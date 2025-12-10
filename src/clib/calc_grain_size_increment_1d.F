@@ -141,68 +141,95 @@
       if (immulti .eq. 0) then
          nSN = 1
          SN_i(1) = imabund + 1
-         SN_metal(:,1) = metal(:,j,k)
+
+         do i = is+1, ie+1
+           SN_metal(i,1) = metal(i,j,k)
+         enddo
       else
          nSN = 0
          if(maxval(metal_loc(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) =  1
-            SN_metal(:,nSN) = metal_loc(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_loc(i,j,k)
+            enddo
          endif
          if(maxval(metal_C13(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) =  2
-            SN_metal(:,nSN) = metal_C13(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_C13(i,j,k)
+            enddo
          endif
          if(maxval(metal_C20(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) =  3
-            SN_metal(:,nSN) = metal_C20(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_C20(i,j,k)
+            enddo
          endif
          if(maxval(metal_C25(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) =  4
-            SN_metal(:,nSN) = metal_C25(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_C25(i,j,k)
+            enddo
          endif
          if(maxval(metal_C30(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) =  5
-            SN_metal(:,nSN) = metal_C30(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_C30(i,j,k)
+            enddo
          endif
          if(maxval(metal_F13(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) =  6
-            SN_metal(:,nSN) = metal_F13(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_F13(i,j,k)
+            enddo
          endif
          if(maxval(metal_F15(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) =  7
-            SN_metal(:,nSN) = metal_F15(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_F15(i,j,k)
+            enddo
          endif
          if(maxval(metal_F50(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) =  8
-            SN_metal(:,nSN) = metal_F50(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_F50(i,j,k)
+            enddo
          endif
          if(maxval(metal_F80(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) =  9
-            SN_metal(:,nSN) = metal_F80(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_F80(i,j,k)
+            enddo
          endif
          if(maxval(metal_P170(:,j,k)/metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) = 10
-            SN_metal(:,nSN) = metal_P170(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_P170(i,j,k)
+            enddo
          endif
          if(maxval(metal_P200(:,j,k)/metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) = 11
-            SN_metal(:,nSN) = metal_P200(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_P200(i,j,k)
+            enddo
          endif
          if(maxval(metal_Y19(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
             SN_i(nSN) = 12
-            SN_metal(:,nSN) = metal_Y19(:,j,k)
+            do i = is+1, ie+1
+              SN_metal(i,nSN) = metal_Y19(i,j,k)
+            enddo
          endif
       endif
          
