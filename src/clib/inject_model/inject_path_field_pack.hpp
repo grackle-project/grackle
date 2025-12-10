@@ -21,6 +21,15 @@ namespace grackle::impl {
 ///
 /// I have some ideas that will let us dispose of this type in the near future.
 struct InjectPathFieldPack {
+  /// Specifies the bounds for a for-loop that you would use to iterate over
+  /// all relevant injection model density fields that are present in fields
+  ///
+  /// @todo
+  /// Some changes are required before we can safely assume that start_idx is
+  /// always 0
+  int start_idx, stop_idx;
+
+  /// holds pointers to the various injection model density fields
   const gr_float* fields[inj_model_input::N_Injection_Pathways];
 };
 
@@ -28,20 +37,24 @@ struct InjectPathFieldPack {
 inline InjectPathFieldPack setup_InjectPathFieldPack(
     const chemistry_data* my_chem, const grackle_field_data* my_fields) {
   if ((my_chem->metal_chemistry > 0) && (my_chem->multi_metals == 1)) {
-    return InjectPathFieldPack{{
-        my_fields->local_ISM_metal_density,
-        my_fields->ccsn13_metal_density,
-        my_fields->ccsn20_metal_density,
-        my_fields->ccsn25_metal_density,
-        my_fields->ccsn30_metal_density,
-        my_fields->fsn13_metal_density,
-        my_fields->fsn15_metal_density,
-        my_fields->fsn50_metal_density,
-        my_fields->fsn80_metal_density,
-        my_fields->pisn170_metal_density,
-        my_fields->pisn200_metal_density,
-        my_fields->y19_metal_density,
-    }};
+    return InjectPathFieldPack{
+        /* start_idx = */ 0,
+        /* stop_idx = */ inj_model_input::N_Injection_Pathways,
+        /* fields = */
+        {
+            my_fields->local_ISM_metal_density,
+            my_fields->ccsn13_metal_density,
+            my_fields->ccsn20_metal_density,
+            my_fields->ccsn25_metal_density,
+            my_fields->ccsn30_metal_density,
+            my_fields->fsn13_metal_density,
+            my_fields->fsn15_metal_density,
+            my_fields->fsn50_metal_density,
+            my_fields->fsn80_metal_density,
+            my_fields->pisn170_metal_density,
+            my_fields->pisn200_metal_density,
+            my_fields->y19_metal_density,
+        }};
   }
 
   InjectPathFieldPack out;
@@ -50,8 +63,14 @@ inline InjectPathFieldPack setup_InjectPathFieldPack(
   }
 
   if ((my_chem->metal_chemistry > 0) && (my_chem->multi_metals == 0)) {
+    out.start_idx = my_chem->metal_abundances;
+    out.stop_idx = out.start_idx + 1;
     out.fields[my_chem->metal_abundances] = my_fields->metal_density;
+  } else {
+    out.start_idx = 0;
+    out.stop_idx = out.start_idx;
   }
+
   return out;
 }
 
