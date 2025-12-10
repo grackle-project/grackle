@@ -282,6 +282,7 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
       "there was a problem building the map of model names");
   }
 
+  // initialize the object that will hold the loaded data
   int n_log10Tdust_vals = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
   int n_opac_poly_coef = grackle::impl::inj_model_input::N_Opacity_Coef;
   my_rates->opaque_storage->inject_pathway_props =
@@ -298,6 +299,7 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
     return GR_FAIL;
   }
 
+  // initialize the grid of dust temperatures associated with the opacity table
   double log10Tdust_lo = 0.0;
   double log10Tdust_step = 0.1;
 
@@ -308,7 +310,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   for(int iTd = 0; iTd < n_log10Tdust_vals; iTd++) {
     log10Tdust_vals[iTd] = log10Tdust_lo + (double)iTd * log10Tdust_step;
   }
-
 
   // zero-out all metal injection yield fractions and dust grain properties
   yields::MetalTables_zero_out(
@@ -337,10 +338,12 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   if (ret != GR_SUCCESS) {
     return GrPrintAndReturnErr(
         "some kind of unspecified error occured when loading data from each "
-        "injection pathway");
+        "injection pathway\n");
+  } else if (ctx.counter != n_pathways) {
+    return GrPrintAndReturnErr(
+        "Only loaded data for %d of the %d available pathways\n",
+        ctx.counter, n_pathways);
   }
-
-  GR_INTERNAL_REQUIRE(ctx.counter == 12, "sanity-checking");
 
   return GR_SUCCESS;
 }
