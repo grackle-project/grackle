@@ -41,19 +41,6 @@ struct GrainSpeciesInfoEntry {
   /// the species index of the grain in the #GrainSpLUT lookup table
   int species_idx;
 
-  /// the species index of the grain in the #OnlyGrainSpLUT lookup table
-  ///
-  /// @note
-  /// It's frankly a little redundant to track this information (since an
-  /// instance of this struct is found at this index of an out.species_infoay)
-  int onlygrainsp_idx;
-
-  /// name of the dust species
-  ///
-  /// @note
-  /// This primarily exists for debuging purposes
-  const char* name;
-
   /// indicates whether to use the carbonaceous or silicate coefficient table
   /// to computing contributions of the grain species to the total h2dust rate
   /// (or the rate of H2 formation)
