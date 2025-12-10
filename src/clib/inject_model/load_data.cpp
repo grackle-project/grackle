@@ -10,20 +10,15 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <cstring>
-#include <stdlib.h>
-#include <hdf5.h>
-#include <stdio.h>
-#include <math.h>
-#include "dust/grain_species_info.hpp"
-#include "../grackle_macros.h"
+#include <cstring>  // std::strcmp
+#include "../dust/grain_species_info.hpp"
 #include "grackle_chemistry_data.h"
 #include "load_data.hpp"  // forward declarations
 #include "raw_data.hpp"
 #include "../LUT.hpp"
 #include "../opaque_storage.hpp"
 #include "../status_reporting.h" // GrPrintAndReturnErr
-#include "utils/FrozenKeyIdxBiMap.hpp"
+#include "../utils/FrozenKeyIdxBiMap.hpp"
 
 namespace {  // stuff inside an anonymous namespace is local to this file
 
@@ -342,10 +337,10 @@ int grackle::impl::load_inject_path_data(const chemistry_data *my_chemistry,
   if (ret != GR_SUCCESS) {
     return GrPrintAndReturnErr(
         "some kind of unspecified error occured when loading data from each "
-        "injection pathway\n");
+        "injection pathway");
   } else if (ctx.counter != n_pathways) {
     return GrPrintAndReturnErr(
-        "Only loaded data for %d of the %d available pathways\n",
+        "Only loaded data for %d of the %d available pathways",
         ctx.counter, n_pathways);
   }
 
