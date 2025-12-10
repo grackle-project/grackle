@@ -103,6 +103,12 @@ struct FrozenKeyIdxBiMap {
   BiMapMode mode;
 };
 
+// ugh, it's unfortunate that we need to make this... but for now its useful.
+// Ideally, we would refactor so that we can get rid of this function.
+inline FrozenKeyIdxBiMap mk_invalid_FrozenKeyIdxBiMap() {
+  return FrozenKeyIdxBiMap{0, nullptr, BiMapMode::REFS_KEYDATA};
+}
+
 /// Constructs a new FrozenKeyIdxBiMap
 ///
 /// @param[in]  keys Sequence of 1 or more unique strings. Each string must
@@ -119,18 +125,15 @@ struct FrozenKeyIdxBiMap {
 /// > this a simple C++ class instead)
 inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
                                                int key_count, BiMapMode mode) {
-  // this will be returned if there is an error
-  FrozenKeyIdxBiMap erroneous_obj{0, nullptr, BiMapMode::REFS_KEYDATA};
-
   // check the specified keys
   long long max_keys = static_cast<long long>(bimap::invalid_val) - 1LL;
   if (key_count < 1 || static_cast<long long>(key_count) > max_keys) {
     GrPrintErrMsg("key_count must be positive and cannot exceed %lld",
                   max_keys);
-    return erroneous_obj;
+    return mk_invalid_FrozenKeyIdxBiMap();
   } else if (keys == nullptr) {
     GrPrintErrMsg("keys must not be a nullptr");
-    return erroneous_obj;
+    return mk_invalid_FrozenKeyIdxBiMap();
   }
   for (int i = 0; i < key_count; i++) {
     GR_INTERNAL_REQUIRE(keys[i] != nullptr, "Can't specify a nullptr key");
@@ -140,13 +143,13 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
           "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
           "exceeding %d",
           keys[i], i, bimap::keylen_max);
-      return erroneous_obj;
+      return mk_invalid_FrozenKeyIdxBiMap();
     }
     // check uniqueness
     for (int j = 0; j < i; j++) {
       if (strcmp(keys[i], keys[j]) == 0) {
         GrPrintErrMsg("\"%s\" key repeats", keys[i]);
-        return erroneous_obj;
+        return mk_invalid_FrozenKeyIdxBiMap();
       }
     }
   }
@@ -173,7 +176,7 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
     }
     default: {
       GrPrintErrMsg("unknown mode");
-      return erroneous_obj;
+      return mk_invalid_FrozenKeyIdxBiMap();
     }
   }
 
@@ -208,7 +211,7 @@ inline void drop_FrozenKeyIdxBiMap(FrozenKeyIdxBiMap* ptr) {
 /// > This is pretty ugly/clunky, but its the only practical way to achieve
 /// > comparable behavior to other internal datatypes (ideally, we would make
 /// > this a simple C++ class instead)
-FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
+inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
   return new_FrozenKeyIdxBiMap(ptr->keys, ptr->length, ptr->mode);
 };
 

@@ -194,17 +194,7 @@ INSTANTIATE_TEST_SUITE_P(
 // check the GrainSpeciesInfo object when constructed from dust_species
 // parameters that hold extreme values
 TEST(GrainSpeciesInfoTestMisc, DustSpeciesExtremeValues) {
-  {
-    unique_GrainSpeciesInfo_ptr ptr = make_unique_GrainSpeciesInfo(0);
-    EXPECT_EQ(ptr->n_species, 0)
-        << "GrainSpeciesInfo::n_species should be 0 when the dust_species "
-        << "parameter is 0.";
-    EXPECT_EQ(ptr->species_info, nullptr)
-        << "GrainSpeciesInfo::species_info should be a nullptr when "
-        << "dust_species parameter is 0.";
-  }
-
-  int invalid_dust_species_values[2] = {-42423, MAX_dust_species_VAL + 1};
+  int invalid_dust_species_values[3] = {-42423, 0, MAX_dust_species_VAL + 1};
   for (auto dust_species_param : invalid_dust_species_values) {
     unique_GrainSpeciesInfo_ptr ptr =
         make_unique_GrainSpeciesInfo(dust_species_param);

@@ -13,6 +13,8 @@
 #ifndef GRAIN_SPECIES_INFO_HPP
 #define GRAIN_SPECIES_INFO_HPP
 
+#include "../utils/FrozenKeyIdxBiMap.hpp"
+
 namespace grackle::impl {
 
 /// holds information about a single gas species that is an ingredient for
@@ -116,6 +118,15 @@ struct GrainSpeciesInfo {
   /// an out.species_infoay of length of length @ref n_species where each entry
   /// holds info about a separate grain species
   GrainSpeciesInfoEntry* species_info;
+
+  /// maps between grain species names and the associated index. The mapping is
+  /// **ALWAYS** consistent with ``OnlyGrainSpLUT``.
+  ///
+  /// @note
+  /// An argument could be made for storing this separately from the rest of
+  /// the struct since the core grackle calculations don't (or at least
+  /// shouldn't) use this data structure during the calculation.
+  FrozenKeyIdxBiMap name_map;
 };
 
 /// return the number of grain species
@@ -164,6 +175,7 @@ inline void drop_GrainSpeciesInfo(GrainSpeciesInfo* ptr) {
     }
   }
   delete[] ptr->species_info;
+  drop_FrozenKeyIdxBiMap(&ptr->name_map);
   // the following 2 lines are not strictly necessary, but they may help us
   // avoid a double-free and a dangling pointer
   ptr->n_species = 0;
