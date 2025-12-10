@@ -122,7 +122,7 @@
      &      , SN_kpreforg(gr_Size,SN0_N)
      &      , SN_kpvolorg(gr_Size,SN0_N), SN_kpH2Oice(gr_Size,SN0_N)
 !     local
-      integer i
+      integer i, idx
 !!    integer iTd, iTd0
 
 !!    iSN0 = 2
@@ -238,10 +238,15 @@
          if ( idspecies .gt. 0 ) then
             SN_fMgSiO3     (iSN) = SN0_fMgSiO3     (iSN0)
             SN_fAC         (iSN) = SN0_fAC         (iSN0)
-            SN_r0MgSiO3  (:,iSN) = SN0_r0MgSiO3  (:,iSN0)
-            SN_r0AC      (:,iSN) = SN0_r0AC      (:,iSN0)
-            SN_kpMgSiO3  (:,iSN) = SN0_kpMgSiO3  (:,iSN0)
-            SN_kpAC      (:,iSN) = SN0_kpAC      (:,iSN0)
+
+            do idx = 1, 3
+              SN_r0MgSiO3  (idx,iSN) = SN0_r0MgSiO3  (idx,iSN0)
+              SN_r0AC      (idx,iSN) = SN0_r0AC      (idx,iSN0)
+            enddo
+            do idx = 1, gr_Size
+              SN_kpMgSiO3  (idx,iSN) = SN0_kpMgSiO3  (idx,iSN0)
+              SN_kpAC      (idx,iSN) = SN0_kpAC      (idx,iSN0)
+            enddo
          endif
          if ( idspecies .gt. 1 ) then
             SN_fSiM        (iSN) = SN0_fSiM        (iSN0)
@@ -252,33 +257,43 @@
             SN_fMgO        (iSN) = SN0_fMgO        (iSN0)
             SN_fFeS        (iSN) = SN0_fFeS        (iSN0)
             SN_fAl2O3      (iSN) = SN0_fAl2O3      (iSN0)
-            SN_r0SiM     (:,iSN) = SN0_r0SiM     (:,iSN0)
-            SN_r0FeM     (:,iSN) = SN0_r0FeM     (:,iSN0)
-            SN_r0Mg2SiO4 (:,iSN) = SN0_r0Mg2SiO4 (:,iSN0)
-            SN_r0Fe3O4   (:,iSN) = SN0_r0Fe3O4   (:,iSN0)
-            SN_r0SiO2D   (:,iSN) = SN0_r0SiO2D   (:,iSN0)
-            SN_r0MgO     (:,iSN) = SN0_r0MgO     (:,iSN0)
-            SN_r0FeS     (:,iSN) = SN0_r0FeS     (:,iSN0)
-            SN_r0Al2O3   (:,iSN) = SN0_r0Al2O3   (:,iSN0)
-            SN_kpSiM     (:,iSN) = SN0_kpSiM     (:,iSN0)
-            SN_kpFeM     (:,iSN) = SN0_kpFeM     (:,iSN0)
-            SN_kpMg2SiO4 (:,iSN) = SN0_kpMg2SiO4 (:,iSN0)
-            SN_kpFe3O4   (:,iSN) = SN0_kpFe3O4   (:,iSN0)
-            SN_kpSiO2D   (:,iSN) = SN0_kpSiO2D   (:,iSN0)
-            SN_kpMgO     (:,iSN) = SN0_kpMgO     (:,iSN0)
-            SN_kpFeS     (:,iSN) = SN0_kpFeS     (:,iSN0)
-            SN_kpAl2O3   (:,iSN) = SN0_kpAl2O3   (:,iSN0)
+
+            do idx = 1, 3
+              SN_r0SiM     (idx,iSN) = SN0_r0SiM     (idx,iSN0)
+              SN_r0FeM     (idx,iSN) = SN0_r0FeM     (idx,iSN0)
+              SN_r0Mg2SiO4 (idx,iSN) = SN0_r0Mg2SiO4 (idx,iSN0)
+              SN_r0Fe3O4   (idx,iSN) = SN0_r0Fe3O4   (idx,iSN0)
+              SN_r0SiO2D   (idx,iSN) = SN0_r0SiO2D   (idx,iSN0)
+              SN_r0MgO     (idx,iSN) = SN0_r0MgO     (idx,iSN0)
+              SN_r0FeS     (idx,iSN) = SN0_r0FeS     (idx,iSN0)
+              SN_r0Al2O3   (idx,iSN) = SN0_r0Al2O3   (idx,iSN0)
+            enddo
+            do idx = 1, gr_Size
+              SN_kpSiM     (idx,iSN) = SN0_kpSiM     (idx,iSN0)
+              SN_kpFeM     (idx,iSN) = SN0_kpFeM     (idx,iSN0)
+              SN_kpMg2SiO4 (idx,iSN) = SN0_kpMg2SiO4 (idx,iSN0)
+              SN_kpFe3O4   (idx,iSN) = SN0_kpFe3O4   (idx,iSN0)
+              SN_kpSiO2D   (idx,iSN) = SN0_kpSiO2D   (idx,iSN0)
+              SN_kpMgO     (idx,iSN) = SN0_kpMgO     (idx,iSN0)
+              SN_kpFeS     (idx,iSN) = SN0_kpFeS     (idx,iSN0)
+              SN_kpAl2O3   (idx,iSN) = SN0_kpAl2O3   (idx,iSN0)
+            enddo
          endif
          if ( idspecies .gt. 2 ) then
             SN_freforg     (iSN) = SN0_freforg     (iSN0)
             SN_fvolorg     (iSN) = SN0_fvolorg     (iSN0)
             SN_fH2Oice     (iSN) = SN0_fH2Oice     (iSN0)
-            SN_r0reforg  (:,iSN) = SN0_r0reforg  (:,iSN0)
-            SN_r0volorg  (:,iSN) = SN0_r0volorg  (:,iSN0)
-            SN_r0H2Oice  (:,iSN) = SN0_r0H2Oice  (:,iSN0)
-            SN_kpreforg  (:,iSN) = SN0_kpreforg  (:,iSN0)
-            SN_kpvolorg  (:,iSN) = SN0_kpvolorg  (:,iSN0)
-            SN_kpH2Oice  (:,iSN) = SN0_kpH2Oice  (:,iSN0)
+
+            do idx = 1, 3
+              SN_r0reforg  (idx,iSN) = SN0_r0reforg  (idx,iSN0)
+              SN_r0volorg  (idx,iSN) = SN0_r0volorg  (idx,iSN0)
+              SN_r0H2Oice  (idx,iSN) = SN0_r0H2Oice  (idx,iSN0)
+            enddo
+            do idx = 1, gr_Size
+              SN_kpreforg  (idx,iSN) = SN0_kpreforg  (idx,iSN0)
+              SN_kpvolorg  (idx,iSN) = SN0_kpvolorg  (idx,iSN0)
+              SN_kpH2Oice  (idx,iSN) = SN0_kpH2Oice  (idx,iSN0)
+            enddo
          endif
       enddo
 
