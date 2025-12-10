@@ -338,7 +338,8 @@ install:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) *.exe DEPEND out.make.DEPEND
+	-@rm -f *.la .libs/* DEPEND.bak *~ $(OUTPUT) *.exe DEPEND out.make.DEPEND
+	-@find . \( -name '*.o' -o -name '*.lo' \) -exec rm '{}' \;
 	-@rm -rf $(AUTOGEN_DIR)
 	-@touch DEPEND
 
