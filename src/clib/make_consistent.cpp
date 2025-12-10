@@ -51,12 +51,14 @@ void make_consistent(
   grackle::impl::View<gr_float***> HeIII(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> d(
-      my_fields->density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal(
-      my_fields->metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> d(
+      const_cast<const gr_float*>(my_fields->density),
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> metal(
+      const_cast<const gr_float*>(my_fields->metal_density),
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> HM(
       my_fields->HM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -217,8 +219,11 @@ void make_consistent(
   int inj_path_idx_start, inj_path_idx_stop;
 
   // construct view of each specified injection pathway metal density field
-  if ((my_chemistry->metal_chemistry > 0) &&
-      (my_chemistry->multi_metals == 1)) {
+  if (my_chemistry->metal_chemistry > 0) {
+    // note: when (my_chemistry->multi_metals == 0) a view within
+    //       SN_metal_arr will wrap my_fields->metal_density. In other words,
+    //       that view will be an alias of the `metal` view. This is ok because
+    //       my_fields->metal_density is **NOT** mutated by this function.
     InjectPathFieldPack p = setup_InjectPathFieldPack(my_chemistry, my_fields);
 
     inj_path_idx_start = p.start_idx;
@@ -333,84 +338,39 @@ void make_consistent(
         const grackle::impl::yields::MetalTables& onlygas_metal_yields =
             inject_pathway_props->gas_metal_nuclide_yields;
 
-        if (my_chemistry->multi_metals == 0) {  // case with 1 injection pathway
-          int iSN0 = my_chemistry->metal_abundances;
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            Ct[i] = total_metal_yields.C[iSN0] * metal(i, j, k);
-            Ot[i] = total_metal_yields.O[iSN0] * metal(i, j, k);
-            Mgt[i] = total_metal_yields.Mg[iSN0] * metal(i, j, k);
-            Alt[i] = total_metal_yields.Al[iSN0] * metal(i, j, k);
-            Sit[i] = total_metal_yields.Si[iSN0] * metal(i, j, k);
-            St[i] = total_metal_yields.S[iSN0] * metal(i, j, k);
-            Fet[i] = total_metal_yields.Fe[iSN0] * metal(i, j, k);
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          Ct[i] = 0.;
+          Cg[i] = 0.;
+          Ot[i] = 0.;
+          Og[i] = 0.;
+          Mgt[i] = 0.;
+          Mgg[i] = 0.;
+          Alt[i] = 0.;
+          Alg[i] = 0.;
+          Sit[i] = 0.;
+          Sig[i] = 0.;
+          St[i] = 0.;
+          Sg[i] = 0.;
+          Fet[i] = 0.;
+          Feg[i] = 0.;
+          for (int iSN = inj_path_idx_start; iSN < inj_path_idx_stop; iSN++) {
+            gr_float cur_val = SN_metal_arr[iSN](i, j, k);
 
-            Cg[i] = onlygas_metal_yields.C[iSN0] * metal(i, j, k);
-            Og[i] = onlygas_metal_yields.O[iSN0] * metal(i, j, k);
-            Mgg[i] = onlygas_metal_yields.Mg[iSN0] * metal(i, j, k);
-            Alg[i] = onlygas_metal_yields.Al[iSN0] * metal(i, j, k);
-            Sig[i] = onlygas_metal_yields.Si[iSN0] * metal(i, j, k);
-            Sg[i] = onlygas_metal_yields.S[iSN0] * metal(i, j, k);
-            Feg[i] = onlygas_metal_yields.Fe[iSN0] * metal(i, j, k);
-          }
+            Ct[i] = Ct[i] + total_metal_yields.C[iSN] * cur_val;
+            Ot[i] = Ot[i] + total_metal_yields.O[iSN] * cur_val;
+            Mgt[i] = Mgt[i] + total_metal_yields.Mg[iSN] * cur_val;
+            Alt[i] = Alt[i] + total_metal_yields.Al[iSN] * cur_val;
+            Sit[i] = Sit[i] + total_metal_yields.Si[iSN] * cur_val;
+            St[i] = St[i] + total_metal_yields.S[iSN] * cur_val;
+            Fet[i] = Fet[i] + total_metal_yields.Fe[iSN] * cur_val;
 
-        } else {  // case with multiple injection pathways
-          //        do i = is+1, ie+1
-          //           totalZ = metal_loc(i,j,k)
-          // &           + metal_C13(i,j,k) + metal_C20(i,j,k)
-          // &           + metal_C25(i,j,k) + metal_C30(i,j,k)
-          // &           + metal_F13(i,j,k) + metal_F15(i,j,k)
-          // &           + metal_F50(i,j,k) + metal_F80(i,j,k)
-          // &           + metal_P170(i,j,k)+ metal_P200(i,j,k)
-          // &           + metal_Y19(i,j,k)
-          //           correctZ = metal(i,j,k) / totalZ
-          //           metal_loc(i,j,k) = metal_loc(i,j,k) * correctZ
-          //           metal_C13(i,j,k) = metal_C13(i,j,k) * correctZ
-          //           metal_C20(i,j,k) = metal_C20(i,j,k) * correctZ
-          //           metal_C25(i,j,k) = metal_C25(i,j,k) * correctZ
-          //           metal_C30(i,j,k) = metal_C30(i,j,k) * correctZ
-          //           metal_F13(i,j,k) = metal_F13(i,j,k) * correctZ
-          //           metal_F15(i,j,k) = metal_F15(i,j,k) * correctZ
-          //           metal_F50(i,j,k) = metal_F50(i,j,k) * correctZ
-          //           metal_F80(i,j,k) = metal_F80(i,j,k) * correctZ
-          //           metal_P170(i,j,k)= metal_P170(i,j,k)* correctZ
-          //           metal_P200(i,j,k)= metal_P200(i,j,k)* correctZ
-          //           metal_Y19(i,j,k) = metal_Y19(i,j,k) * correctZ
-          //        enddo
-
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            Ct[i] = 0.;
-            Cg[i] = 0.;
-            Ot[i] = 0.;
-            Og[i] = 0.;
-            Mgt[i] = 0.;
-            Mgg[i] = 0.;
-            Alt[i] = 0.;
-            Alg[i] = 0.;
-            Sit[i] = 0.;
-            Sig[i] = 0.;
-            St[i] = 0.;
-            Sg[i] = 0.;
-            Fet[i] = 0.;
-            Feg[i] = 0.;
-            for (int iSN = inj_path_idx_start; iSN < inj_path_idx_stop; iSN++) {
-              gr_float cur_val = SN_metal_arr[iSN](i, j, k);
-
-              Ct[i] = Ct[i] + total_metal_yields.C[iSN] * cur_val;
-              Ot[i] = Ot[i] + total_metal_yields.O[iSN] * cur_val;
-              Mgt[i] = Mgt[i] + total_metal_yields.Mg[iSN] * cur_val;
-              Alt[i] = Alt[i] + total_metal_yields.Al[iSN] * cur_val;
-              Sit[i] = Sit[i] + total_metal_yields.Si[iSN] * cur_val;
-              St[i] = St[i] + total_metal_yields.S[iSN] * cur_val;
-              Fet[i] = Fet[i] + total_metal_yields.Fe[iSN] * cur_val;
-
-              Cg[i] = Cg[i] + onlygas_metal_yields.C[iSN] * cur_val;
-              Og[i] = Og[i] + onlygas_metal_yields.O[iSN] * cur_val;
-              Mgg[i] = Mgg[i] + onlygas_metal_yields.Mg[iSN] * cur_val;
-              Alg[i] = Alg[i] + onlygas_metal_yields.Al[iSN] * cur_val;
-              Sig[i] = Sig[i] + onlygas_metal_yields.Si[iSN] * cur_val;
-              Sg[i] = Sg[i] + onlygas_metal_yields.S[iSN] * cur_val;
-              Feg[i] = Feg[i] + onlygas_metal_yields.Fe[iSN] * cur_val;
-            }
+            Cg[i] = Cg[i] + onlygas_metal_yields.C[iSN] * cur_val;
+            Og[i] = Og[i] + onlygas_metal_yields.O[iSN] * cur_val;
+            Mgg[i] = Mgg[i] + onlygas_metal_yields.Mg[iSN] * cur_val;
+            Alg[i] = Alg[i] + onlygas_metal_yields.Al[iSN] * cur_val;
+            Sig[i] = Sig[i] + onlygas_metal_yields.Si[iSN] * cur_val;
+            Sg[i] = Sg[i] + onlygas_metal_yields.S[iSN] * cur_val;
+            Feg[i] = Feg[i] + onlygas_metal_yields.Fe[iSN] * cur_val;
           }
         }
 
