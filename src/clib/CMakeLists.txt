@@ -115,9 +115,9 @@ add_library(Grackle_Grackle
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
-  initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
   inject_model/grain_metal_inject_pathways.hpp
+  inject_model/load_data.cpp inject_model/load_data.hpp
   inject_model/raw_data.cpp inject_model/raw_data.hpp
   internal_types.cpp internal_types.hpp
   interp_table_utils.hpp

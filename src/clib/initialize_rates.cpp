@@ -47,7 +47,7 @@
 #include "collisional_rate_props.hpp"  // init_extra_collisional_rates
 #include "dust/grain_species_info.hpp"
 #include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
-#include "initialize_dust_yields.hpp"  // initialize_dust_yields
+#include "inject_model/load_data.hpp"  // load_inject_path_data
 #include "initialize_rates.hpp"
 #include "internal_types.hpp" // new_CollisionalRxnRateCollection
 #include "LUT.hpp" // CollisionalRxnLUT
@@ -653,10 +653,10 @@ int grackle::impl::initialize_rates(
         grackle::impl::new_GrainSpeciesInfo(my_chemistry->dust_species);
     }
 
-    // Dust rates
-    if (grackle::impl::initialize_dust_yields(my_chemistry, my_rates, my_units) == FAIL) {
-      fprintf(stderr, "Error in initialize_dust_yields.\n");
-      return FAIL;
+    // Load injection pathway data
+    if (grackle::impl::load_inject_path_data(my_chemistry, my_rates)
+        != GR_SUCCESS) {
+      return GrPrintAndReturnErr("Error in load_inject_path_data.");
     }
 
     return SUCCESS;

@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the functions to initialize the dust yields
+/// Implments the function for loading injection pathway data
 ///
 //===----------------------------------------------------------------------===//
 
@@ -16,13 +16,13 @@
 #include <stdio.h>
 #include <math.h>
 #include "dust/grain_species_info.hpp"
-#include "grackle_macros.h"
+#include "../grackle_macros.h"
 #include "grackle_chemistry_data.h"
-#include "initialize_dust_yields.hpp" // forward declarations
-#include "inject_model/raw_data.hpp"
-#include "LUT.hpp"
-#include "opaque_storage.hpp"
-#include "status_reporting.h" // GrPrintAndReturnErr
+#include "load_data.hpp"  // forward declarations
+#include "raw_data.hpp"
+#include "../LUT.hpp"
+#include "../opaque_storage.hpp"
+#include "../status_reporting.h" // GrPrintAndReturnErr
 #include "utils/FrozenKeyIdxBiMap.hpp"
 
 namespace {  // stuff inside an anonymous namespace is local to this file
@@ -259,10 +259,14 @@ void zero_out_dust_inject_props(
 
 }  // anonymous namespace
 
-int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
-                                          chemistry_data_storage *my_rates,
-                                          code_units *my_units)
+int grackle::impl::load_inject_path_data(const chemistry_data *my_chemistry,
+                                         chemistry_data_storage *my_rates)
 {
+  // Currently, this function "loads" injection pathway data from data that is
+  // directly embedded as part of the Grackle library in a manner controlled
+  // by raw_data.hpp and raw_data.cpp
+  //
+  // Longer term, the goal is to "load" the data from an external HDF5 file
 
   if (my_chemistry->metal_chemistry == 0) {
     return GR_SUCCESS;
