@@ -447,27 +447,29 @@
      &                 + sgH2Oice    (i)
          endif
             
-         if (idspecies .gt. 0) then
-            altot(:,i) = alMgSiO3  (:,i)
-     &                 + alAC      (:,i)
-         endif
-         if (idspecies .gt. 1) then
-            altot(:,i) = altot     (:,i)
-     &                 + alSiM     (:,i)
-     &                 + alFeM     (:,i)
-     &                 + alMg2SiO4 (:,i)
-     &                 + alFe3O4   (:,i)
-     &                 + alSiO2D   (:,i)
-     &                 + alMgO     (:,i)
-     &                 + alFeS     (:,i)
-     &                 + alAl2O3   (:,i)
-         endif
-         if (idspecies .gt. 2) then
-            altot(:,i) = altot     (:,i)
-     &                 + alreforg  (:,i)
-     &                 + alvolorg  (:,i)
-     &                 + alH2Oice  (:,i)
-         endif
+         do idx = 1, gr_N(2)
+           if (idspecies .gt. 0) then
+              altot(idx,i) = alMgSiO3  (idx,i)
+     &                     + alAC      (idx,i)
+           endif
+           if (idspecies .gt. 1) then
+              altot(idx,i) = altot     (idx,i)
+     &                     + alSiM     (idx,i)
+     &                     + alFeM     (idx,i)
+     &                     + alMg2SiO4 (idx,i)
+     &                     + alFe3O4   (idx,i)
+     &                     + alSiO2D   (idx,i)
+     &                     + alMgO     (idx,i)
+     &                     + alFeS     (idx,i)
+     &                     + alAl2O3   (idx,i)
+           endif
+           if (idspecies .gt. 2) then
+              altot(idx,i) = altot     (idx,i)
+     &                     + alreforg  (idx,i)
+     &                     + alvolorg  (idx,i)
+     &                     + alH2Oice  (idx,i)
+           endif
+         enddo
 
       endif
       enddo
