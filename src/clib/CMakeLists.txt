@@ -117,6 +117,7 @@ add_library(Grackle_Grackle
   initialize_chemistry_data.cpp
   initialize_rates.cpp initialize_rates.hpp
   inject_model/grain_metal_inject_pathways.hpp
+  inject_model/inject_path_field_pack.hpp
   inject_model/load_data.cpp inject_model/load_data.hpp
   inject_model/raw_data.cpp inject_model/raw_data.hpp
   internal_types.cpp internal_types.hpp
