@@ -138,7 +138,7 @@ inline void calc_grain_size_increment_1d (
   int gr_Size = gr_N[0] * gr_N[1];
 
   ::grackle::impl::calc_grain_size_increment_1d(
-    dom, idx_range, itmask_metal, gr_N, &gr_Size, my_chemistry, my_fields, 
+    dom, idx_range, itmask_metal, gr_N, gr_Size, my_chemistry, my_fields, 
     internal_dust_prop_buf, inject_pathway_props
   );
 }
