@@ -24,6 +24,7 @@
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "lookup_cool_rates1d.hpp"
+#include "make_consistent.hpp"
 #include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
@@ -149,7 +150,17 @@ static void setup_chem_scheme_masks_(
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if ( itmask[i] != MASK_FALSE )  {
       bool usemetal = (imetal == 1) && (metallicity[i] > min_metallicity);
-      bool is_hi_dens = (ddom[i] >= 1.e8) || (usemetal && (ddom[i] >= 1.0e6));
+      bool is_hi_dens;
+      if (my_chemistry->solver_method == 2) {
+        // Force Gauss-Seidel
+        is_hi_dens = false;
+      } else if (my_chemistry->solver_method == 3) {
+        // Force Newton-Raphson
+        is_hi_dens = true;
+      } else {
+        // Default
+        is_hi_dens = (ddom[i] >= 1.e8) || (usemetal && (ddom[i] >= 1.0e6));
+      }
 
       itmask_gs[i] = (!is_hi_dens) ? MASK_TRUE : MASK_FALSE;
       itmask_nr[i] = (is_hi_dens) ? MASK_TRUE : MASK_FALSE;
@@ -998,7 +1009,7 @@ int solve_rate_cool_g(
 
     // Correct the species to ensure consistency (i.e. type conservation)
 
-    f_wrap::make_consistent_g(imetal, dom, my_chemistry, my_rates, my_fields);
+    grackle::impl::make_consistent(imetal, dom, my_chemistry, my_rates, my_fields);
 
   }
 
