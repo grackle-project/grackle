@@ -80,11 +80,6 @@ inline void calc_grain_size_increment_1d(
       inject_pathway_props->log10Tdust_interp_props.dimension[0]);
   const int n_opac_poly_coef = inject_pathway_props->n_opac_poly_coef;
 
-  // NOTE: gr_N and gr_Size are historical names
-  // -> they are pretty uninformative and should be changed!
-  int gr_N[2] = {n_opac_poly_coef, n_log10Tdust_vals};
-  int gr_Size = gr_N[0] * gr_N[1];
-
   // Step 1: Identify the set of pathways for which the max ratio b/t the
   // pathway's metal density and the total metal density exceeds a threshold.
   //
@@ -172,7 +167,13 @@ inline void calc_grain_size_increment_1d(
     }
   }
 
-  // allocate some buffers
+  // Step 2: Compute the output quantities for each individual species
+
+  // NOTE: gr_N and gr_Size are historical names
+  // -> they are pretty uninformative and should be changed!
+  int gr_N[2] = {n_opac_poly_coef, n_log10Tdust_vals};
+  int gr_Size = gr_N[0] * gr_N[1];
+
   std::vector<double> repacked_yields(n_pathways);
 
   std::vector<double> repacked_size_moments_data_(n_pathways * 3);
@@ -188,7 +189,7 @@ inline void calc_grain_size_increment_1d(
   // loop over grain species
   for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
 
-    // here, we repack the injection pathway for the current grain species
+    // repack the selected injection pathways for the current grain species
     grackle::impl::View<double**> orig_size_moments(
         inject_pathway_props->size_moments.data[grsp_i], 3, n_pathways);
     grackle::impl::View<double**> orig_opac_table(
@@ -197,7 +198,8 @@ inline void calc_grain_size_increment_1d(
 
     for (int iSN = 0; iSN < n_selected_inj_paths; iSN++) {
       int iSN0 = selected_inj_path_idx_l[iSN];
-      repacked_yields[iSN] = inject_pathway_props->grain_yields.data[grsp_i][iSN0];
+      repacked_yields[iSN] =
+        inject_pathway_props->grain_yields.data[grsp_i][iSN0];
       for (int idx = 0; idx < 3; idx++) {
         repacked_size_moments(idx,iSN) = orig_size_moments(idx,iSN0);
       }
@@ -210,7 +212,6 @@ inline void calc_grain_size_increment_1d(
     const GrainSpeciesInfoEntry& cur_grsp_info =
       grain_species_info->species_info[grsp_i];
     double bulk_density = cur_grsp_info.bulk_density_cgs;
-
     const gr_float* grsp_density =
          field_data_adaptor.get_ptr_dynamic(cur_grsp_info.species_idx);
 
@@ -233,9 +234,13 @@ inline void calc_grain_size_increment_1d(
         );
   }
 
+  // step 3: calculate the total cross-section and the total opacity table
+  // (i.e. that include contributions from all grain species)
 
-  // todo: clean this up so that we don't need to explicitly mention grain
-  //       species names
+  // todo: can we skip this when my_chemistry->use_multiple_dust_temperatures
+  //   is not 0?
+
+  // todo: clean up to avoid explicitly mention grain species names
   //   -> doing this will probably require an update to the gold standard
   grackle::impl::View<double**> alSiM(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiM_dust], gr_N[1], my_fields->grid_dimension[0]);
   grackle::impl::View<double**> alFeM(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeM_dust], gr_N[1], my_fields->grid_dimension[0]);
