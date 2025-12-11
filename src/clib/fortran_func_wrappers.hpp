@@ -22,6 +22,9 @@
 #error "This file must be read by a c++ compiler"
 #endif
 
+
+#include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+
 #include "grackle.h"
 #include "dust_props.hpp"
 #include "fortran_func_decls.h"
@@ -134,7 +137,11 @@ inline void calc_grain_size_increment_1d (
   };
   int gr_Size = gr_N[0] * gr_N[1];
 
-
+  ::grackle::impl::calc_grain_size_increment_1d(
+    itmask_metal, &dom, gr_N, &gr_Size, my_chemistry, my_fields, idx_range,
+    internal_dust_prop_buf, inject_pathway_props
+  );
+  /*
   FORTRAN_NAME(calc_grain_size_increment_1d)(
     &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->grain_growth, itmask_metal,
     &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
@@ -195,6 +202,7 @@ inline void calc_grain_size_increment_1d (
     internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiO2_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgO_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeS_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Al2O3_dust],
     internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::ref_org_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.dyntab_kappa_tot
   );
+  */
 }
 
 inline void calc_temp1d_cloudy_g(
