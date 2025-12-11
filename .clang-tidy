@@ -48,6 +48,7 @@ Checks: >
 
   google-build-using-namespace,
   google-explicit-constructor,
+  google-global-names-in-headers,
   google-readability-avoid-underscore-in-googletest-name,
   google-runtime-float,
   google-upgrade-googletest-case,
