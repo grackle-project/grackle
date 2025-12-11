@@ -142,49 +142,6 @@ inline void calc_grain_size_increment_1d(
   std::vector<gr_float> SN_metal_data_(my_fields->grid_dimension[0] * inject_pathway_props->n_pathways);
   grackle::impl::View<gr_float**> SN_metal(SN_metal_data_.data(), my_fields->grid_dimension[0], inject_pathway_props->n_pathways);
 
-  GrainMetalInjectPathways reduced_inject_paths = new_GrainMetalInjectPathways(
-    n_pathways, n_log10Tdust_vals, n_opac_poly_coef);
-
-  double* SN_fSiM = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::SiM_dust];
-  double* SN_fFeM = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::FeM_dust];
-  double* SN_fMg2SiO4 = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust];
-  double* SN_fMgSiO3 = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust];
-  double* SN_fFe3O4 = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust];
-  double* SN_fAC = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::AC_dust];
-  double* SN_fSiO2D = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::SiO2_dust];
-  double* SN_fMgO = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::MgO_dust];
-  double* SN_fFeS = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::FeS_dust];
-  double* SN_fAl2O3 = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::Al2O3_dust];
-  double* SN_freforg = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::ref_org_dust];
-  double* SN_fvolorg = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::vol_org_dust];
-  double* SN_fH2Oice = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust];
-  grackle::impl::View<double**> SN_r0SiM(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::SiM_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0FeM(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::FeM_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0Mg2SiO4(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::Mg2SiO4_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0MgSiO3(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::MgSiO3_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0Fe3O4(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::Fe3O4_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0AC(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::AC_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0SiO2D(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::SiO2_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0MgO(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::MgO_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0FeS(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::FeS_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0Al2O3(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::Al2O3_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0reforg(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::ref_org_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0volorg(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::vol_org_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_r0H2Oice(reduced_inject_paths.size_moments.data[OnlyGrainSpLUT::H2O_ice_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpSiM(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::SiM_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpFeM(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::FeM_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpMg2SiO4(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::Mg2SiO4_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpMgSiO3(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::MgSiO3_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpFe3O4(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::Fe3O4_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpAC(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::AC_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpSiO2D(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::SiO2_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpMgO(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::MgO_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpFeS(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::FeS_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpAl2O3(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::Al2O3_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpreforg(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::ref_org_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpvolorg(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::vol_org_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN_kpH2Oice(reduced_inject_paths.opacity_coef_table.data[OnlyGrainSpLUT::H2O_ice_dust], gr_Size, inject_pathway_props->n_pathways);
-
   // local
   int i, idx;
 
@@ -224,74 +181,7 @@ inline void calc_grain_size_increment_1d(
     }
   }
 
-
-
-  /*
-  for (iSN = 1; iSN<=(nSN); iSN++) {
-    iSN0 = SN_i[iSN-1];
-    if ( my_chemistry->dust_species > 0 )  {
-      SN_fMgSiO3     [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]     [iSN0-1];
-      SN_fAC         [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]         [iSN0-1];
-
-      for (idx = 1; idx<=(3); idx++) {
-        SN_r0MgSiO3  (idx-1,iSN-1) = SN0_r0MgSiO3  (idx-1,iSN0-1);
-        SN_r0AC      (idx-1,iSN-1) = SN0_r0AC      (idx-1,iSN0-1);
-      }
-      for (idx = 1; idx<=(gr_Size); idx++) {
-        SN_kpMgSiO3  (idx-1,iSN-1) = SN0_kpMgSiO3  (idx-1,iSN0-1);
-        SN_kpAC      (idx-1,iSN-1) = SN0_kpAC      (idx-1,iSN0-1);
-      }
-    }
-    if ( my_chemistry->dust_species > 1 )  {
-      SN_fSiM        [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]        [iSN0-1];
-      SN_fFeM        [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]        [iSN0-1];
-      SN_fMg2SiO4    [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust]    [iSN0-1];
-      SN_fFe3O4      [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust]      [iSN0-1];
-      SN_fSiO2D      [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]      [iSN0-1];
-      SN_fMgO        [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]        [iSN0-1];
-      SN_fFeS        [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust]        [iSN0-1];
-      SN_fAl2O3      [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]      [iSN0-1];
-
-      for (idx = 1; idx<=(3); idx++) {
-        SN_r0SiM     (idx-1,iSN-1) = SN0_r0SiM     (idx-1,iSN0-1);
-        SN_r0FeM     (idx-1,iSN-1) = SN0_r0FeM     (idx-1,iSN0-1);
-        SN_r0Mg2SiO4 (idx-1,iSN-1) = SN0_r0Mg2SiO4 (idx-1,iSN0-1);
-        SN_r0Fe3O4   (idx-1,iSN-1) = SN0_r0Fe3O4   (idx-1,iSN0-1);
-        SN_r0SiO2D   (idx-1,iSN-1) = SN0_r0SiO2D   (idx-1,iSN0-1);
-        SN_r0MgO     (idx-1,iSN-1) = SN0_r0MgO     (idx-1,iSN0-1);
-        SN_r0FeS     (idx-1,iSN-1) = SN0_r0FeS     (idx-1,iSN0-1);
-        SN_r0Al2O3   (idx-1,iSN-1) = SN0_r0Al2O3   (idx-1,iSN0-1);
-      }
-      for (idx = 1; idx<=(gr_Size); idx++) {
-        SN_kpSiM     (idx-1,iSN-1) = SN0_kpSiM     (idx-1,iSN0-1);
-        SN_kpFeM     (idx-1,iSN-1) = SN0_kpFeM     (idx-1,iSN0-1);
-        SN_kpMg2SiO4 (idx-1,iSN-1) = SN0_kpMg2SiO4 (idx-1,iSN0-1);
-        SN_kpFe3O4   (idx-1,iSN-1) = SN0_kpFe3O4   (idx-1,iSN0-1);
-        SN_kpSiO2D   (idx-1,iSN-1) = SN0_kpSiO2D   (idx-1,iSN0-1);
-        SN_kpMgO     (idx-1,iSN-1) = SN0_kpMgO     (idx-1,iSN0-1);
-        SN_kpFeS     (idx-1,iSN-1) = SN0_kpFeS     (idx-1,iSN0-1);
-        SN_kpAl2O3   (idx-1,iSN-1) = SN0_kpAl2O3   (idx-1,iSN0-1);
-      }
-    }
-    if ( my_chemistry->dust_species > 2 )  {
-      SN_freforg     [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::ref_org_dust]     [iSN0-1];
-      SN_fvolorg     [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::vol_org_dust]     [iSN0-1];
-      SN_fH2Oice     [iSN-1] = inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust]     [iSN0-1];
-
-      for (idx = 1; idx<=(3); idx++) {
-        SN_r0reforg  (idx-1,iSN-1) = SN0_r0reforg  (idx-1,iSN0-1);
-        SN_r0volorg  (idx-1,iSN-1) = SN0_r0volorg  (idx-1,iSN0-1);
-        SN_r0H2Oice  (idx-1,iSN-1) = SN0_r0H2Oice  (idx-1,iSN0-1);
-      }
-      for (idx = 1; idx<=(gr_Size); idx++) {
-        SN_kpreforg  (idx-1,iSN-1) = SN0_kpreforg  (idx-1,iSN0-1);
-        SN_kpvolorg  (idx-1,iSN-1) = SN0_kpvolorg  (idx-1,iSN0-1);
-        SN_kpH2Oice  (idx-1,iSN-1) = SN0_kpH2Oice  (idx-1,iSN0-1);
-      }
-    }
-  }
-  */
-
+  // allocate some buffers
   std::vector<double> repacked_yields(n_pathways);
 
   std::vector<double> repacked_size_moments_data_(n_pathways * 3);
@@ -302,13 +192,10 @@ inline void calc_grain_size_increment_1d(
   grackle::impl::View<double**> repacked_opac_table(
       repacked_opac_table_data_.data(), gr_Size, n_pathways);
 
+  // loop over grain species
   for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
 
     // here, we repack the injection pathway for the current grain species
-    double* cur_yields = SN_fMgSiO3;
-    grackle::impl::View<double**>& cur_size_moments = SN_r0MgSiO3;
-    grackle::impl::View<double**>& cur_opac_table = SN_kpMgSiO3;
-
     grackle::impl::View<double**> orig_size_moments(
         inject_pathway_props->size_moments.data[grsp_i], 3, n_pathways);
     grackle::impl::View<double**> orig_opac_table(
@@ -406,8 +293,6 @@ inline void calc_grain_size_increment_1d(
 
     }
   }
-
-  drop_GrainMetalInjectPathways(&reduced_inject_paths);
 }
 
 }  // namespace grackle::impl
