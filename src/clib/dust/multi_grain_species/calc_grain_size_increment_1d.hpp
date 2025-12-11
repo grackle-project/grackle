@@ -22,6 +22,7 @@
 #include "fortran_func_decls.h"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
+#include "inject_model/inject_path_field_pack.hpp"
 #include "LUT.hpp"
 #include "phys_constants.h"
 #include "utils-cpp.hpp"
@@ -37,19 +38,11 @@ inline void calc_grain_size_increment_1d(
 )
 {
 
-  grackle::impl::View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_loc(my_fields->local_ISM_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C13(my_fields->ccsn13_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C20(my_fields->ccsn20_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C25(my_fields->ccsn25_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C30(my_fields->ccsn30_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F13(my_fields->fsn13_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F15(my_fields->fsn15_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F50(my_fields->fsn50_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F80(my_fields->fsn80_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P170(my_fields->pisn170_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P200(my_fields->pisn200_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_Y19(my_fields->y19_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> metal(
+      const_cast<const gr_float*>(my_fields->metal_density),
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+
   // table
   grackle::impl::View<double**> SN0_r0SiM(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::SiM_dust], 3, inject_pathway_props->n_pathways);
   grackle::impl::View<double**> SN0_r0FeM(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::FeM_dust], 3, inject_pathway_props->n_pathways);
@@ -94,7 +87,7 @@ inline void calc_grain_size_increment_1d(
   grackle::impl::View<double**> alH2Oice(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], gr_N[2-1], my_fields->grid_dimension[0]);
   grackle::impl::View<double**> altot(internal_dust_prop_buf.dyntab_kappa_tot, gr_N[2-1], my_fields->grid_dimension[0]);
   // array
-  int iSN, nSN, iSN0;
+  int iSN, iSN0;
   std::vector<int> SN_i(inject_pathway_props->n_pathways);
   std::vector<gr_float> SN_metal_data_(my_fields->grid_dimension[0] * inject_pathway_props->n_pathways);
   grackle::impl::View<gr_float**> SN_metal(SN_metal_data_.data(), my_fields->grid_dimension[0], inject_pathway_props->n_pathways);
@@ -164,130 +157,47 @@ inline void calc_grain_size_increment_1d(
   std::vector<double> SN_kpH2Oice_data_((*gr_Size) * inject_pathway_props->n_pathways);
   grackle::impl::View<double**> SN_kpH2Oice(SN_kpH2Oice_data_.data(), (*gr_Size), inject_pathway_props->n_pathways);
 
-  // this is a stopgap solution
-  auto max_ratio_fn = [&](grackle::impl::View<gr_float***> inj_path_metal_dens) {
-    gr_float max_ratio = std::numeric_limits<gr_float>::lowest();
+  // local
+  int i, idx;
 
+  InjectPathFieldPack inject_path_metal_densities = setup_InjectPathFieldPack(
+    my_chemistry, my_fields);
+
+  int start = inject_path_metal_densities.start_idx;
+  int stop = inject_path_metal_densities.stop_idx;
+
+  // make arrays
+  int nSN = 0;
+  for (int count = start; count < stop; count++) {
+    // when my_chemistry->multi_metals == 0, inj_path_metal_dens wraps
+    // the same pointer as `metal`
+
+    grackle::impl::View<const gr_float***> inj_path_metal_dens(
+        inject_path_metal_densities.fields[count],
+        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+        my_fields->grid_dimension[2]);
+
+    // calculate the max ratio between inj_path_metal_dens and metal
+    gr_float max_ratio = std::numeric_limits<gr_float>::lowest();
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       gr_float cur_ratio = (
           inj_path_metal_dens(i, idx_range.j, idx_range.k) /
           metal(i, idx_range.j, idx_range.k));
       max_ratio = std::fmax(cur_ratio, max_ratio);
     }
-    return static_cast<double>(max_ratio);
-  };
 
-  // local
-  int i, idx;
+    if (max_ratio > 0.01) {
+      nSN++;
 
-
-  // make arrays
-  if (my_chemistry->multi_metals == 0)  {
-    nSN = 1;
-    SN_i[1-1] = my_chemistry->metal_abundances + 1;
-
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      SN_metal(i-1,1-1) = metal(i-1,idx_range.jp1-1,idx_range.kp1-1);
-    }
-  } else {
-    nSN = 0;
-
-    if(max_ratio_fn(metal_loc) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] =  1;
+      SN_i[nSN-1] =  count + 1;
       for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_loc(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_C13) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] =  2;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_C13(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_C20) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] =  3;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_C20(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_C25) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] =  4;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_C25(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_C30) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] =  5;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_C30(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_F13) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] =  6;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_F13(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_F15) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] =  7;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_F15(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_F50) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] =  8;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_F50(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_F80) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] =  9;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_F80(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_P170) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] = 10;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_P170(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_P200) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] = 11;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_P200(i-1,idx_range.jp1-1,idx_range.kp1-1);
-      }
-    }
-
-    if (max_ratio_fn(metal_Y19) > 0.01) {
-      nSN = nSN + 1;
-      SN_i[nSN-1] = 12;
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        SN_metal(i-1,nSN-1) = metal_Y19(i-1,idx_range.jp1-1,idx_range.kp1-1);
+        SN_metal(i-1,nSN-1) = inj_path_metal_dens(i-1,idx_range.jp1-1,idx_range.kp1-1);
       }
     }
   }
+
+
+
          
   for (iSN = 1; iSN<=(nSN); iSN++) {
     iSN0 = SN_i[iSN-1];
