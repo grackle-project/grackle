@@ -85,51 +85,90 @@ inline void calc_grain_size_increment_1d(
   int gr_N[2] = {n_opac_poly_coef, n_log10Tdust_vals};
   int gr_Size = gr_N[0] * gr_N[1];
 
+  // Step 1: Identify the set of pathways for which the max ratio b/t the
+  // pathway's metal density and the total metal density exceeds a threshold.
+  //
+  // -> the max ratio is taken along idx_range
+  // -> we repack the selected metal densities into a temporary buffer
+  //
+  // TODO: refactor calc_grain_size_increment_species_1d to directly accept the
+  // list of selected injection pathway indices so that we can skip the process
+  // of repacking.
+  // -> repacking is mostly done for historical reasons (i.e. this logic was
+  //    originally written in a Fortran dialect that didn't use pointers)
+  //
+  // TODO: for bitwise reproducibility, we should really be doing the same
+  // threshold checking within calc_grain_size_increment_species_1d.
+  // -> We want to ensure that a Grackle calculation **NEVER** gives
+  //    different results whether it process a bunch of zones or one zone at
+  //    a time.
+  // -> yes, for a low enough threshold, there won't be a physically meaningful
+  //    difference in the results, but we don't want Grackle to give slightly
+  //    different numbers based on how its called for a few reasons:
+  //    1. It can be EXTREMELY frustrating for someone trying to debug an error
+  //       in a simulation code.
+  //    2. It can be annoying for constructing automated Grackle tests
+  //    3. Slight differences in a calculation can be a fantasitc heuristic for
+  //       discovering memory errors and other bugs. But, that requires our
+  //       logic to provide bitwise reproducible results.
 
-  grackle::impl::View<const gr_float***> metal(
-      const_cast<const gr_float*>(my_fields->metal_density),
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
+  constexpr gr_float threshold = 0.01;
+  constexpr int max_num_pathways = inj_model_input::N_Injection_Pathways;
 
-  grackle::impl::SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
+  // to be filled with the indices of selected injection pathways
+  int selected_inj_path_idx_l[max_num_pathways];
 
-  // array
-  std::vector<int> SN_i(inject_pathway_props->n_pathways);
-  std::vector<gr_float> SN_metal_data_(my_fields->grid_dimension[0] * inject_pathway_props->n_pathways);
-  grackle::impl::View<gr_float**> SN_metal(SN_metal_data_.data(), my_fields->grid_dimension[0], inject_pathway_props->n_pathways);
+  // to be updated with the number of selected injection pathways
+  int n_selected_inj_paths = 0;
 
-  InjectPathFieldPack inject_path_metal_densities = setup_InjectPathFieldPack(
-    my_chemistry, my_fields);
+  // to be filled with the metal densities for the selected injection paths
+  std::vector<gr_float> repacked_inj_path_metal_densities(
+      my_fields->grid_dimension[0] * n_pathways);
 
-  int start = inject_path_metal_densities.start_idx;
-  int stop = inject_path_metal_densities.stop_idx;
+  // do the work
+  {
+    grackle::impl::View<gr_float**> SN_metal(
+        repacked_inj_path_metal_densities.data(), my_fields->grid_dimension[0],
+        inject_pathway_props->n_pathways);
 
-  // make arrays
-  int nSN = 0;
-  for (int count = start; count < stop; count++) {
-    // when my_chemistry->multi_metals == 0, inj_path_metal_dens wraps
-    // the same pointer as `metal`
-
-    grackle::impl::View<const gr_float***> inj_path_metal_dens(
-        inject_path_metal_densities.fields[count],
+    grackle::impl::View<const gr_float***> metal(
+        const_cast<const gr_float*>(my_fields->metal_density),
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
 
-    // calculate the max ratio between inj_path_metal_dens and metal
-    gr_float max_ratio = std::numeric_limits<gr_float>::lowest();
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      gr_float cur_ratio = (
-          inj_path_metal_dens(i, idx_range.j, idx_range.k) /
-          metal(i, idx_range.j, idx_range.k));
-      max_ratio = std::fmax(cur_ratio, max_ratio);
-    }
+    InjectPathFieldPack inject_path_metal_densities = setup_InjectPathFieldPack(
+      my_chemistry, my_fields);
 
-    if (max_ratio > 0.01) {
-      SN_i[nSN] =  count;
+    int start = inject_path_metal_densities.start_idx;
+    int stop = inject_path_metal_densities.stop_idx;
+
+    // make arrays
+    for (int count = start; count < stop; count++) {
+      // when my_chemistry->multi_metals == 0, inj_path_metal_dens wraps
+      // the same pointer as `metal`
+
+      grackle::impl::View<const gr_float***> inj_path_metal_dens(
+          inject_path_metal_densities.fields[count],
+          my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+          my_fields->grid_dimension[2]);
+
+      // calculate the max ratio between inj_path_metal_dens and metal
+      gr_float max_ratio = std::numeric_limits<gr_float>::lowest();
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        SN_metal(i,nSN) = inj_path_metal_dens(i,idx_range.j,idx_range.k);
+        gr_float cur_ratio = (
+            inj_path_metal_dens(i, idx_range.j, idx_range.k) /
+            metal(i, idx_range.j, idx_range.k));
+        max_ratio = std::fmax(cur_ratio, max_ratio);
       }
-      nSN++;
+
+      if (max_ratio > threshold) {
+        selected_inj_path_idx_l[n_selected_inj_paths] =  count;
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          SN_metal(i,n_selected_inj_paths) =
+            inj_path_metal_dens(i,idx_range.j,idx_range.k);
+        }
+        n_selected_inj_paths++;
+      }
     }
   }
 
@@ -144,6 +183,8 @@ inline void calc_grain_size_increment_1d(
   grackle::impl::View<double**> repacked_opac_table(
       repacked_opac_table_data_.data(), gr_Size, n_pathways);
 
+  grackle::impl::SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
+
   // loop over grain species
   for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
 
@@ -154,8 +195,8 @@ inline void calc_grain_size_increment_1d(
         inject_pathway_props->opacity_coef_table.data[grsp_i], gr_Size,
         n_pathways);
 
-    for (int iSN = 0; iSN < nSN; iSN++) {
-      int iSN0 = SN_i[iSN];
+    for (int iSN = 0; iSN < n_selected_inj_paths; iSN++) {
+      int iSN0 = selected_inj_path_idx_l[iSN];
       repacked_yields[iSN] = inject_pathway_props->grain_yields.data[grsp_i][iSN0];
       for (int idx = 0; idx < 3; idx++) {
         repacked_size_moments(idx,iSN) = orig_size_moments(idx,iSN0);
@@ -178,7 +219,8 @@ inline void calc_grain_size_increment_1d(
         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1],
         &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end,
         &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-        &nSN, grsp_density, SN_metal.data(),
+        &n_selected_inj_paths, grsp_density,
+        repacked_inj_path_metal_densities.data(),
         repacked_yields.data(),
         repacked_size_moments.data(),
         &bulk_density,
