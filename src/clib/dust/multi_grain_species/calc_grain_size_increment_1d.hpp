@@ -93,49 +93,6 @@ inline void calc_grain_size_increment_1d(
 
   grackle::impl::SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
 
-  // table
-  grackle::impl::View<double**> SN0_r0SiM(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::SiM_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0FeM(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::FeM_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0Mg2SiO4(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Mg2SiO4_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0MgSiO3(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::MgSiO3_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0Fe3O4(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Fe3O4_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0AC(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::AC_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0SiO2D(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::SiO2_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0MgO(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::MgO_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0FeS(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::FeS_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0Al2O3(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Al2O3_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0reforg(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::ref_org_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0volorg(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::vol_org_dust], 3, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_r0H2Oice(inject_pathway_props->size_moments.data[OnlyGrainSpLUT::H2O_ice_dust], 3, inject_pathway_props->n_pathways);
-  // opacity table
-  grackle::impl::View<double**> SN0_kpSiM(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::SiM_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpFeM(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::FeM_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpMg2SiO4(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Mg2SiO4_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpMgSiO3(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::MgSiO3_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpFe3O4(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Fe3O4_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpAC(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::AC_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpSiO2D(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::SiO2_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpMgO(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::MgO_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpFeS(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::FeS_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpAl2O3(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Al2O3_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpreforg(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::ref_org_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpvolorg(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::vol_org_dust], gr_Size, inject_pathway_props->n_pathways);
-  grackle::impl::View<double**> SN0_kpH2Oice(inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::H2O_ice_dust], gr_Size, inject_pathway_props->n_pathways);
-  // out
-  grackle::impl::View<double**> alSiM(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiM_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alFeM(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeM_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alMg2SiO4(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alMgSiO3(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgSiO3_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alFe3O4(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Fe3O4_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alAC(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::AC_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alSiO2D(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiO2_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alMgO(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgO_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alFeS(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeS_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alAl2O3(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Al2O3_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alreforg(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::ref_org_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alvolorg(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::vol_org_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alH2Oice(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], gr_N[2-1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> altot(internal_dust_prop_buf.dyntab_kappa_tot, gr_N[2-1], my_fields->grid_dimension[0]);
   // array
   int iSN, iSN0;
   std::vector<int> SN_i(inject_pathway_props->n_pathways);
@@ -213,7 +170,7 @@ inline void calc_grain_size_increment_1d(
       }
     }
 
-    // actually calculate the size increment and subsequent quantities
+    // now, actually calculate the size increment and subsequent quantities
     const GrainSpeciesInfoEntry& cur_grsp_info =
       grain_species_info->species_info[grsp_i];
     double bulk_density = cur_grsp_info.bulk_density_cgs;
@@ -228,19 +185,33 @@ inline void calc_grain_size_increment_1d(
         &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
         &nSN, grsp_density, SN_metal.data(),
         repacked_yields.data(),
-        //reduced_inject_paths.grain_yields.data[grsp_i],
         repacked_size_moments.data(),
-        //reduced_inject_paths.size_moments.data[grsp_i],
         &bulk_density,
         internal_dust_prop_buf.grain_sigma_per_gas_mass.data[grsp_i],
         internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i],
         gr_N, &gr_Size,
         &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0],
         inject_pathway_props->log10Tdust_interp_props.parameters[0], 
-        //reduced_inject_paths.opacity_coef_table.data[grsp_i],
         repacked_opac_table.data()
         );
   }
+
+
+  // out
+  grackle::impl::View<double**> alSiM(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiM_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alFeM(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeM_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alMg2SiO4(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alMgSiO3(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgSiO3_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alFe3O4(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Fe3O4_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alAC(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::AC_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alSiO2D(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiO2_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alMgO(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgO_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alFeS(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeS_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alAl2O3(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Al2O3_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alreforg(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::ref_org_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alvolorg(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::vol_org_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> alH2Oice(internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], gr_N[2-1], my_fields->grid_dimension[0]);
+  grackle::impl::View<double**> altot(internal_dust_prop_buf.dyntab_kappa_tot, gr_N[2-1], my_fields->grid_dimension[0]);
 
   for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
     if ( itmask[i-1] != MASK_FALSE )  {
