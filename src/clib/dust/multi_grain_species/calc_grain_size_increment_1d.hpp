@@ -129,12 +129,11 @@ inline void calc_grain_size_increment_1d(
     }
 
     if (max_ratio > 0.01) {
-      nSN++;
-
-      SN_i[nSN-1] =  count + 1;
+      SN_i[nSN] =  count;
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        SN_metal(i,nSN-1) = inj_path_metal_dens(i,idx_range.j,idx_range.k);
+        SN_metal(i,nSN) = inj_path_metal_dens(i,idx_range.j,idx_range.k);
       }
+      nSN++;
     }
   }
 
@@ -159,14 +158,14 @@ inline void calc_grain_size_increment_1d(
         inject_pathway_props->opacity_coef_table.data[grsp_i], gr_Size,
         n_pathways);
 
-    for (iSN = 1; iSN<=(nSN); iSN++) {
-      iSN0 = SN_i[iSN-1];
-      repacked_yields[iSN-1] = inject_pathway_props->grain_yields.data[grsp_i][iSN0-1];
+    for (iSN = 0; iSN<nSN; iSN++) {
+      iSN0 = SN_i[iSN];
+      repacked_yields[iSN] = inject_pathway_props->grain_yields.data[grsp_i][iSN0];
       for (idx = 0; idx < 3; idx++) {
-        repacked_size_moments(idx,iSN-1) = orig_size_moments(idx,iSN0-1);
+        repacked_size_moments(idx,iSN) = orig_size_moments(idx,iSN0);
       }
       for (idx = 0; idx < gr_Size; idx++) {
-        repacked_opac_table(idx,iSN-1) = orig_opac_table(idx,iSN0-1);
+        repacked_opac_table(idx,iSN) = orig_opac_table(idx,iSN0);
       }
     }
 
