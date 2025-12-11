@@ -10,6 +10,9 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#ifndef CALC_GRAIN_SIZE_INCREMENT_1D_HPP
+#define CALC_GRAIN_SIZE_INCREMENT_1D_HPP
+
 // This file was initially generated automatically during conversion of the
 // calc_grain_size_increment_1d function from FORTRAN to C++
 
@@ -29,6 +32,38 @@
 
 namespace grackle::impl {
 
+/// For each grain species, compute quantities pertaining to the size
+/// distribution along the specified index range.
+///
+/// In slightly more detail, our model assumes that the a grain species's
+/// current differential size distribution is the weighted sum of the
+/// initial differential size distributions from each of the injection
+/// pathways that is translated by a value known as the "size increment."
+/// Internally, this function computes the size increment based on the amount
+/// of amount of mass that has been transferred to the grain species (compared
+/// to the initial injected amount) via grain growth. For context, if there
+/// hasn't been growth, the size increment is zero.
+///
+/// This function computes the size increment as an intermediate quantity.
+/// Then, it uses that information to compute
+/// - the current cross-section
+/// - a 1D table of opacity-related values (for various possible dust
+///   Temperatures).
+///
+/// @todo
+/// Consider writing some narrative documentation about the detailed model of
+/// the multi-grain species dust model and revising this docstring so that its
+/// less dense (and points the reader to the narrative docs for more details)
+///
+/// @param[in] dom a standard quantity used throughout the codebase
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] itmask_metal Specifies the `idx_range`'s iteration-mask
+/// @param[in] my_chemistry holds a number of configuration parameters
+/// @param[in] inject_pathway_props holds data about the modelled injection
+///     pathways for all of the grain species.
+/// @param[in] my_fields specifies the field data
+/// @param[in,out] internal_dust_prop_buf Holds dust-specific information that
+///     gets updated by this function
 inline void calc_grain_size_increment_1d(
   double dom, IndexRange idx_range, const gr_mask_type* itmask,
   const chemistry_data* my_chemistry,
@@ -469,3 +504,6 @@ inline void calc_grain_size_increment_1d(
 }
 
 }  // namespace grackle::impl
+
+
+#endif  // CALC_GRAIN_SIZE_INCREMENT_1D_HPP

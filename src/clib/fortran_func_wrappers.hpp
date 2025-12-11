@@ -105,38 +105,6 @@ inline void calc_all_tdust_gasgr_1d_g(
 
 }
 
-/// Compute grain size increment
-///
-/// @note
-/// The description could obviously be improved! My general sense is that we
-/// are computing dust-properties in each zone. Among other things, this
-/// computes size and precomputes the dust opacity table
-///
-/// @param[in] dom a standard quantity used throughout the codebase
-/// @param[in] idx_range Specifies the current index-range
-/// @param[in] itmask_metal Specifies the `idx_range`'s iteration-mask
-/// @param[in] my_chemistry holds a number of configuration parameters
-/// @param[in] inject_pathway_props holds data about the modelled injection
-///     pathways for all of the grain species.
-/// @param[in] my_fields specifies the field data
-/// @param[in,out] internal_dust_prop_buf Holds dust-specific information that
-///     gets updated by this function
-inline void calc_grain_size_increment_1d (
-  double dom, IndexRange idx_range, const gr_mask_type* itmask_metal,
-  chemistry_data* my_chemistry,
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
-  grackle_field_data* my_fields,
-  grackle::impl::InternalDustPropBuf internal_dust_prop_buf
-) {
-
-
-  ::grackle::impl::calc_grain_size_increment_1d(
-    dom, idx_range, itmask_metal,
-    my_chemistry, inject_pathway_props, my_fields, 
-    internal_dust_prop_buf
-  );
-}
-
 inline void calc_temp1d_cloudy_g(
   double* rhoH, IndexRange idx_range, double* tgas, double* mmw, double dom,
   double zr, int imetal, cloudy_data cloudy_primordial, gr_mask_type* itmask,

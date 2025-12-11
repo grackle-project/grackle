@@ -21,6 +21,7 @@
 #include "grackle.h"
 #include "dust_props.hpp"
 #include "dust/grain_species_info.hpp"
+#include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "internal_types.hpp"
@@ -809,7 +810,7 @@ inline void lookup_cool_rates1d(
   // Compute grain size increment
 
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
-    f_wrap::calc_grain_size_increment_1d(
+    calc_grain_size_increment_1d(
         dom, idx_range, itmask_metal, my_chemistry,
         my_rates->opaque_storage->inject_pathway_props, my_fields,
         internal_dust_prop_scratch_buf);
