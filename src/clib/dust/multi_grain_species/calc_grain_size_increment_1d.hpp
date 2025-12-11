@@ -22,12 +22,12 @@
 
 #include "grackle.h"
 #include "dust_props.hpp"
+#include "dust/grain_species_info.hpp"
 #include "fortran_func_decls.h"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/inject_path_field_pack.hpp"
 #include "LUT.hpp"
-#include "phys_constants.h"
 #include "utils-cpp.hpp"
 
 namespace grackle::impl {
@@ -59,6 +59,7 @@ namespace grackle::impl {
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] itmask_metal Specifies the `idx_range`'s iteration-mask
 /// @param[in] my_chemistry holds a number of configuration parameters
+/// @param[in] grain_species_info holds information about each grain species
 /// @param[in] inject_pathway_props holds data about the modelled injection
 ///     pathways for all of the grain species.
 /// @param[in] my_fields specifies the field data
@@ -67,7 +68,8 @@ namespace grackle::impl {
 inline void calc_grain_size_increment_1d(
   double dom, IndexRange idx_range, const gr_mask_type* itmask,
   const chemistry_data* my_chemistry,
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
+  const GrainSpeciesInfo* grain_species_info,
+  const GrainMetalInjectPathways* inject_pathway_props,
   grackle_field_data* my_fields,
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf
 )
@@ -306,22 +308,10 @@ inline void calc_grain_size_increment_1d(
     }
   }
 
-  double bulk_densities[OnlyGrainSpLUT::NUM_ENTRIES] = {
-    sMgSiO3,
-    sAC,
-    sSiM,
-    sFeM,
-    sMg2SiO4,
-    sFe3O4,
-    sSiO2D,
-    sMgO,
-    sFeS,
-    sAl2O3,
-    sreforg,
-    svolorg,
-    sH2Oice,
-  };
-
+  double bulk_densities[OnlyGrainSpLUT::NUM_ENTRIES];
+  for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
+    bulk_densities[grsp_i] = grain_species_info->species_info[grsp_i].bulk_density_cgs;
+  }
 
   // ! calculate size increment
 

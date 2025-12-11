@@ -48,11 +48,11 @@ void FORTRAN_NAME(calc_all_tdust_gasgr_1d_g)(
 );
 
 void FORTRAN_NAME(calc_grain_size_increment_species_1d)(
-  const int* igrgr, const gr_mask_type* itmask, int* SN0_N, int* in, int* jn, int* kn,
+  const int* igrgr, const gr_mask_type* itmask, const int* SN0_N, int* in, int* jn, int* kn,
   int* is, int* ie, int* j, int* k, double* dom, gr_float* d_data_ptr, int* nSN,
   gr_float* dsp_data_ptr, gr_float* SN_metal_data_ptr, double* SN_fsp,
   double* SN_r0sp_data_ptr, double* ssp, double* sgsp, double* alsp_data_ptr,
-  int* gr_N, int* gr_Size, double* gr_dT, double* gr_Td,
+  const int* gr_N, const int* gr_Size, const double* gr_dT, const double* gr_Td,
   double* SN_kp0sp_data_ptr
 );
 
