@@ -463,16 +463,34 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     tm_info = localtime(&timer);
     strftime(tstr, 26, "%Y-%m-%d %H:%M:%S", tm_info);
 
-    FILE *fptr = fopen("GRACKLE_INFO", "w");
-    fprintf(fptr, "%s\n", tstr);
-    show_version(fptr);
-    fprintf(fptr, "Grackle build options:\n");
-    auto_show_config(fptr);
-    fprintf(fptr, "Grackle build flags:\n");
-    auto_show_flags(fptr);
-    fprintf(fptr, "Grackle run-time parameters:\n");
-    show_parameters(fptr, my_chemistry);
-    fclose(fptr);
+    const char* fname = "GRACKLE_INFO";
+
+    FILE *fptr = fopen(fname, "w");
+    if (fptr == nullptr) {
+      // on posix platforms we could give a more detailed error message
+      // - posix (not the C or C++ standard) mandates that `fopen` set errno
+      //   upon failure
+      // - properly informing the user of the error gets a little "hairy." We
+      //   should use POSIX's strerror_r to get the error (since regular
+      //   strerror may not be threadsafe). But we would need to account for
+      //   the fact that glibc describes an incompatible signature for
+      //   strerror_r (https://www.club.cc.cmu.edu/~cmccabe/blog_strerror.html)
+      // Since this isn't central to Grackle's functionality, we'll punt on
+      // this...
+      fprintf(stderr, "Failed to open \"%s\" file (to record config info)\n",
+              fname);
+      // an argument could be made that we should return with an error
+    } else {
+      fprintf(fptr, "%s\n", tstr);
+      show_version(fptr);
+      fprintf(fptr, "Grackle build options:\n");
+      auto_show_config(fptr);
+      fprintf(fptr, "Grackle build flags:\n");
+      auto_show_flags(fptr);
+      fprintf(fptr, "Grackle run-time parameters:\n");
+      show_parameters(fptr, my_chemistry);
+      fclose(fptr);
+    }
 
     fprintf(stdout, "Grackle run-time parameters:\n");
     show_parameters(stdout, my_chemistry);

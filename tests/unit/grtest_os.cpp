@@ -86,7 +86,9 @@ std::unique_ptr<grtest::CaptureSink> grtest::CaptureSink::create(FILE* stream) {
   }
 
   // 5. prepare the container
-  std::unique_ptr<grtest::CaptureSink> out{new grtest::CaptureSink};
+
+  // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
+  std::unique_ptr<grtest::CaptureSink> out(new grtest::CaptureSink);
   out->redirected_stream_ = stream;
   out->redirected_fd_ = underlying_fd;
   out->backup_fd_ = backup_fd;

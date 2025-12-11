@@ -105,7 +105,11 @@ MemberTypeNameMapResult query_struct_members(std::string struct_name)
       "The build-system failed to create the xml-file. (THIS SHOULDN'T HAPPEN)",
       {}
     };
-  } else if (std::fgetc(f) == EOF) {
+  }
+  bool file_is_empty = (std::fgetc(f) == EOF);
+  std::fclose(f);
+
+  if (file_is_empty) {
     std::string msg(
       "The build-system wrote an empty xml-file, which usually means that "
       "castxml wasn't installed. If you install castxml, you need to instruct "
@@ -114,7 +118,6 @@ MemberTypeNameMapResult query_struct_members(std::string struct_name)
     );
     return MemberTypeNameMapResult{msg, {}};
   }
-  std::fclose(f);
 
   // step 2: parse the xml
   // =====================
