@@ -129,17 +129,11 @@ inline void calc_grain_size_increment_1d (
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf
 ) {
 
-  // NOTE: gr_N and gr_Size are historical names
-  // -> they are pretty uninformative and should be changed!
-  int gr_N[2] = {
-    inject_pathway_props->n_opac_poly_coef,
-    static_cast<int>(inject_pathway_props->log10Tdust_interp_props.dimension[0])
-  };
-  int gr_Size = gr_N[0] * gr_N[1];
 
   ::grackle::impl::calc_grain_size_increment_1d(
-    dom, idx_range, itmask_metal, gr_N, gr_Size, my_chemistry, my_fields, 
-    internal_dust_prop_buf, inject_pathway_props
+    dom, idx_range, itmask_metal,
+    my_chemistry, inject_pathway_props, my_fields, 
+    internal_dust_prop_buf
   );
 }
 

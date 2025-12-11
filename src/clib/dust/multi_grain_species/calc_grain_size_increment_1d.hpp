@@ -30,13 +30,21 @@
 namespace grackle::impl {
 
 inline void calc_grain_size_increment_1d(
-  double dom, IndexRange idx_range,
-  const gr_mask_type* itmask,  int* gr_N, int gr_Size,
-  const chemistry_data* my_chemistry, grackle_field_data* my_fields,
-  grackle::impl::InternalDustPropBuf internal_dust_prop_buf,
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props
+  double dom, IndexRange idx_range, const gr_mask_type* itmask,
+  const chemistry_data* my_chemistry,
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
+  grackle_field_data* my_fields,
+  grackle::impl::InternalDustPropBuf internal_dust_prop_buf
 )
 {
+  // NOTE: gr_N and gr_Size are historical names
+  // -> they are pretty uninformative and should be changed!
+  int gr_N[2] = {
+    inject_pathway_props->n_opac_poly_coef,
+    static_cast<int>(inject_pathway_props->log10Tdust_interp_props.dimension[0])
+  };
+  int gr_Size = gr_N[0] * gr_N[1];
+
 
   grackle::impl::View<const gr_float***> metal(
       const_cast<const gr_float*>(my_fields->metal_density),
