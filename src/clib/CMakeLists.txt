@@ -181,7 +181,6 @@ add_library(Grackle_Grackle
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
   utils.h
-  dust_const.def
 
   # Fortran public headers
   ../include/grackle.def

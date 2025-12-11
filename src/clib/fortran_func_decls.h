@@ -47,48 +47,6 @@ void FORTRAN_NAME(calc_all_tdust_gasgr_1d_g)(
   double* gasvolorg, double* gasH2Oice
 );
 
-void FORTRAN_NAME(calc_grain_size_increment_1d)(
-  int* immulti, int* imabund, int* idspecies, int* igrgr,
-  const gr_mask_type* itmask, int* in, int* jn, int* kn, int* is, int* ie,
-  int* j, int* k, double* dom, gr_float* d_data_ptr, gr_float* SiM_data_ptr,
-  gr_float* FeM_data_ptr, gr_float* Mg2SiO4_data_ptr, gr_float* MgSiO3_data_ptr,
-  gr_float* Fe3O4_data_ptr, gr_float* AC_data_ptr, gr_float* SiO2D_data_ptr,
-  gr_float* MgO_data_ptr, gr_float* FeS_data_ptr, gr_float* Al2O3_data_ptr,
-  gr_float* reforg_data_ptr, gr_float* volorg_data_ptr,
-  gr_float* H2Oice_data_ptr, gr_float* metal_data_ptr,
-  gr_float* metal_loc_data_ptr, gr_float* metal_C13_data_ptr,
-  gr_float* metal_C20_data_ptr, gr_float* metal_C25_data_ptr,
-  gr_float* metal_C30_data_ptr, gr_float* metal_F13_data_ptr,
-  gr_float* metal_F15_data_ptr, gr_float* metal_F50_data_ptr,
-  gr_float* metal_F80_data_ptr, gr_float* metal_P170_data_ptr,
-  gr_float* metal_P200_data_ptr, gr_float* metal_Y19_data_ptr, int* SN0_N,
-  double* SN0_fSiM, double* SN0_fFeM, double* SN0_fMg2SiO4, double* SN0_fMgSiO3,
-  double* SN0_fFe3O4, double* SN0_fAC, double* SN0_fSiO2D, double* SN0_fMgO,
-  double* SN0_fFeS, double* SN0_fAl2O3, double* SN0_freforg,
-  double* SN0_fvolorg, double* SN0_fH2Oice, double* SN0_r0SiM_data_ptr,
-  double* SN0_r0FeM_data_ptr, double* SN0_r0Mg2SiO4_data_ptr,
-  double* SN0_r0MgSiO3_data_ptr, double* SN0_r0Fe3O4_data_ptr,
-  double* SN0_r0AC_data_ptr, double* SN0_r0SiO2D_data_ptr,
-  double* SN0_r0MgO_data_ptr, double* SN0_r0FeS_data_ptr,
-  double* SN0_r0Al2O3_data_ptr, double* SN0_r0reforg_data_ptr,
-  double* SN0_r0volorg_data_ptr, double* SN0_r0H2Oice_data_ptr, int* gr_N,
-  int* gr_Size, double* gr_dT, double* gr_Td, double* SN0_kpSiM_data_ptr,
-  double* SN0_kpFeM_data_ptr, double* SN0_kpMg2SiO4_data_ptr,
-  double* SN0_kpMgSiO3_data_ptr, double* SN0_kpFe3O4_data_ptr,
-  double* SN0_kpAC_data_ptr, double* SN0_kpSiO2D_data_ptr,
-  double* SN0_kpMgO_data_ptr, double* SN0_kpFeS_data_ptr,
-  double* SN0_kpAl2O3_data_ptr, double* SN0_kpreforg_data_ptr,
-  double* SN0_kpvolorg_data_ptr, double* SN0_kpH2Oice_data_ptr, double* sgSiM,
-  double* sgFeM, double* sgMg2SiO4, double* sgMgSiO3, double* sgFe3O4,
-  double* sgAC, double* sgSiO2D, double* sgMgO, double* sgFeS, double* sgAl2O3,
-  double* sgreforg, double* sgvolorg, double* sgH2Oice, double* sgtot,
-  double* alSiM_data_ptr, double* alFeM_data_ptr, double* alMg2SiO4_data_ptr,
-  double* alMgSiO3_data_ptr, double* alFe3O4_data_ptr, double* alAC_data_ptr,
-  double* alSiO2D_data_ptr, double* alMgO_data_ptr, double* alFeS_data_ptr,
-  double* alAl2O3_data_ptr, double* alreforg_data_ptr,
-  double* alvolorg_data_ptr, double* alH2Oice_data_ptr, double* altot_data_ptr
-);
-
 void FORTRAN_NAME(calc_grain_size_increment_species_1d)(
   const int* igrgr, const gr_mask_type* itmask, int* SN0_N, int* in, int* jn, int* kn,
   int* is, int* ie, int* j, int* k, double* dom, gr_float* d_data_ptr, int* nSN,
