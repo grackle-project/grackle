@@ -74,12 +74,14 @@ inline void calc_grain_size_increment_1d(
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf
 )
 {
+  const int n_pathways = inject_pathway_props->n_pathways;
+  const int n_log10Tdust_vals = static_cast<int>(
+      inject_pathway_props->log10Tdust_interp_props.dimension[0]);
+  const int n_opac_poly_coef = inject_pathway_props->n_opac_poly_coef;
+
   // NOTE: gr_N and gr_Size are historical names
   // -> they are pretty uninformative and should be changed!
-  int gr_N[2] = {
-    inject_pathway_props->n_opac_poly_coef,
-    static_cast<int>(inject_pathway_props->log10Tdust_interp_props.dimension[0])
-  };
+  int gr_N[2] = {n_opac_poly_coef, n_log10Tdust_vals};
   int gr_Size = gr_N[0] * gr_N[1];
 
 
@@ -136,19 +138,23 @@ inline void calc_grain_size_increment_1d(
   std::vector<int> SN_i(inject_pathway_props->n_pathways);
   std::vector<gr_float> SN_metal_data_(my_fields->grid_dimension[0] * inject_pathway_props->n_pathways);
   grackle::impl::View<gr_float**> SN_metal(SN_metal_data_.data(), my_fields->grid_dimension[0], inject_pathway_props->n_pathways);
-  std::vector<double> SN_fSiM(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fFeM(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fMg2SiO4(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fMgSiO3(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fFe3O4(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fAC(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fSiO2D(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fMgO(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fFeS(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fAl2O3(inject_pathway_props->n_pathways);
-  std::vector<double> SN_freforg(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fvolorg(inject_pathway_props->n_pathways);
-  std::vector<double> SN_fH2Oice(inject_pathway_props->n_pathways);
+
+  GrainMetalInjectPathways reduced_inject_paths = new_GrainMetalInjectPathways(
+    n_pathways, n_log10Tdust_vals, n_opac_poly_coef);
+
+  double* SN_fSiM = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::SiM_dust];
+  double* SN_fFeM = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::FeM_dust];
+  double* SN_fMg2SiO4 = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust];
+  double* SN_fMgSiO3 = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust];
+  double* SN_fFe3O4 = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust];
+  double* SN_fAC = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::AC_dust];
+  double* SN_fSiO2D = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::SiO2_dust];
+  double* SN_fMgO = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::MgO_dust];
+  double* SN_fFeS = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::FeS_dust];
+  double* SN_fAl2O3 = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::Al2O3_dust];
+  double* SN_freforg = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::ref_org_dust];
+  double* SN_fvolorg = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::vol_org_dust];
+  double* SN_fH2Oice = reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust];
   std::vector<double> SN_r0SiM_data_(3 * inject_pathway_props->n_pathways);
   grackle::impl::View<double**> SN_r0SiM(SN_r0SiM_data_.data(), 3, inject_pathway_props->n_pathways);
   std::vector<double> SN_r0FeM_data_(3 * inject_pathway_props->n_pathways);
@@ -320,7 +326,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->MgSiO3_dust_density,   SN_metal.data(), SN_fMgSiO3.data(),   SN_r0MgSiO3.data(),
+             &nSN, my_fields->MgSiO3_dust_density,   SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust],
+             SN_r0MgSiO3.data(),
              &bulk_densities[OnlyGrainSpLUT::MgSiO3_dust],   internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgSiO3_dust],   alMgSiO3.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpMgSiO3.data()
                 );
@@ -329,7 +337,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->AC_dust_density,       SN_metal.data(), SN_fAC.data(),       SN_r0AC.data(),
+             &nSN, my_fields->AC_dust_density,       SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::AC_dust],
+             SN_r0AC.data(),
              &bulk_densities[OnlyGrainSpLUT::AC_dust],       internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::AC_dust],       alAC.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpAC.data()
                 );
@@ -340,7 +350,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->SiM_dust_density,      SN_metal.data(), SN_fSiM.data(),      SN_r0SiM.data(),
+             &nSN, my_fields->SiM_dust_density,      SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::SiM_dust],
+             SN_r0SiM.data(),
              &bulk_densities[OnlyGrainSpLUT::SiM_dust],      internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiM_dust],      alSiM.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpSiM.data()
                 );
@@ -349,7 +361,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->FeM_dust_density,      SN_metal.data(), SN_fFeM.data(),      SN_r0FeM.data(),
+             &nSN, my_fields->FeM_dust_density,      SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::FeM_dust],
+             SN_r0FeM.data(),
              &bulk_densities[OnlyGrainSpLUT::FeM_dust],      internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeM_dust],      alFeM.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpFeM.data()
                 );
@@ -358,7 +372,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->Mg2SiO4_dust_density,  SN_metal.data(), SN_fMg2SiO4.data(),  SN_r0Mg2SiO4.data(),
+             &nSN, my_fields->Mg2SiO4_dust_density,  SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust],
+             SN_r0Mg2SiO4.data(),
              &bulk_densities[OnlyGrainSpLUT::Mg2SiO4_dust],  internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Mg2SiO4_dust],  alMg2SiO4.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpMg2SiO4.data()
                 );
@@ -367,7 +383,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->Fe3O4_dust_density,    SN_metal.data(), SN_fFe3O4.data(),    SN_r0Fe3O4.data(),
+             &nSN, my_fields->Fe3O4_dust_density,    SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust],
+             SN_r0Fe3O4.data(),
              &bulk_densities[OnlyGrainSpLUT::Fe3O4_dust],    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Fe3O4_dust],    alFe3O4.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpFe3O4.data()
                 );
@@ -376,7 +394,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->SiO2_dust_density,    SN_metal.data(), SN_fSiO2D.data(),    SN_r0SiO2D.data(),
+             &nSN, my_fields->SiO2_dust_density,    SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::SiO2_dust],
+             SN_r0SiO2D.data(),
              &bulk_densities[OnlyGrainSpLUT::SiO2_dust],    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiO2_dust],    alSiO2D.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpSiO2D.data()
                 );
@@ -385,7 +405,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->MgO_dust_density,      SN_metal.data(), SN_fMgO.data(),      SN_r0MgO.data(),
+             &nSN, my_fields->MgO_dust_density,      SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::MgO_dust],
+             SN_r0MgO.data(),
              &bulk_densities[OnlyGrainSpLUT::MgO_dust],      internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgO_dust],      alMgO.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpMgO.data()
                 );
@@ -394,7 +416,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->FeS_dust_density,      SN_metal.data(), SN_fFeS.data(),      SN_r0FeS.data(),
+             &nSN, my_fields->FeS_dust_density,      SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::FeS_dust],
+             SN_r0FeS.data(),
              &bulk_densities[OnlyGrainSpLUT::FeS_dust],      internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeS_dust],      alFeS.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpFeS.data()
                 );
@@ -403,7 +427,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->Al2O3_dust_density,    SN_metal.data(), SN_fAl2O3.data(),    SN_r0Al2O3.data(),
+             &nSN, my_fields->Al2O3_dust_density,    SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::Al2O3_dust],
+             SN_r0Al2O3.data(),
              &bulk_densities[OnlyGrainSpLUT::Al2O3_dust],    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Al2O3_dust],    alAl2O3.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpAl2O3.data()
                 );
@@ -414,7 +440,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->ref_org_dust_density,   SN_metal.data(), SN_freforg.data(),   SN_r0reforg.data(),
+             &nSN, my_fields->ref_org_dust_density,   SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::ref_org_dust],
+             SN_r0reforg.data(),
              &bulk_densities[OnlyGrainSpLUT::ref_org_dust],   internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::ref_org_dust],   alreforg.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpreforg.data()
                 );
@@ -423,7 +451,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->vol_org_dust_density,   SN_metal.data(), SN_fvolorg.data(),   SN_r0volorg.data(),
+             &nSN, my_fields->vol_org_dust_density,   SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::vol_org_dust],
+             SN_r0volorg.data(),
              &bulk_densities[OnlyGrainSpLUT::vol_org_dust],   internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::vol_org_dust],   alvolorg.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpvolorg.data()
                 );
@@ -432,7 +462,9 @@ inline void calc_grain_size_increment_1d(
      FORTRAN_NAME(calc_grain_size_increment_species_1d)(
               &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-             &nSN, my_fields->H2O_ice_dust_density,   SN_metal.data(), SN_fH2Oice.data(),   SN_r0H2Oice.data(),
+             &nSN, my_fields->H2O_ice_dust_density,   SN_metal.data(),
+             reduced_inject_paths.grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust],
+             SN_r0H2Oice.data(),
              &bulk_densities[OnlyGrainSpLUT::H2O_ice_dust],   internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::H2O_ice_dust],   alH2Oice.data(),
              gr_N, &gr_Size, &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0], inject_pathway_props->log10Tdust_interp_props.parameters[0], SN_kpH2Oice.data()
                 );
@@ -490,7 +522,7 @@ inline void calc_grain_size_increment_1d(
     }
   }
 
-  return;
+  drop_GrainMetalInjectPathways(&reduced_inject_paths);
 }
 
 }  // namespace grackle::impl
