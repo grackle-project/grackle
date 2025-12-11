@@ -215,8 +215,8 @@ void make_consistent(
   // total metal density that corresponds to an injection pathway
   grackle::impl::View<const gr_float***>
       SN_metal_arr[inj_model_input::N_Injection_Pathways];
-  // declare variables used to hold bounds for iterating over SN_metal_arr
-  int inj_path_idx_start, inj_path_idx_stop;
+
+  int n_pathways = 0;
 
   // construct view of each specified injection pathway metal density field
   if (my_chemistry->metal_chemistry > 0) {
@@ -226,17 +226,13 @@ void make_consistent(
     //       my_fields->metal_density is **NOT** mutated by this function.
     InjectPathFieldPack p = setup_InjectPathFieldPack(my_chemistry, my_fields);
 
-    inj_path_idx_start = p.start_idx;
-    inj_path_idx_stop = p.stop_idx;
+    n_pathways = inject_pathway_props->n_pathways;
 
-    for (int iSN = inj_path_idx_start; iSN < inj_path_idx_stop; iSN++) {
+    for (int iSN = 0; iSN < n_pathways; iSN++) {
       SN_metal_arr[iSN] = grackle::impl::View<const gr_float***>(
           p.fields[iSN], my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     }
-  } else {
-    inj_path_idx_start = 0;
-    inj_path_idx_stop = 0;
   }
 
   std::vector<double> Ct(my_fields->grid_dimension[0]);
@@ -353,7 +349,7 @@ void make_consistent(
           Sg[i] = 0.;
           Fet[i] = 0.;
           Feg[i] = 0.;
-          for (int iSN = inj_path_idx_start; iSN < inj_path_idx_stop; iSN++) {
+          for (int iSN = 0; iSN < n_pathways; iSN++) {
             gr_float cur_val = SN_metal_arr[iSN](i, j, k);
 
             Ct[i] = Ct[i] + total_metal_yields.C[iSN] * cur_val;

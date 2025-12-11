@@ -132,11 +132,8 @@ inline void calc_grain_size_increment_1d(
     InjectPathFieldPack inject_path_metal_densities =
         setup_InjectPathFieldPack(my_chemistry, my_fields);
 
-    int start = inject_path_metal_densities.start_idx;
-    int stop = inject_path_metal_densities.stop_idx;
-
     // make arrays
-    for (int count = start; count < stop; count++) {
+    for (int count = 0; count < n_pathways; count++) {
       // when my_chemistry->multi_metals == 0, inj_path_metal_dens wraps
       // the same pointer as `metal`
 
