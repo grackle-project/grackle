@@ -232,110 +232,38 @@ inline void calc_grain_size_increment_1d(
   // todo: can we skip this when my_chemistry->use_multiple_dust_temperatures
   //   is not 0?
 
-  // todo: clean up to avoid explicitly mention grain species names
-  //   -> doing this will probably require an update to the gold standard
-  grackle::impl::View<double**> alSiM(
-      internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiM_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alFeM(
-      internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeM_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alMg2SiO4(
-      internal_dust_prop_buf.grain_dyntab_kappa
-          .data[OnlyGrainSpLUT::Mg2SiO4_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alMgSiO3(
-      internal_dust_prop_buf.grain_dyntab_kappa
-          .data[OnlyGrainSpLUT::MgSiO3_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alFe3O4(
-      internal_dust_prop_buf.grain_dyntab_kappa
-          .data[OnlyGrainSpLUT::Fe3O4_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alAC(
-      internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::AC_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alSiO2D(
-      internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiO2_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alMgO(
-      internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgO_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alFeS(
-      internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeS_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alAl2O3(
-      internal_dust_prop_buf.grain_dyntab_kappa
-          .data[OnlyGrainSpLUT::Al2O3_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alreforg(
-      internal_dust_prop_buf.grain_dyntab_kappa
-          .data[OnlyGrainSpLUT::ref_org_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alvolorg(
-      internal_dust_prop_buf.grain_dyntab_kappa
-          .data[OnlyGrainSpLUT::vol_org_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> alH2Oice(
-      internal_dust_prop_buf.grain_dyntab_kappa
-          .data[OnlyGrainSpLUT::H2O_ice_dust],
-      gr_N[1], my_fields->grid_dimension[0]);
-  grackle::impl::View<double**> altot(internal_dust_prop_buf.dyntab_kappa_tot,
-                                      gr_N[1], my_fields->grid_dimension[0]);
+  double* sigma_tot = internal_dust_prop_buf.sigma_per_gas_mass_tot;
+  View<double**> kappa_tab_tot(internal_dust_prop_buf.dyntab_kappa_tot,
+                               n_log10Tdust_vals, my_fields->grid_dimension[0]);
+
+  // zero-out the current value
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    sigma_tot[i] = 0.0;
+  }
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      if (my_chemistry->dust_species > 0) {
-        internal_dust_prop_buf.sigma_per_gas_mass_tot[i] =
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::MgSiO3_dust][i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::AC_dust][i];
-      }
-      if (my_chemistry->dust_species > 1) {
-        internal_dust_prop_buf.sigma_per_gas_mass_tot[i] =
-            internal_dust_prop_buf.sigma_per_gas_mass_tot[i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::SiM_dust][i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::FeM_dust][i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::Mg2SiO4_dust][i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::Fe3O4_dust][i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::SiO2_dust][i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::MgO_dust][i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::FeS_dust][i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::Al2O3_dust][i];
-      }
-      if (my_chemistry->dust_species > 2) {
-        internal_dust_prop_buf.sigma_per_gas_mass_tot[i] =
-            internal_dust_prop_buf.sigma_per_gas_mass_tot[i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::ref_org_dust][i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::vol_org_dust][i] +
-            internal_dust_prop_buf.grain_sigma_per_gas_mass
-                .data[OnlyGrainSpLUT::H2O_ice_dust][i];
-      }
+    for (int idx = 0; idx < n_log10Tdust_vals; idx++) {
+      kappa_tab_tot(idx, i) = 0.0;
+    }
+  }
 
-      for (int idx = 0; idx < gr_N[1]; idx++) {
-        if (my_chemistry->dust_species > 0) {
-          altot(idx, i) = alMgSiO3(idx, i) + alAC(idx, i);
-        }
-        if (my_chemistry->dust_species > 1) {
-          altot(idx, i) = altot(idx, i) + alSiM(idx, i) + alFeM(idx, i) +
-                          alMg2SiO4(idx, i) + alFe3O4(idx, i) +
-                          alSiO2D(idx, i) + alMgO(idx, i) + alFeS(idx, i) +
-                          alAl2O3(idx, i);
-        }
-        if (my_chemistry->dust_species > 2) {
-          altot(idx, i) = altot(idx, i) + alreforg(idx, i) + alvolorg(idx, i) +
-                          alH2Oice(idx, i);
+  // todo: get rid of the itmask check (it shouldn't be necessary here)
+  for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
+    const double* cur_grsp_sigma =
+        internal_dust_prop_buf.grain_sigma_per_gas_mass.data[grsp_i];
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        sigma_tot[i] += cur_grsp_sigma[i];
+      }
+    }
+
+    const double* tmp = internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i];
+    View<const double**> cur_grsp_kappa_tab(tmp, n_log10Tdust_vals,
+                                            my_fields->grid_dimension[0]);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        for (int idx = 0; idx < n_log10Tdust_vals; idx++) {
+          kappa_tab_tot(idx, i) += cur_grsp_kappa_tab(idx, i);
         }
       }
     }
