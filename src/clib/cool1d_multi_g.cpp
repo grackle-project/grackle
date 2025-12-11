@@ -959,7 +959,6 @@ void grackle::impl::cool1d_multi_g(
         if (itmask[i] != MASK_FALSE) {
           // Only calculate if H2I(i) is a substantial fraction
           if (d(i, idx_range.j, idx_range.k) * dom > 1e10) {
-            ciefudge = 1.;
             tau = std::pow(((d(i, idx_range.j, idx_range.k) / 2e16) * dom),
                            2.8);  // 2e16 is in units of cm^-3
             tau = std::fmax(tau, 1.e-5);
