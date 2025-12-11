@@ -226,7 +226,7 @@ inline void calc_grain_size_increment_1d(
 
 
 
-         
+  /*
   for (iSN = 1; iSN<=(nSN); iSN++) {
     iSN0 = SN_i[iSN-1];
     if ( my_chemistry->dust_species > 0 )  {
@@ -290,9 +290,43 @@ inline void calc_grain_size_increment_1d(
       }
     }
   }
+  */
 
-  // actually calculate the size increment and subsequent quantities
+  std::vector<double> repacked_yields(n_pathways);
+
+  std::vector<double> repacked_size_moments_data_(n_pathways * 3);
+  grackle::impl::View<double**> repacked_size_moments(
+      repacked_size_moments_data_.data(), 3, n_pathways);
+
+  std::vector<double> repacked_opac_table_data_(n_pathways * gr_Size);
+  grackle::impl::View<double**> repacked_opac_table(
+      repacked_opac_table_data_.data(), gr_Size, n_pathways);
+
   for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
+
+    // here, we repack the injection pathway for the current grain species
+    double* cur_yields = SN_fMgSiO3;
+    grackle::impl::View<double**>& cur_size_moments = SN_r0MgSiO3;
+    grackle::impl::View<double**>& cur_opac_table = SN_kpMgSiO3;
+
+    grackle::impl::View<double**> orig_size_moments(
+        inject_pathway_props->size_moments.data[grsp_i], 3, n_pathways);
+    grackle::impl::View<double**> orig_opac_table(
+        inject_pathway_props->opacity_coef_table.data[grsp_i], gr_Size,
+        n_pathways);
+
+    for (iSN = 1; iSN<=(nSN); iSN++) {
+      iSN0 = SN_i[iSN-1];
+      repacked_yields[iSN-1] = inject_pathway_props->grain_yields.data[grsp_i][iSN0-1];
+      for (idx = 1; idx<=(3); idx++) {
+        repacked_size_moments(idx-1,iSN-1) = orig_size_moments(idx-1,iSN0-1);
+      }
+      for (idx = 1; idx<=(gr_Size); idx++) {
+        repacked_opac_table(idx-1,iSN-1) = orig_opac_table(idx-1,iSN0-1);
+      }
+    }
+
+    // actually calculate the size increment and subsequent quantities
     const GrainSpeciesInfoEntry& cur_grsp_info =
       grain_species_info->species_info[grsp_i];
     double bulk_density = cur_grsp_info.bulk_density_cgs;
@@ -306,15 +340,19 @@ inline void calc_grain_size_increment_1d(
         &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end,
         &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
         &nSN, grsp_density, SN_metal.data(),
-        reduced_inject_paths.grain_yields.data[grsp_i],
-        reduced_inject_paths.size_moments.data[grsp_i],
+        repacked_yields.data(),
+        //reduced_inject_paths.grain_yields.data[grsp_i],
+        repacked_size_moments.data(),
+        //reduced_inject_paths.size_moments.data[grsp_i],
         &bulk_density,
         internal_dust_prop_buf.grain_sigma_per_gas_mass.data[grsp_i],
         internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i],
         gr_N, &gr_Size,
         &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0],
         inject_pathway_props->log10Tdust_interp_props.parameters[0], 
-        reduced_inject_paths.opacity_coef_table.data[grsp_i]);
+        //reduced_inject_paths.opacity_coef_table.data[grsp_i],
+        repacked_opac_table.data()
+        );
   }
 
   for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
