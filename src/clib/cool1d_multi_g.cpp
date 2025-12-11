@@ -1108,8 +1108,8 @@ void grackle::impl::cool1d_multi_g(
     grackle::impl::calc_grain_size_increment_1d(
         dom, idx_range, itmask_metal, my_chemistry,
         my_rates->opaque_storage->grain_species_info,
-        my_rates->opaque_storage->inject_pathway_props,
-        my_fields, internal_dust_prop_buf);
+        my_rates->opaque_storage->inject_pathway_props, my_fields,
+        internal_dust_prop_buf);
   }
 
   // Calculate dust to gas ratio AND interstellar radiation field
