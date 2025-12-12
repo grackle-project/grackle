@@ -23,7 +23,7 @@
 /// returns the rateid used to denote invalid rate names
 grunstable_rateid_type get_invalid_rateid(const grtest::GrackleCtxPack& pack) {
   // although we don't use pack, yet a forthcoming refactor requires it
-  return grunstable_ratequery_id(nullptr);
+  return grunstable_ratequery_id(pack.my_rates(), nullptr);
 }
 
 using SimpleRateQueryTest =
@@ -32,17 +32,18 @@ using SimpleRateQueryTest =
 
 TEST_F(SimpleRateQueryTest, InvalidIthRate) {
   const char* name = grunstable_ith_rate(
-      std::numeric_limits<unsigned long long>::max(), nullptr);
+      pack.my_rates(), std::numeric_limits<unsigned long long>::max(), nullptr);
   EXPECT_EQ(name, nullptr);
 }
 
 TEST_F(SimpleRateQueryTest, EmptyNameQuery) {
-  grunstable_rateid_type rateid = grunstable_ratequery_id("");
+  grunstable_rateid_type rateid = grunstable_ratequery_id(pack.my_rates(), "");
   EXPECT_EQ(rateid, get_invalid_rateid(pack));
 }
 
 TEST_F(SimpleRateQueryTest, InvalidNameQuery) {
-  grunstable_rateid_type rateid = grunstable_ratequery_id("NotAValidName");
+  grunstable_rateid_type rateid =
+      grunstable_ratequery_id(pack.my_rates(), "NotAValidName");
   EXPECT_EQ(rateid, get_invalid_rateid(pack));
 }
 
@@ -72,7 +73,8 @@ TEST_P(ParametrizedRateQueryTest, AllUnique) {
 
 TEST_P(ParametrizedRateQueryTest, ConsistentIDs) {
   for (const grtest::NameIdPair pair : grtest::RateQueryRange(pack)) {
-    grunstable_rateid_type rateid = grunstable_ratequery_id(pair.name.c_str());
+    grunstable_rateid_type rateid =
+        grunstable_ratequery_id(pack.my_rates(), pair.name.c_str());
     EXPECT_EQ(rateid, pair.id);
   }
 }

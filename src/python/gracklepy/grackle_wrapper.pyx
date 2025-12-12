@@ -897,18 +897,6 @@ def _get_rate_shape(wrapped_chemistry_data_obj, rate_name):
             "the shape of the rate {rate_name!r} has not been specified yet"
         )
 
-@functools.lru_cache   # (could use functools.cache starting in python3.9)
-def _name_rateid_map():
-    cdef dict out = {}
-    cdef const char* rate_name
-    cdef grunstable_rateid_type rate_id
-    cdef unsigned long long i = 0
-    while True:
-        rate_name = grunstable_ith_rate(i, &rate_id)
-        if rate_name is NULL:
-            return out
-        out[rate_name.decode('UTF-8')] = int(rate_id)
-        i+=1
 
 cdef class _rate_mapping_access:
     # This class is used internally by the chemistry_data extension class to
@@ -925,10 +913,12 @@ cdef class _rate_mapping_access:
 
     cdef c_chemistry_data_storage *_ptr
     cdef object _rate_shape_callback
+    cdef dict _cached_name_rateid_map
 
     def __cinit__(self):
         self._ptr = NULL
         self._rate_shape_callback = None
+        self._cached_name_rateid_map = None
 
     def __init__(self):
         # Prevent accidental instantiation from normal Python code
@@ -945,11 +935,28 @@ cdef class _rate_mapping_access:
         out._rate_shape_callback = callback
         return out
 
+    @property
+    def _name_rateid_map(self):
+        if self._cached_name_rateid_map is not None:
+            return self._cached_name_rateid_map
+
+        cdef dict out = {}
+        cdef const char* rate_name
+        cdef grunstable_rateid_type rate_id
+        cdef unsigned long long i = 0
+        while True:
+            rate_name = grunstable_ith_rate(self._ptr, i, &rate_id)
+            if rate_name is NULL:
+                self._cached_name_rateid_map = out
+                return out
+            out[rate_name.decode('UTF-8')] = int(rate_id)
+            i+=1
+
     def _access_rate(self, key, val):
         # determine whether the rate needs to be updated
         update_rate = (val is not _NOSETVAL)
 
-        rate_id = _name_rateid_map()[key] # will raise a KeyError if not known
+        rate_id = self._name_rateid_map[key] # will raise a KeyError if not known
 
         if self._ptr is NULL:
             raise RuntimeError(
@@ -991,9 +998,9 @@ cdef class _rate_mapping_access:
 
     def __setitem__(self, key, value): self._access_rate(key, value)
 
-    def __iter__(self): return iter(_name_rateid_map())
+    def __iter__(self): return iter(self._name_rateid_map)
 
-    def __len__(self): return len(_name_rateid_map())
+    def __len__(self): return len(self._name_rateid_map)
 
 
 

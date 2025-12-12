@@ -298,12 +298,15 @@ cdef extern from "grackle.h":
     # the unstable API
     ctypedef long long grunstable_rateid_type
 
-    grunstable_rateid_type grunstable_ratequery_id(const char* name)
+    grunstable_rateid_type grunstable_ratequery_id(
+        const c_chemistry_data_storage* my_rates,
+        const char* name)
 
     double* grunstable_ratequery_get_ptr(
         c_chemistry_data_storage* my_rates,
         grunstable_rateid_type rate_id)
 
     const char* grunstable_ith_rate(
+        const c_chemistry_data_storage* my_rates,
         unsigned long long i,
         grunstable_rateid_type* out_rate_id)

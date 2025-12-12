@@ -100,7 +100,7 @@ struct RateQueryPlugin {
 
   NameIdPair operator()(unsigned long long i) const {
     grunstable_rateid_type tmp;
-    const char* name = grunstable_ith_rate(i, &tmp);
+    const char* name = grunstable_ith_rate(my_rates, i, &tmp);
     return NameIdPair{name, tmp};
   }
 
@@ -114,7 +114,7 @@ inline unsigned long long grunstable_ratequery_nrates(
     const chemistry_data_storage* my_rates) {
   // current implementation is stupid! (in future, will use my_rates)
   unsigned long long i = 0;
-  while (nullptr != grunstable_ith_rate(i, nullptr)) {
+  while (nullptr != grunstable_ith_rate(my_rates, i, nullptr)) {
     i++;
   }
   return i;

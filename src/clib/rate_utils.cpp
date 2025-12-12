@@ -208,7 +208,8 @@ static struct ratequery_rslt_ query_Descr(chemistry_data_storage* my_rates,
 // here we implement the public API
 // --------------------------------
 
-extern "C" grunstable_rateid_type grunstable_ratequery_id(const char* name) {
+extern "C" grunstable_rateid_type grunstable_ratequery_id(
+    const chemistry_data_storage* my_rates, const char* name) {
   namespace rate_q = grackle::impl::ratequery;
 
   if (name == nullptr) {
@@ -235,7 +236,8 @@ extern "C" double* grunstable_ratequery_get_ptr(
 }
 
 extern "C" const char* grunstable_ith_rate(
-    unsigned long long i, grunstable_rateid_type* out_rate_id) {
+    const chemistry_data_storage* my_rates, unsigned long long i,
+    grunstable_rateid_type* out_rate_id) {
   namespace rate_q = grackle::impl::ratequery;
 
   const long long sanitized_i = (i < LLONG_MAX) ? (long long)i : -1;
