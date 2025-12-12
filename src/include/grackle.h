@@ -266,6 +266,39 @@ double* grunstable_ratequery_get_ptr(
   chemistry_data_storage* my_rates, grunstable_rateid_type rate_id
 );
 
+/// Describe Rate-Query Property Types
+///
+/// > [!note]
+/// > It may make more sense to use macros if we want to support these from
+/// > Fortran
+///
+/// > [!important]
+/// > Users should obviously avoid hardcoding values in their codebase.
+enum grunstable_ratequery_prop_kind {
+  GRUNSTABLE_QPROP_NDIM = 1,
+  GRUNSTABLE_QPROP_SHAPE = 2,
+  GRUNSTABLE_QPROP_TYPE = 3,
+  GRUNSTABLE_QPROP_MAXITEMSIZE = 4,
+  // I don't like the next one
+  GRUNSTABLE_QPROP_WRITABLE = 5,
+};
+
+/// Query a property of the specified rate
+///
+/// @param[in]  my_rates The object being queried
+/// @param[in]  rate_id The id of the rate for which the property is queried
+/// @param[in]  prop_kind The proprty to query
+/// @param[out] ptr The pointer where the property is recorded
+///
+/// @returns GR_SUCCESS if successful. Otherwise, a different value is returned.
+///
+/// The behavior is undefined when @p my_rates is a `nullptr`, @p ptr is a
+/// nullptr or @p ptr doesn't have enough space to store the queried property
+int grunstable_ratequery_prop(const chemistry_data_storage* my_rates,
+                              grunstable_rateid_type rate_id,
+                              enum grunstable_ratequery_prop_kind prop_kind,
+                              long long* ptr);
+
 /// Query the name (and optionally the rate_id) of the ith registered rate
 ///
 /// > [!warning]

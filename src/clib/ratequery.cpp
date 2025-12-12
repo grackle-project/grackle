@@ -17,6 +17,7 @@
 #include "LUT.hpp"             // CollisionalRxnLUT
 #include "opaque_storage.hpp"  // gr_opaque_storage
 #include "ratequery.hpp"
+#include "status_reporting.h"
 
 // In comparison to the dynamic API for accessing elements of chemistry_data,
 // we have explicitly opted NOT to make use of offsetof to access arbitrary
@@ -57,8 +58,8 @@ static Entry new_Entry_standard_kcol_(chemistry_data_storage* my_rates,
   }
 }
 
-#define MKENTRY_(PTR, NAME)                                                    \
-  new_Entry(((PTR) == nullptr) ? nullptr : (PTR)->NAME, #NAME)
+#define MKENTRY_(PTR, NAME, FAMILY)                                            \
+  new_Entry(((PTR) == nullptr) ? nullptr : (PTR)->NAME, #NAME, FAMILY)
 #define MKENTRY_SCALAR_(PTR, NAME)                                             \
   new_Entry(((PTR) == nullptr) ? nullptr : &((PTR)->NAME), #NAME)
 #define MKENTRY_STANDARD_KCOL_(PTR, NAME, INDEX)                               \
@@ -86,9 +87,17 @@ static Entry get_CollisionalRxn_Entry(chemistry_data_storage* my_rates, int i) {
 #include "collisional_rxn_rate_members.def"
 #undef ENTRY
     default: {
-      Entry out = {nullptr, nullptr};
-      return out;
+      return mk_invalid_Entry();
     }
+  }
+}
+
+static Entry get_k13dd_Entry(chemistry_data_storage* my_rates, int i) {
+  if (i == 0) {
+    double* ptr = (my_rates == nullptr) ? nullptr : my_rates->k13dd;
+    return new_Entry(ptr, "k13dd");
+  } else {
+    return mk_invalid_Entry();
   }
 }
 
@@ -96,7 +105,6 @@ static Entry get_CollisionalRxn_Entry(chemistry_data_storage* my_rates, int i) {
 // ----------------------------------------------------
 
 enum MiscRxnRateKind_ {
-  MiscRxn_k13dd,
   MiscRxn_k24,
   MiscRxn_k25,
   MiscRxn_k26,
@@ -111,9 +119,6 @@ enum MiscRxnRateKind_ {
 
 static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
   switch (i) {
-    // density dependent version of k13 (which is a CollisionalRxn)
-    case MiscRxn_k13dd:
-      return MKENTRY_(my_rates, k13dd);
     // Radiative rates for 6-species (for external field):
     case MiscRxn_k24:
       return MKENTRY_SCALAR_(my_rates, k24);
@@ -133,18 +138,33 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
     case MiscRxn_k31:
       return MKENTRY_SCALAR_(my_rates, k31);
     default: {
-      Entry out = {nullptr, nullptr};
-      return out;
+      return mk_invalid_Entry();
     }
   }
 }
 
 }  // namespace grackle::impl::ratequery
 
-grackle::impl::ratequery::Registry grackle::impl::ratequery::new_Registry() {
+grackle::impl::ratequery::Registry grackle::impl::ratequery::new_Registry(
+    const chemistry_data& my_chemistry) {
+  EntryProps props_LogTLinInterp = mk_invalid_EntryProps();
+  props_LogTLinInterp.ndim = 1;
+  props_LogTLinInterp.shape[0] = my_chemistry.NumberOfTemperatureBins;
+
+  // maybe k13dd should be considered multi-dimensional?
+  EntryProps props_k13dd = mk_invalid_EntryProps();
+  props_k13dd.ndim = 1;
+  props_k13dd.shape[0] = my_chemistry.NumberOfTemperatureBins * 14;
+
+  EntryProps props_scalar = mk_invalid_EntryProps();
+  props_scalar.ndim = 0;
+
   const RecipeEntrySet standard_sets[] = {
-      {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Entry},
-      {2000, MiscRxn_NRATES, &get_MiscRxn_Entry}};
+      {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Entry,
+       props_LogTLinInterp},
+      {1999, 1, &get_k13dd_Entry, props_k13dd},
+      {2000, MiscRxn_NRATES, &get_MiscRxn_Entry, props_scalar}};
+
   int len = static_cast<int>(sizeof(standard_sets) / sizeof(RecipeEntrySet));
   RecipeEntrySet* sets = new RecipeEntrySet[len];
   for (int i = 0; i < len; i++) {
@@ -204,6 +224,7 @@ static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
       ratequery_rslt_ out;
       out.rate_id = tmp + cur_set.id_offset;
       out.entry = cur_set.fn(my_rates, tmp);
+      out.entry.props = cur_set.common_props;
       return out;
     }
     total_len += cur_set.len;
@@ -242,6 +263,47 @@ extern "C" double* grunstable_ratequery_get_ptr(
   namespace rate_q = grackle::impl::ratequery;
 
   return rate_q::query_Entry(my_rates, rate_id, true).entry.data;
+}
+
+extern "C" int grunstable_ratequery_prop(
+    const chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
+    enum grunstable_ratequery_prop_kind prop_kind, long long* ptr) {
+  namespace rate_q = grackle::impl::ratequery;
+
+  // short-term hack! (it's bad practice to "cast away the const")
+  rate_q::Entry entry =
+      rate_q::query_Entry(const_cast<chemistry_data_storage*>(my_rates),
+                          rate_id, true)
+          .entry;
+
+  const rate_q::EntryProps& props = entry.props;
+  if ((entry.name == nullptr) || !rate_q::EntryProps_is_valid(props)) {
+    return GR_FAIL;
+  }
+
+  switch (prop_kind) {
+    case GRUNSTABLE_QPROP_NDIM: {
+      *ptr = static_cast<long long>(props.ndim);
+      return GR_SUCCESS;
+    }
+    case GRUNSTABLE_QPROP_SHAPE: {
+      for (int i = 0; i < props.ndim; i++) {
+        ptr[i] = static_cast<long long>(props.shape[i]);
+      }
+      return GR_SUCCESS;
+    }
+    case GRUNSTABLE_QPROP_TYPE:
+      return GR_FAIL;
+    case GRUNSTABLE_QPROP_MAXITEMSIZE: {
+      *ptr = static_cast<long long>(sizeof(double));
+      return GR_SUCCESS;
+    }
+    case GRUNSTABLE_QPROP_WRITABLE: {
+      *ptr = 1LL;
+    }
+    default:
+      GR_INTERNAL_UNREACHABLE_ERROR();
+  }
 }
 
 extern "C" const char* grunstable_ith_rate(

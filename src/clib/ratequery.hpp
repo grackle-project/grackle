@@ -58,18 +58,34 @@ namespace grackle::impl::ratequery {
 /// over runtime performance.
 /** @{ */
 
+/// Describes properties about the data in an entry
+struct EntryProps {
+  int ndim;
+  int shape[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+};
+
+inline EntryProps mk_invalid_EntryProps() {
+  EntryProps out;
+  out.ndim = -1;
+  return out;
+}
+
+inline bool EntryProps_is_valid(EntryProps obj) { return obj.ndim >= 0; }
+
 /// A queryable entity
 struct Entry {
   double* data;
   const char* name;
+  EntryProps props;
 };
 
-/// Constructs an entry
+inline Entry mk_invalid_Entry() {
+  return Entry{nullptr, nullptr, mk_invalid_EntryProps()};
+}
+
+/// Constructs an Entry
 inline Entry new_Entry(double* rate, const char* name) {
-  Entry out;
-  out.data = rate;
-  out.name = name;
-  return out;
+  return Entry{rate, name, mk_invalid_EntryProps()};
 }
 
 /// a recipe for querying 1 or more entries from a chemistry_data_storage
@@ -86,6 +102,7 @@ struct RecipeEntrySet {
   int id_offset;
   int len;
   fetch_Entry_recipe_fn* fn;
+  EntryProps common_props;
 };
 
 /// Describes a registry of queryable entries
@@ -95,7 +112,7 @@ struct Registry {
 };
 
 /// construct a new registry
-Registry new_Registry();
+Registry new_Registry(const chemistry_data&);
 
 /// deallocate the contents of a registry
 void drop_Registry(Registry* ptr);

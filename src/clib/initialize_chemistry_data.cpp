@@ -460,7 +460,7 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   // initialize the registry
   my_rates->opaque_storage->registry = new grackle::impl::ratequery::Registry(
-    grackle::impl::ratequery::new_Registry()
+    grackle::impl::ratequery::new_Registry(*my_chemistry)
   );
 
   if (grackle_verbose) {
