@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Defines functions that perform basic utilities related to rate data.
+/// Defines functionality for querying rate data.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -45,36 +45,36 @@ enum { UNDEFINED_RATE_ID_ = 0 };
 
 // introduce some basic machinery to help us implement dynamic lookup of rates
 
-/// A description of a rate
-struct Descr {
+/// Description of a queryable entity
+struct Entry {
   double* data;
   const char* name;
 };
 
-static inline Descr mk_Descr(double* rate, const char* name) {
-  Descr out;
+static inline Entry mk_Entry(double* rate, const char* name) {
+  Entry out;
   out.data = rate;
   out.name = name;
   return out;
 }
 
-static inline Descr mk_Descr_standard_kcol_(chemistry_data_storage* my_rates,
+static inline Entry mk_Entry_standard_kcol_(chemistry_data_storage* my_rates,
                                             const char* name, int index) {
   if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
       (my_rates->opaque_storage->kcol_rate_tables == nullptr)) {
-    return mk_Descr(nullptr, name);
+    return mk_Entry(nullptr, name);
   } else {
-    return mk_Descr(my_rates->opaque_storage->kcol_rate_tables->data[index],
+    return mk_Entry(my_rates->opaque_storage->kcol_rate_tables->data[index],
                     name);
   }
 }
 
-#define MKDESCR_(PTR, NAME)                                                    \
-  mk_Descr(((PTR) == nullptr) ? nullptr : (PTR)->NAME, #NAME)
-#define MKDESCR_SCALAR_(PTR, NAME)                                             \
-  mk_Descr(((PTR) == nullptr) ? nullptr : &((PTR)->NAME), #NAME)
-#define MKDESCR_STANDARD_KCOL_(PTR, NAME, INDEX)                               \
-  mk_Descr_standard_kcol_(PTR, #NAME, INDEX)
+#define MKENTRY_(PTR, NAME)                                                    \
+  mk_Entry(((PTR) == nullptr) ? nullptr : (PTR)->NAME, #NAME)
+#define MKENTRY_SCALAR_(PTR, NAME)                                             \
+  mk_Entry(((PTR) == nullptr) ? nullptr : &((PTR)->NAME), #NAME)
+#define MKENTRY_STANDARD_KCOL_(PTR, NAME, INDEX)                               \
+  mk_Entry_standard_kcol_(PTR, #NAME, INDEX)
 
 // Create machinery to lookup Standard-Form Collisional Reaction Rates
 // -------------------------------------------------------------------
@@ -89,16 +89,16 @@ static inline Descr mk_Descr_standard_kcol_(chemistry_data_storage* my_rates,
 //   of the previous value (if a value isn't explicitly specified)
 // - CollisionalRxnLUT::NUM_ENTRIES specifies the number of other enumeration
 //   constants (excluding CollisionalRxnLUT::NUM_ENTRIES) in the enum
-static Descr get_CollisionalRxn_Descr(chemistry_data_storage* my_rates, int i) {
+static Entry get_CollisionalRxn_Entry(chemistry_data_storage* my_rates, int i) {
   switch (i) {
 #define ENTRY(NAME)                                                            \
   case CollisionalRxnLUT::NAME: {                                              \
-    return MKDESCR_STANDARD_KCOL_(my_rates, NAME, CollisionalRxnLUT::NAME);    \
+    return MKENTRY_STANDARD_KCOL_(my_rates, NAME, CollisionalRxnLUT::NAME);    \
   }
 #include "collisional_rxn_rate_members.def"
 #undef ENTRY
     default: {
-      Descr out = {nullptr, nullptr};
+      Entry out = {nullptr, nullptr};
       return out;
     }
   }
@@ -121,31 +121,31 @@ enum MiscRxnRateKind_ {
   MiscRxn_NRATES  // <- will hold the number of reactions
 };
 
-static Descr get_MiscRxn_Descr(chemistry_data_storage* my_rates, int i) {
+static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
   switch (i) {
     // density dependent version of k13 (which is a CollisionalRxn)
     case MiscRxn_k13dd:
-      return MKDESCR_(my_rates, k13dd);
+      return MKENTRY_(my_rates, k13dd);
     // Radiative rates for 6-species (for external field):
     case MiscRxn_k24:
-      return MKDESCR_SCALAR_(my_rates, k24);
+      return MKENTRY_SCALAR_(my_rates, k24);
     case MiscRxn_k25:
-      return MKDESCR_SCALAR_(my_rates, k25);
+      return MKENTRY_SCALAR_(my_rates, k25);
     case MiscRxn_k26:
-      return MKDESCR_SCALAR_(my_rates, k26);
+      return MKENTRY_SCALAR_(my_rates, k26);
     // Radiative rates for 9-species
     case MiscRxn_k27:
-      return MKDESCR_SCALAR_(my_rates, k27);
+      return MKENTRY_SCALAR_(my_rates, k27);
     case MiscRxn_k28:
-      return MKDESCR_SCALAR_(my_rates, k28);
+      return MKENTRY_SCALAR_(my_rates, k28);
     case MiscRxn_k29:
-      return MKDESCR_SCALAR_(my_rates, k29);
+      return MKENTRY_SCALAR_(my_rates, k29);
     case MiscRxn_k30:
-      return MKDESCR_SCALAR_(my_rates, k30);
+      return MKENTRY_SCALAR_(my_rates, k30);
     case MiscRxn_k31:
-      return MKDESCR_SCALAR_(my_rates, k31);
+      return MKENTRY_SCALAR_(my_rates, k31);
     default: {
-      Descr out = {nullptr, nullptr};
+      Entry out = {nullptr, nullptr};
       return out;
     }
   }
@@ -154,27 +154,32 @@ static Descr get_MiscRxn_Descr(chemistry_data_storage* my_rates, int i) {
 // define some additional generic machinery
 // ----------------------------------------
 
-#define DESCR_SET_COUNT 2
-typedef Descr fetch_Descr_fn(chemistry_data_storage*, int);
-struct DescrSet {
+/// describes a recipe for creating 1 or more different entries
+/// from a chemistry_data_storage pointer
+typedef Entry fetch_Entry_recipe_fn(chemistry_data_storage*, int);
+
+/// Entryibes a set of rate descriptions that
+struct RecipeEntrySet {
   int id_offset;
   int len;
-  fetch_Descr_fn* fn;
-};
-struct DescrRegistry {
-  int len;
-  DescrSet sets[DESCR_SET_COUNT];
+  fetch_Entry_recipe_fn* fn;
 };
 
-static const struct DescrRegistry descr_registry_ = {
+#define DESCR_SET_COUNT 2
+struct EntryRegistry {
+  int len;
+  RecipeEntrySet sets[DESCR_SET_COUNT];
+};
+
+static const struct EntryRegistry entry_registry_ = {
     /* len: */ DESCR_SET_COUNT,
     /* sets: */ {
-        {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Descr},
-        {2000, MiscRxn_NRATES, &get_MiscRxn_Descr}}};
+        {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Entry},
+        {2000, MiscRxn_NRATES, &get_MiscRxn_Entry}}};
 
 struct ratequery_rslt_ {
   grunstable_rateid_type rate_id;
-  Descr descr;
+  Entry entry;
 };
 
 /// internal function to search for the rate description i
@@ -183,18 +188,18 @@ struct ratequery_rslt_ {
 /// look for the ith rate description (we introduce an artificial distinction
 /// between the 2 cases because we want to reserve the right to be able to
 /// change the relationship if it becomes convenient in the future)
-static struct ratequery_rslt_ query_Descr(chemistry_data_storage* my_rates,
+static struct ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
                                           long long i, bool use_rate_id) {
   int total_len = 0;  // <- we increment this as we go through the rates
 
-  for (int set_idx = 0; set_idx < descr_registry_.len; set_idx++) {
-    const struct DescrSet cur_set = descr_registry_.sets[set_idx];
+  for (int set_idx = 0; set_idx < entry_registry_.len; set_idx++) {
+    const struct RecipeEntrySet cur_set = entry_registry_.sets[set_idx];
 
     const long long tmp = (use_rate_id) ? i - cur_set.id_offset : i - total_len;
     if ((tmp >= 0) && (tmp < cur_set.len)) {
       struct ratequery_rslt_ out;
       out.rate_id = tmp + cur_set.id_offset;
-      out.descr = cur_set.fn(my_rates, tmp);
+      out.entry = cur_set.fn(my_rates, tmp);
       return out;
     }
     total_len += cur_set.len;
@@ -216,12 +221,12 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
     return rate_q::UNDEFINED_RATE_ID_;
   }
 
-  for (int set_idx = 0; set_idx < rate_q::descr_registry_.len; set_idx++) {
-    const rate_q::DescrSet cur_set = rate_q::descr_registry_.sets[set_idx];
-    for (int i = 0; i < cur_set.len; i++) {
-      rate_q::Descr descr = cur_set.fn(nullptr, i);
-      if (std::strcmp(name, descr.name) == 0) {
-        return cur_set.id_offset + i;
+  for (int set_idx = 0; set_idx < rate_q::entry_registry_.len; set_idx++) {
+    const rate_q::RecipeEntrySet set = rate_q::entry_registry_.sets[set_idx];
+    for (int i = 0; i < set.len; i++) {
+      rate_q::Entry entry = set.fn(nullptr, i);
+      if (std::strcmp(name, entry.name) == 0) {
+        return set.id_offset + i;
       }
     }
   }
@@ -232,7 +237,7 @@ extern "C" double* grunstable_ratequery_get_ptr(
     chemistry_data_storage* my_rates, grunstable_rateid_type rate_id) {
   namespace rate_q = grackle::impl::ratequery;
 
-  return rate_q::query_Descr(my_rates, rate_id, true).descr.data;
+  return rate_q::query_Entry(my_rates, rate_id, true).entry.data;
 }
 
 extern "C" const char* grunstable_ith_rate(
@@ -242,9 +247,9 @@ extern "C" const char* grunstable_ith_rate(
 
   const long long sanitized_i = (i < LLONG_MAX) ? (long long)i : -1;
   rate_q::ratequery_rslt_ tmp =
-      rate_q::query_Descr(nullptr, sanitized_i, false);
+      rate_q::query_Entry(nullptr, sanitized_i, false);
   if (out_rate_id != nullptr) {
     *out_rate_id = tmp.rate_id;
   }
-  return tmp.descr.name;
+  return tmp.entry.name;
 }
