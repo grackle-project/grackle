@@ -124,8 +124,8 @@ add_library(Grackle_Grackle
   scale_fields.cpp scale_fields.hpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
+  support/h5io.cpp support/h5io.hpp
   time_deriv_0d.hpp
-  utils/h5io.cpp utils/h5io.hpp
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp

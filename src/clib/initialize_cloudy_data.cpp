@@ -18,7 +18,7 @@
 #include "grackle.h"
 #include "grackle_macros.h" // TRUE
 #include "initialize_cloudy_data.hpp"
-#include "utils/h5io.hpp"
+#include "support/h5io.hpp"
 
 #define SMALL_LOG_VALUE (-99.0)
 #define MAX_PARAMETER_NAME_LENGTH (512)
