@@ -212,6 +212,7 @@ cdef extern from "grackle.h":
 
     # defined in "grackle.h"
     # ----------------------
+    cdef int GR_SUCCESS
     cdef int GRACKLE_FAIL_VALUE "GR_FAIL"
     cdef int GR_SPECIFY_INITIAL_A_VALUE
 
@@ -305,6 +306,19 @@ cdef extern from "grackle.h":
     double* grunstable_ratequery_get_ptr(
         c_chemistry_data_storage* my_rates,
         grunstable_rateid_type rate_id)
+
+    cdef enum grunstable_ratequery_prop_kind:
+        GRUNSTABLE_QPROP_NDIM
+        GRUNSTABLE_QPROP_SHAPE
+        GRUNSTABLE_QPROP_TYPE
+        GRUNSTABLE_QPROP_MAXITEMSIZE
+        GRUNSTABLE_QPROP_WRITABLE
+
+    int grunstable_ratequery_prop(
+        const c_chemistry_data_storage* my_rates,
+        grunstable_rateid_type rate_id,
+        grunstable_ratequery_prop_kind prop_kind,
+        long long* ptr)
 
     const char* grunstable_ith_rate(
         const c_chemistry_data_storage* my_rates,

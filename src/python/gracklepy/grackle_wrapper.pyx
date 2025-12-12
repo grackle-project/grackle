@@ -952,11 +952,35 @@ cdef class _rate_mapping_access:
             out[rate_name.decode('UTF-8')] = int(rate_id)
             i+=1
 
+    def _try_get_shape(self, rate_id):
+        cdef long long buf[7]
+        cdef int ret = grunstable_ratequery_prop(
+            self._ptr, rate_id, GRUNSTABLE_QPROP_NDIM, &buf[0]
+        )
+        if ret != GR_SUCCESS:
+            return None
+        ndim = int(buf[0])
+        if ndim == 0:
+            return ()
+        elif ndim >7:
+            tmp = int(ndim)
+            raise RuntimeError(
+                f"rate_id {rate_id} has a questionable number of dims: {tmp}"
+            )
+
+        ret = grunstable_ratequery_prop(
+            self._ptr, rate_id, GRUNSTABLE_QPROP_SHAPE, &buf[0]
+        )
+        if ret != GR_SUCCESS:
+            raise RuntimeError(
+                "the query for shape failed after query for ndim succeeded")
+        return tuple(int(buf[i]) for i in range(ndim))
+
     def _access_rate(self, key, val):
         # determine whether the rate needs to be updated
         update_rate = (val is not _NOSETVAL)
 
-        rate_id = self._name_rateid_map[key] # will raise a KeyError if not known
+        rate_id = self._name_rateid_map[key] # will raise KeyError if not known
 
         if self._ptr is NULL:
             raise RuntimeError(
@@ -967,9 +991,14 @@ cdef class _rate_mapping_access:
         # retrieve the pointer
         cdef double* rate_ptr = grunstable_ratequery_get_ptr(self._ptr, rate_id)
 
+        # experimental shape retrieval
+        exp_shape = self._try_get_shape(rate_id)
+
         # lookup the shape of the rates
         callback = self._rate_shape_callback
         shape = callback(rate_name=key)
+
+        assert shape == exp_shape
 
         # predeclare a memoryview to use with 1d arrays
         cdef double[:] memview
