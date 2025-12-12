@@ -18,7 +18,7 @@
 #include "../LUT.hpp"
 #include "../opaque_storage.hpp"
 #include "../status_reporting.h"  // GrPrintAndReturnErr
-#include "../utils/FrozenKeyIdxBiMap.hpp"
+#include "../support/FrozenKeyIdxBiMap.hpp"
 
 namespace {  // stuff inside an anonymous namespace is local to this file
 
