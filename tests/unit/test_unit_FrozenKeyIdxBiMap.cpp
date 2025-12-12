@@ -14,7 +14,7 @@
 #include <vector>
 
 #include <gtest/gtest.h>
-#include "utils/FrozenKeyIdxBiMap.hpp"
+#include "support/FrozenKeyIdxBiMap.hpp"
 #include "grackle.h"
 
 class FrozenKeyIdxBiMapConstructorSuite
