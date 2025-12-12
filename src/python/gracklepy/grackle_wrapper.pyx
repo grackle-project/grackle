@@ -12,7 +12,6 @@
 ########################################################################
 
 import copy
-import functools
 from gracklepy.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
@@ -38,12 +37,7 @@ cdef class chemistry_data:
 
     def __cinit__(self):
         self.data = _wrapped_c_chemistry_data()
-        self._rate_map = _rate_mapping_access.from_ptr_and_callback(
-            ptr=&self.rates,
-            callback=functools.partial(
-                _get_rate_shape, wrapped_chemistry_data_obj = self.data
-            )
-        )
+        self._rate_map = _rate_mapping_access.from_ptr(&self.rates)
         self.data_copy_from_init = None
 
     cdef void _try_uninitialize(self):
@@ -871,32 +865,6 @@ cdef class _wrapped_c_chemistry_data:
             out[k] = self[k]
         return out
 
-def _get_rate_shape(wrapped_chemistry_data_obj, rate_name):
-    # for now we need to manually keep this updated.
-    # -> in the future, we could add probably encode some/all of this
-    #    information within Grackle's ratequery API
-
-    def _is_standard_colrecombination_rate(rate_name):
-        if rate_name[:2] == 'kz' and rate_name[2:].isdecimal():
-            return 11 <= int(rate_name[2:]) <= 54
-        elif rate_name[:1] == 'k' and rate_name[1:].isdecimal():
-            digit = int(rate_name[1:])
-            return ( (1 <= digit <= 23) or
-                     (50 <= digit <= 58) or
-                     (125 <= digit <= 153) )
-        return False
-
-    if rate_name in ("k24", "k25", "k26", "k27", "k28", "k29", "k30", "k31"):
-        return () # the rate is a scalar
-    elif _is_standard_colrecombination_rate(rate_name):
-        return (wrapped_chemistry_data_obj['NumberOfTemperatureBins'],)
-    elif rate_name == 'k13dd':
-        return (wrapped_chemistry_data_obj['NumberOfTemperatureBins'] * 14,)
-    else:
-        raise RuntimeError(
-            "the shape of the rate {rate_name!r} has not been specified yet"
-        )
-
 
 cdef class _rate_mapping_access:
     # This class is used internally by the chemistry_data extension class to
@@ -912,12 +880,10 @@ cdef class _rate_mapping_access:
     #   we might make some different choices)
 
     cdef c_chemistry_data_storage *_ptr
-    cdef object _rate_shape_callback
     cdef dict _cached_name_rateid_map
 
     def __cinit__(self):
         self._ptr = NULL
-        self._rate_shape_callback = None
         self._cached_name_rateid_map = None
 
     def __init__(self):
@@ -925,14 +891,11 @@ cdef class _rate_mapping_access:
         raise TypeError("This class cannot be instantiated directly.")
 
     @staticmethod
-    cdef _rate_mapping_access from_ptr_and_callback(
-        c_chemistry_data_storage *ptr, object callback
-    ):
+    cdef _rate_mapping_access from_ptr(c_chemistry_data_storage *ptr):
         cdef _rate_mapping_access out = _rate_mapping_access.__new__(
             _rate_mapping_access
         )
         out._ptr = ptr
-        out._rate_shape_callback = callback
         return out
 
     @property
@@ -991,14 +954,8 @@ cdef class _rate_mapping_access:
         # retrieve the pointer
         cdef double* rate_ptr = grunstable_ratequery_get_ptr(self._ptr, rate_id)
 
-        # experimental shape retrieval
-        exp_shape = self._try_get_shape(rate_id)
-
         # lookup the shape of the rates
-        callback = self._rate_shape_callback
-        shape = callback(rate_name=key)
-
-        assert shape == exp_shape
+        shape = self._try_get_shape(rate_id)
 
         # predeclare a memoryview to use with 1d arrays
         cdef double[:] memview
