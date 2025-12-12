@@ -13,7 +13,7 @@
 #ifndef GRAIN_SPECIES_INFO_HPP
 #define GRAIN_SPECIES_INFO_HPP
 
-#include "../utils/FrozenKeyIdxBiMap.hpp"
+#include "../support/FrozenKeyIdxBiMap.hpp"
 
 namespace grackle::impl {
 

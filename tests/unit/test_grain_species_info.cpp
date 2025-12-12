@@ -17,7 +17,7 @@
 
 #include "LUT.hpp"
 #include "dust/grain_species_info.hpp"
-#include "utils/FrozenKeyIdxBiMap.hpp"
+#include "support/FrozenKeyIdxBiMap.hpp"
 
 namespace {  // stuff in an anonymous namespace is local to this file
 
