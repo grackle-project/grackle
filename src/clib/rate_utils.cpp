@@ -10,9 +10,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <stdbool.h>  // bool, true, and false are defined
-#include <string.h>   // strcmp
-#include <limits.h>   // LLONG_MAX
+#include <cstring>  // strcmp
+#include <climits>  // LLONG_MAX
 #include "grackle.h"
 #include "internal_types.hpp"  // CollisionalRxnRateCollection
 #include "LUT.hpp"             // CollisionalRxnLUT
@@ -39,15 +38,17 @@
 //    offsetof in this fashion
 //
 
+namespace grackle::impl::ratequery {
+
 // we have reserved the right to change this value at any time
 enum { UNDEFINED_RATE_ID_ = 0 };
 
 // introduce some basic machinery to help us implement dynamic lookup of rates
 
-typedef struct {
+struct rateprop_ {
   double* data;
   const char* name;
-} rateprop_;
+};
 
 static inline rateprop_ mk_rateprop_(double* rate, const char* name) {
   rateprop_ out;
@@ -68,9 +69,9 @@ static inline rateprop_ mk_rateprop_standard_kcol_(
 }
 
 #define MKPROP_(PTR, NAME)                                                     \
-  mk_rateprop_(((PTR) == NULL) ? NULL : (PTR)->NAME, #NAME)
+  mk_rateprop_(((PTR) == nullptr) ? nullptr : (PTR)->NAME, #NAME)
 #define MKPROP_SCALAR_(PTR, NAME)                                              \
-  mk_rateprop_(((PTR) == NULL) ? NULL : &((PTR)->NAME), #NAME)
+  mk_rateprop_(((PTR) == nullptr) ? nullptr : &((PTR)->NAME), #NAME)
 #define MKPROP_STANDARD_KCOL_(PTR, NAME, INDEX)                                \
   mk_rateprop_standard_kcol_(PTR, #NAME, INDEX)
 
@@ -97,7 +98,7 @@ static rateprop_ get_CollisionalRxn_rateprop_(chemistry_data_storage* my_rates,
 #include "collisional_rxn_rate_members.def"
 #undef ENTRY
     default: {
-      rateprop_ out = {NULL, NULL};
+      rateprop_ out = {nullptr, nullptr};
       return out;
     }
   }
@@ -145,7 +146,7 @@ static rateprop_ get_MiscRxn_rateprop_(chemistry_data_storage* my_rates,
     case MiscRxn_k31:
       return MKPROP_SCALAR_(my_rates, k31);
     default: {
-      rateprop_ out = {NULL, NULL};
+      rateprop_ out = {nullptr, nullptr};
       return out;
     }
   }
@@ -199,40 +200,49 @@ static struct ratequery_rslt_ query_rateprop_(chemistry_data_storage* my_rates,
     }
     total_len += cur_set.len;
   }
-  struct ratequery_rslt_ out = {UNDEFINED_RATE_ID_, {NULL, NULL}};
+  struct ratequery_rslt_ out = {UNDEFINED_RATE_ID_, {nullptr, nullptr}};
   return out;
 }
+
+}  // namespace grackle::impl::ratequery
 
 // here we implement the public API
 // --------------------------------
 
 extern "C" grunstable_rateid_type grunstable_ratequery_id(const char* name) {
-  if (name == NULL) {
-    return UNDEFINED_RATE_ID_;
+  namespace rate_q = grackle::impl::ratequery;
+
+  if (name == nullptr) {
+    return rate_q::UNDEFINED_RATE_ID_;
   }
 
-  for (int set_idx = 0; set_idx < rate_registry_.len; set_idx++) {
-    const struct rateprop_set_ cur_set = rate_registry_.sets[set_idx];
+  for (int set_idx = 0; set_idx < rate_q::rate_registry_.len; set_idx++) {
+    const rate_q::rateprop_set_ cur_set = rate_q::rate_registry_.sets[set_idx];
     for (int i = 0; i < cur_set.len; i++) {
-      rateprop_ prop = cur_set.fn(NULL, i);
-      if (strcmp(name, prop.name) == 0) {
+      rate_q::rateprop_ prop = cur_set.fn(nullptr, i);
+      if (std::strcmp(name, prop.name) == 0) {
         return cur_set.id_offset + i;
       }
     }
   }
-  return UNDEFINED_RATE_ID_;
+  return rate_q::UNDEFINED_RATE_ID_;
 }
 
 extern "C" double* grunstable_ratequery_get_ptr(
     chemistry_data_storage* my_rates, grunstable_rateid_type rate_id) {
-  return query_rateprop_(my_rates, rate_id, true).prop.data;
+  namespace rate_q = grackle::impl::ratequery;
+
+  return rate_q::query_rateprop_(my_rates, rate_id, true).prop.data;
 }
 
 extern "C" const char* grunstable_ith_rate(
     unsigned long long i, grunstable_rateid_type* out_rate_id) {
+  namespace rate_q = grackle::impl::ratequery;
+
   const long long sanitized_i = (i < LLONG_MAX) ? (long long)i : -1;
-  struct ratequery_rslt_ tmp = query_rateprop_(NULL, sanitized_i, false);
-  if (out_rate_id != NULL) {
+  rate_q::ratequery_rslt_ tmp =
+      rate_q::query_rateprop_(nullptr, sanitized_i, false);
+  if (out_rate_id != nullptr) {
     *out_rate_id = tmp.rate_id;
   }
   return tmp.prop.name;
