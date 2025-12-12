@@ -156,17 +156,17 @@ static Descr get_MiscRxn_Descr(chemistry_data_storage* my_rates, int i) {
 
 #define DESCR_SET_COUNT 2
 typedef Descr fetch_Descr_fn(chemistry_data_storage*, int);
-struct Descr_set_ {
+struct DescrSet {
   int id_offset;
   int len;
   fetch_Descr_fn* fn;
 };
-struct rate_registry_type_ {
+struct DescrRegistry {
   int len;
-  Descr_set_ sets[DESCR_SET_COUNT];
+  DescrSet sets[DESCR_SET_COUNT];
 };
 
-static const struct rate_registry_type_ rate_registry_ = {
+static const struct DescrRegistry descr_registry_ = {
     /* len: */ DESCR_SET_COUNT,
     /* sets: */ {
         {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Descr},
@@ -187,8 +187,8 @@ static struct ratequery_rslt_ query_Descr(chemistry_data_storage* my_rates,
                                           long long i, bool use_rate_id) {
   int total_len = 0;  // <- we increment this as we go through the rates
 
-  for (int set_idx = 0; set_idx < rate_registry_.len; set_idx++) {
-    const struct Descr_set_ cur_set = rate_registry_.sets[set_idx];
+  for (int set_idx = 0; set_idx < descr_registry_.len; set_idx++) {
+    const struct DescrSet cur_set = descr_registry_.sets[set_idx];
 
     const long long tmp = (use_rate_id) ? i - cur_set.id_offset : i - total_len;
     if ((tmp >= 0) && (tmp < cur_set.len)) {
@@ -215,8 +215,8 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(const char* name) {
     return rate_q::UNDEFINED_RATE_ID_;
   }
 
-  for (int set_idx = 0; set_idx < rate_q::rate_registry_.len; set_idx++) {
-    const rate_q::Descr_set_ cur_set = rate_q::rate_registry_.sets[set_idx];
+  for (int set_idx = 0; set_idx < rate_q::descr_registry_.len; set_idx++) {
+    const rate_q::DescrSet cur_set = rate_q::descr_registry_.sets[set_idx];
     for (int i = 0; i < cur_set.len; i++) {
       rate_q::Descr descr = cur_set.fn(nullptr, i);
       if (std::strcmp(name, descr.name) == 0) {
