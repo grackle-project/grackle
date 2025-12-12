@@ -16,6 +16,7 @@
 #include "internal_types.hpp"  // CollisionalRxnRateCollection
 #include "LUT.hpp"             // CollisionalRxnLUT
 #include "opaque_storage.hpp"  // gr_opaque_storage
+#include "ratequery.hpp"
 
 // In comparison to the dynamic API for accessing elements of chemistry_data,
 // we have explicitly opted NOT to make use of offsetof to access arbitrary
@@ -45,36 +46,23 @@ enum { UNDEFINED_RATE_ID_ = 0 };
 
 // introduce some basic machinery to help us implement dynamic lookup of rates
 
-/// Description of a queryable entity
-struct Entry {
-  double* data;
-  const char* name;
-};
-
-static inline Entry mk_Entry(double* rate, const char* name) {
-  Entry out;
-  out.data = rate;
-  out.name = name;
-  return out;
-}
-
-static inline Entry mk_Entry_standard_kcol_(chemistry_data_storage* my_rates,
-                                            const char* name, int index) {
+static Entry new_Entry_standard_kcol_(chemistry_data_storage* my_rates,
+                                      const char* name, int index) {
   if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
       (my_rates->opaque_storage->kcol_rate_tables == nullptr)) {
-    return mk_Entry(nullptr, name);
+    return new_Entry(nullptr, name);
   } else {
-    return mk_Entry(my_rates->opaque_storage->kcol_rate_tables->data[index],
-                    name);
+    return new_Entry(my_rates->opaque_storage->kcol_rate_tables->data[index],
+                     name);
   }
 }
 
 #define MKENTRY_(PTR, NAME)                                                    \
-  mk_Entry(((PTR) == nullptr) ? nullptr : (PTR)->NAME, #NAME)
+  new_Entry(((PTR) == nullptr) ? nullptr : (PTR)->NAME, #NAME)
 #define MKENTRY_SCALAR_(PTR, NAME)                                             \
-  mk_Entry(((PTR) == nullptr) ? nullptr : &((PTR)->NAME), #NAME)
+  new_Entry(((PTR) == nullptr) ? nullptr : &((PTR)->NAME), #NAME)
 #define MKENTRY_STANDARD_KCOL_(PTR, NAME, INDEX)                               \
-  mk_Entry_standard_kcol_(PTR, #NAME, INDEX)
+  new_Entry_standard_kcol_(PTR, #NAME, INDEX)
 
 // Create machinery to lookup Standard-Form Collisional Reaction Rates
 // -------------------------------------------------------------------
@@ -154,25 +142,8 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
 // define some additional generic machinery
 // ----------------------------------------
 
-/// describes a recipe for creating 1 or more different entries
-/// from a chemistry_data_storage pointer
-typedef Entry fetch_Entry_recipe_fn(chemistry_data_storage*, int);
-
-/// Entryibes a set of rate descriptions that
-struct RecipeEntrySet {
-  int id_offset;
-  int len;
-  fetch_Entry_recipe_fn* fn;
-};
-
-#define DESCR_SET_COUNT 2
-struct EntryRegistry {
-  int len;
-  RecipeEntrySet sets[DESCR_SET_COUNT];
-};
-
 static const struct EntryRegistry entry_registry_ = {
-    /* len: */ DESCR_SET_COUNT,
+    /* len: */ ENTRY_SET_COUNT,
     /* sets: */ {
         {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Entry},
         {2000, MiscRxn_NRATES, &get_MiscRxn_Entry}}};
