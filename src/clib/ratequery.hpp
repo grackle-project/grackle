@@ -88,13 +88,17 @@ struct RecipeEntrySet {
   fetch_Entry_recipe_fn* fn;
 };
 
-#define ENTRY_SET_COUNT 2
-
 /// Describes a registry of queryable entries
-struct EntryRegistry {
+struct Registry {
   int len;
-  RecipeEntrySet sets[ENTRY_SET_COUNT];
+  RecipeEntrySet* sets;
 };
+
+/// construct a new registry
+Registry new_Registry();
+
+/// deallocate the contents of a registry
+void drop_Registry(Registry* ptr);
 
 /** @}*/  // end of group
 

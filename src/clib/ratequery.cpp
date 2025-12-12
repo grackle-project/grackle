@@ -139,19 +139,46 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
   }
 }
 
-// define some additional generic machinery
-// ----------------------------------------
+}  // namespace grackle::impl::ratequery
 
-static const struct EntryRegistry entry_registry_ = {
-    /* len: */ ENTRY_SET_COUNT,
-    /* sets: */ {
-        {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Entry},
-        {2000, MiscRxn_NRATES, &get_MiscRxn_Entry}}};
+grackle::impl::ratequery::Registry grackle::impl::ratequery::new_Registry() {
+  const RecipeEntrySet standard_sets[] = {
+      {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Entry},
+      {2000, MiscRxn_NRATES, &get_MiscRxn_Entry}};
+  int len = static_cast<int>(sizeof(standard_sets) / sizeof(RecipeEntrySet));
+  RecipeEntrySet* sets = new RecipeEntrySet[len];
+  for (int i = 0; i < len; i++) {
+    sets[i] = standard_sets[i];
+  }
+
+  return Registry{len, sets};
+}
+
+void grackle::impl::ratequery::drop_Registry(
+    grackle::impl::ratequery::Registry* ptr) {
+  if (ptr->sets != nullptr) {
+    delete[] ptr->sets;
+    ptr->sets = nullptr;
+  }
+}
+
+namespace grackle::impl::ratequery {
 
 struct ratequery_rslt_ {
   grunstable_rateid_type rate_id;
   Entry entry;
 };
+
+static ratequery_rslt_ invalid_rslt_() {
+  return {UNDEFINED_RATE_ID_, {nullptr, nullptr}};
+}
+
+static const Registry* get_registry(const chemistry_data_storage* my_rates) {
+  if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr)) {
+    return nullptr;
+  }
+  return my_rates->opaque_storage->registry;
+}
 
 /// internal function to search for the rate description i
 ///
@@ -159,24 +186,29 @@ struct ratequery_rslt_ {
 /// look for the ith rate description (we introduce an artificial distinction
 /// between the 2 cases because we want to reserve the right to be able to
 /// change the relationship if it becomes convenient in the future)
-static struct ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
-                                          long long i, bool use_rate_id) {
+static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
+                                   long long i, bool use_rate_id) {
+  const Registry* registry = get_registry(my_rates);
+
+  if (registry == nullptr) {
+    return invalid_rslt_();
+  }
+
   int total_len = 0;  // <- we increment this as we go through the rates
 
-  for (int set_idx = 0; set_idx < entry_registry_.len; set_idx++) {
-    const struct RecipeEntrySet cur_set = entry_registry_.sets[set_idx];
+  for (int set_idx = 0; set_idx < registry->len; set_idx++) {
+    const struct RecipeEntrySet cur_set = registry->sets[set_idx];
 
     const long long tmp = (use_rate_id) ? i - cur_set.id_offset : i - total_len;
     if ((tmp >= 0) && (tmp < cur_set.len)) {
-      struct ratequery_rslt_ out;
+      ratequery_rslt_ out;
       out.rate_id = tmp + cur_set.id_offset;
       out.entry = cur_set.fn(my_rates, tmp);
       return out;
     }
     total_len += cur_set.len;
   }
-  struct ratequery_rslt_ out = {UNDEFINED_RATE_ID_, {nullptr, nullptr}};
-  return out;
+  return invalid_rslt_();
 }
 
 }  // namespace grackle::impl::ratequery
@@ -188,12 +220,13 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
     const chemistry_data_storage* my_rates, const char* name) {
   namespace rate_q = grackle::impl::ratequery;
 
-  if (name == nullptr) {
+  const rate_q::Registry* registry = rate_q::get_registry(my_rates);
+  if ((name == nullptr) || (registry == nullptr)) {
     return rate_q::UNDEFINED_RATE_ID_;
   }
 
-  for (int set_idx = 0; set_idx < rate_q::entry_registry_.len; set_idx++) {
-    const rate_q::RecipeEntrySet set = rate_q::entry_registry_.sets[set_idx];
+  for (int set_idx = 0; set_idx < registry->len; set_idx++) {
+    const rate_q::RecipeEntrySet set = registry->sets[set_idx];
     for (int i = 0; i < set.len; i++) {
       rate_q::Entry entry = set.fn(nullptr, i);
       if (std::strcmp(name, entry.name) == 0) {
@@ -217,8 +250,9 @@ extern "C" const char* grunstable_ith_rate(
   namespace rate_q = grackle::impl::ratequery;
 
   const long long sanitized_i = (i < LLONG_MAX) ? (long long)i : -1;
-  rate_q::ratequery_rslt_ tmp =
-      rate_q::query_Entry(nullptr, sanitized_i, false);
+  // short-term hack! (it's bad practice to "cast away the const")
+  rate_q::ratequery_rslt_ tmp = rate_q::query_Entry(
+      const_cast<chemistry_data_storage*>(my_rates), sanitized_i, false);
   if (out_rate_id != nullptr) {
     *out_rate_id = tmp.rate_id;
   }
