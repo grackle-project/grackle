@@ -20,6 +20,41 @@ from libc.limits cimport INT_MAX
 from .grackle_defs cimport *
 import numpy as np
 
+# define a set of rate-related properties that the chemistry_data extension
+# type must support as attributes:
+# - historically, these rates have been accessible regardless of whether a
+#   chemistry solver class has been defined to use them.
+# - in the near future, the _rate_mapping_access machinery may lose the ability
+#   to access rate buffers that are not being actively used
+# - we will use this set to ensure that these types remain accessible
+_legacy_rate_attrs = frozenset(
+    [
+        "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11",
+        "k12", "k13", "k14", "k15", "k16", "k17", "k18", "k19", "k20", "k21",
+        "k22", "k23", "k50", "k51", "k52", "k53", "k54", "k55", "k56", "k57",
+        "k58", "k13dd",
+        # radiative rates:
+        "k24", "k25", "k26", "k27", "k28", "k29", "k30", "k31",
+
+        # A question for another time (before releasing Grackle 3.5):
+        # - do we want to provide an alternative approach for people to query
+        #   rates? (like a method or function?)
+        #   - If so, then maybe we don't the following to be attributes of
+        #     chemistry_data
+        # - for now, they are accessible as attributes of chemistry_data
+
+        # 15 species rates (with DM, HDII, HeHII)
+        "k125", "k129", "k130", "k131", "k132", "k133", "k134", "k135", "k136",
+        "k137", "k148", "k149", "k150", "k151", "k152", "k153",
+        # metal species rates:
+        "kz15", "kz16", "kz17", "kz18", "kz19", "kz20", "kz21", "kz22", "kz23",
+        "kz24", "kz25", "kz26", "kz27", "kz28", "kz29", "kz30", "kz31", "kz32",
+        "kz33", "kz34", "kz35", "kz36", "kz37", "kz38", "kz39", "kz40", "kz41",
+        "kz42", "kz43", "kz44", "kz45", "kz46", "kz47", "kz48", "kz49", "kz50",
+        "kz51", "kz52", "kz53", "kz54",
+    ]
+)
+
 cdef class chemistry_data:
     cdef _wrapped_c_chemistry_data data
     cdef c_chemistry_data_storage rates
@@ -93,10 +128,8 @@ cdef class chemistry_data:
         except KeyError:
             pass
 
-        try:
-            return self._rate_map[name] # case where name specifies a rate
-        except KeyError:
-            pass
+        if name in _legacy_rate_attrs:
+            return self._rate_map.get(name)
 
         # this method is expected to raise AttributeError when it fails
         raise AttributeError(
@@ -143,11 +176,15 @@ cdef class chemistry_data:
         except KeyError:
             pass
 
-        try:
-            self._rate_map[name] = value
-            return # early exit
-        except KeyError:
-            pass
+        if name in _legacy_rate_attrs:
+            try:
+                self._rate_map[name] = value
+                return # early exit
+            except KeyError:
+                raise AttributeError(
+                    f"attribute '{name}' of '{type(self).__name__}' can't be "
+                    "mutated under the current configuration"
+                ) from None
 
         raise AttributeError(
             f"'{type(self).__name__}' object has no attribute '{name}'"
@@ -979,6 +1016,16 @@ cdef class _rate_mapping_access:
             raise RuntimeError(
                 "no support is in place for higher dimensional arrays"
             )
+
+    def get(self, key, default=None, /):
+        """
+        Retrieve the value associated with key, if key is known. Otherwise,
+        return the default.
+        """
+        try:
+            return self._access_rate(key, _NOSETVAL)
+        except:
+            return default
 
     def __getitem__(self, key): return self._access_rate(key, _NOSETVAL)
 
