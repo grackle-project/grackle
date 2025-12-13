@@ -148,8 +148,9 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
 grackle::impl::ratequery::Registry grackle::impl::ratequery::new_Registry(
     const chemistry_data& my_chemistry) {
   if (my_chemistry.primordial_chemistry == 0) {
-    return Registry{0, nullptr};
+    return Registry{0, 0, nullptr, nullptr};
   }
+  // step 1: define several common EntryProps
   EntryProps props_LogTLinInterp = mk_invalid_EntryProps();
   props_LogTLinInterp.ndim = 1;
   props_LogTLinInterp.shape[0] = my_chemistry.NumberOfTemperatureBins;
@@ -162,24 +163,33 @@ grackle::impl::ratequery::Registry grackle::impl::ratequery::new_Registry(
   EntryProps props_scalar = mk_invalid_EntryProps();
   props_scalar.ndim = 0;
 
-  const RecipeEntrySet standard_sets[] = {
-      {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Entry,
+  // step 2: define standard entry recipies
+  const EntrySet standard_recipies[] = {
+      {CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Entry,
        props_LogTLinInterp},
-      {1999, 1, &get_k13dd_Entry, props_k13dd},
-      {2000, MiscRxn_NRATES, &get_MiscRxn_Entry, props_scalar}};
+      {1, &get_k13dd_Entry, props_k13dd},
+      {MiscRxn_NRATES, &get_MiscRxn_Entry, props_scalar}};
 
-  int len = static_cast<int>(sizeof(standard_sets) / sizeof(RecipeEntrySet));
-  RecipeEntrySet* sets = new RecipeEntrySet[len];
-  for (int i = 0; i < len; i++) {
-    sets[i] = standard_sets[i];
+  int n_sets = static_cast<int>(sizeof(standard_recipies) / sizeof(EntrySet));
+
+  // step 3: actually set up Registry
+  EntrySet* sets = new EntrySet[n_sets];
+  int* id_offsets = new int[n_sets];
+  int tot_entry_count = 0;
+  for (int i = 0; i < n_sets; i++) {
+    id_offsets[i] = tot_entry_count;
+    sets[i] = standard_recipies[i];
+    tot_entry_count += standard_recipies[i].len;
   }
 
-  return Registry{len, sets};
+  return Registry{tot_entry_count, n_sets, id_offsets, sets};
 }
 
 void grackle::impl::ratequery::drop_Registry(
     grackle::impl::ratequery::Registry* ptr) {
   if (ptr->sets != nullptr) {
+    delete[] ptr->id_offsets;
+    ptr->id_offsets = nullptr;
     delete[] ptr->sets;
     ptr->sets = nullptr;
   }
@@ -204,33 +214,26 @@ static const Registry* get_registry(const chemistry_data_storage* my_rates) {
 }
 
 /// internal function to search for the rate description i
-///
-/// We interpret i as rate_id, when use_rate_id is true. Otherwise, we just
-/// look for the ith rate description (we introduce an artificial distinction
-/// between the 2 cases because we want to reserve the right to be able to
-/// change the relationship if it becomes convenient in the future)
 static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
-                                   long long i, bool use_rate_id) {
+                                   long long i) {
   const Registry* registry = get_registry(my_rates);
 
-  if (registry == nullptr) {
+  if (registry == nullptr || i >= registry->n_entries) {
     return invalid_rslt_();
   }
 
-  int total_len = 0;  // <- we increment this as we go through the rates
+  for (int set_idx = 0; set_idx < registry->n_sets; set_idx++) {
+    const struct EntrySet cur_set = registry->sets[set_idx];
+    int cur_id_offset = registry->id_offsets[set_idx];
 
-  for (int set_idx = 0; set_idx < registry->len; set_idx++) {
-    const struct RecipeEntrySet cur_set = registry->sets[set_idx];
-
-    const long long tmp = (use_rate_id) ? i - cur_set.id_offset : i - total_len;
+    const long long tmp = i - static_cast<long long>(cur_id_offset);
     if ((tmp >= 0) && (tmp < cur_set.len)) {
       ratequery_rslt_ out;
-      out.rate_id = tmp + cur_set.id_offset;
-      out.entry = cur_set.fn(my_rates, tmp);
+      out.rate_id = i;
+      out.entry = cur_set.recipe_fn(my_rates, tmp);
       out.entry.props = cur_set.common_props;
       return out;
     }
-    total_len += cur_set.len;
   }
   return invalid_rslt_();
 }
@@ -280,12 +283,13 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
     return rate_q::UNDEFINED_RATE_ID_;
   }
 
-  for (int set_idx = 0; set_idx < registry->len; set_idx++) {
-    const rate_q::RecipeEntrySet set = registry->sets[set_idx];
-    for (int i = 0; i < set.len; i++) {
-      rate_q::Entry entry = set.fn(nullptr, i);
+  for (int set_idx = 0; set_idx < registry->n_sets; set_idx++) {
+    const rate_q::EntrySet set = registry->sets[set_idx];
+    int set_len = set.len;
+    for (int i = 0; i < set_len; i++) {
+      rate_q::Entry entry = set.recipe_fn(nullptr, i);
       if (std::strcmp(name, entry.name) == 0) {
-        return set.id_offset + i;
+        return registry->id_offsets[set_idx] + i;
       }
     }
   }
@@ -296,7 +300,7 @@ extern "C" int grunstable_ratequery_get_f64(chemistry_data_storage* my_rates,
                                             grunstable_rateid_type rate_id,
                                             double* buf) {
   namespace rate_q = grackle::impl::ratequery;
-  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id, true).entry;
+  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id).entry;
 
   if (entry.data == nullptr) {  // in this case, the query failed
     return GR_FAIL;
@@ -313,7 +317,7 @@ extern "C" int grunstable_ratequery_set_f64(chemistry_data_storage* my_rates,
                                             grunstable_rateid_type rate_id,
                                             const double* buf) {
   namespace rate_q = grackle::impl::ratequery;
-  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id, true).entry;
+  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id).entry;
   if (entry.data == nullptr) {  // in this case, the query failed
     return GR_FAIL;
   }
@@ -333,7 +337,7 @@ extern "C" int grunstable_ratequery_prop(
   // short-term hack! (it's bad practice to "cast away the const")
   rate_q::Entry entry =
       rate_q::query_Entry(const_cast<chemistry_data_storage*>(my_rates),
-                          rate_id, true)
+                          rate_id)
           .entry;
 
   const rate_q::EntryProps& props = entry.props;
@@ -369,7 +373,7 @@ extern "C" const char* grunstable_ith_rate(
   const long long sanitized_i = (i < LLONG_MAX) ? (long long)i : -1;
   // short-term hack! (it's bad practice to "cast away the const")
   rate_q::ratequery_rslt_ tmp = rate_q::query_Entry(
-      const_cast<chemistry_data_storage*>(my_rates), sanitized_i, false);
+      const_cast<chemistry_data_storage*>(my_rates), sanitized_i);
   if (out_rate_id != nullptr) {
     *out_rate_id = tmp.rate_id;
   }
@@ -380,10 +384,5 @@ extern "C" unsigned long long grunstable_ratequery_nrates(
     const chemistry_data_storage* my_rates) {
   namespace rate_q = grackle::impl::ratequery;
   const rate_q::Registry* registry = my_rates->opaque_storage->registry;
-
-  unsigned long long out = 0;
-  for (int i = 0; i < registry->len; i++) {
-    out += static_cast<unsigned long long>(registry->sets[i].len);
-  }
-  return out;
+  return registry->n_entries;
 }

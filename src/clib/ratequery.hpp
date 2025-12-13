@@ -97,18 +97,31 @@ inline Entry new_Entry(double* rate, const char* name) {
 /// satisfies `0 <= index <= (N-1)`
 typedef Entry fetch_Entry_recipe_fn(chemistry_data_storage*, int);
 
-/// Describes the set of entries that can be accessed through a given recipe
-struct RecipeEntrySet {
-  int id_offset;
+/// Describes the set of entries that can be access through a given recipe
+struct EntrySet {
+  /// number of entries in the current set
   int len;
-  fetch_Entry_recipe_fn* fn;
+
+  /// a function pointer that can be used to access entries through a recipe
+  fetch_Entry_recipe_fn* recipe_fn;
+
+  /// properties used by all entries accessed through a recipe
+  ///
+  /// In more detail, an entry returned by `recipe_fn` has its `props` member
+  /// overwritten by this value
   EntryProps common_props;
 };
 
 /// Describes a registry of queryable entries
 struct Registry {
-  int len;
-  RecipeEntrySet* sets;
+  /// number of entries
+  int n_entries;
+  /// number of contained EntrySets
+  int n_sets;
+  /// stores the minimum rate_id for each EntrySet
+  int* id_offsets;
+  /// stores sets of entries
+  EntrySet* sets;
 };
 
 /// construct a new registry
