@@ -215,6 +215,11 @@ static const Registry* get_registry(const chemistry_data_storage* my_rates) {
 }
 
 /// internal function to search for the rate description i
+///
+/// @note
+/// While it would be nice to enforce that rate data in a
+/// `const chemistry_data_storage` can't be mutated, that is something that
+/// should be done at the public API level.
 static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
                                    long long i) {
   const Registry* registry = get_registry(my_rates);
@@ -305,13 +310,25 @@ extern "C" int grunstable_ratequery_get_f64(chemistry_data_storage* my_rates,
   namespace rate_q = grackle::impl::ratequery;
   rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id).entry;
 
-  if (entry.data == nullptr) {  // in this case, the query failed
+  if (entry.data.is_null()) {  // in this case, the query failed
     return GR_FAIL;
+  }
+
+  const double* src;
+  switch (entry.data.tag()) {
+    case rate_q::PtrKind::const_f64:
+      src = entry.data.const_f64();
+      break;
+    case rate_q::PtrKind::mutable_f64:
+      src = const_cast<const double*>(entry.data.mutable_f64());
+      break;
+    default:
+      return GR_FAIL;
   }
 
   long long n_items = rate_q::get_n_items(entry.props);
   for (long long i = 0; i < n_items; i++) {
-    buf[i] = entry.data[i];
+    buf[i] = src[i];
   }
   return GR_SUCCESS;
 }
@@ -321,15 +338,20 @@ extern "C" int grunstable_ratequery_set_f64(chemistry_data_storage* my_rates,
                                             const double* buf) {
   namespace rate_q = grackle::impl::ratequery;
   rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id).entry;
-  if (entry.data == nullptr) {  // in this case, the query failed
+  if (entry.data.is_null()) {  // in this case, the query failed
     return GR_FAIL;
   }
 
   long long n_items = rate_q::get_n_items(entry.props);
-  for (long long i = 0; i < n_items; i++) {
-    entry.data[i] = buf[i];
+  if (entry.data.tag() == rate_q::PtrKind::mutable_f64) {
+    double* dst = entry.data.mutable_f64();
+    for (long long i = 0; i < n_items; i++) {
+      dst[i] = buf[i];
+    }
+    return GR_SUCCESS;
+  } else {  // the retrieved pointer is either immutable or the wrong type
+    return GR_FAIL;
   }
-  return GR_SUCCESS;
 }
 
 extern "C" int grunstable_ratequery_prop(

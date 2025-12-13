@@ -13,6 +13,8 @@
 #define RATEQUERY_HPP
 
 #include "grackle.h"
+#include "utils-cpp.hpp"  // GRIMPL_FORCE_INLINE
+#include "status_reporting.h"
 
 namespace grackle::impl::ratequery {
 
@@ -58,6 +60,133 @@ namespace grackle::impl::ratequery {
 /// over runtime performance.
 /** @{ */
 
+enum struct PtrKind {
+  const_f64,
+  mutable_f64,
+  const_str,
+  // there's no circumstance where we ever want mutable_str
+};
+
+/// Represents a pointer union
+///
+/// We use a class here because it's extremely easy to introduce undefined
+/// behavior when interacting with a union.
+/// - it's even easier to get undefined behavior in C++ than in C. In C, you
+///   are allowed to access an inactive union member (but that's undefined in
+///   C++)
+///
+/// The compromise between safety and writing Grackle in a C-like subset of C++
+/// is to basically write a class with getters and setters that is equivalent
+/// to the following C struct
+/// ```C
+/// struct PtrUnion{
+///   union {
+///     const double* const_f64;
+///     double* mutable_f64;
+///     // ...
+///     const char * const * const_str;
+///   } pointer;
+///
+///   enum PtrKind tag;
+/// };
+/// ```
+/// The only difference is that this class enforces runtime-checks that will
+/// crash the program if a mistake is made (rather than trigger undefined
+/// behavior). In practice, if the union is used properly, most runtime checks
+/// should get optimized out.
+class PtrUnion {
+  // if we ever wanted to include something other than a pointer or fundamental
+  // type, then we almost certainly use std::variant rather than a union
+  union Storage {
+    const double* const_f64;
+    double* mutable_f64;
+    const char* const* const_str;
+    // there's no scenario where we *EVER* want a reason mutable_str
+  };
+
+  // define the data-members (we specify values for the default constructor)
+
+  /// the actual union
+  Storage pointer = {nullptr};  // <- intializes the first member
+  /// the tag (that tracks the kind of pointer)
+  PtrKind tag_ = PtrKind::const_f64;
+
+public:
+  // explicitly declare the use of default constructor/assignment/destructor
+  PtrUnion() = default;
+  PtrUnion(const PtrUnion&) = default;
+  PtrUnion(PtrUnion&&) = default;
+  PtrUnion& operator=(const PtrUnion&) = default;
+  PtrUnion& operator=(PtrUnion&&) = default;
+  ~PtrUnion() = default;
+
+  // introduce 2 convenienece methods related to nullptr
+
+  /// constructor to use when is the `nullptr` literal is used
+  PtrUnion(std::nullptr_t) : PtrUnion() {}
+
+  /// Convenience method to check whether the instance holds a nullptr
+  ///
+  /// @note
+  /// An argument could be made for converting this to a standalone function
+  /// so that things are more C-like
+  bool is_null() const {
+    // maybe we turn on errors for non-exhaustive switch statements with
+    // a pragma?
+    switch (this->tag_) {
+      case PtrKind::const_f64:
+        return pointer.const_f64 == nullptr;
+      case PtrKind::mutable_f64:
+        return pointer.mutable_f64 == nullptr;
+      case PtrKind::const_str:
+        return pointer.const_str == nullptr;
+    }
+    GR_INTERNAL_UNREACHABLE_ERROR();
+  }
+
+  /// access the tag attribute
+  PtrKind tag() const { return this->tag_; }
+
+  // methods associated with const_f64
+  explicit PtrUnion(const double* ptr) { this->set_const_f64(ptr); }
+
+  GRIMPL_FORCE_INLINE const double* const_f64() const {
+    GR_INTERNAL_REQUIRE(this->tag_ == PtrKind::const_f64, "has wrong tag");
+    return this->pointer.const_f64;
+  }
+
+  GRIMPL_FORCE_INLINE void set_const_f64(const double* ptr) {
+    this->tag_ = PtrKind::const_f64;
+    this->pointer.const_f64 = ptr;
+  }
+
+  // methods associated with mutable_f64
+  explicit PtrUnion(double* ptr) { this->set_mutable_f64(ptr); }
+
+  GRIMPL_FORCE_INLINE double* mutable_f64() const {
+    GR_INTERNAL_REQUIRE(this->tag_ == PtrKind::mutable_f64, "has wrong tag");
+    return this->pointer.mutable_f64;
+  }
+
+  GRIMPL_FORCE_INLINE void set_mutable_f64(double* ptr) {
+    this->tag_ = PtrKind::mutable_f64;
+    this->pointer.mutable_f64 = ptr;
+  }
+
+  // methods associated with const_str
+  explicit PtrUnion(const char* const* ptr) { this->set_const_str(ptr); }
+
+  GRIMPL_FORCE_INLINE const char* const* const_str() const {
+    GR_INTERNAL_REQUIRE(this->tag_ == PtrKind::const_str, "has wrong tag");
+    return this->pointer.const_str;
+  }
+
+  GRIMPL_FORCE_INLINE void set_const_str(const char* const* ptr) {
+    this->tag_ = PtrKind::const_str;
+    this->pointer.const_str = ptr;
+  }
+};
+
 /// Describes properties about the data in an entry
 struct EntryProps {
   int ndim;
@@ -74,7 +203,7 @@ inline bool EntryProps_is_valid(EntryProps obj) { return obj.ndim >= 0; }
 
 /// A queryable entity
 struct Entry {
-  double* data;
+  PtrUnion data;
   const char* name;
   EntryProps props;
 };
@@ -85,7 +214,7 @@ inline Entry mk_invalid_Entry() {
 
 /// Constructs an Entry
 inline Entry new_Entry(double* rate, const char* name) {
-  return Entry{rate, name, mk_invalid_EntryProps()};
+  return Entry{PtrUnion(rate), name, mk_invalid_EntryProps()};
 }
 
 /// a recipe for querying 1 or more entries from a chemistry_data_storage
