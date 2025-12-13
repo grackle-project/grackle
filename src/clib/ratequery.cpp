@@ -292,14 +292,9 @@ extern "C" int grunstable_ratequery_prop(
       }
       return GR_SUCCESS;
     }
-    case GRUNSTABLE_QPROP_TYPE:
-      return GR_FAIL;
     case GRUNSTABLE_QPROP_MAXITEMSIZE: {
       *ptr = static_cast<long long>(sizeof(double));
       return GR_SUCCESS;
-    }
-    case GRUNSTABLE_QPROP_WRITABLE: {
-      *ptr = 1LL;
     }
     default:
       GR_INTERNAL_UNREACHABLE_ERROR();

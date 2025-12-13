@@ -277,10 +277,7 @@ double* grunstable_ratequery_get_ptr(
 enum grunstable_ratequery_prop_kind {
   GRUNSTABLE_QPROP_NDIM = 1,
   GRUNSTABLE_QPROP_SHAPE = 2,
-  GRUNSTABLE_QPROP_TYPE = 3,
-  GRUNSTABLE_QPROP_MAXITEMSIZE = 4,
-  // I don't like the next one
-  GRUNSTABLE_QPROP_WRITABLE = 5,
+  GRUNSTABLE_QPROP_MAXITEMSIZE = 3,
 };
 
 /// Query a property of the specified rate
