@@ -65,7 +65,7 @@ jobs:
           python -m pip list
           pytest
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: cibw-sdist
           path: dist/*.tar.gz
@@ -112,7 +112,7 @@ jobs:
         with:
           output-dir: dist
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./dist/*.whl
@@ -130,7 +130,7 @@ jobs:
     # upload to PyPI on every tag starting with 'grackle-'
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/grackle-')
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           pattern: cibw-*
           path: dist
