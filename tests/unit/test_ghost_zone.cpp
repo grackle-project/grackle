@@ -249,37 +249,10 @@ bool equal_ghost_values(val_vec_map_t& ref, val_vec_map_t& actual,
   return true;
 }
 
-// this defines a parameterized test-fixture (it is parameterized on
-// InitStatus::data_file_not_found)
-// -> it has a GetParam() method to access the parameters
-// -> to assist with avoiding memory leaks, I decided to also make this setup
-//    and teardown GrackleCtxPack.
-//    -> Frankly, I don't love this, but I think it is okay since the test
-//       really doesn't care how grackle is configured (other than that
-//       primordial_chemistry varies and that it will actually perform
-//       calculations)
-class APIConventionTest : public testing::TestWithParam<grtest::FullConfPreset> {
- protected:
-  void SetUp() override {
-    // Disable output
-    grackle_verbose = 0;
+class APIGhostZoneTest: public grtest::ParametrizedConfigPresetFixture
+{};
 
-    // called immediately after the constructor (but before the test-case)
-    grtest::InitStatus status;
-    pack_ = grtest::GrackleCtxPack::create(GetParam(), &status);
-    if (!pack_.is_initialized()) {
-      if (status == grtest::InitStatus::datafile_notfound) {
-        GTEST_SKIP() << "something went wrong with finding the data file";
-      } else {
-        FAIL() << "Error in initialize_chemistry_data.";
-      }
-    }
-  }
-
-  grtest::GrackleCtxPack pack_;
-};
-
-TEST_P(APIConventionTest, GridZoneStartEnd) {
+TEST_P(APIGhostZoneTest, GridZoneStartEnd) {
 
   grid_props my_grid_props = {{5,6,7}, {1,0,2}};
 
@@ -376,7 +349,7 @@ using grtest::ChemPreset;
 using grtest::InitialUnitPreset;
 
 INSTANTIATE_TEST_SUITE_P(
-  VaryingPrimordialChem, APIConventionTest,
+  VaryingPrimordialChem, APIGhostZoneTest,
   ::testing::Values(
     FullConfPreset{ChemPreset::primchem0, InitialUnitPreset::simple_z0},
     FullConfPreset{ChemPreset::primchem1, InitialUnitPreset::simple_z0},
