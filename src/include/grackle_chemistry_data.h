@@ -319,7 +319,6 @@ typedef struct
   double dust_grainsize;
   double dust_growth_densref;
   double dust_growth_tauref;
-  double SolarAbundances[NUM_METAL_SPECIES_GRACKLE];
 
 } chemistry_data;
 
