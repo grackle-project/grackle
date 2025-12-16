@@ -16,8 +16,7 @@ void dust_growth(
     InternalGrUnits internalu,
     IndexRange idx_range,
     double dt_value,
-    double* t_gas,
-    double* t_dust
+    double* t_gas
 );
 
 // Calculates and applies dust destruction from SNe shocks and thermal sputtering.
@@ -27,8 +26,7 @@ void dust_destruction(
     InternalGrUnits internalu,
     IndexRange idx_range,
     double dt_value,
-    double* t_gas,
-    double* t_dust
+    double* t_gas
 );
 
 }
