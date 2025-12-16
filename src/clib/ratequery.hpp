@@ -327,10 +327,29 @@ int RegBuilder_misc_recipies(RegBuilder* ptr,
 /// For safety, the caller should still plan to call drop_RegBuilder
 Registry RegBuilder_consume_and_build(RegBuilder* ptr);
 
-/// Describes the set of entries that can be access through a given recipe
+/// Describes a set of entries
+///
+/// This can operate in 2 modes:
+/// 1. Embedded-List-mode:
+///    - the EntrySet directly holds a list of Entry instances that **ONLY**
+///      exist for querying purposes and should **NEVER** be mutated by
+///      external code.
+///    - imporantly, the EntrySet is responsible for managing the memory the
+///      pointers to string each string and pointer referenced by a pointer in
+///      this list.
+/// 2. Recipe-mode:
+///    - In this case, the EntrySet provides access to Entry instances that
+///      directly reference data managed by `chemistry_data_storage`
 struct EntrySet {
   /// number of entries in the current set
   int len;
+
+  /// an embedded list of entries, where the allocation are directly owned and
+  /// managed by this instance.
+  ///
+  /// @important
+  /// this **must** be a nullptr if operating in Recipe-mode
+  Entry* embedded_list;
 
   /// a function pointer that can be used to access entries through a recipe
   fetch_Entry_recipe_fn* recipe_fn;
@@ -339,8 +358,25 @@ struct EntrySet {
   ///
   /// In more detail, an entry returned by `recipe_fn` has its `props` member
   /// overwritten by this value
-  EntryProps common_props;
+  ///
+  /// @note
+  /// only used in Recipe-mode
+  EntryProps common_recipe_props;
 };
+
+/// look up an Entry in an EntrySet
+///
+/// @param[in] entry_set The container object being queried
+/// @param[in] my_rates Used for looking up Entry in recipe-mode
+/// @param[in] i The index to query
+///
+/// @returns An instance that references memory owned by either my_rates or by
+///     the entry_set, itself.
+Entry EntrySet_access(const EntrySet* entry_set,
+                      chemistry_data_storage* my_rates, int i);
+
+/// deallocate the contents of an EntrySet
+void drop_EntrySet(EntrySet* ptr);
 
 /** @}*/  // end of group
 

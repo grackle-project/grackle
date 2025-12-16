@@ -102,6 +102,67 @@ int grackle::impl::ratequery::RegBuilder_misc_recipies(
 
 namespace grackle::impl::ratequery {
 
+/// calls delete or delete[] on the specified pointer (depending on the value
+/// of is_scalar).
+///
+/// @note
+/// This was originally function-like macro. We can go back to that if people
+/// dislike this usage of a template function.
+/// function-like macro
+template <typename T>
+static void careful_delete_(T* ptr, bool is_scalar) {
+  (is_scalar) ? delete ptr : delete[] ptr;
+}
+
+/// This deallocates data within a list of owned Entries (i.e. all pointers
+/// within an Entry are deleted)
+///
+/// Importantly, this does **NOT** call delete[] on entry_list
+static void drop_owned_Entry_list_contents(Entry* entry_list, int n_entries) {
+  for (int entry_idx = 0; entry_idx < n_entries; entry_idx++) {
+    Entry* cur_entry = &entry_list[entry_idx];
+
+    // invariant: each Entry within an embedded-list should be valid and
+    //            fully initialized
+    GR_INTERNAL_REQUIRE(cur_entry->name != nullptr, "sanity check!");
+    GR_INTERNAL_REQUIRE(!cur_entry->data.is_null(), "sanity check!");
+
+    delete[] cur_entry->name;
+
+    bool is_scalar = cur_entry->props.ndim == 0;
+    switch (cur_entry->data.tag()) {
+      case PtrKind::const_f64: {
+        careful_delete_(cur_entry->data.const_f64(), is_scalar);
+        break;
+      }
+      case PtrKind::mutable_f64: {
+        careful_delete_(cur_entry->data.mutable_f64(), is_scalar);
+        break;
+      }
+      case PtrKind::const_str: {
+        const char* const* ptr = cur_entry->data.const_str();
+
+        // get the number of strings referenced by cur_entry->data
+        int n_strings = 1;
+        for (int i = 0; i < cur_entry->props.ndim; i++) {
+          n_strings *= cur_entry->props.shape[i];
+        }
+
+        // delete each string within ptr
+        for (int i = 0; i < n_strings; i++) {
+          delete[] ptr[i];
+        }
+
+        // now actually delete ptr
+        careful_delete_(ptr, is_scalar);
+        break;
+      }
+      default:
+        GR_INTERNAL_UNREACHABLE_ERROR();
+    }
+  }
+}
+
 /// resets the instance to the initial (empty) state.
 ///
 /// the skip_dealloc argument will only be true when the data is transferred
@@ -131,7 +192,7 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
     return GrPrintAndReturnErr("out of capacity");
   }
 
-  ptr->sets[ptr->len++] = EntrySet{n_entries, recipe_fn, common_props};
+  ptr->sets[ptr->len++] = EntrySet{n_entries, nullptr, recipe_fn, common_props};
   return GR_SUCCESS;
 }
 
@@ -140,8 +201,6 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
 void grackle::impl::ratequery::drop_RegBuilder(RegBuilder* ptr) {
   RegBuilder_reset_to_empty(ptr, false);
 }
-
-namespace grackle::impl::ratequery {}  // namespace grackle::impl::ratequery
 
 int grackle::impl::ratequery::RegBuilder_recipe_scalar(
     RegBuilder* ptr, int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
@@ -186,11 +245,41 @@ grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
   }
 }
 
+grackle::impl::ratequery::Entry grackle::impl::ratequery::EntrySet_access(
+    const EntrySet* entry_set, chemistry_data_storage* my_rates, int i) {
+  if (i > entry_set->len) {
+    return mk_invalid_Entry();
+  } else if (entry_set->embedded_list == nullptr) {  // in recipe-mode
+    Entry out = (entry_set->recipe_fn)(my_rates, i);
+    out.props = entry_set->common_recipe_props;
+    return out;
+  } else {  // in embedded-list mode
+    return entry_set->embedded_list[i];
+  }
+}
+
+void grackle::impl::ratequery::drop_EntrySet(EntrySet* ptr) {
+  if (ptr->embedded_list == nullptr) {
+    // nothing to deallocate in recipe-mode
+  } else {
+    // in embedded-list-mode, we need to deallocate each Entry in the list
+    // and the deallocate the actual list-pointer
+    drop_owned_Entry_list_contents(ptr->embedded_list, ptr->len);
+
+    // deallocate the memory associated with embedded_list
+    delete[] ptr->embedded_list;
+    ptr->embedded_list = nullptr;
+  }
+}
+
 void grackle::impl::ratequery::drop_Registry(
     grackle::impl::ratequery::Registry* ptr) {
   if (ptr->sets != nullptr) {
     delete[] ptr->id_offsets;
     ptr->id_offsets = nullptr;
+    for (int i = 0; i < ptr->n_sets; i++) {
+      drop_EntrySet(&ptr->sets[i]);
+    }
     delete[] ptr->sets;
     ptr->sets = nullptr;
   }
@@ -229,16 +318,10 @@ static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
   }
 
   for (int set_idx = 0; set_idx < registry->n_sets; set_idx++) {
-    const struct EntrySet cur_set = registry->sets[set_idx];
-    int cur_id_offset = registry->id_offsets[set_idx];
-
-    const long long tmp = i - static_cast<long long>(cur_id_offset);
-    if ((tmp >= 0) && (tmp < cur_set.len)) {
-      ratequery_rslt_ out;
-      out.rate_id = i;
-      out.entry = cur_set.recipe_fn(my_rates, tmp);
-      out.entry.props = cur_set.common_props;
-      return out;
+    EntrySet* cur_set = &registry->sets[set_idx];
+    int tmp = i - registry->id_offsets[set_idx];
+    if ((tmp >= 0) && (tmp < cur_set->len)) {
+      return ratequery_rslt_{i, EntrySet_access(cur_set, my_rates, tmp)};
     }
   }
   return invalid_rslt_();
@@ -290,12 +373,11 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
   }
 
   for (int set_idx = 0; set_idx < registry->n_sets; set_idx++) {
-    const rate_q::EntrySet set = registry->sets[set_idx];
-    int set_len = set.len;
+    rate_q::EntrySet* set = &registry->sets[set_idx];
+    int set_len = set->len;
     for (int i = 0; i < set_len; i++) {
-      // short-term hack! (it's bad practice to "cast away the const")
-      rate_q::Entry entry =
-          set.recipe_fn(const_cast<chemistry_data_storage*>(my_rates), i);
+      rate_q::Entry entry = rate_q::EntrySet_access(
+          set, const_cast<chemistry_data_storage*>(my_rates), i);
       if (std::strcmp(name, entry.name) == 0) {
         return registry->id_offsets[set_idx] + i;
       }
