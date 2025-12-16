@@ -26,8 +26,7 @@ void grackle::impl::dust_growth(
     InternalGrUnits internalu,
     IndexRange idx_range,
     double dt_value,
-    double* t_gas,
-    double* t_dust) 
+    double* t_gas)
 {
     grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
@@ -97,8 +96,7 @@ void grackle::impl::dust_destruction(
     InternalGrUnits internalu,
     IndexRange idx_range,
     double dt_value,
-    double* t_gas,
-    double* t_dust)
+    double* t_gas)
 {
     grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
