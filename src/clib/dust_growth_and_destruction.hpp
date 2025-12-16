@@ -15,8 +15,9 @@ void dust_growth(
     grackle_field_data* my_fields,
     InternalGrUnits internalu,
     IndexRange idx_range,
-    double dt_value,
-    double* t_gas
+    double* dt_value,
+    double* t_gas,
+    bool dryrun
 );
 
 // Calculates and applies dust destruction from SNe shocks and thermal sputtering.
@@ -25,8 +26,9 @@ void dust_destruction(
     grackle_field_data* my_fields,
     InternalGrUnits internalu,
     IndexRange idx_range,
-    double dt_value,
-    double* t_gas
+    double* dt_value,
+    double* t_gas,
+    bool dryrun
 );
 
 }

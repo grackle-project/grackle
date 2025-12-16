@@ -31,6 +31,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
+#include "dust_growth_and_destruction.hpp"
 
 void grackle::impl::cool1d_multi_g(
     int imetal, int iter, double* edot, double* tgas, double* mmw, double* p2d,
@@ -42,7 +43,8 @@ void grackle::impl::cool1d_multi_g(
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
-    grackle::impl::CoolHeatScratchBuf coolingheating_buf) {
+    grackle::impl::CoolHeatScratchBuf coolingheating_buf,
+    double* dtit) {
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -1097,13 +1099,67 @@ void grackle::impl::cool1d_multi_g(
       itmask_metal[i] = MASK_FALSE;
     }
   }
+  // Compute grain size increment
+  if ((my_chemistry->use_dust_density_field > 0) &&
+      (my_chemistry->dust_species > 0)) {
+    grackle::impl::calc_grain_size_increment_1d(
+        dom, idx_range, itmask_metal, my_chemistry,
+        my_rates->opaque_storage->grain_species_info,
+        my_rates->opaque_storage->inject_pathway_props, my_fields,
+        internal_dust_prop_buf);
+    grackle::impl::dust_growth(
+      my_chemistry, my_fields, internalu, idx_range, dtit, tgas, true);
+  }
 
-  dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
-                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
-                     idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
-                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
-                     kappa_tot.data(), grain_kappa, cool1dmulti_buf.gasgr_tdust,
-                     myisrf.data(), internal_dust_prop_buf);
+  // Calculate dust to gas ratio AND interstellar radiation field
+  // -> an earlier version of this logic would store values @ indices
+  //    where `itmask_metal(i) .ne. MASK_FALSE`
+  // -> this was undesirable, b/c these quantities are required for
+  //    photo-electric heating, which can occur when
+  //    `itmask_metal(i) .eq. MASK_FALSE` (we can revisit this choice
+  //    later). Moreover, in most cases, these calculations will be
+  //    faster when there is no branching
+
+  if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 0)) {
+    if (my_chemistry->use_dust_density_field > 0) {
+      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        // REMINDER: use of `itmask` over `itmask_metal` is
+        //   currently required by Photo-electric heating
+        if (itmask[i] != MASK_FALSE) {
+          // it may be faster to remove this branching
+          dust2gas[i] = dust(i, idx_range.j, idx_range.k) /
+                        d(i, idx_range.j, idx_range.k);
+        }
+      }
+    } else {
+      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        dust2gas[i] = my_chemistry->local_dust_to_gas_ratio * metallicity[i];
+      }
+    }
+  }
+
+  if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 1)) {
+    if (my_chemistry->use_isrf_field > 0) {
+      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        myisrf[i] = isrf_habing(i, idx_range.j, idx_range.k);
+      }
+    } else {
+      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        myisrf[i] = my_chemistry->interstellar_radiation_field;
+      }
+    }
+  }
+
+  // compute dust temperature and cooling due to dust
+  if (anydust != MASK_FALSE) {
+    // TODO: trad -> comp2
+    grackle::impl::fortran_wrapper::calc_all_tdust_gasgr_1d_g(
+        comp2, tgas, tdust, metallicity, dust2gas, cool1dmulti_buf.mynh,
+        cool1dmulti_buf.gasgr_tdust, itmask_metal, coolunit, gasgr.data(),
+        myisrf.data(), kappa_tot.data(), my_chemistry, my_rates, my_fields,
+        idx_range, grain_temperatures, gas_grainsp_heatrate, grain_kappa,
+        logTlininterp_buf, internal_dust_prop_buf);
+  }
 
   // Calculate dust cooling rate
   if (anydust != MASK_FALSE) {
