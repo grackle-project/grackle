@@ -108,6 +108,7 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
 /// MainScratchBuf and track pointers to previously allocated memory buffer
 /// for all cases
 struct Assorted1ElemBuf {
+  double dtit[1];
   double p2d[1];
   double tgas[1];
   double tdust[1];
@@ -486,7 +487,8 @@ void derivatives(
       my_uvb_rates, internalu, pack.idx_range_1_element, pack.main_scratch_buf.grain_temperatures,
       pack.main_scratch_buf.logTlininterp_buf,
       pack.main_scratch_buf.cool1dmulti_buf,
-      pack.main_scratch_buf.coolingheating_buf
+      pack.main_scratch_buf.coolingheating_buf,
+      pack.other_scratch_buf.dtit
     );
   }
 

@@ -70,7 +70,7 @@ void cool_multi_time_g(
     // used in a number of different internal routines. Sorting these into
     // additional structs (or leaving them free-standing) will become more
     // obvious as we transcribe more routines.
-
+    std::vector<double> dtit(my_fields->grid_dimension[0]);
     std::vector<double> p2d(my_fields->grid_dimension[0]);
     std::vector<double> tgas(my_fields->grid_dimension[0]);
     std::vector<double> mmw(my_fields->grid_dimension[0]);
@@ -107,7 +107,7 @@ void cool_multi_time_g(
         dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
         my_chemistry, my_rates, my_fields, my_uvb_rates, internalu, idx_range,
         grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
-        coolingheating_buf
+        coolingheating_buf, dtit.data()
       );
 
       // Compute the cooling time on the slice

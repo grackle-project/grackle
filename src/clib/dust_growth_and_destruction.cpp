@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iostream>
 #include "dust_growth_and_destruction.hpp"
+#include "internal_types.hpp"
+#include "utils-cpp.hpp"
 
 namespace {
     const double k_boltz      = 1.3806504e-16;
@@ -25,8 +27,9 @@ void grackle::impl::dust_growth(
     grackle_field_data* my_fields,
     InternalGrUnits internalu,
     IndexRange idx_range,
-    double dt_value,
-    double* t_gas)
+    double* dt_value,
+    double* t_gas,
+    bool dryrun)
 {
     grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
@@ -38,8 +41,7 @@ void grackle::impl::dust_growth(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     
-    double dens_proper = internalu.density_units * internalu.a_value**3;
-    double dt = dt_value;
+    double dens_proper = internalu.urho * std::pow(internalu.a_value,3);
     double tau_ref = my_chemistry->dust_growth_tauref * 1e9 * sec_per_year/internalu.tbase1;
 
 
@@ -47,9 +49,10 @@ void grackle::impl::dust_growth(
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         
         double rho_gas      = d(i,idx_range.j,idx_range.k);
-        double temp     = t_gas[i];
         double rho_dust = dust(i,idx_range.j,idx_range.k);
         double rho_metal= metal(i,idx_range.j,idx_range.k);
+        double temp     = t_gas[i];
+        double dt = dt_value[i];
 
         double tau_accr0 = tau_ref*(my_chemistry->dust_growth_densref/dens_proper)* std::pow(t_ref/temp,0.5);
         double tau_accr = huge_value;
@@ -79,11 +82,11 @@ void grackle::impl::dust_growth(
         if (std::abs(total_density_final - total_density_init) > 1e-8){
             std::exit(21);
         }
-
-        dust(i,idx_range.j,idx_range.k) = rho_dust;
-        metal(i,idx_range.j,idx_range.k) = rho_metal; 
-        d(i,idx_range.j,idx_range.k) = rho_gas;
-
+        if (dryrun == false) {
+            dust(i,idx_range.j,idx_range.k) = rho_dust;
+            metal(i,idx_range.j,idx_range.k) = rho_metal; 
+            d(i,idx_range.j,idx_range.k) = rho_gas;
+        }
     }
 }
 
@@ -95,8 +98,9 @@ void grackle::impl::dust_destruction(
     grackle_field_data* my_fields,
     InternalGrUnits internalu,
     IndexRange idx_range,
-    double dt_value,
-    double* t_gas)
+    double* dt_value,
+    double* t_gas,
+    bool dryrun)
 {
     grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
@@ -111,8 +115,7 @@ void grackle::impl::dust_destruction(
         my_fields->SNe_ThisTimeStep, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-    double dt = dt_value;
-    double dens_proper = internalu.density_units * internalu.a_value**3;
+    double dens_proper = internalu.urho * std::pow(internalu.a_value,3);
 
     double Ms100 = 6800.0 * my_chemistry->sne_coeff
                  * (100.0 / my_chemistry->sne_shockspeed)
@@ -123,11 +126,12 @@ void grackle::impl::dust_destruction(
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
 
         double rho_gas   = d(i,idx_range.j,idx_range.k);
-        double temp      = t_gas[i];
         double rho_dust  = dust(i,idx_range.j,idx_range.k);
         double rho_metal = metal(i,idx_range.j,idx_range.k);
-        double tau_dest = 0;
         double sne_this = sne(i,idx_range.j,idx_range.k);
+        double temp      = t_gas[i];
+        double dt = dt_value[i];
+        double tau_dest = 0;
 
         double total_density_init = rho_metal + rho_dust;
         double dM = 0;
@@ -184,8 +188,10 @@ void grackle::impl::dust_destruction(
             std::exit(21);
         }
 
-        dust(i,idx_range.j,idx_range.k) = rho_dust;
-        metal(i,idx_range.j,idx_range.k) = rho_metal; 
-        d(i,idx_range.j,idx_range.k) = rho_gas;
+        if (dryrun == false) {
+            dust(i,idx_range.j,idx_range.k) = rho_dust;
+            metal(i,idx_range.j,idx_range.k) = rho_metal; 
+            d(i,idx_range.j,idx_range.k) = rho_gas;
+        }
     }
 }

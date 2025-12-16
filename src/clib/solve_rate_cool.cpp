@@ -815,7 +815,8 @@ int solve_rate_cool(
           *my_uvb_rates, internalu,
           idx_range,
           grain_temperatures, logTlininterp_buf,
-          cool1dmulti_buf, coolingheating_buf
+          cool1dmulti_buf, coolingheating_buf,
+          dtit.data()
         );
 
         if (my_chemistry->primordial_chemistry > 0)  {
