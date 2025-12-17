@@ -643,8 +643,6 @@ int solve_rate_cool_g(
   grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 )
 {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
 #ifdef GRACKLE_FLOAT_4
   const gr_float tolerance = (gr_float)(1.0e-05);
