@@ -23,7 +23,7 @@
 namespace grackle::impl {
 
 void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
-                     double* h2dust, double* rhoH, gr_mask_type* itmask,
+                     const double* h2dust, const double* rhoH, const gr_mask_type* itmask,
                      double* edot, double chunit, double dom,
                      chemistry_data* my_chemistry,
                      grackle_field_data* my_fields,
