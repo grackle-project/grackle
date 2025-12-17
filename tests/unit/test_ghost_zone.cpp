@@ -347,7 +347,7 @@ using grtest::ChemPreset;
 using grtest::InitialUnitPreset;
 
 INSTANTIATE_TEST_SUITE_P(
-  VaryingPrimordialChem, APIGhostZoneTest,
+  /* 1st arg is intentionally empty */, APIGhostZoneTest,
   ::testing::Values(
     FullConfPreset{ChemPreset::primchem0, InitialUnitPreset::simple_z0},
     FullConfPreset{ChemPreset::primchem1, InitialUnitPreset::simple_z0},
