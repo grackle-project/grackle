@@ -8,7 +8,7 @@
 
 // TODO: replace with Grackle's existing err machinery
 [[noreturn]] static void err_(std::string msg="") {
-  const char* ptr = (msg.size() == 0) ? "<unspecified>" : msg.c_str();
+  const char* ptr = (msg.empty()) ? "<unspecified>" : msg.c_str();
   fprintf(stderr, "ERROR: %s\n", ptr);
   std::exit(1);
 }

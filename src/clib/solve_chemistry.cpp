@@ -11,33 +11,30 @@
 / software.
 ************************************************************************/
 
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
 #include "grackle.h"
-#include "grackle_macros.h"
 #include "internal_units.h"
-#include "phys_constants.h"
 #include "solve_rate_cool_g-cpp.h"
 #include "utils.h"
 
 /* function prototypes */
 
-int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              chemistry_data_storage *my_rates,
-                              photo_rate_storage *my_uvb_rates,
-                              code_units *my_units);
+extern "C" int update_UVbackground_rates(chemistry_data *my_chemistry,
+                                         chemistry_data_storage *my_rates,
+                                         photo_rate_storage *my_uvb_rates,
+                                         code_units *my_units);
 
-int local_solve_chemistry(chemistry_data *my_chemistry,
-                          chemistry_data_storage *my_rates,
-                          code_units *my_units,
-                          grackle_field_data *my_fields,
-                          double dt_value)
+extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
+                                     chemistry_data_storage *my_rates,
+                                     code_units *my_units,
+                                     grackle_field_data *my_fields,
+                                     double dt_value)
 {
 
   /* Return if this doesn't concern us. */
 
   if (!my_chemistry->use_grackle)
-    return SUCCESS;
+    return GR_SUCCESS;
 
   /* Update UV background rates. */
   photo_rate_storage my_uvb_rates;
@@ -51,9 +48,9 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
 
   if (my_chemistry->UVbackground == 1) {
     if (update_UVbackground_rates(my_chemistry, my_rates,
-                                  &my_uvb_rates, my_units) == FAIL) {
-      fprintf(stderr, "Error in update_UVbackground_rates.\n");
-      return FAIL;
+                                  &my_uvb_rates, my_units) != GR_SUCCESS) {
+      std::fprintf(stderr, "Error in update_UVbackground_rates.\n");
+      return GR_FAIL;
     }
   }
   else {
@@ -85,8 +82,8 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
 
   /* Error checking for H2 shielding approximation */
   if (self_shielding_err_check(my_chemistry, my_fields,
-                               "local_solve_chemistry") == FAIL) {
-    return FAIL;
+                               "local_solve_chemistry") != GR_SUCCESS) {
+    return GR_SUCCESS;
   }
 
   /* Call the routine to solve cooling equations. */
@@ -96,22 +93,22 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
     my_chemistry, my_rates, my_fields, &my_uvb_rates
   );
 
-  if (ierr == GR_FAIL) {
-    fprintf(stderr, "Error in solve_rate_cool_g.\n");
+  if (ierr != GR_SUCCESS) {
+    std::fprintf(stderr, "Error in solve_rate_cool_g.\n");
   }
 
   return ierr;
 
 }
 
-int solve_chemistry(code_units *my_units,
-                    grackle_field_data *my_fields,
-                    double dt_value)
+extern "C" int solve_chemistry(code_units *my_units,
+                               grackle_field_data *my_fields,
+                               double dt_value)
 {
   if (local_solve_chemistry(grackle_data, &grackle_rates,
-                            my_units, my_fields, dt_value) == FAIL) {
-    fprintf(stderr, "Error in local_solve_chemistry.\n");
-    return FAIL;
+                            my_units, my_fields, dt_value) != GR_SUCCESS) {
+    std::fprintf(stderr, "Error in local_solve_chemistry.\n");
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }

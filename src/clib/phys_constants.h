@@ -115,7 +115,12 @@
 
 /************************************************/
 
-/* (we may want to relocate these to a different file in the future) */
+/* TODO: After we finish transcribe calc_grain_size_increment_1d to C++, we
+ *       should remove these constants and instead use the values stored by
+ *       `GrainSpeciesInfoEntry::bulk_density_cgs`
+ *  -> to be clear, the values within GrainSpeciesInfoEntry::bulk_density_cgs
+ *     are hardcoded based on the values currently held by these constants.
+ */
 
 #define sSiM      2.34118e0
 #define sFeM      7.95995e0
