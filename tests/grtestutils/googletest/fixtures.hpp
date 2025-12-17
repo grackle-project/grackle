@@ -25,25 +25,30 @@
 
 namespace grtest {
 
-/// defines a parameterized test-fixture that can used to run a parametrized
-/// set of tests that are initialized with different chemistry data presets.
+/// test-fixture that can used to run one or more tests with a chemistry data
+/// configuration initialized from a given chemistry presets.
 ///
 /// This sets up a GrackleCtxPack (where the contents are configured with
 /// appropriate presets) and deallocates that memory at the end of the test.
 ///
 /// How To Use
 /// ==========
-/// To make use of this, you might create a subclass of this type that is named
-/// for the test suite. I don't love this strategy, but it seems to be the
-/// standard way to do things. We can revisit this in the future.
-class ParametrizedConfigPresetFixture
-    : public testing::TestWithParam<FullConfPreset> {
+/// To make use of this fixture in a test-suite called `MyFeatureTest`, you
+/// need to either:
+/// 1. make a type alias (via `using` or `typedef`), named `MyFeatureTest`, of
+///    the relevant instantiation of this class template, OR
+/// 2. make a subclass, named `MyFeatureTest`, of the relevant instantiation of
+///    this class template
+template <ChemPreset chem_preset, InitialUnitPreset unit_preset>
+class ConfigPresetFixture : public testing::Test {
 protected:
   void SetUp() override {
     // called immediately after the constructor (but before the test-case)
+
     grtest::InitStatus status;
-    pack_ = GrackleCtxPack::create(GetParam(), &status);
-    if (!pack_.is_initialized()) {
+    pack = GrackleCtxPack::create(FullConfPreset{chem_preset, unit_preset},
+                                  &status);
+    if (!pack.is_initialized()) {
       if (status == InitStatus::datafile_notfound) {
         GTEST_SKIP() << "something went wrong with finding the data file";
       } else {
@@ -52,7 +57,39 @@ protected:
     }
   }
 
-  GrackleCtxPack pack_;
+  GrackleCtxPack pack;
+};
+
+/// defines a parameterized test-fixture that can be used to run a parametrized
+/// set of tests that are initialized with different chemistry data presets.
+///
+/// This sets up a GrackleCtxPack (where the contents are configured with
+/// appropriate presets) and deallocates that memory at the end of the test.
+///
+/// How To Use
+/// ==========
+/// To make use of this fixture in a test-suite called `MyFeatureTest`, you
+/// need to either:
+/// 1. make a type alias (via `using` or `typedef`), named `MyFeatureTest`, of
+///    this class, OR
+/// 2. make a subclass, named `MyFeatureTest`, of this class
+class ParametrizedConfigPresetFixture
+    : public testing::TestWithParam<FullConfPreset> {
+protected:
+  void SetUp() override {
+    // called immediately after the constructor (but before the test-case)
+    grtest::InitStatus status;
+    pack = GrackleCtxPack::create(GetParam(), &status);
+    if (!pack.is_initialized()) {
+      if (status == InitStatus::datafile_notfound) {
+        GTEST_SKIP() << "something went wrong with finding the data file";
+      } else {
+        FAIL() << "Error in initialize_chemistry_data.";
+      }
+    }
+  }
+
+  GrackleCtxPack pack;
 };
 
 }  // namespace grtest

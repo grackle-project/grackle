@@ -249,16 +249,14 @@ bool equal_ghost_values(val_vec_map_t& ref, val_vec_map_t& actual,
   return true;
 }
 
-class APIGhostZoneTest: public grtest::ParametrizedConfigPresetFixture
-{};
+using APIGhostZoneTest = grtest::ParametrizedConfigPresetFixture;
 
 TEST_P(APIGhostZoneTest, GridZoneStartEnd) {
 
   grid_props my_grid_props = {{5,6,7}, {1,0,2}};
 
-  // alias the pack_ attribute tracked by the fixture
-  grtest::GrackleCtxPack& pack = pack_;
-  code_units my_units = pack_.initial_units();
+  // the pack attribute holds grtest::GrackleCtxPack
+  code_units my_units = pack.initial_units();
 
   // initialize pseudo random number generator
   std::uint32_t seed = 1379069008;

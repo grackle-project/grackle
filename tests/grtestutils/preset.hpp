@@ -34,6 +34,7 @@ enum class ChemPreset {
   primchem1,
   primchem2,
   primchem3,
+  primchem4_dustspecies3,
 };
 
 /// override the settings of my_chem based on the specified preset

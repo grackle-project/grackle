@@ -26,6 +26,8 @@ static std::string to_string(const grtest::ChemPreset& preset) {
       return "pc=2";
     case grtest::ChemPreset::primchem3:
       return "pc=3";
+    case grtest::ChemPreset::primchem4_dustspecies3:
+      return "pc=3-dust_species=4";
   }
 
   GR_INTERNAL_UNREACHABLE_ERROR();
@@ -66,6 +68,14 @@ grtest::InitStatus grtest::setup_chemistry_data_from_preset(
     case ChemPreset::primchem3: {
       my_chem->primordial_chemistry = 3;
       my_chem->dust_chemistry = 1;
+      return InitStatus::success;
+    }
+    case ChemPreset::primchem4_dustspecies3: {
+      my_chem->primordial_chemistry = 4;
+      my_chem->dust_chemistry = 1;
+      my_chem->metal_chemistry = 1;
+      my_chem->dust_species = 1;
+      my_chem->use_dust_density_field = 1;
       return InitStatus::success;
     }
   }
