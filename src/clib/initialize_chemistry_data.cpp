@@ -402,6 +402,7 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   my_rates->opaque_storage->n_kcol_rate_indices = 0;
   init_empty_interp_grid_props_(
     &my_rates->opaque_storage->h2dust_grain_interp_props);
+  my_rates->opaque_storage->grain_species_info = nullptr;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -629,12 +630,35 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     return FAIL;
   }
 
+  // start freeing memory associated with opaque storage
+  // ---------------------------------------------------
   if (my_rates->opaque_storage->kcol_rate_tables != nullptr) {
+    // delete contents of kcol_rate_tables
     drop_CollisionalRxnRateCollection(my_rates->opaque_storage->kcol_rate_tables);
+    // delete kcol_rate_tables, itself
     delete my_rates->opaque_storage->kcol_rate_tables;
   }
-  delete[] my_rates->opaque_storage->used_kcol_rate_indices;
+
+  if (my_rates->opaque_storage->used_kcol_rate_indices !=nullptr) {
+    // since used_kcol_rate_indices are just integers, we can directly
+    // deallocate them
+    delete[] my_rates->opaque_storage->used_kcol_rate_indices;
+  }
+
+  // delete contents of h2dust_grain_interp_props (automatically handles the
+  // case where we didn't allocate anything)
   free_interp_grid_props_(&my_rates->opaque_storage->h2dust_grain_interp_props);
+  // since h2dust_grain_interp_props isn't a pointer, there is nothing more to
+  // allocate right here
+
+  if (my_rates->opaque_storage->grain_species_info != nullptr) {
+    // delete contents of grain_species_info
+    grackle::impl::drop_GrainSpeciesInfo(
+      my_rates->opaque_storage->grain_species_info);
+    // delete kcol_rate_tables, itself
+    delete my_rates->opaque_storage->grain_species_info;
+  }
+
   delete my_rates->opaque_storage;
   my_rates->opaque_storage = nullptr;
 
