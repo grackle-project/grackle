@@ -364,43 +364,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
         // H * (k22 * H^2 - k13 * H_2) + H_2 * (k21 * H^2 - k23 * H_2) */
       }
     }
-
-    // !!!! output cooling rate for debug
-    //         d_max = 0._DKIND
-    //         do i = is+1, ie+1
-    //         if (itmask(i)) then
-    //            if (d(i,j,k) .gt. d_max) then
-    //               i_max = i
-    //               d_max = d(i,j,k)
-    //            endif
-    //         endif
-    //         enddo
-
-    // if (d_max * dom .gt. 1.e9_DKIND) then
-    //-        open(11,file='nH.dat',status='unknown',form='formatted'
-    //- &         , access='append'
-    //- &          )
-    //-        do i = is+1, ie+1
-    //-           if (itmask(i)) then
-    //-              write(11,'(6E13.5)')
-    //- &            d(i,j,k)*dom
-    //- &          , chunit * H2delta(i) * atten / d(i,j,k)
-    //- &          , 3.53_DKIND * k8 (i) * HM(i,j,k) * HI(i,j,k)
-    //- &             * h2heatfac(i) * chunit / d(i,j,k)
-    //- &          , 4.48_DKIND * k22(i) * HI(i,j,k)**2._DKIND * HI(i,j,k)
-    //- &             * h2heatfac(i) * chunit / d(i,j,k)
-    //- &          ,-4.48_DKIND * k13(i) * H2I(i,j,k)/2._DKIND * HI(i,j,k)
-    //- &                            *chunit / d(i,j,k)
-    //- &          ,(0.2_DKIND + 4.2_DKIND * h2heatfac(i)) * h2dust(i)
-    //- &             * HI(i,j,k) * rhoH(i) * chunit / d(i,j,k)
-    //-           endif
-    //-        enddo
-    //-        close(11)
-    // endif
-
-    // if (d_max * dom .gt. 1.e11_DKIND) then
-    //    stop
-    // endif
   }
 
   // Add photo-ionization rates if needed
