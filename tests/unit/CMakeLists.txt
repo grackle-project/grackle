@@ -1,12 +1,11 @@
-# NOTE: the grtestutils and testdeps library targets are both defined within
-#       ../grtestutils/CMakeLists.txt
+# NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
 add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
 target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
 
 add_executable(runLinAlgTests test_linalg.cpp)
-target_link_libraries(runLinAlgTests grtestutils)
+target_link_libraries(runLinAlgTests testdeps)
 gtest_discover_tests(runLinAlgTests)
 
 add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
@@ -14,7 +13,7 @@ target_link_libraries(runGrainSpeciesIntoTests testdeps)
 gtest_discover_tests(runGrainSpeciesIntoTests)
 
 add_executable(runStatusReporting test_status_reporting.cpp)
-target_link_libraries(runStatusReporting grtestutils)
+target_link_libraries(runStatusReporting testdeps)
 gtest_discover_tests(runStatusReporting)
 
 # one might argue that the following is more of an integration or end-to-end
@@ -26,7 +25,7 @@ gtest_discover_tests(runVisitorTests)
 # one might argue that the following is more of an integration or end-to-end
 # test than a unit-test
 add_executable(runGhostZoneTests test_ghost_zone.cpp)
-target_link_libraries(runGhostZoneTests grtestutils testdeps)
+target_link_libraries(runGhostZoneTests testdeps)
 gtest_discover_tests(runGhostZoneTests)
 
 # this target tests that the members of the chemistry_data struct can be
@@ -36,7 +35,7 @@ gtest_discover_tests(runGhostZoneTests)
 # problems for "death-tests", so these test-cases should remain separate from
 # the rest of the gtest framework
 add_executable(runSyncedChemistryData test_chemistry_struct_synced.cpp)
-target_link_libraries(runSyncedChemistryData grtestutils testdeps)
+target_link_libraries(runSyncedChemistryData testdeps)
 target_compile_definitions(runSyncedChemistryData
   PRIVATE
     READER_PATH=${PROJECT_SOURCE_DIR}/tests/scripts/castxml_output_reader.py
