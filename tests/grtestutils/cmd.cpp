@@ -1,4 +1,4 @@
-#include "grtest_cmd.hpp"
+#include "cmd.hpp"
 
 #include <stdio.h>  // FILE, fgets, fprintf, stderr, (popen/pclose on POSIX)
 
