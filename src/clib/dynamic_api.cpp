@@ -26,19 +26,19 @@ namespace {  // stuff in an anonymous namespace is only visible to this file
 /// This is collection of enumerators, with an enumerator named for EVERY
 /// parameter. Importantly, each enumerator has a unique value (that we use
 /// in a giant switch-statement).
-enum ParamEnum {
-#define ENTRY(FIELD, TYPE, DEFAULT_VAL) ParamEnum_ ## FIELD,
+enum class ParamEnum {
+#define ENTRY(FIELD, TYPE, DEFAULT_VAL) FIELD,
 #include "grackle_chemistry_data_fields.def"
 #undef ENTRY
 
-  ParamEnum_NUM_ENTRIES  // <- always last (so it specifies number of entries)
+  NUM_ENTRIES  // <- always last (so it specifies number of entries)
 };
 
 // initialize int_param_l_, double_param_l_ & string_param_l_. They are sized
 // lists that respectively hold entries for each int, double, and string field
 // in chemistry_data. These are only used internally
 struct param_entry {
-  const enum ParamEnum enum_val;
+  const ParamEnum enum_val;
   const char * name;
 };
 
@@ -49,17 +49,17 @@ struct param_list {
 
 #define INIT_PAR_LIST(ENTRIES) {sizeof(ENTRIES) / sizeof(param_entry), ENTRIES}
 
-#define LIST_INT_INT(FIELD) {ParamEnum_ ## FIELD, #FIELD},
+#define LIST_INT_INT(FIELD) {ParamEnum::FIELD, #FIELD},
 #define LIST_INT_DOUBLE(FIELD) /* ... */
 #define LIST_INT_STRING(FIELD) /* ... */
 
 #define LIST_DOUBLE_INT(FIELD) /* ... */
-#define LIST_DOUBLE_DOUBLE(FIELD) {ParamEnum_ ## FIELD, #FIELD},
+#define LIST_DOUBLE_DOUBLE(FIELD) {ParamEnum::FIELD, #FIELD},
 #define LIST_DOUBLE_STRING(FIELD) /* ... */
 
 #define LIST_STRING_INT(FIELD) /* ... */
 #define LIST_STRING_DOUBLE(FIELD) /* ... */
-#define LIST_STRING_STRING(FIELD) {ParamEnum_ ## FIELD, #FIELD},
+#define LIST_STRING_STRING(FIELD) {ParamEnum::FIELD, #FIELD},
 
 constexpr param_entry int_param_entries_[] = {
   #define ENTRY(FIELD, TYPE, DEFAULT_VAL) LIST_INT_ ## TYPE(FIELD)
@@ -107,7 +107,7 @@ static void* get_field_ptr_(chemistry_data* my_chemistry, const char* name,
   if (my_chemistry == nullptr) { return nullptr; }
 
   // lookup the enum value associated with name
-  enum ParamEnum enum_val = ParamEnum_NUM_ENTRIES;
+  enum ParamEnum enum_val = ParamEnum::NUM_ENTRIES;
   for (std::size_t param_index = 0; param_index < my_param_l.len; param_index++){
     const param_entry* entry = my_param_l.entries + param_index;
     if (std::strcmp(entry->name, name) == 0) {
@@ -119,11 +119,11 @@ static void* get_field_ptr_(chemistry_data* my_chemistry, const char* name,
   // now use a switch statement to actually return the appropriate pointer
   switch (enum_val) {
     #define ENTRY(FIELD, TYPE, DEFAULT_VAL)                              \
-      case ParamEnum_ ## FIELD: { return (void*)(&my_chemistry->FIELD); }
+      case ParamEnum::FIELD: { return (void*)(&my_chemistry->FIELD); }
     #include "grackle_chemistry_data_fields.def"
     #undef ENTRY
 
-    case ParamEnum_NUM_ENTRIES: return nullptr;  // <- unknown name
+      case ParamEnum::NUM_ENTRIES: return nullptr;  // <- unknown name
   }
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
