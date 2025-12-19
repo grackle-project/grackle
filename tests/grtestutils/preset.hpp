@@ -13,6 +13,7 @@
 #define GRTESTUTILS_PRESET_HPP
 
 #include "grackle.h"
+#include <memory>
 #include <string>
 #include <ostream>
 
