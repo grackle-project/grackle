@@ -16,10 +16,12 @@
 / software.
 ************************************************************************/
 
-#include <stddef.h>
-#include <string.h>
+#include <cstddef>
+#include <cstring>
 #include "grackle_chemistry_data.h"
 #include "status_reporting.h"
+
+namespace {  // stuff in an anonymous namespace is only visible to this file
 
 /// This is collection of enumerators, with an enumerator named for EVERY
 /// parameter. Importantly, each enumerator has a unique value (that we use
@@ -35,12 +37,15 @@ enum ParamEnum {
 // initialize int_param_l_, double_param_l_ & string_param_l_. They are sized
 // lists that respectively hold entries for each int, double, and string field
 // in chemistry_data. These are only used internally
-typedef struct {
+struct param_entry {
   const enum ParamEnum enum_val;
   const char * name;
-} param_entry;
+};
 
-typedef struct { const size_t len; const param_entry * entries; } param_list;
+struct param_list {
+  const std::size_t len;
+  const param_entry * entries;
+};
 
 #define INIT_PAR_LIST(ENTRIES) {sizeof(ENTRIES) / sizeof(param_entry), ENTRIES}
 
@@ -56,26 +61,27 @@ typedef struct { const size_t len; const param_entry * entries; } param_list;
 #define LIST_STRING_DOUBLE(FIELD) /* ... */
 #define LIST_STRING_STRING(FIELD) {ParamEnum_ ## FIELD, #FIELD},
 
-static const param_entry int_param_entries_[] = {
+constexpr param_entry int_param_entries_[] = {
   #define ENTRY(FIELD, TYPE, DEFAULT_VAL) LIST_INT_ ## TYPE(FIELD)
   #include "grackle_chemistry_data_fields.def"
   #undef ENTRY
 };
-static const param_list int_param_l_ = INIT_PAR_LIST(int_param_entries_);
+constexpr param_list int_param_l_ = INIT_PAR_LIST(int_param_entries_);
 
-static const param_entry double_param_entries_[] = {
+constexpr param_entry double_param_entries_[] = {
   #define ENTRY(FIELD, TYPE, DEFAULT_VAL) LIST_DOUBLE_ ## TYPE(FIELD)
   #include "grackle_chemistry_data_fields.def"
   #undef ENTRY
 };
-static const param_list double_param_l_ = INIT_PAR_LIST(double_param_entries_);
+constexpr param_list double_param_l_ =
+  INIT_PAR_LIST(double_param_entries_);
 
-static const param_entry string_param_entries_[] = {
+constexpr param_entry string_param_entries_[] = {
   #define ENTRY(FIELD, TYPE, DEFAULT_VAL) LIST_STRING_ ## TYPE(FIELD)
   #include "grackle_chemistry_data_fields.def"
   #undef ENTRY
 };
-static const param_list string_param_l_ = INIT_PAR_LIST(string_param_entries_);
+constexpr param_list string_param_l_ = INIT_PAR_LIST(string_param_entries_);
 
 
 // define functions for accessing field values
@@ -93,18 +99,18 @@ static const param_list string_param_l_ = INIT_PAR_LIST(string_param_entries_);
 
 /// retrieves a pointer to the field of my_chemistry that's named ``name``.
 ///
-/// This returns a NULL pointer if: my_chemistry is NULL, the field doesn't
+/// This returns a nullptr pointer if: my_chemistry is nullptr, the field doesn't
 /// exist, or the field doesn't have the specified type
 static void* get_field_ptr_(chemistry_data* my_chemistry, const char* name,
                             const param_list my_param_l)
 {
-  if (my_chemistry == NULL) { return NULL; }
+  if (my_chemistry == nullptr) { return nullptr; }
 
   // lookup the enum value associated with name
   enum ParamEnum enum_val = ParamEnum_NUM_ENTRIES;
-  for (size_t param_index = 0; param_index < my_param_l.len; param_index++){
+  for (std::size_t param_index = 0; param_index < my_param_l.len; param_index++){
     const param_entry* entry = my_param_l.entries + param_index;
-    if (strcmp(entry->name, name) == 0) {
+    if (std::strcmp(entry->name, name) == 0) {
       enum_val = entry->enum_val;
       break;
     }
@@ -117,10 +123,14 @@ static void* get_field_ptr_(chemistry_data* my_chemistry, const char* name,
     #include "grackle_chemistry_data_fields.def"
     #undef ENTRY
 
-    case ParamEnum_NUM_ENTRIES: return NULL;  // <- unknown name
+    case ParamEnum_NUM_ENTRIES: return nullptr;  // <- unknown name
   }
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
+
+}  // anonymous namespace
+
+extern "C" {
 
 int* local_chemistry_data_access_int(chemistry_data* my_chemistry,
                                      const char* param_name)
@@ -134,6 +144,8 @@ char** local_chemistry_data_access_string(chemistry_data* my_chemistry,
                                           const char* param_name)
 { return (char**)get_field_ptr_(my_chemistry, param_name, string_param_l_); }
 
+} // extern "C"
+
 // define functions for accessing the names of chemistry_data:
 //   param_name_int, param_name_double, param_name_string
 //
@@ -141,9 +153,11 @@ char** local_chemistry_data_access_string(chemistry_data* my_chemistry,
 // serialization.
 
 // returns the name of the ``i``th parameter of the specified type. This returns
-// NULL when there are ``i`` or fewer parameters of the specified type
-static const char* param_name_(size_t i, const param_list my_param_list)
-{ return (i < my_param_list.len) ? my_param_list.entries[i].name : NULL; }
+// nullptr when there are ``i`` or fewer parameters of the specified type
+static const char* param_name_(std::size_t i, const param_list my_param_list)
+{ return (i < my_param_list.len) ? my_param_list.entries[i].name : nullptr; }
+
+extern "C" {
 
 const char* param_name_int(unsigned int i)
 {return param_name_(i,int_param_l_);}
@@ -154,14 +168,16 @@ const char* param_name_string(unsigned int i)
 
 // function to query the number of parameters of chemistry_data of a given type
 unsigned int grackle_num_params(const char* type_name){
-  if (type_name == NULL) {
+  if (type_name == nullptr) {
     return 0;
-  } else if (strcmp(type_name, "int") == 0) {
+  } else if (std::strcmp(type_name, "int") == 0) {
     return (unsigned int) int_param_l_.len;
-  } else if (strcmp(type_name, "double") == 0) {
+  } else if (std::strcmp(type_name, "double") == 0) {
     return (unsigned int) double_param_l_.len;
-  } else if (strcmp(type_name, "string") == 0) {
+  } else if (std::strcmp(type_name, "string") == 0) {
     return (unsigned int) string_param_l_.len;
   }
   return 0;
 }
+
+} // extern "C"
