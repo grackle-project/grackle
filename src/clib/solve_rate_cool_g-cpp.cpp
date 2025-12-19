@@ -839,7 +839,7 @@ int solve_rate_cool_g(
           grackle::impl::rate_timestep_g(
             spsolvbuf.dedot, spsolvbuf.HIdot, anydust, spsolvbuf.h2dust,
             rhoH.data(), itmask.data(), edot.data(),
-            chunit, dom, my_chemistry, my_fields, *my_uvb_rates, idx_range,
+            chunit, dom, my_chemistry, my_fields, idx_range,
             spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
             spsolvbuf.chemheatrates_buf
           );

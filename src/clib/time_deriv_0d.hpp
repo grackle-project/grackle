@@ -518,11 +518,11 @@ void derivatives(
 
     grackle::impl::rate_timestep_g(
       pack.other_scratch_buf.dedot, pack.other_scratch_buf.HIdot,
-      pack.fwd_args.anydust, pack.other_scratch_buf.h2dust, 
-      pack.other_scratch_buf.rhoH, pack.other_scratch_buf.itmask, 
-      pack.other_scratch_buf.edot, pack.fwd_args.chunit, 
-      pack.fwd_args.dom, my_chemistry, &pack.fields, 
-      my_uvb_rates, pack.idx_range_1_element, 
+      pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
+      pack.other_scratch_buf.rhoH, pack.other_scratch_buf.itmask,
+      pack.other_scratch_buf.edot, pack.fwd_args.chunit,
+      pack.fwd_args.dom, my_chemistry, &pack.fields,
+      pack.idx_range_1_element,
       pack.main_scratch_buf.kcr_buf,
       pack.main_scratch_buf.kshield_buf,
       pack.main_scratch_buf.chemheatrates_buf
