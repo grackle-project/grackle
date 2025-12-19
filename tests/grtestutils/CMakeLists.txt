@@ -86,6 +86,7 @@ add_library(grtestutils
   utils.hpp utils.cpp
 
   # files in the googletest subdirectory (reminder: should just be headers!)
+  googletest/assertions.hpp
   googletest/check_allclose.hpp
   googletest/fixtures.hpp
 )

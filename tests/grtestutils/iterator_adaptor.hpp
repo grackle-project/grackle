@@ -13,6 +13,7 @@
 #define GRTESTUTILS_ITERATOR_ADAPTOR_HPP
 
 #include <iterator>
+#include <ostream>
 #include <string>
 
 #include "grackle.h"
@@ -25,6 +26,14 @@ struct NameIdPair {
   std::string name;
   long long id;
 };
+
+/// teach std::ostream how to format NameIdPair
+///
+/// The motivation is to make it easier write detailed error messages
+inline std::ostream& operator<<(std::ostream& os, const NameIdPair& pair) {
+  os << "{name=\"" << pair.name << "\", id=" << pair.id << "}";
+  return os;
+}
 
 /// implements a C++ style InputIterator by adapting a simple Plugin type
 /// that wraps a set of Grackle functions
