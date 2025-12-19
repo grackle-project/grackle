@@ -129,7 +129,8 @@ target_compile_definitions(grtestutils
 
 add_library(testdeps INTERFACE)
 target_link_libraries(testdeps
-  INTERFACE Grackle::Grackle grtestutils _grackle_internals GTest::gtest_main
+  INTERFACE Grackle::Grackle grtestutils _grackle_internals
+            GTest::gtest_main GTest::gmock
 )
 # indicates that all consumers are written in C++17 or newer
 target_compile_features(testdeps INTERFACE cxx_std_17)
