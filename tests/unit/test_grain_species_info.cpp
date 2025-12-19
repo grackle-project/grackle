@@ -11,6 +11,7 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <ostream>
 #include <vector>
 #include <string>
 #include <string_view>
@@ -103,9 +104,24 @@ TEST(OnlyGrainSpLUTTest, CheckNumEntries) {
   ASSERT_EQ(OnlyGrainSpLUT::NUM_ENTRIES, number_known_grain_species());
 }
 
+/// represents the dust_species parameter of chemistry_data
+///
+/// @note
+/// This **ONLY** exists to make the test names more concise
+enum class DustSpeciesParam : int {
+  DustSpeciesEq1 = 1,
+  DustSpeciesEq2 = 2,
+  DustSpeciesEq3 = 3,
+};
+
+// teach googletest how to print DustSpeciesParam
+void PrintTo(const DustSpeciesParam dust_species_param, std::ostream* os) {
+  *os << "DustSpeciesEq" << static_cast<int>(dust_species_param);
+}
+
 /// Define a fixture for running parameterized tests of the GrainSpeciesInfo
 /// machinery. The tests are parameterized by the dust_species parameter.
-class GrainSpeciesInfoTest : public testing::TestWithParam<int> {
+class GrainSpeciesInfoTest : public testing::TestWithParam<DustSpeciesParam> {
 protected:
   /// set up the grain_species_info pointer
   ///
@@ -113,7 +129,7 @@ protected:
   /// We **ONLY** perform setup in this method (rather than in a default
   /// constructor) because we want to perform some basic sanity checks
   void SetUp() override {
-    int dust_species = GetParam();
+    int dust_species = static_cast<int>(GetParam());
     grain_species_info_ = make_unique_GrainSpeciesInfo(dust_species);
 
     // perform 3 sanity checks!
@@ -130,7 +146,8 @@ protected:
   unique_GrainSpeciesInfo_ptr grain_species_info_;
 };
 
-TEST_P(GrainSpeciesInfoTest, CheckOnlyGrainSpeciesLUTConsistency) {
+TEST_P(GrainSpeciesInfoTest, OnlyGrainSpeciesLUT) {
+  // this test seeks to check consistency with the LUT
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
     // sanity check!
@@ -146,7 +163,7 @@ TEST_P(GrainSpeciesInfoTest, CheckOnlyGrainSpeciesLUTConsistency) {
   }
 }
 
-TEST_P(GrainSpeciesInfoTest, SublimationTemperature) {
+TEST_P(GrainSpeciesInfoTest, SublimationTemp) {
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
     // sanity check!
@@ -182,14 +199,10 @@ TEST_P(GrainSpeciesInfoTest, SpeciesLUTCompare) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    ,  // <- this comma is meaningful
-    GrainSpeciesInfoTest, testing::Range(1, MAX_dust_species_VAL + 1),
-    // adjust how the value is formatted in the test name
-    [](const testing::TestParamInfo<GrainSpeciesInfoTest::ParamType>& info) {
-      int val = info.param;
-      std::string name = "DustSpeciesEq" + std::to_string(val);
-      return name;
-    });
+    /* 1st arg is intentionally empty */, GrainSpeciesInfoTest,
+    testing::Values(DustSpeciesParam::DustSpeciesEq1,
+                    DustSpeciesParam::DustSpeciesEq2,
+                    DustSpeciesParam::DustSpeciesEq3));
 
 // check the GrainSpeciesInfo object when constructed from dust_species
 // parameters that hold extreme values
