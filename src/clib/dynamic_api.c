@@ -20,7 +20,7 @@
 #include <string.h>
 #include "grackle_chemistry_data.h"
 
-// initialize _int_param_l, _double_param_l & _string_param_l. They are sized
+// initialize int_param_l_, double_param_l_ & string_param_l_. They are sized
 // lists that respectively hold entries for each int, double, and string field
 // in chemistry_data. These are only used internally
 typedef struct { const size_t offset; const char * name; } param_entry;
@@ -28,38 +28,38 @@ typedef struct { const size_t len; const param_entry * entries; } param_list;
 
 #define INIT_PAR_LIST(ENTRIES) {sizeof(ENTRIES) / sizeof(param_entry), ENTRIES}
 
-#define _LIST_INT_INT(FIELD) {offsetof(chemistry_data, FIELD), #FIELD},
-#define _LIST_INT_DOUBLE(FIELD) /* ... */
-#define _LIST_INT_STRING(FIELD) /* ... */
+#define LIST_INT_INT(FIELD) {offsetof(chemistry_data, FIELD), #FIELD},
+#define LIST_INT_DOUBLE(FIELD) /* ... */
+#define LIST_INT_STRING(FIELD) /* ... */
 
-#define _LIST_DOUBLE_INT(FIELD) /* ... */
-#define _LIST_DOUBLE_DOUBLE(FIELD) {offsetof(chemistry_data, FIELD), #FIELD},
-#define _LIST_DOUBLE_STRING(FIELD) /* ... */
+#define LIST_DOUBLE_INT(FIELD) /* ... */
+#define LIST_DOUBLE_DOUBLE(FIELD) {offsetof(chemistry_data, FIELD), #FIELD},
+#define LIST_DOUBLE_STRING(FIELD) /* ... */
 
-#define _LIST_STRING_INT(FIELD) /* ... */
-#define _LIST_STRING_DOUBLE(FIELD) /* ... */
-#define _LIST_STRING_STRING(FIELD) {offsetof(chemistry_data, FIELD), #FIELD},
+#define LIST_STRING_INT(FIELD) /* ... */
+#define LIST_STRING_DOUBLE(FIELD) /* ... */
+#define LIST_STRING_STRING(FIELD) {offsetof(chemistry_data, FIELD), #FIELD},
 
-static const param_entry _int_param_entries[] = {
-  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) _LIST_INT_ ## TYPE(FIELD)
+static const param_entry int_param_entries_[] = {
+  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) LIST_INT_ ## TYPE(FIELD)
   #include "grackle_chemistry_data_fields.def"
   #undef ENTRY
 };
-static const param_list _int_param_l = INIT_PAR_LIST(_int_param_entries);
+static const param_list int_param_l_ = INIT_PAR_LIST(int_param_entries_);
 
-static const param_entry _double_param_entries[] = {
-  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) _LIST_DOUBLE_ ## TYPE(FIELD)
+static const param_entry double_param_entries_[] = {
+  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) LIST_DOUBLE_ ## TYPE(FIELD)
   #include "grackle_chemistry_data_fields.def"
   #undef ENTRY
 };
-static const param_list _double_param_l = INIT_PAR_LIST(_double_param_entries);
+static const param_list double_param_l_ = INIT_PAR_LIST(double_param_entries_);
 
-static const param_entry _string_param_entries[] = {
-  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) _LIST_STRING_ ## TYPE(FIELD)
+static const param_entry string_param_entries_[] = {
+  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) LIST_STRING_ ## TYPE(FIELD)
   #include "grackle_chemistry_data_fields.def"
   #undef ENTRY
 };
-static const param_list _string_param_l = INIT_PAR_LIST(_string_param_entries);
+static const param_list string_param_l_ = INIT_PAR_LIST(string_param_entries_);
 
 
 // define functions for accessing field values
@@ -79,7 +79,7 @@ static const param_list _string_param_l = INIT_PAR_LIST(_string_param_entries);
 //
 // This returns a NULL pointer if: my_chemistry is NULL, the field doesn't
 // exist, or the field doesn't have the specified type
-static void* _get_field_ptr(chemistry_data* my_chemistry, const char* name,
+static void* get_field_ptr_(chemistry_data* my_chemistry, const char* name,
                             const param_list my_param_l)
 {
   if (my_chemistry == NULL) { return NULL; }
@@ -95,15 +95,15 @@ static void* _get_field_ptr(chemistry_data* my_chemistry, const char* name,
 
 int* local_chemistry_data_access_int(chemistry_data* my_chemistry,
                                      const char* param_name)
-{ return (int*)_get_field_ptr(my_chemistry, param_name, _int_param_l); }
+{ return (int*)get_field_ptr_(my_chemistry, param_name, int_param_l_); }
 
 double* local_chemistry_data_access_double(chemistry_data* my_chemistry,
                                            const char* param_name)
-{ return (double*)_get_field_ptr(my_chemistry, param_name, _double_param_l); }
+{ return (double*)get_field_ptr_(my_chemistry, param_name, double_param_l_); }
 
 char** local_chemistry_data_access_string(chemistry_data* my_chemistry,
                                           const char* param_name)
-{ return (char**)_get_field_ptr(my_chemistry, param_name, _string_param_l); }
+{ return (char**)get_field_ptr_(my_chemistry, param_name, string_param_l_); }
 
 // define functions for accessing the names of chemistry_data:
 //   param_name_int, param_name_double, param_name_string
@@ -113,26 +113,26 @@ char** local_chemistry_data_access_string(chemistry_data* my_chemistry,
 
 // returns the name of the ``i``th parameter of the specified type. This returns
 // NULL when there are ``i`` or fewer parameters of the specified type
-static const char* _param_name(size_t i, const param_list my_param_list)
+static const char* param_name_(size_t i, const param_list my_param_list)
 { return (i < my_param_list.len) ? my_param_list.entries[i].name : NULL; }
 
 const char* param_name_int(unsigned int i)
-{return _param_name(i,_int_param_l);}
+{return param_name_(i,int_param_l_);}
 const char* param_name_double(unsigned int i)
-{return _param_name(i,_double_param_l);}
+{return param_name_(i,double_param_l_);}
 const char* param_name_string(unsigned int i)
-{return _param_name(i,_string_param_l);}
+{return param_name_(i,string_param_l_);}
 
 // function to query the number of parameters of chemistry_data of a given type
 unsigned int grackle_num_params(const char* type_name){
   if (type_name == NULL) {
     return 0;
   } else if (strcmp(type_name, "int") == 0) {
-    return (unsigned int)_int_param_l.len;
+    return (unsigned int) int_param_l_.len;
   } else if (strcmp(type_name, "double") == 0) {
-    return (unsigned int) _double_param_l.len;
+    return (unsigned int) double_param_l_.len;
   } else if (strcmp(type_name, "string") == 0) {
-    return (unsigned int) _string_param_l.len;
+    return (unsigned int) string_param_l_.len;
   }
   return 0;
 }
