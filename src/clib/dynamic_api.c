@@ -125,7 +125,9 @@ const char* param_name_string(unsigned int i)
 
 // function to query the number of parameters of chemistry_data of a given type
 unsigned int grackle_num_params(const char* type_name){
-  if (strcmp(type_name, "int") == 0) {
+  if (type_name == NULL) {
+    return 0;
+  } else if (strcmp(type_name, "int") == 0) {
     return (unsigned int)_int_param_l.len;
   } else if (strcmp(type_name, "double") == 0) {
     return (unsigned int) _double_param_l.len;

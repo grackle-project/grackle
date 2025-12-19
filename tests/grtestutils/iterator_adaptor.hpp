@@ -19,7 +19,6 @@
 #include "preset.hpp"
 
 namespace grtest {
-
 /// the standard value-type that an IteratorAdaptor instantiation refers to
 struct NameIdPair {
   std::string name;
@@ -130,6 +129,59 @@ public:
   explicit RateQueryRange(grtest::GrackleCtxPack& pack)
       : plugin_(RateQueryPlugin{pack.my_rates()}),
         n_rates_(grunstable_ratequery_nrates(pack.my_rates())) {}
+
+  iterator begin() { return iterator(0, n_rates_, plugin_); }
+  iterator end() { return iterator(n_rates_, n_rates_, plugin_); }
+};
+
+}  // namespace grtest
+
+// Now lets use this machinery to implement logic for iterating over the names
+// of chemistry parameters
+extern "C" {
+typedef const char* param_name_fn(unsigned int);
+}
+
+namespace grtest {
+
+struct ParamItrPlugin {
+  param_name_fn* fn;
+
+  NameIdPair operator()(unsigned long long i) const {
+    return {fn(static_cast<unsigned>(i)), static_cast<long long>(i)};
+  }
+
+  bool operator==(const ParamItrPlugin& other) const { return fn == other.fn; }
+};
+
+enum class ChemParamType { INT, DOUBLE, STRING };
+
+/// used for creating the iterator and within range-based for-loops
+class ChemParamRange {
+  using iterator = IteratorAdaptor<ParamItrPlugin>;
+  ParamItrPlugin plugin_;
+  long long n_rates_;
+
+public:
+  explicit ChemParamRange(grtest::ChemParamType param) {
+    switch (param) {
+      case ChemParamType::INT:
+        n_rates_ = grackle_num_params("int");
+        plugin_ = ParamItrPlugin{&param_name_int};
+        break;
+      case ChemParamType::DOUBLE:
+        n_rates_ = grackle_num_params("double");
+        plugin_ = ParamItrPlugin{&param_name_double};
+        break;
+      case ChemParamType::STRING:
+        n_rates_ = grackle_num_params("string");
+        plugin_ = ParamItrPlugin{&param_name_string};
+        break;
+      default:  // should NEVER come up (but the behavior is well-defined)
+        n_rates_ = 0;
+        plugin_ = ParamItrPlugin{nullptr};
+    }
+  }
 
   iterator begin() { return iterator(0, n_rates_, plugin_); }
   iterator end() { return iterator(n_rates_, n_rates_, plugin_); }
