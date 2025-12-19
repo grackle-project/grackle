@@ -46,16 +46,17 @@ namespace grackle::impl {
 /// @param[in] kcr_buf Holds various pre-computed chemical reaction rates for
 ///    each location in `idx_range`.
 /// @param[in] kshield_buf Holds various pre-computed radiative reaction rates
-/// @param[in] chemheatrates_buf Holds various pre-computed chemistry-heating rates
+/// @param[in] chemheatrates_buf Holds various pre-computed chemistry-heating
+/// rates
 ///    at each index-range location
 /// @par History
 /// written by:
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
 void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
-                     const double* h2dust, const double* rhoH, const gr_mask_type* itmask,
-                     double* edot, double chunit, double dom,
-                     chemistry_data* my_chemistry,
+                     const double* h2dust, const double* rhoH,
+                     const gr_mask_type* itmask, double* edot, double chunit,
+                     double dom, chemistry_data* my_chemistry,
                      grackle_field_data* my_fields, IndexRange idx_range,
                      grackle::impl::CollisionalRxnRateCollection kcr_buf,
                      grackle::impl::PhotoRxnRateCollection kshield_buf,
