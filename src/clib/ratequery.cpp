@@ -190,7 +190,7 @@ struct ratequery_rslt_ {
 };
 
 static ratequery_rslt_ invalid_rslt_() {
-  return {UNDEFINED_RATE_ID_, {nullptr, nullptr}};
+  return {UNDEFINED_RATE_ID_, mk_invalid_Entry()};
 }
 
 static const Registry* get_registry(const chemistry_data_storage* my_rates) {
