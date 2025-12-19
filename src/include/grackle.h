@@ -313,6 +313,10 @@ const char* grunstable_ith_rate(
   grunstable_rateid_type* out_rate_id
 );
 
+/// Query the number of rates accessible through the ratequery API
+unsigned long long grunstable_ratequery_nrates(
+    const chemistry_data_storage* my_rates);
+
 /** @}*/ // end of group
 
 #ifdef __cplusplus

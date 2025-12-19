@@ -22,7 +22,6 @@
 
 /// returns the rateid used to denote invalid rate names
 grunstable_rateid_type get_invalid_rateid(const grtest::GrackleCtxPack& pack) {
-  // although we don't use pack, yet a forthcoming refactor requires it
   return grunstable_ratequery_id(pack.my_rates(), nullptr);
 }
 
@@ -34,6 +33,15 @@ TEST_F(SimpleRateQueryTest, InvalidIthRate) {
   const char* name = grunstable_ith_rate(
       pack.my_rates(), std::numeric_limits<unsigned long long>::max(), nullptr);
   EXPECT_EQ(name, nullptr);
+}
+
+TEST_F(SimpleRateQueryTest, IthRateChecks) {
+  chemistry_data_storage* my_rates = pack.my_rates();
+  unsigned long long n_rates = grunstable_ratequery_nrates(my_rates);
+  ASSERT_GT(n_rates, 0);  // <- sanity check!
+  EXPECT_NE(nullptr, grunstable_ith_rate(my_rates, n_rates - 1, nullptr));
+  EXPECT_EQ(nullptr, grunstable_ith_rate(my_rates, n_rates, nullptr));
+  EXPECT_EQ(nullptr, grunstable_ith_rate(my_rates, n_rates + 1, nullptr));
 }
 
 TEST_F(SimpleRateQueryTest, EmptyNameQuery) {

@@ -315,3 +315,15 @@ extern "C" const char* grunstable_ith_rate(
   }
   return tmp.entry.name;
 }
+
+extern "C" unsigned long long grunstable_ratequery_nrates(
+    const chemistry_data_storage* my_rates) {
+  namespace rate_q = grackle::impl::ratequery;
+  const rate_q::Registry* registry = my_rates->opaque_storage->registry;
+
+  unsigned long long out = 0;
+  for (int i = 0; i < registry->len; i++) {
+    out += static_cast<unsigned long long>(registry->sets[i].len);
+  }
+  return out;
+}

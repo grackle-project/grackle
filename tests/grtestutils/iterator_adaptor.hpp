@@ -109,17 +109,6 @@ struct RateQueryPlugin {
   }
 };
 
-// will be implemented (in a much more robust manner) in the near future
-inline unsigned long long grunstable_ratequery_nrates(
-    const chemistry_data_storage* my_rates) {
-  // current implementation is stupid! (in future, will use my_rates)
-  unsigned long long i = 0;
-  while (nullptr != grunstable_ith_rate(my_rates, i, nullptr)) {
-    i++;
-  }
-  return i;
-}
-
 /// used for creating the iterator and within range-based for-loops
 class RateQueryRange {
   RateQueryPlugin plugin_;
