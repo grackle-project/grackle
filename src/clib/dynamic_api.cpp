@@ -99,8 +99,10 @@ constexpr param_list string_param_l_ = INIT_PAR_LIST(string_param_entries_);
 
 /// retrieves a pointer to the field of my_chemistry that's named ``name``.
 ///
-/// This returns a nullptr pointer if: my_chemistry is nullptr, the field doesn't
-/// exist, or the field doesn't have the specified type
+/// This returns a nullptr pointer if:
+/// - my_chemistry is nullptr
+/// - the field doesn't exist
+/// - the field doesn't have the specified type
 static void* get_field_ptr_(chemistry_data* my_chemistry, const char* name,
                             const param_list my_param_l)
 {
@@ -152,8 +154,9 @@ char** local_chemistry_data_access_string(chemistry_data* my_chemistry,
 // These are primarily needed for testing purposes and can be used for
 // serialization.
 
-// returns the name of the ``i``th parameter of the specified type. This returns
-// nullptr when there are ``i`` or fewer parameters of the specified type
+/// returns the name of the ``i``th parameter of the specified type. This
+/// returns nullptr when there are ``i`` or fewer parameters of the specified
+/// type
 static const char* param_name_(std::size_t i, const param_list my_param_list)
 { return (i < my_param_list.len) ? my_param_list.entries[i].name : nullptr; }
 
@@ -180,4 +183,4 @@ unsigned int grackle_num_params(const char* type_name){
   return 0;
 }
 
-} // extern "C"
+}  // extern "C"
