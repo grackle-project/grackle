@@ -75,6 +75,5 @@ tests/unit/test_chemistry_struct_synced.cpp
 tests/unit/test_ghost_zone.cpp
 tests/unit/test_interpolators_comparisons.cpp
 tests/unit/test_linalg.cpp
-tests/unit/test_status_reporting.cpp
 tests/unit/test_unit_interpolators_g.cpp
 
