@@ -1,26 +1,13 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
-// the following 2 headers are the c versions of the headers (rather than the
-// C++ versions) since it seems more likely that posix-specific functions are
-// provided in this version
-//#include <stdio.h> // fflush, tmpfile, fread, fileno
-//#include <stdlib.h> // mkstemp, getenv
-
-#include <memory>
+#include <memory>  // unique_ptr
 #include <string>
 
 #include "grackle.h" // GR_FAIL
 #include "status_reporting.h"
 
 #include "grtestutils/os.hpp"
-
-
-testing::AssertionResult ContainsFormattedMessage_(int n) {
-  if ((n % 2) == 0)
-    return testing::AssertionSuccess();
-  else
-    return testing::AssertionFailure() << n << " is odd";
-}
 
 
 TEST(StatusReportingTest, PrintErrMsg) {
@@ -34,17 +21,11 @@ TEST(StatusReportingTest, PrintErrMsg) {
   }
 
   GrPrintErrMsg("message with string: `%s` & int: %d", "str", 4);
-  const char* expected_msg = "message with string: `str` & int: 4";
-
   // end the capture
   std::string msg = capstderr->end_capture();
 
-  // now do some checking (it would be cleaner to use gmock's matchers)
-  ASSERT_GT(msg.size(), 0) << "nothing seems to have printed";
-  EXPECT_EQ(msg[msg.size()-1], '\n') << "we expect a trailing newline";
-  ASSERT_NE(msg.find(expected_msg), std::string::npos)
-    << "The error message doesn't contain the substring \"" << expected_msg
-    << "\". The contents of the message is: \"" << msg << '"';
+  EXPECT_THAT(msg, testing::EndsWith("\n"));
+  EXPECT_THAT(msg, testing::HasSubstr("message with string: `str` & int: 4"));
 }
 
 
@@ -59,20 +40,14 @@ TEST(StatusReportingTest, PrintAndReturnErr) {
   }
 
   int ec = GrPrintAndReturnErr("message with string: `%s` & int: %d", "str", 4);
-  const char* expected_msg = "message with string: `str` & int: 4";
 
   // end the capture
   std::string msg = capstderr->end_capture();
 
   EXPECT_EQ(ec, GR_FAIL) << "GrPrintAndReturnErr's exit code, " << ec
                          << ", doesn't match GR_FAIL (" << GR_FAIL << ')';
-
-  // now do some checking (it would be cleaner to use gmock's matchers)
-  ASSERT_GT(msg.size(), 0) << "nothing seems to have printed";
-  EXPECT_EQ(msg[msg.size()-1], '\n') << "we expect a trailing newline";
-  ASSERT_NE(msg.find(expected_msg), std::string::npos)
-    << "The error message doesn't contain the substring \"" << expected_msg
-    << "\". The contents of the message is: \"" << msg << '"';
+  EXPECT_THAT(msg, testing::EndsWith("\n"));
+  EXPECT_THAT(msg, testing::HasSubstr("message with string: `str` & int: 4"));
 }
 
 TEST(StatusReportingDeathTest, InternalError) {
