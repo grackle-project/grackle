@@ -19,26 +19,42 @@
 #include <stddef.h>
 #include <string.h>
 #include "grackle_chemistry_data.h"
+#include "status_reporting.h"
+
+/// This is collection of enumerators, with an enumerator named for EVERY
+/// parameter. Importantly, each enumerator has a unique value (that we use
+/// in a giant switch-statement).
+enum ParamEnum {
+#define ENTRY(FIELD, TYPE, DEFAULT_VAL) ParamEnum_ ## FIELD,
+#include "grackle_chemistry_data_fields.def"
+#undef ENTRY
+
+  ParamEnum_NUM_ENTRIES  // <- always last (so it specifies number of entries)
+};
 
 // initialize int_param_l_, double_param_l_ & string_param_l_. They are sized
 // lists that respectively hold entries for each int, double, and string field
 // in chemistry_data. These are only used internally
-typedef struct { const size_t offset; const char * name; } param_entry;
+typedef struct {
+  const enum ParamEnum enum_val;
+  const char * name;
+} param_entry;
+
 typedef struct { const size_t len; const param_entry * entries; } param_list;
 
 #define INIT_PAR_LIST(ENTRIES) {sizeof(ENTRIES) / sizeof(param_entry), ENTRIES}
 
-#define LIST_INT_INT(FIELD) {offsetof(chemistry_data, FIELD), #FIELD},
+#define LIST_INT_INT(FIELD) {ParamEnum_ ## FIELD, #FIELD},
 #define LIST_INT_DOUBLE(FIELD) /* ... */
 #define LIST_INT_STRING(FIELD) /* ... */
 
 #define LIST_DOUBLE_INT(FIELD) /* ... */
-#define LIST_DOUBLE_DOUBLE(FIELD) {offsetof(chemistry_data, FIELD), #FIELD},
+#define LIST_DOUBLE_DOUBLE(FIELD) {ParamEnum_ ## FIELD, #FIELD},
 #define LIST_DOUBLE_STRING(FIELD) /* ... */
 
 #define LIST_STRING_INT(FIELD) /* ... */
 #define LIST_STRING_DOUBLE(FIELD) /* ... */
-#define LIST_STRING_STRING(FIELD) {offsetof(chemistry_data, FIELD), #FIELD},
+#define LIST_STRING_STRING(FIELD) {ParamEnum_ ## FIELD, #FIELD},
 
 static const param_entry int_param_entries_[] = {
   #define ENTRY(FIELD, TYPE, DEFAULT_VAL) LIST_INT_ ## TYPE(FIELD)
@@ -75,22 +91,35 @@ static const param_list string_param_l_ = INIT_PAR_LIST(string_param_entries_);
 // possible (it would just involve more code).
 
 
-// retrieves a pointer to the field of my_chemistry that's named ``name``.
-//
-// This returns a NULL pointer if: my_chemistry is NULL, the field doesn't
-// exist, or the field doesn't have the specified type
+/// retrieves a pointer to the field of my_chemistry that's named ``name``.
+///
+/// This returns a NULL pointer if: my_chemistry is NULL, the field doesn't
+/// exist, or the field doesn't have the specified type
 static void* get_field_ptr_(chemistry_data* my_chemistry, const char* name,
                             const param_list my_param_l)
 {
   if (my_chemistry == NULL) { return NULL; }
 
+  // lookup the enum value associated with name
+  enum ParamEnum enum_val = ParamEnum_NUM_ENTRIES;
   for (size_t param_index = 0; param_index < my_param_l.len; param_index++){
     const param_entry* entry = my_param_l.entries + param_index;
     if (strcmp(entry->name, name) == 0) {
-      return (void*)( (char*)my_chemistry + entry->offset );
+      enum_val = entry->enum_val;
+      break;
     }
   }
-  return NULL;
+
+  // now use a switch statement to actually return the appropriate pointer
+  switch (enum_val) {
+    #define ENTRY(FIELD, TYPE, DEFAULT_VAL)                              \
+      case ParamEnum_ ## FIELD: { return (void*)(&my_chemistry->FIELD); }
+    #include "grackle_chemistry_data_fields.def"
+    #undef ENTRY
+
+    case ParamEnum_NUM_ENTRIES: return NULL;  // <- unknown name
+  }
+  GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
 int* local_chemistry_data_access_int(chemistry_data* my_chemistry,
