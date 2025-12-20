@@ -313,10 +313,6 @@ cdef extern from "grackle.h":
         grunstable_rateid_type rate_id,
         const double* buf)
 
-    double* grunstable_ratequery_get_ptr(
-        c_chemistry_data_storage* my_rates,
-        grunstable_rateid_type rate_id)
-
     cdef enum grunstable_ratequery_prop_kind:
         GRUNSTABLE_QPROP_NDIM
         GRUNSTABLE_QPROP_SHAPE

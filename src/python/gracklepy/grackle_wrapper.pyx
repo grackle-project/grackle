@@ -1089,61 +1089,19 @@ cdef class _rate_mapping_access:
                 f"\"{key}\" key"
             )
 
-
-    def _access_rate(self, key, val):
-        # determine whether the rate needs to be updated
-        update_rate = (val is not _NOSETVAL)
-
-        rate_id = self._name_rateid_map[key] # will raise KeyError if not known
-
-        if self._ptr is NULL:
-            raise RuntimeError(
-                "this instance hasn't been configured with a pointer for it "
-                "access retrieve data from"
-            )
-
-        # retrieve the pointer
-        cdef double* rate_ptr = grunstable_ratequery_get_ptr(self._ptr, rate_id)
-
-        # lookup the shape of the rates
-        shape = self._try_get_shape(rate_id)
-
-        # predeclare a memoryview to use with 1d arrays
-        cdef double[:] memview
-
-        if shape == (): # handle the scalar case!
-            if update_rate:
-                rate_ptr[0] = <double?>val # <double?> cast performs type check
-            return float(rate_ptr[0])
-        elif len(shape) == 1:
-            if update_rate:
-                raise RuntimeError(
-                    f"You cannot assign a value to the {key!r} rate.\n\n"
-                    "If you are looking to modify the rate's values, you "
-                    f"should retrieve the {key!r} rate's value (a numpy "
-                    "array), and modify the values in place"
-                )
-            size = shape[0]
-            memview = <double[:size]>(rate_ptr)
-            return np.asarray(memview)
-        else:
-            raise RuntimeError(
-                "no support is in place for higher dimensional arrays"
-            )
-
     def get(self, key, default=None, /):
         """
         Retrieve the value associated with key, if key is known. Otherwise,
         return the default.
         """
         try:
-            return self._access_rate(key, _NOSETVAL)
+            return self._get_rate(key)
         except:
             return default
 
-    def __getitem__(self, key): return self._access_rate(key, _NOSETVAL)
+    def __getitem__(self, key): return self._get_rate(key)
 
-    def __setitem__(self, key, value): self._access_rate(key, value)
+    def __setitem__(self, key, value): self._set_rate(key, value)
 
     def __iter__(self): return iter(self._name_rateid_map)
 
