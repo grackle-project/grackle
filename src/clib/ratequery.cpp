@@ -230,42 +230,22 @@ grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
 
 grackle::impl::ratequery::Registry grackle::impl::ratequery::new_Registry(
     const chemistry_data& my_chemistry) {
-  if (my_chemistry.primordial_chemistry == 0) {
-    return Registry{0, 0, nullptr, nullptr};
-  }
-  // step 1: define several common EntryProps
-  EntryProps props_LogTLinInterp = mk_invalid_EntryProps();
-  props_LogTLinInterp.ndim = 1;
-  props_LogTLinInterp.shape[0] = my_chemistry.NumberOfTemperatureBins;
+  RegBuilder reg_builder = new_RegBuilder();
+  if (my_chemistry.primordial_chemistry != 0) {
+    RegBuilder_recipe_1d(&reg_builder, CollisionalRxnLUT::NUM_ENTRIES,
+                         &get_CollisionalRxn_Entry,
+                         my_chemistry.NumberOfTemperatureBins);
 
-  // maybe k13dd should be considered multi-dimensional?
-  EntryProps props_k13dd = mk_invalid_EntryProps();
-  props_k13dd.ndim = 1;
-  props_k13dd.shape[0] = my_chemistry.NumberOfTemperatureBins * 14;
+    // maybe k13dd should be considered multi-dimensional?
+    RegBuilder_recipe_1d(&reg_builder, 1, &get_k13dd_Entry,
+                         my_chemistry.NumberOfTemperatureBins * 14);
 
-  EntryProps props_scalar = mk_invalid_EntryProps();
-  props_scalar.ndim = 0;
-
-  // step 2: define standard entry recipies
-  const EntrySet standard_recipies[] = {
-      {CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Entry,
-       props_LogTLinInterp},
-      {1, &get_k13dd_Entry, props_k13dd},
-      {MiscRxn_NRATES, &get_MiscRxn_Entry, props_scalar}};
-
-  int n_sets = static_cast<int>(sizeof(standard_recipies) / sizeof(EntrySet));
-
-  // step 3: actually set up Registry
-  EntrySet* sets = new EntrySet[n_sets];
-  int* id_offsets = new int[n_sets];
-  int tot_entry_count = 0;
-  for (int i = 0; i < n_sets; i++) {
-    id_offsets[i] = tot_entry_count;
-    sets[i] = standard_recipies[i];
-    tot_entry_count += standard_recipies[i].len;
+    RegBuilder_recipe_scalar(&reg_builder, MiscRxn_NRATES, &get_MiscRxn_Entry);
   }
 
-  return Registry{tot_entry_count, n_sets, id_offsets, sets};
+  Registry out = RegBuilder_consume_and_build(&reg_builder);
+  drop_RegBuilder(&reg_builder);
+  return out;
 }
 
 void grackle::impl::ratequery::drop_Registry(
