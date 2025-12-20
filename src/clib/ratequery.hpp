@@ -101,6 +101,8 @@ typedef Entry fetch_Entry_recipe_fn(chemistry_data_storage*, int);
 struct EntrySet;
 
 /// Describes a registry of queryable entries
+///
+/// @note This is constructed from a RegBuilder
 struct Registry {
   /// number of entries
   int n_entries;
@@ -111,9 +113,6 @@ struct Registry {
   /// stores sets of entries
   EntrySet* sets;
 };
-
-/// construct a new registry
-Registry new_Registry(const chemistry_data&);
 
 /// deallocate the contents of a registry
 void drop_Registry(Registry* ptr);
@@ -181,6 +180,14 @@ int RegBuilder_recipe_scalar(RegBuilder* ptr, int n_entries,
 /// @returns GR_SUCCESS if successful, otherwise returns a different value
 int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
                          fetch_Entry_recipe_fn* recipe_fn, int common_len);
+
+/// registers miscellaneous recipes
+///
+/// @note
+/// This is a hack until we can figure out a better spot to put definitions of
+/// some miscellaneous rates
+void RegBuilder_misc_recipies(RegBuilder* ptr,
+                              const chemistry_data* my_chemistry);
 
 /// build a new Registry.
 ///

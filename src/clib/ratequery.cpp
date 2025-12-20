@@ -41,7 +41,6 @@
 //
 
 namespace grackle::impl::ratequery {
-
 // we have reserved the right to change this value at any time
 enum { UNDEFINED_RATE_ID_ = 0 };
 
@@ -127,7 +126,7 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
       return MKENTRY_SCALAR_(my_rates, k25);
     case MiscRxn_k26:
       return MKENTRY_SCALAR_(my_rates, k26);
-    // Radiative rates for 9-species
+      // Radiative rates for 9-species
     case MiscRxn_k27:
       return MKENTRY_SCALAR_(my_rates, k27);
     case MiscRxn_k28:
@@ -143,6 +142,24 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
     }
   }
 }
+}  // namespace grackle::impl::ratequery
+
+void grackle::impl::ratequery::RegBuilder_misc_recipies(
+    RegBuilder* ptr, const chemistry_data* my_chemistry) {
+  if (my_chemistry->primordial_chemistry != 0) {
+    RegBuilder_recipe_1d(ptr, CollisionalRxnLUT::NUM_ENTRIES,
+                         &get_CollisionalRxn_Entry,
+                         my_chemistry->NumberOfTemperatureBins);
+
+    // maybe k13dd should be considered multi-dimensional?
+    RegBuilder_recipe_1d(ptr, 1, &get_k13dd_Entry,
+                         my_chemistry->NumberOfTemperatureBins * 14);
+
+    RegBuilder_recipe_scalar(ptr, MiscRxn_NRATES, &get_MiscRxn_Entry);
+  }
+}
+
+namespace grackle::impl::ratequery {
 
 /// resets the instance to the initial (empty) state.
 ///
@@ -226,26 +243,6 @@ grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
     RegBuilder_reset_to_empty(ptr, true);
     return out;
   }
-}
-
-grackle::impl::ratequery::Registry grackle::impl::ratequery::new_Registry(
-    const chemistry_data& my_chemistry) {
-  RegBuilder reg_builder = new_RegBuilder();
-  if (my_chemistry.primordial_chemistry != 0) {
-    RegBuilder_recipe_1d(&reg_builder, CollisionalRxnLUT::NUM_ENTRIES,
-                         &get_CollisionalRxn_Entry,
-                         my_chemistry.NumberOfTemperatureBins);
-
-    // maybe k13dd should be considered multi-dimensional?
-    RegBuilder_recipe_1d(&reg_builder, 1, &get_k13dd_Entry,
-                         my_chemistry.NumberOfTemperatureBins * 14);
-
-    RegBuilder_recipe_scalar(&reg_builder, MiscRxn_NRATES, &get_MiscRxn_Entry);
-  }
-
-  Registry out = RegBuilder_consume_and_build(&reg_builder);
-  drop_RegBuilder(&reg_builder);
-  return out;
 }
 
 void grackle::impl::ratequery::drop_Registry(

@@ -230,9 +230,15 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->opaque_storage = NULL;
 }
 
-extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
-                                               chemistry_data_storage *my_rates,
-                                               code_units *my_units)
+/// core logic of local_initialize_chemistry_data_
+///
+/// @note
+/// This has been separated from local_initialize_chemistry_data to ensure that
+/// any memory allocations tracked by reg_builder can be appropriately freed
+/// (this is somewhat unavoidable in C++ without destructors)
+static int local_initialize_chemistry_data_(
+    chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
+    code_units *my_units, grackle::impl::ratequery::RegBuilder* reg_builder)
 {
 
   /* Better safe than sorry: Initialize everything to NULL/0 */
@@ -459,8 +465,9 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   my_rates->initial_units = *my_units;
 
   // initialize the registry
+  grackle::impl::ratequery::RegBuilder_misc_recipies(reg_builder, my_chemistry);
   my_rates->opaque_storage->registry = new grackle::impl::ratequery::Registry(
-    grackle::impl::ratequery::new_Registry(*my_chemistry)
+    grackle::impl::ratequery::RegBuilder_consume_and_build(reg_builder)
   );
 
   if (grackle_verbose) {
@@ -508,6 +515,20 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   return GR_SUCCESS;
+}
+
+
+extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
+                                               chemistry_data_storage *my_rates,
+                                               code_units *my_units)
+{
+  namespace rate_q = grackle::impl::ratequery;
+  rate_q::RegBuilder reg_builder = rate_q::new_RegBuilder();
+
+  int out = local_initialize_chemistry_data_(my_chemistry, my_rates, my_units,
+                                             &reg_builder);
+  rate_q::drop_RegBuilder(&reg_builder);
+  return out;
 }
 
 extern "C" int initialize_chemistry_data(code_units *my_units)
