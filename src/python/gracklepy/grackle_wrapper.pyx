@@ -903,6 +903,18 @@ cdef class _wrapped_c_chemistry_data:
         return out
 
 
+def _portable_reshape(arr: np.ndarray, shape: tuple[int, ...]) -> np.ndarray:
+    """
+    Reshape a numpy array (raises an error if a copy can't be avoided)
+    """
+    if np.__version__.startswith("1.") or np.__version__.startswith("2.0."):
+        out = arr.view()
+        out.shape = shape
+        return out
+    else:
+        return arr.reshape(shape, order="C", copy=False)
+
+
 cdef class _rate_mapping_access:
     # This class is used internally by the chemistry_data extension class to
     # wrap its chemistry_data_storage ptr and provide access to the stored
@@ -929,6 +941,9 @@ cdef class _rate_mapping_access:
 
     @staticmethod
     cdef _rate_mapping_access from_ptr(c_chemistry_data_storage *ptr):
+        """
+        Construct a _rate_mapping_access instance from the provided pointer
+        """
         cdef _rate_mapping_access out = _rate_mapping_access.__new__(
             _rate_mapping_access
         )
@@ -937,8 +952,16 @@ cdef class _rate_mapping_access:
 
     @property
     def _name_rateid_map(self):
+        """returns a mapping between rate names and rate id"""
+
         if self._cached_name_rateid_map is not None:
             return self._cached_name_rateid_map
+
+        if self._ptr is NULL:
+            raise RuntimeError(
+                "this instance hasn't been configured with a pointer for it "
+                "access retrieve data from"
+            )
 
         cdef dict out = {}
         cdef const char* rate_name
@@ -952,7 +975,10 @@ cdef class _rate_mapping_access:
             out[rate_name.decode('UTF-8')] = int(rate_id)
             i+=1
 
-    def _try_get_shape(self, rate_id):
+    def _try_get_shape(self, rate_id: int) -> tuple[int, ...]:
+        """
+        try to query the shape associated with rate_id
+        """
         cdef long long buf[7]
         cdef int ret = grunstable_ratequery_prop(
             self._ptr, rate_id, GRUNSTABLE_QPROP_NDIM, &buf[0]
@@ -975,6 +1001,94 @@ cdef class _rate_mapping_access:
             raise RuntimeError(
                 "the query for shape failed after query for ndim succeeded")
         return tuple(int(buf[i]) for i in range(ndim))
+
+    def _get_rate(self, key: str):
+        """
+        Returns a numpy array that holds a copy of grackle's internal data
+        associated with `key`
+
+        Parameters
+        ----------
+        key: str
+            The name of the quantity to access
+
+        Returns
+        -------
+        np.ndarray or float
+            The retrieved value
+        """
+
+        # lookup the rate_id and shape of the rates
+        rate_id = self._name_rateid_map[key]
+        shape = self._try_get_shape(rate_id)
+
+        # allocate the memory that grackle will write data to
+        nelements = 1 if shape == () else np.prod(shape)
+        out = np.empty(shape=(nelements,), dtype=np.float64)
+
+        # create a memoryview of out (so we can access the underlying pointer)
+        cdef double[:] memview = out
+
+        if grunstable_ratequery_get_f64(self._ptr, rate_id, &memview[0]) != GR_SUCCESS:
+            raise RuntimeError(
+                "Something went wrong while retrieving the data associated with the "
+                f"\"{key}\" key"
+            )
+        if shape == ():
+            return float(out[0])
+
+        if shape != out.shape:
+            out = _portable_reshape(out, shape=shape)
+        # we set the WRITABLE flag to False so that people don't mistakenly believe
+        # that by modifying the array in place that they are updating Grackle's
+        # internal buffers
+        out.setflags(write=False)
+        return out
+
+    def _set_rate(self, key, val):
+        """
+        Copies value(s) into the Grackle solver's internal buffer associated
+        with `key`
+
+        Parameters
+        ----------
+        key: str
+            The name of the quantity to modify
+        val: array_like
+            The values to be written
+        """
+        # lookup the rate_id and shape of the rates
+        rate_id = self._name_rateid_map[key]
+        shape = self._try_get_shape(rate_id)
+
+        # validate that val meets expectations and then coerce to `buf` a 1D numpy
+        # array that we can feed to the C function
+        if np.shape(val) != shape:
+            if shape == ():
+                raise ValueError(f"The \"{key}\" key expects a scalar")
+            raise ValueError(f"The \"{key}\" expects a value with shape, {shape}")
+        elif shape == ():
+            coerced = float(val)
+            buf = np.array([coerced])
+        else:
+            coerced = np.asanyarray(val, dtype=np.float64, order="C")
+            if hasattr(coerced, "unit") or hasattr(coerced, "units"):
+                # val is probably an astropy.Quantity or unyt.unyt_array instance
+                raise ValueError(
+                    f"'{type(self).__name__}' can't handle numpy.ndarray subclasses "
+                    "that attach unit information"
+                )
+            buf = _portable_reshape(coerced, shape = (coerced.size,))
+
+        # create a memoryview of out (so we can access the underlying pointer)
+        cdef const double[:] memview = buf
+
+        if grunstable_ratequery_set_f64(self._ptr, rate_id, &memview[0]) != GR_SUCCESS:
+            raise RuntimeError(
+                "Something went wrong while writing data associated with the "
+                f"\"{key}\" key"
+            )
+
 
     def _access_rate(self, key, val):
         # determine whether the rate needs to be updated
