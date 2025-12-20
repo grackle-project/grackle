@@ -97,20 +97,8 @@ inline Entry new_Entry(double* rate, const char* name) {
 /// satisfies `0 <= index <= (N-1)`
 typedef Entry fetch_Entry_recipe_fn(chemistry_data_storage*, int);
 
-/// Describes the set of entries that can be access through a given recipe
-struct EntrySet {
-  /// number of entries in the current set
-  int len;
-
-  /// a function pointer that can be used to access entries through a recipe
-  fetch_Entry_recipe_fn* recipe_fn;
-
-  /// properties used by all entries accessed through a recipe
-  ///
-  /// In more detail, an entry returned by `recipe_fn` has its `props` member
-  /// overwritten by this value
-  EntryProps common_props;
-};
+// temporary forward declaration
+struct EntrySet;
 
 /// Describes a registry of queryable entries
 struct Registry {
@@ -129,6 +117,95 @@ Registry new_Registry(const chemistry_data&);
 
 /// deallocate the contents of a registry
 void drop_Registry(Registry* ptr);
+
+/// An interface for gradually configuring a Registry
+///
+/// @par Context within the codebase
+/// This is intended to be an ephemeral object that only lives during within
+/// the function that initializes a Grackle solver from user-specified
+/// parameters
+/// - the instance is created at the start of this function
+/// - a pointer to the instance is passed to various initialization functions.
+///   These functions can use the instance to register entries that will be
+///   accessible in the resulting Registry
+/// - if all configuration has gone well, this instance will be used to
+///   initialize the Registry
+/// - the instance is **always** destroyed when it is time to exit the solver
+///   initialization function
+///
+/// @par Motivation
+/// There are 2 main sources of motivation
+/// 1. It lets us locate a "recipe-routine" for accessing data next to the
+///    routines that initialize the same data. This makes sense from a
+///    code-organization perspective. Moreover, if we conditionally initialize
+///    data, it will be easier to ensure that recipies won't try to provide
+///    access to the uninitialized data
+/// 2. this will make it easier for us to handle data that Grackle only
+///    initializes for the sake of supporting user queries (at the moment,
+///    this is hypothetical)
+///
+/// @important
+/// Other parts of grackle should refrain from directly accessing the internals
+/// of this function (i.e. they should only use the associated methods)
+struct RegBuilder {
+  int capacity;
+  int len;
+  EntrySet* sets;
+};
+
+/// initialize a new instance
+inline RegBuilder new_RegBuilder() { return {0, 0, nullptr}; }
+
+/// deallocates all storage within a RegBuilder instance
+void drop_RegBuilder(RegBuilder* ptr);
+
+/// register a recipe for accessing scalar values
+///
+/// @param[inout] ptr The RegBuilder that will be updated
+/// @param[in] n_entries The number of entries accessible through the recipe
+/// @param[in] recipe_fn The recipe being registered
+/// @param[in] common_props The properties shared by each Entry in the recipe
+///
+/// @returns GR_SUCCESS if successful, otherwise returns a different value
+int RegBuilder_recipe_scalar(RegBuilder* ptr, int n_entries,
+                             fetch_Entry_recipe_fn* recipe_fn);
+
+/// register a recipe for accessing 1D arrays
+///
+/// @param[inout] ptr The RegBuilder that will be updated
+/// @param[in] n_entries The number of entries accessible through the recipe
+/// @param[in] recipe_fn The recipe being registered
+/// @param[in] common_len The length shared by each 1D array accessible
+///     through this recipe.
+///
+/// @returns GR_SUCCESS if successful, otherwise returns a different value
+int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
+                         fetch_Entry_recipe_fn* recipe_fn, int common_len);
+
+/// build a new Registry.
+///
+/// In the process, the current Registry is consumed; it's effectively reset to
+/// the state immediately after it was initialized. (This lets us avoid
+/// reallocating lots of memory)
+///
+/// @note
+/// For safety, the caller should still plan to call drop_RegBuilder
+Registry RegBuilder_consume_and_build(RegBuilder* ptr);
+
+/// Describes the set of entries that can be access through a given recipe
+struct EntrySet {
+  /// number of entries in the current set
+  int len;
+
+  /// a function pointer that can be used to access entries through a recipe
+  fetch_Entry_recipe_fn* recipe_fn;
+
+  /// properties used by all entries accessed through a recipe
+  ///
+  /// In more detail, an entry returned by `recipe_fn` has its `props` member
+  /// overwritten by this value
+  EntryProps common_props;
+};
 
 /** @}*/  // end of group
 

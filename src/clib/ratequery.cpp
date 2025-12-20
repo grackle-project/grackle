@@ -85,6 +85,7 @@ static Entry get_CollisionalRxn_Entry(chemistry_data_storage* my_rates, int i) {
     return MKENTRY_STANDARD_KCOL_(my_rates, NAME, CollisionalRxnLUT::NAME);    \
   }
 #include "collisional_rxn_rate_members.def"
+
 #undef ENTRY
     default: {
       return mk_invalid_Entry();
@@ -143,7 +144,89 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
   }
 }
 
+/// resets the instance to the initial (empty) state.
+///
+/// the skip_dealloc argument will only be true when the data is transferred
+/// to a Registry
+static void RegBuilder_reset_to_empty(RegBuilder* ptr, bool skip_dealloc) {
+  if ((ptr->capacity > 0) && !skip_dealloc) {
+    delete[] ptr->sets;
+  }
+  (*ptr) = new_RegBuilder();
+}
+
+static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
+                              int n_entries, EntryProps common_props) {
+  if (recipe_fn == nullptr) {
+    return GrPrintAndReturnErr("recipe_fn is a nullptr");
+  } else if (n_entries <= 0) {
+    return GrPrintAndReturnErr("n_entries is not positive");
+  } else if (!EntryProps_is_valid(common_props)) {
+    return GrPrintAndReturnErr("common_props isn't valid");
+  }
+
+  if (ptr->capacity == 0) {
+    ptr->capacity = 5;
+    ptr->sets = new EntrySet[ptr->capacity];
+  } else if (ptr->len == ptr->capacity) {
+    // consider making this resizable in the future...
+    return GrPrintAndReturnErr("out of capacity");
+  }
+
+  ptr->sets[ptr->len++] = EntrySet{n_entries, recipe_fn, common_props};
+  return GR_SUCCESS;
+}
+
 }  // namespace grackle::impl::ratequery
+
+void grackle::impl::ratequery::drop_RegBuilder(RegBuilder* ptr) {
+  RegBuilder_reset_to_empty(ptr, false);
+}
+
+namespace grackle::impl::ratequery {}  // namespace grackle::impl::ratequery
+
+int grackle::impl::ratequery::RegBuilder_recipe_scalar(
+    RegBuilder* ptr, int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
+  EntryProps common_props = mk_invalid_EntryProps();
+  common_props.ndim = 0;
+  return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
+}
+
+int grackle::impl::ratequery::RegBuilder_recipe_1d(
+    RegBuilder* ptr, int n_entries, fetch_Entry_recipe_fn* recipe_fn,
+    int common_len) {
+  EntryProps common_props = mk_invalid_EntryProps();
+  common_props.ndim = 1;
+  common_props.shape[0] = common_len;
+  return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
+}
+
+/// build a new Registry.
+///
+/// In the process, the current Registry is consumed; it's effectively reset to
+/// the state immediately after it was initialized. (This lets us avoid
+/// reallocating lots of memory)
+grackle::impl::ratequery::Registry
+grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
+  int n_sets = ptr->len;
+  if (n_sets == 0) {
+    drop_RegBuilder(ptr);
+    return Registry{0, n_sets, nullptr, nullptr};
+  } else {
+    // set up id_offsets and determine the total number of entries
+    int* id_offsets = new int[n_sets];
+    int tot_entry_count = 0;
+    for (int i = 0; i < n_sets; i++) {
+      id_offsets[i] = tot_entry_count;
+      tot_entry_count += ptr->sets[i].len;
+    }
+    Registry out{tot_entry_count, n_sets, id_offsets, ptr->sets};
+    // reset to ptr to initial state (but don't deallocate since the ptr was
+    // transferred to out
+    RegBuilder_reset_to_empty(ptr, true);
+    return out;
+  }
+}
 
 grackle::impl::ratequery::Registry grackle::impl::ratequery::new_Registry(
     const chemistry_data& my_chemistry) {
