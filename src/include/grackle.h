@@ -198,11 +198,7 @@ int gr_initialize_field_data(grackle_field_data *my_fields);
 /// >    - we should probably update all of the function signatures so that a
 /// >      pointer to chemistry_data_storage* is passed as an argument to each
 /// >      of the functions.
-/// > 2. Should we prevent direct access to the underlying data pointers?
-/// >    Instead we would provide getter and setters. We discuss this further
-/// >    down below (in the relevant function's API). This is important for
-/// >    different backends.
-/// > 3. We should generally consider whether the API is consistent enough with
+/// > 2. We should generally consider whether the API is consistent enough with
 /// >    APIs for accessing other data structures.
 /// >    - currently the dynamic parameter API is grackle's only other
 /// >      data-access API, but we could imagine creating an API for the fields
@@ -233,6 +229,56 @@ typedef long long grunstable_rateid_type;
 /// > rates are all accessible).
 grunstable_rateid_type grunstable_ratequery_id(
     const chemistry_data_storage* my_rates, const char* name);
+
+/// Copy data associated with the @p rate_id in @p my_rates into buf
+///
+/// The behavior is currently undefined if:
+/// - the @p my_rates argument is a NULL pointer
+/// - the @p my_rates argument isn't configured to use the specified rate
+/// - the @p buf argument is NULL
+/// - the @p buf isn't large enough to store the copied rates
+///
+/// @param[in] my_rates The object from which data is retrieved
+/// @param[in] rate_id The id of the rate for which the data is retrieved
+/// @param[out] buf The buffer that the function writes to
+///
+/// @return Returns GR_SUCCESS if successful. If an invalid @p rate_id is
+///    specified, this returns a different value
+///
+/// > [!note]
+/// > Before stablizing, we should consider whether we want to add an argument
+/// > that specifies the supplied size of `buf` (and provide well-defined
+/// > behavior when `buf` is too small
+int grunstable_ratequery_get_f64(
+  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
+  double* buf
+);
+
+
+/// Overwrite the data associated with @p rate_id in @p my_rates with the
+/// values provided by @p buf
+///
+/// The behavior is currently undefined if:
+/// - the @p my_rates argument is a NULL pointer
+/// - the @p my_rates argument isn't configured to use the specified rate
+/// - the @p buf argument is NULL
+/// - the @p buf isn't large enough to store the copied rates
+///
+/// @param[out] my_rates The object from which data is retrieved
+/// @param[in] rate_id The id of the rate for which the data is retrieved
+/// @param[in] buf The buffer that the function writes to
+///
+/// @return Returns GR_SUCCESS if successful. If an invalid @p rate_id is
+///    specified, this returns a different value
+///
+/// > [!note]
+/// > Before stablizing, we should consider whether we want to add an argument
+/// > that specifies the supplied size of `buf` (and provide well-defined
+/// > behavior when `buf` is too small
+int grunstable_ratequery_set_f64(
+  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
+  const double* buf
+);
 
 /// Access the pointer associated with the rateid from myrates
 ///

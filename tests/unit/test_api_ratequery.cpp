@@ -203,6 +203,14 @@ struct RateProperties {
     return maxitemsize == other.maxitemsize && shape == other.shape;
   }
 
+  long long n_items() const {
+    long long n_items = 1LL;
+    for (std::size_t i = 0; i < shape.size(); i++) {
+      n_items *= shape[i];
+    }
+    return n_items;  // this is correct even for scalars
+  }
+
   /// teach googletest how to print this type
   friend void PrintTo(const RateProperties& props, std::ostream* os) {
     *os << "{shape={";
@@ -253,6 +261,57 @@ std::optional<RateProperties> try_query_RateProperties(
   }
 
   return {RateProperties{shape, static_cast<std::size_t>(maxitemsize)}};
+}
+
+// returns a value that differs from the input
+static double remap_value(double in) {
+  if (in == 0.0 || !std::isfinite(in)) {
+    return 1.0;
+  }
+  return -in;
+}
+
+TEST_P(ParametrizedRateQueryTest, SetAndGet) {
+  std::vector<double> initial_buf;
+  std::vector<double> post_update_buf;
+
+  // iterate over every known (rate-name, rate-id) pair
+  for (const grtest::NameIdPair pair : grtest::RateQueryRange(pack)) {
+    // get the properties associated with the current rate
+    std::optional<RateProperties> maybe_props =
+        try_query_RateProperties(pack.my_rates(), pair.id);
+    if (!maybe_props.has_value()) {
+      GTEST_FAIL()
+          << "something went wrong while trying to lookup the properties for "
+          << "the " << pair << " rate.";
+    }
+    RateProperties props = maybe_props.value();
+    long long n_items = props.n_items();
+
+    // load in data associated with the current rate
+    initial_buf.assign(n_items, NAN);
+    ASSERT_GR_SUCCESS(grunstable_ratequery_get_f64(pack.my_rates(), pair.id,
+                                                   initial_buf.data()))
+        << "for " << pair;
+
+    // overwrite each entry with a different value
+    for (long long i = 0; i < n_items; i++) {
+      initial_buf[i] = remap_value(initial_buf[i]);
+    }
+
+    // write the new values back to my_rates
+    EXPECT_GR_SUCCESS(grunstable_ratequery_set_f64(pack.my_rates(), pair.id,
+                                                   initial_buf.data()))
+        << "for " << pair;
+
+    // finally, lets check that the values actually got updated
+    post_update_buf.assign(n_items, NAN);
+    EXPECT_GR_SUCCESS(grunstable_ratequery_get_f64(pack.my_rates(), pair.id,
+                                                   post_update_buf.data()))
+        << "for " << pair;
+
+    EXPECT_EQ(initial_buf, post_update_buf) << "for " << pair;
+  }
 }
 
 using grtest::ChemPreset;
@@ -357,4 +416,7 @@ TEST_F(KnownRateQueryTest, CheckProperties) {
         << "this mismatch in the queried properties is for the " << pair
         << " rate.";
   }
+
+  // it might be useful to repeat the tests using another chemistry_data
+  // instance with a different NumberOfTemperatureBins value
 }

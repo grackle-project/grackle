@@ -147,6 +147,9 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
 
 grackle::impl::ratequery::Registry grackle::impl::ratequery::new_Registry(
     const chemistry_data& my_chemistry) {
+  if (my_chemistry.primordial_chemistry == 0) {
+    return Registry{0, nullptr};
+  }
   EntryProps props_LogTLinInterp = mk_invalid_EntryProps();
   props_LogTLinInterp.ndim = 1;
   props_LogTLinInterp.shape[0] = my_chemistry.NumberOfTemperatureBins;
@@ -232,6 +235,37 @@ static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
   return invalid_rslt_();
 }
 
+/*
+/// this only exists for debugging purposes
+static void show_Entry(const Entry* entry) {
+  std::printf(
+    "{.data=%p, .name=\"%s\", .props={.ndim=%d, .shape={",
+    reinterpret_cast<void*>(entry->data), entry->name, entry->props.ndim);
+  // we should strongly consider factoring out logic for printing arrays
+  for (int i = 0; i < entry->props.ndim; i++) {
+    if (i > 0) {
+      std::printf(", ");
+    }
+    std::printf("%d", entry->props.shape[i]);
+  }
+  std::printf("}}\n");
+}
+*/
+
+/// compute the number of items in an Entry described by @p props
+static long long get_n_items(EntryProps props) {
+  GR_INTERNAL_REQUIRE(props.ndim >= 0, "sanity check!");
+
+  if (props.ndim == 0) {
+    return 1LL;  // a scalar always consists of 1 item
+  }
+  long long n_items = 1LL;
+  for (int i = 0; i < props.ndim; i++) {
+    n_items *= static_cast<long long>(props.shape[i]);
+  }
+  return n_items;
+}
+
 }  // namespace grackle::impl::ratequery
 
 // here we implement the public API
@@ -256,6 +290,39 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
     }
   }
   return rate_q::UNDEFINED_RATE_ID_;
+}
+
+extern "C" int grunstable_ratequery_get_f64(chemistry_data_storage* my_rates,
+                                            grunstable_rateid_type rate_id,
+                                            double* buf) {
+  namespace rate_q = grackle::impl::ratequery;
+  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id, true).entry;
+
+  if (entry.data == nullptr) {  // in this case, the query failed
+    return GR_FAIL;
+  }
+
+  long long n_items = rate_q::get_n_items(entry.props);
+  for (long long i = 0; i < n_items; i++) {
+    buf[i] = entry.data[i];
+  }
+  return GR_SUCCESS;
+}
+
+extern "C" int grunstable_ratequery_set_f64(chemistry_data_storage* my_rates,
+                                            grunstable_rateid_type rate_id,
+                                            const double* buf) {
+  namespace rate_q = grackle::impl::ratequery;
+  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id, true).entry;
+  if (entry.data == nullptr) {  // in this case, the query failed
+    return GR_FAIL;
+  }
+
+  long long n_items = rate_q::get_n_items(entry.props);
+  for (long long i = 0; i < n_items; i++) {
+    entry.data[i] = buf[i];
+  }
+  return GR_SUCCESS;
 }
 
 extern "C" double* grunstable_ratequery_get_ptr(
