@@ -62,12 +62,6 @@ TEST_F(SimpleRateQueryTest, InvalidNameQuery) {
   EXPECT_EQ(rateid, get_invalid_rateid(pack));
 }
 
-TEST_F(SimpleRateQueryTest, PtrInvalidRateId) {
-  double* ptr =
-      grunstable_ratequery_get_ptr(pack.my_rates(), get_invalid_rateid(pack));
-  EXPECT_EQ(ptr, nullptr);
-}
-
 // most of the remaining tests (and future planned tests) involve iterating
 // through all rates made available via the ratequery interface. To make the
 // tests themselves as easy to read as possible, we implate a C++-style

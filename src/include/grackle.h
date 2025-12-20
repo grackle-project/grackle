@@ -280,38 +280,6 @@ int grunstable_ratequery_set_f64(
   const double* buf
 );
 
-/// Access the pointer associated with the rateid from myrates
-///
-/// The behavior is **NOT** currently defined if the `my_rates` struct isn't
-/// configured to use the specified rate.
-///
-/// @return The pointer to the accessed data (whether the rate data corresponds
-///    to an array or scalar). If an invalid `rate_id` is specified, this
-///    returns NULL.
-///
-/// > [!note]
-/// > Before stablizing, we should consider whether we actually want this
-/// > function. It may be better to replace it with a getter (that copies the
-/// > rate data to the supplied buffer) and a setter (that copies the provided
-/// > data out of the provided buffer). This may be appealing for a number of
-/// > reasons:
-/// > 1. When we add GPU support, the rate data may live permanently on the GPU
-/// >    (or some data may live on the GPU while other data lives on the CPU).
-/// >    With dedicated setters/getters, we could always require that the
-/// >    provided buffer data is on the CPU.
-/// > 2. We have the option to conditionally disable the setter. For example,
-/// >    if we choose to support custom rates, I assume we will want to specify
-/// >    all custom choices as part of initialization (for simplicity) and then
-/// >    we may want to deprecate/remove the setter. (One could also imagine,
-/// >    disabling the setter when using GPUs).
-/// > 3. It eliminates a certain class of memory-lifetime bugs (People could
-/// >    try use the pointer returned by the incarnation of this function after
-/// >    destroying Grackle. This problem can't happen with the proposed
-/// >    getter/setter)
-double* grunstable_ratequery_get_ptr(
-  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id
-);
-
 /// Describe Rate-Query Property Types
 ///
 /// > [!note]

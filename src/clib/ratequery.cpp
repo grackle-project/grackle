@@ -325,13 +325,6 @@ extern "C" int grunstable_ratequery_set_f64(chemistry_data_storage* my_rates,
   return GR_SUCCESS;
 }
 
-extern "C" double* grunstable_ratequery_get_ptr(
-    chemistry_data_storage* my_rates, grunstable_rateid_type rate_id) {
-  namespace rate_q = grackle::impl::ratequery;
-
-  return rate_q::query_Entry(my_rates, rate_id, true).entry.data;
-}
-
 extern "C" int grunstable_ratequery_prop(
     const chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
     enum grunstable_ratequery_prop_kind prop_kind, long long* ptr) {
