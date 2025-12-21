@@ -134,6 +134,16 @@ TEST_F(SimpleRateQueryTest, PropertyInvalidRateID) {
 
 using ParametrizedRateQueryTest = grtest::ParametrizedConfigPresetFixture;
 
+TEST_P(ParametrizedRateQueryTest, InvalidIdCollision) {
+  grunstable_rateid_type invalid_id =
+      grunstable_ratequery_id(pack.my_rates(), nullptr);
+  for (const grtest::NameIdPair pair : grtest::RateQueryRange(pack)) {
+    EXPECT_NE(invalid_id, pair.id)
+        << "there is a collision between the canonical invalid id "
+        << "and the id associated with the \"" << pair.name << "\" rate";
+  }
+}
+
 TEST_P(ParametrizedRateQueryTest, AllUnique) {
   std::set<std::string> name_set;
   std::set<grunstable_rateid_type> id_set;

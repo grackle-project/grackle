@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstring>  // strcmp
-#include <climits>  // LLONG_MAX
+#include <limits>
 #include "grackle.h"
 #include "internal_types.hpp"  // CollisionalRxnRateCollection
 #include "LUT.hpp"             // CollisionalRxnLUT
@@ -42,7 +42,9 @@
 
 namespace grackle::impl::ratequery {
 // we have reserved the right to change this value at any time
-enum { UNDEFINED_RATE_ID_ = 0 };
+enum {
+  UNDEFINED_RATE_ID_ = std::numeric_limits<grunstable_rateid_type>::max()
+};
 
 // Create machinery to lookup Other Miscellaneous Rates
 // ----------------------------------------------------
@@ -477,7 +479,8 @@ extern "C" const char* grunstable_ith_rate(
     grunstable_rateid_type* out_rate_id) {
   namespace rate_q = grackle::impl::ratequery;
 
-  const long long sanitized_i = (i < LLONG_MAX) ? (long long)i : -1;
+  const long long sanitized_i =
+      (i < std::numeric_limits<long long>::max()) ? (long long)i : -1;
   // short-term hack! (it's bad practice to "cast away the const")
   rate_q::ratequery_rslt_ tmp = rate_q::query_Entry(
       const_cast<chemistry_data_storage*>(my_rates), sanitized_i);
