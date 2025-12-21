@@ -163,7 +163,6 @@ void drop_RegBuilder(RegBuilder* ptr);
 /// @param[inout] ptr The RegBuilder that will be updated
 /// @param[in] n_entries The number of entries accessible through the recipe
 /// @param[in] recipe_fn The recipe being registered
-/// @param[in] common_props The properties shared by each Entry in the recipe
 ///
 /// @returns GR_SUCCESS if successful, otherwise returns a different value
 int RegBuilder_recipe_scalar(RegBuilder* ptr, int n_entries,

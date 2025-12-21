@@ -46,51 +46,10 @@ enum { UNDEFINED_RATE_ID_ = 0 };
 
 // introduce some basic machinery to help us implement dynamic lookup of rates
 
-static Entry new_Entry_standard_kcol_(chemistry_data_storage* my_rates,
-                                      const char* name, int index) {
-  if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
-      (my_rates->opaque_storage->kcol_rate_tables == nullptr)) {
-    return new_Entry(nullptr, name);
-  } else {
-    return new_Entry(my_rates->opaque_storage->kcol_rate_tables->data[index],
-                     name);
-  }
-}
-
 #define MKENTRY_(PTR, NAME, FAMILY)                                            \
   new_Entry(((PTR) == nullptr) ? nullptr : (PTR)->NAME, #NAME, FAMILY)
 #define MKENTRY_SCALAR_(PTR, NAME)                                             \
   new_Entry(((PTR) == nullptr) ? nullptr : &((PTR)->NAME), #NAME)
-#define MKENTRY_STANDARD_KCOL_(PTR, NAME, INDEX)                               \
-  new_Entry_standard_kcol_(PTR, #NAME, INDEX)
-
-// Create machinery to lookup Standard-Form Collisional Reaction Rates
-// -------------------------------------------------------------------
-// see the next section for other macros
-
-// this fn leverages the following properties of the CollisionalRxnLUT enum:
-// - each entry of collisional_rxn_rate_members.def has a corresponding
-//   enumeration-constant
-// - the very first enumeration constant has a value of 0 (since a value wasn't
-//   explicitly specified)
-// - the value of each other enumeration constants is 1 larger than the value
-//   of the previous value (if a value isn't explicitly specified)
-// - CollisionalRxnLUT::NUM_ENTRIES specifies the number of other enumeration
-//   constants (excluding CollisionalRxnLUT::NUM_ENTRIES) in the enum
-static Entry get_CollisionalRxn_Entry(chemistry_data_storage* my_rates, int i) {
-  switch (i) {
-#define ENTRY(NAME)                                                            \
-  case CollisionalRxnLUT::NAME: {                                              \
-    return MKENTRY_STANDARD_KCOL_(my_rates, NAME, CollisionalRxnLUT::NAME);    \
-  }
-#include "collisional_rxn_rate_members.def"
-
-#undef ENTRY
-    default: {
-      return mk_invalid_Entry();
-    }
-  }
-}
 
 static Entry get_k13dd_Entry(chemistry_data_storage* my_rates, int i) {
   if (i == 0) {
@@ -147,10 +106,6 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
 void grackle::impl::ratequery::RegBuilder_misc_recipies(
     RegBuilder* ptr, const chemistry_data* my_chemistry) {
   if (my_chemistry->primordial_chemistry != 0) {
-    RegBuilder_recipe_1d(ptr, CollisionalRxnLUT::NUM_ENTRIES,
-                         &get_CollisionalRxn_Entry,
-                         my_chemistry->NumberOfTemperatureBins);
-
     // maybe k13dd should be considered multi-dimensional?
     RegBuilder_recipe_1d(ptr, 1, &get_k13dd_Entry,
                          my_chemistry->NumberOfTemperatureBins * 14);
@@ -347,7 +302,9 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
     const rate_q::EntrySet set = registry->sets[set_idx];
     int set_len = set.len;
     for (int i = 0; i < set_len; i++) {
-      rate_q::Entry entry = set.recipe_fn(nullptr, i);
+      // short-term hack! (it's bad practice to "cast away the const")
+      rate_q::Entry entry =
+          set.recipe_fn(const_cast<chemistry_data_storage*>(my_rates), i);
       if (std::strcmp(name, entry.name) == 0) {
         return registry->id_offsets[set_idx] + i;
       }

@@ -385,12 +385,60 @@ int init_kcol_rate_tables(
   return GR_SUCCESS;
 }
 
+
+/// a function that encodes the algorithm for looking up the `i`th pointer
+/// collisional reaction rate from an instance of `chemistry_data_storage`.
+///
+/// This is intended to be registered with RegBuilder in order to provide
+/// access to the various collisional reaction rates.
+///
+/// @param my_rates The object from which the rate Entry is loaded
+/// @param i the index of the queried rate
+grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
+    (chemistry_data_storage* my_rates, int i) {
+  // sanity check! (this shouldn't actually happen)
+  if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
+      (my_rates->opaque_storage->kcol_rate_tables == nullptr)) {
+    return grackle::impl::ratequery::mk_invalid_Entry();
+  }
+
+  // import new_Entry into the current scope (so we don't need the full name)
+  using ::grackle::impl::ratequery::new_Entry;
+
+  double** data = my_rates->opaque_storage->kcol_rate_tables->data;
+
+  // this implementation leverages the following properties of the
+  // CollisionalRxnLUT enum:
+  // - each entry of collisional_rxn_rate_members.def has a corresponding
+  //   enumeration-constant
+  // - the very first enumeration constant has a value of 0 (since a value
+  //   wasn't explicitly specified)
+  // - the value of each other enumeration constants is 1 larger than the value
+  //   of the previous value (if a value isn't explicitly specified)
+  // - CollisionalRxnLUT::NUM_ENTRIES specifies the number of other enumeration
+  //   constants (excluding CollisionalRxnLUT::NUM_ENTRIES) in the enum
+  switch (i) {
+#define TO_STR(s) #s
+#define ENTRY(NAME)                                                            \
+  case CollisionalRxnLUT::NAME: { return new_Entry(data[i], TO_STR(NAME)); }
+#include "collisional_rxn_rate_members.def"
+
+#undef ENTRY
+#undef TO_STR
+    default: {
+      return grackle::impl::ratequery::mk_invalid_Entry();
+    }
+  }
+}
+
+
 } // anonymous namespace
 
 //Definition of the initialise_rates function.
 int grackle::impl::initialize_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
-  code_units *my_units, double co_length_unit, double co_density_unit)
+  code_units *my_units, double co_length_unit, double co_density_unit,
+  ratequery::RegBuilder* reg_builder)
 { 
     // TODO: we REALLY need to do an error check that
     //    my_chemistry->NumberOfTemperatureBins >= 2
@@ -491,6 +539,15 @@ int grackle::impl::initialize_rates(
           ) != GR_SUCCESS) {
         fprintf(stderr, "Error in init_kcol_rate_tables.\n");
         return GR_FAIL;
+      }
+
+      // register the recipe for looking up the "standard" collisional rates
+      if (grackle::impl::ratequery::RegBuilder_recipe_1d(
+              reg_builder, CollisionalRxnLUT::NUM_ENTRIES,
+              &get_CollisionalRxn_Entry, my_chemistry->NumberOfTemperatureBins
+          ) != GR_SUCCESS) {
+        return GrPrintAndReturnErr("error registering standard collisional "
+                                   "reaction rates");
       }
 
         //--------Calculate coefficients for density-dependent collisional H2 dissociation rate--------
