@@ -75,8 +75,32 @@ std::string stringify_prop_kind(enum grunstable_ratequery_prop_kind kind) {
       return "GRUNSTABLE_QPROP_SHAPE";
     case GRUNSTABLE_QPROP_MAXITEMSIZE:
       return "GRUNSTABLE_QPROP_MAXITEMSIZE";
+    case GRUNSTABLE_QPROP_WRITABLE:
+      return "GRUNSTABLE_QPROP_WRITABLE";
+    case GRUNSTABLE_QPROP_DTYPE:
+      return "GRUNSTABLE_QPROP_DTYPE";
   }
   GR_INTERNAL_UNREACHABLE_ERROR();
+}
+
+std::string stringify_type(enum grunstable_types kind) {
+  switch (kind) {
+    case GRUNSTABLE_TYPE_F64:
+      return "GRUNSTABLE_TYPE_F64";
+    case GRUNSTABLE_TYPE_STR:
+      return "GRUNSTABLE_TYPE_STR";
+  }
+  GR_INTERNAL_UNREACHABLE_ERROR();
+}
+
+std::optional<enum grunstable_types> safe_type_enum_cast(long long val) {
+  if (static_cast<long long>(GRUNSTABLE_TYPE_F64) == val) {
+    return std::make_optional(GRUNSTABLE_TYPE_F64);
+  } else if (static_cast<long long>(GRUNSTABLE_TYPE_STR) == val) {
+    return std::make_optional(GRUNSTABLE_TYPE_STR);
+  } else {
+    return std::nullopt;
+  }
 }
 
 /// return a vector of some invalid rateids
@@ -190,11 +214,29 @@ TEST_P(ParametrizedRateQueryTest, Property) {
           << "buf holds the shape queried for " << pair;
     }
 
+    long long tmp = DEFAULT_VAL;
+    EXPECT_GR_SUCCESS(grunstable_ratequery_prop(pack.my_rates(), pair.id,
+                                                GRUNSTABLE_QPROP_DTYPE, &tmp))
+        << "for " << pair;
+    std::optional<enum grunstable_types> dtype_maybe = safe_type_enum_cast(tmp);
+    EXPECT_TRUE(dtype_maybe.has_value()) << "for " << pair;
+    enum grunstable_types dtype = dtype_maybe.value();
+
     long long maxitemsize = DEFAULT_VAL;
     EXPECT_GR_SUCCESS(grunstable_ratequery_prop(
         pack.my_rates(), pair.id, GRUNSTABLE_QPROP_MAXITEMSIZE, &maxitemsize))
         << "for " << pair;
-    EXPECT_EQ(maxitemsize, sizeof(double)) << "for " << pair;
+    if (dtype == GRUNSTABLE_TYPE_F64) {
+      EXPECT_EQ(maxitemsize, sizeof(double)) << "for " << pair;
+    } else {
+      EXPECT_GT(maxitemsize, 0) << "for " << pair;
+    }
+
+    long long writable = DEFAULT_VAL;
+    EXPECT_GR_SUCCESS(grunstable_ratequery_prop(
+        pack.my_rates(), pair.id, GRUNSTABLE_QPROP_WRITABLE, &writable))
+        << "for " << pair;
+    EXPECT_THAT(writable, ::testing::AnyOf(0LL, 1LL)) << "for " << pair;
   }
 }
 
@@ -202,9 +244,12 @@ TEST_P(ParametrizedRateQueryTest, Property) {
 struct RateProperties {
   std::vector<long long> shape;
   std::size_t maxitemsize;
+  enum grunstable_types dtype;
+  bool writable;
 
   bool operator==(const RateProperties& other) const {
-    return maxitemsize == other.maxitemsize && shape == other.shape;
+    return maxitemsize == other.maxitemsize && shape == other.shape &&
+           dtype == other.dtype && writable == other.writable;
   }
 
   long long n_items() const {
@@ -224,32 +269,41 @@ struct RateProperties {
       }
       *os << props.shape[i];
     }
-    *os << "}, maxitemsize=" << props.maxitemsize << "}";
+    *os << "}, maxitemsize=" << props.maxitemsize
+        << ", dtype=" << stringify_type(props.dtype)
+        << ", writable=" << props.writable << '}';
   }
 };
 
 /// construct a RateProperties instance for the specified rate
 ///
 /// returns an empty optional if any there are any issues
+///
+/// @note
+/// After we query each property, we encode an extra sanity-check. We **only**
+/// encode this in case there are other underlying issues (so that we don't end
+/// up with an extremely crazy set of errors). The Property tests should
+/// generally provide more details about these tests. To be clear, user-code
+/// should never need to include these sanity check!
 std::optional<RateProperties> try_query_RateProperties(
     chemistry_data_storage* my_rates, grunstable_rateid_type rateid) {
   long long ndim = -1LL;
-  std::vector<long long> shape;
   if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_NDIM,
                                 &ndim) != GR_SUCCESS) {
     return std::nullopt;
-  } else if (ndim != 0LL) {
-    if (ndim < 0LL) {  // <- sanity check!
-      return std::nullopt;
-    }
+  }
+  if (ndim < 0LL) {
+    return std::nullopt;  // sanity-check failed!
+  }
+
+  std::vector<long long> shape;
+  if (ndim > 0LL) {
     shape.assign(ndim, 0LL);
     if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_SHAPE,
                                   shape.data()) != GR_SUCCESS) {
       return std::nullopt;
     }
   }
-
-  // sanity check! confirm that no shape elements are non-positive
   if (std::count_if(shape.begin(), shape.end(),
                     [](long long x) { return x <= 0; }) > 0) {
     return std::nullopt;  // sanity check failed!
@@ -261,10 +315,30 @@ std::optional<RateProperties> try_query_RateProperties(
     return std::nullopt;
   }
   if (maxitemsize <= 0LL) {
+    return std::nullopt;  // sanity check failed!
+  }
+
+  long long dtype_tmp;
+  if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_DTYPE,
+                                &dtype_tmp) != GR_SUCCESS) {
+    return std::nullopt;
+  }
+  std::optional<enum grunstable_types> dtype = safe_type_enum_cast(dtype_tmp);
+  if (maxitemsize <= 0LL) {
+    return std::nullopt;  // sanity check failed!
+  }
+
+  long long writable;
+  if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_WRITABLE,
+                                &writable) != GR_SUCCESS) {
+    return std::nullopt;
+  }
+  if ((writable != 0LL) && (writable != 1LL)) {
     return std::nullopt;
   }
 
-  return {RateProperties{shape, static_cast<std::size_t>(maxitemsize)}};
+  return {RateProperties{shape, static_cast<std::size_t>(maxitemsize),
+                         dtype.value(), static_cast<bool>(writable)}};
 }
 
 // returns a value that differs from the input
@@ -340,19 +414,20 @@ enum RateKind { scalar_f64, simple_1d_rate, k13dd };
 
 static RateProperties RateProperties_from_RateKind(
     const chemistry_data* my_chemistry, RateKind kind) {
+  const enum grunstable_types f64dtype = GRUNSTABLE_TYPE_F64;
   switch (kind) {
     case RateKind::scalar_f64: {
       std::vector<long long> shape = {};  // <-- intentionally empty
-      return RateProperties{shape, sizeof(double)};
+      return RateProperties{shape, sizeof(double), f64dtype, true};
     }
     case RateKind::simple_1d_rate: {
       std::vector<long long> shape = {my_chemistry->NumberOfTemperatureBins};
-      return RateProperties{shape, sizeof(double)};
+      return RateProperties{shape, sizeof(double), f64dtype, true};
     }
     case RateKind::k13dd: {
       std::vector<long long> shape = {my_chemistry->NumberOfTemperatureBins *
                                       14};
-      return RateProperties{shape, sizeof(double)};
+      return RateProperties{shape, sizeof(double), f64dtype, true};
     }
   }
   GR_INTERNAL_UNREACHABLE_ERROR()

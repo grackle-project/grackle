@@ -144,6 +144,22 @@ public:
     GR_INTERNAL_UNREACHABLE_ERROR();
   }
 
+  /// Convenience method to check whether the tag holds a const pointer
+  ///
+  /// @note
+  /// An argument could be made for converting this to a standalone function
+  /// so that things are more C-like
+  bool is_const_ptr() const {
+    switch (this->tag_) {
+      case PtrKind::const_f64:
+      case PtrKind::const_str:
+        return true;
+      case PtrKind::mutable_f64:
+        return false;
+    }
+    GR_INTERNAL_UNREACHABLE_ERROR();
+  }
+
   /// access the tag attribute
   PtrKind tag() const { return this->tag_; }
 

@@ -10,7 +10,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <cstring>  // strcmp
+#include <cstring>  // std::strcmp, std::strlen, std::strcpy
 #include <limits>
 #include "grackle.h"
 #include "internal_types.hpp"  // CollisionalRxnRateCollection
@@ -18,6 +18,8 @@
 #include "opaque_storage.hpp"  // gr_opaque_storage
 #include "ratequery.hpp"
 #include "status_reporting.h"
+
+#include <algorithm>
 
 // In comparison to the dynamic API for accessing elements of chemistry_data,
 // we have explicitly opted NOT to make use of offsetof to access arbitrary
@@ -438,6 +440,27 @@ extern "C" int grunstable_ratequery_set_f64(chemistry_data_storage* my_rates,
   }
 }
 
+extern "C" int grunstable_ratequery_get_str(chemistry_data_storage* my_rates,
+                                            grunstable_rateid_type rate_id,
+                                            char* const* buf) {
+  namespace rate_q = grackle::impl::ratequery;
+  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id).entry;
+
+  if (entry.data.is_null()) {  // in this case, the query failed
+    return GR_FAIL;
+  }
+
+  if (entry.data.tag() != rate_q::PtrKind::const_str) {
+    return GR_FAIL;
+  }
+  const char* const* src = entry.data.const_str();
+  long long n_items = rate_q::get_n_items(entry.props);
+  for (long long i = 0; i < n_items; i++) {
+    std::strcpy(buf[i], src[i]);
+  }
+  return GR_SUCCESS;
+}
+
 extern "C" int grunstable_ratequery_prop(
     const chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
     enum grunstable_ratequery_prop_kind prop_kind, long long* ptr) {
@@ -466,12 +489,49 @@ extern "C" int grunstable_ratequery_prop(
       return GR_SUCCESS;
     }
     case GRUNSTABLE_QPROP_MAXITEMSIZE: {
-      *ptr = static_cast<long long>(sizeof(double));
+      switch (entry.data.tag()) {
+        case rate_q::PtrKind::const_f64:
+        case rate_q::PtrKind::mutable_f64: {
+          *ptr = static_cast<long long>(sizeof(double));
+          return GR_SUCCESS;
+        }
+        case rate_q::PtrKind::const_str: {
+          long long n_items = rate_q::get_n_items(entry.props);
+          const char* const* str_list = entry.data.const_str();
+
+          std::size_t max_size = 1;
+          for (long long i = 0; i < n_items; i++) {
+            // max_size holds the max number of bytes per element
+            max_size = std::max(max_size, std::strlen(str_list[i]) + 1);
+          }
+          *ptr = static_cast<long long>(max_size);
+          return GR_SUCCESS;
+        }
+      }
+      // if we reach here then we didn't handle a possible PtrKind
+      GR_INTERNAL_UNREACHABLE_ERROR();
+    }
+    case GRUNSTABLE_QPROP_WRITABLE: {
+      *ptr = static_cast<long long>(entry.data.is_const_ptr());
       return GR_SUCCESS;
     }
-    default:
+    case GRUNSTABLE_QPROP_DTYPE: {
+      switch (entry.data.tag()) {
+        case rate_q::PtrKind::const_f64:
+        case rate_q::PtrKind::mutable_f64: {
+          *ptr = static_cast<long long>(GRUNSTABLE_TYPE_F64);
+          return GR_SUCCESS;
+        }
+        case rate_q::PtrKind::const_str: {
+          *ptr = static_cast<long long>(GRUNSTABLE_TYPE_STR);
+          return GR_SUCCESS;
+        }
+      }
+      // if we reach here then we didn't handle a possible PtrKind
       GR_INTERNAL_UNREACHABLE_ERROR();
+    }
   }
+  return GrPrintAndReturnErr("received an unknown prop_kind");
 }
 
 extern "C" const char* grunstable_ith_rate(

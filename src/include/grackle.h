@@ -272,13 +272,35 @@ int grunstable_ratequery_get_f64(
 ///    specified, this returns a different value
 ///
 /// > [!note]
-/// > Before stablizing, we should consider whether we want to add an argument
+/// > Before stabilizing, we should consider whether we want to add an argument
 /// > that specifies the supplied size of `buf` (and provide well-defined
 /// > behavior when `buf` is too small
 int grunstable_ratequery_set_f64(
   chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
   const double* buf
 );
+
+int grunstable_ratequery_get_str(
+  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
+  char* const * buf
+);
+
+
+/// Describe types known to grackle
+///
+/// > [!note]
+/// > Before stabilizing, we should consider:
+/// > 1. whether this is general enough to be useful throughout grackle.
+/// >    - For example, we could imagine adding a function in the future to the
+/// >      chemistry_data dynamic-access API that generically tries to query
+/// >      datatype.
+/// >    - In that case, we would want to reuse these macros
+/// > 2. if these should actually be defined as macros (that may make it easier
+/// >    to support them from Fortran
+enum grunstable_types {
+  GRUNSTABLE_TYPE_F64 = 1,
+  GRUNSTABLE_TYPE_STR = 2,
+};
 
 /// Describe Rate-Query Property Types
 ///
@@ -292,6 +314,8 @@ enum grunstable_ratequery_prop_kind {
   GRUNSTABLE_QPROP_NDIM = 1,
   GRUNSTABLE_QPROP_SHAPE = 2,
   GRUNSTABLE_QPROP_MAXITEMSIZE = 3,
+  GRUNSTABLE_QPROP_WRITABLE = 4,
+  GRUNSTABLE_QPROP_DTYPE = 5,
 };
 
 /// Query a property of the specified rate
