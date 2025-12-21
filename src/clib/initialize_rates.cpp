@@ -432,6 +432,25 @@ grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
 }
 
 
+/// a function that encodes the algorithm for looking up the k13dd
+/// collisional reaction rate from an instance of `chemistry_data_storage`.
+///
+/// This is intended to be registered with RegBuilder in order to provide
+/// access to the various collisional reaction rates.
+///
+/// @param my_rates The object from which the rate Entry is loaded
+/// @param i the index of the queried rate
+grackle::impl::ratequery::Entry get_k13dd_Entry(
+    chemistry_data_storage* my_rates, int i) {
+  if (i == 0) {
+    double* ptr = (my_rates == nullptr) ? nullptr : my_rates->k13dd;
+    return grackle::impl::ratequery::new_Entry(ptr, "k13dd");
+  } else {
+    return grackle::impl::ratequery::mk_invalid_Entry();
+  }
+}
+
+
 } // anonymous namespace
 
 //Definition of the initialise_rates function.
@@ -564,6 +583,14 @@ int grackle::impl::initialize_rates(
         // k13dd = {coeff1(idt=0, Tbin1), coeff1(idt=0, Tbin2), ..., coeff1(idt=0, TbinFinal), coeff2(idt=0, Tbin1), ..., 
         //          coeff7(idt=0, TbinFinal), coeff1(idt=1, Tbin1), ..., coeff7(idt=1, TbinFinal)}
         add_k13dd_reaction_rate(&my_rates->k13dd, kUnit, my_chemistry);
+
+        // maybe k13dd should be considered multi-dimensional?
+        if (grackle::impl::ratequery::RegBuilder_recipe_1d(
+                reg_builder, 1, &get_k13dd_Entry,
+                my_chemistry->NumberOfTemperatureBins * 14) != GR_SUCCESS) {
+          return GrPrintAndReturnErr("error registering k13dd rate");
+        }
+
 
         //H2 formation on dust grains requires loop over the dust temperature.
         add_h2dust_reaction_rate(&my_rates->h2dust, kUnit, my_chemistry);

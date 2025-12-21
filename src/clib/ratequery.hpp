@@ -185,8 +185,8 @@ int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
 /// @note
 /// This is a hack until we can figure out a better spot to put definitions of
 /// some miscellaneous rates
-void RegBuilder_misc_recipies(RegBuilder* ptr,
-                              const chemistry_data* my_chemistry);
+int RegBuilder_misc_recipies(RegBuilder* ptr,
+                             const chemistry_data* my_chemistry);
 
 /// build a new Registry.
 ///

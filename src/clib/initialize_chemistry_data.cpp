@@ -29,6 +29,7 @@
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 #include "ratequery.hpp"
+#include "status_reporting.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -466,7 +467,11 @@ static int local_initialize_chemistry_data_(
   my_rates->initial_units = *my_units;
 
   // initialize the registry
-  grackle::impl::ratequery::RegBuilder_misc_recipies(reg_builder, my_chemistry);
+  if (grackle::impl::ratequery::RegBuilder_misc_recipies(reg_builder,
+                                                         my_chemistry)
+      != GR_SUCCESS){
+    return GrPrintAndReturnErr("error in RegBuilder_misc_recipies");
+  }
   my_rates->opaque_storage->registry = new grackle::impl::ratequery::Registry(
     grackle::impl::ratequery::RegBuilder_consume_and_build(reg_builder)
   );

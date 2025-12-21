@@ -44,24 +44,10 @@ namespace grackle::impl::ratequery {
 // we have reserved the right to change this value at any time
 enum { UNDEFINED_RATE_ID_ = 0 };
 
-// introduce some basic machinery to help us implement dynamic lookup of rates
-
-#define MKENTRY_(PTR, NAME, FAMILY)                                            \
-  new_Entry(((PTR) == nullptr) ? nullptr : (PTR)->NAME, #NAME, FAMILY)
-#define MKENTRY_SCALAR_(PTR, NAME)                                             \
-  new_Entry(((PTR) == nullptr) ? nullptr : &((PTR)->NAME), #NAME)
-
-static Entry get_k13dd_Entry(chemistry_data_storage* my_rates, int i) {
-  if (i == 0) {
-    double* ptr = (my_rates == nullptr) ? nullptr : my_rates->k13dd;
-    return new_Entry(ptr, "k13dd");
-  } else {
-    return mk_invalid_Entry();
-  }
-}
-
 // Create machinery to lookup Other Miscellaneous Rates
 // ----------------------------------------------------
+// -> ideally this should get relocated to a more sensible location (but not
+//    sure where that is...
 
 enum MiscRxnRateKind_ {
   MiscRxn_k24,
@@ -77,25 +63,28 @@ enum MiscRxnRateKind_ {
 };
 
 static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
+  if (my_rates == nullptr) {  // <- shouldn't come up
+    return mk_invalid_Entry();
+  }
   switch (i) {
     // Radiative rates for 6-species (for external field):
     case MiscRxn_k24:
-      return MKENTRY_SCALAR_(my_rates, k24);
+      return new_Entry(&my_rates->k24, "k24");
     case MiscRxn_k25:
-      return MKENTRY_SCALAR_(my_rates, k25);
+      return new_Entry(&my_rates->k25, "k25");
     case MiscRxn_k26:
-      return MKENTRY_SCALAR_(my_rates, k26);
+      return new_Entry(&my_rates->k26, "k26");
       // Radiative rates for 9-species
     case MiscRxn_k27:
-      return MKENTRY_SCALAR_(my_rates, k27);
+      return new_Entry(&my_rates->k27, "k27");
     case MiscRxn_k28:
-      return MKENTRY_SCALAR_(my_rates, k28);
+      return new_Entry(&my_rates->k28, "k28");
     case MiscRxn_k29:
-      return MKENTRY_SCALAR_(my_rates, k29);
+      return new_Entry(&my_rates->k29, "k29");
     case MiscRxn_k30:
-      return MKENTRY_SCALAR_(my_rates, k30);
+      return new_Entry(&my_rates->k30, "k30");
     case MiscRxn_k31:
-      return MKENTRY_SCALAR_(my_rates, k31);
+      return new_Entry(&my_rates->k31, "k31");
     default: {
       return mk_invalid_Entry();
     }
@@ -103,15 +92,12 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
 }
 }  // namespace grackle::impl::ratequery
 
-void grackle::impl::ratequery::RegBuilder_misc_recipies(
+int grackle::impl::ratequery::RegBuilder_misc_recipies(
     RegBuilder* ptr, const chemistry_data* my_chemistry) {
   if (my_chemistry->primordial_chemistry != 0) {
-    // maybe k13dd should be considered multi-dimensional?
-    RegBuilder_recipe_1d(ptr, 1, &get_k13dd_Entry,
-                         my_chemistry->NumberOfTemperatureBins * 14);
-
-    RegBuilder_recipe_scalar(ptr, MiscRxn_NRATES, &get_MiscRxn_Entry);
+    return RegBuilder_recipe_scalar(ptr, MiscRxn_NRATES, &get_MiscRxn_Entry);
   }
+  return GR_SUCCESS;
 }
 
 namespace grackle::impl::ratequery {
