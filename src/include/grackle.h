@@ -188,7 +188,7 @@ int gr_initialize_field_data(grackle_field_data *my_fields);
 /// >   anyways to support any variant of this API for dynamic rates)
 ///
 /// > [!note]
-/// > There are a number of considerations before stablization. Some are
+/// > There are a number of considerations before stabilization. Some are
 /// > discussed in docstrings. Below we summarize more generic considerations:
 /// > 1. Do we want to be able to use this API to eventually support a dynamic
 /// >    set of rates? If so, then:
@@ -203,13 +203,49 @@ int gr_initialize_field_data(grackle_field_data *my_fields);
 /// >    - currently the dynamic parameter API is grackle's only other
 /// >      data-access API, but we could imagine creating an API for the fields
 /// >      (in order to achieve ABI stability)
+/// > 3. I think it may be beneficial to follow the example of yt and make keys
+/// >    2 element strings (rather than just a single string).
+/// >    - this is attractive because it would let us group things together
+/// >    - for example, we could group k1, k2, k3, ... under a group of
+/// >      collisional reaction rates. It might be useful to list yields for
+/// >      different injection pathways (e.g. used in the multi-dust grain
+/// >      species model) under a separate group.
+/// > 4. We should consider improving "ergonomics" of this API
+/// >    - accessing arrays of strings are currently very clunky.
+/// >      - Maybe we should avoid requiring a deep-copy? And just require the
+/// >        user to allocate a buffer to hold pointers to internal strings? I
+/// >        don't love this.
+/// >      - There's a piece of me that wonders if we could entirely eliminate
+/// >        arrays of strings (while still supporting single strings) by
+/// >        adopting keys composed of 2 strings and refactoring
+/// >        grackle_field_data to only provide access to strings through keys
+/// >        (as in PR 271)
+/// >    - property-querying also feels a little clunky... See the note
+/// >      attached to that docstring for more details
+/// > 5. We need to come up with a consistent strategy when rates are not
+/// >    defined.
+/// >    - In a lot of cases, I think it's ok to simply "not" define the rate.
+/// >      For example, when primordial_chemistry=0, I don't think we should
+/// >      define rates like k1, k2, k3, ... If we ever want to support a
+/// >      dynamic API, I think this approach makes a lot of sense in a lot of
+/// >      cases.
+/// >    - There's a separate, related question of whether we should support the
+/// >      idea of an empty entry (i.e. a 1D array with 0 entries). This may
+/// >      come up in the context of arrays of strings
+/// >      - for example, if we normally list the names of all dust grain
+/// >        species, we may want an empty string when there are no dust grain
+/// >        grain species
+/// >      - but does it make sense to support an empty scalar?
+/// >      - as we discuss earlier in this list, it's plausible certain changes
+/// >        could make string-datasets unnecessary. In that case, this point
+/// >        may become moot.
 /** @{ */
 
 /// @typedef grunstable_rateid_type
 /// @brief Type of rate-ids returned to the user
 ///
 /// > [!note]
-/// > Before stablizing, we should consider:
+/// > Before stabilizing, we should consider:
 /// > - if we should use `int64_t` rather than `long long`
 /// > - if we want to make this a more generic name like `gr_idtype` (i.e. if
 /// >   we plan to use rates in other parts of the code)
@@ -322,13 +358,32 @@ enum grunstable_ratequery_prop_kind {
 ///
 /// @param[in]  my_rates The object being queried
 /// @param[in]  rate_id The id of the rate for which the property is queried
-/// @param[in]  prop_kind The proprty to query
+/// @param[in]  prop_kind The property to query
 /// @param[out] ptr The pointer where the property is recorded
 ///
 /// @returns GR_SUCCESS if successful. Otherwise, a different value is returned.
 ///
 /// The behavior is undefined when @p my_rates is a `nullptr`, @p ptr is a
 /// nullptr or @p ptr doesn't have enough space to store the queried property
+///
+/// @note
+/// It turns out that using this interface is a little clunky...
+/// - before stabilization, it may be better to change this function so that
+///   - it accepts an additional argument specifying the total size of the
+///     provided buffer (and report an error if the buffer isn't long enough)
+///   - it would also be great (but not essential) to change the return-value
+///     to specify:
+///     - the number of entries that were filled written to ptr by this
+///       function
+///     - aside: we need to return 0 for GRUNSTABLE_QPROP_SHAPE when
+///       querying a scalar quantity
+///     - a negative value would denote an error
+///   - optionally, when ptr is a nullptr, we could have the function return
+///     the number of required ptr needs (similar to the interface for
+///     snprintf), but this isn't necessary
+/// - Doing this would allow users to write extra code to handle queries of
+///   GRUNSTABLE_QPROP_SHAPE in a special way (i.e. currently you **NEED** to
+///   query GRUNSTABLE_QPROP_NDIM, first to make sure you allocate enough space)
 int grunstable_ratequery_prop(const chemistry_data_storage* my_rates,
                               grunstable_rateid_type rate_id,
                               enum grunstable_ratequery_prop_kind prop_kind,
