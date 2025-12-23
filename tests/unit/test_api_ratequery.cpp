@@ -219,7 +219,11 @@ TEST_P(ParametrizedRateQueryTest, Property) {
                                                 GRUNSTABLE_QPROP_DTYPE, &tmp))
         << "for " << pair;
     std::optional<enum grunstable_types> dtype_maybe = safe_type_enum_cast(tmp);
-    EXPECT_TRUE(dtype_maybe.has_value()) << "for " << pair;
+    if (!dtype_maybe.has_value()) {
+      GTEST_FAIL()
+        << "Error coercing " << tmp << ", the dtype for " << pair
+        << ", to an enum value";
+    }
     enum grunstable_types dtype = dtype_maybe.value();
 
     long long maxitemsize = DEFAULT_VAL;
@@ -324,7 +328,7 @@ std::optional<RateProperties> try_query_RateProperties(
     return std::nullopt;
   }
   std::optional<enum grunstable_types> dtype = safe_type_enum_cast(dtype_tmp);
-  if (maxitemsize <= 0LL) {
+  if (!dtype.has_value()) {
     return std::nullopt;  // sanity check failed!
   }
 
