@@ -990,11 +990,14 @@ cdef object rateq_get_prop(
         # did we forget to update this function after adding a new prop_kind?
         raise ValueError(f"recieved an unknown prop_kind: {prop_kind}")
 
-cdef object rateq_load_string(
-    c_chemistry_data_storage *ptr, grunstable_rateid_type rate_id, tuple shape
+cdef list rateq_load_string(
+    c_chemistry_data_storage *ptr,
+    grunstable_rateid_type rate_id,
+    Py_ssize_t n_items,
+    object key
 ):
     """
-    query the property and coerce the result to the appropriate python type
+    Load the single string or list of strings associated with rate_id
 
     Notes
     -----
@@ -1005,15 +1008,6 @@ cdef object rateq_load_string(
     #     C type will check for overflows during the cast
     #     https://cython.readthedocs.io/en/3.0.x/src/quickstart/cythonize.html
 
-    cdef Py_ssize_t n_strings
-    if shape == ():
-        n_strings = 1
-    elif len(shape) == 1 and shape[0] > 0:
-        n_strings = <Py_ssize_t>(shape[0])
-    else:
-        # a multi-dimensional string array or an array of 0 strings makes **NO** sense
-        raise ValueError(f"invalid shape: {shape}")
-
     # query max number of bytes per string (includes space for trailing '\0')
     cdef Py_ssize_t bytes_per_string
     try:
@@ -1021,9 +1015,7 @@ cdef object rateq_load_string(
             rateq_get_prop(ptr, rate_id, GRUNSTABLE_QPROP_MAXITEMSIZE)
         )
     except OverflowError:
-        raise RuntimeError(
-            "bytes per string is suspiciously big (rate_id={})".format(int(rate_id))
-        ) from None
+        raise RuntimeError(f"bytes per string is suspiciously big ({key=})") from None
 
     # let's confirm that the allocation size doesn't exceed the max value of Py_ssize_t
     # -> technically, the max allocation size shouldn't exceed SIZE_MAX from C's
@@ -1032,33 +1024,55 @@ cdef object rateq_load_string(
     #    (by definition, the max value represented by Py_ssize_t uses 1 less bit of
     #    storage than SIZE_MAX)
     cdef Py_ssize_t max_alloc_size = sys.maxsize  # sys.maxsize is max val of Py_ssize_t
-    if (max_alloc_size / bytes_per_string) > n_strings:
-        raise RuntimeError(
-            "rate_id={} requires too much memory to load".format(int(rate_id))
-        )
+    if (max_alloc_size / bytes_per_string) > n_items:
+        raise RuntimeError(f"{key=} requires too much memory to load")
 
     # allocate memory
-    cdef char* str_storage = <char*> malloc(bytes_per_string * n_strings)
-    cdef char** str_array = <char* const*> malloc(sizeof(char*)*n_strings)
+    cdef char* str_storage = <char*> malloc(bytes_per_string * n_items)
+    cdef char** str_array = <char* const*> malloc(sizeof(char*) * n_items)
     cdef Py_ssize_t i
-    cdef list py_string_list = []
+    cdef list out = []
     try:
-        for i in range(n_strings):
+        for i in range(n_items):
             str_array[i] = &str_storage[i*bytes_per_string]
 
         if (grunstable_ratequery_get_str(ptr, rate_id, <char* const *>str_array)
             != GR_SUCCESS):
-            raise RatequeryFailException()
+            raise RuntimeError(f"Error retrieving data for the \"{key}\" key")
 
-        for i in range(n_strings):
-            py_string_list.append((<bytes>str_storage[i]).decode("ASCII"))
+        for i in range(n_items):
+            out.append((<bytes>str_storage[i]).decode("ASCII"))
     finally:
         free(str_array)
         free(str_storage)
 
-    if shape == ():
-        return py_string_list[0]
-    return py_string_list
+    return out
+
+
+cdef object rateq_load_f64(
+    c_chemistry_data_storage *ptr,
+    grunstable_rateid_type rate_id,
+    Py_ssize_t n_items,
+    object key
+):
+    """
+    Returns a 1D numpy array of loaded 64-bit floats
+
+    Notes
+    -----
+    If we add more types (other than strings), it would be easier to use cython's
+    fused-type functionality to generalize this function
+    """
+    out = np.empty(shape=(n_items,), dtype=np.float64)
+    cdef double[:] memview = out
+    if grunstable_ratequery_get_f64(ptr, rate_id, &memview[0]) != GR_SUCCESS:
+        raise RuntimeError(f"Error retrieving data for the \"{key}\" key")
+
+    # we set the WRITABLE flag to False so that people don't mistakenly believe
+    # that by modifying the array in place that they are updating Grackle's
+    # internal buffers
+    out.setflags(write=False)
+    return out
 
 
 cdef class _rate_mapping_access:
@@ -1155,33 +1169,23 @@ cdef class _rate_mapping_access:
         rate_id = self._name_rateid_map[key]
         shape, dtype = self._try_get_shape_type_pair(rate_id)
 
+        ndim = len(shape)
+        nelements = 1 if shape == () else np.prod(shape)
+
         if dtype == str:
-            # strings are a special case where we don't really want to rely upon numpy
-            return rateq_load_string(self._ptr, rate_id, shape)
-        elif dtype != float:
+            if ndim > 1:
+                raise RuntimeError("multi-dimensional arrays of strings aren't alowed")
+            out = rateq_load_string(self._ptr, rate_id, nelements, key)
+        elif dtype == float:
+            out = rateq_load_f64(self._ptr, rate_id, nelements, key)
+        else:
             raise RuntimeError(f"no support (yet?) for rates of {dtype} values")
 
-        # allocate the memory that grackle will write data to
-        nelements = 1 if shape == () else np.prod(shape)
-        out = np.empty(shape=(nelements,), dtype=np.float64)
-
         # declare a few memoryview types
-        cdef double[:] memview = out
-
-        if grunstable_ratequery_get_f64(self._ptr, rate_id, &memview[0]) != GR_SUCCESS:
-            raise RuntimeError(
-                "Something went wrong while retrieving the data associated with the "
-                f"\"{key}\" key"
-            )
         if shape == ():
-            return float(out[0])
-
-        if shape != out.shape:
-            out = _portable_reshape(out, shape=shape)
-        # we set the WRITABLE flag to False so that people don't mistakenly believe
-        # that by modifying the array in place that they are updating Grackle's
-        # internal buffers
-        out.setflags(write=False)
+            return dtype(out[0])
+        elif ndim != 1:
+            return _portable_reshape(out, shape=shape)
         return out
 
     def _set_rate(self, key, val):
@@ -1234,8 +1238,7 @@ cdef class _rate_mapping_access:
             writable = rateq_get_prop(self._ptr, rate_id, GRUNSTABLE_QPROP_WRITABLE)
             if writable:
                 raise RuntimeError(
-                    "Something went wrong while writing data associated with the "
-                    f"\"{key}\" key"
+                    f"Error writing to data associated with the \"{key}\" key"
                 )
             else:
                 raise ValueError(
@@ -1249,7 +1252,7 @@ cdef class _rate_mapping_access:
         """
         try:
             return self._get_rate(key)
-        except:
+        except KeyError:
             return default
 
     def __getitem__(self, key): return self._get_rate(key)
