@@ -167,6 +167,79 @@ static void drop_owned_Entry_list_contents(Entry* entry_list, int n_entries) {
   }
 }
 
+/// Describes a set of entries
+///
+/// This can operate in 2 modes:
+/// 1. Embedded-List-mode:
+///    - the EntrySet directly holds a list of Entry instances that **ONLY**
+///      exist for querying purposes and should **NEVER** be mutated by
+///      external code.
+///    - importantly, the EntrySet is responsible for managing the memory the
+///      pointers to string each string and pointer referenced by a pointer in
+///      this list.
+/// 2. Recipe-mode:
+///    - In this case, the EntrySet provides access to Entry instances that
+///      directly reference data managed by `chemistry_data_storage`
+struct EntrySet {
+  /// number of entries in the current set
+  int len;
+
+  /// an embedded list of entries, where the allocation are directly owned and
+  /// managed by this instance.
+  ///
+  /// @important
+  /// this **must** be a nullptr if operating in Recipe-mode
+  Entry* embedded_list;
+
+  /// a function pointer that can be used to access entries through a recipe
+  fetch_Entry_recipe_fn* recipe_fn;
+
+  /// properties used by all entries accessed through a recipe
+  ///
+  /// In more detail, an entry returned by `recipe_fn` has its `props` member
+  /// overwritten by this value
+  ///
+  /// @note
+  /// only used in Recipe-mode
+  EntryProps common_recipe_props;
+};
+
+/// look up an Entry in an EntrySet
+///
+/// @param[in] entry_set The container object being queried
+/// @param[in] my_rates Used for looking up Entry in recipe-mode
+/// @param[in] i The index to query
+///
+/// @returns An instance that references memory owned by either my_rates or by
+///     the entry_set, itself.
+Entry EntrySet_access(const EntrySet* entry_set,
+                      chemistry_data_storage* my_rates, int i) {
+  if (i > entry_set->len) {
+    return mk_invalid_Entry();
+  } else if (entry_set->embedded_list == nullptr) {  // in recipe-mode
+    Entry out = (entry_set->recipe_fn)(my_rates, i);
+    out.props = entry_set->common_recipe_props;
+    return out;
+  } else {  // in embedded-list mode
+    return entry_set->embedded_list[i];
+  }
+}
+
+/// deallocate the contents of an EntrySet
+void drop_EntrySet(EntrySet* ptr) {
+  if (ptr->embedded_list == nullptr) {
+    // nothing to deallocate in recipe-mode
+  } else {
+    // in embedded-list-mode, we need to deallocate each Entry in the list
+    // and the deallocate the actual list-pointer
+    drop_owned_Entry_list_contents(ptr->embedded_list, ptr->len);
+
+    // deallocate the memory associated with embedded_list
+    delete[] ptr->embedded_list;
+    ptr->embedded_list = nullptr;
+  }
+}
+
 /// resets the instance to the initial (empty) state.
 ///
 /// the skip_dealloc argument will only be true when the data is transferred
@@ -246,33 +319,6 @@ grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
     // transferred to out
     RegBuilder_reset_to_empty(ptr, true);
     return out;
-  }
-}
-
-grackle::impl::ratequery::Entry grackle::impl::ratequery::EntrySet_access(
-    const EntrySet* entry_set, chemistry_data_storage* my_rates, int i) {
-  if (i > entry_set->len) {
-    return mk_invalid_Entry();
-  } else if (entry_set->embedded_list == nullptr) {  // in recipe-mode
-    Entry out = (entry_set->recipe_fn)(my_rates, i);
-    out.props = entry_set->common_recipe_props;
-    return out;
-  } else {  // in embedded-list mode
-    return entry_set->embedded_list[i];
-  }
-}
-
-void grackle::impl::ratequery::drop_EntrySet(EntrySet* ptr) {
-  if (ptr->embedded_list == nullptr) {
-    // nothing to deallocate in recipe-mode
-  } else {
-    // in embedded-list-mode, we need to deallocate each Entry in the list
-    // and the deallocate the actual list-pointer
-    drop_owned_Entry_list_contents(ptr->embedded_list, ptr->len);
-
-    // deallocate the memory associated with embedded_list
-    delete[] ptr->embedded_list;
-    ptr->embedded_list = nullptr;
   }
 }
 
