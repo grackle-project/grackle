@@ -220,9 +220,8 @@ TEST_P(ParametrizedRateQueryTest, Property) {
         << "for " << pair;
     std::optional<enum grunstable_types> dtype_maybe = safe_type_enum_cast(tmp);
     if (!dtype_maybe.has_value()) {
-      GTEST_FAIL()
-        << "Error coercing " << tmp << ", the dtype for " << pair
-        << ", to an enum value";
+      GTEST_FAIL() << "Error coercing " << tmp << ", the dtype for " << pair
+                   << ", to an enum value";
     }
     enum grunstable_types dtype = dtype_maybe.value();
 

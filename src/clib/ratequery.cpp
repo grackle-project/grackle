@@ -512,7 +512,7 @@ extern "C" int grunstable_ratequery_prop(
       GR_INTERNAL_UNREACHABLE_ERROR();
     }
     case GRUNSTABLE_QPROP_WRITABLE: {
-      *ptr = static_cast<long long>(entry.data.is_const_ptr());
+      *ptr = static_cast<long long>(!entry.data.is_const_ptr());
       return GR_SUCCESS;
     }
     case GRUNSTABLE_QPROP_DTYPE: {
