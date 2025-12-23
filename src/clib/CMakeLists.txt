@@ -124,6 +124,7 @@ add_library(Grackle_Grackle
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
+  support/SimpleVec.hpp
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp
