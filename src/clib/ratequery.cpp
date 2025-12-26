@@ -250,7 +250,7 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
-  SimpleVec_push_back(ptr->sets,
+  SimpleVec_push_back(ptr->recipe_sets,
                       EntrySet{n_entries, nullptr, recipe_fn, common_props});
 
   return GR_SUCCESS;
@@ -259,9 +259,21 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
 }  // namespace grackle::impl::ratequery
 
 void grackle::impl::ratequery::drop_RegBuilder(RegBuilder* ptr) {
-  drop_SimpleVec(ptr->sets);
-  delete ptr->sets;
-  ptr->sets = nullptr;
+  if (ptr->recipe_sets != nullptr) {
+    drop_SimpleVec(ptr->recipe_sets);
+    delete ptr->recipe_sets;
+    ptr->recipe_sets = nullptr;
+  }
+  if (ptr->owned_entries != nullptr) {
+    int n_entries = SimpleVec_len(ptr->owned_entries);
+    if (n_entries > 0) {
+      Entry* entry_l = SimpleVec_extract_ptr_and_make_empty(ptr->owned_entries);
+      drop_owned_Entry_list_contents(entry_l, n_entries);
+    }
+    drop_SimpleVec(ptr->owned_entries);
+    delete ptr->owned_entries;
+    ptr->owned_entries = nullptr;
+  }
 }
 
 int grackle::impl::ratequery::RegBuilder_recipe_scalar(
@@ -287,12 +299,23 @@ int grackle::impl::ratequery::RegBuilder_recipe_1d(
 /// reallocating lots of memory)
 grackle::impl::ratequery::Registry
 grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
-  int n_sets = SimpleVec_len(ptr->sets);
+  // try to construct an EntrySet that contains all owned entries
+  if (SimpleVec_len(ptr->owned_entries) > 0) {
+    EntrySet tmp{/* len = */ SimpleVec_len(ptr->owned_entries),
+                 /* embedded_list = */
+                 SimpleVec_extract_ptr_and_make_empty(ptr->owned_entries),
+                 /* recipe_fn = */ nullptr,
+                 /* common_recipe_props = */ mk_invalid_EntryProps()};
+    SimpleVec_push_back(ptr->recipe_sets, tmp);
+  }
+
+  // now actually set up the registry
+  int n_sets = SimpleVec_len(ptr->recipe_sets);
   if (n_sets == 0) {
-    drop_SimpleVec(ptr->sets);
+    drop_SimpleVec(ptr->recipe_sets);
     return Registry{0, n_sets, nullptr, nullptr};
   } else {
-    EntrySet* sets = SimpleVec_extract_ptr_and_make_empty(ptr->sets);
+    EntrySet* sets = SimpleVec_extract_ptr_and_make_empty(ptr->recipe_sets);
     // set up id_offsets and determine the total number of entries
     int* id_offsets = new int[n_sets];
     int tot_entry_count = 0;

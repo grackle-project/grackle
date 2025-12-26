@@ -293,13 +293,21 @@ void drop_Registry(Registry* ptr);
 /// Other parts of grackle should refrain from directly accessing the internals
 /// of this function (i.e. they should only use the associated methods)
 struct RegBuilder {
-  SimpleVec<EntrySet>* sets;
+  /// a growable array that records recipies for accessing sets of entries
+  SimpleVec<EntrySet>* recipe_sets;
+  /// a growable array of owned Entry instances
+  ///
+  /// The basic premise is that these Entry instances **ONLY** exist for the
+  /// purpose of supporting queries. Cleaning up each instance involves extra
+  /// effort. When a Registry instance is constructed, this pointer will be
+  /// transferred to an EntrySet.
+  SimpleVec<Entry>* owned_entries;
 };
 
 /// initialize a new instance
 inline RegBuilder new_RegBuilder() {
   // by default SimpleVec<T> is automatically initialized
-  return {new SimpleVec<EntrySet>};
+  return {new SimpleVec<EntrySet>, new SimpleVec<Entry>};
 }
 
 /// deallocates all storage within a RegBuilder instance
