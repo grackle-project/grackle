@@ -13,7 +13,7 @@
 #define SUPPORT_SIMPLEVEC_HPP
 
 #include <limits>
-#include <type_traits>
+// #include <type_traits>
 
 #include "status_reporting.h"
 
@@ -38,14 +38,23 @@ namespace grackle::impl {
 /// We should **STRONGLY** consider replacing this type with std::vector. In my
 /// opinion, the primary "cost" is that std::vector is more "contagious."
 /// Unlike the status quo where we can extract the underlying pointer (and take
-/// ownership of it), that can't be done with a std::vector; you need to either
-/// allocate a new pointer or continue carrying around the underlying vector)
+/// ownership of it), storage can't be taken from a std::vector; you need to
+/// either allocate a new pointer or continue carrying around the underlying
+/// vector)
+///
+/// @par Justification for making this a class template
+/// The alternatives to making this a template are *MUCH* less desirable:
+/// 1. We could use a macro to define a version of this type and all associated
+///    functions for each contained type. This is messy, and we would need to
+///    come up with unique names for each version of the primary struct. In
+///    practice, the template is doing this under the hood
+/// 2. We could convert data from `T*` to `void**`. While this is doable, it
+///    will require extra memory. Every time we push back a value, we would
+///    need to copy that value into newly allocated memory and cast a pointer
+///    to that memory to `void*`. For cleanup, you would need to cast each
+///    `void*` back to the original type before calling `delete`
 template <typename T>
 struct SimpleVec {
-  static_assert(  // sanity-check!
-      std::is_default_constructible_v<T> && std::is_copy_assignable_v<T>,
-      "template type is too sophisticated. You should be using std::vector");
-
   // declare the struct-members
   // - default-member initialization is used to ensure that this struct is in
   //   a valid state without calling an explicit constructor function
@@ -62,6 +71,7 @@ struct SimpleVec {
   // - By forcing the use of pointers to this type, we are mitigating this risk
   //   to an extent at the cost of an extra pointer indirection.
   // - (if we're willing to fully embrace C++, we could do a **LOT** better)
+  SimpleVec() = default;
   SimpleVec(const SimpleVec&) = delete;
   SimpleVec(SimpleVec&&) = delete;
   SimpleVec& operator=(const SimpleVec&) = delete;
@@ -121,7 +131,7 @@ void SimpleVec_push_back(SimpleVec<T>* vec, T value) {
 
 /// Deletes internal data within a vec
 template <typename T>
-int SimpleVec_len(SimpleVec<T>* vec) {
+int SimpleVec_len(const SimpleVec<T>* vec) {
   return vec->len;
 }
 

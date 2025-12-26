@@ -15,6 +15,7 @@
 #include "grackle.h"
 #include "utils-cpp.hpp"  // GRIMPL_FORCE_INLINE
 #include "status_reporting.h"
+#include "support/SimpleVec.hpp"
 
 namespace grackle::impl::ratequery {
 
@@ -292,13 +293,14 @@ void drop_Registry(Registry* ptr);
 /// Other parts of grackle should refrain from directly accessing the internals
 /// of this function (i.e. they should only use the associated methods)
 struct RegBuilder {
-  int capacity;
-  int len;
-  EntrySet* sets;
+  SimpleVec<EntrySet>* sets;
 };
 
 /// initialize a new instance
-inline RegBuilder new_RegBuilder() { return {0, 0, nullptr}; }
+inline RegBuilder new_RegBuilder() {
+  // by default SimpleVec<T> is automatically initialized
+  return {new SimpleVec<EntrySet>};
+}
 
 /// deallocates all storage within a RegBuilder instance
 void drop_RegBuilder(RegBuilder* ptr);

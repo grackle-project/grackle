@@ -240,17 +240,6 @@ void drop_EntrySet(EntrySet* ptr) {
   }
 }
 
-/// resets the instance to the initial (empty) state.
-///
-/// the skip_dealloc argument will only be true when the data is transferred
-/// to a Registry
-static void RegBuilder_reset_to_empty(RegBuilder* ptr, bool skip_dealloc) {
-  if ((ptr->capacity > 0) && !skip_dealloc) {
-    delete[] ptr->sets;
-  }
-  (*ptr) = new_RegBuilder();
-}
-
 static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
                               int n_entries, EntryProps common_props) {
   if (recipe_fn == nullptr) {
@@ -261,22 +250,18 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
-  if (ptr->capacity == 0) {
-    ptr->capacity = 5;
-    ptr->sets = new EntrySet[ptr->capacity];
-  } else if (ptr->len == ptr->capacity) {
-    // consider making this resizable in the future...
-    return GrPrintAndReturnErr("out of capacity");
-  }
+  SimpleVec_push_back(ptr->sets,
+                      EntrySet{n_entries, nullptr, recipe_fn, common_props});
 
-  ptr->sets[ptr->len++] = EntrySet{n_entries, nullptr, recipe_fn, common_props};
   return GR_SUCCESS;
 }
 
 }  // namespace grackle::impl::ratequery
 
 void grackle::impl::ratequery::drop_RegBuilder(RegBuilder* ptr) {
-  RegBuilder_reset_to_empty(ptr, false);
+  drop_SimpleVec(ptr->sets);
+  delete ptr->sets;
+  ptr->sets = nullptr;
 }
 
 int grackle::impl::ratequery::RegBuilder_recipe_scalar(
@@ -302,22 +287,20 @@ int grackle::impl::ratequery::RegBuilder_recipe_1d(
 /// reallocating lots of memory)
 grackle::impl::ratequery::Registry
 grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
-  int n_sets = ptr->len;
+  int n_sets = SimpleVec_len(ptr->sets);
   if (n_sets == 0) {
-    drop_RegBuilder(ptr);
+    drop_SimpleVec(ptr->sets);
     return Registry{0, n_sets, nullptr, nullptr};
   } else {
+    EntrySet* sets = SimpleVec_extract_ptr_and_make_empty(ptr->sets);
     // set up id_offsets and determine the total number of entries
     int* id_offsets = new int[n_sets];
     int tot_entry_count = 0;
     for (int i = 0; i < n_sets; i++) {
       id_offsets[i] = tot_entry_count;
-      tot_entry_count += ptr->sets[i].len;
+      tot_entry_count += sets[i].len;
     }
-    Registry out{tot_entry_count, n_sets, id_offsets, ptr->sets};
-    // reset to ptr to initial state (but don't deallocate since the ptr was
-    // transferred to out
-    RegBuilder_reset_to_empty(ptr, true);
+    Registry out{tot_entry_count, n_sets, id_offsets, sets};
     return out;
   }
 }
