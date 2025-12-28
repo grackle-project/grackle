@@ -369,6 +369,10 @@ TEST_P(ParametrizedRateQueryTest, SetAndGet) {
     RateProperties props = maybe_props.value();
     long long n_items = props.n_items();
 
+    if (!props.writable) {
+      continue;
+    }
+
     // load in data associated with the current rate
     initial_buf.assign(n_items, NAN);
     ASSERT_GR_SUCCESS(grunstable_ratequery_get_f64(pack.my_rates(), pair.id,
