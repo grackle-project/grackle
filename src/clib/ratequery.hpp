@@ -54,7 +54,7 @@ namespace grackle::impl::ratequery {
 /// initialization, we could consider making construction of the registry (or
 /// non-essential registry-entries) a runtime parameter.
 ///
-/// ASIDE: The current design is very much prioritizes doing something easy
+/// ASIDE: The current design very much prioritizes doing something easy
 /// over runtime performance.
 /** @{ */
 
