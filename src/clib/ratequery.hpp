@@ -343,6 +343,47 @@ int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
 int RegBuilder_misc_recipies(RegBuilder* ptr,
                              const chemistry_data* my_chemistry);
 
+/// copies a 1d array of strings to make a queryable entry
+///
+/// The resulting Registry will have a queryable entry corresponding to the
+/// specified 1D array of strings. Importantly, the RegBuilder and Registry
+/// hold a deepcopy of the specified strings.
+///
+/// @param[inout] ptr The RegBuilder that will be updated
+/// @param[in] name The queryable name that corresponds to the provided data
+/// @param[in] str_arr1d The 1d array of strings
+/// @param[in] len The length of str_arr1d
+///
+/// @returns GR_SUCCESS if successful, otherwise returns a different value
+///
+/// @note
+/// This is intended to be used for making information available that Grackle
+/// otherwise does not need access to.
+int RegBuilder_copied_str_arr1d(RegBuilder* ptr, const char* name,
+                                const char* const* str_arr1d, int len);
+
+/// copies a 1d array of doubles to make a queryable entry
+///
+/// The resulting Registry will have a queryable entry corresponding to the
+/// specified 1D array of doubles. Importantly, the RegBuilder and Registry
+/// hold a deepcopy of the values.
+///
+/// @param[inout] ptr The RegBuilder that will be updated
+/// @param[in] name The queryable name that corresponds to the provided data
+/// @param[in] f64_arr1d The 1d array of doubles
+/// @param[in] len The length of str_list
+///
+/// @returns GR_SUCCESS if successful, otherwise returns a different value
+///
+/// @note
+/// This is intended to be used for making information available that Grackle
+/// otherwise does not need access to. For example, it might be used to provide
+/// information about assumed abundances that Grackle doesn't directly use (i.e.
+/// the abundances could be "baked into" some tables), but external simulation
+/// codes may want to know about to achieve better consistency.
+int RegBuilder_copied_f64_arr1d(RegBuilder* ptr, const char* name,
+                                const double* f64_arr1d, int len);
+
 /// build a new Registry.
 ///
 /// In the process, the current Registry is consumed; it's effectively reset to

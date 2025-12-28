@@ -240,6 +240,32 @@ void drop_EntrySet(EntrySet* ptr) {
   }
 }
 
+/// Helper function that takes ownership of owned_data
+static int RegBuilder_take_data_(RegBuilder* ptr, const char* raw_name,
+                                 PtrUnion owned_data, EntryProps props) {
+  if (raw_name == nullptr) {
+    return GrPrintAndReturnErr("raw_name is a nullptr");
+  } else if (owned_data.is_null()) {
+    return GrPrintAndReturnErr("owned_data holds a nullptr");
+  } else if (!owned_data.is_const_ptr()) {
+    return GrPrintAndReturnErr("owned_data isn't const");
+  } else if (!EntryProps_is_valid(props)) {
+    return GrPrintAndReturnErr("common_props isn't valid");
+  }
+
+  std::size_t n_byte = std::strlen(raw_name) + 1;
+  char* name = new char[n_byte];
+  // NOLINTNEXTLINE(bugprone-not-null-terminated-result)
+  std::memcpy(name, raw_name, n_byte);
+
+  Entry tmp = mk_invalid_Entry();
+  tmp.data = owned_data;
+  tmp.name = name;
+  tmp.props = props;
+  SimpleVec_push_back(ptr->owned_entries, tmp);
+  return GR_SUCCESS;
+}
+
 static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
                               int n_entries, EntryProps common_props) {
   if (recipe_fn == nullptr) {
@@ -292,6 +318,38 @@ int grackle::impl::ratequery::RegBuilder_recipe_1d(
   return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
 }
 
+int grackle::impl::ratequery::RegBuilder_copied_str_arr1d(
+    RegBuilder* ptr, const char* name, const char* const* str_arr1d, int len) {
+  if (len <= 0) {
+    return GrPrintAndReturnErr("len must be positive");
+  }
+  char** my_copy = new char*[len];
+  for (int i = 0; i < len; i++) {
+    int nbytes = std::strlen(str_arr1d[i]) + 1;
+    my_copy[i] = new char[nbytes];
+    std::memcpy(my_copy[i], str_arr1d[i], nbytes);
+  }
+  PtrUnion data(const_cast<const char* const*>(my_copy));
+  EntryProps props = mk_invalid_EntryProps();
+  props.ndim = 1;
+  props.shape[0] = len;
+  return RegBuilder_take_data_(ptr, name, data, props);
+}
+
+int grackle::impl::ratequery::RegBuilder_copied_f64_arr1d(
+    RegBuilder* ptr, const char* name, const double* f64_arr1d, int len) {
+  if (len <= 0) {
+    return GrPrintAndReturnErr("len must be positive");
+  }
+  double* my_copy = new double[len];
+  std::memcpy(my_copy, f64_arr1d, sizeof(double) * len);
+  PtrUnion data(const_cast<const double*>(my_copy));
+  EntryProps props = mk_invalid_EntryProps();
+  props.ndim = 1;
+  props.shape[0] = len;
+  return RegBuilder_take_data_(ptr, name, data, props);
+}
+
 /// build a new Registry.
 ///
 /// In the process, the current Registry is consumed; it's effectively reset to
@@ -328,8 +386,7 @@ grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
   }
 }
 
-void grackle::impl::ratequery::drop_Registry(
-    grackle::impl::ratequery::Registry* ptr) {
+void grackle::impl::ratequery::drop_Registry(Registry* ptr) {
   if (ptr->sets != nullptr) {
     delete[] ptr->id_offsets;
     ptr->id_offsets = nullptr;
