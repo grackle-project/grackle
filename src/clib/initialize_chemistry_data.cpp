@@ -28,6 +28,8 @@
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
+#include "ratequery.hpp"
+#include "status_reporting.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -153,9 +155,15 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->opaque_storage = NULL;
 }
 
-extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
-                                               chemistry_data_storage *my_rates,
-                                               code_units *my_units)
+/// core logic of local_initialize_chemistry_data_
+///
+/// @note
+/// This has been separated from local_initialize_chemistry_data to ensure that
+/// any memory allocations tracked by reg_builder can be appropriately freed
+/// (this is somewhat unavoidable in C++ without destructors)
+static int local_initialize_chemistry_data_(
+    chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
+    code_units *my_units, grackle::impl::ratequery::RegBuilder* reg_builder)
 {
 
   /* Better safe than sorry: Initialize everything to NULL/0 */
@@ -328,6 +336,7 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     &my_rates->opaque_storage->h2dust_grain_interp_props);
   my_rates->opaque_storage->grain_species_info = nullptr;
   my_rates->opaque_storage->inject_pathway_props = nullptr;
+  my_rates->opaque_storage->registry = nullptr;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -343,7 +352,8 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   // Compute rate tables.
   if (grackle::impl::initialize_rates(my_chemistry, my_rates, my_units,
-                                      co_length_units, co_density_units)
+                                      co_length_units, co_density_units,
+                                      reg_builder)
       != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_rates.\n");
     return GR_FAIL;
@@ -380,6 +390,16 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   /* store a copy of the initial units */
   my_rates->initial_units = *my_units;
+
+  // initialize the registry
+  if (grackle::impl::ratequery::RegBuilder_misc_recipies(reg_builder,
+                                                         my_chemistry)
+      != GR_SUCCESS){
+    return GrPrintAndReturnErr("error in RegBuilder_misc_recipies");
+  }
+  my_rates->opaque_storage->registry = new grackle::impl::ratequery::Registry(
+    grackle::impl::ratequery::RegBuilder_consume_and_build(reg_builder)
+  );
 
   if (grackle_verbose) {
     time_t timer;
@@ -426,6 +446,20 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   return GR_SUCCESS;
+}
+
+
+extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
+                                               chemistry_data_storage *my_rates,
+                                               code_units *my_units)
+{
+  namespace rate_q = grackle::impl::ratequery;
+  rate_q::RegBuilder reg_builder = rate_q::new_RegBuilder();
+
+  int out = local_initialize_chemistry_data_(my_chemistry, my_rates, my_units,
+                                             &reg_builder);
+  rate_q::drop_RegBuilder(&reg_builder);
+  return out;
 }
 
 extern "C" int initialize_chemistry_data(code_units *my_units)
@@ -585,6 +619,15 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
       my_rates->opaque_storage->inject_pathway_props);
     // delete inject_pathway_props, itself
     delete my_rates->opaque_storage->inject_pathway_props;
+  }
+
+  if (my_rates->opaque_storage->registry != nullptr) {
+    // delete contents of registry
+    grackle::impl::ratequery::drop_Registry(
+      my_rates->opaque_storage->registry
+    );
+    // delete registry, itself
+    delete my_rates->opaque_storage->registry;
   }
 
   delete my_rates->opaque_storage;
