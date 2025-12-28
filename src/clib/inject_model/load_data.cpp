@@ -17,6 +17,7 @@
 #include "raw_data.hpp"
 #include "../LUT.hpp"
 #include "../opaque_storage.hpp"
+#include "../ratequery.hpp"
 #include "../status_reporting.h"  // GrPrintAndReturnErr
 #include "../utils/FrozenKeyIdxBiMap.hpp"
 
@@ -250,7 +251,8 @@ void zero_out_dust_inject_props(
 }  // anonymous namespace
 
 int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
-                                         chemistry_data_storage* my_rates) {
+                                         chemistry_data_storage* my_rates,
+                                         ratequery::RegBuilder* reg_builder) {
   // Currently, this function "loads" injection pathway data from data that is
   // directly embedded as part of the Grackle library in a manner controlled
   // by raw_data.hpp and raw_data.cpp
@@ -299,6 +301,15 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   if (!FrozenKeyIdxBiMap_is_ok(&inj_path_names)) {
     return GrPrintAndReturnErr(
         "there was a problem building the map of model names");
+  }
+
+  // we are going to make the list of model names available to Grackle users
+  // through the ratequery interface
+  if (ratequery::RegBuilder_copied_str_arr1d(reg_builder, "inject_model_names",
+                                             inj_path_name_l,
+                                             n_pathways) != GR_SUCCESS) {
+    return GrPrintAndReturnErr(
+        "There was an issue making names of inject pathways queryable");
   }
 
   // initialize the object that will hold the loaded data

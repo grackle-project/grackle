@@ -738,8 +738,8 @@ int grackle::impl::initialize_rates(
     }
 
     // Load injection pathway data
-    if (grackle::impl::load_inject_path_data(my_chemistry, my_rates)
-        != GR_SUCCESS) {
+    if (grackle::impl::load_inject_path_data(
+        my_chemistry, my_rates, reg_builder) != GR_SUCCESS) {
       return GrPrintAndReturnErr("Error in load_inject_path_data.");
     }
 
