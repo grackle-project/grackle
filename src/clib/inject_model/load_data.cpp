@@ -23,6 +23,160 @@
 
 namespace {  // stuff inside an anonymous namespace is local to this file
 
+/// a function that encodes the algorithm for looking up the pointer to the
+/// gas yield fractions (as in fractions of the total injected non-primordial
+/// material) from each injection pathway for the `i`th metal nuclide
+///
+/// This is intended to be registered with RegBuilder in order to provide
+/// access to these quantities
+///
+/// @param my_rates The object from which the rate Entry is loaded
+/// @param i the index of the queried rate
+grackle::impl::ratequery::Entry nuclide_gas_yield_recipe(
+    chemistry_data_storage* my_rates, int i) {
+  namespace rateq = grackle::impl::ratequery;
+  if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
+      (my_rates->opaque_storage->inject_pathway_props == nullptr)) {
+    return rateq::mk_invalid_Entry();
+  }
+  const grackle::impl::yields::MetalTables& tab =
+      my_rates->opaque_storage->inject_pathway_props->gas_metal_nuclide_yields;
+
+  switch (i) {
+    case 0:
+      return rateq::new_Entry(tab.C, "inject_path_gas_yield_frac.C");
+    case 1:
+      return rateq::new_Entry(tab.O, "inject_path_gas_yield_frac.O");
+    case 2:
+      return rateq::new_Entry(tab.Mg, "inject_path_gas_yield_frac.Mg");
+    case 3:
+      return rateq::new_Entry(tab.Al, "inject_path_gas_yield_frac.Al");
+    case 4:
+      return rateq::new_Entry(tab.Si, "inject_path_gas_yield_frac.Si");
+    case 5:
+      return rateq::new_Entry(tab.S, "inject_path_gas_yield_frac.S");
+    case 6:
+      return rateq::new_Entry(tab.Fe, "inject_path_gas_yield_frac.Fe");
+    default:
+      return rateq::mk_invalid_Entry();
+  }
+}
+
+/// a function that encodes the algorithm for looking up the pointer to the
+/// yield fractions (as in fractions of the total injected non-primordial
+/// material) from each injection pathway for the `i`th dust grain species
+///
+/// This is intended to be registered with RegBuilder in order to provide
+/// access to these quantities
+///
+/// @param my_rates The object from which the rate Entry is loaded
+/// @param i the index of the queried rate
+///
+/// @note
+/// This function makes 2 things clear:
+/// 1. We *may* want to configure recipes to accept an arbitrary callback
+///    argument so that we don't have to hardcode the names of every dust
+///    grain species
+/// 2. It would be advantageous to adopt key-names that are composed of 2
+///    strings (that way we could reuse string-literals holding the grain
+///    species names)
+grackle::impl::ratequery::Entry grain_yield_recipe(
+    chemistry_data_storage* my_rates, int i) {
+  namespace rateq = grackle::impl::ratequery;
+  if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
+      (my_rates->opaque_storage->inject_pathway_props == nullptr)) {
+    return rateq::mk_invalid_Entry();
+  }
+  const grackle::impl::GrainSpeciesCollection& tab =
+      my_rates->opaque_storage->inject_pathway_props->grain_yields;
+  double* const* data = tab.data;
+
+  switch (i) {
+    case 0:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::MgSiO3_dust],
+                              "inject_path_grain_yield_frac.MgSiO3_dust");
+    case 1:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::AC_dust],
+                              "inject_path_grain_yield_frac.AC_dust");
+    case 2:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::SiM_dust],
+                              "inject_path_grain_yield_frac.SiM_dust");
+    case 3:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::FeM_dust],
+                              "inject_path_grain_yield_frac.FeM_dust");
+    case 4:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::Mg2SiO4_dust],
+                              "inject_path_grain_yield_frac.Mg2SiO4_dust");
+    case 5:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::Fe3O4_dust],
+                              "inject_path_grain_yield_frac.Fe3O4_dust");
+    case 6:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::SiO2_dust],
+                              "inject_path_grain_yield_frac.SiO2_dust");
+    case 7:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::MgO_dust],
+                              "inject_path_grain_yield_frac.MgO_dust");
+    case 8:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::FeS_dust],
+                              "inject_path_grain_yield_frac.FeS_dust");
+    case 9:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::Al2O3_dust],
+                              "inject_path_grain_yield_frac.Al2O3_dust");
+    case 10:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::ref_org_dust],
+                              "inject_path_grain_yield_frac.ref_org_dust");
+    case 11:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::vol_org_dust],
+                              "inject_path_grain_yield_frac.vol_org_dust");
+    case 12:
+      return rateq::new_Entry(data[OnlyGrainSpLUT::H2O_ice_dust],
+                              "inject_path_grain_yield_frac.H2O_ice_dust");
+    default:
+      return rateq::mk_invalid_Entry();
+  }
+}
+
+int configure_RegBuilder(const chemistry_data_storage* my_rates,
+                         grackle::impl::ratequery::RegBuilder* reg_builder,
+                         const char* const* inj_path_name_l, int n_pathways) {
+  namespace rateq = grackle::impl::ratequery;
+
+  // make list of pathway names available to users through the ratequery API
+  if (rateq::RegBuilder_copied_str_arr1d(reg_builder, "inject_model_names",
+                                         inj_path_name_l,
+                                         n_pathways) != GR_SUCCESS) {
+    return GrPrintAndReturnErr(
+        "There was an issue making names of inject pathways queryable");
+  }
+
+  // the length of each gas nuclide yield array is equal to the number of
+  // injection pathways
+  if (rateq::RegBuilder_recipe_1d(reg_builder, 7, &nuclide_gas_yield_recipe,
+                                  n_pathways) != GR_SUCCESS) {
+    return GrPrintAndReturnErr(
+        "There was an issue making nuclide gas yield fractions (for each "
+        "injection pathway) queryable");
+  }
+
+  if ((my_rates->opaque_storage != nullptr) &&
+      (my_rates->opaque_storage->grain_species_info != nullptr)) {
+    int n_grain_species =
+        my_rates->opaque_storage->grain_species_info->n_species;
+
+    // the length of each grain species yield array is equal to the number of
+    // injection pathways
+    if (rateq::RegBuilder_recipe_1d(reg_builder, n_grain_species,
+                                    &grain_yield_recipe,
+                                    n_pathways) != GR_SUCCESS) {
+      return GrPrintAndReturnErr(
+          "There was an issue making nuclide gas yield fractions (for each "
+          "injection pathway) queryable");
+    }
+  }
+
+  return GR_SUCCESS;
+}
+
 /// names of all injection pathways known to grackle listed in the order
 /// consistent with the logic for implementing InjectPathFieldPack
 ///
@@ -303,15 +457,6 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
         "there was a problem building the map of model names");
   }
 
-  // we are going to make the list of model names available to Grackle users
-  // through the ratequery interface
-  if (ratequery::RegBuilder_copied_str_arr1d(reg_builder, "inject_model_names",
-                                             inj_path_name_l,
-                                             n_pathways) != GR_SUCCESS) {
-    return GrPrintAndReturnErr(
-        "There was an issue making names of inject pathways queryable");
-  }
-
   // initialize the object that will hold the loaded data
   int n_log10Tdust_vals = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
   int n_opac_poly_coef = grackle::impl::inj_model_input::N_Opacity_Coef;
@@ -374,6 +519,13 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
     return GrPrintAndReturnErr(
         "Only loaded data for %d of the %d available pathways", ctx.counter,
         n_pathways);
+  }
+
+  // Before we finish, let's register some of these it can be queried by
+  // Grackle-users
+  if (configure_RegBuilder(my_rates, reg_builder, inj_path_name_l,
+                           n_pathways) != GR_SUCCESS) {
+    return GrPrintAndReturnErr("error making injection pathway info queryable");
   }
 
   return GR_SUCCESS;
