@@ -25,6 +25,7 @@
 #include "grtestutils/googletest/fixtures.hpp"
 
 #include "grackle.h"
+#include "inject_model/raw_data.hpp"  // grackle::impl::inj_model_input::N_Injection_Pathways
 #include "status_reporting.h"
 
 /// returns the rateid used to denote invalid rate names
@@ -243,17 +244,27 @@ TEST_P(ParametrizedRateQueryTest, Property) {
   }
 }
 
+/// A helper function that is used to help implement PrintTo for
+/// ExpectedRateProperties and RateProperties
+template <typename T>
+void print_standard_props_(const T& props, std::ostream* os) {
+  *os << "shape={";
+  for (std::size_t i = 0; i < props.shape.size(); i++) {
+    if (i != 0) {
+      *os << ", ";
+    }
+    *os << props.shape[i];
+  }
+  *os << "}, dtype=" << stringify_type(props.dtype)
+      << ", writable=" << props.writable;
+}
+
 /// summarizes details about rate properties
 struct RateProperties {
   std::vector<long long> shape;
   std::size_t maxitemsize;
   enum grunstable_types dtype;
   bool writable;
-
-  bool operator==(const RateProperties& other) const {
-    return maxitemsize == other.maxitemsize && shape == other.shape &&
-           dtype == other.dtype && writable == other.writable;
-  }
 
   long long n_items() const {
     long long n_items = 1LL;
@@ -265,18 +276,56 @@ struct RateProperties {
 
   /// teach googletest how to print this type
   friend void PrintTo(const RateProperties& props, std::ostream* os) {
-    *os << "{shape={";
-    for (std::size_t i = 0; i < props.shape.size(); i++) {
-      if (i != 0) {
-        *os << ", ";
-      }
-      *os << props.shape[i];
-    }
-    *os << "}, maxitemsize=" << props.maxitemsize
-        << ", dtype=" << stringify_type(props.dtype)
-        << ", writable=" << props.writable << '}';
+    *os << "RateProperties{";
+    print_standard_props_(props, os);
+    *os << ", maxitemsize=" << props.maxitemsize << '}';
   }
 };
+
+/// analogous to RateProperties, but it doesn't have the maxitemsize member
+///
+/// The premise is that you construct this to express expectations since you
+/// can't know the maxitemsize for an arbitrary array of strings
+///
+/// @todo
+/// This is an ugly kludge. We may want to replace this with some kind of
+/// custom "matcher"...
+struct ExpectedRateProperties {
+  std::vector<long long> shape;
+  enum grunstable_types dtype;
+  bool writable;
+
+  /// teach googletest how to print this type
+  friend void PrintTo(const ExpectedRateProperties& props, std::ostream* os) {
+    *os << "ExpectedRateProperties{";
+    print_standard_props_(props, os);
+    *os << '}';
+  }
+};
+
+bool operator==(const RateProperties& a, const RateProperties& b) {
+  return a.maxitemsize == b.maxitemsize && a.shape == b.shape &&
+         a.dtype == b.dtype && a.writable == b.writable;
+}
+
+static bool has_appropriate_maxitemsize_(const RateProperties& props) {
+  switch (props.dtype) {
+    case GRUNSTABLE_TYPE_F64:
+      return props.maxitemsize == sizeof(double);
+    case GRUNSTABLE_TYPE_STR:
+      return true;
+  }
+  GR_INTERNAL_UNREACHABLE_ERROR();
+}
+
+bool operator==(const RateProperties& a, const ExpectedRateProperties& b) {
+  return has_appropriate_maxitemsize_(a) && a.shape == b.shape &&
+         a.dtype == b.dtype && a.writable == b.writable;
+}
+
+bool operator==(const ExpectedRateProperties& a, const RateProperties& b) {
+  return b == a;
+}
 
 /// construct a RateProperties instance for the specified rate
 ///
@@ -417,24 +466,51 @@ INSTANTIATE_TEST_SUITE_P(
 // -> this may not be the most maintainable test (we may want to re-evaluate it
 //    in the future)
 
-enum RateKind { scalar_f64, simple_1d_rate, k13dd };
+enum RateKind {
+  scalar_f64,
+  simple_1d_rate,
+  k13dd,
+  inject_path_yield,
+  inject_path_names
+};
 
-static RateProperties RateProperties_from_RateKind(
+static long long get_n_inj_pathways(const chemistry_data* my_chemistry) {
+  if (my_chemistry->metal_chemistry <= 0) {
+    GR_INTERNAL_ERROR("there are no injection pathways");
+  } else if (my_chemistry->multi_metals == 0) {
+    return 1LL;
+  } else {
+    return static_cast<long long>(
+        grackle::impl::inj_model_input::N_Injection_Pathways);
+  }
+};
+
+static ExpectedRateProperties RateProperties_from_RateKind(
     const chemistry_data* my_chemistry, RateKind kind) {
   const enum grunstable_types f64dtype = GRUNSTABLE_TYPE_F64;
+  const enum grunstable_types strdtype = GRUNSTABLE_TYPE_STR;
+
   switch (kind) {
     case RateKind::scalar_f64: {
       std::vector<long long> shape = {};  // <-- intentionally empty
-      return RateProperties{shape, sizeof(double), f64dtype, true};
+      return ExpectedRateProperties{shape, f64dtype, true};
     }
     case RateKind::simple_1d_rate: {
       std::vector<long long> shape = {my_chemistry->NumberOfTemperatureBins};
-      return RateProperties{shape, sizeof(double), f64dtype, true};
+      return ExpectedRateProperties{shape, f64dtype, true};
     }
     case RateKind::k13dd: {
       std::vector<long long> shape = {my_chemistry->NumberOfTemperatureBins *
                                       14};
-      return RateProperties{shape, sizeof(double), f64dtype, true};
+      return ExpectedRateProperties{shape, f64dtype, true};
+    }
+    case RateKind::inject_path_yield: {
+      std::vector<long long> shape = {get_n_inj_pathways(my_chemistry)};
+      return ExpectedRateProperties{shape, f64dtype, true};
+    }
+    case RateKind::inject_path_names: {
+      std::vector<long long> shape = {get_n_inj_pathways(my_chemistry)};
+      return ExpectedRateProperties{shape, strdtype, false};
     }
   }
   GR_INTERNAL_UNREACHABLE_ERROR()
@@ -466,6 +542,23 @@ std::map<std::string, RateKind> known_rates() {
 
   out.insert({"k13dd", RateKind::k13dd});
 
+  std::vector<std::string> metal_nuclides = {"C",  "O", "Mg", "Al",
+                                             "Si", "S", "Fe"};
+  for (const std::string& metal_nuclide : metal_nuclides) {
+    out.insert({"inject_path_gas_yield_frac." + metal_nuclide,
+                RateKind::inject_path_yield});
+  }
+  std::vector<std::string> known_grain_species = {
+      "MgSiO3_dust",  "AC_dust",      "SiM_dust",    "FeM_dust", "Mg2SiO4_dust",
+      "Fe3O4_dust",   "SiO2_dust",    "MgO_dust",    "FeS_dust", "Al2O3_dust",
+      "ref_org_dust", "vol_org_dust", "H2O_ice_dust"};
+  for (const std::string& grain_species : known_grain_species) {
+    out.insert({"inject_path_grain_yield_frac." + grain_species,
+                RateKind::inject_path_yield});
+  }
+
+  out.insert({"inject_model_names", RateKind::inject_path_names});
+
   return out;
 }
 
@@ -485,7 +578,7 @@ TEST_F(KnownRateQueryTest, CheckProperties) {
       continue;  // the rateid is **NOT** in known_rate_map
     }
     // construct the expected properties
-    RateProperties expected_props =
+    ExpectedRateProperties expected_props =
         RateProperties_from_RateKind(pack.my_chemistry(), search->second);
 
     // load the actual props
