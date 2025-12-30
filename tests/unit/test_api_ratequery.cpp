@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <algorithm>  // std::min, std::max
+#include <cstring>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -206,6 +207,81 @@ TEST_P(ParametrizedRateQueryTest, Property) {
   }
 }
 
+// This test case performs basic sanity checks when it comes to querying arrays
+// of strings (this doesn't really care whether the queried values are correct)
+//
+// note: this test isn't currently part of the parameterized suite since some
+//       presets don't have any queryable arrays of strings (at least at the
+//       time of writing)
+TEST_F(SimpleRateQueryTest, GetStr) {
+  std::vector<char> char_buffer;
+  std::vector<char*> str_buffer;
+
+  bool any_str = false;
+
+  // iterate over every known (rate-name, rate-id) pair
+  for (const grtest::NameIdPair pair : grtest::RateQueryRange(pack)) {
+    // get the properties associated with the current rate
+    std::optional<grtest::RateProperties> maybe_props =
+        grtest::try_query_RateProperties(pack.my_rates(), pair.id);
+    if (!maybe_props.has_value()) {
+      GTEST_FAIL()
+          << "something went wrong while trying to lookup the properties for "
+          << "the " << pair << " rate.";
+    }
+    grtest::RateProperties props = maybe_props.value();
+    if (props.dtype != GRUNSTABLE_TYPE_STR) {
+      continue;
+    }
+    any_str = true;  // <- record that we have seen a string
+
+    // the following check probably won't ever change
+    ASSERT_LT(props.shape.size(), 2)
+        << pair << " appears to correspond to a multi-dimensional array of "
+        << "strings";
+
+    // we may need to remove the following check
+    EXPECT_NE(props.shape.size(), 0)
+        << pair << " appears to correspond to a single scalar string";
+
+    ASSERT_GT(props.n_items(), 0LL) << "for " << pair;
+    std::size_t n_strings = static_cast<std::size_t>(props.n_items());
+
+    // set up the buffers for loading the data
+    // -> (we allocate more memory than necessary)
+    std::size_t bytes_per_str = props.maxitemsize;
+    constexpr char DUMMY_CHAR = '}';
+    char_buffer.assign(bytes_per_str * n_strings, DUMMY_CHAR);
+    str_buffer.clear();
+    for (std::size_t i = 0; i < n_strings; i++) {
+      str_buffer.push_back(char_buffer.data() + i * bytes_per_str);
+    }
+
+    ASSERT_GR_SUCCESS(grunstable_ratequery_get_str(pack.my_rates(), pair.id,
+                                                   str_buffer.data()))
+        << "for " << pair;
+
+    std::size_t max_strlen = 0;
+    for (std::size_t i = 0; i < n_strings; i++) {
+      ASSERT_NE(str_buffer[i][0], DUMMY_CHAR)
+          << "nothing wasn't written for index " << i << " of the string "
+          << "array associated with " << pair;
+      std::size_t cur_strlen = std::strlen(str_buffer[i]);
+      EXPECT_GT(cur_strlen, 0)
+          << "The element at index " << i << " of the string array, associated "
+          << "with " << pair << ", is an empty string.";
+      max_strlen = std::max(max_strlen, cur_strlen);
+    }
+    EXPECT_EQ(max_strlen + 1, bytes_per_str)
+        << "The queried maxitemsize for " << pair << "doesn't match the "
+        << "maximum number of bytes per string. Strictly speaking, this "
+        << "doesn't violate any API guarantees, but it would be nice to "
+        << "avoid wasting memory.";
+  }
+
+  ASSERT_TRUE(any_str) << "no string keys were encountered for the preset";
+}
+
 // returns a value that differs from the input
 static double remap_value(double in) {
   if (in == 0.0 || !std::isfinite(in)) {
@@ -214,7 +290,9 @@ static double remap_value(double in) {
   return -in;
 }
 
-TEST_P(ParametrizedRateQueryTest, SetAndGet) {
+// This test case performs basic sanity checks when it comes to querying arrays
+// of double-precision values
+TEST_P(ParametrizedRateQueryTest, SetAndGetF64) {
   std::vector<double> initial_buf;
   std::vector<double> post_update_buf;
 
@@ -229,11 +307,12 @@ TEST_P(ParametrizedRateQueryTest, SetAndGet) {
           << "the " << pair << " rate.";
     }
     grtest::RateProperties props = maybe_props.value();
-    long long n_items = props.n_items();
 
-    if (!props.writable) {
+    if (!props.writable || props.dtype != GRUNSTABLE_TYPE_F64) {
       continue;
     }
+
+    long long n_items = props.n_items();
 
     // load in data associated with the current rate
     initial_buf.assign(n_items, NAN);
