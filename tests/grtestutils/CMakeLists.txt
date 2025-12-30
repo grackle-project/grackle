@@ -83,6 +83,7 @@ add_library(grtestutils
   iterator_adaptor.hpp
   os.hpp os.cpp
   preset.hpp preset.cpp
+  ratequery.hpp
   utils.hpp utils.cpp
 
   # files in the googletest subdirectory (reminder: should just be headers!)

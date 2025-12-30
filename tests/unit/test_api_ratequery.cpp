@@ -21,17 +21,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "grtestutils/iterator_adaptor.hpp"
+#include "grtestutils/ratequery.hpp"
 #include "grtestutils/googletest/assertions.hpp"
 #include "grtestutils/googletest/fixtures.hpp"
 
 #include "grackle.h"
 #include "inject_model/raw_data.hpp"  // grackle::impl::inj_model_input::N_Injection_Pathways
 #include "status_reporting.h"
-
-/// returns the rateid used to denote invalid rate names
-grunstable_rateid_type get_invalid_rateid(const grtest::GrackleCtxPack& pack) {
-  return grunstable_ratequery_id(pack.my_rates(), nullptr);
-}
 
 using SimpleRateQueryTest =
     grtest::ConfigPresetFixture<grtest::ChemPreset::primchem4_dustspecies3,
@@ -54,7 +50,7 @@ TEST_F(SimpleRateQueryTest, IthRateChecks) {
 
 TEST_F(SimpleRateQueryTest, EmptyNameQuery) {
   grunstable_rateid_type rateid = grunstable_ratequery_id(pack.my_rates(), "");
-  EXPECT_EQ(rateid, get_invalid_rateid(pack));
+  EXPECT_EQ(rateid, grtest::get_invalid_rateid(pack));
 }
 
 TEST_F(SimpleRateQueryTest, InvalidNameQuery) {
@@ -67,42 +63,6 @@ TEST_F(SimpleRateQueryTest, InvalidNameQuery) {
 // through all rates made available via the ratequery interface. To make the
 // tests themselves as easy to read as possible, we implate a C++-style
 // iterator to wrap part of the interface
-
-std::string stringify_prop_kind(enum grunstable_ratequery_prop_kind kind) {
-  switch (kind) {
-    case GRUNSTABLE_QPROP_NDIM:
-      return "GRUNSTABLE_QPROP_NDIM";
-    case GRUNSTABLE_QPROP_SHAPE:
-      return "GRUNSTABLE_QPROP_SHAPE";
-    case GRUNSTABLE_QPROP_MAXITEMSIZE:
-      return "GRUNSTABLE_QPROP_MAXITEMSIZE";
-    case GRUNSTABLE_QPROP_WRITABLE:
-      return "GRUNSTABLE_QPROP_WRITABLE";
-    case GRUNSTABLE_QPROP_DTYPE:
-      return "GRUNSTABLE_QPROP_DTYPE";
-  }
-  GR_INTERNAL_UNREACHABLE_ERROR();
-}
-
-std::string stringify_type(enum grunstable_types kind) {
-  switch (kind) {
-    case GRUNSTABLE_TYPE_F64:
-      return "GRUNSTABLE_TYPE_F64";
-    case GRUNSTABLE_TYPE_STR:
-      return "GRUNSTABLE_TYPE_STR";
-  }
-  GR_INTERNAL_UNREACHABLE_ERROR();
-}
-
-std::optional<enum grunstable_types> safe_type_enum_cast(long long val) {
-  if (static_cast<long long>(GRUNSTABLE_TYPE_F64) == val) {
-    return std::make_optional(GRUNSTABLE_TYPE_F64);
-  } else if (static_cast<long long>(GRUNSTABLE_TYPE_STR) == val) {
-    return std::make_optional(GRUNSTABLE_TYPE_STR);
-  } else {
-    return std::nullopt;
-  }
-}
 
 /// return a vector of some invalid rateids
 std::vector<grunstable_rateid_type> invalid_rateids(
@@ -148,11 +108,12 @@ TEST_F(SimpleRateQueryTest, PropertyInvalidRateID) {
       ASSERT_GR_ERR(grunstable_ratequery_prop(pack.my_rates(), invalid_id, kind,
                                               buf.data()))
           << "executed with invalid_id=" << invalid_id
-          << ", kind=" << stringify_prop_kind(kind);
+          << ", kind=" << grtest::stringify_prop_kind(kind);
       EXPECT_THAT(buf, testing::Each(testing::Eq(DEFAULT_VAL)))
           << "grunstable_ratequery_prop mutated the ptr even though it "
           << "reported a failure. It was called with an invalid id of "
-          << invalid_id << " and a kind of " << stringify_prop_kind(kind);
+          << invalid_id << " and a kind of "
+          << grtest::stringify_prop_kind(kind);
     }
   }
 }
@@ -219,7 +180,8 @@ TEST_P(ParametrizedRateQueryTest, Property) {
     EXPECT_GR_SUCCESS(grunstable_ratequery_prop(pack.my_rates(), pair.id,
                                                 GRUNSTABLE_QPROP_DTYPE, &tmp))
         << "for " << pair;
-    std::optional<enum grunstable_types> dtype_maybe = safe_type_enum_cast(tmp);
+    std::optional<enum grunstable_types> dtype_maybe =
+        grtest::safe_type_enum_cast(tmp);
     if (!dtype_maybe.has_value()) {
       GTEST_FAIL() << "Error coercing " << tmp << ", the dtype for " << pair
                    << ", to an enum value";
@@ -244,155 +206,6 @@ TEST_P(ParametrizedRateQueryTest, Property) {
   }
 }
 
-/// A helper function that is used to help implement PrintTo for
-/// ExpectedRateProperties and RateProperties
-template <typename T>
-void print_standard_props_(const T& props, std::ostream* os) {
-  *os << "shape={";
-  for (std::size_t i = 0; i < props.shape.size(); i++) {
-    if (i != 0) {
-      *os << ", ";
-    }
-    *os << props.shape[i];
-  }
-  *os << "}, dtype=" << stringify_type(props.dtype)
-      << ", writable=" << props.writable;
-}
-
-/// summarizes details about rate properties
-struct RateProperties {
-  std::vector<long long> shape;
-  std::size_t maxitemsize;
-  enum grunstable_types dtype;
-  bool writable;
-
-  long long n_items() const {
-    long long n_items = 1LL;
-    for (std::size_t i = 0; i < shape.size(); i++) {
-      n_items *= shape[i];
-    }
-    return n_items;  // this is correct even for scalars
-  }
-
-  /// teach googletest how to print this type
-  friend void PrintTo(const RateProperties& props, std::ostream* os) {
-    *os << "RateProperties{";
-    print_standard_props_(props, os);
-    *os << ", maxitemsize=" << props.maxitemsize << '}';
-  }
-};
-
-/// analogous to RateProperties, but it doesn't have the maxitemsize member
-///
-/// The premise is that you construct this to express expectations since you
-/// can't know the maxitemsize for an arbitrary array of strings
-///
-/// @todo
-/// This is an ugly kludge. We may want to replace this with some kind of
-/// custom "matcher"...
-struct ExpectedRateProperties {
-  std::vector<long long> shape;
-  enum grunstable_types dtype;
-  bool writable;
-
-  /// teach googletest how to print this type
-  friend void PrintTo(const ExpectedRateProperties& props, std::ostream* os) {
-    *os << "ExpectedRateProperties{";
-    print_standard_props_(props, os);
-    *os << '}';
-  }
-};
-
-bool operator==(const RateProperties& a, const RateProperties& b) {
-  return a.maxitemsize == b.maxitemsize && a.shape == b.shape &&
-         a.dtype == b.dtype && a.writable == b.writable;
-}
-
-static bool has_appropriate_maxitemsize_(const RateProperties& props) {
-  switch (props.dtype) {
-    case GRUNSTABLE_TYPE_F64:
-      return props.maxitemsize == sizeof(double);
-    case GRUNSTABLE_TYPE_STR:
-      return true;
-  }
-  GR_INTERNAL_UNREACHABLE_ERROR();
-}
-
-bool operator==(const RateProperties& a, const ExpectedRateProperties& b) {
-  return has_appropriate_maxitemsize_(a) && a.shape == b.shape &&
-         a.dtype == b.dtype && a.writable == b.writable;
-}
-
-bool operator==(const ExpectedRateProperties& a, const RateProperties& b) {
-  return b == a;
-}
-
-/// construct a RateProperties instance for the specified rate
-///
-/// returns an empty optional if any there are any issues
-///
-/// @note
-/// After we query each property, we encode an extra sanity-check. We **only**
-/// encode this in case there are other underlying issues (so that we don't end
-/// up with an extremely crazy set of errors). The Property tests should
-/// generally provide more details about these tests. To be clear, user-code
-/// should never need to include these sanity check!
-std::optional<RateProperties> try_query_RateProperties(
-    chemistry_data_storage* my_rates, grunstable_rateid_type rateid) {
-  long long ndim = -1LL;
-  if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_NDIM,
-                                &ndim) != GR_SUCCESS) {
-    return std::nullopt;
-  }
-  if (ndim < 0LL) {
-    return std::nullopt;  // sanity-check failed!
-  }
-
-  std::vector<long long> shape;
-  if (ndim > 0LL) {
-    shape.assign(ndim, 0LL);
-    if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_SHAPE,
-                                  shape.data()) != GR_SUCCESS) {
-      return std::nullopt;
-    }
-  }
-  if (std::count_if(shape.begin(), shape.end(),
-                    [](long long x) { return x <= 0; }) > 0) {
-    return std::nullopt;  // sanity check failed!
-  }
-
-  long long maxitemsize = -1LL;
-  if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_MAXITEMSIZE,
-                                &maxitemsize) != GR_SUCCESS) {
-    return std::nullopt;
-  }
-  if (maxitemsize <= 0LL) {
-    return std::nullopt;  // sanity check failed!
-  }
-
-  long long dtype_tmp;
-  if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_DTYPE,
-                                &dtype_tmp) != GR_SUCCESS) {
-    return std::nullopt;
-  }
-  std::optional<enum grunstable_types> dtype = safe_type_enum_cast(dtype_tmp);
-  if (!dtype.has_value()) {
-    return std::nullopt;  // sanity check failed!
-  }
-
-  long long writable;
-  if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_WRITABLE,
-                                &writable) != GR_SUCCESS) {
-    return std::nullopt;
-  }
-  if ((writable != 0LL) && (writable != 1LL)) {
-    return std::nullopt;
-  }
-
-  return {RateProperties{shape, static_cast<std::size_t>(maxitemsize),
-                         dtype.value(), static_cast<bool>(writable)}};
-}
-
 // returns a value that differs from the input
 static double remap_value(double in) {
   if (in == 0.0 || !std::isfinite(in)) {
@@ -408,14 +221,14 @@ TEST_P(ParametrizedRateQueryTest, SetAndGet) {
   // iterate over every known (rate-name, rate-id) pair
   for (const grtest::NameIdPair pair : grtest::RateQueryRange(pack)) {
     // get the properties associated with the current rate
-    std::optional<RateProperties> maybe_props =
-        try_query_RateProperties(pack.my_rates(), pair.id);
+    std::optional<grtest::RateProperties> maybe_props =
+        grtest::try_query_RateProperties(pack.my_rates(), pair.id);
     if (!maybe_props.has_value()) {
       GTEST_FAIL()
           << "something went wrong while trying to lookup the properties for "
           << "the " << pair << " rate.";
     }
-    RateProperties props = maybe_props.value();
+    grtest::RateProperties props = maybe_props.value();
     long long n_items = props.n_items();
 
     if (!props.writable) {
@@ -485,8 +298,9 @@ static long long get_n_inj_pathways(const chemistry_data* my_chemistry) {
   }
 };
 
-static ExpectedRateProperties RateProperties_from_RateKind(
+static grtest::ExpectedRateProperties RateProperties_from_RateKind(
     const chemistry_data* my_chemistry, RateKind kind) {
+  using grtest::ExpectedRateProperties;
   const enum grunstable_types f64dtype = GRUNSTABLE_TYPE_F64;
   const enum grunstable_types strdtype = GRUNSTABLE_TYPE_STR;
 
@@ -578,18 +392,18 @@ TEST_F(KnownRateQueryTest, CheckProperties) {
       continue;  // the rateid is **NOT** in known_rate_map
     }
     // construct the expected properties
-    ExpectedRateProperties expected_props =
+    grtest::ExpectedRateProperties expected_props =
         RateProperties_from_RateKind(pack.my_chemistry(), search->second);
 
     // load the actual props
-    std::optional<RateProperties> maybe_actual_props =
-        try_query_RateProperties(pack.my_rates(), pair.id);
+    std::optional<grtest::RateProperties> maybe_actual_props =
+        grtest::try_query_RateProperties(pack.my_rates(), pair.id);
     if (!maybe_actual_props.has_value()) {
       GTEST_FAIL()
           << "something went wrong while trying to lookup the properties for "
           << "the " << pair << " rate.";
     }
-    RateProperties actual_props = maybe_actual_props.value();
+    grtest::RateProperties actual_props = maybe_actual_props.value();
 
     EXPECT_EQ(expected_props, actual_props)
         << "this mismatch in the queried properties is for the " << pair
