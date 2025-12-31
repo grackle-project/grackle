@@ -29,7 +29,8 @@ gtest_discover_tests(runVisitorTests)
 # tests of the API functions
 # -> one might argue that these are better classified as integration or
 #    end-to-end tests than as unit-test
-add_executable(runApiTests test_ghost_zone.cpp test_api_ratequery.cpp)
+add_executable(runApiTests
+  test_ghost_zone.cpp test_api_ratequery.cpp test_inject_pathway.cpp)
 target_link_libraries(runApiTests testdeps)
 gtest_discover_tests(runApiTests)
 

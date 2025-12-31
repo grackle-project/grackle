@@ -16,6 +16,7 @@
 #include "status_reporting.h"
 
 #include <algorithm>
+#include <cstring>
 #include <optional>
 #include <string>
 #include <vector>
@@ -24,8 +25,13 @@ namespace grtest {
 
 /// returns the rateid used to denote invalid rate names
 inline grunstable_rateid_type get_invalid_rateid(
+    const chemistry_data_storage* my_rates) {
+  return grunstable_ratequery_id(my_rates, nullptr);
+}
+
+inline grunstable_rateid_type get_invalid_rateid(
     const grtest::GrackleCtxPack& pack) {
-  return grunstable_ratequery_id(pack.my_rates(), nullptr);
+  return get_invalid_rateid(pack.my_rates());
 }
 
 inline std::string stringify_prop_kind(
@@ -152,7 +158,7 @@ inline bool operator==(const ExpectedRateProperties& a,
 
 /// construct a RateProperties instance for the specified rate
 ///
-/// returns an empty optional if any there are any issues. To be clear, this
+/// returns an empty optional if any there are any issues. to be clear, this
 /// function shouldn't actually be used to test whether the property-querying
 /// machinery works (it just tries to gracefully handle cases issues to avoid
 /// distracting error-messages)
@@ -217,6 +223,118 @@ inline std::optional<RateProperties> try_query_RateProperties(
 
   return {RateProperties{shape, static_cast<std::size_t>(maxitemsize),
                          dtype.value(), static_cast<bool>(writable)}};
+}
+
+/// A convenience function to try to query a 1d array of strings
+///
+/// returns an empty optional if any there are any issues. to be clear, this
+/// function shouldn't actually be used to test the ratequiery API machinery,
+/// itself. It's intended to be used to query that queried strings hold
+/// expected values or as a building-block in more sophisticated calculations.
+inline std::optional<std::vector<std::string>> try_query_str_arr1d(
+    chemistry_data_storage* my_rates, std::string name) {
+  grunstable_rateid_type id = grunstable_ratequery_id(my_rates, name.c_str());
+  if (id == get_invalid_rateid(my_rates)) {
+    return std::nullopt;
+  }
+
+  std::optional<RateProperties> props_maybe =
+      try_query_RateProperties(my_rates, id);
+  if (!props_maybe.has_value()) {
+    return std::nullopt;
+  }
+  RateProperties props = props_maybe.value();
+
+  if ((props.shape.size() != 1) || props.dtype != GRUNSTABLE_TYPE_STR) {
+    return std::nullopt;
+  }
+
+  // allocate output storage
+  std::size_t bytes_per_string = props.maxitemsize;
+  std::size_t max_chars_per_string = bytes_per_string - 1;
+  std::size_t n_strings = static_cast<std::size_t>(props.n_items());
+  // NOTE: C++ standards older than C++17 can't directly write to strings
+  //       without triggering undefined behavior
+  std::vector<std::string> out_arr;
+  out_arr.reserve(n_strings);
+  for (std::size_t i = 0; i < n_strings; i++) {
+    out_arr.emplace_back(max_chars_per_string, '\0');
+  }
+
+  // now, we are actually going to make the query
+  // WARNING: do NOT touch `out_arr` until after we are done with this.
+  // Otherwise, undefined behavior may arise since std::string may (must?) be
+  // implemented using the "small-string optimization" (SSO).
+  // -> for context, most standard library C++ containers (e.g. std::vector)
+  //    are implemented as a class/struct with 3 data-members:
+  //    1. a pointer to heap-memory that is the storage for contained items
+  //    2. the container's current size
+  //    3. the container's current capacity
+  // -> SSO is the idea that sufficiently small strings may directly embed the
+  //    stored elements as part of the struct/class as long as the total size
+  //    of the struct/class doesn't exceed the size of the container's required
+  //    members (outlined above)
+  // -> this is helpful since it avoids needless heap-allocations
+  // -> issues arise for us when `bytes_per_string` is small enough to take
+  //    advantage of the SSO. In this scenario, the characters of the strings
+  //    are being tracked as part of the storage allocating by `out_arr`. If we
+  //    do something (e.g. append an element) that causes `out_arr` to
+  //    reallocate its storage pointer, then the pointers in tmp_buf would be
+  //    invalidated
+  {
+    // set up the buffer to actually pass to Grackle
+    std::vector<char*> tmp_buf;
+    tmp_buf.reserve(n_strings);
+    for (std::size_t i = 0; i < n_strings; i++) {
+      tmp_buf.push_back(out_arr[i].data());
+    }
+
+    if (grunstable_ratequery_get_str(my_rates, id, tmp_buf.data()) !=
+        GR_SUCCESS) {
+      return std::nullopt;
+    }
+  }
+
+  // since we allocated more memory than was necessary, let's resize each
+  // element in out_arr so it has the appropriate size
+  for (std::string& element : out_arr) {
+    element.resize(std::strlen(element.c_str()));
+  }
+
+  return {out_arr};
+}
+
+/// A convenience function to try to query a 1d array of `double`s
+///
+/// returns an empty optional if any there are any issues. to be clear, this
+/// function shouldn't actually be used to test the ratequiery API machinery,
+/// itself. It's intended to be used to query that queried strings hold
+/// expected values or as a building-block in more sophisticated calculations.
+inline std::optional<std::vector<double>> try_query_f64_arr1d(
+    chemistry_data_storage* my_rates, std::string name) {
+  grunstable_rateid_type id = grunstable_ratequery_id(my_rates, name.c_str());
+  if (id == get_invalid_rateid(my_rates)) {
+    return std::nullopt;
+  }
+
+  std::optional<RateProperties> props_maybe =
+      try_query_RateProperties(my_rates, id);
+  if (!props_maybe.has_value()) {
+    return std::nullopt;
+  }
+  RateProperties props = props_maybe.value();
+
+  if ((props.shape.size() != 1) || props.dtype != GRUNSTABLE_TYPE_F64) {
+    return std::nullopt;
+  }
+  std::vector<double> out_arr;
+  out_arr.assign(props.n_items(), -1.0);
+  if (grunstable_ratequery_get_f64(my_rates, id, out_arr.data()) !=
+      GR_SUCCESS) {
+    return std::nullopt;
+  }
+
+  return {out_arr};
 }
 
 }  // namespace grtest

@@ -12,6 +12,7 @@
 #ifndef GRTEST_GOOGLETEST_ASSERTIONS_HPP
 #define GRTEST_GOOGLETEST_ASSERTIONS_HPP
 
+#include <optional>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -66,5 +67,8 @@ inline testing::AssertionResult IsGRError(const char* expr1, int val1) {
 #define EXPECT_GR_ERR(expr) EXPECT_PRED_FORMAT1(::grtest::IsGRError, expr)
 
 #define ASSERT_GR_ERR(expr) ASSERT_PRED_FORMAT1(::grtest::IsGRError, expr)
+
+/// applies to a std::optional<T>
+#define ASSERT_NOT_EMPTY(expr) ASSERT_NE(expr, std::nullopt)
 
 #endif  // GRTEST_GOOGLETEST_ASSERTIONS_HPP

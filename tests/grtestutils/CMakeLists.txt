@@ -90,6 +90,7 @@ add_library(grtestutils
   googletest/assertions.hpp
   googletest/check_allclose.hpp
   googletest/fixtures.hpp
+  googletest/matchers.hpp
 )
 
 target_link_libraries(grtestutils
