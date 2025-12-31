@@ -12,6 +12,7 @@
 ########################################################################
 
 import copy
+import weakref
 import sys
 from gracklepy.utilities.physical_constants import \
     boltzmann_constant_cgs, \
@@ -72,9 +73,12 @@ cdef class chemistry_data:
     #   backwards compatibility)
     cdef object data_copy_from_init
 
+    # ensure that weak references can be made to instances of this type
+    cdef object __weakref__
+
     def __cinit__(self):
         self.data = _wrapped_c_chemistry_data()
-        self._rate_map = _rate_mapping_access.from_ptr(&self.rates)
+        self._rate_map = _rate_mapping_access.from_ptr(&self.rates, weakref.ref(self))
         self.data_copy_from_init = None
 
     cdef void _try_uninitialize(self):
@@ -1091,6 +1095,15 @@ cdef class _rate_mapping_access:
     cdef c_chemistry_data_storage *_ptr
     cdef dict _cached_name_rateid_map
 
+    # holds an object returned by weakref.ref that was called on the object
+    # that owns the wrapped _ptr.
+    # -> this is tracked purely as a safety mechanism to ensure that we won't
+    #    try to access a dangling pointer (to guard against programming mistakes
+    #    within the python module)
+    # -> if we are extremely concerned about performance, we can probably remove
+    #    this attribute
+    cdef object _parent_weakref
+
     def __cinit__(self):
         self._ptr = NULL
         self._cached_name_rateid_map = None
@@ -1100,7 +1113,8 @@ cdef class _rate_mapping_access:
         raise TypeError("This class cannot be instantiated directly.")
 
     @staticmethod
-    cdef _rate_mapping_access from_ptr(c_chemistry_data_storage *ptr):
+    cdef _rate_mapping_access from_ptr(c_chemistry_data_storage *ptr,
+                                       object parent_weakref):
         """
         Construct a _rate_mapping_access instance from the provided pointer
         """
@@ -1108,16 +1122,22 @@ cdef class _rate_mapping_access:
             _rate_mapping_access
         )
         out._ptr = ptr
+        out._parent_weakref = parent_weakref
         return out
 
     @property
     def _name_rateid_map(self):
         """returns a mapping between rate names and rate id"""
 
-        if self._cached_name_rateid_map is not None:
+        parent_weakref = self._parent_weakref
+        if parent_weakref() is None:
+            raise RuntimeError(
+                "this appears to be a dangling instance. Access to rates "
+                "can't be provided when the parent has been garbage collected"
+            )
+        elif self._cached_name_rateid_map is not None:
             return self._cached_name_rateid_map
-
-        if self._ptr is NULL:
+        elif self._ptr is NULL:
             raise RuntimeError(
                 "this instance hasn't been configured with a pointer for it "
                 "access retrieve data from"
@@ -1262,7 +1282,6 @@ cdef class _rate_mapping_access:
     def __iter__(self): return iter(self._name_rateid_map)
 
     def __len__(self): return len(self._name_rateid_map)
-
 
 
 def _query_units(chemistry_data chem_data, object name,
