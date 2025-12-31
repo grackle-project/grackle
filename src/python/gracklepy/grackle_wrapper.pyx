@@ -1028,7 +1028,7 @@ cdef list rateq_load_string(
     #    (by definition, the max value represented by Py_ssize_t uses 1 less bit of
     #    storage than SIZE_MAX)
     cdef Py_ssize_t max_alloc_size = sys.maxsize  # sys.maxsize is max val of Py_ssize_t
-    if (max_alloc_size / bytes_per_string) > n_items:
+    if (max_alloc_size / bytes_per_string) < n_items:
         raise RuntimeError(f"{key=} requires too much memory to load")
 
     # allocate memory
@@ -1045,7 +1045,7 @@ cdef list rateq_load_string(
             raise RuntimeError(f"Error retrieving data for the \"{key}\" key")
 
         for i in range(n_items):
-            out.append((<bytes>str_storage[i]).decode("ASCII"))
+            out.append((<bytes>str_array[i]).decode("ASCII"))
     finally:
         free(str_array)
         free(str_storage)
