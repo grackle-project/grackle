@@ -81,8 +81,11 @@ cdef class chemistry_data:
         self._rate_map = _rate_mapping_access.from_ptr(&self.rates, weakref.ref(self))
         self.data_copy_from_init = None
 
+    def _is_initialized(self):
+        return self.data_copy_from_init is not None
+
     cdef void _try_uninitialize(self):
-        if self.data_copy_from_init is None:
+        if not self._is_initialized():
             return # nothing to uninitialize
 
         c_local_free_chemistry_data(
