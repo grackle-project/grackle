@@ -26,39 +26,47 @@ struct InjectPathFieldPack {
   int n_fields;
 
   /// holds pointers to the various injection model density fields
-  const gr_float* fields[inj_model_input::N_Injection_Pathways];
+  const gr_float* const* fields;
 };
 
 /// Setup an InjectPathFieldPack instance
 inline InjectPathFieldPack setup_InjectPathFieldPack(
     const chemistry_data* my_chem, const grackle_field_data* my_fields) {
   if ((my_chem->metal_chemistry > 0) && (my_chem->multi_metals == 1)) {
+    grackle_field_data* my_fields_ = const_cast<grackle_field_data*>(my_fields);
+    my_fields_->inject_pathway_metal_density[0] =
+        my_fields_->local_ISM_metal_density;
+    my_fields_->inject_pathway_metal_density[1] =
+        my_fields_->ccsn13_metal_density;
+    my_fields_->inject_pathway_metal_density[2] =
+        my_fields_->ccsn20_metal_density;
+    my_fields_->inject_pathway_metal_density[3] =
+        my_fields_->ccsn25_metal_density;
+    my_fields_->inject_pathway_metal_density[4] =
+        my_fields_->ccsn30_metal_density;
+    my_fields_->inject_pathway_metal_density[5] =
+        my_fields_->fsn13_metal_density;
+    my_fields_->inject_pathway_metal_density[6] =
+        my_fields_->fsn15_metal_density;
+    my_fields_->inject_pathway_metal_density[7] =
+        my_fields_->fsn50_metal_density;
+    my_fields_->inject_pathway_metal_density[8] =
+        my_fields_->fsn80_metal_density;
+    my_fields_->inject_pathway_metal_density[9] =
+        my_fields_->pisn170_metal_density;
+    my_fields_->inject_pathway_metal_density[10] =
+        my_fields_->pisn200_metal_density;
+    my_fields_->inject_pathway_metal_density[11] =
+        my_fields_->y19_metal_density;
+
     return InjectPathFieldPack{inj_model_input::N_Injection_Pathways,
-                               {
-                                   my_fields->local_ISM_metal_density,
-                                   my_fields->ccsn13_metal_density,
-                                   my_fields->ccsn20_metal_density,
-                                   my_fields->ccsn25_metal_density,
-                                   my_fields->ccsn30_metal_density,
-                                   my_fields->fsn13_metal_density,
-                                   my_fields->fsn15_metal_density,
-                                   my_fields->fsn50_metal_density,
-                                   my_fields->fsn80_metal_density,
-                                   my_fields->pisn170_metal_density,
-                                   my_fields->pisn200_metal_density,
-                                   my_fields->y19_metal_density,
-                               }};
+                               my_fields->inject_pathway_metal_density};
   }
 
-  InjectPathFieldPack out;
-  out.n_fields = 0;
-  for (int i = 0; i < inj_model_input::N_Injection_Pathways; i++) {
-    out.fields[i] = nullptr;
-  }
-
+  InjectPathFieldPack out{0, nullptr};
   if ((my_chem->metal_chemistry > 0) && (my_chem->multi_metals == 0)) {
     out.n_fields = 1;
-    out.fields[0] = my_fields->metal_density;
+    out.fields = &my_fields->metal_density;
   }
 
   return out;
