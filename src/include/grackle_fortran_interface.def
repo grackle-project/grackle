@@ -112,6 +112,7 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: pisn170_metal_density
          TYPE(C_PTR) :: pisn200_metal_density
          TYPE(C_PTR) :: y19_metal_density
+         TYPE(C_PTR) :: inject_pathway_metal_density(12)
          TYPE(C_PTR) :: volumetric_heating_rate
          TYPE(C_PTR) :: specific_heating_rate
          TYPE(C_PTR) :: temperature_floor

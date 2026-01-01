@@ -53,6 +53,8 @@ extern "C" {
 #error "Both GRACKLE_FLOAT_4 and GRACKLE_FLOAT_8 are defined. Only one can be defined."
 #endif
 
+#define GRIMPL_MAX_INJ_PATHWAYS 12
+
 typedef struct
 {
 
@@ -162,6 +164,9 @@ typedef struct
   gr_float *pisn200_metal_density;
   gr_float *y19_metal_density;
 
+  // in the next few commits, this will replace all *_metal_density fields
+  gr_float* inject_pathway_metal_density[GRIMPL_MAX_INJ_PATHWAYS];
+
   // use_volumetric_heating_rate = 1
   gr_float *volumetric_heating_rate;
   // use_specific_heating_rate = 1
@@ -222,6 +227,12 @@ typedef struct
   const char* revision;
 
 } grackle_version;
+
+#if !defined(GRIMPL_COMPILING_CORE_LIB)
+// avoid leaking these macros used for defining implementation details out of
+// the core library
+#undef GRIMPL_MAX_INJ_PATHWAYS
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -68,5 +68,10 @@ int gr_initialize_field_data(grackle_field_data *my_fields)
   #include "field_data_misc_fdatamembers.def"
   #undef ENTRY
 
+  // Part 3: modify inject pathway density field slots
+  for (int i = 0; i < GRIMPL_MAX_INJ_PATHWAYS; i++) {
+    my_fields->inject_pathway_metal_density[i] = NULL;
+  }
+
   return SUCCESS;
 }

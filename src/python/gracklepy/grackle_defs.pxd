@@ -173,6 +173,7 @@ cdef extern from "grackle.h":
       gr_float *pisn170_metal_density;
       gr_float *pisn200_metal_density;
       gr_float *y19_metal_density;
+      gr_float *inject_pathway_metal_density[12];
       gr_float *volumetric_heating_rate;
       gr_float *specific_heating_rate;
       gr_float *temperature_floor;
