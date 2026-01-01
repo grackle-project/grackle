@@ -253,6 +253,9 @@ TEST(GrainSpeciesInfoTestMisc, DustSpeciesExtremeValues) {
 // indeed holds the maximum number of ingredients that a grain species can
 // have.
 TEST(GrainSpeciesInfoTestMisc, MaxIngredientsPerGrainSpecies) {
+  // I really don't understand this linter issue
+  // NOLINTBEGIN(clang-analyzer-core.CallAndMessage)
+
   // construct a GrainSpeciesInfo instance that holds values for every dust
   // grain species
   unique_GrainSpeciesInfo_ptr gsp_info =
@@ -271,4 +274,5 @@ TEST(GrainSpeciesInfoTestMisc, MaxIngredientsPerGrainSpecies) {
             grackle::impl::max_ingredients_per_grain_species)
       << "it appears that grackle::impl::max_ingredients_per_grain_species "
       << "should have a value of " << max_ingredient_count;
+  // NOLINTEND(clang-analyzer-core.CallAndMessage)
 }
