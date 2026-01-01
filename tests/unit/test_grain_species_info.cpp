@@ -92,9 +92,11 @@ using unique_GrainSpeciesInfo_ptr =
 /// This is useful for preventing memory leaks when tests fail
 unique_GrainSpeciesInfo_ptr make_unique_GrainSpeciesInfo(
     int dust_species_param) {
+  // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
   grackle::impl::GrainSpeciesInfo* ptr = new grackle::impl::GrainSpeciesInfo;
   (*ptr) = grackle::impl::new_GrainSpeciesInfo(dust_species_param);
   return unique_GrainSpeciesInfo_ptr(ptr, GrainSpeciesInfoDeleter());
+  // NOLINTEND(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
 }  // anonymous namespace
