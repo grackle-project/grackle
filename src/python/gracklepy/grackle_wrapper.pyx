@@ -14,6 +14,7 @@
 import copy
 import weakref
 import sys
+from types import MappingProxyType
 from gracklepy.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
@@ -198,6 +199,79 @@ cdef class chemistry_data:
         raise AttributeError(
             f"'{type(self).__name__}' object has no attribute '{name}'"
         )
+
+    def _experimental_nuclide_gas_inj_path_yields(
+        self
+    ) -> MappingProxyType[str, np.ndarray]:
+        """
+        Just like ``_experimental_grain_inj_path_yields`` except that it
+        returns yield-fractions for the gas-phase components of each
+        relevant metal nuclide (rather than yield fractions for grain
+        species).
+
+        Note
+        ----
+        See the docstring for ``_experimental_grain_inj_path_yields`` for a
+        discussion of how we might want to modify the interface for accessing
+        this information before stabilizing the API.
+        """
+        return _get_inj_path_yield_map(self._rate_map, "inject_path_gas_yield_frac.")
+
+    def _experimental_grain_inj_path_yields(
+        self
+    ) -> MappingProxyType[str, np.ndarray]:
+        """
+        A helper method that returns a dictionary of grain-species yields
+        expected by each modelled injection pathway (if there are any). This
+        is **ONLY** meaningful when using the multi-grain species dust model.
+
+        This method returns an immutable mapping that maps the name of each
+        relevant grain-species to a 1D array of yield fractions of that
+        species. In a given array, element ``i`` corresponds to the initial
+        yield assumed for the injection pathway specified by
+        ``FluidContainer.inject_pathway_density_yield_fields[i]``.
+
+        Note
+        ----
+        While we must make this information available in order to properly
+        make use of the multi-grain species dust models (as consistently as
+        possible), we are still experimenting with how best to do this.
+
+        Before we stabilize the API for accessing this information:
+
+        - we may want to consider replacing both this method and the
+          ``_experimental_nuclide_gas_inj_path_yields`` method, with a single
+          method that instead returns a dataclass that holds the information
+          currently returned by the existing methods. This has a couple of
+          appealing properites:
+          1. all injection pathway information is only used in a very small
+             subset of Grackle configurations. It makes logical sense to
+             return all of this information together at once (plus, we could
+             return `None` if the information isn't defined)
+          2. if we ever wanted to expose additional injection pathway
+             information to end-users (like the initial size moments assumed
+             by each pathway for each grain-species), it would be a logical
+             place to group the information
+
+        - alternatively, we may want to get rid of special methods for curating
+          this information and instead provide an interface to the
+          query-machinery that mirrors the C-interface and require python users
+          to use that same interface:
+          - In the long term, I think that this would be a lot better
+            (especially if we make this the preferred way to access all rate
+            info like k1, k2, ...).
+          - But, in the shorter term, this requires us to make a bunch of final
+            decisions about the interface.
+          - If we do this, I think we may want to first shift from using
+            single-string keys to a key consisting of a string-pair. This
+            could plausibly make a more ergonomic interface
+
+        - we also need to decide on whether we want to make this information
+          mutable. Currently, we don't support any mutations. I don't actually
+          think this is an issue since we're moving towards using HDF5 files
+          for configuring this information
+        """
+        return _get_inj_path_yield_map(self._rate_map, "inject_path_grain_yield_frac.")
 
     property h2dust:
         def __get__(self):
@@ -510,7 +584,6 @@ cdef class chemistry_data:
     property pressure_units:
         def __get__(self):
             return self.density_units * self.energy_units
-
 
 
 cdef gr_float* get_field(object fc, object name) except? NULL:
@@ -911,7 +984,6 @@ cdef class _wrapped_c_chemistry_data:
             out[k] = self[k]
         return out
 
-
 def _portable_reshape(arr: np.ndarray, shape: tuple[int, ...]) -> np.ndarray:
     """
     Reshape a numpy array (raises an error if a copy can't be avoided)
@@ -1285,6 +1357,27 @@ cdef class _rate_mapping_access:
     def __iter__(self): return iter(self._name_rateid_map)
 
     def __len__(self): return len(self._name_rateid_map)
+
+
+def _get_inj_path_yield_map(
+    rate_map: _rate_mapping_access, key_prefix: str
+) -> MappingProxyType[str, np.ndarray]:
+    """
+    A helper function to return read-only mappings of arrays that share a
+    common prefix
+    """
+    if not key_prefix:
+        raise ValueError("key_prefix must be a non-empty string")
+    # we will strip off the common prefix
+    suffix_start = len(key_prefix)
+
+    tmp = {key[suffix_start:] : rate_map[key] for key in rate_map
+           if key.startswith(key_prefix)}
+
+    # we return a MappingProxyType rather than a regular dict to reflect the fact
+    # users can't directly the mutate the queried entries (the entries also don't
+    # have the numpy array's writable flag set to False)
+    return MappingProxyType(tmp)
 
 
 def _query_units(chemistry_data chem_data, object name,
