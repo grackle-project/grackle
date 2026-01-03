@@ -47,29 +47,6 @@ inline int get_n_inject_pathway_density_ptrs(const chemistry_data* my_chem) {
 ///   pathway details from user-specified HDF5 files
 inline const gr_float* const* get_inject_pathway_metal_density(
     const chemistry_data* my_chem, grackle_field_data* my_fields) {
-  if ((my_chem->metal_chemistry > 0) && (my_chem->multi_metals == 1) &&
-      (my_fields->inject_pathway_metal_density[0] == nullptr)) {
-    my_fields->inject_pathway_metal_density[0] =
-        my_fields->local_ISM_metal_density;
-    my_fields->inject_pathway_metal_density[1] =
-        my_fields->ccsn13_metal_density;
-    my_fields->inject_pathway_metal_density[2] =
-        my_fields->ccsn20_metal_density;
-    my_fields->inject_pathway_metal_density[3] =
-        my_fields->ccsn25_metal_density;
-    my_fields->inject_pathway_metal_density[4] =
-        my_fields->ccsn30_metal_density;
-    my_fields->inject_pathway_metal_density[5] = my_fields->fsn13_metal_density;
-    my_fields->inject_pathway_metal_density[6] = my_fields->fsn15_metal_density;
-    my_fields->inject_pathway_metal_density[7] = my_fields->fsn50_metal_density;
-    my_fields->inject_pathway_metal_density[8] = my_fields->fsn80_metal_density;
-    my_fields->inject_pathway_metal_density[9] =
-        my_fields->pisn170_metal_density;
-    my_fields->inject_pathway_metal_density[10] =
-        my_fields->pisn200_metal_density;
-    my_fields->inject_pathway_metal_density[11] = my_fields->y19_metal_density;
-  }
-
   if (my_chem->metal_chemistry <= 0) {
     return nullptr;
   } else if (my_chem->multi_metals == 0) {

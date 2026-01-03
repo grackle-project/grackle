@@ -148,23 +148,12 @@ typedef struct
   gr_float *vol_org_dust_density; // volatile organics
   gr_float *H2O_ice_dust_density; // water ice
 
-  // metal_chemistry = 1
-  // multi_metals = 0, metal_abundances = 0-11 selects one of below
-  // multi_metals = 1, all of below
-  gr_float *local_ISM_metal_density;
-  gr_float *ccsn13_metal_density;
-  gr_float *ccsn20_metal_density;
-  gr_float *ccsn25_metal_density;
-  gr_float *ccsn30_metal_density;
-  gr_float *fsn13_metal_density;
-  gr_float *fsn15_metal_density;
-  gr_float *fsn50_metal_density;
-  gr_float *fsn80_metal_density;
-  gr_float *pisn170_metal_density;
-  gr_float *pisn200_metal_density;
-  gr_float *y19_metal_density;
-
-  // in the next few commits, this will replace all *_metal_density fields
+  // metal_chemistry = 1 && multi_metals = 1
+  // -> the number and names of models are queried with the experimental
+  //    ratequery interface
+  // -> when metal_chemistry = 1 && multi_metals = 0, Grackle currently expects
+  //    this to be empty and uses metal_density, instead (This may change in
+  //    the near future as we start using hdf5 configuration files)
   gr_float* inject_pathway_metal_density[GRIMPL_MAX_INJ_PATHWAYS];
 
   // use_volumetric_heating_rate = 1
