@@ -17,6 +17,16 @@
 
 namespace grackle::impl {
 
+/// this is a hacky short-term helper function
+///
+/// @todo
+/// Get rid of this function. This will be necessary in the future in order to
+/// start reading injection pathway details from user-specified HDF5 files.
+inline int get_n_inject_pathway_density_ptrs(const chemistry_data* my_chem) {
+  bool nonzero = (my_chem->metal_chemistry > 0) && (my_chem->multi_metals > 0);
+  return (nonzero) ? grackle::impl::inj_model_input::N_Injection_Pathways : 0;
+}
+
 /// Retrieves a pointer that corresponds to the array of user-specified fields
 /// holding the cumulative metal density injected by each relevant injection
 /// pathway
@@ -37,8 +47,8 @@ namespace grackle::impl {
 ///   pathway details from user-specified HDF5 files
 inline const gr_float* const* get_inject_pathway_metal_density(
     const chemistry_data* my_chem, grackle_field_data* my_fields) {
-  if ((my_chem->metal_chemistry > 0) && (my_chem->multi_metals == 1)
-      && (my_fields->inject_pathway_metal_density[0] == nullptr)) {
+  if ((my_chem->metal_chemistry > 0) && (my_chem->multi_metals == 1) &&
+      (my_fields->inject_pathway_metal_density[0] == nullptr)) {
     my_fields->inject_pathway_metal_density[0] =
         my_fields->local_ISM_metal_density;
     my_fields->inject_pathway_metal_density[1] =

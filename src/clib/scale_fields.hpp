@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file scale_fields.hpp
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
 /// @brief Defines field-scaling functions (to account for cosmology)
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // scale_fields_table_g function from FORTRAN to C++
@@ -50,6 +57,11 @@ inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
   }
 }
 
+/// A helper function for scaling the injection pathway metal density fields
+void scale_inject_path_metal_densities_(const chemistry_data* my_chemistry,
+                                        grackle_field_data* my_fields,
+                                        gr_float factor);
+
 /// Scales fields related to computing dust temperature
 inline void scale_fields_dust(chemistry_data* my_chemistry,
                               grackle_field_data* my_fields, int imetal,
@@ -59,42 +71,6 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_loc(
-      my_fields->local_ISM_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C13(
-      my_fields->ccsn13_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C20(
-      my_fields->ccsn20_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C25(
-      my_fields->ccsn25_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C30(
-      my_fields->ccsn30_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F13(
-      my_fields->fsn13_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F15(
-      my_fields->fsn15_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F50(
-      my_fields->fsn50_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F80(
-      my_fields->fsn80_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P170(
-      my_fields->pisn170_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P200(
-      my_fields->pisn200_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_Y19(
-      my_fields->y19_metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> SiM(
       my_fields->SiM_dust_density, my_fields->grid_dimension[0],
@@ -148,20 +124,6 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
     if (imetal == 1) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         metal(i, j, k) = metal(i, j, k) * factor;
-        if (my_chemistry->multi_metals > 0) {
-          metal_loc(i, j, k) = metal_loc(i, j, k) * factor;
-          metal_C13(i, j, k) = metal_C13(i, j, k) * factor;
-          metal_C20(i, j, k) = metal_C20(i, j, k) * factor;
-          metal_C25(i, j, k) = metal_C25(i, j, k) * factor;
-          metal_C30(i, j, k) = metal_C30(i, j, k) * factor;
-          metal_F13(i, j, k) = metal_F13(i, j, k) * factor;
-          metal_F15(i, j, k) = metal_F15(i, j, k) * factor;
-          metal_F50(i, j, k) = metal_F50(i, j, k) * factor;
-          metal_F80(i, j, k) = metal_F80(i, j, k) * factor;
-          metal_P170(i, j, k) = metal_P170(i, j, k) * factor;
-          metal_P200(i, j, k) = metal_P200(i, j, k) * factor;
-          metal_Y19(i, j, k) = metal_Y19(i, j, k) * factor;
-        }
       }
     }
     if (my_chemistry->use_dust_density_field == 1) {
@@ -194,6 +156,8 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
       }
     }
   }
+
+  scale_inject_path_metal_densities_(my_chemistry, my_fields, factor);
 }
 
 void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
