@@ -37,7 +37,8 @@ namespace grackle::impl {
 ///   pathway details from user-specified HDF5 files
 inline const gr_float* const* get_inject_pathway_metal_density(
     const chemistry_data* my_chem, grackle_field_data* my_fields) {
-  if ((my_chem->metal_chemistry > 0) && (my_chem->multi_metals == 1)) {
+  if ((my_chem->metal_chemistry > 0) && (my_chem->multi_metals == 1)
+      && (my_fields->inject_pathway_metal_density[0] == nullptr)) {
     my_fields->inject_pathway_metal_density[0] =
         my_fields->local_ISM_metal_density;
     my_fields->inject_pathway_metal_density[1] =

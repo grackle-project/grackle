@@ -718,18 +718,18 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.vol_org_dust_density = get_field(fc, "vol_org_dust_density")
     my_fields.H2O_ice_dust_density = get_field(fc, "H2O_ice_dust_density")
 
-    my_fields.local_ISM_metal_density = get_field(fc, "local_ISM_metal_density")
-    my_fields.ccsn13_metal_density = get_field(fc, "ccsn13_metal_density")
-    my_fields.ccsn20_metal_density = get_field(fc, "ccsn20_metal_density")
-    my_fields.ccsn25_metal_density = get_field(fc, "ccsn25_metal_density")
-    my_fields.ccsn30_metal_density = get_field(fc, "ccsn30_metal_density")
-    my_fields.fsn13_metal_density = get_field(fc, "fsn13_metal_density")
-    my_fields.fsn15_metal_density = get_field(fc, "fsn15_metal_density")
-    my_fields.fsn50_metal_density = get_field(fc, "fsn50_metal_density")
-    my_fields.fsn80_metal_density = get_field(fc, "fsn80_metal_density")
-    my_fields.pisn170_metal_density = get_field(fc, "pisn170_metal_density")
-    my_fields.pisn200_metal_density = get_field(fc, "pisn200_metal_density")
-    my_fields.y19_metal_density = get_field(fc, "y19_metal_density")
+    # todo: replace this with a faster alternative
+    cdef list inject_pathway_density_fields = fc.inject_pathway_density_yield_fields
+    cdef Py_ssize_t n_pathways = len(inject_pathway_density_fields)
+    cdef Py_ssize_t i
+    cdef gr_float* ptr
+    #raise RuntimeError(inject_pathway_density_fields)
+    for i in range(n_pathways):
+        my_fields.inject_pathway_metal_density[i] = get_field(
+            fc, inject_pathway_density_fields[i]
+        )
+        if my_fields.inject_pathway_metal_density[i] is NULL:
+            raise RuntimeError("{!r} holds NULL".format(inject_pathway_density_fields[i]))
 
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
