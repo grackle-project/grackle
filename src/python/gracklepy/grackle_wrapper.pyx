@@ -718,18 +718,14 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.vol_org_dust_density = get_field(fc, "vol_org_dust_density")
     my_fields.H2O_ice_dust_density = get_field(fc, "H2O_ice_dust_density")
 
-    # todo: replace this with a faster alternative
-    cdef list inject_pathway_density_fields = fc.inject_pathway_density_yield_fields
-    cdef Py_ssize_t n_pathways = len(inject_pathway_density_fields)
+    # copy over pointers to all (if any) injection pathway metal density fields
+    # -> the data already has the order expected by the Grackle solver
+    cdef gr_float[:, ::1] inj_path_fields = fc._inj_path_density_arrays
+    assert inj_path_fields.shape[1] == fc.n_vals  # sanity check
+    cdef Py_ssize_t n_pathways = inj_path_fields.shape[0]
     cdef Py_ssize_t i
-    cdef gr_float* ptr
-    #raise RuntimeError(inject_pathway_density_fields)
     for i in range(n_pathways):
-        my_fields.inject_pathway_metal_density[i] = get_field(
-            fc, inject_pathway_density_fields[i]
-        )
-        if my_fields.inject_pathway_metal_density[i] is NULL:
-            raise RuntimeError("{!r} holds NULL".format(inject_pathway_density_fields[i]))
+        my_fields.inject_pathway_metal_density[i] = &inj_path_fields[i, 0]
 
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
