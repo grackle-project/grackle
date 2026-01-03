@@ -161,7 +161,15 @@ cdef extern from "grackle.h":
       gr_float *ref_org_dust_density;
       gr_float *vol_org_dust_density;
       gr_float *H2O_ice_dust_density;
+
+      # the array-length should be kept synchronized with the value of the
+      # GRIMPL_MAX_INJ_PATHWAYS macro
+      # -> cython prevents us from directly using GRIMPL_MAX_INJ_PATHWAYS
+      # -> unfortunately cython doesn't complain if the values differ
+      # -> I suspect the specified length may not actually matter, but that
+      #    is NOT confirmed by the documentation
       gr_float *inject_pathway_metal_density[12];
+
       gr_float *volumetric_heating_rate;
       gr_float *specific_heating_rate;
       gr_float *temperature_floor;

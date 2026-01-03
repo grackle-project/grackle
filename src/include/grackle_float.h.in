@@ -31,6 +31,8 @@
 //    to both C and Fortran headers
 // -> the existence of this macro is an implementation detail, it can/will
 //    be removed at any time (without warning)
+// -> if you update the value of this macro, make sure you update hardcoded
+//    value(s) used in grackle_defs.pxd
 #endif
 #define GRIMPL_MAX_INJ_PATHWAYS 12
 
