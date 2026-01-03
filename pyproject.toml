@@ -68,10 +68,17 @@ Tracker = 'https://github.com/grackle-project/grackle/issues'
 # currently the next line duplicates the dependency-groups purely for
 # historical reasons. We should delete the following entry in the near-future
 # (since they are actually dependencies of the gracklepy-wheel).
-dev = ['flake8', 'packaging', 'pytest', 'sphinx', 'sphinx-tabs', 'furo']
+dev = ['flake8', 'packaging', 'pytest', 'sphinx', 'sphinx-tabs', 'furo==2025.9.25']
 
 [dependency-groups]
-docs = ['sphinx', 'sphinx-tabs', 'furo']
+docs = [
+    'sphinx',
+    'sphinx-tabs',
+    # I think newer versions of furo may be incompatible with sphinx-tabs
+    # -> an argument could be made for swapping to 'sphinx-inline-tabs',
+    #    which was created by the furo developer
+    'furo==2025.9.25'
+]
 test = ['pytest', 'packaging']
 dev = ['flake8', {include-group = "docs"}, {include-group = 'test'}]
 
