@@ -662,11 +662,4 @@ typedef struct
 } /* extern "C" */
 #endif /* __cplusplus */
 
-
-#if !defined(GRIMPL_COMPILING_CORE_LIB)
-// avoid leaking these macros used for defining implementation details out of
-// the core library
-#undef GRACKLE_CLOUDY_TABLE_MAX_DIMENSION
-#endif
-
 #endif /* __CHEMISTRY_DATA_H__ */

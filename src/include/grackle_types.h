@@ -53,8 +53,6 @@ extern "C" {
 #error "Both GRACKLE_FLOAT_4 and GRACKLE_FLOAT_8 are defined. Only one can be defined."
 #endif
 
-#define GRIMPL_MAX_INJ_PATHWAYS 12
-
 typedef struct
 {
 
@@ -217,11 +215,7 @@ typedef struct
 
 } grackle_version;
 
-#if !defined(GRIMPL_COMPILING_CORE_LIB)
-// avoid leaking these macros used for defining implementation details out of
-// the core library
-#undef GRIMPL_MAX_INJ_PATHWAYS
-#endif
+
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -22,6 +22,7 @@ c   using the 2003 Fortran C interoperability features.  Note that some
 c   care must be taken defining matching types.
 
 c     This is the fortran definition of grackle_units
+#include "grackle_float.h"
 
       TYPE, BIND(C) :: grackle_units
          INTEGER(C_INT) :: comoving_coordinates
@@ -100,7 +101,8 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: ref_org_dust_density
          TYPE(C_PTR) :: vol_org_dust_density
          TYPE(C_PTR) :: H2O_ice_dust_density
-         TYPE(C_PTR) :: inject_pathway_metal_density(12)
+         TYPE(C_PTR) ::
+     &        inject_pathway_metal_density(GRIMPL_MAX_INJ_PATHWAYS)
          TYPE(C_PTR) :: volumetric_heating_rate
          TYPE(C_PTR) :: specific_heating_rate
          TYPE(C_PTR) :: temperature_floor

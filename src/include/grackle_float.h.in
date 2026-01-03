@@ -21,5 +21,17 @@
 
 #ifndef __GRACKLE_FLOAT_H__
 #define __GRACKLE_FLOAT_H__
+
 #define @GRACKLE_FLOAT_MACRO@
+
+#ifdef __cplusplus
+// GRIMPL_MAX_INJ_PATHWAYS is used to specify the maximum number of injection
+// pathways that Grackle can currently model at a given time
+// -> we choose to define this macro within this header so that it's exposed
+//    to both C and Fortran headers
+// -> the existence of this macro is an implementation detail, it can/will
+//    be removed at any time (without warning)
+#endif
+#define GRIMPL_MAX_INJ_PATHWAYS 12
+
 #endif
