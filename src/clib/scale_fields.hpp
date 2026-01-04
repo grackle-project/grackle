@@ -58,14 +58,25 @@ inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
 }
 
 /// A helper function for scaling the injection pathway metal density fields
-void scale_inject_path_metal_densities_(const chemistry_data* my_chemistry,
-                                        grackle_field_data* my_fields,
-                                        gr_float factor);
+///
+/// @param[inout] my_fields holds the fields that will be updated in-place
+/// @param[in] factor The factor that is multiplied by the fields
+/// @param[in] n_inj_path_ptrs The number of pointers tracked by
+///     `my_fields->inject_pathway_metal_density`
+void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
+                                        gr_float factor, int n_inj_path_ptrs);
 
 /// Scales fields related to computing dust temperature
+///
+/// @param[in] my_chemistry holds a number of configuration parameters
+/// @param[inout] my_fields holds the fields that will be updated in-place
+/// @param[in] imetal Specifies whether the metal_density was specified
+/// @param[in] factor The factor that is multiplied by the fields
+/// @param[in] n_inj_path_ptrs The number of pointers tracked by
+///     `my_fields->inject_pathway_metal_density`
 inline void scale_fields_dust(chemistry_data* my_chemistry,
                               grackle_field_data* my_fields, int imetal,
-                              gr_float factor) {
+                              gr_float factor, int n_inj_path_ptrs) {
   grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -157,11 +168,19 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
     }
   }
 
-  scale_inject_path_metal_densities_(my_chemistry, my_fields, factor);
+  scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs);
 }
 
+/// Scales fields related to computing dust temperature
+///
+/// @param[in] imetal Specifies whether the metal_density was specified
+/// @param[in] factor The factor that is multiplied by the fields
+/// @param[in] my_chemistry holds a number of configuration parameters
+/// @param[inout] my_fields holds the fields that will be updated in-place
+/// @param[in] n_inj_path_ptrs The number of pointers tracked by
+///     `my_fields->inject_pathway_metal_density`
 void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
-                    grackle_field_data* my_fields);
+                    grackle_field_data* my_fields, int n_inj_path_ptrs);
 
 }  // namespace grackle::impl
 

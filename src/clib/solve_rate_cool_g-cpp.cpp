@@ -22,6 +22,7 @@
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
+#include "inject_model/misc.hpp"
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "lookup_cool_rates1d.hpp"
@@ -33,7 +34,7 @@
 #include "visitor/memory.hpp"
 
 #include "ceiling_species.hpp"
-#include "scale_fields_g-cpp.h"
+#include "scale_fields.hpp"
 #include "solve_rate_cool_g-cpp.h"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
@@ -682,7 +683,9 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(
+        imetal, factor, my_chemistry, my_fields,
+        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
@@ -1007,7 +1010,9 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(
+        imetal, factor, my_chemistry, my_fields,
+        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   if (my_chemistry->primordial_chemistry > 0)  {

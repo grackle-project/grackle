@@ -37,7 +37,7 @@ static constexpr int N_Opacity_Coef = 4;
 static constexpr int N_Tdust_Opacity_Table = 35;
 
 /// the number of hard-coded injection pathways
-static constexpr int N_Injection_Pathways = 12;
+static constexpr int N_Injection_Pathways = GRIMPL_MAX_INJ_PATHWAYS;
 
 struct MetalNuclideYieldProps;
 struct GrainSpeciesYieldProps;

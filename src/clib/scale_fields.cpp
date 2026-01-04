@@ -14,18 +14,14 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_decls.h"
 #include "index_helper.h"
 #include "inject_model/misc.hpp"
 #include "utils-cpp.hpp"
 
-#include "scale_fields_g-cpp.h"
-
 namespace grackle::impl {
 
-void scale_inject_path_metal_densities_(const chemistry_data* my_chemistry,
-                                        grackle_field_data* my_fields,
-                                        gr_float factor) {
+void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
+                                        gr_float factor, int n_inj_path_ptrs) {
   // each view within inj_path_view_arr wraps a field specifying the total
   // metal density that was injected by an injection pathway (we allocate
   // space for the max possible number of injection pathways)
@@ -33,8 +29,7 @@ void scale_inject_path_metal_densities_(const chemistry_data* my_chemistry,
   // -> note: get_n_inject_pathway_density_ptrs returns 0 in the event that
   //    my_fields->inject_pathway_metal_density holds no entries
   View<gr_float***> inj_path_view_arr[inj_model_input::N_Injection_Pathways];
-  int n_inject_pathways = get_n_inject_pathway_density_ptrs(my_chemistry);
-  for (int path_idx = 0; path_idx < n_inject_pathways; path_idx++) {
+  for (int path_idx = 0; path_idx < n_inj_path_ptrs; path_idx++) {
     inj_path_view_arr[path_idx] = View<gr_float***>(
         my_fields->inject_pathway_metal_density[path_idx],
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
@@ -49,7 +44,7 @@ void scale_inject_path_metal_densities_(const chemistry_data* my_chemistry,
     const IndexRange idx_range = make_idx_range_(t, &idx_helper);
     const int k = idx_range.k;  // use 0-based index
     const int j = idx_range.j;  // use 0-based index
-    for (int path_idx = 0; path_idx < n_inject_pathways; path_idx++) {
+    for (int path_idx = 0; path_idx < n_inj_path_ptrs; path_idx++) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         inj_path_view_arr[path_idx](i, j, k) =
             inj_path_view_arr[path_idx](i, j, k) * factor;
@@ -59,7 +54,7 @@ void scale_inject_path_metal_densities_(const chemistry_data* my_chemistry,
 }
 
 void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
-                    grackle_field_data* my_fields) {
+                    grackle_field_data* my_fields, int n_inj_path_ptrs) {
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -361,7 +356,7 @@ void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
     }
   }  // OMP_PRAGMA("omp parallel")
 
-  scale_inject_path_metal_densities_(my_chemistry, my_fields, factor);
+  scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs);
 }
 
 }  // namespace grackle::impl

@@ -13,18 +13,32 @@
 #ifndef INJECT_MODEL_MISC_HPP
 #define INJECT_MODEL_MISC_HPP
 
+#include "opaque_storage.hpp"
 #include "raw_data.hpp"  // grackle::impl::inj_model_input::N_Injection_Pathways
+#include "status_reporting.h"
 
 namespace grackle::impl {
 
 /// this is a hacky short-term helper function
 ///
-/// @todo
-/// Get rid of this function. This will be necessary in the future in order to
-/// start reading injection pathway details from user-specified HDF5 files.
-inline int get_n_inject_pathway_density_ptrs(const chemistry_data* my_chem) {
-  bool nonzero = (my_chem->metal_chemistry > 0) && (my_chem->multi_metals > 0);
-  return (nonzero) ? grackle::impl::inj_model_input::N_Injection_Pathways : 0;
+/// @note
+/// Because (at the time of writing), when `metal_chemistry > 0` and
+/// `multi_metals == 0`, Grackle simply uses the `metal_density` field rather
+/// than a pointer from `my_fields->inject_pathway_metal_density`, this function
+/// returns 0 in that case.
+inline int get_n_inject_pathway_density_ptrs(
+    const chemistry_data_storage* my_rates) {
+  const gr_opaque_storage* tmp = my_rates->opaque_storage;
+  GR_INTERNAL_REQUIRE(tmp != nullptr, "sanity-check failed!");
+
+  if (tmp->inject_pathway_props == nullptr) {
+    return 0;
+  }
+  int n_pathways = tmp->inject_pathway_props->n_pathways;
+  // at the time of writing, the only way `n_pathways` can have a value of 1 is
+  // when `metal_chemistry > 0 && multi_metals == 0`
+  // -> as we note in the docstring, we return 0 in this case
+  return (n_pathways == 1) ? 0 : n_pathways;
 }
 
 /// Retrieves a pointer that corresponds to the array of user-specified fields
