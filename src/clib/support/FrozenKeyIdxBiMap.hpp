@@ -22,8 +22,8 @@
 /// constructor And copy assignement methods OR adopt reference counting).
 ///
 //===----------------------------------------------------------------------===//
-#ifndef UTILS_FROZENKEYIDXBIMAP_HPP
-#define UTILS_FROZENKEYIDXBIMAP_HPP
+#ifndef SUPPORT_FROZENKEYIDXBIMAP_HPP
+#define SUPPORT_FROZENKEYIDXBIMAP_HPP
 
 #include <cstdint>
 #include <cstdlib>
@@ -54,9 +54,9 @@ namespace grackle::impl {
 
 enum class BiMapMode { REFS_KEYDATA = 0, COPIES_KEYDATA = 1 };
 
-/// @brief This is a bidirectional map (bimap). It is specialized to map `n`
-/// unique string keys to unique indexes with values of `0` through `n-1` and
-/// vice versa. The ordering of keys is set at initialization and frozen.
+/// This is a bidirectional map (bimap). It is specialized to map @c n
+/// unique string keys to unique indexes with values of @c 0` through @c (n-1)
+/// and  vice versa. The ordering of keys is set at initialization and frozen.
 ///
 /// This is primarily intended to be used in the implementation of Maps of
 /// arrays (where the values could be part of a single contiguous array or are
@@ -76,21 +76,21 @@ enum class BiMapMode { REFS_KEYDATA = 0, COPIES_KEYDATA = 1 };
 ///    (where we directly embed the string in the hash-table-rows), this will
 ///    probably be a quite a bit faster
 ///
-/// Replacement in PR #270
-/// ======================
+/// @par Replacement in PR #270
 /// The current implementation is extremely oversimplified and inefficient! It
 /// doesn't even use a hash table. The purpose is to create a simple abstract
 /// data structure for which the implementation will be dramatically improved
 /// by PR #270 (but the interface won't be touched at all).
 ///
+/// @par
 /// The PR with the improved version, also updates this docstring with a
 /// detailed explanation of design decisions (like why the contents
 /// are "frozen") and highlights a number of potential improvements.
 ///
-/// > [!note]
-/// > The contents of this struct should be considered an implementation
-/// > detail! Always prefer the associated functions (they are defined in such
-/// > a way that they should be inlined
+/// @note
+/// The contents of this struct should be considered an implementation
+/// detail! Always prefer the associated functions (they are defined in such
+/// a way that they should be inlined)
 struct FrozenKeyIdxBiMap {
   // don't forget to update FrozenKeyIdxBiMap_clone when changing members
 
@@ -111,16 +111,16 @@ struct FrozenKeyIdxBiMap {
 /// @param[in]  mode specifies handling of keys. This will be passed on to any
 ///     clones that are made.
 ///
-/// > [!note]
-/// > If this function returns `bimap`, then the caller should invoke
-/// > `FrozenKeyIdxBiMap_is_ok(&bimap)` to test whether there was an error.
-/// > This is pretty ugly/clunky, but its the only practical way to achieve
-/// > comparable behavior to other internal datatypes (ideally, we would make
-/// > this a simple C++ class instead)
+/// @note
+/// If this function returns \c bimap, then the caller should invoke
+/// \c FrozenKeyIdxBiMap_is_ok(&bimap) to test whether there was an error.
+/// This is pretty ugly/clunky, but it's the only practical way to achieve
+/// comparable behavior to other internal datatypes (ideally, we would make
+/// this a simple C++ class instead)
 inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
                                                int key_count, BiMapMode mode) {
   // this will be returned if there is an error
-  FrozenKeyIdxBiMap erroneous_obj{0, nullptr, BiMapMode::REFS_KEYDATA};
+  FrozenKeyIdxBiMap erroneous_obj{-1, nullptr, BiMapMode::REFS_KEYDATA};
 
   // check the specified keys
   long long max_keys = static_cast<long long>(bimap::invalid_val) - 1LL;
@@ -183,8 +183,8 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
 }
 
 /// returns whether new_FrozenKeyIdxBiMap constructed a valid object
-inline bool FrozenKeyIdxBiMap_is_ok(FrozenKeyIdxBiMap* ptr) {
-  return (ptr->length > 0);
+inline bool FrozenKeyIdxBiMap_is_ok(const FrozenKeyIdxBiMap* ptr) {
+  return (ptr->length != -1);
 }
 
 /// Destroys the specified FrozenKeyIdxBiMap
@@ -199,16 +199,16 @@ inline void drop_FrozenKeyIdxBiMap(FrozenKeyIdxBiMap* ptr) {
   }
 }
 
-/// Makes a clone of the specified FrozenKeyIdxBiMap (the clone inherites the
+/// Makes a clone of the specified FrozenKeyIdxBiMap (the clone inherits the
 /// original BiMapMode).
 ///
-/// > [!note]
-/// > If this function returns `bimap`, then the caller should invoke
-/// > `FrozenKeyIdxBiMap_is_ok(&bimap)` to test whether there was an error.
-/// > This is pretty ugly/clunky, but its the only practical way to achieve
-/// > comparable behavior to other internal datatypes (ideally, we would make
-/// > this a simple C++ class instead)
-FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
+/// @note
+/// If this function returns \c bimap, then the caller should invoke
+/// \c FrozenKeyIdxBiMap_is_ok(&bimap) to test whether there was an error.
+/// This is pretty ugly/clunky, but it's the only practical way to achieve
+/// comparable behavior to other internal datatypes (ideally, we would make
+/// this a simple C++ class instead)
+inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
   return new_FrozenKeyIdxBiMap(ptr->keys, ptr->length, ptr->mode);
 };
 
@@ -246,4 +246,4 @@ inline const char* FrozenKeyIdxBiMap_key_from_idx(const FrozenKeyIdxBiMap* map,
 
 }  // namespace grackle::impl
 
-#endif  // UTILS_FROZENKEYIDXBIMAP_HPP
+#endif  // SUPPORT_FROZENKEYIDXBIMAP_HPP
