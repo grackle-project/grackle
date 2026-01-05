@@ -122,6 +122,10 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
   // this will be returned if there is an error
   FrozenKeyIdxBiMap erroneous_obj{-1, nullptr, BiMapMode::REFS_KEYDATA};
 
+  if (keys == nullptr && key_count == 0) {
+    return FrozenKeyIdxBiMap{0, nullptr, mode};
+  }
+
   // check the specified keys
   long long max_keys = static_cast<long long>(bimap::invalid_val) - 1LL;
   if (key_count < 1 || static_cast<long long>(key_count) > max_keys) {

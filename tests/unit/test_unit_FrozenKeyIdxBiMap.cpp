@@ -77,6 +77,49 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
   grimpl::drop_FrozenKeyIdxBiMap(&m);
 }
 
+// validate basic operations for an empty bimap
+TEST(FrozenKeyIdxBiMap, EmptyBasicOps) {
+  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::new_FrozenKeyIdxBiMap(
+      nullptr, 0, grackle::impl::BiMapMode::COPIES_KEYDATA);
+  ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&m))
+      << "construction of a FrozenKeyIdxBiMap unexpectedly failed";
+
+  EXPECT_EQ(0, grackle::impl::FrozenKeyIdxBiMap_size(&m))
+      << "an empty mapping should have a size of 0";
+
+  EXPECT_EQ(grackle::impl::bimap::invalid_val,
+            grackle::impl::FrozenKeyIdxBiMap_idx_from_key(&m, "NotAKey"))
+      << "key lookup should always fail for an empty mapping";
+
+  EXPECT_EQ(nullptr, grackle::impl::FrozenKeyIdxBiMap_key_from_idx(&m, 0))
+      << "index lookup should always fail for an empty mapping";
+
+  grackle::impl::drop_FrozenKeyIdxBiMap(&m);
+}
+
+// validate behavior of clone for an empty bimap
+TEST(FrozenKeyIdxBiMap, EmptyClone) {
+  // make the original
+  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::new_FrozenKeyIdxBiMap(
+      nullptr, 0, grackle::impl::BiMapMode::COPIES_KEYDATA);
+  ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&m))
+      << "construction of a FrozenKeyIdxBiMap unexpectedly failed";
+
+  // make the clone
+  grackle::impl::FrozenKeyIdxBiMap m_clone =
+      grackle::impl::FrozenKeyIdxBiMap_clone(&m);
+
+  bool success = grackle::impl::FrozenKeyIdxBiMap_is_ok(&m_clone);
+
+  grackle::impl::drop_FrozenKeyIdxBiMap(&m);  // drop the original
+
+  if (success) {
+    grackle::impl::drop_FrozenKeyIdxBiMap(&m_clone);
+  } else {
+    FAIL() << "cloning an empty mapping failed!";
+  }
+}
+
 class FrozenKeyIdxBiMapConstructorSuite
     : public testing::TestWithParam<grackle::impl::BiMapMode> {
   // You can implement all the usual fixture class members here.
@@ -123,9 +166,16 @@ TEST_P(FrozenKeyIdxBiMapConstructorSuite, 0LenKey) {
   ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
 
-TEST_P(FrozenKeyIdxBiMapConstructorSuite, NoKeys) {
+TEST_P(FrozenKeyIdxBiMapConstructorSuite, NullptrWithPosCount) {
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(nullptr, 0, GetParam());
+      grackle::impl::new_FrozenKeyIdxBiMap(nullptr, 1, GetParam());
+  ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
+}
+
+TEST_P(FrozenKeyIdxBiMapConstructorSuite, NotNull0KeyCount) {
+  const char* keys[] = {"denisty", "internal_energy"};
+  grackle::impl::FrozenKeyIdxBiMap tmp =
+      grackle::impl::new_FrozenKeyIdxBiMap(keys, 0, GetParam());
   ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
 
