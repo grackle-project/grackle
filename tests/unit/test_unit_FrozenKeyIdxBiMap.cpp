@@ -17,6 +17,66 @@
 #include "support/FrozenKeyIdxBiMap.hpp"
 #include "grackle.h"
 
+// this top test was introduced to provide a more concrete example
+// of how we might use FrozenKeyIdxBiMap
+
+TEST(FrozenKeyIdxBiMap, FullExample) {
+  // THE SCENARIO: we have a list of unique ordered strings
+  //
+  // We are going build a FrozenKeyIdxBiMap instance from the following list.
+  // The resulting object is a bidirectional map that can both:
+  // 1. map a string to its index (at the time of construction) in the list.
+  //    - example: "HII" is mapped to 2
+  //    - example: "O2II" is mapped to 33
+  // 2. perform the reverse mapping (i.e. index -> string)
+  //    - example: 2 is mapped to "HII"
+  //    - example: 33 is mapped to "O2II"
+  //
+  // It's worth emphasizing that the mapping is frozen when its constructed &
+  // contents can't be changed (even if you reorder the original)
+  const char* keys[34] = {
+      "e",   "HI",   "HII", "HeI",  "HeII",  "HeIII", "HM",   "H2I",   "H2II",
+      "DI",  "DII",  "HDI", "DM",   "HDII",  "HeHII", "CI",   "CII",   "CO",
+      "CO2", "OI",   "OH",  "H2O",  "O2",    "SiI",   "SiOI", "SiO2I", "CH",
+      "CH2", "COII", "OII", "OHII", "H2OII", "H3OII", "O2II"};
+
+  namespace grimpl = grackle::impl;
+
+  // PART 1: build a FrozenKeyIdxBiMap from this list
+  // the 3rd argument tells the string to make copies of each string
+  grimpl::FrozenKeyIdxBiMap m = grimpl::new_FrozenKeyIdxBiMap(
+      keys, 34, grimpl::BiMapMode::COPIES_KEYDATA);
+
+  // before we use it, we should confirm the constructor succeeded
+  if (!grimpl::FrozenKeyIdxBiMap_is_ok(&m)) {
+    FAIL() << "creation of the m failed unexpectedly";
+  }
+
+  // PART 2: let's show some examples of lookups from names
+
+  // Equivalent Python/idiomatic C++:  `2 == m["HII"]`
+  EXPECT_EQ(2, grimpl::FrozenKeyIdxBiMap_idx_from_key(&m, "HII"));
+  // Equivalent Python/idiomatic C++:  `33 == m["O2II"]`
+  EXPECT_EQ(33, grimpl::FrozenKeyIdxBiMap_idx_from_key(&m, "O2II"));
+
+  // Behavior is well-defined when a key isn't known
+  int invalid = grimpl::bimap::invalid_val;
+  EXPECT_EQ(invalid, grimpl::FrozenKeyIdxBiMap_idx_from_key(&m, "NotAKey"));
+
+  // PART 3: let's show the reverse of the previous lookups
+  EXPECT_STREQ("HII", grimpl::FrozenKeyIdxBiMap_key_from_idx(&m, 2));
+  EXPECT_STREQ("O2II", grimpl::FrozenKeyIdxBiMap_key_from_idx(&m, 33));
+
+  // Behavior is again well-defined when passing an invalid index
+  EXPECT_EQ(nullptr, grimpl::FrozenKeyIdxBiMap_key_from_idx(&m, 131));
+
+  // PART 4: We can also query the length
+  EXPECT_EQ(34, grimpl::FrozenKeyIdxBiMap_size(&m));
+
+  // Finally, to cleanup we will deallocate data tracked internally by `m`
+  grimpl::drop_FrozenKeyIdxBiMap(&m);
+}
+
 class FrozenKeyIdxBiMapConstructorSuite
     : public testing::TestWithParam<grackle::impl::BiMapMode> {
   // You can implement all the usual fixture class members here.
