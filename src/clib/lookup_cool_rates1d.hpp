@@ -20,6 +20,7 @@
 
 #include "grackle.h"
 #include "dust_props.hpp"
+#include "dust/grain_species_info.hpp"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "internal_types.hpp"

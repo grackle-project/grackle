@@ -31,6 +31,8 @@
 #include "LUT.hpp"
 #include "utils-cpp.hpp"
 
+#include "step_rate_gauss_seidel.hpp"
+
 // callers of these functions are generally expected to locally shorten the
 // namespace name when they call these routines
 namespace grackle::impl::fortran_wrapper {
@@ -369,79 +371,6 @@ inline void rate_timestep_g(
                         &my_chemistry->radiative_transfer_metal_dissociation, my_fields->RT_CO_dissociation_rate, my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate
                               );
 }
-
-/// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time
-/// integrator to advance the rate equations by one (sub-)cycle (dtit).
-inline void step_rate_g(
-  double* dtit, IndexRange idx_range, gr_mask_type anydust, double* h2dust,
-  double* rhoH, double* dedot_prev, double* HIdot_prev,
-  gr_mask_type* itmask, gr_mask_type* itmask_metal, int imetal,
-  chemistry_data* my_chemistry, grackle_field_data* my_fields,
-  photo_rate_storage my_uvb_rates,
-  grackle::impl::GrainSpeciesCollection grain_growth_rates,
-  grackle::impl::SpeciesCollection species_tmpdens,
-  grackle::impl::CollisionalRxnRateCollection kcr_buf,
-  grackle::impl::PhotoRxnRateCollection kshield_buf
-) {
-           FORTRAN_NAME(step_rate_g)(my_fields->e_density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, my_fields->density,
-                         my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, dtit,
-                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-                         &my_chemistry->primordial_chemistry, &anydust,
-                         kcr_buf.data[CollisionalRxnLUT::k1], kcr_buf.data[CollisionalRxnLUT::k2], kcr_buf.data[CollisionalRxnLUT::k3], kcr_buf.data[CollisionalRxnLUT::k4], kcr_buf.data[CollisionalRxnLUT::k5], kcr_buf.data[CollisionalRxnLUT::k6], kcr_buf.data[CollisionalRxnLUT::k7], kcr_buf.data[CollisionalRxnLUT::k8], kcr_buf.data[CollisionalRxnLUT::k9], kcr_buf.data[CollisionalRxnLUT::k10], kcr_buf.data[CollisionalRxnLUT::k11],
-                         kcr_buf.data[CollisionalRxnLUT::k12], kcr_buf.data[CollisionalRxnLUT::k13], kcr_buf.data[CollisionalRxnLUT::k14], kcr_buf.data[CollisionalRxnLUT::k15], kcr_buf.data[CollisionalRxnLUT::k16], kcr_buf.data[CollisionalRxnLUT::k17], kcr_buf.data[CollisionalRxnLUT::k18], kcr_buf.data[CollisionalRxnLUT::k19], kcr_buf.data[CollisionalRxnLUT::k22],
-                         &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k27, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30,
-                         kcr_buf.data[CollisionalRxnLUT::k50], kcr_buf.data[CollisionalRxnLUT::k51], kcr_buf.data[CollisionalRxnLUT::k52], kcr_buf.data[CollisionalRxnLUT::k53], kcr_buf.data[CollisionalRxnLUT::k54], kcr_buf.data[CollisionalRxnLUT::k55], kcr_buf.data[CollisionalRxnLUT::k56], kcr_buf.data[CollisionalRxnLUT::k57], kcr_buf.data[CollisionalRxnLUT::k58],
-                         h2dust, rhoH,
-                         kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
-                         kshield_buf.k28, kshield_buf.k29, kshield_buf.k30, kshield_buf.k31,
-                         species_tmpdens.data[SpLUT::HI], species_tmpdens.data[SpLUT::HII], species_tmpdens.data[SpLUT::HeI], species_tmpdens.data[SpLUT::HeII], species_tmpdens.data[SpLUT::HeIII], species_tmpdens.data[SpLUT::e],
-                         species_tmpdens.data[SpLUT::HM], species_tmpdens.data[SpLUT::H2I], species_tmpdens.data[SpLUT::H2II], species_tmpdens.data[SpLUT::DI], species_tmpdens.data[SpLUT::DII], species_tmpdens.data[SpLUT::HDI],
-                         dedot_prev, HIdot_prev,
-                         &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
-                         my_fields->RT_HI_ionization_rate, my_fields->RT_HeI_ionization_rate, my_fields->RT_HeII_ionization_rate,
-                         itmask, itmask_metal,
-                        my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density, &imetal, my_fields->metal_density,
-                        &my_chemistry->metal_chemistry, &my_chemistry->dust_species, &my_chemistry->grain_growth, &my_chemistry->dust_sublimation,
-                        my_fields->CI_density, my_fields->CII_density, my_fields->CO_density, my_fields->CO2_density,
-                        my_fields->OI_density, my_fields->OH_density, my_fields->H2O_density, my_fields->O2_density,
-                        my_fields->SiI_density, my_fields->SiOI_density, my_fields->SiO2I_density,
-                        my_fields->CH_density, my_fields->CH2_density, my_fields->COII_density, my_fields->OII_density,
-                        my_fields->OHII_density, my_fields->H2OII_density, my_fields->H3OII_density, my_fields->O2II_density,
-                        my_fields->Mg_density, my_fields->Al_density, my_fields->S_density, my_fields->Fe_density,
-                        my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
-                        my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
-                        my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
-                        kcr_buf.data[CollisionalRxnLUT::k125], kcr_buf.data[CollisionalRxnLUT::k129], kcr_buf.data[CollisionalRxnLUT::k130], kcr_buf.data[CollisionalRxnLUT::k131], kcr_buf.data[CollisionalRxnLUT::k132],
-                        kcr_buf.data[CollisionalRxnLUT::k133], kcr_buf.data[CollisionalRxnLUT::k134], kcr_buf.data[CollisionalRxnLUT::k135], kcr_buf.data[CollisionalRxnLUT::k136], kcr_buf.data[CollisionalRxnLUT::k137],
-                        kcr_buf.data[CollisionalRxnLUT::k148], kcr_buf.data[CollisionalRxnLUT::k149], kcr_buf.data[CollisionalRxnLUT::k150], kcr_buf.data[CollisionalRxnLUT::k151], kcr_buf.data[CollisionalRxnLUT::k152],
-                        kcr_buf.data[CollisionalRxnLUT::k153],
-                        kcr_buf.data[CollisionalRxnLUT::kz15],  kcr_buf.data[CollisionalRxnLUT::kz16],  kcr_buf.data[CollisionalRxnLUT::kz17],  kcr_buf.data[CollisionalRxnLUT::kz18],  kcr_buf.data[CollisionalRxnLUT::kz19],
-                        kcr_buf.data[CollisionalRxnLUT::kz20],  kcr_buf.data[CollisionalRxnLUT::kz21],  kcr_buf.data[CollisionalRxnLUT::kz22],  kcr_buf.data[CollisionalRxnLUT::kz23],  kcr_buf.data[CollisionalRxnLUT::kz24],
-                        kcr_buf.data[CollisionalRxnLUT::kz25],  kcr_buf.data[CollisionalRxnLUT::kz26],  kcr_buf.data[CollisionalRxnLUT::kz27],  kcr_buf.data[CollisionalRxnLUT::kz28],  kcr_buf.data[CollisionalRxnLUT::kz29],
-                        kcr_buf.data[CollisionalRxnLUT::kz30],  kcr_buf.data[CollisionalRxnLUT::kz31],  kcr_buf.data[CollisionalRxnLUT::kz32],  kcr_buf.data[CollisionalRxnLUT::kz33],  kcr_buf.data[CollisionalRxnLUT::kz34],
-                        kcr_buf.data[CollisionalRxnLUT::kz35],  kcr_buf.data[CollisionalRxnLUT::kz36],  kcr_buf.data[CollisionalRxnLUT::kz37],  kcr_buf.data[CollisionalRxnLUT::kz38],  kcr_buf.data[CollisionalRxnLUT::kz39],
-                        kcr_buf.data[CollisionalRxnLUT::kz40],  kcr_buf.data[CollisionalRxnLUT::kz41],  kcr_buf.data[CollisionalRxnLUT::kz42],  kcr_buf.data[CollisionalRxnLUT::kz43],  kcr_buf.data[CollisionalRxnLUT::kz44],
-                        kcr_buf.data[CollisionalRxnLUT::kz45],  kcr_buf.data[CollisionalRxnLUT::kz46],  kcr_buf.data[CollisionalRxnLUT::kz47],  kcr_buf.data[CollisionalRxnLUT::kz48],  kcr_buf.data[CollisionalRxnLUT::kz49],
-                        kcr_buf.data[CollisionalRxnLUT::kz50],  kcr_buf.data[CollisionalRxnLUT::kz51],  kcr_buf.data[CollisionalRxnLUT::kz52],  kcr_buf.data[CollisionalRxnLUT::kz53],  kcr_buf.data[CollisionalRxnLUT::kz54],
-                        species_tmpdens.data[SpLUT::DM], species_tmpdens.data[SpLUT::HDII], species_tmpdens.data[SpLUT::HeHII],
-                        species_tmpdens.data[SpLUT::CI], species_tmpdens.data[SpLUT::CII], species_tmpdens.data[SpLUT::CO], species_tmpdens.data[SpLUT::CO2],
-                        species_tmpdens.data[SpLUT::OI], species_tmpdens.data[SpLUT::OH], species_tmpdens.data[SpLUT::H2O], species_tmpdens.data[SpLUT::O2],
-                        species_tmpdens.data[SpLUT::SiI], species_tmpdens.data[SpLUT::SiOI], species_tmpdens.data[SpLUT::SiO2I],
-                        species_tmpdens.data[SpLUT::CH], species_tmpdens.data[SpLUT::CH2], species_tmpdens.data[SpLUT::COII], species_tmpdens.data[SpLUT::OII],
-                        species_tmpdens.data[SpLUT::OHII], species_tmpdens.data[SpLUT::H2OII], species_tmpdens.data[SpLUT::H3OII], species_tmpdens.data[SpLUT::O2II],
-                        species_tmpdens.data[SpLUT::Mg], species_tmpdens.data[SpLUT::Al], species_tmpdens.data[SpLUT::S], species_tmpdens.data[SpLUT::Fe],
-                        species_tmpdens.data[SpLUT::SiM_dust], species_tmpdens.data[SpLUT::FeM_dust], species_tmpdens.data[SpLUT::Mg2SiO4_dust], species_tmpdens.data[SpLUT::MgSiO3_dust], species_tmpdens.data[SpLUT::Fe3O4_dust],
-                        species_tmpdens.data[SpLUT::AC_dust], species_tmpdens.data[SpLUT::SiO2_dust], species_tmpdens.data[SpLUT::MgO_dust], species_tmpdens.data[SpLUT::FeS_dust], species_tmpdens.data[SpLUT::Al2O3_dust],
-                        species_tmpdens.data[SpLUT::ref_org_dust], species_tmpdens.data[SpLUT::vol_org_dust], species_tmpdens.data[SpLUT::H2O_ice_dust],
-                        grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust], grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust], grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust], grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust],
-                        grain_growth_rates.data[OnlyGrainSpLUT::AC_dust], grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust], grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust], grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust], grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust],
-                        grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust], grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust], grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust],
-                        &my_chemistry->radiative_transfer_HDI_dissociation, my_fields->RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, my_fields->RT_CI_ionization_rate, my_fields->RT_OI_ionization_rate,
-                        &my_chemistry->radiative_transfer_metal_dissociation, my_fields->RT_CO_dissociation_rate, my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate
-               );
-
-}
-
 
 } // namespace grackle::impl::fortran_wrapper
 

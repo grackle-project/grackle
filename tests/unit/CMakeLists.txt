@@ -61,6 +61,10 @@ add_executable(runLinAlgTests test_linalg.cpp)
 target_link_libraries(runLinAlgTests testdeps)
 gtest_discover_tests(runLinAlgTests)
 
+add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
+target_link_libraries(runGrainSpeciesIntoTests testdeps)
+gtest_discover_tests(runGrainSpeciesIntoTests)
+
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting grtest_utils)
 gtest_discover_tests(runStatusReporting)
