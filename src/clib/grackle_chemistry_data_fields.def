@@ -46,6 +46,57 @@ ENTRY(dust_chemistry, INT, 0)
    0) off, 1) on */
 ENTRY(metal_cooling, INT, FALSE)
 
+/* enable metal chemistry
+   0) off, 1) on */
+ENTRY(metal_chemistry, INT, FALSE)
+
+/* minimum temperature to include tabulated metal cooling.
+   This is used to supplement the non-equilibrium metal cooling
+   from setting metal_chemistry=1, which is only valid up to T~1e4 K.
+   - A value of -1.0 is used to specify no minimum temperature, i.e.,
+     tabulated cooling is always used.
+   - A value of -2.0 indicates the parameter is unset. If unset, the
+     following behavior is applied:
+     - if metal_chemistry = 0, this is set to -1.0 (i.e., disabled)
+     - if metal_chemistry = 1, this is set to 1e4 K. */
+ENTRY(tabulated_cooling_minimum_temperature, DOUBLE, -2.0)
+
+/* Flag to solve grain growth reactions */
+ENTRY(grain_growth, INT, FALSE)
+
+/* enable tracking of multiple metal sources for dust evolution
+   0) off, 1) on */
+ENTRY(multi_metals, INT, FALSE)
+
+/* if metal_chemistry>0 and multi_metals=0,
+   this flag selects a single metal source for dust evolution from the
+   following options:
+  0. metal/dust abundances of local ISM (Pollack et al. 1994)
+  1-4. Pop III normal core-collapse supernovae (Nozawa et al. 2007)
+       with progenitor masses 13, 20, 25 and 30 Msun
+  5-8. Pop III faint supernovae (Marassi et al. 2014)
+       with progenitor masses 13, 50 and 80 Msun
+  9-10. Pop III pair-instability supernovae (Nozawa et al. 2007)
+        with progenitor masses 170 and 200 Msun
+  11. simple dust model (only include silicate and graphite; Yajima et al. 2019)
+*/
+ENTRY(metal_abundances, INT, 0)
+
+/* Flag to solve multiple grain species
+   1. enstatite + amorphous carbon (also follow Mg metal density)
+   2. + metallic silicon + metallic iron + forsterite + magnetite
+      + silica + magnesia + troilite + alumina
+      (also follow Al, S, Fe metal densities)
+   3. + water ice + volatile organics + refractory organics
+*/
+ENTRY(dust_species, INT, 0)
+
+/* Flag to solve temperatures of multiple grain species */
+ENTRY(use_multiple_dust_temperatures, INT, FALSE)
+
+/* Flag to supply dust sublimation */
+ENTRY(dust_sublimation, INT, FALSE)
+
 /* add heating from UV background model
    0) off, 1) on */
 ENTRY(UVbackground, INT, 0)
@@ -94,9 +145,38 @@ ENTRY(use_temperature_floor, INT, 0)
 /* use to specify scalar temperature floor */
 ENTRY(temperature_floor_scalar, DOUBLE, 0.0)
 
-/* additional chemistry solver parameters */
+/* H2 cooling rate
+ * 0: Lepp & Shull (1983)
+ * 1: Galli & Palla (1998)
+ * 2: Glover & Abel (2008)
+ * 3: Chiaki & Wise (2019)
+ */
+ENTRY(h2_cooling_rate, INT, 2)
+
+/* HD cooling rate
+ * 0: Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007)
+ * 1: Chiaki & Wise (2019)
+ */
+ENTRY(hd_cooling_rate, INT, 0)
+
+/* H2 formation from 3-body reactions
+ * 0: Abel, Bryan & Norman (2002)
+ * 1: Palla, Salpeter & Stahler (1983)
+ * 2: Cohen & Westberg (1983)
+ * 3: Flower & Harris (2007)
+ * 4: Glover (2008)
+ * 5: Forrey (2013)
+ */
 ENTRY(three_body_rate, INT, 0)
+
+/* H2 collisionally-induced emission cooling
+ * 0: off
+ * 1: Ripamonti & Abel (2003)
+ * 2: Yoshida et al. (2006)
+ */
 ENTRY(cie_cooling, INT, 0)
+
+/* H2 cooling attenuation from Ripamonti & Abel (2004) */
 ENTRY(h2_optical_depth_approximation, INT, 0)
 
 /* flag for H2 cooling (0-off/1-on) */
@@ -173,6 +253,12 @@ ENTRY(use_radiative_transfer, INT, 0)
 ENTRY(radiative_transfer_coupled_rate_solver, INT, 0)
 ENTRY(radiative_transfer_intermediate_step, INT, 0)
 ENTRY(radiative_transfer_hydrogen_only, INT, 0)
+ENTRY(radiative_transfer_HDI_dissociation, INT, 0)
+ENTRY(radiative_transfer_metal_ionization, INT, 0)
+ENTRY(radiative_transfer_metal_dissociation, INT, 0)
+
+/* flag to signal H2 self-shielding is being done in hydro code */
+ENTRY(radiative_transfer_use_H2_shielding, INT, FALSE)
 
 /* flag for approximiate self-shielding as well
    as spectrum averaged photo heating and
@@ -186,7 +272,7 @@ ENTRY(H2_self_shielding, INT, 0)
 
 /* flag for custom H2-shielding factor. The factor is provided as an additional
    field by the user and is multiplied to the rate for radiative H2
-   dissocitation */
+   dissociation */
 ENTRY(H2_custom_shielding, INT, 0)
 
 /* flag to select which formula for calculating k11 you want to use. 
@@ -208,6 +294,30 @@ ENTRY(collisional_ionisation_rates, INT, 1) //Collisional ionisation
 ENTRY(recombination_cooling_rates, INT, 1) //Recombination cooling
 ENTRY(bremsstrahlung_cooling_rates, INT, 1) //Bremsstrahlung cooling
 
+/* flag to add primordial continuum opacity */
+ENTRY(use_primordial_continuum_opacity, INT, FALSE)
+
+/* Alternative rates for HD-related reactions (k50-k56)
+ * 0: multiple sources (see rate_functions.c for details)
+ * 1: Stancil, Lepp & Dalgarno (1998)
+ */
+ENTRY(hd_reaction_rates, INT, 0)
+
+/* Alternative gas-grain heat transfer rate.
+ * 0: Hollenbach & McKee (1989)
+ * 1: Omukai (2000) - see rate_functions.c for more details
+ */
+ENTRY(gas_grain_cooling_rate, INT, 0)
+
+/* Alternative formulations of interstellar radiation heating
+   rate on uniform sized grains. Both are based on Goldsmith (2001)
+   and Krumholz (2014) and are in fact very similar. See
+   rate_functions.c for more details.
+ * 0: 3.9e-24 / mh / fgr, where fgr is local dust-to-gas ratio
+ * 1: 8.60892e-24 / (2.0 * mh) / fgr
+ */
+ENTRY(uniform_grain_isrf_heating_rate, INT, 0)
+
 /* maximum number of subcycle iterations for solve_chemistry */
 ENTRY(max_iterations, INT, 10000)
 
@@ -216,3 +326,10 @@ ENTRY(exit_after_iterations_exceeded, INT, FALSE)
 
 /* number of OpenMP threads, if supported */
 ENTRY(omp_nthreads, INT, 0)
+
+/* solver to be used 
+* 1: Gauss-Seidel-Newton-Raphson
+* 2: Gauss-Seidel-only
+* 3: Newton-Raphson-only
+*/
+ENTRY(solver_method, INT, 1)

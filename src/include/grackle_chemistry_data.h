@@ -85,8 +85,57 @@ typedef struct
   /* Flag to supply a dust density field */
   int use_dust_density_field;
 
-  /* Flag for enabling recombination cooling on grains */
+  /* Flag for dust recombination cooling */
   int dust_recombination_cooling;
+
+  /* Flag to solve metal chemistry */
+  int metal_chemistry;
+
+  /* minimum temperature to include tabulated metal cooling.
+     This is used to supplement the non-equilibrium metal cooling
+     from setting metal_chemistry=1, which is only valid up to T~1e4 K.
+     - A value of -1.0 is used to specify no minimum temperature, i.e.,
+       tabulated cooling is always used.
+     - A value of -2.0 indicates the parameter is unset. If unset, the
+       following behavior is applied:
+       - if metal_chemistry = 0, this is set to -1.0 (i.e., disabled)
+       - if metal_chemistry = 1, this is set to 1e4 K. */
+  double tabulated_cooling_minimum_temperature;
+
+  /* Flag to solve grain growth reactions */
+  int grain_growth;
+
+  /* Flag to enable tracking of multiple metal sources for dust evolution */
+  int multi_metals;
+
+  /* if metal_chemistry>0 and multi_metals=0,
+     this flag selects a single metal source for dust evolution from the
+     following options:
+     0. metal/dust abundances of local ISM (Pollack et al. 1994)
+     1-4. Pop III normal core-collapse supernovae (Nozawa et al. 2007)
+     with progenitor masses 13, 20, 25 and 30 Msun
+     5-8. Pop III faint supernovae (Marassi et al. 2014)
+     with progenitor masses 13, 50 and 80 Msun
+     9-10. Pop III pair-instability supernovae (Nozawa et al. 2007)
+     with progenitor masses 170 and 200 Msun
+     11. simple dust model (only include silicate and graphite; Yajima et al. 2019)
+  */
+  int metal_abundances;
+
+  /* Flag to solve multiple grain species
+     1. enstatite + amorphous carbon (also follow Mg metal density)
+     2. + metallic silicon + metallic iron + forsterite + magnetite
+        + silica + magnesia + troilite + alumina
+        (also follow Al, S, Fe metal densities)
+     3. + water ice + volatile organics + refractory organics
+  */
+  int dust_species;
+
+  /* Flag to solve temperatures of multiple grain species */
+  int use_multiple_dust_temperatures;
+
+  /* Flag to supply dust sublimation */
+  int dust_sublimation;
 
   /* photo-electric heating from irradiated dust */
   int photoelectric_heating;
@@ -112,10 +161,40 @@ typedef struct
 
   double temperature_floor_scalar;
 
-  /* additional chemistry solver parameters */
+  /* H2 cooling rate
+   * 0: Lepp & Shull (1983)
+   * 1: Galli & Palla (1998)
+   * 2: Glover & Abel (2008)
+   * 3: Chiaki & Wise (2019)
+   */
+  int h2_cooling_rate;
+
+  /* HD cooling rate
+   * 0: Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007)
+   * 1: Chiaki & Wise (2019)
+   */
+  int hd_cooling_rate;
+
+  /* H2 formation from 3-body reactions
+   * 0: Abel, Bryan & Norman (2002)
+   * 1: Palla, Salpeter & Stahler (1983)
+   * 2: Cohen & Westberg (1983)
+   * 3: Flower & Harris (2007)
+   * 4: Glover (2008)
+   * 5: Forrey (2013)
+   */
   int three_body_rate;
+
+  /* H2 collisionally-induced emission cooling
+   * 0: off
+   * 1: Ripamonti & Abel (2003)
+   * 2: Yoshida et al. (2006)
+   */
   int cie_cooling;
+
+  /* H2 cooling attenuation from Ripamonti & Abel (2004) */
   int h2_optical_depth_approximation;
+
   int ih2co; // flag for H2 cooling (0-off/1-on)
   int ipiht; // flag for photoionization cooling
   double HydrogenFractionByMass;
@@ -153,6 +232,12 @@ typedef struct
   int radiative_transfer_coupled_rate_solver;
   int radiative_transfer_intermediate_step;
   int radiative_transfer_hydrogen_only;
+  int radiative_transfer_HDI_dissociation;
+  int radiative_transfer_metal_ionization;
+  int radiative_transfer_metal_dissociation;
+
+  /* flag to signal H2 self-shielding is being done in hydro code */
+  int radiative_transfer_use_H2_shielding;
 
   /* flag for approximiate self-shielding as well
      as spectrum averaged photo heating and
@@ -187,6 +272,30 @@ typedef struct
   int recombination_cooling_rates; //Recombination cooling
   int bremsstrahlung_cooling_rates; //Bremsstrahlung cooling
 
+  /* flag to add primordial continuum opacity */
+  int use_primordial_continuum_opacity;
+
+  /* Alternative rates for HD-related reactions (k50-k56)
+   * 0: multiple sources (see rate_functions.c for details)
+   * 1: Stancil, Lepp & Dalgarno (1998)
+   */
+  int hd_reaction_rates;
+
+  /* Alternative gas-grain heat transfer rate.
+   * 0: Hollenbach & McKee (1989)
+   * 1: Omukai (2000) - see rate_functions.c for more details
+   */
+  int gas_grain_cooling_rate;
+
+  /* Alternative formulations of interstellar radiation heating
+     rate of grains. Both are based on Goldsmith (2001) and
+     Krumholz (2014) and are in fact very similar. See
+     rate_functions.c for more details.
+   * 0: 3.9e-24 / mh / fgr, where fgr is local dust-to-gas ratio
+   * 1: 8.60892e-24 / (2.0 * mh) / fgr
+   */
+  int uniform_grain_isrf_heating_rate;
+
   /* maximum number of subcycle iterations for solve_chemistry */
   int max_iterations;
 
@@ -195,6 +304,13 @@ typedef struct
 
   /* number of OpenMP threads, if supported */
   int omp_nthreads;
+
+   /* solver to be used 
+   * 1: Gauss-Seidel-Newton-Raphson
+   * 2: Gauss-Seidel-only
+   * 3: Newton-Raphson-only
+   */
+  int solver_method;
 
 } chemistry_data;
 
@@ -284,6 +400,61 @@ typedef struct
 } UVBtable;
 
 /******************************************
+ ******* Generic Interpolation Table ******
+ ******************************************/
+// as with the other components of chemistry_data_storage, this struct and its
+// contents should be treated as an implementation detail
+// -> in the future, it would be nice to unify this with cloudy_data
+// -> to help facillitate this goal, we track the grid properties in a data
+//    structure (that we can probably reuse) that doesn't hold the values that
+//    are actually interpolated.
+// -> this may be useful since there may be a variable number of grids that
+//    need to be interpolated (e.g. cloudy-primordial tables have 3 grids,
+//    cloudy-metal tables have 2 grids, generic interpolation tables have 1
+//    grid). But maybe we should revisit this in the future?
+
+typedef struct gr_interp_grid_props
+{
+  /// Rank of dataset
+  ///
+  /// TODO: do we need this attribute? In most cases, we know the rank
+  ///       of a table ahead of time
+  long long rank;
+
+  /// Dimension of dataset.
+  long long dimension[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+
+  /// Dataset parameter values (in the common case where there there is
+  /// constant spacing, we could probably track less data).
+  double *parameters[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+
+  /// Value of the constant paramter spacing
+  double parameter_spacing[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+
+  /// Length of 1D flattened data grid
+  long long data_size;
+
+} gr_interp_grid_props;
+
+typedef struct gr_interp_grid
+{
+  /// properties of the interpolation grid
+  gr_interp_grid_props props;
+  /// the actual data that gets interpolated
+  double* data;
+} gr_interp_grid;
+
+
+/******************************************
+ ********** Forward declarations **********
+ ******************************************/
+
+// the following is an opaque type. The definition is intentionally opaque to
+// consumers of the Grackle library. Ideally, the entire chemistry_data_storage
+// struct will become opaque in the future
+struct gr_opaque_storage;
+
+/******************************************
  *** Chemistry and cooling data storage ***
  ******************************************/
 typedef struct
@@ -293,32 +464,9 @@ typedef struct
    * primordial chemistry rate data *
    **********************************/
 
-  /* 6 species rates */
-  double *k1;
-  double *k2;
-  double *k3;
-  double *k4;
-  double *k5;
-  double *k6;
+  // the (non-radiative) collisional rates, that are handled in a standard
+  // manner, are now tracked within opaque_storage
 
-  /* 9 species rates (including H2) */
-  double *k7;
-  double *k8;
-  double *k9;
-  double *k10;
-  double *k11;
-  double *k12;
-  double *k13;
-  double *k14;
-  double *k15;
-  double *k16;
-  double *k17;
-  double *k18;
-  double *k19;
-  double *k20;  /* currently not used */
-  double *k21;  /* currently not used */
-  double *k22;  /* 3-body H2 formation */
-  double *k23;  /* H2-H2 dissociation */
   double *k13dd;  /* density dependent version of k13 (collisional H2
                     dissociation); actually 7 functions instead of 1. */
 
@@ -334,21 +482,13 @@ typedef struct
   double k30;
   double k31;
 
-  /* 12 species rates (with Deuterium). */
-  double *k50;
-  double *k51;
-  double *k52;
-  double *k53;
-  double *k54;
-  double *k55;
-  double *k56;
-
-  /* New H-ionizing reactions, used for 6, 9 & 12 species chemistry */
-  double *k57;
-  double *k58;
-
   /* H2 formation on dust grains */
   double *h2dust;
+  double *h2dustS;
+  double *h2dustC;
+
+  /* Grain growth rate */
+  double *grain_growth_rate;
 
   /* Chemical heating from H2 formation. */
   /* numerator and denominator of Eq 23 of Omukai ea. 2000. */
@@ -428,9 +568,58 @@ typedef struct
 
   // Heating of dust by interstellar radiation field
   double gamma_isrf;
+  // for arbitrary grain size distribution
+  double gamma_isrf2;
 
   /* Gas/grain energy transfer. */
   double *gas_grain;
+  // for arbitrary grain size distribution
+  double *gas_grain2;
+
+  /* CIE cooling rate (Yoshida et al. 2006) */
+  double *cieY06;
+
+  /* The next 8 attributes hold interpolation grids representing collision
+   * rates of a species with HI or H2I. The parameters along each axis are:
+   *   grid.parameter[0]: log10( ndens_{species} / (dv/dr) )
+   *   grid.parameter[1]: log10( T )
+   *   grid.parameter[2]: log10( ndens_HI ) OR log10( ndens_H2I )
+   */
+
+  /* H2 and HD cooling rates (collision with HI; Hollenbach & McKee 1979) */
+  gr_interp_grid LH2;
+  gr_interp_grid LHD;
+
+  /* Fine-structure cooling rates (collision with HI; Maio et al. 2007) */
+  gr_interp_grid LCI;
+  gr_interp_grid LCII;
+  gr_interp_grid LOI;
+
+  /* metal molecular cooling rates (collision with H2I; UMIST table) */
+  gr_interp_grid LCO;
+  gr_interp_grid LOH;
+  gr_interp_grid LH2O;
+
+  /* primordial opacity table
+   * -> alphap.parameters[0] is log10(mass density)
+   * -> alphap.parameters[1] is log10(temperature) */
+  gr_interp_grid alphap;
+
+  /* metal/dust abundance */
+  int    *gr_N, gr_Size;
+  double gr_dT, *gr_Td;
+  int     SN0_N;
+  double *SN0_XC , *SN0_XO , *SN0_XMg, *SN0_XAl, *SN0_XSi, *SN0_XS , *SN0_XFe;
+  double *SN0_fC , *SN0_fO , *SN0_fMg, *SN0_fAl, *SN0_fSi, *SN0_fS , *SN0_fFe;
+  double *SN0_fSiM, *SN0_fFeM, *SN0_fMg2SiO4, *SN0_fMgSiO3, *SN0_fFe3O4
+       , *SN0_fAC, *SN0_fSiO2D, *SN0_fMgO, *SN0_fFeS, *SN0_fAl2O3
+       , *SN0_freforg , *SN0_fvolorg , *SN0_fH2Oice;
+  double *SN0_r0SiM, *SN0_r0FeM, *SN0_r0Mg2SiO4, *SN0_r0MgSiO3, *SN0_r0Fe3O4
+       , *SN0_r0AC, *SN0_r0SiO2D, *SN0_r0MgO, *SN0_r0FeS, *SN0_r0Al2O3
+       , *SN0_r0reforg , *SN0_r0volorg , *SN0_r0H2Oice;
+  double *SN0_kpSiM, *SN0_kpFeM, *SN0_kpMg2SiO4, *SN0_kpMgSiO3, *SN0_kpFe3O4
+       , *SN0_kpAC, *SN0_kpSiO2D, *SN0_kpMgO, *SN0_kpFeS, *SN0_kpAl2O3
+       , *SN0_kpreforg , *SN0_kpvolorg , *SN0_kpH2Oice;
 
   /* UV background data */
   UVBtable UVbackground_table;
@@ -446,6 +635,9 @@ typedef struct
 
   /* tracks the initial value of the code-units */
   code_units initial_units;
+
+  /// holds data that in a manner opaque to consumers of grackle
+  struct gr_opaque_storage* opaque_storage;
 } chemistry_data_storage;
 
 /**************************

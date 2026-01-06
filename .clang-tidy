@@ -1,0 +1,144 @@
+# configuration file for clang-tidy
+# -> the documentation provides a nice overview for using clang-tidy
+
+ImplementationFileExtensions: ['cpp']
+
+# excludes the .def headers
+HeaderFileExtensions:         ['h', 'hpp']
+
+# Checks is a multiline string that specifies the comma-separate list of checks
+# used with clang-tidy.
+# -> Each check has a name (can be looked up @
+#    https://clang.llvm.org/extra/clang-tidy/checks/list.html)
+# -> globs can also be used to select checks
+# -> a name/glob preceded by a minus sign, `-`, is a negative glob which
+#    deselects all matched check names (e.g. `-bugprone-*` would deselect all
+#    checks matching `bugprone-*`)
+#
+# The very first item deselects everything and we gradually enable things.
+#
+# The checks that are currently enabled:
+# ======================================
+# I wasn't super thorough while initially enabling things.
+# - I may have missed some useful checks
+# - I may have also accidently enabled some overly opinionated or overly
+#   restrictive checks. My primary criterion (especially with the broadest
+#   globs) was making sure the checks didn't flag much existing code
+#
+# Before you enable or disable any checks, you should check to see whether
+# there any relevant comments about that check in the comment at the end of
+# the string
+Checks: >
+  -*,
+
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-narrowing-conversions,
+
+  cert-dcl58-cpp,
+  cert-flp30-c,
+  cert-mem57-cpp,
+
+  cppcoreguidelines-avoid-goto,
+  cppcoreguidelines-avoid-non-const-global-variables,
+  cppcoreguidelines-virtual-class-destructor
+
+  google-build-using-namespace,
+  google-explicit-constructor,
+  google-readability-avoid-underscore-in-googletest-name,
+  google-runtime-float,
+  google-upgrade-googletest-case,
+
+  llvm-namespace-comment,
+
+  misc-*,
+  -misc-use-anonymous-namespace,
+  -misc-include-cleaner,
+  -misc-non-private-member-variables-in-classes,
+  -misc-redundant-expression,
+  -misc-unused-parameters,
+  -misc-use-internal-linkage,
+
+  modernize-avoid-setjmp-longjmp,
+  modernize-avoid-variadic-functions,
+  modernize-concat-nested-namespaces,
+  modernize-use-bool-literals,
+  modernize-use-override,
+
+  readability-avoid-const-params-in-decls,
+  readability-avoid-nested-conditional-operator,
+  readability-avoid-return-with-void-value,
+  readability-avoid-unconditional-preprocessor-if,
+  readability-const-return-type,
+  readability-container-*,
+  readability-convert-member-functions-to-static
+  readability-duplicate-include,
+  readability-inconsistent-declaration-parameter-name,
+  readability-make-member-function-const,
+  readability-misleading-indentation,
+  readability-misplaced-array-index,
+  readability-named-parameter,
+  readability-non-const-parameter,
+  readability-qualified-auto,
+  readability-reference-to-constructed-temporary,
+  readability-simplify-boolean-expr,
+  readability-simplify-subscript-expr,
+  readability-static-accessed-through-instance,
+  readability-string-compare,
+  readability-uniqueptr-delete-release,
+
+# At the time of writing, I have not done a very thorough job of looking
+# through any families of checks. There is definitely more that can be enabled.
+#
+# We should really try to enable as much from the clang-analyzer- family of
+# checks as possible. It looks like it catches a bunch of stuff (potentially
+# linked to uninitialized variables)
+#
+# Specific Checks I would like to enable in the future:
+#   cppcoreguidelines-init-variables,
+#   misc-include-cleaner,
+#   misc-non-private-member-variables-in-classes,
+#   misc-redundant-expression,
+#   misc-use-internal-linkage,
+#   modernize-use-nullptr,
+#   readability-braces-around-statements,
+#   readability-implicit-bool-conversion,
+#   readability-magic-numbers,
+#   readability-math-missing-parentheses,
+#   readability-static-definition-in-anonymous-namespace
+#
+# Some noteworthy checks:
+#   misc-unused-parameters
+#     This seems nice, but I think it would take a lot of work to enable. If we
+#     do the work needed to enable it, we could probably replace it with a
+#     compiler-warning
+#   readability-use-std-min-max
+#     I don't think this properly handles NaNs. But maybe this isn't actually
+#     an issue?
+#
+# ASIDE: there are abunch of redability checks that I simply haven't considered
+#        that may be useful
+#
+# Here are a handful of checks that we should categorically avoid enabling
+#   modernize-min-max-use-initializer-list
+#     In all cases where this is relevant to us, I suspect this will probably
+#     make things slower
+#   modernize-redundant-void-arg
+#     In principle, having this check internally is ok. But, we don't want to
+#     enable it in any headers exposed to C since this change breaks most of
+#     the C argument lists
+#   readability-delete-null-pointer
+#     I think that checking whether a pointer exists may be important if/when
+#     we get to GPU porting
+
+
+# I have made readability-simplify-boolean-expr very relaxed. We could make it
+# stricter in the future (but in my experience from other projects, it
+# sometimes goes a little overboard)
+CheckOptions:
+  misc-const-correctness.AnalyzeValues: false
+  misc-const-correctness.AnalyzePointersAsValues: false
+  readability-simplify-boolean-expr.ChainedConditionalReturn: false
+  readability-simplify-boolean-expr.ChainedConditionalAssignment: false
+  readability-simplify-boolean-expr.SimplifyDeMorgan: false

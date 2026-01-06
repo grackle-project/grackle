@@ -45,6 +45,8 @@ double k57_rate(double T, double units,  chemistry_data *my_chemistry);
 double k58_rate(double T, double units,  chemistry_data *my_chemistry);
 
 double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_chemistry);
+double h2dust_C_rate(double T, double T_dust, double units, chemistry_data *my_chemistry);
+double h2dust_S_rate(double T, double T_dust, double units, chemistry_data *my_chemistry);
 
 double n_cr_n_rate(double T, double units,  chemistry_data *my_chemistry);
 double n_cr_d1_rate(double T, double units,  chemistry_data *my_chemistry);
@@ -87,11 +89,30 @@ double cie_thin_cooling_rate(double T);
 double cieco_rate(double T, double units, chemistry_data *my_chemistry);
 
 double gasGrain_rate(double T, double units, chemistry_data *my_chemistry);
+double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry);
 double regr_rate(double T, double units, chemistry_data *my_chemistry);
+double grain_growth_rate(double T, double units, chemistry_data *my_chemistry);
 
 double comp_rate(double units, chemistry_data *my_chemistry);
 double gammah_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf_rate(double units, chemistry_data *my_chemistry);
+double gamma_isrf2_rate(double units, chemistry_data *my_chemistry);
+
+// given that all of the following are interpolation tables, I don't think we
+// should be exposing these functions as part of the public api. These are
+// fundamentally different from the other functions: they are initializing
+// entries tracked by chemistry_data_storage
+
+void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+
+void initialize_cooling_rate_CI (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+void initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+void initialize_cooling_rate_OI (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+void initialize_cooling_rate_CO (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+void initialize_cooling_rate_OH (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
 
 #ifdef __cplusplus
 } /* extern "C" */
