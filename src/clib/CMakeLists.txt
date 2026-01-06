@@ -127,6 +127,7 @@ add_library(Grackle_Grackle
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
   support/FrozenKeyIdxBiMap.hpp
+  support/FrozenKeyIdxBiMap_detail.hpp
   support/fnv1a_hash.hpp
   time_deriv_0d.hpp
   utils-cpp.cpp utils-cpp.hpp
