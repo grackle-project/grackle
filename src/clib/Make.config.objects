@@ -27,6 +27,7 @@ OBJS_CONFIG_LIB = \
         cool_multi_time_g.lo \
         dust/grain_species_info.lo \
         dynamic_api.lo \
+        FrozenKeyIdxBiMap.lo \
         grackle_units.lo \
 	index_helper.lo \
         initialize_chemistry_data.lo \
