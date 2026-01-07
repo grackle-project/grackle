@@ -50,7 +50,7 @@ target_compile_definitions(grtest_utils
 # ---------------------------------
 add_executable(testFrozenKeyIdxBiMap
   test_unit_hash.cpp test_unit_FrozenKeyIdxBiMap.cpp)
-target_link_libraries(testFrozenKeyIdxBiMap testdeps)
+target_link_libraries(testFrozenKeyIdxBiMap testdeps GTest::gmock)
 gtest_discover_tests(testFrozenKeyIdxBiMap)
 
 add_executable(runInterpolationTests test_unit_interpolators_g.cpp)

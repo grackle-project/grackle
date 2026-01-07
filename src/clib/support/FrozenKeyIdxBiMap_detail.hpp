@@ -23,15 +23,13 @@
 
 namespace grackle::impl {
 
-/// This namespace holds a few constants that are used by consumers of
-/// FrozenKeyIdxBiMap
-namespace bimap {
+/// This namespace holds a generic constants and typedefs
+namespace bimap_detail {
 /// specifies an invalid value of the map
 ///
 /// In other words, a map must have fewer entries than the maximum possible u16
 /// value
-inline constexpr std::uint16_t invalid_val =
-    std::numeric_limits<std::uint16_t>::max();
+inline constexpr uint16_t INVALID_VAL = std::numeric_limits<uint16_t>::max();
 
 /// specifies maximum allowed length of a key (excluding the null terminator).
 ///
@@ -39,8 +37,10 @@ inline constexpr std::uint16_t invalid_val =
 /// While the value may seem low, it's probably large enough. Restricting
 /// strings to 30 elements (including the terminator) allows for a hypothetical
 /// optimization (see the @ref FrozenKeyIdxBiMap docstring for info).
-inline constexpr std::uint16_t keylen_max = 29;
+inline constexpr uint16_t KEYLEN_MAX = 29;
+}  // namespace bimap_detail
 
+namespace bimap {
 /// the type used for indexing the rows of the BiMap's internal hash table
 ///
 /// @note
@@ -143,7 +143,7 @@ static void overwrite_row(Row* row, const char* key, std::uint16_t keylen,
 /// As a rule of thumb, it's generally better (for compiler optimization) to
 /// return a struct of integers than rely on modifying pointer arguments
 struct SearchRslt {
-  /// specifies the value found by the search (or @ref invalid_val)
+  /// specifies value found by the search (or @ref bimap_detail::INVALID_VAL)
   std::uint16_t val;
   /// specified the number of probes before the search returned
   int probe_count;
@@ -171,7 +171,7 @@ inline SearchRslt search(const Row* rows, const char* key, int capacity,
   GR_INTERNAL_REQUIRE(key != nullptr, "Major programming oversight");
   max_probe = (max_probe <= 0 || max_probe > capacity) ? capacity : max_probe;
 
-  HashRsltPack h = fnv1a_hash<bimap::keylen_max>(key);
+  HashRsltPack h = fnv1a_hash<bimap_detail::KEYLEN_MAX>(key);
   int i = -1;  // <- set to a dummy value
   int launched_probes = 0;
   if (h.keylen > 0 && h.success && max_probe > 0) {
@@ -190,7 +190,7 @@ inline SearchRslt search(const Row* rows, const char* key, int capacity,
     } while (rows[i].keylen != 0 && launched_probes < max_probe);
   }
 
-  return SearchRslt{bimap::invalid_val, launched_probes, i};
+  return SearchRslt{bimap_detail::INVALID_VAL, launched_probes, i};
 }
 
 }  // namespace bimap_StrU16_detail
