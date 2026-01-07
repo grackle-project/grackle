@@ -29,13 +29,9 @@
 
 namespace grackle::impl {
 
-// the motivation for these constants are provided in PR #484 (they are related
+// the motivation for this constant is provided in PR #484 (its related
 // to some optimizations in the FrozenKeyIdxBiMap implementation)
 namespace bimap_detail {
-/// specifies an invalid value of the map (we state that you can't store the
-/// maximum u16 value)
-inline constexpr uint16_t INVALID_VAL = std::numeric_limits<uint16_t>::max();
-
 /// specifies maximum allowed length of a key (excluding the null character).
 inline constexpr uint16_t KEYLEN_MAX = 29;
 }  // namespace bimap_detail
@@ -128,7 +124,7 @@ struct FrozenKeyIdxBiMap {
 /// ugly/clunky, but it's the only practical way to achieve comparable behavior
 /// to other internal data types. The best alternatives involve things like
 /// std::optional or converting this type to a simple C++ class.
-inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
+inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
                                                int key_count, BiMapMode mode) {
   // this will be returned if there is an error
   FrozenKeyIdxBiMap erroneous_obj{-1, nullptr, BiMapMode::REFS_KEYDATA};
@@ -138,10 +134,9 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
   }
 
   // check the specified keys
-  long long max_keys = static_cast<long long>(bimap_detail::INVALID_VAL) - 1LL;
-  if (key_count < 1 || static_cast<long long>(key_count) > max_keys) {
-    GrPrintErrMsg("key_count must be positive and cannot exceed %lld",
-                  max_keys);
+  int max_keys = static_cast<int>(std::numeric_limits<uint16_t>::max());
+  if (key_count < 1 || key_count > max_keys) {
+    GrPrintErrMsg("key_count must be positive & can't exceed %d", max_keys);
     return erroneous_obj;
   } else if (keys == nullptr) {
     GrPrintErrMsg("keys must not be a nullptr");
@@ -263,7 +258,9 @@ namespace bimap {
 
 /// holds the result of a call to @ref FrozenKeyIdxBiMap_find
 ///
-/// @note This C-style approximation of std::optional<uint16_t>
+/// @note
+/// This is a C-style approximation of std::optional<uint16_t>. Additionally,
+/// the choice to make value a uint16_t is motivated by PR #484
 struct AccessRslt {
   /// Indicates whether the value member is valid
   bool has_value;
