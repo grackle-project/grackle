@@ -27,19 +27,18 @@
 #include "grackle.h"
 #include "status_reporting.h"
 
+namespace grackle::impl {
+
 // the motivation for these constants are provided in PR #484 (they are related
 // to some optimizations in the FrozenKeyIdxBiMap implementation)
-namespace grackle::impl::bimap {
+namespace bimap_detail {
 /// specifies an invalid value of the map (we state that you can't store the
 /// maximum u16 value)
-inline constexpr std::uint16_t invalid_val =
-    std::numeric_limits<std::uint16_t>::max();
+inline constexpr uint16_t INVALID_VAL = std::numeric_limits<uint16_t>::max();
 
 /// specifies maximum allowed length of a key (excluding the null character).
-inline constexpr std::uint16_t keylen_max = 29;
-}  // namespace grackle::impl::bimap
-
-namespace grackle::impl {
+inline constexpr uint16_t KEYLEN_MAX = 29;
+}  // namespace bimap_detail
 
 // the following doxygen comment block logically groups every all parts of
 // the (internal) API for Grackle's (internal) FrozenKeyIdxBiMap. It's useful
@@ -139,7 +138,7 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
   }
 
   // check the specified keys
-  long long max_keys = static_cast<long long>(bimap::invalid_val) - 1LL;
+  long long max_keys = static_cast<long long>(bimap_detail::INVALID_VAL) - 1LL;
   if (key_count < 1 || static_cast<long long>(key_count) > max_keys) {
     GrPrintErrMsg("key_count must be positive and cannot exceed %lld",
                   max_keys);
@@ -151,11 +150,12 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
   for (int i = 0; i < key_count; i++) {
     GR_INTERNAL_REQUIRE(keys[i] != nullptr, "Can't specify a nullptr key");
     std::size_t n_chrs_without_nul = std::strlen(keys[i]);
-    if (n_chrs_without_nul == 0 || n_chrs_without_nul > bimap::keylen_max) {
+    if (n_chrs_without_nul == 0 ||
+        n_chrs_without_nul > bimap_detail::KEYLEN_MAX) {
       GrPrintErrMsg(
           "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
           "exceeding %d",
-          keys[i], i, bimap::keylen_max);
+          keys[i], i, bimap_detail::KEYLEN_MAX);
       return erroneous_obj;
     }
     // check uniqueness
@@ -262,13 +262,13 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
 /// lookup the value associated with the key
 ///
 /// This is the analog to calling `map[key]` in python. In practice, the
-/// semantics are more similar to calling `map.get(key,invalid_val)`
+/// semantics are more similar to calling `map.get(key,INVALID_VAL)`
 ///
 /// @param[in] map A pointer to a valid bimap
 /// @param[in] key A null-terminated string
 ///
 /// @return the key's associated value or, if the key can't be found,
-///     @ref grackle::impl::bimap::invalid_val
+///     @ref grackle::impl::bimap_detail::INVALID_VAL
 inline std::uint16_t FrozenKeyIdxBiMap_idx_from_key(
     const FrozenKeyIdxBiMap* map, const char* key) {
   GR_INTERNAL_REQUIRE(key != nullptr, "A nullptr key is forbidden");
@@ -277,7 +277,7 @@ inline std::uint16_t FrozenKeyIdxBiMap_idx_from_key(
       return static_cast<std::uint16_t>(i);
     }
   }
-  return bimap::invalid_val;
+  return bimap_detail::INVALID_VAL;
 }
 
 /// returns whether the map contains the key
@@ -286,7 +286,7 @@ inline std::uint16_t FrozenKeyIdxBiMap_idx_from_key(
 /// @param[in] key A null-terminated string
 inline bool FrozenKeyIdxBiMap_contains(const FrozenKeyIdxBiMap* map,
                                        const char* key) {
-  return FrozenKeyIdxBiMap_idx_from_key(map, key) != bimap::invalid_val;
+  return FrozenKeyIdxBiMap_idx_from_key(map, key) != bimap_detail::INVALID_VAL;
 }
 
 /// return the number of keys in the map
