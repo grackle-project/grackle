@@ -112,20 +112,27 @@ add_library(Grackle_Grackle
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
+  dust/multi_grain_species/calc_grain_size_increment_1d.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
-  initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
+  inject_model/grain_metal_inject_pathways.hpp
+  inject_model/load_data.cpp inject_model/load_data.hpp
+  inject_model/misc.hpp
+  inject_model/raw_data.cpp inject_model/raw_data.hpp
   internal_types.cpp internal_types.hpp
+  interp_table_utils.hpp
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
-  rate_utils.cpp
+  ratequery.cpp ratequery.hpp
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
+  support/SimpleVec.hpp
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
+  support/FrozenKeyIdxBiMap.hpp
   time_deriv_0d.hpp
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
@@ -174,11 +181,9 @@ add_library(Grackle_Grackle
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
   index_helper.h
-  interp_table_utils.h
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
   utils.h
-  dust_const.def
 
   # Fortran public headers
   ../include/grackle.def
@@ -297,7 +302,16 @@ if ("${CMAKE_SYSTEM_NAME}" MATCHES "^(Linux)|(Darwin)$")
   target_compile_definitions(Grackle_Grackle PRIVATE "LINUX")
 endif()
 
-# define macro to suppress warnings about C files using our deprecated public
-# headers (the files should include grackle.h instead). We're currently holding
-# off on this to minimize conflicts with the newchem-cpp branch
-target_compile_definitions(Grackle_Grackle PRIVATE GRIMPL_PUBLIC_INCLUDE=1)
+# define macro to slightly customize behavior in header files since we're compiling
+# the grackle library
+# - suppresses warnings about C files using our deprecated public headers (the files
+#   should include grackle.h instead). We're gradually making this transition. It will
+#   probably be complete once we're finished transcribing all Fortran
+# - indicate to the headers that they shouldn't undef certain macros
+#
+# In reality, a "cleaner" approach than this may be to have
+# - all files in the core library include a wrapper-header-file that wraps the public
+#   headers and have that wrapper-file define this macro instead
+# - this is appealing since there's one less custom argument that needs to be passed
+#   to the compiler
+target_compile_definitions(Grackle_Grackle PRIVATE GRIMPL_COMPILING_CORE_LIB=1)

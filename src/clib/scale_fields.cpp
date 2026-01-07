@@ -14,15 +14,47 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_decls.h"
+#include "index_helper.h"
+#include "inject_model/misc.hpp"
 #include "utils-cpp.hpp"
-
-#include "scale_fields_g-cpp.h"
 
 namespace grackle::impl {
 
+void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
+                                        gr_float factor, int n_inj_path_ptrs) {
+  // each view within inj_path_view_arr wraps a field specifying the total
+  // metal density that was injected by an injection pathway (we allocate
+  // space for the max possible number of injection pathways)
+  //
+  // -> note: get_n_inject_pathway_density_ptrs returns 0 in the event that
+  //    my_fields->inject_pathway_metal_density holds no entries
+  View<gr_float***> inj_path_view_arr[inj_model_input::N_Injection_Pathways];
+  for (int path_idx = 0; path_idx < n_inj_path_ptrs; path_idx++) {
+    inj_path_view_arr[path_idx] = View<gr_float***>(
+        my_fields->inject_pathway_metal_density[path_idx],
+        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+        my_fields->grid_dimension[2]);
+  }
+
+  // parallelize the k and j loops with OpenMP
+  // flat j and k loops for better parallelism
+  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  OMP_PRAGMA("omp parallel for schedule(runtime)")
+  for (int t = 0; t < idx_helper.outer_ind_size; t++) {
+    const IndexRange idx_range = make_idx_range_(t, &idx_helper);
+    const int k = idx_range.k;  // use 0-based index
+    const int j = idx_range.j;  // use 0-based index
+    for (int path_idx = 0; path_idx < n_inj_path_ptrs; path_idx++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        inj_path_view_arr[path_idx](i, j, k) =
+            inj_path_view_arr[path_idx](i, j, k) * factor;
+      }
+    }
+  }
+}
+
 void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
-                    grackle_field_data* my_fields) {
+                    grackle_field_data* my_fields, int n_inj_path_ptrs) {
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -185,42 +217,6 @@ void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
   grackle::impl::View<gr_float***> H2Oice(
       my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_loc(
-      my_fields->local_ISM_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C13(
-      my_fields->ccsn13_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C20(
-      my_fields->ccsn20_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C25(
-      my_fields->ccsn25_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C30(
-      my_fields->ccsn30_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F13(
-      my_fields->fsn13_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F15(
-      my_fields->fsn15_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F50(
-      my_fields->fsn50_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F80(
-      my_fields->fsn80_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P170(
-      my_fields->pisn170_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P200(
-      my_fields->pisn200_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_Y19(
-      my_fields->y19_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   int dj, dk;
   dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
@@ -301,23 +297,6 @@ void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
           }
         }
 
-        if (my_chemistry->multi_metals > 0) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            metal_loc(i, j, k) = metal_loc(i, j, k) * factor;
-            metal_C13(i, j, k) = metal_C13(i, j, k) * factor;
-            metal_C20(i, j, k) = metal_C20(i, j, k) * factor;
-            metal_C25(i, j, k) = metal_C25(i, j, k) * factor;
-            metal_C30(i, j, k) = metal_C30(i, j, k) * factor;
-            metal_F13(i, j, k) = metal_F13(i, j, k) * factor;
-            metal_F15(i, j, k) = metal_F15(i, j, k) * factor;
-            metal_F50(i, j, k) = metal_F50(i, j, k) * factor;
-            metal_F80(i, j, k) = metal_F80(i, j, k) * factor;
-            metal_P170(i, j, k) = metal_P170(i, j, k) * factor;
-            metal_P200(i, j, k) = metal_P200(i, j, k) * factor;
-            metal_Y19(i, j, k) = metal_Y19(i, j, k) * factor;
-          }
-        }
-
         if ((my_chemistry->grain_growth == 1) ||
             (my_chemistry->dust_sublimation == 1)) {
           if (my_chemistry->dust_species > 0) {
@@ -377,7 +356,7 @@ void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
     }
   }  // OMP_PRAGMA("omp parallel")
 
-  return;
+  scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs);
 }
 
 }  // namespace grackle::impl
