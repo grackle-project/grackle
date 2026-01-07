@@ -36,6 +36,7 @@ OBJS_CONFIG_LIB = \
         initialize_rates.lo \
         initialize_UVbackground_data.lo \
         interpolators_g.lo \
+        rate_timestep_g.lo \
         make_consistent.lo \
         scale_fields.lo \
         set_default_chemistry_parameters.lo \
