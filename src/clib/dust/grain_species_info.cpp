@@ -15,7 +15,7 @@
 
 #include "LUT.hpp"
 #include "grain_species_info.hpp"
-#include "../utils/FrozenKeyIdxBiMap.hpp"
+#include "../support/FrozenKeyIdxBiMap.hpp"
 
 // The following logic effectively does 2 (related things):
 // 1. it serves as a human-readable registry of all known grain species and
