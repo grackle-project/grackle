@@ -271,7 +271,7 @@ struct AccessRslt {
   uint16_t value;
 };
 
-}
+}  // namespace bimap
 
 /// lookup the value associated with the key
 ///
@@ -282,8 +282,8 @@ struct AccessRslt {
 ///
 /// @return An instance of @ref bimap::AccessRslt that encodes the value (if
 ///     the key is present)
-inline bimap::AccessRslt FrozenKeyIdxBiMap_get(
-    const FrozenKeyIdxBiMap* map, const char* key) {
+inline bimap::AccessRslt FrozenKeyIdxBiMap_get(const FrozenKeyIdxBiMap* map,
+                                               const char* key) {
   GR_INTERNAL_REQUIRE(key != nullptr, "A nullptr key is forbidden");
   for (int i = 0; i < map->length; i++) {
     if (std::strcmp(map->keys[i], key) == 0) {
