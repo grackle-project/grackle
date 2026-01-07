@@ -18,7 +18,7 @@
 #include "../LUT.hpp"
 #include "../opaque_storage.hpp"
 #include "../status_reporting.h"  // GrPrintAndReturnErr
-#include "../utils/FrozenKeyIdxBiMap.hpp"
+#include "../support/FrozenKeyIdxBiMap.hpp"
 
 namespace {  // stuff inside an anonymous namespace is local to this file
 
@@ -132,12 +132,13 @@ extern "C" int setup_yield_table_callback(
   // and report an error if there is one
   // -> see the docstring for SetupCallbackCtx::inj_path_names for how this
   //    behavior will change when we start loading data from HDF5 files
-  int pathway_idx = static_cast<int>(
-      FrozenKeyIdxBiMap_idx_from_key(my_ctx->inj_path_names, name));
-  if (pathway_idx == static_cast<int>(bimap::invalid_val)) {
+  bimap::AccessRslt maybe_pathway_idx =
+      FrozenKeyIdxBiMap_find(my_ctx->inj_path_names, name);
+  if (!maybe_pathway_idx.has_value) {
     return GrPrintAndReturnErr("`%s` is an unexpected injection pathway name",
                                name);
   }
+  int pathway_idx = static_cast<int>(maybe_pathway_idx.value);
 
   // load the object that we update with the data we read
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
@@ -167,11 +168,12 @@ extern "C" int setup_yield_table_callback(
       const inj_input::GrainSpeciesYieldProps& yield_info =
           input->initial_grain_props[yield_idx];
 
-      int grain_species_idx = static_cast<int>(FrozenKeyIdxBiMap_idx_from_key(
-          my_ctx->grain_species_names, yield_info.name));
-      if (grain_species_idx == static_cast<int>(bimap::invalid_val)) {
+      bimap::AccessRslt maybe_grain_idx =
+          FrozenKeyIdxBiMap_find(my_ctx->grain_species_names, yield_info.name);
+      if (!maybe_grain_idx.has_value) {
         continue;
       }
+      int grain_species_idx = static_cast<int>(maybe_grain_idx.value);
 
       // copy the nonprimordial yield fraction
       inject_pathway_props->grain_yields.data[grain_species_idx][pathway_idx] =
