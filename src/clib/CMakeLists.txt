@@ -130,6 +130,7 @@ add_library(Grackle_Grackle
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
+  support/config.hpp
   visitor/common.hpp
   visitor/copy.hpp
   visitor/memory.hpp
