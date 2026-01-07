@@ -27,19 +27,14 @@
 #include "grackle.h"
 #include "status_reporting.h"
 
-// the motivation for these constants are provided in PR #484 (they are related
-// to some optimizations in the FrozenKeyIdxBiMap implementation)
-namespace grackle::impl::bimap {
-/// specifies an invalid value of the map (we state that you can't store the
-/// maximum u16 value)
-inline constexpr std::uint16_t invalid_val =
-    std::numeric_limits<std::uint16_t>::max();
-
-/// specifies maximum allowed length of a key (excluding the null character).
-inline constexpr std::uint16_t keylen_max = 29;
-}  // namespace grackle::impl::bimap
-
 namespace grackle::impl {
+
+// the motivation for this constant is provided in PR #484 (its related
+// to some optimizations in the FrozenKeyIdxBiMap implementation)
+namespace bimap_detail {
+/// specifies maximum allowed length of a key (excluding the null character).
+inline constexpr uint16_t KEYLEN_MAX = 29;
+}  // namespace bimap_detail
 
 // the following doxygen comment block logically groups every all parts of
 // the (internal) API for Grackle's (internal) FrozenKeyIdxBiMap. It's useful
@@ -135,17 +130,16 @@ inline FrozenKeyIdxBiMap mk_invalid_FrozenKeyIdxBiMap() {
 /// ugly/clunky, but it's the only practical way to achieve comparable behavior
 /// to other internal data types. The best alternatives involve things like
 /// std::optional or converting this type to a simple C++ class.
-inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
+inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
                                                int key_count, BiMapMode mode) {
   if (keys == nullptr && key_count == 0) {
     return FrozenKeyIdxBiMap{0, nullptr, mode};
   }
 
   // check the specified keys
-  long long max_keys = static_cast<long long>(bimap::invalid_val) - 1LL;
-  if (key_count < 1 || static_cast<long long>(key_count) > max_keys) {
-    GrPrintErrMsg("key_count must be positive and cannot exceed %lld",
-                  max_keys);
+  int max_keys = static_cast<int>(std::numeric_limits<uint16_t>::max());
+  if (key_count < 1 || key_count > max_keys) {
+    GrPrintErrMsg("key_count must be positive & can't exceed %d", max_keys);
     return mk_invalid_FrozenKeyIdxBiMap();
   } else if (keys == nullptr) {
     GrPrintErrMsg("keys must not be a nullptr");
@@ -154,11 +148,12 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
   for (int i = 0; i < key_count; i++) {
     GR_INTERNAL_REQUIRE(keys[i] != nullptr, "Can't specify a nullptr key");
     std::size_t n_chrs_without_nul = std::strlen(keys[i]);
-    if (n_chrs_without_nul == 0 || n_chrs_without_nul > bimap::keylen_max) {
+    if (n_chrs_without_nul == 0 ||
+        n_chrs_without_nul > bimap_detail::KEYLEN_MAX) {
       GrPrintErrMsg(
           "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
           "exceeding %d",
-          keys[i], i, bimap::keylen_max);
+          keys[i], i, bimap_detail::KEYLEN_MAX);
       return mk_invalid_FrozenKeyIdxBiMap();
     }
     // check uniqueness
@@ -262,25 +257,40 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
   return new_FrozenKeyIdxBiMap(ptr->keys, ptr->length, ptr->mode);
 };
 
+namespace bimap {
+
+/// holds the result of a call to @ref FrozenKeyIdxBiMap_find
+///
+/// @note
+/// This is a C-style approximation of std::optional<uint16_t>. Additionally,
+/// the choice to make value a uint16_t is motivated by PR #484
+struct AccessRslt {
+  /// Indicates whether the value member is valid
+  bool has_value;
+  /// the loaded value (if has_value is false then this holds garbage)
+  uint16_t value;
+};
+
+}  // namespace bimap
+
 /// lookup the value associated with the key
 ///
-/// This is the analog to calling `map[key]` in python. In practice, the
-/// semantics are more similar to calling `map.get(key,invalid_val)`
+/// This is the analog to calling `map[key]` in python.
 ///
 /// @param[in] map A pointer to a valid bimap
 /// @param[in] key A null-terminated string
 ///
-/// @return the key's associated value or, if the key can't be found,
-///     @ref grackle::impl::bimap::invalid_val
-inline std::uint16_t FrozenKeyIdxBiMap_idx_from_key(
-    const FrozenKeyIdxBiMap* map, const char* key) {
+/// @return An instance of @ref bimap::AccessRslt that encodes the value (if
+///     the key is present)
+inline bimap::AccessRslt FrozenKeyIdxBiMap_find(const FrozenKeyIdxBiMap* map,
+                                                const char* key) {
   GR_INTERNAL_REQUIRE(key != nullptr, "A nullptr key is forbidden");
   for (int i = 0; i < map->length; i++) {
     if (std::strcmp(map->keys[i], key) == 0) {
-      return static_cast<std::uint16_t>(i);
+      return bimap::AccessRslt{true, static_cast<uint16_t>(i)};
     }
   }
-  return bimap::invalid_val;
+  return bimap::AccessRslt{false, 0};
 }
 
 /// returns whether the map contains the key
@@ -289,7 +299,7 @@ inline std::uint16_t FrozenKeyIdxBiMap_idx_from_key(
 /// @param[in] key A null-terminated string
 inline bool FrozenKeyIdxBiMap_contains(const FrozenKeyIdxBiMap* map,
                                        const char* key) {
-  return FrozenKeyIdxBiMap_idx_from_key(map, key) != bimap::invalid_val;
+  return FrozenKeyIdxBiMap_find(map, key).has_value;
 }
 
 /// return the number of keys in the map
@@ -299,10 +309,10 @@ inline int FrozenKeyIdxBiMap_size(const FrozenKeyIdxBiMap* map) {
   return map->length;
 }
 
-/// Return the ith key (this is effectively a reverse lookup)
+/// Return the key associated with the specified value
 ///
 /// For some context, if this function returns a string `s` for some index `i`,
-/// then a call to @ref FrozenKeyIdxBiMap_idx_from_key that passes `s` will
+/// then a call to @ref FrozenKeyIdxBiMap_find that passes `s` will
 /// return `i`
 ///
 /// This is intended for use in situations where you briefly need the string
@@ -316,14 +326,14 @@ inline int FrozenKeyIdxBiMap_size(const FrozenKeyIdxBiMap* map) {
 ///   is ill-formed
 ///
 /// @param[in] map A pointer to a valid bimap
-/// @param[in] i The returned index
+/// @param[in] idx The index to check
 /// @return The pointer to the appropriate key
-inline const char* FrozenKeyIdxBiMap_key_from_idx(const FrozenKeyIdxBiMap* map,
-                                                  std::uint16_t i) {
-  if (i >= map->length) {
+inline const char* FrozenKeyIdxBiMap_inverse_find(const FrozenKeyIdxBiMap* map,
+                                                  uint16_t idx) {
+  if (idx >= map->length) {
     return nullptr;
   }
-  return map->keys[i];  // this can't be a nullptr
+  return map->keys[idx];  // this can't be a nullptr
 }
 
 /** @}*/  // end of group
