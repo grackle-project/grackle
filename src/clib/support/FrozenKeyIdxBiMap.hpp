@@ -261,7 +261,7 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
 
 namespace bimap {
 
-/// holds the result of a call to @ref FrozenKeyIdxBiMap_get
+/// holds the result of a call to @ref FrozenKeyIdxBiMap_find
 ///
 /// @note This C-style approximation of std::optional<uint16_t>
 struct AccessRslt {
@@ -282,8 +282,8 @@ struct AccessRslt {
 ///
 /// @return An instance of @ref bimap::AccessRslt that encodes the value (if
 ///     the key is present)
-inline bimap::AccessRslt FrozenKeyIdxBiMap_get(const FrozenKeyIdxBiMap* map,
-                                               const char* key) {
+inline bimap::AccessRslt FrozenKeyIdxBiMap_find(const FrozenKeyIdxBiMap* map,
+                                                const char* key) {
   GR_INTERNAL_REQUIRE(key != nullptr, "A nullptr key is forbidden");
   for (int i = 0; i < map->length; i++) {
     if (std::strcmp(map->keys[i], key) == 0) {
@@ -299,7 +299,7 @@ inline bimap::AccessRslt FrozenKeyIdxBiMap_get(const FrozenKeyIdxBiMap* map,
 /// @param[in] key A null-terminated string
 inline bool FrozenKeyIdxBiMap_contains(const FrozenKeyIdxBiMap* map,
                                        const char* key) {
-  return FrozenKeyIdxBiMap_get(map, key).has_value;
+  return FrozenKeyIdxBiMap_find(map, key).has_value;
 }
 
 /// return the number of keys in the map
@@ -312,7 +312,7 @@ inline int FrozenKeyIdxBiMap_size(const FrozenKeyIdxBiMap* map) {
 /// Return the key associated with the specified value
 ///
 /// For some context, if this function returns a string `s` for some index `i`,
-/// then a call to @ref FrozenKeyIdxBiMap_get that passes `s` will
+/// then a call to @ref FrozenKeyIdxBiMap_find that passes `s` will
 /// return `i`
 ///
 /// This is intended for use in situations where you briefly need the string
@@ -328,8 +328,8 @@ inline int FrozenKeyIdxBiMap_size(const FrozenKeyIdxBiMap* map) {
 /// @param[in] map A pointer to a valid bimap
 /// @param[in] idx The index to check
 /// @return The pointer to the appropriate key
-inline const char* FrozenKeyIdxBiMap_inverse_get(const FrozenKeyIdxBiMap* map,
-                                                 uint16_t idx) {
+inline const char* FrozenKeyIdxBiMap_inverse_find(const FrozenKeyIdxBiMap* map,
+                                                  uint16_t idx) {
   if (idx >= map->length) {
     return nullptr;
   }

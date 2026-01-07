@@ -94,21 +94,21 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
   // PART 2: let's show some examples of lookups from names
 
   // Equivalent Python:  `2 == m["HII"]`
-  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_get(&m, "HII"),
+  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_find(&m, "HII"),
               AccessRsltHolds(2));  // aka AccessRslt{has_value=true, value=2}
 
   // Equivalent Python/idiomatic C++:  `33 == m["O2II"]`
-  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_get(&m, "O2II"), AccessRsltHolds(33));
+  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_find(&m, "O2II"), AccessRsltHolds(33));
 
   // for unknown key, returns AccessRslt{has_value=false, value=<garbage>}
-  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_get(&m, "Dummy"), EmptyAccessRslt());
+  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_find(&m, "Dummy"), EmptyAccessRslt());
 
   // PART 3: let's show the reverse of the previous lookups
-  EXPECT_STREQ("HII", grimpl::FrozenKeyIdxBiMap_inverse_get(&m, 2));
-  EXPECT_STREQ("O2II", grimpl::FrozenKeyIdxBiMap_inverse_get(&m, 33));
+  EXPECT_STREQ("HII", grimpl::FrozenKeyIdxBiMap_inverse_find(&m, 2));
+  EXPECT_STREQ("O2II", grimpl::FrozenKeyIdxBiMap_inverse_find(&m, 33));
 
   // Behavior is again well-defined when passing an invalid index
-  EXPECT_EQ(nullptr, grimpl::FrozenKeyIdxBiMap_inverse_get(&m, 131));
+  EXPECT_EQ(nullptr, grimpl::FrozenKeyIdxBiMap_inverse_find(&m, 131));
 
   // PART 4: We can also query the length
   EXPECT_EQ(34, grimpl::FrozenKeyIdxBiMap_size(&m));
@@ -127,11 +127,11 @@ TEST(FrozenKeyIdxBiMap, EmptyBasicOps) {
   EXPECT_EQ(0, grackle::impl::FrozenKeyIdxBiMap_size(&m))
       << "an empty mapping should have a size of 0";
 
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_get(&m, "key"),
+  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(&m, "key"),
               EmptyAccessRslt())
       << "key lookup should always fail for an empty mapping";
 
-  EXPECT_EQ(nullptr, grackle::impl::FrozenKeyIdxBiMap_inverse_get(&m, 0))
+  EXPECT_EQ(nullptr, grackle::impl::FrozenKeyIdxBiMap_inverse_find(&m, 0))
       << "index lookup should always fail for an empty mapping";
 
   grackle::impl::drop_FrozenKeyIdxBiMap(&m);
@@ -278,7 +278,7 @@ protected:
   bool ReusesOriginalKeyPtrs(const grackle::impl::FrozenKeyIdxBiMap* p) const {
     for (int i = 0; i < 3; i++) {
       const char* orig_key_ptr = ordered_keys[i].c_str();
-      if (grackle::impl::FrozenKeyIdxBiMap_inverse_get(p, i) != orig_key_ptr) {
+      if (grackle::impl::FrozenKeyIdxBiMap_inverse_find(p, i) != orig_key_ptr) {
         return false;
       }
     }
@@ -287,41 +287,41 @@ protected:
 };
 
 TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyContainedKey) {
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_get(bimap_p, "density"),
+  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "density"),
               AccessRsltHolds(1));
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_get(bimap_p, "internal_energy"),
+  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "internal_energy"),
               AccessRsltHolds(0));
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_get(bimap_p, "metal_density"),
+  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "metal_density"),
               AccessRsltHolds(2));
 }
 
 TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyAbsentKey) {
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_get(bimap_p, "notAKey"),
+  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "notAKey"),
               EmptyAccessRslt());
 }
 
 TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyAbsentIrregularKeys) {
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_get(bimap_p, ""),
+  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, ""),
               EmptyAccessRslt());
 
   std::string key(grackle::impl::bimap_detail::KEYLEN_MAX + 1, 'A');
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_get(bimap_p, key.data()),
+  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, key.data()),
               EmptyAccessRslt());
 }
 
 TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdxInvalidIdx) {
-  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_inverse_get(bimap_p, 3), nullptr);
+  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_inverse_find(bimap_p, 3), nullptr);
 }
 
 TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdxValidIdx) {
   EXPECT_EQ(
-      std::string(grackle::impl::FrozenKeyIdxBiMap_inverse_get(bimap_p, 2)),
+      std::string(grackle::impl::FrozenKeyIdxBiMap_inverse_find(bimap_p, 2)),
       std::string("metal_density"));
   EXPECT_EQ(
-      std::string(grackle::impl::FrozenKeyIdxBiMap_inverse_get(bimap_p, 1)),
+      std::string(grackle::impl::FrozenKeyIdxBiMap_inverse_find(bimap_p, 1)),
       std::string("density"));
   EXPECT_EQ(
-      std::string(grackle::impl::FrozenKeyIdxBiMap_inverse_get(bimap_p, 0)),
+      std::string(grackle::impl::FrozenKeyIdxBiMap_inverse_find(bimap_p, 0)),
       std::string("internal_energy"));
 
   // check whether the bimap is using pointers to the keys used during init
@@ -342,13 +342,13 @@ TEST_P(FrozenKeyIdxBiMapGeneralSuite, Clone) {
   grackle::impl::drop_FrozenKeyIdxBiMap(bimap_p);
   bimap_p = nullptr;
 
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_get(clone_p, "internal_energy"),
+  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(clone_p, "internal_energy"),
               AccessRsltHolds(0));
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_get(clone_p, "notAKey"),
+  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(clone_p, "notAKey"),
               EmptyAccessRslt());
 
-  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_inverse_get(clone_p, 3), nullptr);
-  EXPECT_STREQ(grackle::impl::FrozenKeyIdxBiMap_inverse_get(clone_p, 1),
+  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_inverse_find(clone_p, 3), nullptr);
+  EXPECT_STREQ(grackle::impl::FrozenKeyIdxBiMap_inverse_find(clone_p, 1),
                "density");
 
   // check whether the clone is using pointers to the keys used during init
