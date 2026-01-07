@@ -132,8 +132,8 @@ add_library(Grackle_Grackle
   support/SimpleVec.hpp
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
+  support/FrozenKeyIdxBiMap.hpp
   time_deriv_0d.hpp
-  utils/FrozenKeyIdxBiMap.hpp
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp

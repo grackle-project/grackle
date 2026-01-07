@@ -1,7 +1,7 @@
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
 add_executable(testFrozenKeyIdxBiMap test_unit_FrozenKeyIdxBiMap.cpp)
-target_link_libraries(testFrozenKeyIdxBiMap testdeps)
+target_link_libraries(testFrozenKeyIdxBiMap testdeps GTest::gmock)
 gtest_discover_tests(testFrozenKeyIdxBiMap)
 
 add_executable(runInterpolationTests test_unit_interpolators_g.cpp)

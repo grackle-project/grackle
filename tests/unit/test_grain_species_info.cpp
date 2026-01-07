@@ -17,7 +17,7 @@
 
 #include "LUT.hpp"
 #include "dust/grain_species_info.hpp"
-#include "utils/FrozenKeyIdxBiMap.hpp"
+#include "support/FrozenKeyIdxBiMap.hpp"
 
 namespace {  // stuff in an anonymous namespace is local to this file
 
@@ -155,7 +155,7 @@ TEST_P(GrainSpeciesInfoTest, CheckOnlyGrainSpeciesLUTConsistency) {
 
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
-    const char* name = grackle::impl::FrozenKeyIdxBiMap_key_from_idx(
+    const char* name = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
         &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
 
     ASSERT_NE(name, nullptr);      // sanity check!
@@ -172,7 +172,7 @@ TEST_P(GrainSpeciesInfoTest, CheckOnlyGrainSpeciesLUTConsistency) {
 TEST_P(GrainSpeciesInfoTest, SublimationTemperature) {
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
-    const char* name = grackle::impl::FrozenKeyIdxBiMap_key_from_idx(
+    const char* name = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
         &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
     ASSERT_NE(name, nullptr);  // sanity check!
     // actual check!
@@ -189,7 +189,7 @@ TEST_P(GrainSpeciesInfoTest, SpeciesLUTCompare) {
 
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
-    const char* name_cstr = grackle::impl::FrozenKeyIdxBiMap_key_from_idx(
+    const char* name_cstr = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
         &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
     ASSERT_NE(name_cstr, nullptr);  // sanity check!
     // actual check!

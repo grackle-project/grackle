@@ -13,7 +13,7 @@
 #ifndef GRAIN_SPECIES_INFO_HPP
 #define GRAIN_SPECIES_INFO_HPP
 
-#include "../utils/FrozenKeyIdxBiMap.hpp"
+#include "../support/FrozenKeyIdxBiMap.hpp"
 
 namespace grackle::impl {
 
@@ -81,17 +81,17 @@ struct GrainSpeciesInfoEntry {
 /// Relationship with OnlyGrainSpLUT
 /// --------------------------------
 /// In the short term, the index of each species in the
-/// @ref GrainSpeciesInfo::species_info out.species_infoay is dictated by the
+/// @ref GrainSpeciesInfo::species_info out.species_info is dictated by the
 /// order of enumerators in the OnlyGrainSpLUT enumeration.
 ///
 /// In the medium term, we plan to entirely eliminate the OnlyGrainSpLUT
-/// enumeration because all of the grain species can be treated very uniformly
-/// uniformly. At the time of writing, just about every place where we would
-/// use OnlyGrainSpLUT corresponds to a location where would enumerate every
+/// enumeration because all of the grain species can be treated very uniformly.
+/// At the time of writing, just about every place where we would use
+/// OnlyGrainSpLUT corresponds to a location where we would enumerate every
 /// possible grain species and perform nearly identical operations on each
 /// species. In each case, it is straight-forward to replace these blocks of
 /// logic with for-loops (we just need to encode species-specific variations in
-/// the calculations in out.species_infoays that have the same ordering as the
+/// the calculations in out.species_info that have the same ordering as the
 /// species). To phrase it another way, in nearly all of the places where we
 /// would use OnlyGrainSpLUT, we don't need to know the grain species identity.
 ///
@@ -102,7 +102,7 @@ struct GrainSpeciesInfo {
   /// number of grain species considered for the current Grackle configuration
   int n_species;
 
-  /// an out.species_infoay of length of length @ref n_species where each entry
+  /// an out.species_info of length of length @ref n_species where each entry
   /// holds info about a separate grain species
   GrainSpeciesInfoEntry* species_info;
 
