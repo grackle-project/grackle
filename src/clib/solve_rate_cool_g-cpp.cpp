@@ -21,6 +21,7 @@
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
+#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "lookup_cool_rates1d.hpp"
@@ -712,8 +713,12 @@ int solve_rate_cool_g(
     // (we can't do it right now since we need to pass in 2 arguments to the
     // factory function)
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf =
-      grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
-                                              my_rates->gr_N[1]);
+      grackle::impl::new_InternalDustPropBuf(
+          my_fields->grid_dimension[0],
+          grackle::impl::GrainMetalInjectPathways_get_n_log10Tdust_vals(
+              my_rates->opaque_storage->inject_pathway_props
+          )
+      );
 
     // holds buffers exclusively used for solving species rate equations
     // (i.e. in the future, we could have the constructor skip allocations of
@@ -791,7 +796,7 @@ int solve_rate_cool_g(
       // declare 2 variables (primarily used for subcycling, but also used in
       // error reporting)
       int iter;
-      double ttmin;
+      double ttmin = huge8;
 
       // ------------------ Loop over subcycles ----------------
 
@@ -1009,7 +1014,9 @@ int solve_rate_cool_g(
 
     // Correct the species to ensure consistency (i.e. type conservation)
 
-    grackle::impl::make_consistent(imetal, dom, my_chemistry, my_rates, my_fields);
+    grackle::impl::make_consistent(
+        imetal, dom, my_chemistry,
+        my_rates->opaque_storage->inject_pathway_props, my_fields);
 
   }
 

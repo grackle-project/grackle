@@ -47,7 +47,7 @@
 #include "collisional_rate_props.hpp"  // init_extra_collisional_rates
 #include "dust/grain_species_info.hpp"
 #include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
-#include "initialize_dust_yields.hpp"  // initialize_dust_yields
+#include "inject_model/load_data.hpp"  // load_inject_path_data
 #include "initialize_rates.hpp"
 #include "internal_types.hpp" // new_CollisionalRxnRateCollection
 #include "LUT.hpp" // CollisionalRxnLUT
@@ -385,12 +385,79 @@ int init_kcol_rate_tables(
   return GR_SUCCESS;
 }
 
+
+/// a function that encodes the algorithm for looking up the `i`th pointer
+/// collisional reaction rate from an instance of `chemistry_data_storage`.
+///
+/// This is intended to be registered with RegBuilder in order to provide
+/// access to the various collisional reaction rates.
+///
+/// @param my_rates The object from which the rate Entry is loaded
+/// @param i the index of the queried rate
+grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
+    (chemistry_data_storage* my_rates, int i) {
+  // sanity check! (this shouldn't actually happen)
+  if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
+      (my_rates->opaque_storage->kcol_rate_tables == nullptr)) {
+    return grackle::impl::ratequery::mk_invalid_Entry();
+  }
+
+  // import new_Entry into the current scope (so we don't need the full name)
+  using ::grackle::impl::ratequery::new_Entry;
+
+  double** data = my_rates->opaque_storage->kcol_rate_tables->data;
+
+  // this implementation leverages the following properties of the
+  // CollisionalRxnLUT enum:
+  // - each entry of collisional_rxn_rate_members.def has a corresponding
+  //   enumeration-constant
+  // - the very first enumeration constant has a value of 0 (since a value
+  //   wasn't explicitly specified)
+  // - the value of each other enumeration constants is 1 larger than the value
+  //   of the previous value (if a value isn't explicitly specified)
+  // - CollisionalRxnLUT::NUM_ENTRIES specifies the number of other enumeration
+  //   constants (excluding CollisionalRxnLUT::NUM_ENTRIES) in the enum
+  switch (i) {
+#define TO_STR(s) #s
+#define ENTRY(NAME)                                                            \
+  case CollisionalRxnLUT::NAME: { return new_Entry(data[i], TO_STR(NAME)); }
+#include "collisional_rxn_rate_members.def"
+
+#undef ENTRY
+#undef TO_STR
+    default: {
+      return grackle::impl::ratequery::mk_invalid_Entry();
+    }
+  }
+}
+
+
+/// a function that encodes the algorithm for looking up the k13dd
+/// collisional reaction rate from an instance of `chemistry_data_storage`.
+///
+/// This is intended to be registered with RegBuilder in order to provide
+/// access to the various collisional reaction rates.
+///
+/// @param my_rates The object from which the rate Entry is loaded
+/// @param i the index of the queried rate
+grackle::impl::ratequery::Entry get_k13dd_Entry(
+    chemistry_data_storage* my_rates, int i) {
+  if (i == 0) {
+    double* ptr = (my_rates == nullptr) ? nullptr : my_rates->k13dd;
+    return grackle::impl::ratequery::new_Entry(ptr, "k13dd");
+  } else {
+    return grackle::impl::ratequery::mk_invalid_Entry();
+  }
+}
+
+
 } // anonymous namespace
 
 //Definition of the initialise_rates function.
 int grackle::impl::initialize_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
-  code_units *my_units, double co_length_unit, double co_density_unit)
+  code_units *my_units, double co_length_unit, double co_density_unit,
+  ratequery::RegBuilder* reg_builder)
 { 
     // TODO: we REALLY need to do an error check that
     //    my_chemistry->NumberOfTemperatureBins >= 2
@@ -471,9 +538,6 @@ int grackle::impl::initialize_rates(
     double coolingUnits = (pow(my_units->a_units, 5) * pow(lengthBase1, 2) * pow(mh, 2))
                           / (densityBase1 * pow(timeBase1, 3));
 
-    // These always need to be allocated since we define other variables by them.
-    my_rates->gr_N = (int*)calloc(2, sizeof(int));
-
     if (my_chemistry->use_primordial_continuum_opacity == 1) {
       initialize_primordial_opacity(my_chemistry, my_rates);
     }
@@ -493,6 +557,15 @@ int grackle::impl::initialize_rates(
         return GR_FAIL;
       }
 
+      // register the recipe for looking up the "standard" collisional rates
+      if (grackle::impl::ratequery::RegBuilder_recipe_1d(
+              reg_builder, CollisionalRxnLUT::NUM_ENTRIES,
+              &get_CollisionalRxn_Entry, my_chemistry->NumberOfTemperatureBins
+          ) != GR_SUCCESS) {
+        return GrPrintAndReturnErr("error registering standard collisional "
+                                   "reaction rates");
+      }
+
         //--------Calculate coefficients for density-dependent collisional H2 dissociation rate--------
         //
         // idt = 0 calculates coefficients for direct collisional dissociation idt = 1 
@@ -507,6 +580,14 @@ int grackle::impl::initialize_rates(
         // k13dd = {coeff1(idt=0, Tbin1), coeff1(idt=0, Tbin2), ..., coeff1(idt=0, TbinFinal), coeff2(idt=0, Tbin1), ..., 
         //          coeff7(idt=0, TbinFinal), coeff1(idt=1, Tbin1), ..., coeff7(idt=1, TbinFinal)}
         add_k13dd_reaction_rate(&my_rates->k13dd, kUnit, my_chemistry);
+
+        // maybe k13dd should be considered multi-dimensional?
+        if (grackle::impl::ratequery::RegBuilder_recipe_1d(
+                reg_builder, 1, &get_k13dd_Entry,
+                my_chemistry->NumberOfTemperatureBins * 14) != GR_SUCCESS) {
+          return GrPrintAndReturnErr("error registering k13dd rate");
+        }
+
 
         //H2 formation on dust grains requires loop over the dust temperature.
         add_h2dust_reaction_rate(&my_rates->h2dust, kUnit, my_chemistry);
@@ -656,10 +737,10 @@ int grackle::impl::initialize_rates(
         grackle::impl::new_GrainSpeciesInfo(my_chemistry->dust_species);
     }
 
-    // Dust rates
-    if (grackle::impl::initialize_dust_yields(my_chemistry, my_rates, my_units) == FAIL) {
-      fprintf(stderr, "Error in initialize_dust_yields.\n");
-      return FAIL;
+    // Load injection pathway data
+    if (grackle::impl::load_inject_path_data(
+        my_chemistry, my_rates, reg_builder) != GR_SUCCESS) {
+      return GrPrintAndReturnErr("Error in load_inject_path_data.");
     }
 
     return SUCCESS;
