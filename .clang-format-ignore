@@ -32,11 +32,9 @@ src/clib/init_misc_species_cool_rates.cpp
 src/clib/initialize_UVbackground_data.c
 src/clib/initialize_chemistry_data.cpp
 src/clib/initialize_cloudy_data.c
-src/clib/initialize_dust_yields.cpp
 src/clib/initialize_rates.cpp
 src/clib/internal_types.hpp
 src/clib/internal_units.h
-src/clib/interp_table_utils.h
 src/clib/interpolate.hpp
 src/clib/phys_constants.h
 src/clib/rate_functions.c
