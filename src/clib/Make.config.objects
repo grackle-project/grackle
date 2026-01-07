@@ -31,10 +31,11 @@ OBJS_CONFIG_LIB = \
 	index_helper.lo \
         initialize_chemistry_data.lo \
         initialize_cloudy_data.lo \
-        initialize_dust_yields.lo \
         init_misc_species_cool_rates.lo \
         initialize_rates.lo \
         initialize_UVbackground_data.lo \
+        inject_model/load_data.lo \
+        inject_model/raw_data.lo \
         interpolators_g.lo \
         make_consistent.lo \
         scale_fields.lo \
