@@ -38,17 +38,16 @@ inline constexpr uint16_t INVALID_VAL = std::numeric_limits<uint16_t>::max();
 /// strings to 30 elements (including the terminator) allows for a hypothetical
 /// optimization (see the @ref FrozenKeyIdxBiMap docstring for info).
 inline constexpr uint16_t KEYLEN_MAX = 29;
-}  // namespace bimap_detail
 
-namespace bimap {
 /// the type used for indexing the rows of the BiMap's internal hash table
 ///
 /// @note
 /// This does not necessarily need to be a uint16_t (even if the internal
-/// values of the hash table are uint16_t).
-typedef std::uint16_t rowidx_type;
+/// values of the hash table are uint16_t). It just needs to be able to hold
+/// the maximum possible value
+typedef uint16_t rowidx_type;
 
-}  // namespace bimap
+}  // namespace bimap_detail
 
 // -----------------------------------------------------------------
 
@@ -66,17 +65,19 @@ static_assert(INVERSE_LOAD_FACTOR > 1);
 /// list of allowed capacities. These are all prime numbers that
 /// have nearly constant linear spacing (it may make more sense to have
 /// logarithmic spacing)
-inline constexpr std::uint32_t CAPACITIES_LIST[] = {
-    7,   19,  31,  41,  53,  61,  71,  83,  89,  101, 113, 127,
-    139, 149, 163, 173, 181, 191, 199, 211, 223, 233, 241, 251};
+inline constexpr uint32_t CAPACITIES_LIST[] = {
+    // each number increases by ~10 in this first batch
+    7, 19, 31, 41, 53, 61, 71, 83, 89, 101, 113, 127, 139, 149, 163, 173, 181,
+    191, 199, 211, 223, 233, 241, 251,
+    // probably won't use these (so we increase spacing:
+    293, 401, 503, 601, 701, 797, 907, 997};
 
-inline constexpr int N_CAPACITIES =
-    (sizeof(CAPACITIES_LIST) / sizeof(std::uint32_t));
+inline constexpr int N_CAPACITIES = sizeof(CAPACITIES_LIST) / sizeof(uint32_t);
 
 /// compute the maximum number of keys
-inline bimap::rowidx_type max_key_count() {
-  return std::min<bimap::rowidx_type>(
-      std::numeric_limits<bimap::rowidx_type>::max(),
+inline bimap_detail::rowidx_type max_key_count() {
+  return std::min<bimap_detail::rowidx_type>(
+      std::numeric_limits<bimap_detail::rowidx_type>::max(),
       CAPACITIES_LIST[N_CAPACITIES - 1] / INVERSE_LOAD_FACTOR);
 }
 
@@ -84,11 +85,11 @@ inline bimap::rowidx_type max_key_count() {
 /// capacity can't be found)
 ///
 /// @param key_count the desired number of keys (should be positive)
-inline std::uint16_t calc_map_capacity(int key_count) {
-  std::uint64_t c = INVERSE_LOAD_FACTOR * static_cast<std::uint64_t>(key_count);
+inline uint16_t calc_map_capacity(int key_count) {
+  uint64_t c = INVERSE_LOAD_FACTOR * static_cast<uint64_t>(key_count);
   for (int i = 0; i < N_CAPACITIES; i++) {  // binary search may be faster
     if (c < CAPACITIES_LIST[i]) {
-      return static_cast<std::uint16_t>(CAPACITIES_LIST[i]);
+      return static_cast<uint16_t>(CAPACITIES_LIST[i]);
     }
   }
   return 0;
@@ -112,18 +113,18 @@ namespace bimap_StrU16_detail {
 /// listed first) to pack as many entries into a cacheline as possible
 struct Row {
   /// specifies the value associated with the current key
-  std::uint16_t value;
+  uint16_t value;
 
   /// specifies the length of the key (not including the '\0')
   ///
   /// @note Tracked for short-circuiting comparisons (while probing collisions)
-  std::uint16_t keylen;
+  uint16_t keylen;
   /// identifies the address of this entry's key
   const char* key;
 };
 
-static void overwrite_row(Row* row, const char* key, std::uint16_t keylen,
-                          std::uint16_t value, bool copy_key_data) {
+static void overwrite_row(Row* row, const char* key, uint16_t keylen,
+                          uint16_t value, bool copy_key_data) {
   GR_INTERNAL_REQUIRE(row->keylen == 0, "Sanity check failed!");
   row->value = value;
   row->keylen = keylen;
@@ -144,7 +145,7 @@ static void overwrite_row(Row* row, const char* key, std::uint16_t keylen,
 /// return a struct of integers than rely on modifying pointer arguments
 struct SearchRslt {
   /// specifies value found by the search (or @ref bimap_detail::INVALID_VAL)
-  std::uint16_t val;
+  uint16_t val;
   /// specified the number of probes before the search returned
   int probe_count;
   /// specify the index of the "row" corresponding to the search result
