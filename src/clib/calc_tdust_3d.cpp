@@ -21,6 +21,7 @@
 #include "fortran_func_wrappers.hpp"
 #include "grackle.h"
 #include "index_helper.h"
+#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
@@ -111,7 +112,10 @@ void calc_tdust_3d_g(
 
     grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
       grackle::impl::new_InternalDustPropBuf(
-        my_fields->grid_dimension[0], my_rates->gr_N[1]
+        my_fields->grid_dimension[0],
+        grackle::impl::GrainMetalInjectPathways_get_n_log10Tdust_vals(
+          my_rates->opaque_storage->inject_pathway_props
+        )
       );
 
     // these next buffer variables hold values that are computed as side-effect
@@ -161,7 +165,8 @@ void calc_tdust_3d_g(
       if ( (my_chemistry->use_dust_density_field > 0)  &&  (my_chemistry->dust_species > 0) )  {
 
         f_wrap::calc_grain_size_increment_1d (
-          dom, idx_range, itmask_metal.data(), my_chemistry, my_rates,
+          dom, idx_range, itmask_metal.data(), my_chemistry,
+          my_rates->opaque_storage->inject_pathway_props,
           my_fields, internal_dust_prop_buf
         );
 
