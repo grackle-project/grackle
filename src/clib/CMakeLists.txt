@@ -1,5 +1,5 @@
-# generate grackle_float.h AND auto_general.c
-# ===========================================
+# generate grackle_float.h AND auto_general.cpp
+# =============================================
 
 # perform a check to try to help out with the scenario where the classic build
 # system in an older Grackle revisions placed auto-generated files in locations
@@ -33,7 +33,7 @@ endif()
 configure_file(../include/grackle_float.h.in
   ${GRACKLE_GENERATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
 
-# next, declare recipe for generating auto_general.c:
+# next, declare recipe for generating auto_general.cpp:
 
 # fetch necessary version information via query-version.py script
 # -> GIT_BRANCH and GIT_REVISION hold sensible vals when git isn't installed
@@ -74,7 +74,7 @@ string(REPLACE "\n" "\\n" SHOW_CONFIG_STR "
    BUILD_TYPE                          : ${CMAKE_BUILD_TYPE}
 ")
 
-configure_file(auto_general.c.in auto_general.c @ONLY)
+configure_file(auto_general.cpp.in auto_general.cpp @ONLY)
 
 # Declare the main target
 # =======================
@@ -93,10 +93,10 @@ add_library(Grackle_Grackle
   update_UVbackground_rates.c
   utils.c
 
-  # auto-generated C source files
-  ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
+  # auto-generated C++ source files
+  ${CMAKE_CURRENT_BINARY_DIR}/auto_general.cpp
   # here is the companion header file (not generated)
-  auto_general.h
+  auto_general.hpp
 
   # C++ Source (and Private Header Files)
   calc_tdust_3d.cpp calc_tdust_3d.h
