@@ -129,7 +129,6 @@
 
 #define FLOAT_UNDEFINED  -99999.0
 #define INT_UNDEFINED    -99999
-#define MAX_LINE_LENGTH                   512
 
 #ifndef tiny
 #define tiny 1.0e-20
