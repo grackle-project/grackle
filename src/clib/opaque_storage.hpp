@@ -16,6 +16,7 @@
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
 #include "internal_types.hpp"
+#include "ratequery.hpp"
 
 /// a struct that used to wrap some private storage details
 ///
@@ -95,6 +96,9 @@ struct gr_opaque_storage {
   /// > calculations). An alternative would be to briefly initialize an
   /// > instance during setup and then repack the data.
   grackle::impl::GrainSpeciesInfo* grain_species_info;
+
+  /// used to implement the experimental ratequery machinery
+  grackle::impl::ratequery::Registry* registry;
 };
 
 #endif /* OPAQUE_STORAGE_HPP */
