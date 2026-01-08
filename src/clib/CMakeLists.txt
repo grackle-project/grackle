@@ -85,8 +85,6 @@ add_library(Grackle_Grackle
   dynamic_api.c
   grackle_units.c
   index_helper.c
-  initialize_cloudy_data.c initialize_cloudy_data.h
-  initialize_UVbackground_data.c  initialize_UVbackground_data.h
   rate_functions.c
   set_default_chemistry_parameters.c
   status_reporting.c status_reporting.h
@@ -114,8 +112,10 @@ add_library(Grackle_Grackle
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
+  initialize_cloudy_data.cpp initialize_cloudy_data.hpp
   initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
+  initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp
   internal_types.cpp internal_types.hpp
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
@@ -126,6 +126,7 @@ add_library(Grackle_Grackle
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
+  support/h5io.cpp support/h5io.hpp
   time_deriv_0d.hpp
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
