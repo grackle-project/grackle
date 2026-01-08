@@ -82,7 +82,6 @@ configure_file(auto_general.c.in auto_general.c @ONLY)
 add_library(Grackle_Grackle
 
   # C source files
-  dynamic_api.c
   grackle_units.c
   index_helper.c
   initialize_cloudy_data.c initialize_cloudy_data.h
@@ -112,6 +111,7 @@ add_library(Grackle_Grackle
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
+  dynamic_api.cpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_dust_yields.cpp initialize_dust_yields.hpp
