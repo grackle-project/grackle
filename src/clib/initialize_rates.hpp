@@ -14,12 +14,14 @@
 #define INITIALIZE_RATES_HPP
 
 #include "grackle.h"
+#include "ratequery.hpp"
 
 namespace grackle::impl {
 
 int initialize_rates(chemistry_data* my_chemistry,
                      chemistry_data_storage* my_rates, code_units* my_units,
-                     double co_length_unit, double co_density_unit);
+                     double co_length_unit, double co_density_unit,
+                     ratequery::RegBuilder* reg_builder);
 
 }  // namespace grackle::impl
 
