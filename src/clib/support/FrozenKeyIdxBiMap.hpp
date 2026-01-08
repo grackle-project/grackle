@@ -329,8 +329,8 @@ inline int FrozenKeyIdxBiMap_size(const FrozenKeyIdxBiMap* map) {
 /// @param[in] idx The index to check
 /// @return The pointer to the appropriate key
 inline const char* FrozenKeyIdxBiMap_inverse_find(const FrozenKeyIdxBiMap* map,
-                                                  uint16_t idx) {
-  if (idx >= map->length) {
+                                                  int idx) {
+  if (idx >= map->length || idx < 0) {
     return nullptr;
   }
   return map->keys[idx];  // this can't be a nullptr
