@@ -41,7 +41,16 @@ void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
   const double dom = internalu_calc_dom_(internalu);
   const double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;
 
-  // Convert densities from comoving to proper
+  // this assertion is a hint to clang-analyzer about the relationship between
+  // `imetal` and whether `metal_density` is a nullptr
+  // -> for context, `scale_fields_table` is inlined into this function. Rather
+  //    than look at `imetal`, it checks if `metal_density` is a nullptr
+  // -> without this assertion clang-tidy will infer that since there's an
+  //    explicit check for whether `metal_density` is null, regardless of
+  //    `imetal`'s value, then it must be possible for `metal_density` to be
+  //    null when `imetal` is 1. Then, it would report an error
+  GR_INTERNAL_REQUIRE((imetal != 1) || (my_fields->metal_density != nullptr),
+                      "imetal has an incorrect value");
 
   if (internalu.extfields_in_comoving == 1) {
     double factor = std::pow(internalu.a_value, -3);
