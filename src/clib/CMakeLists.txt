@@ -99,7 +99,7 @@ add_library(Grackle_Grackle
   auto_general.h
 
   # C++ Source (and Private Header Files)
-  # calc_all_tdust_gasgr_1d_g.cpp calc_all_tdust_gasgr_1d_g.hpp
+  calc_all_tdust_gasgr_1d_g.cpp calc_all_tdust_gasgr_1d_g.hpp
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
   calculate_cooling_time.cpp
@@ -137,7 +137,6 @@ add_library(Grackle_Grackle
   visitor/printer.hpp
 
   # Fortran Source Files
-  calc_all_tdust_gasgr_1d_g.F
   calc_tdust_1d_g.F
   calc_temp1d_cloudy_g.F
   cool1d_cloudy_g.F
