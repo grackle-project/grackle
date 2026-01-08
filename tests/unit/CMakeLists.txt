@@ -16,6 +16,11 @@ add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
 target_link_libraries(runGrainSpeciesIntoTests testdeps)
 gtest_discover_tests(runGrainSpeciesIntoTests)
 
+add_executable(testPartSeq support/test_unit_PartSeq.cpp)
+target_link_libraries(testPartSeq testdeps)
+gtest_discover_tests(testPartSeq)
+
+
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting testdeps)
 gtest_discover_tests(runStatusReporting)
