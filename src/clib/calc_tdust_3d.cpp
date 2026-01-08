@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <vector>
 
+#include "calc_all_tdust_gasgr_1d_g.hpp"
 #include "calc_tdust_3d.h"
 #include "dust_props.hpp"
 #include "fortran_func_wrappers.hpp"
@@ -255,6 +256,13 @@ void calc_tdust_3d_g(
         my_fields, idx_range, grain_temperatures, gas_grainsp_heatrate,
         grain_kappa, logTlininterp_buf, internal_dust_prop_buf
       );
+      // grackle::impl::calc_all_tdust_gasgr_1d_g(
+      //   trad, tgas.data(), tdust.data(), metallicity.data(),
+      //   dust2gas.data(), nh.data(), gasgr_tdust.data(), itmask_metal.data(),
+      //   internalu.coolunit, gasgr.data(), myisrf.data(), kappa_tot.data(), 
+      //   my_chemistry, my_rates, my_fields, idx_range, grain_temperatures, 
+      //   gas_grainsp_heatrate, logTlininterp_buf, internal_dust_prop_buf,
+      //   grain_kappa);
 
       // Copy slice values back to grid
 
