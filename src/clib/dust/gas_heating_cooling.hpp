@@ -93,14 +93,17 @@ inline void update_edot_photoelectric_heat(
   }
 }
 
-/// update edot, in place, with contributions from electron recombinations
-/// onto dust
+/// update edot, in place, with contributions from electron recombination
+/// onto positively charged dust grains.
+///
+/// Based upon equation 9 of
+/// [Wolfire+95](https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract).
 ///
 /// Each of the 1D arrays (other than @p regr) is only valid for the
 /// specified @p idx_range
 ///
 /// @param [in,out] edot 1D array being used to accumulate the net rate of
-///     change in thermal energy
+///     change in internal energy of the gas
 /// @param[in] tgas 1D array of gas temperatures
 /// @param[in] dust2gas 1D array of ratios between dust & gas densities
 /// @param[in] rhoH 1D array holding the Hydrogen mass density
@@ -113,10 +116,11 @@ inline void update_edot_photoelectric_heat(
 ///     in the local Universe
 /// @param[in] logTlininterp_buf Hold pre-computed values for each location
 ///     in @p idx_range with values that are used to linearly interpolate
-///     tables ov values with respect to the natural log of @p tgas1. Used
+///     tables of values with respect to the natural log of @p tgas1. Used
 ///     here to interpolate the @p regr table.
 /// @param[in] regr 1D table of rate values (precomputed on the shared gas
-///     temperature grid) that parameterize the calculation.
+///     temperature grid using @ref regr_rate). This is just a cluster of
+///     variables taken from the equation.
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] dom_inv
 ///
@@ -129,12 +133,12 @@ inline void update_edot_dust_recombination(
     const gr_mask_type* itmask, double local_dust_to_gas_ratio,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
     const double* regr, IndexRange idx_range, double dom_inv) {
-  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      double cur_regr = regr[logTlininterp_buf.indixe[i] - 1] +
-                        logTlininterp_buf.tdef[i] *
-                            (regr[logTlininterp_buf.indixe[i] + 1 - 1] -
-                             regr[logTlininterp_buf.indixe[i] - 1]);
+      double cur_regr =
+          regr[logTlininterp_buf.indixe[i] - 1] +
+          logTlininterp_buf.tdef[i] * (regr[logTlininterp_buf.indixe[i]] -
+                                       regr[logTlininterp_buf.indixe[i] - 1]);
 
       double grbeta = 0.74 / std::pow(tgas[i], 0.068);
       edot[i] =
