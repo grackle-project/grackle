@@ -122,7 +122,7 @@ void grackle::impl::cool1d_multi_g(
   int i, iZscale, mycmbTfloor;
   double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2,
       x, fudge, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother,
-      nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, grbeta, ih2cox,
+      nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, ih2cox,
       min_metallicity;
   double comp1, comp2;
 
@@ -1528,31 +1528,9 @@ void grackle::impl::cool1d_multi_g(
       idx_range, cool1dmulti_buf.myde, dom_inv, myisrf.data());
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-
-  if ((my_chemistry->dust_chemistry > 0) ||
-      (my_chemistry->dust_recombination_cooling > 0)) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        cool1dmulti_buf.regr[i] =
-            my_rates->regr[logTlininterp_buf.indixe[i] - 1] +
-            logTlininterp_buf.tdef[i] *
-                (my_rates->regr[logTlininterp_buf.indixe[i] + 1 - 1] -
-                 my_rates->regr[logTlininterp_buf.indixe[i] - 1]);
-      }
-    }
-
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        grbeta = 0.74 / std::pow(tgas[i], 0.068);
-        edot[i] = edot[i] -
-                  cool1dmulti_buf.regr[i] *
-                      std::pow((myisrf[i] * dom_inv / cool1dmulti_buf.myde[i]),
-                               grbeta) *
-                      cool1dmulti_buf.myde[i] * rhoH[i] * dust2gas[i] /
-                      my_chemistry->local_dust_to_gas_ratio;
-      }
-    }
-  }
+  dust::update_edot_dust_recombination(
+      edot, tgas, dust2gas, rhoH, itmask, my_chemistry, my_rates, idx_range,
+      logTlininterp_buf, cool1dmulti_buf, dom_inv, myisrf.data());
 
   // Compton cooling or heating and X-ray compton heating
 
