@@ -122,8 +122,8 @@ void grackle::impl::cool1d_multi_g(
   int i, iZscale, mycmbTfloor;
   double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2,
       x, fudge, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother,
-      nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta,
-      ih2cox, min_metallicity;
+      nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, grbeta, ih2cox,
+      min_metallicity;
   double comp1, comp2;
 
   // Performing heap allocations for all of the subsequent buffers within this
@@ -1525,7 +1525,7 @@ void grackle::impl::cool1d_multi_g(
   // Photo-electric heating by UV-irradiated dust
   dust::update_edot_photoelectric_heat(
       edot, tgas, dust2gas, rhoH, itmask, my_chemistry, my_rates->gammah,
-      idx_range, cool1dmulti_buf, dom_inv, myisrf.data());
+      idx_range, cool1dmulti_buf.myde, dom_inv, myisrf.data());
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
 

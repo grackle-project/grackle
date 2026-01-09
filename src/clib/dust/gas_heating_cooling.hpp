@@ -36,20 +36,25 @@ namespace grackle::impl::dust {
 /// @param[in] my_chemistry holds a number of configuration parameters.
 /// @param[in] gammah Parameterizes the calculation
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] cool1dmulti_buf Pre-allocated buffers that are used by this
-///     function for scratch space (to hold a variety of quantities)
+/// @param[in] e_density 1D array of electron mass densities (see below)
 /// @param[in] dom_inv
 /// @param[in] isrf 1D array specifying the strength of the interstellar
 ///     radiation field in Habing units
 ///
 /// @todo Perhaps we should extract the relevant parameters from my_chemistry?
+///
+/// @note
+/// For primordial_chemistry > 0, @p e_density is typically just a copy of
+/// the electron density field. Otherwise, these values are inferred
 inline void update_edot_photoelectric_heat(
     double* edot, const double* tgas, const double* dust2gas,
     const double* rhoH, const gr_mask_type* itmask,
     const chemistry_data* my_chemistry, double gammah, IndexRange idx_range,
-    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf, double dom_inv,
-    const double* isrf) {
+    const double* e_density, double dom_inv, const double* isrf) {
   double local_dust_to_gas_ratio = my_chemistry->local_dust_to_gas_ratio;
+
+  // define a lambda function to actually apply the update (once we determine
+  // the value of gammaha)
   auto update_edot_fn = [=](int i, double gammaha_eff) {
     edot[i] = edot[i] + gammaha_eff * rhoH[i] * dom_inv * dust2gas[i] /
                             local_dust_to_gas_ratio;
@@ -77,8 +82,7 @@ inline void update_edot_photoelectric_heat(
   } else if (my_chemistry->photoelectric_heating == 3) {
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        double pe_X =
-            isrf[i] * dom_inv * std::sqrt(tgas[i]) / cool1dmulti_buf.myde[i];
+        double pe_X = isrf[i] * dom_inv * std::sqrt(tgas[i]) / e_density[i];
         double pe_eps = (4.9e-2 / (1. + std::pow((pe_X / 1925.), 0.73))) +
                         ((3.7e-2 * std::pow((tgas[i] / 1.e4), 0.7)) /
                          (1. + (pe_X / 5000.)));
