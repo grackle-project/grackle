@@ -111,6 +111,13 @@ double regr_rate(double T, double units, chemistry_data *my_chemistry);
 double grain_growth_rate(double T, double units, chemistry_data *my_chemistry);
 
 double comp_rate(double units, chemistry_data *my_chemistry);
+
+/// Calculate quantity closely related to Γ for photo-electric heating from
+/// photo-electric heating by dust-grains
+///
+/// For added context, we currently use equation 1 (and possibly eqn 2) of
+/// [Wolfire+95](https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract)
+/// to implement photo-electric heating
 double gammah_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf2_rate(double units, chemistry_data *my_chemistry);
