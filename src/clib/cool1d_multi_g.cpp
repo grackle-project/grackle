@@ -1528,9 +1528,14 @@ void grackle::impl::cool1d_multi_g(
       idx_range, cool1dmulti_buf.myde, dom_inv, myisrf.data());
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-  dust::update_edot_dust_recombination(
-      edot, tgas, dust2gas, rhoH, itmask, my_chemistry, my_rates, idx_range,
-      logTlininterp_buf, cool1dmulti_buf, dom_inv, myisrf.data());
+
+  if ((my_chemistry->dust_chemistry > 0) ||
+      (my_chemistry->dust_recombination_cooling > 0)) {
+    dust::update_edot_dust_recombination(
+        edot, tgas, dust2gas, rhoH, itmask,
+        my_chemistry->local_dust_to_gas_ratio, my_rates, idx_range,
+        logTlininterp_buf, cool1dmulti_buf, dom_inv, myisrf.data());
+  }
 
   // Compton cooling or heating and X-ray compton heating
 
