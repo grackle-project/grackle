@@ -23,10 +23,9 @@
 #include "calc_all_tdust_gasgr_1d_g.hpp"
 
 void grackle::impl::calc_all_tdust_gasgr_1d_g(
-  double trad, double* tgas, double* tdust, double* metallicity,
-  double* dust2gas, double* nh, double* gasgr_tdust, gr_mask_type* itmask_metal,
-  double coolunit, double* gasgr, double* myisrf, 
-  double* kptot, 
+  double trad, double* tgas, double* tdust, const double* metallicity,
+  const double* dust2gas, double* nh, double* gasgr_tdust, gr_mask_type* itmask_metal,
+  double coolunit, double* gasgr, double* myisrf, double* kptot,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, IndexRange idx_range,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
