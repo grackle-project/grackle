@@ -297,7 +297,7 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
   interp_props->parameters[0] = d_Td;
   interp_props->parameters[1] = d_Tg;
   interp_props->parameter_spacing[0] = dlogTdust;
-  interp_props->parameter_spacing[0] = dlogtem;
+  interp_props->parameter_spacing[1] = dlogtem;
   interp_props->data_size = n_Tdust*n_Tgas;
 
   return GR_SUCCESS;
