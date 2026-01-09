@@ -25,9 +25,25 @@
 /// @todo Come up with a better name?
 namespace grackle::impl::dust_gas_edot {
 
-/// update edot, in place, with contributions from Photo-electric heating by
+/// update edot, in place, with contributions from photo-electric heating by
 /// UV-irradiated dust
 ///
+/// Based on eqn 1 of
+/// [Wolfire+95](https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract):
+/// @code{unparsed}
+/// Γeff = ε * Γ
+/// Γ = (1e-24 * G₀) erg cm⁻³ s⁻¹
+/// @endcode
+/// where G₀ is the interstellar FUV radiation (in Habing units)
+///
+/// The value of `photoelectric_heating` config parameter controls the
+/// meaning of @p gammah:
+/// - when the `photoelectric_heating` is 1, @p gammah directly holds Γ
+/// - otherwise, it holds: (Γ/G₀)
+///
+///  `photoelectric_heating` also controls modeling of ε
+///
+/// @note
 /// Each of the 1D arrays is only valid for the specified @p idx_range
 ///
 /// @param [in,out] edot 1D array being used to accumulate the net rate of
@@ -41,7 +57,8 @@ namespace grackle::impl::dust_gas_edot {
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
 /// @param[in] my_chemistry holds a number of configuration parameters.
-/// @param[in] gammah Parameterizes the calculation
+/// @param[in] gammah Parameterizes the calculation. Precomputed by
+///     @ref gammah_rate.
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] dom_inv
 ///
