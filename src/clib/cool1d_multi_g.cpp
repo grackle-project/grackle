@@ -26,13 +26,13 @@
 #include "utils-cpp.hpp"
 
 void update_edot_photoelectric_heat(
-    double* edot, double* tgas, double* dust2gas, double* rhoH,
-    gr_mask_type* itmask, chemistry_data* my_chemistry,
+    double* edot, const double* tgas, const double* dust2gas, const double* rhoH,
+    const gr_mask_type* itmask, const chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, IndexRange idx_range,
-    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf, int& i,
-    double dom_inv, double pe_eps, double pe_X, std::vector<double> myisrf) {
+    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
+    double dom_inv, const double* myisrf) {
   if (my_chemistry->photoelectric_heating == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         if (tgas[i] > 2.e4) {
           cool1dmulti_buf.gammaha_eff[i] = 0.;
@@ -44,7 +44,7 @@ void update_edot_photoelectric_heat(
 
     // Use eqn. 1 of Wolfire et al. (1995)
   } else if (my_chemistry->photoelectric_heating == 2) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         if (tgas[i] > 2.e4) {
           cool1dmulti_buf.gammaha_eff[i] = 0.;
@@ -57,11 +57,11 @@ void update_edot_photoelectric_heat(
 
     // Full calculation of epsilon (eqn. 2 of Wolfire 1995)
   } else if (my_chemistry->photoelectric_heating == 3) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        pe_X =
+        double pe_X =
             myisrf[i] * dom_inv * std::sqrt(tgas[i]) / cool1dmulti_buf.myde[i];
-        pe_eps = (4.9e-2 / (1. + std::pow((pe_X / 1925.), 0.73))) +
+        double pe_eps = (4.9e-2 / (1. + std::pow((pe_X / 1925.), 0.73))) +
                  ((3.7e-2 * std::pow((tgas[i] / 1.e4), 0.7)) /
                   (1. + (pe_X / 5000.)));
         cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah * pe_eps * myisrf[i];
@@ -70,7 +70,7 @@ void update_edot_photoelectric_heat(
   }
 
   if (my_chemistry->photoelectric_heating > 0) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         edot[i] = edot[i] + cool1dmulti_buf.gammaha_eff[i] * rhoH[i] * dom_inv *
                                 dust2gas[i] /
@@ -1579,7 +1579,7 @@ void grackle::impl::cool1d_multi_g(
 
   update_edot_photoelectric_heat(
       edot, tgas, dust2gas, rhoH, itmask, my_chemistry, my_rates, idx_range,
-      cool1dmulti_buf, i, dom_inv, pe_eps, pe_X, myisrf);
+      cool1dmulti_buf, dom_inv, myisrf.data());
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
 
