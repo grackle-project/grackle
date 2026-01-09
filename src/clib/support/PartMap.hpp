@@ -18,7 +18,18 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// we are starting with an arbitrarily low number
 inline constexpr int MAX_PART_SEQ_LEN = 4;
 
-/// This type encodes a sequence of partitions
+/// This type encodes a table of partitions
+///
+/// The premise of this type is extremely simple:
+/// - we may work with sequences of data that we need to access by index.
+///   (the indices may be described by a FrozenKeyIdxBiMap)
+/// - the sequences are commonly subdivided into different partitions that
+///   have special semantic meaning (or explicitly don't have a meaning).
+///   For our purposes:
+///   - each index must lie in exactly 1 partition
+///   - each partition spans 0 or more contiguous indices
+/// - Instances of this type exist to provide information about the indices
+///   bounding a partition **AND** to find the partition containing an index
 ///
 /// For context, the following diagram sketches an example where an array of 9
 /// elements has been partitioned into 3 unequally sized partitions
@@ -34,13 +45,37 @@ inline constexpr int MAX_PART_SEQ_LEN = 4;
 ///                stop: 4           stop 6         stop 9
 /// @endcode
 ///
-/// Important invariants:
-/// - every index lies in exactly 1 partition
-/// - each partition has a non-zero start
-/// - each partitions has a stop value that is greater or equal it the start
+/// @par Basic Vocabulary
+/// To avoid confusion (especially with abbreviations):
+/// - an index is an index in array that is partitioned
+/// - the identifier of a partition is always a *partition descriptor* (and is
+///   abbreviated as `pd`)
 ///
-/// @note
-/// While this seems like overkill, I'm convinced this will come up a bunch
+/// @par Motivation
+/// The concept modeled by this datatype models is **EXTREMELY** common in
+/// scientific software written in languages like C or Fortran, and it's
+/// almost always handled very implicitly.
+///
+/// In contrast, this type primarily exists for the sake of being explicit.
+/// In fact, we are explicitly trading off a tiny amount of performance (not
+/// in any performance-critical loops) for the benefit of explicitness. While
+/// we continue refactoring Grackle, this tradeoff is warranted. (We can
+/// revisit this tradeoff once we finish refactoring)
+///
+/// @par Relevant Applications
+/// For added context, I can think of at least 3 contexts where this construct
+/// is relevant:
+/// 1. For tracking which indices in a lookup table refer to chemical species
+///    vs dust species
+/// 2. I hope to consolidate the various arrays used to track the computed
+///    arrays into a single row.
+/// 2. (Hypothetical) when we adopt a new interface type to replace
+///    @ref grackle_field_data (similar in spirit to the one in PR #271), the
+///    idea is to use have users use string keys to access key-value pairs.
+///    When we do this, it would be really useful to have our API support
+///    queries of field category or ranges of keys in a given category (in
+///    particular: chemical-species-fields, dust-species fields, injection
+///    path metal density, etc.)
 struct PartMap {
   /// number of partitions
   int n_parts;
@@ -83,10 +118,12 @@ inline PartMap PartMap_from_part_sizes(const int* part_sizes, int n_parts) {
   return out;
 }
 
-inline int PartMap_n_partitions(const PartMap* s) { return s->n_parts; }
+/// number of partitions in the partition map
+inline int PartMap_n_partitions(const PartMap* m) { return m->n_parts; }
 
-inline int PartMap_n_idx(const PartMap* s) {
-  return (s->n_parts == 0) ? 0 : s->right_idx_bounds[s->n_parts - 1];
+/// number of indices bounded by the partition map
+inline int PartMap_n_idx(const PartMap* m) {
+  return (m->n_parts == 0) ? 0 : m->right_idx_bounds[m->n_parts - 1];
 }
 
 /// @todo Perhaps we should reconcile with field_flat_index_range?
@@ -95,33 +132,43 @@ struct IdxInterval {
   int stop;
 };
 
-inline IdxInterval PartMap_part_prop(const PartMap* s, int part_id) {
-  if (part_id < 0 || part_id >= s->n_parts) {
+/// Query the interval of indices that bound a partition
+///
+/// @param[in] m Valid pointer to a partition map
+/// @param[in] pd The partition descriptor to query
+inline IdxInterval PartMap_part_bounds(const PartMap* m, int pd) {
+  if (pd < 0 || pd >= m->n_parts) {
     return IdxInterval{-1, -1};
   }
   return IdxInterval{
-      /*start=*/(part_id == 0) ? 0 : s->right_idx_bounds[part_id - 1],
-      /*stop=*/s->right_idx_bounds[part_id]};
+      /*start=*/(pd == 0) ? 0 : m->right_idx_bounds[pd - 1],
+      /*stop=*/m->right_idx_bounds[pd]};
 }
 
 /// holds info pertaining to the partition holding an index
-struct RelativePartitionInfo {
-  /// id of the partition
-  int part_id;
+struct IdxPartSearch {
+  /// indicates whether the index was found
+  bool is_valid;
+  /// the partition descriptor
+  int pd;
   /// offset of the index relative to the start of the partition
   int start_offset;
 };
 
-inline RelativePartitionInfo PartMap_find_part_info(const PartMap* s, int idx) {
+/// search for the partition containing an index
+///
+/// @param[in] m Valid pointer to a partition map
+/// @param[in] idx The index to search for
+inline IdxPartSearch PartMap_search_idx(const PartMap* m, int idx) {
   if (idx >= 0) {  // simple, stupid, linear search
-    for (int part_id = 0; part_id < s->n_parts; part_id++) {
-      if (idx < s->right_idx_bounds[part_id]) {
-        int part_start = (part_id == 0) ? 0 : s->right_idx_bounds[part_id - 1];
-        return RelativePartitionInfo{part_id, idx - part_start};
+    for (int pd = 0; pd < m->n_parts; pd++) {
+      if (idx < m->right_idx_bounds[pd]) {
+        int part_start = (pd == 0) ? 0 : m->right_idx_bounds[pd - 1];
+        return IdxPartSearch{true, pd, idx - part_start};
       }
     }
   }
-  return {-1, -1};
+  return {false, -1, -1};
 }
 }  // namespace GRIMPL_NAMESPACE_DECL
 
