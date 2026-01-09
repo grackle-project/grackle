@@ -1,4 +1,15 @@
-// Header file containing all rate function declarations.
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares rate functions
+///
+//===----------------------------------------------------------------------===//
+
 #include "grackle.h"
 
 #ifndef GRACKLE_RATE_FUNCTIONS_H
