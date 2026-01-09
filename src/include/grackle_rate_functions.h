@@ -101,7 +101,13 @@ double cieco_rate(double T, double units, chemistry_data *my_chemistry);
 
 double gasGrain_rate(double T, double units, chemistry_data *my_chemistry);
 double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry);
+
+/// Calculate regr (as in GRain REcombination cooling)
+///
+/// This is the value of a cluster of variables taken from equation 9 from
+/// [Wolfire+95](https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract).
 double regr_rate(double T, double units, chemistry_data *my_chemistry);
+
 double grain_growth_rate(double T, double units, chemistry_data *my_chemistry);
 
 double comp_rate(double units, chemistry_data *my_chemistry);
