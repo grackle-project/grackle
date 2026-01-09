@@ -1436,11 +1436,10 @@ double comp_rate(double units, chemistry_data *my_chemistry)
     return 5.65e-36 / units;
 }
 
-//Calculation of gammah.
 double gammah_rate(double units, chemistry_data *my_chemistry)
 {
-    //Default is 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3).
     if (my_chemistry->photoelectric_heating <= 1) {
+       // Default: 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3)
         return my_chemistry->photoelectric_heating_rate / units;
     } else { //photoelectric_heating set to 2 or 3
         //User to specify G_0, epsilon set to 0.05 or calculated directly.
