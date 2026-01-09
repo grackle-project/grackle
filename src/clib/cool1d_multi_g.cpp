@@ -25,19 +25,41 @@
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
+/// update edot, in place, with contributions from Photo-electric heating by
+/// UV-irradiated dust
+///
+/// Each of the 1D arrays is only valid for the specified @p idx_range
+///
+/// @param [in,out] edot 1D array being used to accumulate the net rate of
+///     change in thermal energy
+/// @param[in] tgas 1D array of gas temperatures
+/// @param[in] dust2gas 1D array of ratios between dust & gas densities
+/// @param[in] rhoH 1D array holding the Hydrogen mass density
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] gammah Parameterizes the calculation
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] cool1dmulti_buf Pre-allocated buffers that are used by this
+///     function for scratch space (to hold a variety of quantities)
+/// @param[in] dom_inv
+/// @param[in] isrf 1D array specifying the strength of the interstellar
+///     radiation field in Habing units
+///
+/// @todo Perhaps we should extract the relevant parameters from my_chemistry?
 void update_edot_photoelectric_heat(
-    double* edot, const double* tgas, const double* dust2gas, const double* rhoH,
-    const gr_mask_type* itmask, const chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, IndexRange idx_range,
-    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
-    double dom_inv, const double* myisrf) {
+    double* edot, const double* tgas, const double* dust2gas,
+    const double* rhoH, const gr_mask_type* itmask,
+    const chemistry_data* my_chemistry, double gammah, IndexRange idx_range,
+    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf, double dom_inv,
+    const double* isrf) {
   if (my_chemistry->photoelectric_heating == 1) {
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         if (tgas[i] > 2.e4) {
           cool1dmulti_buf.gammaha_eff[i] = 0.;
         } else {
-          cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah;
+          cool1dmulti_buf.gammaha_eff[i] = gammah;
         }
       }
     }
@@ -50,7 +72,7 @@ void update_edot_photoelectric_heat(
           cool1dmulti_buf.gammaha_eff[i] = 0.;
         } else {
           // Assume constant epsilon = 0.05.
-          cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah * 0.05 * myisrf[i];
+          cool1dmulti_buf.gammaha_eff[i] = gammah * 0.05 * isrf[i];
         }
       }
     }
@@ -60,11 +82,11 @@ void update_edot_photoelectric_heat(
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         double pe_X =
-            myisrf[i] * dom_inv * std::sqrt(tgas[i]) / cool1dmulti_buf.myde[i];
+            isrf[i] * dom_inv * std::sqrt(tgas[i]) / cool1dmulti_buf.myde[i];
         double pe_eps = (4.9e-2 / (1. + std::pow((pe_X / 1925.), 0.73))) +
-                 ((3.7e-2 * std::pow((tgas[i] / 1.e4), 0.7)) /
-                  (1. + (pe_X / 5000.)));
-        cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah * pe_eps * myisrf[i];
+                        ((3.7e-2 * std::pow((tgas[i] / 1.e4), 0.7)) /
+                         (1. + (pe_X / 5000.)));
+        cool1dmulti_buf.gammaha_eff[i] = gammah * pe_eps * isrf[i];
       }
     }
   }
@@ -1576,10 +1598,9 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Photo-electric heating by UV-irradiated dust
-
-  update_edot_photoelectric_heat(
-      edot, tgas, dust2gas, rhoH, itmask, my_chemistry, my_rates, idx_range,
-      cool1dmulti_buf, dom_inv, myisrf.data());
+  update_edot_photoelectric_heat(edot, tgas, dust2gas, rhoH, itmask,
+                                 my_chemistry, my_rates->gammah, idx_range,
+                                 cool1dmulti_buf, dom_inv, myisrf.data());
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
 
