@@ -13,6 +13,8 @@
 // This file was initially generated automatically during conversion of the
 // cool1d_multi_g function from FORTRAN to C++
 
+#include "dust/gas_heat_cool.hpp"
+
 #include <cstdio>
 #include <vector>
 #include <iostream>
@@ -120,8 +122,8 @@ void grackle::impl::cool1d_multi_g(
   int i, iZscale, mycmbTfloor;
   double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2,
       x, fudge, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother,
-      nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta,
-      ih2cox, min_metallicity;
+      nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, ih2cox,
+      min_metallicity;
   double comp1, comp2;
 
   // Performing heap allocations for all of the subsequent buffers within this
@@ -1521,80 +1523,17 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Photo-electric heating by UV-irradiated dust
-
-  if (my_chemistry->photoelectric_heating == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] > 2.e4) {
-          cool1dmulti_buf.gammaha_eff[i] = 0.;
-        } else {
-          cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah;
-        }
-      }
-    }
-
-    // Use eqn. 1 of Wolfire et al. (1995)
-  } else if (my_chemistry->photoelectric_heating == 2) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] > 2.e4) {
-          cool1dmulti_buf.gammaha_eff[i] = 0.;
-        } else {
-          // Assume constant epsilon = 0.05.
-          cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah * 0.05 * myisrf[i];
-        }
-      }
-    }
-
-    // Full calculation of epsilon (eqn. 2 of Wolfire 1995)
-  } else if (my_chemistry->photoelectric_heating == 3) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        pe_X =
-            myisrf[i] * dom_inv * std::sqrt(tgas[i]) / cool1dmulti_buf.myde[i];
-        pe_eps = (4.9e-2 / (1. + std::pow((pe_X / 1925.), 0.73))) +
-                 ((3.7e-2 * std::pow((tgas[i] / 1.e4), 0.7)) /
-                  (1. + (pe_X / 5000.)));
-        cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah * pe_eps * myisrf[i];
-      }
-    }
-  }
-
-  if (my_chemistry->photoelectric_heating > 0) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        edot[i] = edot[i] + cool1dmulti_buf.gammaha_eff[i] * rhoH[i] * dom_inv *
-                                dust2gas[i] /
-                                my_chemistry->local_dust_to_gas_ratio;
-      }
-    }
-  }
+  dust_gas_edot::update_edot_photoelectric_heat(
+      edot, tgas, dust2gas, rhoH, cool1dmulti_buf.myde, myisrf.data(), itmask,
+      my_chemistry, my_rates->gammah, idx_range, dom_inv);
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-
   if ((my_chemistry->dust_chemistry > 0) ||
       (my_chemistry->dust_recombination_cooling > 0)) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        cool1dmulti_buf.regr[i] =
-            my_rates->regr[logTlininterp_buf.indixe[i] - 1] +
-            logTlininterp_buf.tdef[i] *
-                (my_rates->regr[logTlininterp_buf.indixe[i] + 1 - 1] -
-                 my_rates->regr[logTlininterp_buf.indixe[i] - 1]);
-      }
-    }
-
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        grbeta = 0.74 / std::pow(tgas[i], 0.068);
-        edot[i] = edot[i] -
-                  cool1dmulti_buf.regr[i] *
-                      std::pow((myisrf[i] * dom_inv / cool1dmulti_buf.myde[i]),
-                               grbeta) *
-                      cool1dmulti_buf.myde[i] * rhoH[i] * dust2gas[i] /
-                      my_chemistry->local_dust_to_gas_ratio;
-      }
-    }
+    dust_gas_edot::update_edot_dust_recombination(
+        edot, tgas, dust2gas, rhoH, cool1dmulti_buf.myde, myisrf.data(), itmask,
+        my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
+        my_rates->regr, idx_range, dom_inv);
   }
 
   // Compton cooling or heating and X-ray compton heating
