@@ -1534,7 +1534,7 @@ void grackle::impl::cool1d_multi_g(
     dust::update_edot_dust_recombination(
         edot, tgas, dust2gas, rhoH, itmask,
         my_chemistry->local_dust_to_gas_ratio, my_rates, idx_range,
-        logTlininterp_buf, cool1dmulti_buf, dom_inv, myisrf.data());
+        logTlininterp_buf, cool1dmulti_buf.myde, dom_inv, myisrf.data());
   }
 
   // Compton cooling or heating and X-ray compton heating

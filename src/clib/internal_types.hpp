@@ -126,7 +126,6 @@ struct Cool1DMultiScratchBuf {
   double* mynh = nullptr;
   double* myde = nullptr;
   double* gasgr_tdust = nullptr;
-  double* regr = nullptr;
 };
 
 /// used to help implement the visitor design pattern
@@ -143,7 +142,6 @@ void visit_member_pair(
   f(VIS_MEMBER_NAME("mynh"), obj0.mynh, obj1.mynh, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("myde"), obj0.myde, obj1.myde, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("gasgr_tdust"), obj0.gasgr_tdust, obj1.gasgr_tdust, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("regr"), obj0.regr, obj1.regr, vis::idx_range_len_multiple(1));
   vis::end_visit(f);
 }
 

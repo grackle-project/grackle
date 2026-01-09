@@ -93,33 +93,26 @@ inline void update_edot_photoelectric_heat(
   }
 }
 
-void update_edot_dust_recombination(
+inline void update_edot_dust_recombination(
     double* edot, const double* tgas, const double* dust2gas,
     const double* rhoH, const gr_mask_type* itmask,
     double local_dust_to_gas_ratio, const chemistry_data_storage* my_rates,
     IndexRange idx_range,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf, double dom_inv,
-    const double* isrf) {
+    const double* e_density, double dom_inv, const double* isrf) {
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
-      cool1dmulti_buf.regr[i] =
+      double cur_regr =
           my_rates->regr[logTlininterp_buf.indixe[i] - 1] +
           logTlininterp_buf.tdef[i] *
               (my_rates->regr[logTlininterp_buf.indixe[i] + 1 - 1] -
                my_rates->regr[logTlininterp_buf.indixe[i] - 1]);
-    }
-  }
 
-  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
       double grbeta = 0.74 / std::pow(tgas[i], 0.068);
       edot[i] =
           edot[i] -
-          cool1dmulti_buf.regr[i] *
-              std::pow((isrf[i] * dom_inv / cool1dmulti_buf.myde[i]), grbeta) *
-              cool1dmulti_buf.myde[i] * rhoH[i] * dust2gas[i] /
-              local_dust_to_gas_ratio;
+          cur_regr * std::pow((isrf[i] * dom_inv / e_density[i]), grbeta) *
+              e_density[i] * rhoH[i] * dust2gas[i] / local_dust_to_gas_ratio;
     }
   }
 }
