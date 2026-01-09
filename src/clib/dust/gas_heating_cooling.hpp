@@ -31,15 +31,15 @@ namespace grackle::impl::dust {
 /// @param[in] tgas 1D array of gas temperatures
 /// @param[in] dust2gas 1D array of ratios between dust & gas densities
 /// @param[in] rhoH 1D array holding the Hydrogen mass density
+/// @param[in] e_density 1D array of electron mass densities (see below)
+/// @param[in] isrf 1D array specifying the strength of the interstellar
+///     radiation field in Habing units
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
 /// @param[in] my_chemistry holds a number of configuration parameters.
 /// @param[in] gammah Parameterizes the calculation
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] e_density 1D array of electron mass densities (see below)
 /// @param[in] dom_inv
-/// @param[in] isrf 1D array specifying the strength of the interstellar
-///     radiation field in Habing units
 ///
 /// @todo Perhaps we should extract the relevant parameters from my_chemistry?
 ///
@@ -48,9 +48,9 @@ namespace grackle::impl::dust {
 /// the electron density field. Otherwise, these values are inferred
 inline void update_edot_photoelectric_heat(
     double* edot, const double* tgas, const double* dust2gas,
-    const double* rhoH, const gr_mask_type* itmask,
-    const chemistry_data* my_chemistry, double gammah, IndexRange idx_range,
-    const double* e_density, double dom_inv, const double* isrf) {
+    const double* rhoH, const double* e_density, const double* isrf,
+    const gr_mask_type* itmask, const chemistry_data* my_chemistry,
+    double gammah, IndexRange idx_range, double dom_inv) {
   double local_dust_to_gas_ratio = my_chemistry->local_dust_to_gas_ratio;
 
   // define a lambda function to actually apply the update (once we determine
@@ -104,6 +104,9 @@ inline void update_edot_photoelectric_heat(
 /// @param[in] tgas 1D array of gas temperatures
 /// @param[in] dust2gas 1D array of ratios between dust & gas densities
 /// @param[in] rhoH 1D array holding the Hydrogen mass density
+/// @param[in] e_density 1D array of electron mass densities (see below)
+/// @param[in] isrf 1D array specifying the strength of the interstellar
+///     radiation field in Habing units
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
 /// @param[in] local_dust_to_gas_ratio ratio of total dust mass to gas mass
@@ -115,21 +118,17 @@ inline void update_edot_photoelectric_heat(
 /// @param[in] regr 1D table of rate values (precomputed on the shared gas
 ///     temperature grid) that parameterize the calculation.
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] e_density 1D array of electron mass densities (see below)
 /// @param[in] dom_inv
-/// @param[in] isrf 1D array specifying the strength of the interstellar
-///     radiation field in Habing units
 ///
 /// @note
 /// For primordial_chemistry > 0, @p e_density is typically just a copy of
-/// the electron density field. Otherwise, these values are inferred
+/// the electron density field. Otherwise, these values are inferred.
 inline void update_edot_dust_recombination(
     double* edot, const double* tgas, const double* dust2gas,
-    const double* rhoH, const gr_mask_type* itmask,
-    double local_dust_to_gas_ratio,
+    const double* rhoH, const double* e_density, const double* isrf,
+    const gr_mask_type* itmask, double local_dust_to_gas_ratio,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-    const double* regr, IndexRange idx_range, const double* e_density,
-    double dom_inv, const double* isrf) {
+    const double* regr, IndexRange idx_range, double dom_inv) {
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       double cur_regr = regr[logTlininterp_buf.indixe[i] - 1] +
