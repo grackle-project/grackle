@@ -133,7 +133,7 @@ add_library(Grackle_Grackle
   step_rate_newton_raphson.hpp
   support/config.hpp
   support/FrozenKeyIdxBiMap.hpp
-  support/PartSeq.hpp
+  support/PartMap.hpp
   support/SimpleVec.hpp
   time_deriv_0d.hpp
   utils-cpp.cpp utils-cpp.hpp

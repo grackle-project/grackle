@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Define/declare @ref PartSeq
+/// Define/declare @ref PartMap
 ///
 //===----------------------------------------------------------------------===//
 #ifndef SUPPORT_PARTSEQ_HPP
@@ -41,20 +41,20 @@ inline constexpr int MAX_PART_SEQ_LEN = 4;
 ///
 /// @note
 /// While this seems like overkill, I'm convinced this will come up a bunch
-struct PartSeq {
+struct PartMap {
   /// number of partitions
   int n_parts;
   /// the upper bounds on each partition
   int right_idx_bounds[MAX_PART_SEQ_LEN];
 };
 
-/// Construct a PartSeq from the sizes of each partition.
+/// Construct a PartMap from the sizes of each partition.
 ///
 /// @param[in] part_sizes Holds the number of indices for each partition.
 /// @param[in] n_parts The number of partitions
-inline PartSeq PartSeq_from_part_sizes(const int* part_sizes, int n_parts) {
+inline PartMap PartMap_from_part_sizes(const int* part_sizes, int n_parts) {
   if (part_sizes == nullptr && n_parts == 0) {
-    PartSeq out;
+    PartMap out;
     out.n_parts = n_parts;
     out.right_idx_bounds[0] = 0;
     return out;
@@ -71,7 +71,7 @@ inline PartSeq PartSeq_from_part_sizes(const int* part_sizes, int n_parts) {
                       MAX_PART_SEQ_LEN);
   }
 
-  PartSeq out;
+  PartMap out;
   out.n_parts = n_parts;
   int running_sum = 0;
   for (int part_id = 0; part_id < n_parts; part_id++) {
@@ -83,9 +83,9 @@ inline PartSeq PartSeq_from_part_sizes(const int* part_sizes, int n_parts) {
   return out;
 }
 
-inline int PartSeq_n_partitions(const PartSeq* s) { return s->n_parts; }
+inline int PartMap_n_partitions(const PartMap* s) { return s->n_parts; }
 
-inline int PartSeq_n_idx(const PartSeq* s) {
+inline int PartMap_n_idx(const PartMap* s) {
   return (s->n_parts == 0) ? 0 : s->right_idx_bounds[s->n_parts - 1];
 }
 
@@ -95,7 +95,7 @@ struct IdxInterval {
   int stop;
 };
 
-inline IdxInterval PartSeq_part_prop(const PartSeq* s, int part_id) {
+inline IdxInterval PartMap_part_prop(const PartMap* s, int part_id) {
   if (part_id < 0 || part_id >= s->n_parts) {
     return IdxInterval{-1, -1};
   }
@@ -112,7 +112,7 @@ struct RelativePartitionInfo {
   int start_offset;
 };
 
-inline RelativePartitionInfo PartSeq_find_part_info(const PartSeq* s, int idx) {
+inline RelativePartitionInfo PartMap_find_part_info(const PartMap* s, int idx) {
   if (idx >= 0) {  // simple, stupid, linear search
     for (int part_id = 0; part_id < s->n_parts; part_id++) {
       if (idx < s->right_idx_bounds[part_id]) {
