@@ -125,7 +125,6 @@ struct Cool1DMultiScratchBuf {
   double* tgasold = nullptr;
   double* mynh = nullptr;
   double* myde = nullptr;
-  double* gammaha_eff = nullptr;
   double* gasgr_tdust = nullptr;
   double* regr = nullptr;
 };
@@ -143,7 +142,6 @@ void visit_member_pair(
   f(VIS_MEMBER_NAME("tgasold"), obj0.tgasold, obj1.tgasold, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("mynh"), obj0.mynh, obj1.mynh, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("myde"), obj0.myde, obj1.myde, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("gammaha_eff"), obj0.gammaha_eff, obj1.gammaha_eff, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("gasgr_tdust"), obj0.gasgr_tdust, obj1.gasgr_tdust, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("regr"), obj0.regr, obj1.regr, vis::idx_range_len_multiple(1));
   vis::end_visit(f);

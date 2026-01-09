@@ -58,12 +58,8 @@ inline void update_edot_photoelectric_heat(
   if (my_chemistry->photoelectric_heating == 1) {
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] > 2.e4) {
-          cool1dmulti_buf.gammaha_eff[i] = 0.;
-        } else {
-          cool1dmulti_buf.gammaha_eff[i] = gammah;
-        }
-        update_edot_fn(i, cool1dmulti_buf.gammaha_eff[i]);
+        double gammaha_eff = (tgas[i] > 2.e4) ? 0. : gammah;
+        update_edot_fn(i, gammaha_eff);
       }
     }
 
@@ -71,13 +67,9 @@ inline void update_edot_photoelectric_heat(
   } else if (my_chemistry->photoelectric_heating == 2) {
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] > 2.e4) {
-          cool1dmulti_buf.gammaha_eff[i] = 0.;
-        } else {
-          // Assume constant epsilon = 0.05.
-          cool1dmulti_buf.gammaha_eff[i] = gammah * 0.05 * isrf[i];
-        }
-        update_edot_fn(i, cool1dmulti_buf.gammaha_eff[i]);
+        // Assume constant epsilon = 0.05.
+        double gammaha_eff = (tgas[i] > 2.e4) ? 0. : gammah * 0.05 * isrf[i];
+        update_edot_fn(i, gammaha_eff);
       }
     }
 
@@ -90,8 +82,8 @@ inline void update_edot_photoelectric_heat(
         double pe_eps = (4.9e-2 / (1. + std::pow((pe_X / 1925.), 0.73))) +
                         ((3.7e-2 * std::pow((tgas[i] / 1.e4), 0.7)) /
                          (1. + (pe_X / 5000.)));
-        cool1dmulti_buf.gammaha_eff[i] = gammah * pe_eps * isrf[i];
-        update_edot_fn(i, cool1dmulti_buf.gammaha_eff[i]);
+        double gammaha_eff = gammah * pe_eps * isrf[i];
+        update_edot_fn(i, gammaha_eff);
       }
     }
   }
