@@ -1528,7 +1528,6 @@ void grackle::impl::cool1d_multi_g(
       my_chemistry, my_rates->gammah, idx_range, dom_inv);
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-
   if ((my_chemistry->dust_chemistry > 0) ||
       (my_chemistry->dust_recombination_cooling > 0)) {
     dust::update_edot_dust_recombination(
