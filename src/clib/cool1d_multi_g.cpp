@@ -13,7 +13,7 @@
 // This file was initially generated automatically during conversion of the
 // cool1d_multi_g function from FORTRAN to C++
 
-#include "dust/gas_heating_cooling.hpp"
+#include "dust/gas_heat_cool.hpp"
 
 #include <cstdio>
 #include <vector>
@@ -1523,14 +1523,14 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Photo-electric heating by UV-irradiated dust
-  dust::update_edot_photoelectric_heat(
+  dust_gas_edot::update_edot_photoelectric_heat(
       edot, tgas, dust2gas, rhoH, cool1dmulti_buf.myde, myisrf.data(), itmask,
       my_chemistry, my_rates->gammah, idx_range, dom_inv);
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
   if ((my_chemistry->dust_chemistry > 0) ||
       (my_chemistry->dust_recombination_cooling > 0)) {
-    dust::update_edot_dust_recombination(
+    dust_gas_edot::update_edot_dust_recombination(
         edot, tgas, dust2gas, rhoH, cool1dmulti_buf.myde, myisrf.data(), itmask,
         my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
         my_rates->regr, idx_range, dom_inv);

@@ -9,8 +9,8 @@
 /// computes contributions to the heating/cooling of gas
 ///
 //===----------------------------------------------------------------------===//
-#ifndef DUST_GAS_HEATING_COOLING_HPP
-#define DUST_GAS_HEATING_COOLING_HPP
+#ifndef DUST_GAS_HEAT_COOL_HPP
+#define DUST_GAS_HEAT_COOL_HPP
 
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "grackle.h"
@@ -19,7 +19,11 @@
 
 #include <cmath>
 
-namespace grackle::impl::dust {
+/// this namespace groups logic modeling the various sources of gas
+/// heating/cooling from dust-chemistry
+///
+/// @todo Come up with a better name?
+namespace grackle::impl::dust_gas_edot {
 
 /// update edot, in place, with contributions from Photo-electric heating by
 /// UV-irradiated dust
@@ -149,6 +153,6 @@ inline void update_edot_dust_recombination(
   }
 }
 
-}  // namespace grackle::impl::dust
+}  // namespace grackle::impl::dust_gas_edot
 
-#endif  // DUST_GAS_HEATING_COOLING_HPP
+#endif  // DUST_GAS_HEAT_COOL_HPP
