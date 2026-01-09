@@ -1421,7 +1421,6 @@ double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 
-//Calculation of regr.
 double regr_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //(Equation 9, Wolfire et al., 1995)
