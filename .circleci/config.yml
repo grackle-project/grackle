@@ -197,7 +197,7 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-nccv5"
+        default: "gold-standard-nccv6"
       cache-tag:
         description: "A unique tag to append to the cache name"
         type: string
@@ -345,6 +345,83 @@ jobs:
       #    working_directory: build_ci-linux-omp/examples
       #    environment:
       #      OMP_NUM_THREADS: 4
+
+
+      # the following step currently uses the llvm hosted repositories
+      # (described at https://apt.llvm.org/)
+      # -> if the day ever comes where we need to install using a different
+      #    mechanism, we could always install it from the package on PyPI
+      # -> we could also leverage the current installation approach to make
+      #    test-builds with llvm
+      - run:
+          name: "Install clang-tidy"
+          command: |
+            # at the moment, we are trying to keep this synchronized with the
+            # version of clang-format used in pre-commit
+            LLVM_VERSION=20
+
+            # todo: maybe move this logic into a script
+
+            # in general we could replace a lot of the following with with the
+            # script downloaded via `wget https://apt.llvm.org/llvm.sh`
+            # -> it seems like the script may do a lot of extra unnecessary work
+
+            # Step 1: register LLVM's official apt registry
+            # =============================================
+
+            # Step 1a: add the llvm key for authenticating packages
+            GPG_DST=/etc/apt/trusted.gpg.d/apt.llvm.org.asc
+            GPG_SRC_URL="https://apt.llvm.org/llvm-snapshot.gpg.key"
+            wget -qO- "${GPG_SRC_URL}" | sudo tee "${GPG_DST}"
+
+            # Step 1b: lookup the codename of the distribution (e.g. jammy)
+            # -> Debian: only provides VERSION_CODENAME
+            # -> vanilla Ubuntu: UBUNTU_CODENAME & VERSION_CODENAME are same
+            # -> distinction is more important for (some) Ubuntu derivatives
+            source <(grep -F 'UBUNTU_CODENAME' /etc/os-release)
+            CODENAME="${UBUNTU_CODENAME}"
+
+            # step 1c: record the actual source of the package
+            # -> the formula for determining the uri and suite-name is fairly
+            #    consistent unless you are describing Debian Testing or the
+            #    LLVM version under active development
+            uri="http://apt.llvm.org/${CODENAME}/"
+            suite="llvm-toolchain-${CODENAME}-${LLVM_VERSION}"
+            sudo add-apt-repository \
+                --yes \
+                --sourceslist "deb ${uri} ${suite} main"
+
+            # Step 2: actually download clang-tidy
+            # ====================================
+            sudo apt-get update
+            sudo apt-get install -y clang-tidy-${LLVM_VERSION}
+
+            # Step 3: Santity Check and make a symlink
+            # ========================================
+            # The symlink is VERY hacky, but it lets us avoid carrying the
+            # LLVM_VERSION variable between job steps
+            bin_path="/usr/bin/clang-tidy-${LLVM_VERSION}"
+            if [ ! -f ${bin_path} ]; then
+              echo "Our assumptions about where the file is installed is wrong"
+              exit 1
+            elif [ -f /usr/bin/clang-tidy ]; then
+              echo "another version of clang-tidy seems to be installed"
+              exit 1
+            else
+              # this is pretty hacky!
+              sudo ln -s ${bin_path} /usr/bin/clang-tidy
+            fi
+
+      - run:
+          name: "Run clang-tidy"
+          command: |
+            # ci-linux-nowarn preset is designed to work with static analysis
+            # (it disables compiler warnings)
+            cmake \
+              --preset ci-linux-nowarn \
+              -D 'GRACKLE_DEV_CLANG_TIDY=clang-tidy;-warnings-as-errors=*'
+            cmake --build build_ci-linux-nowarn
+
 
   docs-build:
     parameters:
