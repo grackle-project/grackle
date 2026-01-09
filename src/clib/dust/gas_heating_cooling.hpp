@@ -43,12 +43,18 @@ namespace grackle::impl::dust {
 ///     radiation field in Habing units
 ///
 /// @todo Perhaps we should extract the relevant parameters from my_chemistry?
-void update_edot_photoelectric_heat(
+inline void update_edot_photoelectric_heat(
     double* edot, const double* tgas, const double* dust2gas,
     const double* rhoH, const gr_mask_type* itmask,
     const chemistry_data* my_chemistry, double gammah, IndexRange idx_range,
     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf, double dom_inv,
     const double* isrf) {
+  double local_dust_to_gas_ratio = my_chemistry->local_dust_to_gas_ratio;
+  auto update_edot_fn = [=](int i, double gammaha_eff) {
+    edot[i] = edot[i] + gammaha_eff * rhoH[i] * dom_inv * dust2gas[i] /
+                            local_dust_to_gas_ratio;
+  };
+
   if (my_chemistry->photoelectric_heating == 1) {
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
@@ -57,6 +63,7 @@ void update_edot_photoelectric_heat(
         } else {
           cool1dmulti_buf.gammaha_eff[i] = gammah;
         }
+        update_edot_fn(i, cool1dmulti_buf.gammaha_eff[i]);
       }
     }
 
@@ -70,6 +77,7 @@ void update_edot_photoelectric_heat(
           // Assume constant epsilon = 0.05.
           cool1dmulti_buf.gammaha_eff[i] = gammah * 0.05 * isrf[i];
         }
+        update_edot_fn(i, cool1dmulti_buf.gammaha_eff[i]);
       }
     }
 
@@ -83,16 +91,7 @@ void update_edot_photoelectric_heat(
                         ((3.7e-2 * std::pow((tgas[i] / 1.e4), 0.7)) /
                          (1. + (pe_X / 5000.)));
         cool1dmulti_buf.gammaha_eff[i] = gammah * pe_eps * isrf[i];
-      }
-    }
-  }
-
-  if (my_chemistry->photoelectric_heating > 0) {
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        edot[i] = edot[i] + cool1dmulti_buf.gammaha_eff[i] * rhoH[i] * dom_inv *
-                                dust2gas[i] /
-                                my_chemistry->local_dust_to_gas_ratio;
+        update_edot_fn(i, cool1dmulti_buf.gammaha_eff[i]);
       }
     }
   }
