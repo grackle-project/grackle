@@ -109,7 +109,7 @@ add_library(Grackle_Grackle
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
-  dust/gas_heating_cooling.hpp
+  dust/gas_heat_cool.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
