@@ -61,7 +61,7 @@ inline void update_edot_photoelectric_heat(
   };
 
   if (my_chemistry->photoelectric_heating == 1) {
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         double gammaha_eff = (tgas[i] > 2.e4) ? 0. : gammah;
         update_edot_fn(i, gammaha_eff);
@@ -70,7 +70,7 @@ inline void update_edot_photoelectric_heat(
 
     // Use eqn. 1 of Wolfire et al. (1995)
   } else if (my_chemistry->photoelectric_heating == 2) {
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         // Assume constant epsilon = 0.05.
         double gammaha_eff = (tgas[i] > 2.e4) ? 0. : gammah * 0.05 * isrf[i];
@@ -80,7 +80,7 @@ inline void update_edot_photoelectric_heat(
 
     // Full calculation of epsilon (eqn. 2 of Wolfire 1995)
   } else if (my_chemistry->photoelectric_heating == 3) {
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         double pe_X = isrf[i] * dom_inv * std::sqrt(tgas[i]) / e_density[i];
         double pe_eps = (4.9e-2 / (1. + std::pow((pe_X / 1925.), 0.73))) +
