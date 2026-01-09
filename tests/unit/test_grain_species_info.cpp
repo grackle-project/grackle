@@ -271,7 +271,8 @@ TEST_P(GrainSpeciesInfoTest, SampledGrainIngredients) {
 
   // get the list of ALL know chemical species names, in the cannonical order
   const std::vector<std::string> chem_species_names = chemical_species_list();
-  const std::size_t known_chem_species_count = chem_species_names.size();
+  const int known_chem_species_count =
+      static_cast<int>(chem_species_names.size());
 
   std::map<std::string, std::vector<CoefNamePair>> ref_ingred_map =
       get_ingredients(dust_chemistry_parameter);
