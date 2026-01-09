@@ -75,6 +75,6 @@ void calc_all_tdust_gasgr_1d_g(
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf,
   grackle::impl::GrainSpeciesCollection grain_kappa);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
 #endif /* CALC_ALL_TDUST_GASGR_1D_G_HPP */
