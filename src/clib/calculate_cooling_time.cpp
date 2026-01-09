@@ -15,15 +15,9 @@
 #include "grackle.h"
 #include "cool_multi_time_g.h"
 #include "internal_units.h"
+#include "update_UVbackground_rates.hpp"
 #include "utils.h"
 
-/* function prototypes */
-
-extern "C" int update_UVbackground_rates(chemistry_data *my_chemistry,
-                                         chemistry_data_storage *my_rates,
-                                         photo_rate_storage *my_uvb_rates,
-                                         code_units *my_units);
- 
 extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
                                             chemistry_data_storage *my_rates,
                                             code_units *my_units,
@@ -47,8 +41,8 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
     my_uvb_rates.comp_xray = my_uvb_rates.temp_xray = 0.;
 
   if (my_chemistry->UVbackground == 1) {
-    if (update_UVbackground_rates(my_chemistry, my_rates,
-                                  &my_uvb_rates, my_units) != GR_SUCCESS) {
+    if (grackle::impl::update_UVbackground_rates(
+          my_chemistry, my_rates, &my_uvb_rates, my_units) != GR_SUCCESS) {
       std::fprintf(stderr, "Error in update_UVbackground_rates.\n");
       return GR_FAIL;
     }

@@ -11,34 +11,28 @@
 / software.
 ************************************************************************/
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include "update_UVbackground_rates.hpp"
+#include <cmath>
+#include "grackle.h"
+#include "internal_units.h"
 
-#include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
-
-/* function prototypes */
-
-int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              chemistry_data_storage *my_rates,
-                              photo_rate_storage *my_uvb_rates,
-                              code_units *my_units)
+int grackle::impl::update_UVbackground_rates(const chemistry_data *my_chemistry,
+                                             const chemistry_data_storage *my_rates,
+                                             photo_rate_storage *my_uvb_rates,
+                                             const code_units *my_units)
 {
   /* Return if there is no radiation (rates should be all zero). */
 
   if (my_chemistry->UVbackground == 0 ||
       my_chemistry->primordial_chemistry == 0)
-    return SUCCESS;
+    return GR_SUCCESS;
 
   /* Return if redshift is outside of on/off redshifts. */
 
   double Redshift = 1.0 / (my_units->a_value * my_units->a_units) - 1;
   if ( (Redshift < my_chemistry->UVbackground_redshift_off) ||
        (Redshift > my_chemistry->UVbackground_redshift_on) )
-    return SUCCESS;
+    return GR_SUCCESS;
 
   /* ------------------------------------------------------------------ */
   /* First, calculate the ramp value, a number between 0 and 1 which
@@ -73,79 +67,79 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
     index++;
   if(index == 0) index=1;
   if(index == my_rates->UVbackground_table.Nz) index--;
-  double zvec_grad = log((1+zvec[index]) / (1+zvec[index-1]));
-  double redshift_grad = log((1+Redshift) / (1+zvec[index-1]));
+  double zvec_grad = std::log((1+zvec[index]) / (1+zvec[index-1]));
+  double redshift_grad = std::log((1+Redshift) / (1+zvec[index-1]));
   // printf("index = %d, %.3f <= %.3f <= %.3f\n",index,zvec[index-1],Redshift,zvec[index]);
 
   // *** k24 ***
-  slope = log(my_rates->UVbackground_table.k24[index] /
+  slope = std::log(my_rates->UVbackground_table.k24[index] /
               my_rates->UVbackground_table.k24[index-1]) / zvec_grad;
-  my_uvb_rates->k24 = exp(redshift_grad * slope +
-			  log(my_rates->UVbackground_table.k24[index-1]));
+  my_uvb_rates->k24 = std::exp(redshift_grad * slope +
+			  std::log(my_rates->UVbackground_table.k24[index-1]));
 
   // *** k25 ***
-  slope = log(my_rates->UVbackground_table.k25[index] /
+  slope = std::log(my_rates->UVbackground_table.k25[index] /
               my_rates->UVbackground_table.k25[index-1]) / zvec_grad;
-  my_uvb_rates->k25 = exp(redshift_grad * slope +
-			  log(my_rates->UVbackground_table.k25[index-1]));
+  my_uvb_rates->k25 = std::exp(redshift_grad * slope +
+			  std::log(my_rates->UVbackground_table.k25[index-1]));
 
   // *** k26 ***
-  slope = log(my_rates->UVbackground_table.k26[index] /
+  slope = std::log(my_rates->UVbackground_table.k26[index] /
               my_rates->UVbackground_table.k26[index-1]) / zvec_grad;
-  my_uvb_rates->k26 = exp(redshift_grad * slope +
-			  log(my_rates->UVbackground_table.k26[index-1]));
+  my_uvb_rates->k26 = std::exp(redshift_grad * slope +
+			  std::log(my_rates->UVbackground_table.k26[index-1]));
 
   if (my_chemistry->primordial_chemistry > 1) {
 
     // *** k27 ***
-    slope = log(my_rates->UVbackground_table.k27[index] /
+    slope = std::log(my_rates->UVbackground_table.k27[index] /
                 my_rates->UVbackground_table.k27[index-1]) / zvec_grad;
-    my_uvb_rates->k27 = exp(redshift_grad * slope +
-			    log(my_rates->UVbackground_table.k27[index-1]));
+    my_uvb_rates->k27 = std::exp(redshift_grad * slope +
+			    std::log(my_rates->UVbackground_table.k27[index-1]));
 
     // *** k28 ***
-    slope = log(my_rates->UVbackground_table.k28[index] /
+    slope = std::log(my_rates->UVbackground_table.k28[index] /
                 my_rates->UVbackground_table.k28[index-1]) / zvec_grad;
-    my_uvb_rates->k28 = exp(redshift_grad * slope +
-			    log(my_rates->UVbackground_table.k28[index-1]));
+    my_uvb_rates->k28 = std::exp(redshift_grad * slope +
+			    std::log(my_rates->UVbackground_table.k28[index-1]));
 
     // *** k29 ***
-    slope = log(my_rates->UVbackground_table.k29[index] /
+    slope = std::log(my_rates->UVbackground_table.k29[index] /
                 my_rates->UVbackground_table.k29[index-1]) / zvec_grad;
-    my_uvb_rates->k29 = exp(redshift_grad * slope +
-			    log(my_rates->UVbackground_table.k29[index-1]));
+    my_uvb_rates->k29 = std::exp(redshift_grad * slope +
+			    std::log(my_rates->UVbackground_table.k29[index-1]));
 
     // *** k30 ***
-    slope = log(my_rates->UVbackground_table.k30[index] /
+    slope = std::log(my_rates->UVbackground_table.k30[index] /
                 my_rates->UVbackground_table.k30[index-1]) / zvec_grad;
-    my_uvb_rates->k30 = exp(redshift_grad * slope +
-			    log(my_rates->UVbackground_table.k30[index-1]));
+    my_uvb_rates->k30 = std::exp(redshift_grad * slope +
+			    std::log(my_rates->UVbackground_table.k30[index-1]));
 
     // *** k31 ***
-    slope = log(my_rates->UVbackground_table.k31[index] /
+    slope = std::log(my_rates->UVbackground_table.k31[index] /
                 my_rates->UVbackground_table.k31[index-1]) / zvec_grad;
-    my_uvb_rates->k31 = exp(redshift_grad * slope +
-			    log(my_rates->UVbackground_table.k31[index-1]));
+    my_uvb_rates->k31 = std::exp(redshift_grad * slope +
+			    std::log(my_rates->UVbackground_table.k31[index-1]));
 
   }
 
   // *** piHI ***
-  slope = log(my_rates->UVbackground_table.piHI[index] /
+  slope = std::log(my_rates->UVbackground_table.piHI[index] /
               my_rates->UVbackground_table.piHI[index-1]) / zvec_grad;
-  my_uvb_rates->piHI = exp(redshift_grad * slope +
-			   log(my_rates->UVbackground_table.piHI[index-1]));
+  my_uvb_rates->piHI = std::exp(redshift_grad * slope +
+			   std::log(my_rates->UVbackground_table.piHI[index-1]));
 
   // *** piHeII ***
-  slope = log(my_rates->UVbackground_table.piHeII[index] /
+  slope = std::log(my_rates->UVbackground_table.piHeII[index] /
               my_rates->UVbackground_table.piHeII[index-1]) / zvec_grad;
-  my_uvb_rates->piHeII = exp(redshift_grad * slope +
-			     log(my_rates->UVbackground_table.piHeII[index-1]));
+  my_uvb_rates->piHeII = std::exp(redshift_grad * slope +
+			     std::log(my_rates->UVbackground_table.piHeII[index-1]));
 
   // *** piHeI ***
-  slope = log(my_rates->UVbackground_table.piHeI[index] /
+  slope = std::log(my_rates->UVbackground_table.piHeI[index] /
               my_rates->UVbackground_table.piHeI[index-1]) / zvec_grad;
-  my_uvb_rates->piHeI = exp(redshift_grad * slope +
-			    log(my_rates->UVbackground_table.piHeI[index-1]));
+  my_uvb_rates->piHeI = std::exp(redshift_grad * slope +
+			    std::log(my_rates->UVbackground_table.piHeI[index-1]));
 
   //
   // Cross sections are read from table in cgs, and remain in cgs.
@@ -154,52 +148,31 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
 
   // *** crsHI ***
   if (my_chemistry->self_shielding_method > 0){
-    slope = log(my_rates->UVbackground_table.crsHI[index] /
+    slope = std::log(my_rates->UVbackground_table.crsHI[index] /
                 my_rates->UVbackground_table.crsHI[index-1]) / zvec_grad;
-    my_uvb_rates->crsHI = exp(redshift_grad * slope +
-			      log(my_rates->UVbackground_table.crsHI[index-1]));
+    my_uvb_rates->crsHI = std::exp(redshift_grad * slope +
+			      std::log(my_rates->UVbackground_table.crsHI[index-1]));
 
     // *** crsHeI ***
-    slope = log(my_rates->UVbackground_table.crsHeI[index] /
+    slope = std::log(my_rates->UVbackground_table.crsHeI[index] /
                 my_rates->UVbackground_table.crsHeI[index-1]) / zvec_grad;
-    my_uvb_rates->crsHeI = exp(redshift_grad * slope +
-			       log(my_rates->UVbackground_table.crsHeI[index-1]));
+    my_uvb_rates->crsHeI = std::exp(redshift_grad * slope +
+			       std::log(my_rates->UVbackground_table.crsHeI[index-1]));
 
     // *** crsHeII ***
-    slope = log(my_rates->UVbackground_table.crsHeII[index] /
+    slope = std::log(my_rates->UVbackground_table.crsHeII[index] /
                 my_rates->UVbackground_table.crsHeII[index-1]) / zvec_grad;
-    my_uvb_rates->crsHeII = exp(redshift_grad * slope +
-				log(my_rates->UVbackground_table.crsHeII[index-1]));
+    my_uvb_rates->crsHeII = std::exp(redshift_grad * slope +
+				std::log(my_rates->UVbackground_table.crsHeII[index-1]));
   }
 
   // Now convert the rates to code units.
 
-  /* Get conversion units. */
-
-  double co_length_units, co_density_units;
-  if (my_units->comoving_coordinates == TRUE) {
-    co_length_units = my_units->length_units;
-    co_density_units = my_units->density_units;
-  }
-  else {
-    co_length_units = my_units->length_units *
-      my_units->a_value * my_units->a_units;
-    co_density_units = my_units->density_units /
-      POW(my_units->a_value * my_units->a_units, 3);
-  }
-
-  double tbase1 = my_units->time_units;
-  double xbase1 = co_length_units /
-    (my_units->a_value * my_units->a_units);
-  double dbase1 = co_density_units *
-    POW(my_units->a_value * my_units->a_units, 3);
-  double mh     = 1.67262171e-24;
+  InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
   double ev2erg = 1.60217653e-12;
   /* compared to Enzo source, there's an additional factor of
      1/ev2erg here, because the heating rates are stored as eV/s. */
-  double CoolingUnits = (POW(my_units->a_units, 5) * xbase1*xbase1 * mh*mh) /
-    (POW(tbase1, 3) * dbase1) / ev2erg;
-
+  double CoolingUnits = internalu.coolunit / ev2erg;
 
   my_uvb_rates->k24 *= my_units->time_units;
   my_uvb_rates->k25 *= my_units->time_units;
@@ -267,23 +240,23 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
        effects.  Eq.(4) and Eq.(11) of Madau & Efstathiou (1999) */
     
     my_uvb_rates->comp_xray = 4.15e-13 * 3.0e10 *
-      (31.8*POW(1.0+Redshift, 0.3333)/511.0) * 
+      (31.8*std::pow(1.0+Redshift, 0.3333)/511.0) * 
       (6.3e-5 * 1.6e-12) * 
-      POW(1.0 + Redshift, 4) * 
-      exp(-POW(Redshift/RedshiftXrayCutoff, 2)) / 
+      std::pow(1.0 + Redshift, 4.0) * 
+      std::exp(-std::pow(Redshift/RedshiftXrayCutoff, 2.0)) / 
       CoolingUnits; 
   
     /* The effective temperature (in K).  Eq.(10) of Madau &
        Efstathiou (1999) with U_xray(z=0) = 6.3e-5 and U_cmb(z=0) =
        0.256 eV/cm3 */
     
-    my_uvb_rates->temp_xray = 31.8e3*POW(1.0+Redshift, 0.3333)*1.6e-12/
+    my_uvb_rates->temp_xray = 31.8e3*std::pow(1.0+Redshift, 0.3333)*1.6e-12/
       (4.0*1.38e-16) *
-      6.3e-5 * POW(1.0 + Redshift, 4) * 
-      exp(-POW(Redshift/RedshiftXrayCutoff, 2)) /
+      6.3e-5 * std::pow(1.0 + Redshift, 4.0) * 
+      std::exp(-std::pow(Redshift/RedshiftXrayCutoff, 2.0)) /
       (0.256 * (1+Redshift));  
 
   }
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }
