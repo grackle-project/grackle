@@ -93,20 +93,49 @@ inline void update_edot_photoelectric_heat(
   }
 }
 
+/// update edot, in place, with contributions from electron recombinations
+/// onto dust
+///
+/// Each of the 1D arrays (other than @p regr) is only valid for the
+/// specified @p idx_range
+///
+/// @param [in,out] edot 1D array being used to accumulate the net rate of
+///     change in thermal energy
+/// @param[in] tgas 1D array of gas temperatures
+/// @param[in] dust2gas 1D array of ratios between dust & gas densities
+/// @param[in] rhoH 1D array holding the Hydrogen mass density
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] local_dust_to_gas_ratio ratio of total dust mass to gas mass
+///     in the local Universe
+/// @param[in] logTlininterp_buf Hold pre-computed values for each location
+///     in @p idx_range with values that are used to linearly interpolate
+///     tables ov values with respect to the natural log of @p tgas1. Used
+///     here to interpolate the @p regr table.
+/// @param[in] regr 1D table of rate values (precomputed on the shared gas
+///     temperature grid) that parameterize the calculation.
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] e_density 1D array of electron mass densities (see below)
+/// @param[in] dom_inv
+/// @param[in] isrf 1D array specifying the strength of the interstellar
+///     radiation field in Habing units
+///
+/// @note
+/// For primordial_chemistry > 0, @p e_density is typically just a copy of
+/// the electron density field. Otherwise, these values are inferred
 inline void update_edot_dust_recombination(
     double* edot, const double* tgas, const double* dust2gas,
     const double* rhoH, const gr_mask_type* itmask,
-    double local_dust_to_gas_ratio, const chemistry_data_storage* my_rates,
-    IndexRange idx_range,
+    double local_dust_to_gas_ratio,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-    const double* e_density, double dom_inv, const double* isrf) {
+    const double* regr, IndexRange idx_range, const double* e_density,
+    double dom_inv, const double* isrf) {
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
-      double cur_regr =
-          my_rates->regr[logTlininterp_buf.indixe[i] - 1] +
-          logTlininterp_buf.tdef[i] *
-              (my_rates->regr[logTlininterp_buf.indixe[i] + 1 - 1] -
-               my_rates->regr[logTlininterp_buf.indixe[i] - 1]);
+      double cur_regr = regr[logTlininterp_buf.indixe[i] - 1] +
+                        logTlininterp_buf.tdef[i] *
+                            (regr[logTlininterp_buf.indixe[i] + 1 - 1] -
+                             regr[logTlininterp_buf.indixe[i] - 1]);
 
       double grbeta = 0.74 / std::pow(tgas[i], 0.068);
       edot[i] =
