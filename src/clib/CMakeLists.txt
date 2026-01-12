@@ -107,6 +107,7 @@ add_library(Grackle_Grackle
   calculate_pressure.cpp
   calculate_temperature.cpp
   ceiling_species.hpp
+  chemistry/species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time_g.cpp cool_multi_time_g.h
