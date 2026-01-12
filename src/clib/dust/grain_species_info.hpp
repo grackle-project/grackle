@@ -102,9 +102,12 @@ struct GrainSpeciesInfo {
   /// number of grain species considered for the current Grackle configuration
   int n_species;
 
-  /// an out.species_info of length of length @ref n_species where each entry
+  /// an out.species_info of length @ref n_species where each entry
   /// holds info about a separate grain species
   GrainSpeciesInfoEntry* species_info;
+
+  /// a copy of the dust_species parameter used to construct this instance
+  int dust_species_parameter;
 
   /// maps between grain species names and the associated index. The mapping is
   /// **ALWAYS** consistent with ``OnlyGrainSpLUT``.
