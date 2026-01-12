@@ -81,6 +81,7 @@ add_library(grtestutils
   os.hpp os.cpp
   preset.hpp preset.cpp
   ratequery.hpp
+  RuntimeSpLUT.hpp RuntimeSpLUT.cpp
   utils.hpp utils.cpp
 
   # files in the googletest subdirectory (reminder: should just be headers!)

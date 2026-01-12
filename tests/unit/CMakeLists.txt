@@ -20,6 +20,10 @@ add_executable(testPartMap support/test_unit_PartMap.cpp)
 target_link_libraries(testPartMap testdeps)
 gtest_discover_tests(testPartMap)
 
+add_executable(runRuntimeSpLUT test_runtime_splut.cpp)
+target_link_libraries(runRuntimeSpLUT testdeps)
+gtest_discover_tests(runRuntimeSpLUT)
+
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting testdeps)
 gtest_discover_tests(runStatusReporting)

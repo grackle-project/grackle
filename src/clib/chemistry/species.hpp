@@ -84,7 +84,7 @@ typedef void (*visit_chemsp_callback)(const char* name, ChemicalSpKind kind,
 inline void visit_canonical_chem_species(int primordial_chemistry,
                                          int metal_chemistry,
                                          MetalNuclideMassSpChoice choice,
-                                         visit_chemsp_callback* cb, void* ctx) {
+                                         visit_chemsp_callback cb, void* ctx) {
   if (primordial_chemistry >= 1) {
     (*cb)("e", ChemicalSpKind::ELECTRON, ctx);  // free electrons
     (*cb)("HI", ChemicalSpKind::STANDARD, ctx);
@@ -147,7 +147,7 @@ inline void visit_canonical_chem_species(int primordial_chemistry,
 }
 
 inline void visit_canonical_chem_species(chemistry_data* my_chemistry,
-                                         visit_chemsp_callback* cb, void* ctx) {
+                                         visit_chemsp_callback cb, void* ctx) {
   MetalNuclideMassSpChoice choice =
       from_dust_species_param(my_chemistry->dust_species);
   visit_canonical_chem_species(my_chemistry->primordial_chemistry,

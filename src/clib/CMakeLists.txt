@@ -127,6 +127,7 @@ add_library(Grackle_Grackle
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
   ratequery.cpp ratequery.hpp
+  runtime_splut.hpp
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h

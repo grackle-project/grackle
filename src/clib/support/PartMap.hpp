@@ -314,7 +314,7 @@ inline partmap::IdxSearch PartMap_search_idx(const PartMap* m, int idx) {
 /// @param[in] bimap Describes bi-directional mapping between indices & keys
 /// @param[in] key The key to that is being searched
 inline partmap::IdxSearch key_partition_search(const PartMap* part_map,
-                                               FrozenKeyIdxBiMap* bimap,
+                                               const FrozenKeyIdxBiMap* bimap,
                                                const char* key) {
   bimap::AccessRslt maybe_idx = FrozenKeyIdxBiMap_find(bimap, key);
   return PartMap_search_idx(part_map,
