@@ -728,15 +728,6 @@ int grackle::impl::initialize_rates(
       return GR_FAIL;
     }
 
-    // Dust Grain Species Information
-    // (it may make sense want to handle more of the dust separately)
-    if (my_chemistry->dust_species > 0) {
-      my_rates->opaque_storage->grain_species_info = 
-        new grackle::impl::GrainSpeciesInfo;
-      *(my_rates->opaque_storage->grain_species_info) =
-        grackle::impl::new_GrainSpeciesInfo(my_chemistry->dust_species);
-    }
-
     // Load injection pathway data
     if (grackle::impl::load_inject_path_data(
         my_chemistry, my_rates, reg_builder) != GR_SUCCESS) {

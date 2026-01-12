@@ -29,6 +29,7 @@
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 #include "ratequery.hpp"
+#include "runtime_splut.hpp"
 #include "status_reporting.h"
 
 #ifdef _OPENMP
@@ -325,16 +326,39 @@ static int local_initialize_chemistry_data_(
     }
   }
 
+  // it's time to figure out all of the species that are involved in the
+  // chemical network
+  grackle::impl::GrainSpeciesInfo* grain_species_info = nullptr;
+  if (my_chemistry->dust_species > 0) {
+    grain_species_info = new grackle::impl::GrainSpeciesInfo{
+      grackle::impl::new_GrainSpeciesInfo(my_chemistry->dust_species)};
+  }
+
+  grackle::impl::PartitionedKeyIdxBiMapRslt tmp = make_runtime_splut(
+    my_chemistry->primordial_chemistry,
+    my_chemistry->metal_cooling,
+    grain_species_info);
+
+  if (!tmp.success) {
+    if (grain_species_info != nullptr) {
+      grackle::impl::drop_GrainSpeciesInfo(grain_species_info);
+      delete grain_species_info;
+      return GR_FAIL;
+    }
+  }
+
   // it's time to start initializing values in my_rates
 
   // perform some basic allocations
   my_rates->opaque_storage = new gr_opaque_storage;
+  my_rates->opaque_storage->runtime_splut = tmp.bimap;
+  my_rates->opaque_storage->species_kind_map = tmp.part_map;
   my_rates->opaque_storage->kcol_rate_tables = nullptr;
   my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
   my_rates->opaque_storage->n_kcol_rate_indices = 0;
   grackle::impl::init_empty_interp_grid_props_(
     &my_rates->opaque_storage->h2dust_grain_interp_props);
-  my_rates->opaque_storage->grain_species_info = nullptr;
+  my_rates->opaque_storage->grain_species_info = grain_species_info;
   my_rates->opaque_storage->inject_pathway_props = nullptr;
   my_rates->opaque_storage->registry = nullptr;
 
@@ -584,6 +608,9 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
 
   // start freeing memory associated with opaque storage
   // ---------------------------------------------------
+  grackle::impl::drop_FrozenKeyIdxBiMap(&my_rates->opaque_storage->runtime_splut);
+  grackle::impl::drop_PartMap(&my_rates->opaque_storage->species_kind_map);
+
   if (my_rates->opaque_storage->kcol_rate_tables != nullptr) {
     // delete contents of kcol_rate_tables
     drop_CollisionalRxnRateCollection(my_rates->opaque_storage->kcol_rate_tables);

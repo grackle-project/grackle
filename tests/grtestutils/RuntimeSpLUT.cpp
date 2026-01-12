@@ -29,23 +29,22 @@ std::optional<RuntimeSpLUT> RuntimeSpLUT::create(
 }
 
 // this is a little silly (but it's useful)
-std::optional<RuntimeSpLUT> RuntimeSpLUT::create(
-    const chemistry_data* my_chemistry) {
-  int dust_species_param = my_chemistry->dust_species;
-  int n_grain_species = GRIMPL_NS::get_n_grain_species(dust_species_param);
+std::optional<RuntimeSpLUT> RuntimeSpLUT::create(int primordial_chemistry,
+                                                 int metal_chemistry,
+                                                 int dust_species) {
+  int n_grain_species = GRIMPL_NS::get_n_grain_species(dust_species);
   if (n_grain_species < 0) {
     return std::nullopt;
   } else if (n_grain_species == 0) {
-    return RuntimeSpLUT::create(my_chemistry->primordial_chemistry,
-                                my_chemistry->metal_chemistry, nullptr);
+    return RuntimeSpLUT::create(primordial_chemistry, metal_chemistry, nullptr);
   } else {
     GRIMPL_NS::GrainSpeciesInfo tmp =
-        GRIMPL_NS::new_GrainSpeciesInfo(dust_species_param);
+        GRIMPL_NS::new_GrainSpeciesInfo(dust_species);
     std::optional<RuntimeSpLUT> out =
-        RuntimeSpLUT::create(my_chemistry->primordial_chemistry,
-                             my_chemistry->metal_chemistry, &tmp);
+        RuntimeSpLUT::create(primordial_chemistry, metal_chemistry, &tmp);
     GRIMPL_NS::drop_GrainSpeciesInfo(&tmp);
     return out;
   }
 }
+
 }  // namespace grtest

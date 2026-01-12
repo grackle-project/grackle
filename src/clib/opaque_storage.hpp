@@ -18,6 +18,8 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "ratequery.hpp"
+#include "support/FrozenKeyIdxBiMap.hpp"
+#include "support/PartMap.hpp"
 
 /// a struct that used to wrap some private storage details
 ///
@@ -46,6 +48,17 @@
 /// state. The gr_opaque_storage struct can be used to help us gradually
 /// transition towards this case
 struct gr_opaque_storage {
+  /// a runtime equivalent to SpLUT
+  ///
+  /// @note
+  /// In practice, we probably only want this during construction. But,
+  /// it may be useful to keep this around for the lifetime of the solver
+  /// purely for debugging purposes
+  grackle::impl::FrozenKeyIdxBiMap runtime_splut;
+  /// Tracks the species in runtime_splut that correspond to SpKind::CHEMICAL
+  /// and to SpKind::DUST
+  grackle::impl::PartMap species_kind_map;
+
   // in the future, we may want refactor the following set of members into
   // a separate datatype that takes full responsibility for "normal"
   // collisional rates

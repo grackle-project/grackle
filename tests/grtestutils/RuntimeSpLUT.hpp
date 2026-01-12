@@ -73,8 +73,17 @@ public:
       int primordial_chemistry, int metal_chemistry,
       const GRIMPL_NS::GrainSpeciesInfo* grain_info);
 
+  static std::optional<RuntimeSpLUT> create(int primordial_chemistry,
+                                            int metal_chemistry,
+                                            int dust_species);
+
   // this is a little silly (but it's useful)
-  static std::optional<RuntimeSpLUT> create(const chemistry_data* my_chemistry);
+  static std::optional<RuntimeSpLUT> create(
+      const chemistry_data* my_chemistry) {
+    return RuntimeSpLUT::create(my_chemistry->primordial_chemistry,
+                                my_chemistry->metal_chemistry,
+                                my_chemistry->dust_species);
+  }
 
   int size() const { return GRIMPL_NS::FrozenKeyIdxBiMap_size(&bimap_); }
 
@@ -119,6 +128,11 @@ public:
   }
   std::optional<int> kind_index(const std::string& key) const {
     return kind_index(key.c_str());
+  }
+
+  /// expects GRIMPL_NS::SpKind::CHEMICAL or GRIMPL_NS::SpKind::DUST
+  GRIMPL_NS::IdxInterval kind_interval(int kind) const {
+    return grackle::impl::PartMap_part_bounds(&partition_map_, kind);
   }
 };
 
