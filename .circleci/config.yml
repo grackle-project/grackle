@@ -199,7 +199,7 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-nccv6"
+        default: "gold-standard-nccv7"
       cache-tag:
         description: "A unique tag to append to the cache name"
         type: string
