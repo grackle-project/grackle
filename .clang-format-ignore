@@ -40,7 +40,6 @@ src/clib/interp_table_utils.h
 src/clib/interpolate.hpp
 src/clib/phys_constants.h
 src/clib/rate_functions.c
-src/clib/self_shielding_err_check.hpp
 src/clib/set_default_chemistry_parameters.cpp
 src/clib/solve_chemistry.cpp
 src/clib/solve_rate_cool_g-cpp.cpp

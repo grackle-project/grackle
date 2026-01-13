@@ -72,8 +72,9 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
   InternalGrUnits internalu = new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
-  if (self_shielding_err_check(my_chemistry, my_fields,
-                               "local_calculate_temperature") != GR_SUCCESS) {
+  if (grackle::impl::self_shielding_err_check(my_chemistry, my_fields,
+                                              "local_calculate_temperature")
+      != GR_SUCCESS) {
     return GR_FAIL;
   }
 

@@ -75,9 +75,10 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
   InternalGrUnits internalu = new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
-  if (self_shielding_err_check(my_chemistry, my_fields,
-                               "local_solve_chemistry") != GR_SUCCESS) {
-    return GR_SUCCESS;
+  if (grackle::impl::self_shielding_err_check(my_chemistry, my_fields,
+                                              "local_solve_chemistry")
+      != GR_SUCCESS) {
+    return GR_FAIL;
   }
 
   /* Call the routine to solve cooling equations. */
