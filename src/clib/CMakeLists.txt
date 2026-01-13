@@ -89,7 +89,6 @@ add_library(Grackle_Grackle
   initialize_UVbackground_data.c  initialize_UVbackground_data.h
   rate_functions.c
   status_reporting.c status_reporting.h
-  update_UVbackground_rates.c
   utils.c
 
   # auto-generated C source files
@@ -128,6 +127,7 @@ add_library(Grackle_Grackle
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp
+  update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
