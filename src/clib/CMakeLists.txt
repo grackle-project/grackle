@@ -121,6 +121,7 @@ add_library(Grackle_Grackle
   rate_utils.cpp
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
+  self_shielding_err_check.hpp
   set_default_chemistry_parameters.cpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_gauss_seidel.hpp
@@ -129,7 +130,6 @@ add_library(Grackle_Grackle
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
-  utils.cpp utils.hpp
   fortran_func_wrappers.hpp
   visitor/common.hpp
   visitor/copy.hpp

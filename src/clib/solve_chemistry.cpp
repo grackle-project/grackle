@@ -15,8 +15,8 @@
 #include "grackle.h"
 #include "internal_units.h"
 #include "solve_rate_cool_g-cpp.h"
+#include "self_shielding_err_check.hpp"
 #include "update_UVbackground_rates.hpp"
-#include "utils.hpp"
 
 extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
                                      chemistry_data_storage *my_rates,

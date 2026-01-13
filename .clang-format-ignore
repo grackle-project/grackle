@@ -40,6 +40,7 @@ src/clib/interp_table_utils.h
 src/clib/interpolate.hpp
 src/clib/phys_constants.h
 src/clib/rate_functions.c
+src/clib/self_shielding_err_check.hpp
 src/clib/set_default_chemistry_parameters.cpp
 src/clib/solve_chemistry.cpp
 src/clib/solve_rate_cool_g-cpp.cpp
@@ -51,8 +52,6 @@ src/clib/time_deriv_0d.hpp
 src/clib/update_UVbackground_rates.cpp
 src/clib/utils-cpp.cpp
 src/clib/utils-cpp.hpp
-src/clib/utils.cpp
-src/clib/utils.hpp
 src/example/c_example.c
 src/example/c_local_example.c
 src/example/cxx_example.C
