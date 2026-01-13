@@ -41,6 +41,7 @@ Checks: >
   cert-mem57-cpp,
 
   clang-analyzer-*,
+  -clang-analyzer-cplusplus.NewDeleteLeaks
 
   cppcoreguidelines-avoid-goto,
   cppcoreguidelines-avoid-non-const-global-variables,

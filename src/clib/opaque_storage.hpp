@@ -14,6 +14,7 @@
 #define OPAQUE_STORAGE_HPP
 
 #include "grackle.h"
+#include "dust/grain_species_info.hpp"
 #include "internal_types.hpp"
 
 /// a struct that used to wrap some private storage details
@@ -84,6 +85,16 @@ struct gr_opaque_storage {
   ///   explicitly tracking a grid of ln(Tgas) values and a grid of ln(Tdust)
   ///   values (for debugging purposes).
   gr_interp_grid_props h2dust_grain_interp_props;
+
+  /// Tracks basic information about each relevant grain species
+  ///
+  /// > [!note]
+  /// > A case could be made that we may not want to directly store a
+  /// > GrainSpeciesInfo instances directly inside of this struct (since it
+  /// > contains some extra information that is unnecessary during the
+  /// > calculations). An alternative would be to briefly initialize an
+  /// > instance during setup and then repack the data.
+  grackle::impl::GrainSpeciesInfo* grain_species_info;
 };
 
 #endif /* OPAQUE_STORAGE_HPP */
