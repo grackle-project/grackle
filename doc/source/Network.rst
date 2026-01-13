@@ -2,6 +2,35 @@
 
 Chemical Network
 ==================
+
+.. COMMENT-BLOCK:
+
+   To improve readability, we probably want to start using the following replacements
+
+.. |HI|    replace:: H
+
+.. |HII|   replace:: H\ :sup:`+`
+
+.. |H-|    replace:: H\ :sup:`-`
+
+.. |H2I|   replace:: H\ :sub:`2`
+
+.. |H2II|  replace:: H\ :sub:`2`:sup:`+`
+
+.. |HeI|   replace:: He
+
+.. |HeII|  replace:: He\ :sup:`+`
+
+.. |HeIII| replace:: He\ :sup:`+`\ :sup:`+`
+
+.. |e-|    replace:: e\ :sup:`-`
+
+.. |DI|    replace:: D
+
+.. |DII|   replace:: D\ :sup:`+`
+
+.. |HDI|   replace:: HD
+
 The table below shows the reactions in Grackle`s chemical network. All reactions are of the form left-hand side (LHS) -> right-hand side (RHS). The rate column corresponds to the interval table responsable for the reaction rate. The citation colomns denotates the publication in which reaction rate appears in the form used within Grackle. Note, some reaction rate have multiple options depending on the setting of various parameters.
 
 .. list-table::
@@ -133,16 +162,37 @@ The table below shows the reactions in Grackle`s chemical network. All reactions
      - k19
      - `Dalgarno & Lepp (1985) <https://ui.adsabs.harvard.edu/abs/1987IAUS..120..109D/abstract>`__
      - :c:data:`primordial_chemistry` >1
-   * - H + H + H
-     - H\ :sub:`2` + H
-     - k22
-     - see table below
-     - :c:data:`primordial_chemistry` >1
-   * - H + H + H\ :sub:`2`
-     - H\ :sub:`2`  + H\ :sub:`2`
+
+   * - 2H + H\ :sub:`2`
+     - 2\ |H2I|
      - k21
      - `Cohen & Westberg (1983) <https://ui.adsabs.harvard.edu/abs/1983JPCRD..12..531C/abstract>`__
      - :c:data:`primordial_chemistry` >1
+
+   * - 3H
+     - |H2I| + H
+     - k22
+     - see table below
+     - :c:data:`primordial_chemistry` >1
+
+   * - H + :math:`{\gamma}`
+     - |HII| + |e-|
+     - k24
+     - none
+     - :c:data:`primordial_chemistry` >0
+
+   * - |HeII| + :math:`{\gamma}`
+     - |HeIII| + |e-|
+     - k25
+     - none
+     - :c:data:`primordial_chemistry` >0
+
+   * - |HeI| + :math:`{\gamma}`
+     - |HeII| + |e-|
+     - k26
+     - none
+     - :c:data:`primordial_chemistry` >0
+
    * - H\ :sup:`-` + :math:`{\gamma}`
      - H + e\ :sup:`-`
      - k27
