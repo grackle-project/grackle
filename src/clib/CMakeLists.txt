@@ -97,13 +97,15 @@ add_library(Grackle_Grackle
   auto_general.h
 
   # C++ Source (and Private Header Files)
+  api/calculate_cooling_time.cpp
+  api/calculate_dust_temperature.cpp
+  api/calculate_gamma.cpp
+  api/calculate_pressure.cpp
+  api/calculate_temperature.cpp
+  api/set_default_chemistry_parameters.cpp
+  api/solve_chemistry.cpp
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
-  calculate_cooling_time.cpp
-  calculate_dust_temperature.cpp
-  calculate_gamma.cpp
-  calculate_pressure.cpp
-  calculate_temperature.cpp
   ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
@@ -120,9 +122,7 @@ add_library(Grackle_Grackle
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
   rate_utils.cpp
-  solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
-  set_default_chemistry_parameters.cpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp

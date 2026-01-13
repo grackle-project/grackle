@@ -13,11 +13,13 @@
 
 OBJS_CONFIG_LIB = \
         $(AUTOGEN_DIR)/auto_general.lo \
-        calculate_cooling_time.lo \
-        calculate_dust_temperature.lo \
-        calculate_gamma.lo \
-        calculate_pressure.lo \
-        calculate_temperature.lo \
+        api/calculate_cooling_time.lo \
+        api/calculate_dust_temperature.lo \
+        api/calculate_gamma.lo \
+        api/calculate_pressure.lo \
+        api/calculate_temperature.lo \
+        api/set_default_chemistry_parameters.lo \
+        api/solve_chemistry.lo \
         calc_temp1d_cloudy_g.lo \
         calc_temp_cloudy_g.lo \
         collisional_rate_props.lo \
@@ -38,8 +40,6 @@ OBJS_CONFIG_LIB = \
         interpolators_g.lo \
         make_consistent.lo \
         scale_fields.lo \
-        set_default_chemistry_parameters.lo \
-        solve_chemistry.lo \
         solve_rate_cool_g.lo \
         solve_rate_cool_g-cpp.lo \
         status_reporting.lo \
