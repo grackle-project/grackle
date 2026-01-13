@@ -119,7 +119,7 @@ add_library(Grackle_Grackle
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
-  rate_utils.cpp
+  ratequery.cpp ratequery.hpp
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
   set_default_chemistry_parameters.cpp
