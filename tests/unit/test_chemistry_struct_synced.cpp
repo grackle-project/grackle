@@ -1,4 +1,4 @@
-#include "grtest_cmd.hpp"
+#include "grtestutils/cmd.hpp"
 
 #include <grackle.h>
 
