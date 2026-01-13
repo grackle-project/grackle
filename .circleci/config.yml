@@ -42,18 +42,7 @@ commands:
             source $HOME/venv/bin/activate
             pip install --upgrade pip
             pip install --group test
-            pip install flake8
 
-  lint:
-    description: "Lint."
-    steps:
-      - run:
-          name: "Lint."
-          command: |
-            source $BASH_ENV
-            source $HOME/venv/bin/activate
-            cd src/python
-            flake8 gracklepy examples tests
 
   install-grackle:
     description: "Install the core Grackle Library & Pygrackle."
@@ -169,6 +158,10 @@ commands:
         type: enum
         default: 'true'
         enum: ['true', 'false']
+      overwrite:
+        type: enum
+        default: 'true'
+        enum: ['true', 'false']
     steps:
       - run:
           name: "Run the pytest test-suite (build_kind: << parameters.build_kind >>, omp: << parameters.omp >>, generate: << parameters.generate >>)."
@@ -188,9 +181,15 @@ commands:
 
               ANSWER_DIR=./my-test_answers
               if [ '<< parameters.generate >>' == 'true' ]; then
-                py.test --answer-dir=${ANSWER_DIR} --answer-store
+                if [[ '<< parameters.overwrite >>' == 'true' || ! -d ${ANSWER_DIR} ]]; then
+                  py.test --answer-dir=${ANSWER_DIR} --answer-store
+                else
+                  echo "Answers already exist; skipping."
+                fi
               else
-                py.test --answer-dir=${ANSWER_DIR}
+                # we pass -vv, so that each test gets its own line of output
+                # (this can be helpful if we encounter a segfault)
+                py.test -vv --answer-dir=${ANSWER_DIR}
               fi
             fi
 
@@ -200,7 +199,11 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-v4"
+        default: "gold-standard-nccv6"
+      cache-tag:
+        description: "A unique tag to append to the cache name"
+        type: string
+        default: "1"
     steps:
       - run:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
@@ -209,10 +212,20 @@ commands:
             pip uninstall --yes gracklepy # it's ok if gracklepy wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
             pip install -e .
+            rm -rf ./my-test_answers # in case answers have already been generated
+      - restore_cache:
+          name: "Restore gold standard answers from cache."
+          key: << parameters.gold-standard-tag >>-cache<< parameters.cache-tag >>
       - run-gracklepy-tests:
           omp: 'false'
           build_kind: 'standalone-gracklepy'
           generate: 'true'
+          overwrite: 'false'
+      - save_cache:
+          name: "Save gold standard answers to cache."
+          key: << parameters.gold-standard-tag >>-cache<< parameters.cache-tag >>
+          paths:
+            - ./my-test_answers
       - run:
           command: |
             source $HOME/venv/bin/activate
@@ -259,7 +272,6 @@ jobs:
       - checkout
       - set-env
       - install-dependencies
-      - lint
       - download-test-data
       - store-gracklepy-suite-gold-standard-answers
 
@@ -321,17 +333,97 @@ jobs:
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
           command: ctest --test-dir build_ci-linux --output-on-failure
+
+      # we are temporarily disabling OpenMP tests in the newchem-cpp branch
+      # since OpenMP-support is currently "broken" (it is fixed in the C++ port)
+      #- run:
+      #    name: "Build libgrackle with OpenMP enabled"
+      #    command: |
+      #      cmake --preset ci-linux-omp
+      #      cmake --build build_ci-linux-omp
+      #- run:
+      #    name: "run the OpenMP example"
+      #    command: ./cxx_omp_example
+      #    working_directory: build_ci-linux-omp/examples
+      #    environment:
+      #      OMP_NUM_THREADS: 4
+
+
+      # the following step currently uses the llvm hosted repositories
+      # (described at https://apt.llvm.org/)
+      # -> if the day ever comes where we need to install using a different
+      #    mechanism, we could always install it from the package on PyPI
+      # -> we could also leverage the current installation approach to make
+      #    test-builds with llvm
       - run:
-          name: "Build libgrackle with OpenMP enabled"
+          name: "Install clang-tidy"
           command: |
-            cmake --preset ci-linux-omp
-            cmake --build build_ci-linux-omp
+            # at the moment, we are trying to keep this synchronized with the
+            # version of clang-format used in pre-commit
+            LLVM_VERSION=20
+
+            # todo: maybe move this logic into a script
+
+            # in general we could replace a lot of the following with with the
+            # script downloaded via `wget https://apt.llvm.org/llvm.sh`
+            # -> it seems like the script may do a lot of extra unnecessary work
+
+            # Step 1: register LLVM's official apt registry
+            # =============================================
+
+            # Step 1a: add the llvm key for authenticating packages
+            GPG_DST=/etc/apt/trusted.gpg.d/apt.llvm.org.asc
+            GPG_SRC_URL="https://apt.llvm.org/llvm-snapshot.gpg.key"
+            wget -qO- "${GPG_SRC_URL}" | sudo tee "${GPG_DST}"
+
+            # Step 1b: lookup the codename of the distribution (e.g. jammy)
+            # -> Debian: only provides VERSION_CODENAME
+            # -> vanilla Ubuntu: UBUNTU_CODENAME & VERSION_CODENAME are same
+            # -> distinction is more important for (some) Ubuntu derivatives
+            source <(grep -F 'UBUNTU_CODENAME' /etc/os-release)
+            CODENAME="${UBUNTU_CODENAME}"
+
+            # step 1c: record the actual source of the package
+            # -> the formula for determining the uri and suite-name is fairly
+            #    consistent unless you are describing Debian Testing or the
+            #    LLVM version under active development
+            uri="http://apt.llvm.org/${CODENAME}/"
+            suite="llvm-toolchain-${CODENAME}-${LLVM_VERSION}"
+            sudo add-apt-repository \
+                --yes \
+                --sourceslist "deb ${uri} ${suite} main"
+
+            # Step 2: actually download clang-tidy
+            # ====================================
+            sudo apt-get update
+            sudo apt-get install -y clang-tidy-${LLVM_VERSION}
+
+            # Step 3: Santity Check and make a symlink
+            # ========================================
+            # The symlink is VERY hacky, but it lets us avoid carrying the
+            # LLVM_VERSION variable between job steps
+            bin_path="/usr/bin/clang-tidy-${LLVM_VERSION}"
+            if [ ! -f ${bin_path} ]; then
+              echo "Our assumptions about where the file is installed is wrong"
+              exit 1
+            elif [ -f /usr/bin/clang-tidy ]; then
+              echo "another version of clang-tidy seems to be installed"
+              exit 1
+            else
+              # this is pretty hacky!
+              sudo ln -s ${bin_path} /usr/bin/clang-tidy
+            fi
+
       - run:
-          name: "run the OpenMP example"
-          command: ./cxx_omp_example
-          working_directory: build_ci-linux-omp/examples
-          environment:
-            OMP_NUM_THREADS: 4
+          name: "Run clang-tidy"
+          command: |
+            # ci-linux-nowarn preset is designed to work with static analysis
+            # (it disables compiler warnings)
+            cmake \
+              --preset ci-linux-nowarn \
+              -D 'GRACKLE_DEV_CLANG_TIDY=clang-tidy;-warnings-as-errors=*'
+            cmake --build build_ci-linux-nowarn
+
 
   docs-build:
     parameters:

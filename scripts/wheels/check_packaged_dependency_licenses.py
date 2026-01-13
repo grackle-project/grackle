@@ -14,7 +14,7 @@ import platform
 from typing import Optional
 import sys
 
-_IS_LINUX = sys.platform.startswith('linux')
+_IS_LINUX = sys.platform.startswith("linux")
 _IS_LINUX_AARCH64 = _IS_LINUX and platform.machine() == "aarch64"
 _IS_LINUX_GLIBC = _IS_LINUX and platform.libc_ver()[0] == "glibc"
 # note: while platform.libc_ver() can reliably detect whether we're using glibc,
@@ -27,11 +27,10 @@ class LicenseInfo:
     location: str  # location where the info was parsed from
     availability: Optional[str] = None
     description: Optional[str] = None
-    files: Optional[str] = None # specifies file(s) that the license applies to
+    files: Optional[str] = None  # specifies file(s) that the license applies to
 
 
 def parse_license_file(path):
-
     def _chunks(f):
         chunk = None
         for lineno, line in enumerate(f, start=1):
@@ -41,12 +40,13 @@ def parse_license_file(path):
                 chunk = None
             elif m.group("field").lower() == "name":
                 yield chunk
-                chunk = LicenseInfo(name=m.group("value"), location=f"{path!s}:{lineno}")
+                chunk = LicenseInfo(
+                    name=m.group("value"), location=f"{path!s}:{lineno}"
+                )
             elif m is not None:
                 setattr(chunk, m.group("field").lower(), m.group("value"))
         yield chunk
 
-    out = {}
     with open(path, "r") as f:
         return [chunk for chunk in _chunks(f) if chunk is not None]
 
@@ -92,7 +92,7 @@ def main():
             if len(matches) > 0:
                 all_matches.update(matches)
             elif pat.endswith("libgcc_s*") and _IS_LINUX_GLIBC:
-                continue # libgcc_s needs to be distributed for musl, not glibc
+                continue  # libgcc_s needs to be distributed for musl, not glibc
             elif pat.endswith("libquadmath*") and _IS_LINUX_AARCH64:
                 continue
             else:

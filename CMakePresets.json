@@ -55,9 +55,15 @@
           }
       },
       {
+          "name": "ci-linux-nowarn",
+          "description": "A configuration preset intended for use with static analysis tools that doesn't enable any compiler-specific warnings. This avoids issues where options like -Wall or -Wpedantic might enable a clang-only warning (e.g. -Wself-assign) don't we don't ordinarily (e.g. it may require significant refactoring) that starts to get by the likes of clang-tidy.",
+          "inherits": ["ci-common-config"],
+          "cacheVariables": { "CMAKE_BUILD_TYPE": "RELEASE" }
+      },
+      {
           "name": "ci-linux",
           "description": "the general configuration preset for linux",
-          "inherits": ["ci-flags-warnings-gcc-clang", "ci-common-config"],
+          "inherits": ["ci-flags-warnings-gcc-clang", "ci-linux-nowarn"],
           "cacheVariables": { "CMAKE_BUILD_TYPE": "RELEASE" }
       },
       {

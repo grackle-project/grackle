@@ -3,8 +3,19 @@
 add_library(testdeps INTERFACE)
 target_link_libraries(testdeps INTERFACE Grackle::Grackle GTest::gtest_main)
 
-# short-term hack to let tests invoke Fortran functions from C
-target_compile_definitions(testdeps INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>")
+# compiler defs are short-term hacks to help tests invoke internal functions
+# from Grackle (both of these will become unnecessary in the near future)
+target_compile_definitions(testdeps
+  # needed to invoke Fortran functions from C
+  INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>"
+  # suppresses warnings about C internal headers using our deprecated public
+  # headers (the files should include grackle.h instead). We're currently
+  # holding off on properly fixing this to minimize conflicts with pending PRs
+  # on the newchem-cpp branch
+  INTERFACE GRIMPL_PUBLIC_INCLUDE=1
+)
+
+# needed to let tests call internal functions from C
 target_include_directories(testdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
 target_compile_features(testdeps INTERFACE cxx_std_17)
 
@@ -42,9 +53,23 @@ target_link_libraries(runInterpolationTests testdeps)
 
 gtest_discover_tests(runInterpolationTests)
 
+add_executable(runLinAlgTests test_linalg.cpp)
+target_link_libraries(runLinAlgTests testdeps)
+gtest_discover_tests(runLinAlgTests)
+
+add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
+target_link_libraries(runGrainSpeciesIntoTests testdeps)
+gtest_discover_tests(runGrainSpeciesIntoTests)
+
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting grtest_utils)
 gtest_discover_tests(runStatusReporting)
+
+# one might argue that the following is more of an integration or end-to-end
+# test than a unit-test
+add_executable(runVisitorTests test_visitor.cpp)
+target_link_libraries(runVisitorTests testdeps)
+gtest_discover_tests(runVisitorTests)
 
 # one might argue that the following is more of an integration or end-to-end
 # test than a unit-test

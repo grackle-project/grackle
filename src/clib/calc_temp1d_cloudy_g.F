@@ -78,14 +78,13 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !  Parameters
 
-      integer ti_max
-      real*8 mu_metal
-      parameter (mu_metal = 16._DKIND)    ! approx. mean molecular weight of metals
-      parameter (ti_max = 20)
+      ! approx. mean molecular weight of metals
+      real*8, parameter :: mu_metal = 16._DKIND
+      integer, parameter :: ti_max = 20
 
 !  Locals
 
@@ -93,7 +92,7 @@
       integer*8 zindex, zmidpt, zhighpt
       real*8 dclPar(clGridRank), inv_log10,
      &     muold, munew
-      logical end_int
+      integer*8 end_int
 
 !  Slice locals
 
@@ -102,7 +101,7 @@
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
 
-      end_int = .false.
+      end_int = 0
 
       inv_log10 = 1._DKIND / log(10._DKIND)
 
@@ -129,7 +128,7 @@
             zindex = 1
          else if (zr .ge. clPar2(clGridDim(2)-1)) then
             zindex = clGridDim(2)
-            end_int = .true.
+            end_int = 1
          else if (zr .ge. clPar2(clGridDim(2)-2)) then
             zindex = clGridDim(2) - 2
          else
@@ -148,14 +147,14 @@
       endif
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 !              Calculate proper log(n_H)
                log_n_h(i) = log10(rhoH(i) * dom)
          endif
       enddo
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             munew = 1._DKIND
             do ti = 1, ti_max
                muold = munew

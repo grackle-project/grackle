@@ -14,7 +14,6 @@
 import importlib
 import numpy as np
 from numpy.testing import assert_almost_equal
-import subprocess
 
 def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
     if isinstance(a1, np.ndarray):
@@ -53,18 +52,3 @@ def requires_module(module):
         return ffalse
     else:
         return ftrue
-
-def run_command(command, timeout=None, cwd=None):
-    try:
-        proc = subprocess.run(command, shell=True, timeout=timeout, cwd=cwd)
-        if proc.returncode == 0:
-            success = True
-        else:
-            success = False
-    except subprocess.TimeoutExpired:
-        print ("Process reached timeout of %d s. (%s)" % (timeout, command))
-        success = False
-    except KeyboardInterrupt:
-        print ("Killed by keyboard interrupt!")
-        success = False
-    return success

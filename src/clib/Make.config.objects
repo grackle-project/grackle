@@ -20,24 +20,37 @@ OBJS_CONFIG_LIB = \
         calculate_temperature.lo \
         calc_temp1d_cloudy_g.lo \
         calc_temp_cloudy_g.lo \
-        calc_tdust_1d_g.lo \
-        calc_tdust_3d_g.lo \
+        collisional_rate_props.lo \
         cool1d_cloudy_g.lo \
         cool1d_cloudy_old_tables_g.lo \
         cool1d_multi_g.lo \
         cool_multi_time_g.lo \
+        dust/grain_species_info.lo \
         dynamic_api.lo \
         grackle_units.lo \
 	index_helper.lo \
         initialize_chemistry_data.lo \
         initialize_cloudy_data.lo \
+        initialize_dust_yields.lo \
+        init_misc_species_cool_rates.lo \
+        initialize_rates.lo \
         initialize_UVbackground_data.lo \
         interpolators_g.lo \
+        make_consistent.lo \
+        scale_fields.lo \
         set_default_chemistry_parameters.lo \
         solve_chemistry.lo \
         solve_rate_cool_g.lo \
+        solve_rate_cool_g-cpp.lo \
         status_reporting.lo \
         update_UVbackground_rates.lo \
+        calc_all_tdust_gasgr_1d_g.lo \
+        calc_tdust_1d_g.lo \
+        calc_tdust_3d.lo \
+        calc_grain_size_increment_1d.lo \
         rate_functions.lo \
-        initialize_rates.lo \
-        utils.lo
+        rate_utils.lo \
+        gaussj_g.lo \
+        utils.lo \
+        utils-cpp.lo \
+        internal_types.lo

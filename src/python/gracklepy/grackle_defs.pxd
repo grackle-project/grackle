@@ -11,30 +11,6 @@ cdef extern from "grackle.h":
         pass
 
     ctypedef struct c_chemistry_data_storage "chemistry_data_storage":
-        double *k1
-        double *k2
-        double *k3
-        double *k4
-        double *k5
-        double *k6
-
-        double *k7
-        double *k8
-        double *k9
-        double *k10
-        double *k11
-        double *k12
-        double *k13
-        double *k14
-        double *k15
-        double *k16
-        double *k17
-        double *k18
-        double *k19
-        double *k20
-        double *k21
-        double *k22
-        double *k23
         double *k13dd
 
         double k24
@@ -46,17 +22,6 @@ cdef extern from "grackle.h":
         double k29
         double k30
         double k31
-
-        double *k50
-        double *k51
-        double *k52
-        double *k53
-        double *k54
-        double *k55
-        double *k56
-
-        double *k57
-        double *k58
 
         double *h2dust
 
@@ -139,24 +104,75 @@ cdef extern from "grackle.h":
       int *grid_end;
       gr_float grid_dx;
       gr_float *density;
+      gr_float *internal_energy;
+      gr_float *x_velocity;
+      gr_float *y_velocity;
+      gr_float *z_velocity;
+      gr_float *metal_density;
+      gr_float *dust_density;
+      gr_float *e_density;
       gr_float *HI_density;
       gr_float *HII_density;
-      gr_float *HM_density;
       gr_float *HeI_density;
       gr_float *HeII_density;
       gr_float *HeIII_density;
+      gr_float *HM_density;
       gr_float *H2I_density;
       gr_float *H2II_density;
       gr_float *DI_density;
       gr_float *DII_density;
       gr_float *HDI_density;
-      gr_float *e_density;
-      gr_float *metal_density;
-      gr_float *dust_density;
-      gr_float *internal_energy;
-      gr_float *x_velocity;
-      gr_float *y_velocity;
-      gr_float *z_velocity;
+      gr_float *DM_density;
+      gr_float *HDII_density;
+      gr_float *HeHII_density;
+      gr_float *CI_density;
+      gr_float *CII_density;
+      gr_float *CO_density;
+      gr_float *CO2_density;
+      gr_float *OI_density;
+      gr_float *OH_density;
+      gr_float *H2O_density;
+      gr_float *O2_density;
+      gr_float *SiI_density;
+      gr_float *SiOI_density;
+      gr_float *SiO2I_density;
+      gr_float *CH_density;
+      gr_float *CH2_density;
+      gr_float *COII_density;
+      gr_float *OII_density;
+      gr_float *OHII_density;
+      gr_float *H2OII_density;
+      gr_float *H3OII_density;
+      gr_float *O2II_density;
+      gr_float *Mg_density;
+      gr_float *Al_density;
+      gr_float *S_density;
+      gr_float *Fe_density;
+      gr_float *MgSiO3_dust_density;
+      gr_float *AC_dust_density;
+      gr_float *SiM_dust_density;
+      gr_float *FeM_dust_density;
+      gr_float *Mg2SiO4_dust_density;
+      gr_float *Fe3O4_dust_density;
+      gr_float *SiO2_dust_density;
+      gr_float *MgO_dust_density;
+      gr_float *FeS_dust_density;
+      gr_float *Al2O3_dust_density;
+      gr_float *ref_org_dust_density;
+      gr_float *vol_org_dust_density;
+      gr_float *H2O_ice_dust_density;
+      gr_float *local_ISM_metal_density;
+      gr_float *ccsn13_metal_density;
+      gr_float *ccsn20_metal_density;
+      gr_float *ccsn25_metal_density;
+      gr_float *ccsn30_metal_density;
+      gr_float *fsn13_metal_density;
+      gr_float *fsn15_metal_density;
+      gr_float *fsn50_metal_density;
+      gr_float *fsn80_metal_density;
+      gr_float *pisn170_metal_density;
+      gr_float *pisn200_metal_density;
+      gr_float *y19_metal_density;
       gr_float *volumetric_heating_rate;
       gr_float *specific_heating_rate;
       gr_float *temperature_floor;
@@ -165,9 +181,28 @@ cdef extern from "grackle.h":
       gr_float *RT_HeI_ionization_rate;
       gr_float *RT_HeII_ionization_rate;
       gr_float *RT_H2_dissociation_rate;
+      gr_float *RT_HDI_dissociation_rate;
+      gr_float *RT_CI_ionization_rate;
+      gr_float *RT_OI_ionization_rate;
+      gr_float *RT_CO_dissociation_rate;
+      gr_float *RT_OH_dissociation_rate;
+      gr_float *RT_H2O_dissociation_rate;
       gr_float *H2_self_shielding_length;
       gr_float *H2_custom_shielding_factor;
       gr_float *isrf_habing;
+      gr_float *SiM_dust_temperature;
+      gr_float *FeM_dust_temperature;
+      gr_float *Mg2SiO4_dust_temperature;
+      gr_float *MgSiO3_dust_temperature;
+      gr_float *Fe3O4_dust_temperature;
+      gr_float *AC_dust_temperature;
+      gr_float *SiO2_dust_temperature;
+      gr_float *MgO_dust_temperature;
+      gr_float *FeS_dust_temperature;
+      gr_float *Al2O3_dust_temperature;
+      gr_float *ref_org_dust_temperature;
+      gr_float *vol_org_dust_temperature;
+      gr_float *H2O_ice_dust_temperature;
 
     ctypedef struct c_grackle_version "grackle_version":
       const char* version;
@@ -259,3 +294,16 @@ cdef extern from "grackle.h":
     c_grackle_version c_get_grackle_version "get_grackle_version"()
 
     int gr_initialize_field_data(c_field_data *my_fields)
+
+    # the unstable API
+    ctypedef long long grunstable_rateid_type
+
+    grunstable_rateid_type grunstable_ratequery_id(const char* name)
+
+    double* grunstable_ratequery_get_ptr(
+        c_chemistry_data_storage* my_rates,
+        grunstable_rateid_type rate_id)
+
+    const char* grunstable_ith_rate(
+        unsigned long long i,
+        grunstable_rateid_type* out_rate_id)
