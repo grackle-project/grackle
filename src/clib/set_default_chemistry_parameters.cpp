@@ -15,11 +15,13 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 // set the global variables
 int grackle_verbose = FALSE;
 
 chemistry_data *grackle_data = nullptr;
 chemistry_data_storage grackle_rates;
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 extern "C" int local_initialize_chemistry_parameters(chemistry_data *my_chemistry)
 {
