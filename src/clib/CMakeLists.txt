@@ -89,7 +89,6 @@ add_library(Grackle_Grackle
   initialize_UVbackground_data.c  initialize_UVbackground_data.h
   rate_functions.c
   status_reporting.c status_reporting.h
-  utils.c
 
   # auto-generated C source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
@@ -130,6 +129,7 @@ add_library(Grackle_Grackle
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
+  utils.cpp utils.hpp
   fortran_func_wrappers.hpp
   visitor/common.hpp
   visitor/copy.hpp
@@ -178,7 +178,6 @@ add_library(Grackle_Grackle
   interp_table_utils.h
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
-  utils.h
   dust_const.def
 
   # Fortran public headers

@@ -16,7 +16,7 @@
 #include "cool_multi_time_g.h"
 #include "internal_units.h"
 #include "update_UVbackground_rates.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
                                             chemistry_data_storage *my_rates,

@@ -51,8 +51,8 @@ src/clib/time_deriv_0d.hpp
 src/clib/update_UVbackground_rates.cpp
 src/clib/utils-cpp.cpp
 src/clib/utils-cpp.hpp
-src/clib/utils.c
-src/clib/utils.h
+src/clib/utils.cpp
+src/clib/utils.hpp
 src/example/c_example.c
 src/example/c_local_example.c
 src/example/cxx_example.C
