@@ -5,8 +5,35 @@
 
 #include <random>
 #include <grackle.h>
+#include <string>
+#include <string_view>
 
 namespace grtest {
+
+/// Returns whether the `s` begins with the provided prefix
+///
+/// @note
+/// When we start using C++ 20, this can be replaced with the `starts_with`
+/// member functions of `std::string` and `std::string_view`
+inline bool starts_with(std::string_view s, std::string_view prefix) {
+#if defined(__cpp_lib_starts_ends_with) && __cpp_lib_starts_ends_with >= 201711L
+  return s.starts_with(prefix);
+#else
+  return s.substr(0, prefix.size()) == prefix;
+#endif
+}
+
+inline bool starts_with(std::string_view s, const char* prefix) {
+  return starts_with(s, std::string_view(prefix));
+}
+
+inline bool starts_with(const std::string& s, std::string_view prefix) {
+  return starts_with(std::string_view(s), prefix);
+}
+
+inline bool starts_with(const std::string& s, const char* prefix) {
+  return starts_with(std::string_view(s), prefix);
+}
 
 /// this function records the desired standard datafile within the
 /// chemistry_data struct. It deals with the minutia of making sure that

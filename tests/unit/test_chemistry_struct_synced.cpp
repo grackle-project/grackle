@@ -1,4 +1,4 @@
-#include "grtest_cmd.hpp"
+#include "grtestutils/cmd.hpp"
 
 #include <grackle.h>
 
@@ -106,6 +106,7 @@ MemberTypeNameMapResult query_struct_members(std::string struct_name)
       {}
     };
   } else if (std::fgetc(f) == EOF) {
+    std::fclose(f);
     std::string msg(
       "The build-system wrote an empty xml-file, which usually means that "
       "castxml wasn't installed. If you install castxml, you need to instruct "
