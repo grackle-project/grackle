@@ -1,6 +1,6 @@
 /***********************************************************************
 /
-/ Calculate cooling time field
+/ Solve the chemistry and cooling
 /
 /
 / Copyright (c) 2013, Enzo/Grackle Development Team.
@@ -11,38 +11,24 @@
 / software.
 ************************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
 #include "grackle.h"
-#include "grackle_macros.h"
-#include "cool_multi_time_g.h"
-#include "grackle_types.h"
 #include "internal_units.h"
-#include "phys_constants.h"
+#include "solve_rate_cool_g-cpp.h"
+#include "update_UVbackground_rates.hpp"
 #include "utils.h"
 
-extern chemistry_data *grackle_data;
-extern chemistry_data_storage grackle_rates;
-
-/* function prototypes */
-
-int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              chemistry_data_storage *my_rates,
-                              photo_rate_storage *my_uvb_rates,
-                              code_units *my_units);
- 
-int local_calculate_cooling_time(chemistry_data *my_chemistry,
-                                 chemistry_data_storage *my_rates,
-                                 code_units *my_units,
-                                 grackle_field_data *my_fields,
-                                 gr_float *cooling_time)
+extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
+                                     chemistry_data_storage *my_rates,
+                                     code_units *my_units,
+                                     grackle_field_data *my_fields,
+                                     double dt_value)
 {
- 
+
   /* Return if this doesn't concern us. */
 
   if (!my_chemistry->use_grackle)
-    return SUCCESS;
+    return GR_SUCCESS;
 
   /* Update UV background rates. */
   photo_rate_storage my_uvb_rates;
@@ -55,10 +41,10 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
     my_uvb_rates.comp_xray = my_uvb_rates.temp_xray = 0.;
 
   if (my_chemistry->UVbackground == 1) {
-    if (update_UVbackground_rates(my_chemistry, my_rates,
-                                  &my_uvb_rates, my_units) == FAIL) {
-      fprintf(stderr, "Error in update_UVbackground_rates.\n");
-      return FAIL;
+    if (grackle::impl::update_UVbackground_rates(
+          my_chemistry, my_rates, &my_uvb_rates, my_units) != GR_SUCCESS) {
+      std::fprintf(stderr, "Error in update_UVbackground_rates.\n");
+      return GR_FAIL;
     }
   }
   else {
@@ -90,27 +76,33 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
 
   /* Error checking for H2 shielding approximation */
   if (self_shielding_err_check(my_chemistry, my_fields,
-                               "local_calculate_temperature") == FAIL) {
-    return FAIL;
+                               "local_solve_chemistry") != GR_SUCCESS) {
+    return GR_SUCCESS;
   }
 
-  /* Solve cooling equations. */
-  cool_multi_time_g(
-    cooling_time, metal_field_present, internalu, my_chemistry, my_rates,
-    my_fields, my_uvb_rates
+  /* Call the routine to solve cooling equations. */
+
+  int ierr = solve_rate_cool_g(
+    metal_field_present, dt_value, internalu,
+    my_chemistry, my_rates, my_fields, &my_uvb_rates
   );
- 
-  return SUCCESS;
+
+  if (ierr != GR_SUCCESS) {
+    std::fprintf(stderr, "Error in solve_rate_cool_g.\n");
+  }
+
+  return ierr;
+
 }
 
-int calculate_cooling_time(code_units *my_units,
-                           grackle_field_data *my_fields,
-                           gr_float *cooling_time)
+extern "C" int solve_chemistry(code_units *my_units,
+                               grackle_field_data *my_fields,
+                               double dt_value)
 {
-  if (local_calculate_cooling_time(grackle_data, &grackle_rates, my_units,
-                                   my_fields, cooling_time) == FAIL) {
-    fprintf(stderr, "Error in local_calculate_cooling_time.\n");
-    return FAIL;
+  if (local_solve_chemistry(grackle_data, &grackle_rates,
+                            my_units, my_fields, dt_value) != GR_SUCCESS) {
+    std::fprintf(stderr, "Error in local_solve_chemistry.\n");
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }

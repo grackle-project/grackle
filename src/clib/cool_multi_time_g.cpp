@@ -16,6 +16,8 @@
 #include <cstdio>
 #include <vector>
 
+#include "cool1d_multi_g.hpp"
+#include "cool_multi_time_g.h"
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
@@ -23,7 +25,6 @@
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
-#include "cool_multi_time_g.h"
 #include "scale_fields_g-cpp.h"
 
 #ifdef __cplusplus
@@ -36,9 +37,6 @@ void cool_multi_time_g(
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates
 )
 {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
   // Convert densities from comoving to 'proper'
@@ -102,11 +100,11 @@ void cool_multi_time_g(
       // Compute the cooling rate
       int dummy_iter_arg=1;
 
-      f_wrap::cool1d_multi_g(
-        imetal, idx_range, dummy_iter_arg, edot.data(), tgas.data(),
+      cool1d_multi_g(
+        imetal, dummy_iter_arg, edot.data(), tgas.data(),
         mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
-        my_chemistry, my_rates, my_fields, my_uvb_rates, internalu,
+        my_chemistry, my_rates, my_fields, my_uvb_rates, internalu, idx_range,
         grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf
       );

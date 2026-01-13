@@ -45,6 +45,7 @@
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
 #include "collisional_rate_props.hpp"  // init_extra_collisional_rates
+#include "dust/grain_species_info.hpp"
 #include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
 #include "initialize_dust_yields.hpp"  // initialize_dust_yields
 #include "initialize_rates.hpp"
@@ -256,11 +257,12 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
                              double kUnit) {
 
   //H2 formation on dust grains with C and S compositions
-  if (add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry)
-      != GR_SUCCESS) {
-    return GR_FAIL;
-  } else if (add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit,
-                                        my_chemistry) != GR_SUCCESS) {
+  if (
+    (add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry)
+      != GR_SUCCESS) ||
+    (add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit, my_chemistry)
+      != GR_SUCCESS)
+  ) {
     return GR_FAIL;
   }
 
@@ -295,7 +297,7 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
   interp_props->parameters[0] = d_Td;
   interp_props->parameters[1] = d_Tg;
   interp_props->parameter_spacing[0] = dlogTdust;
-  interp_props->parameter_spacing[0] = dlogtem;
+  interp_props->parameter_spacing[1] = dlogtem;
   interp_props->data_size = n_Tdust*n_Tgas;
 
   return GR_SUCCESS;
@@ -351,8 +353,7 @@ int init_kcol_rate_tables(
 ) {
   // allocate storage for kcol_rate_tables
   grackle::impl::CollisionalRxnRateCollection* tables =
-    (grackle::impl::CollisionalRxnRateCollection*) malloc
-      (sizeof(grackle::impl::CollisionalRxnRateCollection));
+    new grackle::impl::CollisionalRxnRateCollection;
 
   // allocate storage within kcol_rate_tables
   *tables = grackle::impl::new_CollisionalRxnRateCollection(
@@ -368,7 +369,7 @@ int init_kcol_rate_tables(
     return GrPrintAndReturnErr("this logic shouldn't be executed in a config "
                                "with 0 \"ordinary\" collisional rxn rates");
   }
-  int* used_kcol_rate_indices = (int*)malloc(n_kcol_rate_indices * sizeof(int));
+  int* used_kcol_rate_indices = new int[n_kcol_rate_indices];
 
   // now its time to initialize the storage
   TablesInitCallbackCtx ctx{
@@ -645,7 +646,17 @@ int grackle::impl::initialize_rates(
       fprintf(stderr, "Error in initialize_metal_chemistry_rates.\n");
       return GR_FAIL;
     }
-    /* Dust rates */
+
+    // Dust Grain Species Information
+    // (it may make sense want to handle more of the dust separately)
+    if (my_chemistry->dust_species > 0) {
+      my_rates->opaque_storage->grain_species_info = 
+        new grackle::impl::GrainSpeciesInfo;
+      *(my_rates->opaque_storage->grain_species_info) =
+        grackle::impl::new_GrainSpeciesInfo(my_chemistry->dust_species);
+    }
+
+    // Dust rates
     if (grackle::impl::initialize_dust_yields(my_chemistry, my_rates, my_units) == FAIL) {
       fprintf(stderr, "Error in initialize_dust_yields.\n");
       return FAIL;
