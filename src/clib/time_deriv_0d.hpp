@@ -6,12 +6,15 @@
 #ifndef TIME_DERIV_0D_HPP
 #define TIME_DERIV_0D_HPP
 
+#include "cool1d_multi_g.hpp"
 #include "chemistry_solver_funcs.hpp"
+#include "dust_props.hpp"
 #include "fortran_func_wrappers.hpp"
 #include "grackle.h"
 #include "grackle_macros.h" // GRACKLE_FREE
 #include "index_helper.h"
 #include "internal_types.hpp"
+#include "lookup_cool_rates1d.hpp"
 #include "utils-field.hpp"
 
 // we choose to adopt a longer, more descriptive namespace here so that the
@@ -52,16 +55,19 @@ struct MainScratchBuf {
   Cool1DMultiScratchBuf cool1dmulti_buf;
   CoolHeatScratchBuf coolingheating_buf;
   ChemHeatingRates chemheatrates_buf;
+  InternalDustPropBuf internal_dust_prop_scratch_buf;
 
   // the remaining buffers were originally reallocated (mostly on the stack)
   // every time calculated the time derivatives were computed
   CollisionalRxnRateCollection kcr_buf;
   PhotoRxnRateCollection kshield_buf;
   GrainSpeciesCollection grain_growth_rates;
-  double* k13dd; // <- only used within lookup_cool_rates1d_g
 };
 
-MainScratchBuf new_MainScratchBuf(void) {
+
+/// @param[in] opacity_table_size The number of elements in a dynamically
+///    computed dust grain opacity table
+MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
   int nelem = 1;
   MainScratchBuf out;
   out.grain_temperatures = new_GrainSpeciesCollection(nelem);
@@ -69,11 +75,13 @@ MainScratchBuf new_MainScratchBuf(void) {
   out.cool1dmulti_buf = new_Cool1DMultiScratchBuf(nelem);
   out.coolingheating_buf = new_CoolHeatScratchBuf(nelem);
   out.chemheatrates_buf = new_ChemHeatingRates(nelem);
+  out.internal_dust_prop_scratch_buf =
+    new_InternalDustPropBuf(nelem, grain_opacity_table_size);
+
 
   out.kcr_buf = new_CollisionalRxnRateCollection(nelem);
   out.kshield_buf = new_PhotoRxnRateCollection(nelem);
   out.grain_growth_rates = new_GrainSpeciesCollection(nelem);
-  out.k13dd = (double*)malloc(sizeof(double)*14*nelem);
   return out;
 }
 
@@ -83,11 +91,11 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_Cool1DMultiScratchBuf(&ptr->cool1dmulti_buf);
   drop_CoolHeatScratchBuf(&ptr->coolingheating_buf);
   drop_ChemHeatingRates(&ptr->chemheatrates_buf);
+  drop_InternalDustPropBuf(&ptr->internal_dust_prop_scratch_buf);
 
   drop_CollisionalRxnRateCollection(&ptr->kcr_buf);
   drop_PhotoRxnRateCollection(&ptr->kshield_buf);
   drop_GrainSpeciesCollection(&ptr->grain_growth_rates);
-  GRACKLE_FREE(ptr->k13dd);
 }
 
 /// this is a collections of values intended to act as 1-element arrays and
@@ -392,7 +400,7 @@ inline void scratchbufs_copy_from_pack(
 /// calculate the time derivatives
 ///
 /// @param[in] dt_FIXME Specifies the timestep passed to the
-///   lookup_cool_rates1d_g function. See the C++ docstring for that function
+///   lookup_cool_rates1d function. See the docstring for that function
 ///   for more details (this needs to be revisited)
 /// @param[in] rhosp Specifies the species mass densities to use for computing
 ///   the time derivatives. This always has enough space for each species (it
@@ -466,20 +474,15 @@ void derivatives(
   // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
   if (pack.local_edot_handling == 1) {
-    // this is a hacky bugfix
-    // -> we need my_local_iter to be 1. If it has any other value,
-    //    `cool1d_multi_g` will assume that `tgasold` was previously
-    //    initialized (it's not!) and try to use its contained value
-    int my_local_iter = 1;
-    f_wrap::cool1d_multi_g(
-      pack.fwd_args.imetal, pack.idx_range_1_element, my_local_iter,
+
+    cool1d_multi_g(
+      pack.fwd_args.imetal, pack.fwd_args.iter,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
       pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
       pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
-      pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry,
-      my_rates, &pack.fields,
-      my_uvb_rates, internalu, pack.main_scratch_buf.grain_temperatures,
+      pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
+      my_uvb_rates, internalu, pack.idx_range_1_element, pack.main_scratch_buf.grain_temperatures,
       pack.main_scratch_buf.logTlininterp_buf,
       pack.main_scratch_buf.cool1dmulti_buf,
       pack.main_scratch_buf.coolingheating_buf
@@ -488,21 +491,20 @@ void derivatives(
 
   // uses the temperature to look up the chemical rates (they are interpolated
   // with respect to log temperature from input tables)
-  f_wrap::lookup_cool_rates1d_g(
+  grackle::impl::lookup_cool_rates1d(
     pack.idx_range_1_element, pack.fwd_args.anydust,
     pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
     pack.other_scratch_buf.tdust, pack.other_scratch_buf.dust2gas,
-    pack.main_scratch_buf.k13dd, pack.other_scratch_buf.h2dust,
-    pack.fwd_args.dom, pack.fwd_args.dx_cgs,
-    pack.fwd_args.c_ljeans, pack.other_scratch_buf.itmask,
-    &pack.local_itmask_metal, pack.fwd_args.imetal,
-    pack.other_scratch_buf.rhoH, dt_FIXME,
+    pack.other_scratch_buf.h2dust,
+    pack.fwd_args.dom, pack.fwd_args.dx_cgs, pack.fwd_args.c_ljeans,
+    pack.other_scratch_buf.itmask, &pack.local_itmask_metal, dt_FIXME,
     my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
     pack.main_scratch_buf.grain_growth_rates,
     pack.main_scratch_buf.grain_temperatures,
     pack.main_scratch_buf.logTlininterp_buf,
     pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf,
-    pack.main_scratch_buf.chemheatrates_buf
+    pack.main_scratch_buf.chemheatrates_buf,
+    pack.main_scratch_buf.internal_dust_prop_scratch_buf
   );
 
 

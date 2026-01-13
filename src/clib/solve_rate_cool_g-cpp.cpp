@@ -17,18 +17,22 @@
 #include <cstdlib> // std::malloc, std::free
 #include <cstring> // std::memcpy
 #include <vector>
-
+#include <iostream>
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
+#include "lookup_cool_rates1d.hpp"
+#include "make_consistent.hpp"
 #include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
 
+#include "ceiling_species.hpp"
+#include "scale_fields_g-cpp.h"
 #include "solve_rate_cool_g-cpp.h"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
@@ -146,7 +150,17 @@ static void setup_chem_scheme_masks_(
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if ( itmask[i] != MASK_FALSE )  {
       bool usemetal = (imetal == 1) && (metallicity[i] > min_metallicity);
-      bool is_hi_dens = (ddom[i] >= 1.e8) || (usemetal && (ddom[i] >= 1.0e6));
+      bool is_hi_dens;
+      if (my_chemistry->solver_method == 2) {
+        // Force Gauss-Seidel
+        is_hi_dens = false;
+      } else if (my_chemistry->solver_method == 3) {
+        // Force Newton-Raphson
+        is_hi_dens = true;
+      } else {
+        // Default
+        is_hi_dens = (ddom[i] >= 1.e8) || (usemetal && (ddom[i] >= 1.0e6));
+      }
 
       itmask_gs[i] = (!is_hi_dens) ? MASK_TRUE : MASK_FALSE;
       itmask_nr[i] = (is_hi_dens) ? MASK_TRUE : MASK_FALSE;
@@ -519,12 +533,6 @@ struct SpeciesRateSolverScratchBuf {
   /// buffer used to track the rate of H2 formation on dust grains
   double* h2dust;
 
-  /// scratch space used only within lookup_cool_rates1d_g. This is 14 times
-  /// larger than most of the other buffers.
-  ///
-  /// (with minimal refactoring, this buffer could probably be removed)
-  double *k13dd;
-
   /// iteration mask denoting where the Gauss-Seidel scheme will be used
   gr_mask_type* itmask_gs;
 
@@ -572,8 +580,6 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
   f(VIS_MEMBER_NAME("HIdot"), obj0.HIdot, obj1.HIdot, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("dedot_prev"), obj0.dedot_prev, obj1.dedot_prev, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("HIdot_prev"), obj0.HIdot_prev, obj1.HIdot_prev, vis::idx_range_len_multiple(1));
-  // the next line is NOT a typo
-  f(VIS_MEMBER_NAME("k13dd"), obj0.k13dd, obj1.k13dd, vis::idx_range_len_multiple(14));
   f(VIS_MEMBER_NAME("h2dust"), obj0.h2dust, obj1.h2dust, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("itmask_gs"), obj0.itmask_gs, obj1.itmask_gs, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("itmask_nr"), obj0.itmask_nr, obj1.itmask_nr, vis::idx_range_len_multiple(1));
@@ -675,10 +681,10 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
-  f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
+  grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
@@ -699,6 +705,15 @@ int solve_rate_cool_g(
 
     grackle::impl::CoolHeatScratchBuf coolingheating_buf =
       grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
+
+    // at the time of writing, the following scratch buffer is **ONLY** used
+    // within lookup_cool_rates1d. In the future, we should really work on
+    // tracking this as a part of grackle::impl::SpeciesRateSolverScratchBuf
+    // (we can't do it right now since we need to pass in 2 arguments to the
+    // factory function)
+    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf =
+      grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
+                                              my_rates->gr_N[1]);
 
     // holds buffers exclusively used for solving species rate equations
     // (i.e. in the future, we could have the constructor skip allocations of
@@ -789,13 +804,17 @@ int solve_rate_cool_g(
         }
 
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
-        f_wrap::cool1d_multi_g(
-          imetal, idx_range, iter, edot.data(), tgas.data(),
-          mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
-          dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
-          my_chemistry, my_rates, my_fields, *my_uvb_rates, internalu,
-          grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
-          coolingheating_buf
+        cool1d_multi_g(
+          imetal, iter,
+          edot.data(),
+          tgas.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+          dust2gas.data(), rhoH.data(), itmask.data(),
+          itmask_metal.data(), my_chemistry,
+          my_rates, my_fields,
+          *my_uvb_rates, internalu,
+          idx_range,
+          grain_temperatures, logTlininterp_buf,
+          cool1dmulti_buf, coolingheating_buf
         );
 
         if (my_chemistry->primordial_chemistry > 0)  {
@@ -805,14 +824,14 @@ int solve_rate_cool_g(
           //
           // -> TODO: passing dt to this function is probably incorrect. See
           //    the C++ docstring for a longer discussion
-          f_wrap::lookup_cool_rates1d_g(
+          grackle::impl::lookup_cool_rates1d(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
-            dust2gas.data(), spsolvbuf.k13dd, spsolvbuf.h2dust,
-            dom, dx_cgs, c_ljeans, itmask.data(), itmask_metal.data(),
-            imetal, rhoH.data(), dt, my_chemistry, my_rates, my_fields,
-            *my_uvb_rates, internalu, spsolvbuf.grain_growth_rates,
-            grain_temperatures, logTlininterp_buf, spsolvbuf.kcr_buf,
-            spsolvbuf.kshield_buf, spsolvbuf.chemheatrates_buf
+            dust2gas.data(), spsolvbuf.h2dust, dom, dx_cgs,
+            c_ljeans, itmask.data(), itmask_metal.data(), dt, my_chemistry,
+            my_rates, my_fields, *my_uvb_rates, internalu,
+            spsolvbuf.grain_growth_rates, grain_temperatures,
+            logTlininterp_buf, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
+            spsolvbuf.chemheatrates_buf, internal_dust_prop_scratch_buf
           );
 
           // Compute dedot and HIdot, the rates of change of de and HI
@@ -881,12 +900,12 @@ int solve_rate_cool_g(
           // Solve rate equations with one linearly implicit Gauss-Seidel
           // sweep of a backward Euler method (for all cells specified by
           // itmask_gs)
-          f_wrap::step_rate_g(
+          grackle::impl::step_rate_gauss_seidel(
             dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
-            itmask_metal.data(), imetal, my_chemistry, my_fields,
-            *my_uvb_rates, spsolvbuf.grain_growth_rates,
-            spsolvbuf.species_tmpdens, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf
+            itmask_metal.data(), my_chemistry, my_fields, *my_uvb_rates,
+            spsolvbuf.grain_growth_rates, spsolvbuf.species_tmpdens,
+            spsolvbuf.kcr_buf, spsolvbuf.kshield_buf
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel
@@ -967,6 +986,7 @@ int solve_rate_cool_g(
     grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
     grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
+    grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_scratch_buf);
 
     grackle::impl::drop_SpeciesRateSolverScratchBuf(&spsolvbuf);
 
@@ -982,14 +1002,14 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
   if (my_chemistry->primordial_chemistry > 0)  {
 
     // Correct the species to ensure consistency (i.e. type conservation)
 
-    f_wrap::make_consistent_g(imetal, dom, my_chemistry, my_rates, my_fields);
+    grackle::impl::make_consistent(imetal, dom, my_chemistry, my_rates, my_fields);
 
   }
 
