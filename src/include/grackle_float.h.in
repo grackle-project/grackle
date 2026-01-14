@@ -8,7 +8,7 @@
   //    relevant `.def` file.
 
   // this logic should occur before the header guards
-  #ifndef GRIMPL_PUBLIC_INCLUDE
+  #if !defined(GRIMPL_PUBLIC_INCLUDE) && !defined(GRIMPL_COMPILING_CORE_LIB)
     #include "grackle_misc.h"
     GRIMPL_COMPTIME_WARNING(
       "You are using a deprecated header file; include the public "
@@ -21,5 +21,19 @@
 
 #ifndef __GRACKLE_FLOAT_H__
 #define __GRACKLE_FLOAT_H__
+
 #define @GRACKLE_FLOAT_MACRO@
+
+#ifdef __cplusplus
+// GRIMPL_MAX_INJ_PATHWAYS is used to specify the maximum number of injection
+// pathways that Grackle can currently model at a given time
+// -> we choose to define this macro within this header so that it's exposed
+//    to both C and Fortran headers
+// -> the existence of this macro is an implementation detail, it can/will
+//    be removed at any time (without warning)
+// -> if you update the value of this macro, make sure you update hardcoded
+//    value(s) used in grackle_defs.pxd
+#endif
+#define GRIMPL_MAX_INJ_PATHWAYS 12
+
 #endif

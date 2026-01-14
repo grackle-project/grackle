@@ -199,7 +199,7 @@
     # this to minimize conflicts with the newchem-cpp branch
     DEFINES = $(MACH_DEFINES) \
               $(ASSEMBLE_IO_DEFINES) \
-              -DGRIMPL_PUBLIC_INCLUDE=1
+              -DGRIMPL_COMPILING_CORE_LIB=1
 
     PUBLIC_HEADER_SRCDIR = $(GRACKLE_DIR)/../include
     AUTOGEN_DIR = $(GRACKLE_DIR)/autogen

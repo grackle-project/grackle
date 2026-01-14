@@ -18,15 +18,19 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
+#include "inject_model/grain_metal_inject_pathways.hpp"
+#include "inject_model/misc.hpp"
+#include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
 #include "make_consistent.hpp"
 
 namespace grackle::impl {
 
-void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
-                     chemistry_data_storage* my_rates,
-                     grackle_field_data* my_fields) {
+void make_consistent(
+    int imetal, double dom, chemistry_data* my_chemistry,
+    const grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
+    grackle_field_data* my_fields) {
   // Arguments
 
   grackle::impl::View<gr_float***> de(
@@ -47,12 +51,14 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
   grackle::impl::View<gr_float***> HeIII(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> d(
-      my_fields->density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal(
-      my_fields->metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> d(
+      const_cast<const gr_float*>(my_fields->density),
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> metal(
+      const_cast<const gr_float*>(my_fields->metal_density),
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> HM(
       my_fields->HM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -188,42 +194,6 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
   grackle::impl::View<gr_float***> H2Oice(
       my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_loc(
-      my_fields->local_ISM_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C13(
-      my_fields->ccsn13_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C20(
-      my_fields->ccsn20_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C25(
-      my_fields->ccsn25_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C30(
-      my_fields->ccsn30_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F13(
-      my_fields->fsn13_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F15(
-      my_fields->fsn15_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F50(
-      my_fields->fsn50_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F80(
-      my_fields->fsn80_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P170(
-      my_fields->pisn170_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P200(
-      my_fields->pisn200_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_Y19(
-      my_fields->y19_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // locals
 
@@ -240,11 +210,30 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
       correctFe;
   gr_float correctCg, correctOg, correctMgg, correctSig, correctFeg;
   gr_float correctCd, correctOd, correctMgd, correctSid, correctFed;
-  int iSN, nSN, iSN0;
-  std::vector<gr_float> SN_metal_data_(my_fields->grid_dimension[0] *
-                                       my_rates->SN0_N);
-  grackle::impl::View<gr_float**> SN_metal(
-      SN_metal_data_.data(), my_fields->grid_dimension[0], my_rates->SN0_N);
+
+  // when relevant, each view within SN_metal_arr wraps a field specifying the
+  // total metal density that corresponds to an injection pathway
+  grackle::impl::View<const gr_float***>
+      SN_metal_arr[inj_model_input::N_Injection_Pathways];
+
+  int n_pathways = 0;
+  // construct view of each specified injection pathway metal density field
+  if (my_chemistry->metal_chemistry > 0) {
+    // note: when (my_chemistry->multi_metals == 0) a view within
+    //       SN_metal_arr will wrap my_fields->metal_density. In other words,
+    //       that view will be an alias of the `metal` view. This is ok because
+    //       my_fields->metal_density is **NOT** mutated by this function.
+    n_pathways = inject_pathway_props->n_pathways;
+    const gr_float* const* inject_pathway_metal_densities =
+        get_inject_pathway_metal_density(my_chemistry, my_fields);
+
+    for (int iSN = 0; iSN < n_pathways; iSN++) {
+      SN_metal_arr[iSN] = grackle::impl::View<const gr_float***>(
+          inject_pathway_metal_densities[iSN], my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    }
+  }
+
   std::vector<double> Ct(my_fields->grid_dimension[0]);
   std::vector<double> Ot(my_fields->grid_dimension[0]);
   std::vector<double> Mgt(my_fields->grid_dimension[0]);
@@ -337,98 +326,46 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
       // endif
 
       if (my_chemistry->metal_chemistry > 0) {
-        if (my_chemistry->multi_metals == 0) {
-          iSN0 = my_chemistry->metal_abundances;
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            Ct[i] = my_rates->SN0_XC[iSN0] * metal(i, j, k);
-            Ot[i] = my_rates->SN0_XO[iSN0] * metal(i, j, k);
-            Mgt[i] = my_rates->SN0_XMg[iSN0] * metal(i, j, k);
-            Alt[i] = my_rates->SN0_XAl[iSN0] * metal(i, j, k);
-            Sit[i] = my_rates->SN0_XSi[iSN0] * metal(i, j, k);
-            St[i] = my_rates->SN0_XS[iSN0] * metal(i, j, k);
-            Fet[i] = my_rates->SN0_XFe[iSN0] * metal(i, j, k);
+        // compute the expected mass density for each metal nuclide using the
+        // yields from every injection pathway
+        const grackle::impl::yields::MetalTables& total_metal_yields =
+            inject_pathway_props->total_metal_nuclide_yields;
+        const grackle::impl::yields::MetalTables& onlygas_metal_yields =
+            inject_pathway_props->gas_metal_nuclide_yields;
 
-            Cg[i] = my_rates->SN0_fC[iSN0] * metal(i, j, k);
-            Og[i] = my_rates->SN0_fO[iSN0] * metal(i, j, k);
-            Mgg[i] = my_rates->SN0_fMg[iSN0] * metal(i, j, k);
-            Alg[i] = my_rates->SN0_fAl[iSN0] * metal(i, j, k);
-            Sig[i] = my_rates->SN0_fSi[iSN0] * metal(i, j, k);
-            Sg[i] = my_rates->SN0_fS[iSN0] * metal(i, j, k);
-            Feg[i] = my_rates->SN0_fFe[iSN0] * metal(i, j, k);
-          }
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          Ct[i] = 0.;
+          Cg[i] = 0.;
+          Ot[i] = 0.;
+          Og[i] = 0.;
+          Mgt[i] = 0.;
+          Mgg[i] = 0.;
+          Alt[i] = 0.;
+          Alg[i] = 0.;
+          Sit[i] = 0.;
+          Sig[i] = 0.;
+          St[i] = 0.;
+          Sg[i] = 0.;
+          Fet[i] = 0.;
+          Feg[i] = 0.;
+          for (int iSN = 0; iSN < n_pathways; iSN++) {
+            gr_float cur_val = SN_metal_arr[iSN](i, j, k);
 
-        } else {
-          //        do i = is+1, ie+1
-          //           totalZ = metal_loc(i,j,k)
-          // &           + metal_C13(i,j,k) + metal_C20(i,j,k)
-          // &           + metal_C25(i,j,k) + metal_C30(i,j,k)
-          // &           + metal_F13(i,j,k) + metal_F15(i,j,k)
-          // &           + metal_F50(i,j,k) + metal_F80(i,j,k)
-          // &           + metal_P170(i,j,k)+ metal_P200(i,j,k)
-          // &           + metal_Y19(i,j,k)
-          //           correctZ = metal(i,j,k) / totalZ
-          //           metal_loc(i,j,k) = metal_loc(i,j,k) * correctZ
-          //           metal_C13(i,j,k) = metal_C13(i,j,k) * correctZ
-          //           metal_C20(i,j,k) = metal_C20(i,j,k) * correctZ
-          //           metal_C25(i,j,k) = metal_C25(i,j,k) * correctZ
-          //           metal_C30(i,j,k) = metal_C30(i,j,k) * correctZ
-          //           metal_F13(i,j,k) = metal_F13(i,j,k) * correctZ
-          //           metal_F15(i,j,k) = metal_F15(i,j,k) * correctZ
-          //           metal_F50(i,j,k) = metal_F50(i,j,k) * correctZ
-          //           metal_F80(i,j,k) = metal_F80(i,j,k) * correctZ
-          //           metal_P170(i,j,k)= metal_P170(i,j,k)* correctZ
-          //           metal_P200(i,j,k)= metal_P200(i,j,k)* correctZ
-          //           metal_Y19(i,j,k) = metal_Y19(i,j,k) * correctZ
-          //        enddo
+            Ct[i] = Ct[i] + total_metal_yields.C[iSN] * cur_val;
+            Ot[i] = Ot[i] + total_metal_yields.O[iSN] * cur_val;
+            Mgt[i] = Mgt[i] + total_metal_yields.Mg[iSN] * cur_val;
+            Alt[i] = Alt[i] + total_metal_yields.Al[iSN] * cur_val;
+            Sit[i] = Sit[i] + total_metal_yields.Si[iSN] * cur_val;
+            St[i] = St[i] + total_metal_yields.S[iSN] * cur_val;
+            Fet[i] = Fet[i] + total_metal_yields.Fe[iSN] * cur_val;
 
-          nSN = 12;
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            SN_metal(i, 0) = metal_loc(i, j, k);
-            SN_metal(i, 1) = metal_C13(i, j, k);
-            SN_metal(i, 2) = metal_C20(i, j, k);
-            SN_metal(i, 3) = metal_C25(i, j, k);
-            SN_metal(i, 4) = metal_C30(i, j, k);
-            SN_metal(i, 5) = metal_F13(i, j, k);
-            SN_metal(i, 6) = metal_F15(i, j, k);
-            SN_metal(i, 7) = metal_F50(i, j, k);
-            SN_metal(i, 8) = metal_F80(i, j, k);
-            SN_metal(i, 9) = metal_P170(i, j, k);
-            SN_metal(i, 10) = metal_P200(i, j, k);
-            SN_metal(i, 11) = metal_Y19(i, j, k);
-          }
-
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            Ct[i] = 0.;
-            Cg[i] = 0.;
-            Ot[i] = 0.;
-            Og[i] = 0.;
-            Mgt[i] = 0.;
-            Mgg[i] = 0.;
-            Alt[i] = 0.;
-            Alg[i] = 0.;
-            Sit[i] = 0.;
-            Sig[i] = 0.;
-            St[i] = 0.;
-            Sg[i] = 0.;
-            Fet[i] = 0.;
-            Feg[i] = 0.;
-            for (iSN = 0; iSN < nSN; iSN++) {
-              Ct[i] = Ct[i] + my_rates->SN0_XC[iSN] * SN_metal(i, iSN);
-              Ot[i] = Ot[i] + my_rates->SN0_XO[iSN] * SN_metal(i, iSN);
-              Mgt[i] = Mgt[i] + my_rates->SN0_XMg[iSN] * SN_metal(i, iSN);
-              Alt[i] = Alt[i] + my_rates->SN0_XAl[iSN] * SN_metal(i, iSN);
-              Sit[i] = Sit[i] + my_rates->SN0_XSi[iSN] * SN_metal(i, iSN);
-              St[i] = St[i] + my_rates->SN0_XS[iSN] * SN_metal(i, iSN);
-              Fet[i] = Fet[i] + my_rates->SN0_XFe[iSN] * SN_metal(i, iSN);
-
-              Cg[i] = Cg[i] + my_rates->SN0_fC[iSN] * SN_metal(i, iSN);
-              Og[i] = Og[i] + my_rates->SN0_fO[iSN] * SN_metal(i, iSN);
-              Mgg[i] = Mgg[i] + my_rates->SN0_fMg[iSN] * SN_metal(i, iSN);
-              Alg[i] = Alg[i] + my_rates->SN0_fAl[iSN] * SN_metal(i, iSN);
-              Sig[i] = Sig[i] + my_rates->SN0_fSi[iSN] * SN_metal(i, iSN);
-              Sg[i] = Sg[i] + my_rates->SN0_fS[iSN] * SN_metal(i, iSN);
-              Feg[i] = Feg[i] + my_rates->SN0_fFe[iSN] * SN_metal(i, iSN);
-            }
+            Cg[i] = Cg[i] + onlygas_metal_yields.C[iSN] * cur_val;
+            Og[i] = Og[i] + onlygas_metal_yields.O[iSN] * cur_val;
+            Mgg[i] = Mgg[i] + onlygas_metal_yields.Mg[iSN] * cur_val;
+            Alg[i] = Alg[i] + onlygas_metal_yields.Al[iSN] * cur_val;
+            Sig[i] = Sig[i] + onlygas_metal_yields.Si[iSN] * cur_val;
+            Sg[i] = Sg[i] + onlygas_metal_yields.S[iSN] * cur_val;
+            Feg[i] = Feg[i] + onlygas_metal_yields.Fe[iSN] * cur_val;
           }
         }
 

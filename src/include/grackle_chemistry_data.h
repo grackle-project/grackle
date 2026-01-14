@@ -12,7 +12,7 @@
 ************************************************************************/
 
 // this should go before the header-guard
-#ifndef GRIMPL_PUBLIC_INCLUDE
+#if !defined(GRIMPL_PUBLIC_INCLUDE) && !defined(GRIMPL_COMPILING_CORE_LIB)
   #include "grackle_misc.h"
   GRIMPL_COMPTIME_WARNING(
     "You are using a deprecated header file; include the public \"grackle.h\" "
@@ -604,22 +604,6 @@ typedef struct
    * -> alphap.parameters[0] is log10(mass density)
    * -> alphap.parameters[1] is log10(temperature) */
   gr_interp_grid alphap;
-
-  /* metal/dust abundance */
-  int    *gr_N, gr_Size;
-  double gr_dT, *gr_Td;
-  int     SN0_N;
-  double *SN0_XC , *SN0_XO , *SN0_XMg, *SN0_XAl, *SN0_XSi, *SN0_XS , *SN0_XFe;
-  double *SN0_fC , *SN0_fO , *SN0_fMg, *SN0_fAl, *SN0_fSi, *SN0_fS , *SN0_fFe;
-  double *SN0_fSiM, *SN0_fFeM, *SN0_fMg2SiO4, *SN0_fMgSiO3, *SN0_fFe3O4
-       , *SN0_fAC, *SN0_fSiO2D, *SN0_fMgO, *SN0_fFeS, *SN0_fAl2O3
-       , *SN0_freforg , *SN0_fvolorg , *SN0_fH2Oice;
-  double *SN0_r0SiM, *SN0_r0FeM, *SN0_r0Mg2SiO4, *SN0_r0MgSiO3, *SN0_r0Fe3O4
-       , *SN0_r0AC, *SN0_r0SiO2D, *SN0_r0MgO, *SN0_r0FeS, *SN0_r0Al2O3
-       , *SN0_r0reforg , *SN0_r0volorg , *SN0_r0H2Oice;
-  double *SN0_kpSiM, *SN0_kpFeM, *SN0_kpMg2SiO4, *SN0_kpMgSiO3, *SN0_kpFe3O4
-       , *SN0_kpAC, *SN0_kpSiO2D, *SN0_kpMgO, *SN0_kpFeS, *SN0_kpAl2O3
-       , *SN0_kpreforg , *SN0_kpvolorg , *SN0_kpH2Oice;
 
   /* UV background data */
   UVBtable UVbackground_table;

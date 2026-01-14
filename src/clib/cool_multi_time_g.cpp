@@ -21,11 +21,12 @@
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
+#include "inject_model/misc.hpp"
 #include "internal_units.h"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
-#include "scale_fields_g-cpp.h"
+#include "scale_fields.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +43,9 @@ void cool_multi_time_g(
   // Convert densities from comoving to 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(
+        imetal, factor, my_chemistry, my_fields,
+        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
 
@@ -132,7 +135,9 @@ void cool_multi_time_g(
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(
+        imetal, factor, my_chemistry, my_fields,
+        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   return;

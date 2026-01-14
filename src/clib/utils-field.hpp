@@ -52,6 +52,13 @@ inline void copy_offset_fieldmember_ptrs_(grackle_field_data* dest,
 #include "field_data_misc_fdatamembers.def"
 #undef ENTRY
 
+  // Part 3: modify inject pathway density field slots
+  for (int i = 0; i < GRIMPL_MAX_INJ_PATHWAYS; i++) {
+    gr_float* p = src->inject_pathway_metal_density[i];
+    dest->inject_pathway_metal_density[i] =
+        (p == nullptr) ? nullptr : p + offset;
+  }
+
 #undef GRIMPL_OFFSET_PTR_CPY
 }
 
