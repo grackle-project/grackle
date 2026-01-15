@@ -1,6 +1,11 @@
-// See LICENSE file for license and copyright information
-
-/// @file chemistry_solver_funcs.hpp
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
 /// @brief Defines chemistry reaction related functions invoked by the
 ///     grackle solver in order to integrate the species densities over time.
 ///
@@ -14,12 +19,15 @@
 ///     be decoupled from the derivative calculation for primoridial species
 ///   - it may also make sense to further divide logic by the kinds of species
 ///     that are affected (e.g. primordial vs grains)
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef CHEMISTRY_SOLVER_FUNCS_HPP
 #define CHEMISTRY_SOLVER_FUNCS_HPP
 
 #include "grackle.h"
 #include "fortran_func_decls.h"  // gr_mask_type
+#include "full_rxn_rate_buf.hpp"
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "LUT.hpp"
@@ -36,8 +44,6 @@ namespace grackle::impl::chemistry {
 /// @param[in] dtit Specifies the timestep of the current sub-cycle for each
 ///     index in @p idx_range.
 /// @param[in] anydust Indicates whether we are modelling dust
-/// @param[in] h2dust Specifies the rate of H2 dust-formation on dust grains
-///     for eacg k
 /// @param[in] rhoH Indicates the mass density of all Hydrogen
 /// @param[in] itmask The general iteration mask for @p idx_range.
 /// @param[in] itmask_metal The iteration mask @p idx_range that specifies
@@ -46,11 +52,8 @@ namespace grackle::impl::chemistry {
 /// @param[in] my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
 /// @param[in] my_fields Specifies the current values of the field data
-/// @param[in] my_uvb_rates specifies precomputed rxn rates dependent on the
-///     UV background, without accounting for self-shield (we probably don't
-///     need to pass the whole thing since we also pass kshield_buf)
-/// @param[in] grain_growth_rates, kcr_buf, kshield_buf specifies the
-///     precomputed rxn rates (depends on local physical conditions)
+/// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
+///     local physical conditions)
 ///
 /// Refactoring Goals
 /// -----------------
@@ -58,8 +61,8 @@ namespace grackle::impl::chemistry {
 /// Right now the implementation of every rate is **very** manual, which makes
 /// it very easy to forget to add a rate.
 ///
-/// The shorter-term goal is to deduplicate as much as possible with between
-/// this function & grackle::impl::chemistry::species_density_derivatives_0d.
+/// The shorter-term goal is to deduplicate as much as possible between this
+/// function & @ref species_density_derivatives_0d.
 /// Some important considerations:
 /// - it will be easiest to deduplicate the metal-chemistry and grain-species
 ///   growth rates (we only need to introduce some light usage of templates)
@@ -73,7 +76,7 @@ namespace grackle::impl::chemistry {
 /// - In the longer term, it would make more sense to use more of a "table
 ///   based approach" in the regime where we have lots of chemistry.
 /// - We elaborate a little more down below:
-///   - we already have a table of 1d rate buffers (i.e. @p kcol_buf ).
+///   - we already have a table of 1d rate buffers: @p rxn_rate_buf.
 ///   - we might also track a table (with matching indices) where we track the
 ///     indexes associated with each reactant/product of a rate as well as
 ///     stoichiometric coefficients.
@@ -84,14 +87,13 @@ namespace grackle::impl::chemistry {
 ///     by index. Essentially, we would dynamically build up the creational
 ///     & destructive coefficients (``acoef`` & ``scoef``) for a full row and
 ///     use the values to then perform the update.
-///   - in practice things would be a little more complex since we have lots
-///     of rates not stored in @p kcol_buf, but it's still **very** doable
+///   - in practice things would be a little more complex since we have to deal
+///     dissociation rates, but it's still **very** doable
 ///   - once this infrastructure is in place, we could replace
-///     grackle::impl::chemistry::species_density_derivatives_0d
-///     that iterates through all of the rates in a very different manner
-///     and directly compute partial derivatives in a much more efficient
-///     manner (currently, it's used with finite derivatives for computing
-///     these partial derivatives)
+///     @ref chemistry::species_density_derivatives_0d with logic that iterates
+///     through rates in a very different manner and directly compute partial
+///     derivatives in a much more efficient manner (currently, it's used with
+///     finite differences for computing the partial derivatives)
 /// - Importantly, the table-based approach is *probably* slower than the
 ///   manual, hand-coded approach in the limit of a small chemical network.
 ///   I suspect that we'll preserve the hand-coded approach for
@@ -100,13 +102,10 @@ namespace grackle::impl::chemistry {
 ///   performance).
 inline void species_density_updates_gauss_seidel(
   grackle::impl::SpeciesCollection out_spdens, IndexRange idx_range,
-  const double* dtit, gr_mask_type anydust, const double* h2dust,
-  const double* rhoH, const gr_mask_type* itmask,
-  const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-  grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-  grackle::impl::GrainSpeciesCollection grain_growth_rates,
-  grackle::impl::CollisionalRxnRateCollection kcol_buf,
-  grackle::impl::PhotoRxnRateCollection kshield_buf
+  const double* dtit, gr_mask_type anydust, const double* rhoH,
+  const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
+  const chemistry_data* my_chemistry, grackle_field_data* my_fields,
+  const FullRxnRateBuf rxn_rate_buf
 )
 {
 
@@ -176,6 +175,11 @@ inline void species_density_updates_gauss_seidel(
   grackle::impl::View<gr_float***> kdissH2O(my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // locals
+  const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
+  const PhotoRxnRateCollection kph_buf = rxn_rate_buf.radiative;
+  const double* const* grain_growth_rates =
+    FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
+  const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
 
   int i;
   double scoef, acoef;
@@ -191,11 +195,11 @@ inline void species_density_updates_gauss_seidel(
 
         // 1) HI
 
-        scoef  = kcol_buf.data[CollisionalRxnLUT::k2][i]*HII(i,j,k)*de(i,j,k);
-        acoef  = kcol_buf.data[CollisionalRxnLUT::k1][i]*de(i,j,k)
-               + kcol_buf.data[CollisionalRxnLUT::k57][i]*HI(i,j,k)
-               + kcol_buf.data[CollisionalRxnLUT::k58][i]*HeI(i,j,k)/4.
-               + kshield_buf.k24[i];
+        scoef  = kcol_buf[CollisionalRxnLUT::k2][i]*HII(i,j,k)*de(i,j,k);
+        acoef  = kcol_buf[CollisionalRxnLUT::k1][i]*de(i,j,k)
+               + kcol_buf[CollisionalRxnLUT::k57][i]*HI(i,j,k)
+               + kcol_buf[CollisionalRxnLUT::k58][i]*HeI(i,j,k)/4.
+               + kph_buf.k24[i];
         if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + kphHI(i,j,k); }
         out_spdens.data[SpLUT::HI][i]  = (scoef*dtit[i] + HI(i,j,k))/
              (1. + acoef*dtit[i]);
@@ -219,13 +223,13 @@ inline void species_density_updates_gauss_seidel(
         }
 
         // 2) HII
-        scoef  = kcol_buf.data[CollisionalRxnLUT::k1][i]*out_spdens.data[SpLUT::HI][i]*de(i,j,k)
-               + kcol_buf.data[CollisionalRxnLUT::k57][i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HI][i]
-               + kcol_buf.data[CollisionalRxnLUT::k58][i]*out_spdens.data[SpLUT::HI][i]*HeI(i,j,k)/4.
-               + kshield_buf.k24[i]*out_spdens.data[SpLUT::HI][i];
+        scoef  = kcol_buf[CollisionalRxnLUT::k1][i]*out_spdens.data[SpLUT::HI][i]*de(i,j,k)
+               + kcol_buf[CollisionalRxnLUT::k57][i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HI][i]
+               + kcol_buf[CollisionalRxnLUT::k58][i]*out_spdens.data[SpLUT::HI][i]*HeI(i,j,k)/4.
+               + kph_buf.k24[i]*out_spdens.data[SpLUT::HI][i];
         if (my_chemistry->use_radiative_transfer == 1)
             { scoef = scoef + kphHI(i,j,k)*out_spdens.data[SpLUT::HI][i]; }
-        acoef  = kcol_buf.data[CollisionalRxnLUT::k2][i]*de (i,j,k);
+        acoef  = kcol_buf[CollisionalRxnLUT::k2][i]*de (i,j,k);
         out_spdens.data[SpLUT::HII][i] = (scoef*dtit[i] + HII(i,j,k))/
              (1. +acoef*dtit[i]);
         // 
@@ -242,22 +246,22 @@ inline void species_density_updates_gauss_seidel(
                    dtit [ i ],
                    HII ( i, j, k ),
                    acoef,
-                   kcol_buf.data[CollisionalRxnLUT::k2] [ i ],
+                   kcol_buf[CollisionalRxnLUT::k2] [ i ],
                    de ( i, j, k ),
                    kphHI ( i, j, k ),
                    out_spdens.data[SpLUT::HI] [ i ],
-                   kshield_buf.k24 [ i ]);
+                   kph_buf.k24 [ i ]);
           }
         }
 
         // 3) Electron density
 
         scoef = 0.
-                   + kcol_buf.data[CollisionalRxnLUT::k57][i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HI][i]
-                   + kcol_buf.data[CollisionalRxnLUT::k58][i]*out_spdens.data[SpLUT::HI][i]*HeI(i,j,k)/4.
-                   + kshield_buf.k24[i]*HI(i,j,k)
-                   + kshield_buf.k25[i]*HeII(i,j,k)/4.
-                   + kshield_buf.k26[i]*HeI(i,j,k)/4.;
+                   + kcol_buf[CollisionalRxnLUT::k57][i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HI][i]
+                   + kcol_buf[CollisionalRxnLUT::k58][i]*out_spdens.data[SpLUT::HI][i]*HeI(i,j,k)/4.
+                   + kph_buf.k24[i]*HI(i,j,k)
+                   + kph_buf.k25[i]*HeII(i,j,k)/4.
+                   + kph_buf.k26[i]*HeI(i,j,k)/4.;
 
         if ( (my_chemistry->use_radiative_transfer == 1)  &&  ( my_chemistry->radiative_transfer_hydrogen_only == 0) )
             { scoef = scoef + kphHI(i,j,k) * HI(i,j,k)
@@ -268,11 +272,11 @@ inline void species_density_updates_gauss_seidel(
 
 
 
-        acoef = -(kcol_buf.data[CollisionalRxnLUT::k1][i]*HI(i,j,k)      - kcol_buf.data[CollisionalRxnLUT::k2][i]*HII(i,j,k)
-                + kcol_buf.data[CollisionalRxnLUT::k3][i]*HeI(i,j,k)/4. -
-             kcol_buf.data[CollisionalRxnLUT::k6][i]*HeIII(i,j,k)/4.
-                + kcol_buf.data[CollisionalRxnLUT::k5][i]*HeII(i,j,k)/4. -
-             kcol_buf.data[CollisionalRxnLUT::k4][i]*HeII(i,j,k)/4.);
+        acoef = -(kcol_buf[CollisionalRxnLUT::k1][i]*HI(i,j,k)      - kcol_buf[CollisionalRxnLUT::k2][i]*HII(i,j,k)
+                + kcol_buf[CollisionalRxnLUT::k3][i]*HeI(i,j,k)/4. -
+             kcol_buf[CollisionalRxnLUT::k6][i]*HeIII(i,j,k)/4.
+                + kcol_buf[CollisionalRxnLUT::k5][i]*HeII(i,j,k)/4. -
+             kcol_buf[CollisionalRxnLUT::k4][i]*HeII(i,j,k)/4.);
         out_spdens.data[SpLUT::e][i]   = (scoef*dtit[i] + de(i,j,k))
                        / (1. + acoef*dtit[i]);
 
@@ -288,53 +292,53 @@ inline void species_density_updates_gauss_seidel(
 
       // 4) HeI
 
-      scoef  = kcol_buf.data[CollisionalRxnLUT::k4][i]*HeII(i,j,k)*de(i,j,k);
-      acoef  = kcol_buf.data[CollisionalRxnLUT::k3][i]*de(i,j,k)
-                   + kshield_buf.k26[i];
+      scoef  = kcol_buf[CollisionalRxnLUT::k4][i]*HeII(i,j,k)*de(i,j,k);
+      acoef  = kcol_buf[CollisionalRxnLUT::k3][i]*de(i,j,k)
+                   + kph_buf.k26[i];
 
       if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
           { acoef = acoef + kphHeI(i,j,k); }
       if (my_chemistry->primordial_chemistry > 3)  {
         scoef = scoef +  4. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::k152][i] * HeHII(i,j,k) *    HI(i,j,k) /  5.
-            + kcol_buf.data[CollisionalRxnLUT::k153][i] * HeHII(i,j,k) *    de(i,j,k) /  5.
+            + kcol_buf[CollisionalRxnLUT::k152][i] * HeHII(i,j,k) *    HI(i,j,k) /  5.
+            + kcol_buf[CollisionalRxnLUT::k153][i] * HeHII(i,j,k) *    de(i,j,k) /  5.
             );
         acoef = acoef
-            + kcol_buf.data[CollisionalRxnLUT::k148][i] *   HII(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::k149][i] *   HII(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::k150][i] *  H2II(i,j,k) /  2.;
+            + kcol_buf[CollisionalRxnLUT::k148][i] *   HII(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::k149][i] *   HII(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::k150][i] *  H2II(i,j,k) /  2.;
       }
       out_spdens.data[SpLUT::HeI][i]   = ( scoef*dtit[i] + HeI(i,j,k) )
                  / ( 1. + acoef*dtit[i] );
 
       // 5) HeII
 
-      scoef  = kcol_buf.data[CollisionalRxnLUT::k3][i]*out_spdens.data[SpLUT::HeI][i]*de(i,j,k)
-             + kcol_buf.data[CollisionalRxnLUT::k6][i]*HeIII(i,j,k)*de(i,j,k)
-             + kshield_buf.k26[i]*out_spdens.data[SpLUT::HeI][i];
+      scoef  = kcol_buf[CollisionalRxnLUT::k3][i]*out_spdens.data[SpLUT::HeI][i]*de(i,j,k)
+             + kcol_buf[CollisionalRxnLUT::k6][i]*HeIII(i,j,k)*de(i,j,k)
+             + kph_buf.k26[i]*out_spdens.data[SpLUT::HeI][i];
      
       if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
           { scoef = scoef + kphHeI(i,j,k)*out_spdens.data[SpLUT::HeI][i]; }
 
-      acoef  = kcol_buf.data[CollisionalRxnLUT::k4][i]*de(i,j,k) + kcol_buf.data[CollisionalRxnLUT::k5][i]*de(i,j,k)
-             + kshield_buf.k25[i];
+      acoef  = kcol_buf[CollisionalRxnLUT::k4][i]*de(i,j,k) + kcol_buf[CollisionalRxnLUT::k5][i]*de(i,j,k)
+             + kph_buf.k25[i];
      
       if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
           { acoef = acoef + kphHeII(i,j,k); }
       if (my_chemistry->primordial_chemistry > 3)  {
         acoef = acoef
-            + kcol_buf.data[CollisionalRxnLUT::k151][i] *    HI(i,j,k);
+            + kcol_buf[CollisionalRxnLUT::k151][i] *    HI(i,j,k);
       }
       out_spdens.data[SpLUT::HeII][i]  = ( scoef*dtit[i] + HeII(i,j,k) )
                  / ( 1. + acoef*dtit[i] );
 
       // 6) HeIII
 
-      scoef   = kcol_buf.data[CollisionalRxnLUT::k5][i]*out_spdens.data[SpLUT::HeII][i]*de(i,j,k)
-              + kshield_buf.k25[i]*out_spdens.data[SpLUT::HeII][i];
+      scoef   = kcol_buf[CollisionalRxnLUT::k5][i]*out_spdens.data[SpLUT::HeII][i]*de(i,j,k)
+              + kph_buf.k25[i]*out_spdens.data[SpLUT::HeII][i];
       if ((my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
           { scoef = scoef + kphHeII(i,j,k) * out_spdens.data[SpLUT::HeII][i]; }
-      acoef   = kcol_buf.data[CollisionalRxnLUT::k6][i]*de(i,j,k);
+      acoef   = kcol_buf[CollisionalRxnLUT::k6][i]*de(i,j,k);
       out_spdens.data[SpLUT::HeIII][i]  = ( scoef*dtit[i] + HeIII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
@@ -351,26 +355,26 @@ inline void species_density_updates_gauss_seidel(
       if (itmask[i] != MASK_FALSE)  {
 
         // 1) HI
-        scoef  =      kcol_buf.data[CollisionalRxnLUT::k2][i] * HII(i,j,k) * de(i,j,k)
-               + 2.*kcol_buf.data[CollisionalRxnLUT::k13][i]* HI(i,j,k)  * H2I(i,j,k)/2.
-               +      kcol_buf.data[CollisionalRxnLUT::k11][i]* HII(i,j,k) * H2I(i,j,k)/2.
-               + 2.*kcol_buf.data[CollisionalRxnLUT::k12][i]* de(i,j,k)  * H2I(i,j,k)/2.
-               +      kcol_buf.data[CollisionalRxnLUT::k14][i]* HM(i,j,k)  * de(i,j,k)
-               +      kcol_buf.data[CollisionalRxnLUT::k15][i]* HM(i,j,k)  * HI(i,j,k)
-               + 2.*kcol_buf.data[CollisionalRxnLUT::k16][i]* HM(i,j,k)  * HII(i,j,k)
-               + 2.*kcol_buf.data[CollisionalRxnLUT::k18][i]* H2II(i,j,k)* de(i,j,k)/2.
-               +      kcol_buf.data[CollisionalRxnLUT::k19][i]* H2II(i,j,k)* HM(i,j,k)/2.
-               + 2.*kshield_buf.k31[i]   * H2I(i,j,k)/2.;
+        scoef  =      kcol_buf[CollisionalRxnLUT::k2][i] * HII(i,j,k) * de(i,j,k)
+               + 2.*kcol_buf[CollisionalRxnLUT::k13][i]* HI(i,j,k)  * H2I(i,j,k)/2.
+               +      kcol_buf[CollisionalRxnLUT::k11][i]* HII(i,j,k) * H2I(i,j,k)/2.
+               + 2.*kcol_buf[CollisionalRxnLUT::k12][i]* de(i,j,k)  * H2I(i,j,k)/2.
+               +      kcol_buf[CollisionalRxnLUT::k14][i]* HM(i,j,k)  * de(i,j,k)
+               +      kcol_buf[CollisionalRxnLUT::k15][i]* HM(i,j,k)  * HI(i,j,k)
+               + 2.*kcol_buf[CollisionalRxnLUT::k16][i]* HM(i,j,k)  * HII(i,j,k)
+               + 2.*kcol_buf[CollisionalRxnLUT::k18][i]* H2II(i,j,k)* de(i,j,k)/2.
+               +      kcol_buf[CollisionalRxnLUT::k19][i]* H2II(i,j,k)* HM(i,j,k)/2.
+               + 2.*kph_buf.k31[i]   * H2I(i,j,k)/2.;
 
-        acoef  =      kcol_buf.data[CollisionalRxnLUT::k1][i] * de(i,j,k)
-               +      kcol_buf.data[CollisionalRxnLUT::k7][i] * de(i,j,k)
-               +      kcol_buf.data[CollisionalRxnLUT::k8][i] * HM(i,j,k)
-               +      kcol_buf.data[CollisionalRxnLUT::k9][i] * HII(i,j,k)
-               +      kcol_buf.data[CollisionalRxnLUT::k10][i]* H2II(i,j,k)/2.
-               + 2.*kcol_buf.data[CollisionalRxnLUT::k22][i]* std::pow(HI(i,j,k),2)
-               +      kcol_buf.data[CollisionalRxnLUT::k57][i]* HI(i,j,k)
-               +      kcol_buf.data[CollisionalRxnLUT::k58][i]* HeI(i,j,k)/4.
-               + kshield_buf.k24[i];
+        acoef  =      kcol_buf[CollisionalRxnLUT::k1][i] * de(i,j,k)
+               +      kcol_buf[CollisionalRxnLUT::k7][i] * de(i,j,k)
+               +      kcol_buf[CollisionalRxnLUT::k8][i] * HM(i,j,k)
+               +      kcol_buf[CollisionalRxnLUT::k9][i] * HII(i,j,k)
+               +      kcol_buf[CollisionalRxnLUT::k10][i]* H2II(i,j,k)/2.
+               + 2.*kcol_buf[CollisionalRxnLUT::k22][i]* std::pow(HI(i,j,k),2)
+               +      kcol_buf[CollisionalRxnLUT::k57][i]* HI(i,j,k)
+               +      kcol_buf[CollisionalRxnLUT::k58][i]* HeI(i,j,k)/4.
+               + kph_buf.k24[i];
 
         if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + kphHI(i,j,k); }
         if (my_chemistry->use_radiative_transfer == 1)  {
@@ -396,63 +400,63 @@ inline void species_density_updates_gauss_seidel(
 #ifdef CONTRIBUTION_OF_MINOR_SPECIES
         if (my_chemistry->primordial_chemistry > 2)  {
           scoef = scoef
-                + kcol_buf.data[CollisionalRxnLUT::k50][i] * HII(i,j,k) * DI(i,j,k)  / 2.
-                + kcol_buf.data[CollisionalRxnLUT::k54][i] * H2I(i,j,k) * DI(i,j,k)  / 4.;
+                + kcol_buf[CollisionalRxnLUT::k50][i] * HII(i,j,k) * DI(i,j,k)  / 2.
+                + kcol_buf[CollisionalRxnLUT::k54][i] * H2I(i,j,k) * DI(i,j,k)  / 4.;
           acoef = acoef
-                + kcol_buf.data[CollisionalRxnLUT::k51][i] * DII(i,j,k) / 2.
-                + kcol_buf.data[CollisionalRxnLUT::k55][i] * HDI(i,j,k) / 3.;
+                + kcol_buf[CollisionalRxnLUT::k51][i] * DII(i,j,k) / 2.
+                + kcol_buf[CollisionalRxnLUT::k55][i] * HDI(i,j,k) / 3.;
         }
 #endif
         if (my_chemistry->primordial_chemistry > 3)  {
           scoef = scoef
-              + kcol_buf.data[CollisionalRxnLUT::k131][i] *  HDII(i,j,k) *    de(i,j,k) /  3.
-              + kcol_buf.data[CollisionalRxnLUT::k134][i] *   HII(i,j,k) *    DM(i,j,k) /  2.
-              + kcol_buf.data[CollisionalRxnLUT::k135][i] *    HM(i,j,k) *    DI(i,j,k) /  2.
-              + kcol_buf.data[CollisionalRxnLUT::k150][i] *   HeI(i,j,k) *  H2II(i,j,k) /  8.
-              + kcol_buf.data[CollisionalRxnLUT::k153][i] * HeHII(i,j,k) *    de(i,j,k) /  5.;
+              + kcol_buf[CollisionalRxnLUT::k131][i] *  HDII(i,j,k) *    de(i,j,k) /  3.
+              + kcol_buf[CollisionalRxnLUT::k134][i] *   HII(i,j,k) *    DM(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k135][i] *    HM(i,j,k) *    DI(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k150][i] *   HeI(i,j,k) *  H2II(i,j,k) /  8.
+              + kcol_buf[CollisionalRxnLUT::k153][i] * HeHII(i,j,k) *    de(i,j,k) /  5.;
           acoef = acoef
-              + kcol_buf.data[CollisionalRxnLUT::k125][i] *  HDII(i,j,k) /  3.
-              + kcol_buf.data[CollisionalRxnLUT::k130][i] *   DII(i,j,k) /  2.
-              + kcol_buf.data[CollisionalRxnLUT::k136][i] *    DM(i,j,k) /  2.
-              + kcol_buf.data[CollisionalRxnLUT::k137][i] *    DM(i,j,k) /  2.
-              + kcol_buf.data[CollisionalRxnLUT::k151][i] *  HeII(i,j,k) /  4.
-              + kcol_buf.data[CollisionalRxnLUT::k152][i] * HeHII(i,j,k) /  5.;
+              + kcol_buf[CollisionalRxnLUT::k125][i] *  HDII(i,j,k) /  3.
+              + kcol_buf[CollisionalRxnLUT::k130][i] *   DII(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k136][i] *    DM(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k137][i] *    DM(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k151][i] *  HeII(i,j,k) /  4.
+              + kcol_buf[CollisionalRxnLUT::k152][i] * HeHII(i,j,k) /  5.;
         }
 
         if ( (my_chemistry->metal_chemistry == 1)  && 
              (itmask_metal[i] != MASK_FALSE) )  {
           scoef = scoef
-              + kcol_buf.data[CollisionalRxnLUT::kz20][i] *    CI(i,j,k) *   H2I(i,j,k) / 24.
-              + kcol_buf.data[CollisionalRxnLUT::kz21][i] *    OI(i,j,k) *   H2I(i,j,k) / 32.
-              + kcol_buf.data[CollisionalRxnLUT::kz22][i] *   HII(i,j,k) *    OI(i,j,k) / 16.
-              + kcol_buf.data[CollisionalRxnLUT::kz23][i] *   H2I(i,j,k) *    CH(i,j,k) / 26.
-              + kcol_buf.data[CollisionalRxnLUT::kz24][i] *   H2I(i,j,k) *    OH(i,j,k) / 34.
-              + kcol_buf.data[CollisionalRxnLUT::kz26][i] *    OH(i,j,k) *    CO(i,j,k) / 476.
-              + kcol_buf.data[CollisionalRxnLUT::kz28][i] *    CI(i,j,k) *    OH(i,j,k) / 204.
-              + kcol_buf.data[CollisionalRxnLUT::kz32][i] *    OI(i,j,k) *    CH(i,j,k) / 208.
-              + kcol_buf.data[CollisionalRxnLUT::kz33][i] *    OI(i,j,k) *    OH(i,j,k) / 272.
-              + kcol_buf.data[CollisionalRxnLUT::kz34][i] *   HII(i,j,k) *    OH(i,j,k) / 17.
-              + kcol_buf.data[CollisionalRxnLUT::kz35][i] *   HII(i,j,k) *   H2O(i,j,k) / 18.
-              + kcol_buf.data[CollisionalRxnLUT::kz36][i] *   HII(i,j,k) *    O2(i,j,k) / 32.
-              + kcol_buf.data[CollisionalRxnLUT::kz37][i] *   CII(i,j,k) *    OH(i,j,k) / 204.
-              + kcol_buf.data[CollisionalRxnLUT::kz40][i] *   OII(i,j,k) *   H2I(i,j,k) / 32.
-              + kcol_buf.data[CollisionalRxnLUT::kz41][i] *  OHII(i,j,k) *   H2I(i,j,k) / 34.
-              + kcol_buf.data[CollisionalRxnLUT::kz42][i] * H2OII(i,j,k) *   H2I(i,j,k) / 36.
-              + kcol_buf.data[CollisionalRxnLUT::kz46][i] * H2OII(i,j,k) *    de(i,j,k) / 18.
-              + kcol_buf.data[CollisionalRxnLUT::kz48][i] * H3OII(i,j,k) *    de(i,j,k) / 19.
-              + kcol_buf.data[CollisionalRxnLUT::kz49][i] * H3OII(i,j,k) *    de(i,j,k) / 9.5
-              + kcol_buf.data[CollisionalRxnLUT::kz52][i] *   SiI(i,j,k) *    OH(i,j,k) / 476.
-              + kcol_buf.data[CollisionalRxnLUT::kz54][i] *  SiOI(i,j,k) *    OH(i,j,k) / 748.;
+              + kcol_buf[CollisionalRxnLUT::kz20][i] *    CI(i,j,k) *   H2I(i,j,k) / 24.
+              + kcol_buf[CollisionalRxnLUT::kz21][i] *    OI(i,j,k) *   H2I(i,j,k) / 32.
+              + kcol_buf[CollisionalRxnLUT::kz22][i] *   HII(i,j,k) *    OI(i,j,k) / 16.
+              + kcol_buf[CollisionalRxnLUT::kz23][i] *   H2I(i,j,k) *    CH(i,j,k) / 26.
+              + kcol_buf[CollisionalRxnLUT::kz24][i] *   H2I(i,j,k) *    OH(i,j,k) / 34.
+              + kcol_buf[CollisionalRxnLUT::kz26][i] *    OH(i,j,k) *    CO(i,j,k) / 476.
+              + kcol_buf[CollisionalRxnLUT::kz28][i] *    CI(i,j,k) *    OH(i,j,k) / 204.
+              + kcol_buf[CollisionalRxnLUT::kz32][i] *    OI(i,j,k) *    CH(i,j,k) / 208.
+              + kcol_buf[CollisionalRxnLUT::kz33][i] *    OI(i,j,k) *    OH(i,j,k) / 272.
+              + kcol_buf[CollisionalRxnLUT::kz34][i] *   HII(i,j,k) *    OH(i,j,k) / 17.
+              + kcol_buf[CollisionalRxnLUT::kz35][i] *   HII(i,j,k) *   H2O(i,j,k) / 18.
+              + kcol_buf[CollisionalRxnLUT::kz36][i] *   HII(i,j,k) *    O2(i,j,k) / 32.
+              + kcol_buf[CollisionalRxnLUT::kz37][i] *   CII(i,j,k) *    OH(i,j,k) / 204.
+              + kcol_buf[CollisionalRxnLUT::kz40][i] *   OII(i,j,k) *   H2I(i,j,k) / 32.
+              + kcol_buf[CollisionalRxnLUT::kz41][i] *  OHII(i,j,k) *   H2I(i,j,k) / 34.
+              + kcol_buf[CollisionalRxnLUT::kz42][i] * H2OII(i,j,k) *   H2I(i,j,k) / 36.
+              + kcol_buf[CollisionalRxnLUT::kz46][i] * H2OII(i,j,k) *    de(i,j,k) / 18.
+              + kcol_buf[CollisionalRxnLUT::kz48][i] * H3OII(i,j,k) *    de(i,j,k) / 19.
+              + kcol_buf[CollisionalRxnLUT::kz49][i] * H3OII(i,j,k) *    de(i,j,k) / 9.5
+              + kcol_buf[CollisionalRxnLUT::kz52][i] *   SiI(i,j,k) *    OH(i,j,k) / 476.
+              + kcol_buf[CollisionalRxnLUT::kz54][i] *  SiOI(i,j,k) *    OH(i,j,k) / 748.;
           acoef = acoef
-              + kcol_buf.data[CollisionalRxnLUT::kz15][i] *    CH(i,j,k) / 13.
-              + kcol_buf.data[CollisionalRxnLUT::kz16][i] *   CH2(i,j,k) / 14.
-              + kcol_buf.data[CollisionalRxnLUT::kz17][i] *    OH(i,j,k) / 17.
-              + kcol_buf.data[CollisionalRxnLUT::kz18][i] *   H2O(i,j,k) / 18.
-              + kcol_buf.data[CollisionalRxnLUT::kz19][i] *    O2(i,j,k) / 32.
-              + kcol_buf.data[CollisionalRxnLUT::kz27][i] *    CI(i,j,k) / 12.
-              + kcol_buf.data[CollisionalRxnLUT::kz30][i] *    OI(i,j,k) / 16.
-              + kcol_buf.data[CollisionalRxnLUT::kz39][i] *   OII(i,j,k) / 16.
-              + kcol_buf.data[CollisionalRxnLUT::kz43][i] *  COII(i,j,k) / 28.;
+              + kcol_buf[CollisionalRxnLUT::kz15][i] *    CH(i,j,k) / 13.
+              + kcol_buf[CollisionalRxnLUT::kz16][i] *   CH2(i,j,k) / 14.
+              + kcol_buf[CollisionalRxnLUT::kz17][i] *    OH(i,j,k) / 17.
+              + kcol_buf[CollisionalRxnLUT::kz18][i] *   H2O(i,j,k) / 18.
+              + kcol_buf[CollisionalRxnLUT::kz19][i] *    O2(i,j,k) / 32.
+              + kcol_buf[CollisionalRxnLUT::kz27][i] *    CI(i,j,k) / 12.
+              + kcol_buf[CollisionalRxnLUT::kz30][i] *    OI(i,j,k) / 16.
+              + kcol_buf[CollisionalRxnLUT::kz39][i] *   OII(i,j,k) / 16.
+              + kcol_buf[CollisionalRxnLUT::kz43][i] *  COII(i,j,k) / 28.;
         }
         out_spdens.data[SpLUT::HI][i]  = ( scoef*dtit[i] + HI(i,j,k) ) /
                         ( 1.f + acoef*dtit[i] );
@@ -474,65 +478,65 @@ inline void species_density_updates_gauss_seidel(
 
         // 2) HII
 
-        scoef  =    kcol_buf.data[CollisionalRxnLUT::k1][i]  * HI(i,j,k) * de(i,j,k)
-               +    kcol_buf.data[CollisionalRxnLUT::k10][i] * H2II(i,j,k)*HI(i,j,k)/2.
-               +    kcol_buf.data[CollisionalRxnLUT::k57][i] * HI(i,j,k) * HI(i,j,k)
-               +    kcol_buf.data[CollisionalRxnLUT::k58][i] * HI(i,j,k) * HeI(i,j,k)/4.
-               + kshield_buf.k24[i]*HI(i,j,k);
+        scoef  =    kcol_buf[CollisionalRxnLUT::k1][i]  * HI(i,j,k) * de(i,j,k)
+               +    kcol_buf[CollisionalRxnLUT::k10][i] * H2II(i,j,k)*HI(i,j,k)/2.
+               +    kcol_buf[CollisionalRxnLUT::k57][i] * HI(i,j,k) * HI(i,j,k)
+               +    kcol_buf[CollisionalRxnLUT::k58][i] * HI(i,j,k) * HeI(i,j,k)/4.
+               + kph_buf.k24[i]*HI(i,j,k);
 
         if (my_chemistry->use_radiative_transfer == 1)
             { scoef = scoef + kphHI(i,j,k) * HI(i,j,k); }
 
-        acoef  =    kcol_buf.data[CollisionalRxnLUT::k2][i]  * de(i,j,k)
-               +    kcol_buf.data[CollisionalRxnLUT::k9][i]  * HI(i,j,k)
-               +    kcol_buf.data[CollisionalRxnLUT::k11][i] * H2I(i,j,k)/2.
-               +    kcol_buf.data[CollisionalRxnLUT::k16][i] * HM(i,j,k)
-               +    kcol_buf.data[CollisionalRxnLUT::k17][i] * HM(i,j,k);
+        acoef  =    kcol_buf[CollisionalRxnLUT::k2][i]  * de(i,j,k)
+               +    kcol_buf[CollisionalRxnLUT::k9][i]  * HI(i,j,k)
+               +    kcol_buf[CollisionalRxnLUT::k11][i] * H2I(i,j,k)/2.
+               +    kcol_buf[CollisionalRxnLUT::k16][i] * HM(i,j,k)
+               +    kcol_buf[CollisionalRxnLUT::k17][i] * HM(i,j,k);
 #ifdef CONTRIBUTION_OF_MINOR_SPECIES
         if (my_chemistry->primordial_chemistry > 2)  {
           scoef = scoef
-                + kcol_buf.data[CollisionalRxnLUT::k51][i] * HI (i,j,k) * DII(i,j,k) / 2.
-                + kcol_buf.data[CollisionalRxnLUT::k52][i] * H2I(i,j,k) * DII(i,j,k) / 4.;
+                + kcol_buf[CollisionalRxnLUT::k51][i] * HI (i,j,k) * DII(i,j,k) / 2.
+                + kcol_buf[CollisionalRxnLUT::k52][i] * H2I(i,j,k) * DII(i,j,k) / 4.;
           acoef = acoef
-                + kcol_buf.data[CollisionalRxnLUT::k50][i] * DI (i,j,k) / 2.
-                + kcol_buf.data[CollisionalRxnLUT::k53][i] * HDI(i,j,k) / 3.;
+                + kcol_buf[CollisionalRxnLUT::k50][i] * DI (i,j,k) / 2.
+                + kcol_buf[CollisionalRxnLUT::k53][i] * HDI(i,j,k) / 3.;
         }
 #endif
         if (my_chemistry->primordial_chemistry > 3)  {
           scoef = scoef
-              + kcol_buf.data[CollisionalRxnLUT::k125][i] *  HDII(i,j,k) *    HI(i,j,k) /  3.;
+              + kcol_buf[CollisionalRxnLUT::k125][i] *  HDII(i,j,k) *    HI(i,j,k) /  3.;
           acoef = acoef
-              + kcol_buf.data[CollisionalRxnLUT::k129][i] *    DI(i,j,k) /  2.
-              + kcol_buf.data[CollisionalRxnLUT::k134][i] *    DM(i,j,k) /  2.
-              + kcol_buf.data[CollisionalRxnLUT::k148][i] *   HeI(i,j,k) /  4.
-              + kcol_buf.data[CollisionalRxnLUT::k149][i] *   HeI(i,j,k) /  4.;
+              + kcol_buf[CollisionalRxnLUT::k129][i] *    DI(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k134][i] *    DM(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k148][i] *   HeI(i,j,k) /  4.
+              + kcol_buf[CollisionalRxnLUT::k149][i] *   HeI(i,j,k) /  4.;
         }
 
         if ( (my_chemistry->metal_chemistry == 1)  && 
              (itmask_metal[i] != MASK_FALSE) )  {
           scoef = scoef
-              + kcol_buf.data[CollisionalRxnLUT::kz39][i] *   OII(i,j,k) *    HI(i,j,k) / 16.
-              + kcol_buf.data[CollisionalRxnLUT::kz43][i] *  COII(i,j,k) *    HI(i,j,k) / 28.;
+              + kcol_buf[CollisionalRxnLUT::kz39][i] *   OII(i,j,k) *    HI(i,j,k) / 16.
+              + kcol_buf[CollisionalRxnLUT::kz43][i] *  COII(i,j,k) *    HI(i,j,k) / 28.;
           acoef = acoef
-              + kcol_buf.data[CollisionalRxnLUT::kz22][i] *    OI(i,j,k) / 16.
-              + kcol_buf.data[CollisionalRxnLUT::kz34][i] *    OH(i,j,k) / 17.
-              + kcol_buf.data[CollisionalRxnLUT::kz35][i] *   H2O(i,j,k) / 18.
-              + kcol_buf.data[CollisionalRxnLUT::kz36][i] *    O2(i,j,k) / 32.;
+              + kcol_buf[CollisionalRxnLUT::kz22][i] *    OI(i,j,k) / 16.
+              + kcol_buf[CollisionalRxnLUT::kz34][i] *    OH(i,j,k) / 17.
+              + kcol_buf[CollisionalRxnLUT::kz35][i] *   H2O(i,j,k) / 18.
+              + kcol_buf[CollisionalRxnLUT::kz36][i] *    O2(i,j,k) / 32.;
         }
         out_spdens.data[SpLUT::HII][i]   = ( scoef*dtit[i] + HII(i,j,k) )
                         / ( 1. + acoef*dtit[i] );
         
         // 3) electrons:
 
-        scoef =   kcol_buf.data[CollisionalRxnLUT::k8][i] * HM(i,j,k) * HI(i,j,k)
-               +  kcol_buf.data[CollisionalRxnLUT::k15][i]* HM(i,j,k) * HI(i,j,k)
-               +  kcol_buf.data[CollisionalRxnLUT::k17][i]* HM(i,j,k) * HII(i,j,k)
-               +  kcol_buf.data[CollisionalRxnLUT::k57][i]* HI(i,j,k) * HI(i,j,k)
-               +  kcol_buf.data[CollisionalRxnLUT::k58][i]* HI(i,j,k) * HeI(i,j,k)/4.
+        scoef =   kcol_buf[CollisionalRxnLUT::k8][i] * HM(i,j,k) * HI(i,j,k)
+               +  kcol_buf[CollisionalRxnLUT::k15][i]* HM(i,j,k) * HI(i,j,k)
+               +  kcol_buf[CollisionalRxnLUT::k17][i]* HM(i,j,k) * HII(i,j,k)
+               +  kcol_buf[CollisionalRxnLUT::k57][i]* HI(i,j,k) * HI(i,j,k)
+               +  kcol_buf[CollisionalRxnLUT::k58][i]* HI(i,j,k) * HeI(i,j,k)/4.
         // 
-               + kshield_buf.k24[i]*out_spdens.data[SpLUT::HI][i]
-               + kshield_buf.k25[i]*out_spdens.data[SpLUT::HeII][i]/4.
-               + kshield_buf.k26[i]*out_spdens.data[SpLUT::HeI][i]/4.;
+               + kph_buf.k24[i]*out_spdens.data[SpLUT::HI][i]
+               + kph_buf.k25[i]*out_spdens.data[SpLUT::HeII][i]/4.
+               + kph_buf.k26[i]*out_spdens.data[SpLUT::HeI][i]/4.;
 
         if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0) )
             { scoef = scoef + kphHI(i,j,k) * out_spdens.data[SpLUT::HI][i]
@@ -551,56 +555,58 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        acoef = - (kcol_buf.data[CollisionalRxnLUT::k1][i] *HI(i,j,k)    - kcol_buf.data[CollisionalRxnLUT::k2][i]*HII(i,j,k)
-                +  kcol_buf.data[CollisionalRxnLUT::k3][i] *HeI(i,j,k)/4. -
-             kcol_buf.data[CollisionalRxnLUT::k6][i]*HeIII(i,j,k)/4.
-                +  kcol_buf.data[CollisionalRxnLUT::k5][i] *HeII(i,j,k)/4. -
-             kcol_buf.data[CollisionalRxnLUT::k4][i]*HeII(i,j,k)/4.
-                +  kcol_buf.data[CollisionalRxnLUT::k14][i]*HM(i,j,k)
-                -  kcol_buf.data[CollisionalRxnLUT::k7][i] *HI(i,j,k)
-                -  kcol_buf.data[CollisionalRxnLUT::k18][i]*H2II(i,j,k)/2.);
+        acoef = - (kcol_buf[CollisionalRxnLUT::k1][i] *HI(i,j,k)    - kcol_buf[CollisionalRxnLUT::k2][i]*HII(i,j,k)
+                +  kcol_buf[CollisionalRxnLUT::k3][i] *HeI(i,j,k)/4. -
+             kcol_buf[CollisionalRxnLUT::k6][i]*HeIII(i,j,k)/4.
+                +  kcol_buf[CollisionalRxnLUT::k5][i] *HeII(i,j,k)/4. -
+             kcol_buf[CollisionalRxnLUT::k4][i]*HeII(i,j,k)/4.
+                +  kcol_buf[CollisionalRxnLUT::k14][i]*HM(i,j,k)
+                -  kcol_buf[CollisionalRxnLUT::k7][i] *HI(i,j,k)
+                -  kcol_buf[CollisionalRxnLUT::k18][i]*H2II(i,j,k)/2.);
 #ifdef CONTRIBUTION_OF_MINOR_SPECIES
         if (my_chemistry->primordial_chemistry > 2)  {
           scoef = scoef
-                + kcol_buf.data[CollisionalRxnLUT::k56][i] * DI (i,j,k) * HM(i,j,k) / 2.;
+                + kcol_buf[CollisionalRxnLUT::k56][i] * DI (i,j,k) * HM(i,j,k) / 2.;
           acoef = acoef
-                - kcol_buf.data[CollisionalRxnLUT::k1] [i] * DI (i,j,k) / 2.
-                + kcol_buf.data[CollisionalRxnLUT::k2] [i] * DII(i,j,k) / 2.;
+                - kcol_buf[CollisionalRxnLUT::k1] [i] * DI (i,j,k) / 2.
+                + kcol_buf[CollisionalRxnLUT::k2] [i] * DII(i,j,k) / 2.;
         }
 #endif
         if (my_chemistry->primordial_chemistry > 3)  {
           scoef = scoef
-              + kcol_buf.data[CollisionalRxnLUT::k137][i] *    DM(i,j,k) *    HI(i,j,k) /  2.;
+              + kcol_buf[CollisionalRxnLUT::k137][i] *    DM(i,j,k) *    HI(i,j,k) /  2.;
           acoef = acoef
-              + kcol_buf.data[CollisionalRxnLUT::k131][i] *  HDII(i,j,k) /  3.
-              + kcol_buf.data[CollisionalRxnLUT::k132][i] *    DI(i,j,k) /  2.
-              + kcol_buf.data[CollisionalRxnLUT::k153][i] * HeHII(i,j,k) /  5.;
+              + kcol_buf[CollisionalRxnLUT::k131][i] *  HDII(i,j,k) /  3.
+              + kcol_buf[CollisionalRxnLUT::k132][i] *    DI(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k153][i] * HeHII(i,j,k) /  5.;
         }
 
         if ( (my_chemistry->metal_chemistry == 1)  && 
              (itmask_metal[i] != MASK_FALSE) )  {
-          scoef = scoef;
+          // we comment out the following line that assigns scoef to itself since
+          // it has no practical impact and produces a compiler warning
+          // scoef = scoef;
           acoef = acoef
-              + kcol_buf.data[CollisionalRxnLUT::kz44][i] *   CII(i,j,k) / 12.
-              + kcol_buf.data[CollisionalRxnLUT::kz45][i] *   OII(i,j,k) / 16.
-              + kcol_buf.data[CollisionalRxnLUT::kz46][i] * H2OII(i,j,k) / 18.
-              + kcol_buf.data[CollisionalRxnLUT::kz47][i] * H2OII(i,j,k) / 18.
-              + kcol_buf.data[CollisionalRxnLUT::kz48][i] * H3OII(i,j,k) / 19.
-              + kcol_buf.data[CollisionalRxnLUT::kz49][i] * H3OII(i,j,k) / 19.
-              + kcol_buf.data[CollisionalRxnLUT::kz50][i] *  O2II(i,j,k) / 32.;
+              + kcol_buf[CollisionalRxnLUT::kz44][i] *   CII(i,j,k) / 12.
+              + kcol_buf[CollisionalRxnLUT::kz45][i] *   OII(i,j,k) / 16.
+              + kcol_buf[CollisionalRxnLUT::kz46][i] * H2OII(i,j,k) / 18.
+              + kcol_buf[CollisionalRxnLUT::kz47][i] * H2OII(i,j,k) / 18.
+              + kcol_buf[CollisionalRxnLUT::kz48][i] * H3OII(i,j,k) / 19.
+              + kcol_buf[CollisionalRxnLUT::kz49][i] * H3OII(i,j,k) / 19.
+              + kcol_buf[CollisionalRxnLUT::kz50][i] *  O2II(i,j,k) / 32.;
         }
         out_spdens.data[SpLUT::e][i]  = ( scoef*dtit[i] + de(i,j,k) )
                   / ( 1. + acoef*dtit[i] );
 
         // 7) H2
 
-        scoef = 2.*(kcol_buf.data[CollisionalRxnLUT::k8][i]  * HM(i,j,k)   * HI(i,j,k)
-              +       kcol_buf.data[CollisionalRxnLUT::k10][i] * H2II(i,j,k) * HI(i,j,k)/2.
-              +       kcol_buf.data[CollisionalRxnLUT::k19][i] * H2II(i,j,k) * HM(i,j,k)/2.
-              +       kcol_buf.data[CollisionalRxnLUT::k22][i] * HI(i,j,k) * std::pow((HI(i,j,k)),2.));
-        acoef = ( kcol_buf.data[CollisionalRxnLUT::k13][i]*HI(i,j,k) + kcol_buf.data[CollisionalRxnLUT::k11][i]*HII(i,j,k)
-                + kcol_buf.data[CollisionalRxnLUT::k12][i]*de(i,j,k) )
-                + kshield_buf.k29[i] + kshield_buf.k31[i];
+        scoef = 2.*(kcol_buf[CollisionalRxnLUT::k8][i]  * HM(i,j,k)   * HI(i,j,k)
+              +       kcol_buf[CollisionalRxnLUT::k10][i] * H2II(i,j,k) * HI(i,j,k)/2.
+              +       kcol_buf[CollisionalRxnLUT::k19][i] * H2II(i,j,k) * HM(i,j,k)/2.
+              +       kcol_buf[CollisionalRxnLUT::k22][i] * HI(i,j,k) * std::pow((HI(i,j,k)),2.));
+        acoef = ( kcol_buf[CollisionalRxnLUT::k13][i]*HI(i,j,k) + kcol_buf[CollisionalRxnLUT::k11][i]*HII(i,j,k)
+                + kcol_buf[CollisionalRxnLUT::k12][i]*de(i,j,k) )
+                + kph_buf.k29[i] + kph_buf.k31[i];
 
         if (anydust != MASK_FALSE)  {
           if(itmask_metal[i] != MASK_FALSE)  {
@@ -611,49 +617,49 @@ inline void species_density_updates_gauss_seidel(
 #ifdef CONTRIBUTION_OF_MINOR_SPECIES
         if (my_chemistry->primordial_chemistry > 2)  {
           scoef = scoef + 2. * (
-                  kcol_buf.data[CollisionalRxnLUT::k53][i] * HDI(i,j,k) * HII(i,j,k) / 3.
-                + kcol_buf.data[CollisionalRxnLUT::k55][i] * HDI(i,j,k) * HI (i,j,k) / 3.
+                  kcol_buf[CollisionalRxnLUT::k53][i] * HDI(i,j,k) * HII(i,j,k) / 3.
+                + kcol_buf[CollisionalRxnLUT::k55][i] * HDI(i,j,k) * HI (i,j,k) / 3.
                    );
           acoef = acoef
-                + kcol_buf.data[CollisionalRxnLUT::k52][i] * DII(i,j,k) / 2.
-                + kcol_buf.data[CollisionalRxnLUT::k54][i] * DI (i,j,k) / 2.;
+                + kcol_buf[CollisionalRxnLUT::k52][i] * DII(i,j,k) / 2.
+                + kcol_buf[CollisionalRxnLUT::k54][i] * DI (i,j,k) / 2.;
         }
 #endif
         if ( (my_chemistry->metal_chemistry == 1)  && 
              (itmask_metal[i] != MASK_FALSE) )  {
           scoef = scoef +  2. * ( 0.
-              + kcol_buf.data[CollisionalRxnLUT::kz15][i] *    HI(i,j,k) *    CH(i,j,k) / 13.
-              + kcol_buf.data[CollisionalRxnLUT::kz16][i] *    HI(i,j,k) *   CH2(i,j,k) / 14.
-              + kcol_buf.data[CollisionalRxnLUT::kz17][i] *    HI(i,j,k) *    OH(i,j,k) / 17.
-              + kcol_buf.data[CollisionalRxnLUT::kz18][i] *    HI(i,j,k) *   H2O(i,j,k) / 18.
-              + kcol_buf.data[CollisionalRxnLUT::kz47][i] * H2OII(i,j,k) *    de(i,j,k) / 18.
+              + kcol_buf[CollisionalRxnLUT::kz15][i] *    HI(i,j,k) *    CH(i,j,k) / 13.
+              + kcol_buf[CollisionalRxnLUT::kz16][i] *    HI(i,j,k) *   CH2(i,j,k) / 14.
+              + kcol_buf[CollisionalRxnLUT::kz17][i] *    HI(i,j,k) *    OH(i,j,k) / 17.
+              + kcol_buf[CollisionalRxnLUT::kz18][i] *    HI(i,j,k) *   H2O(i,j,k) / 18.
+              + kcol_buf[CollisionalRxnLUT::kz47][i] * H2OII(i,j,k) *    de(i,j,k) / 18.
              );
           acoef = acoef
-              + kcol_buf.data[CollisionalRxnLUT::kz20][i] *    CI(i,j,k) / 12.
-              + kcol_buf.data[CollisionalRxnLUT::kz21][i] *    OI(i,j,k) / 16.
-              + kcol_buf.data[CollisionalRxnLUT::kz23][i] *    CH(i,j,k) / 13.
-              + kcol_buf.data[CollisionalRxnLUT::kz24][i] *    OH(i,j,k) / 17.
-              + kcol_buf.data[CollisionalRxnLUT::kz40][i] *   OII(i,j,k) / 16.
-              + kcol_buf.data[CollisionalRxnLUT::kz41][i] *  OHII(i,j,k) / 17.
-              + kcol_buf.data[CollisionalRxnLUT::kz42][i] * H2OII(i,j,k) / 18.
-              + kcol_buf.data[CollisionalRxnLUT::kz51][i] *    CI(i,j,k) / 12.;
+              + kcol_buf[CollisionalRxnLUT::kz20][i] *    CI(i,j,k) / 12.
+              + kcol_buf[CollisionalRxnLUT::kz21][i] *    OI(i,j,k) / 16.
+              + kcol_buf[CollisionalRxnLUT::kz23][i] *    CH(i,j,k) / 13.
+              + kcol_buf[CollisionalRxnLUT::kz24][i] *    OH(i,j,k) / 17.
+              + kcol_buf[CollisionalRxnLUT::kz40][i] *   OII(i,j,k) / 16.
+              + kcol_buf[CollisionalRxnLUT::kz41][i] *  OHII(i,j,k) / 17.
+              + kcol_buf[CollisionalRxnLUT::kz42][i] * H2OII(i,j,k) / 18.
+              + kcol_buf[CollisionalRxnLUT::kz51][i] *    CI(i,j,k) / 12.;
           if ((my_chemistry->grain_growth == 1)  ||  (my_chemistry->dust_sublimation == 1))  {
             if (my_chemistry->dust_species > 0)  {
               scoef = scoef + 2. *
-                    grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust]  [i] * 2.;
+                    grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] * 2.;
 
             }
             if (my_chemistry->dust_species > 1)  {
               scoef = scoef + 2. * (
-                    grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust] [i] * 3.
-                  + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust]   [i] * 4.
-                  + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust]     [i]
-                  + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust]   [i] * 3.
+                    grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust] [i] * 3.
+                  + grain_growth_rates[OnlyGrainSpLUT::Fe3O4_dust]   [i] * 4.
+                  + grain_growth_rates[OnlyGrainSpLUT::MgO_dust]     [i]
+                  + grain_growth_rates[OnlyGrainSpLUT::Al2O3_dust]   [i] * 3.
                 );
             }
             if (my_chemistry->dust_species > 2)  {
               acoef = acoef
-              + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust]  [i] / H2I(i,j,k) * 2. * 2.;
+              + grain_growth_rates[OnlyGrainSpLUT::vol_org_dust]  [i] / H2I(i,j,k) * 2. * 2.;
             }
           }
         }
@@ -662,22 +668,22 @@ inline void species_density_updates_gauss_seidel(
 
         // 8) H-
 
-        scoef = kcol_buf.data[CollisionalRxnLUT::k7][i] * HI(i,j,k) * de(i,j,k);
-        acoef = (kcol_buf.data[CollisionalRxnLUT::k8][i]  + kcol_buf.data[CollisionalRxnLUT::k15][i])  * HI(i,j,k) +
-                (kcol_buf.data[CollisionalRxnLUT::k16][i] + kcol_buf.data[CollisionalRxnLUT::k17][i])  * HII(i,j,k) +
-               kcol_buf.data[CollisionalRxnLUT::k14][i] * de(i,j,k) + kcol_buf.data[CollisionalRxnLUT::k19][i] * H2II(i,j,k)/2.0f +
-               my_uvb_rates.k27;
+        scoef = kcol_buf[CollisionalRxnLUT::k7][i] * HI(i,j,k) * de(i,j,k);
+        acoef = (kcol_buf[CollisionalRxnLUT::k8][i]  + kcol_buf[CollisionalRxnLUT::k15][i])  * HI(i,j,k) +
+                (kcol_buf[CollisionalRxnLUT::k16][i] + kcol_buf[CollisionalRxnLUT::k17][i])  * HII(i,j,k) +
+               kcol_buf[CollisionalRxnLUT::k14][i] * de(i,j,k) + kcol_buf[CollisionalRxnLUT::k19][i] * H2II(i,j,k)/2.0f +
+               kph_buf.k27[i];
 #ifdef CONTRIBUTION_OF_MINOR_SPECIES
         if (my_chemistry->primordial_chemistry > 2)  {
           acoef = acoef
-                + kcol_buf.data[CollisionalRxnLUT::k56][i] * DI (i,j,k) / 2.;
+                + kcol_buf[CollisionalRxnLUT::k56][i] * DI (i,j,k) / 2.;
         }
 #endif
         if (my_chemistry->primordial_chemistry > 3)  {
           scoef = scoef
-              + kcol_buf.data[CollisionalRxnLUT::k136][i] *    DM(i,j,k) *    HI(i,j,k) /  2.;
+              + kcol_buf[CollisionalRxnLUT::k136][i] *    DM(i,j,k) *    HI(i,j,k) /  2.;
           acoef = acoef
-              + kcol_buf.data[CollisionalRxnLUT::k135][i] *    DI(i,j,k) /  2.;
+              + kcol_buf[CollisionalRxnLUT::k135][i] *    DI(i,j,k) /  2.;
         }
         out_spdens.data[SpLUT::HM][i] = (scoef*dtit[i] + HM(i,j,k))
              / (1.0f + acoef*dtit[i]);
@@ -685,26 +691,26 @@ inline void species_density_updates_gauss_seidel(
 
         // 9) H2+
 
-        out_spdens.data[SpLUT::H2II][i] = 2.*( kcol_buf.data[CollisionalRxnLUT::k9] [i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HII][i]
-                      +   kcol_buf.data[CollisionalRxnLUT::k11][i]*out_spdens.data[SpLUT::H2I][i]/2.*out_spdens.data[SpLUT::HII][i]
-                      +   kcol_buf.data[CollisionalRxnLUT::k17][i]*out_spdens.data[SpLUT::HM][i]*out_spdens.data[SpLUT::HII][i]
-                      + kshield_buf.k29[i]*out_spdens.data[SpLUT::H2I][i]
+        out_spdens.data[SpLUT::H2II][i] = 2.*( kcol_buf[CollisionalRxnLUT::k9] [i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HII][i]
+                      +   kcol_buf[CollisionalRxnLUT::k11][i]*out_spdens.data[SpLUT::H2I][i]/2.*out_spdens.data[SpLUT::HII][i]
+                      +   kcol_buf[CollisionalRxnLUT::k17][i]*out_spdens.data[SpLUT::HM][i]*out_spdens.data[SpLUT::HII][i]
+                      + kph_buf.k29[i]*out_spdens.data[SpLUT::H2I][i]
                       )
-                   /  ( kcol_buf.data[CollisionalRxnLUT::k10][i]*out_spdens.data[SpLUT::HI][i] + kcol_buf.data[CollisionalRxnLUT::k18][i]*out_spdens.data[SpLUT::e][i]
-                      + kcol_buf.data[CollisionalRxnLUT::k19][i]*out_spdens.data[SpLUT::HM][i]
-                      + (kshield_buf.k28[i]+kshield_buf.k30[i])
+                   /  ( kcol_buf[CollisionalRxnLUT::k10][i]*out_spdens.data[SpLUT::HI][i] + kcol_buf[CollisionalRxnLUT::k18][i]*out_spdens.data[SpLUT::e][i]
+                      + kcol_buf[CollisionalRxnLUT::k19][i]*out_spdens.data[SpLUT::HM][i]
+                      + (kph_buf.k28[i]+kph_buf.k30[i])
                       );
         if (my_chemistry->primordial_chemistry > 3)  {
-          out_spdens.data[SpLUT::H2II][i] = 2. * (  kcol_buf.data[CollisionalRxnLUT::k9] [i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HII][i]
-                       +   kcol_buf.data[CollisionalRxnLUT::k11][i]*out_spdens.data[SpLUT::H2I][i]/2.*out_spdens.data[SpLUT::HII][i]
-                       +   kcol_buf.data[CollisionalRxnLUT::k17][i]*out_spdens.data[SpLUT::HM][i]*out_spdens.data[SpLUT::HII][i]
-                       + kshield_buf.k29[i]*out_spdens.data[SpLUT::H2I][i]
-                       + kcol_buf.data[CollisionalRxnLUT::k152][i]*HeHII(i,j,k)*out_spdens.data[SpLUT::HI][i]/5.
+          out_spdens.data[SpLUT::H2II][i] = 2. * (  kcol_buf[CollisionalRxnLUT::k9] [i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HII][i]
+                       +   kcol_buf[CollisionalRxnLUT::k11][i]*out_spdens.data[SpLUT::H2I][i]/2.*out_spdens.data[SpLUT::HII][i]
+                       +   kcol_buf[CollisionalRxnLUT::k17][i]*out_spdens.data[SpLUT::HM][i]*out_spdens.data[SpLUT::HII][i]
+                       + kph_buf.k29[i]*out_spdens.data[SpLUT::H2I][i]
+                       + kcol_buf[CollisionalRxnLUT::k152][i]*HeHII(i,j,k)*out_spdens.data[SpLUT::HI][i]/5.
                        )
-                    /  ( kcol_buf.data[CollisionalRxnLUT::k10][i]*out_spdens.data[SpLUT::HI][i] + kcol_buf.data[CollisionalRxnLUT::k18][i]*out_spdens.data[SpLUT::e][i]
-                       + kcol_buf.data[CollisionalRxnLUT::k19][i]*out_spdens.data[SpLUT::HM][i]
-                       + (kshield_buf.k28[i]+kshield_buf.k30[i])
-                       + kcol_buf.data[CollisionalRxnLUT::k150][i]*out_spdens.data[SpLUT::HeI][i]/4.
+                    /  ( kcol_buf[CollisionalRxnLUT::k10][i]*out_spdens.data[SpLUT::HI][i] + kcol_buf[CollisionalRxnLUT::k18][i]*out_spdens.data[SpLUT::e][i]
+                       + kcol_buf[CollisionalRxnLUT::k19][i]*out_spdens.data[SpLUT::HM][i]
+                       + (kph_buf.k28[i]+kph_buf.k30[i])
+                       + kcol_buf[CollisionalRxnLUT::k150][i]*out_spdens.data[SpLUT::HeI][i]/4.
                        );
         }
       }
@@ -718,28 +724,28 @@ inline void species_density_updates_gauss_seidel(
       if (itmask[i] != MASK_FALSE)  {
         
         // 1) DI
-        scoef =   (       kcol_buf.data[CollisionalRxnLUT::k2][i] * DII(i,j,k) * de(i,j,k)
-                   +      kcol_buf.data[CollisionalRxnLUT::k51][i]* DII(i,j,k) * HI(i,j,k)
-                   + 2.*kcol_buf.data[CollisionalRxnLUT::k55][i]* HDI(i,j,k) *
+        scoef =   (       kcol_buf[CollisionalRxnLUT::k2][i] * DII(i,j,k) * de(i,j,k)
+                   +      kcol_buf[CollisionalRxnLUT::k51][i]* DII(i,j,k) * HI(i,j,k)
+                   + 2.*kcol_buf[CollisionalRxnLUT::k55][i]* HDI(i,j,k) *
                 HI(i,j,k)/3.
                    );
-        acoef  =    kcol_buf.data[CollisionalRxnLUT::k1][i] * de(i,j,k)
-               +    kcol_buf.data[CollisionalRxnLUT::k50][i] * HII(i,j,k)
-               +    kcol_buf.data[CollisionalRxnLUT::k54][i] * H2I(i,j,k)/2.
-               +    kcol_buf.data[CollisionalRxnLUT::k56][i] * HM(i,j,k)
-               + kshield_buf.k24[i];
+        acoef  =    kcol_buf[CollisionalRxnLUT::k1][i] * de(i,j,k)
+               +    kcol_buf[CollisionalRxnLUT::k50][i] * HII(i,j,k)
+               +    kcol_buf[CollisionalRxnLUT::k54][i] * H2I(i,j,k)/2.
+               +    kcol_buf[CollisionalRxnLUT::k56][i] * HM(i,j,k)
+               + kph_buf.k24[i];
         if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + kphHI(i,j,k); }
         if (my_chemistry->primordial_chemistry > 3)  {
           scoef = scoef +  2. * ( 0.
-              + kcol_buf.data[CollisionalRxnLUT::k131][i] *  HDII(i,j,k) *    de(i,j,k) /  3.
-              + kcol_buf.data[CollisionalRxnLUT::k133][i] *   DII(i,j,k) *    DM(i,j,k) /  2.
-              + kcol_buf.data[CollisionalRxnLUT::k134][i] *   HII(i,j,k) *    DM(i,j,k) /  2.
-              + kcol_buf.data[CollisionalRxnLUT::k136][i] *    DM(i,j,k) *    HI(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k131][i] *  HDII(i,j,k) *    de(i,j,k) /  3.
+              + kcol_buf[CollisionalRxnLUT::k133][i] *   DII(i,j,k) *    DM(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k134][i] *   HII(i,j,k) *    DM(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k136][i] *    DM(i,j,k) *    HI(i,j,k) /  2.
               );
           acoef = acoef
-              + kcol_buf.data[CollisionalRxnLUT::k129][i] *   HII(i,j,k)
-              + kcol_buf.data[CollisionalRxnLUT::k132][i] *    de(i,j,k)
-              + kcol_buf.data[CollisionalRxnLUT::k135][i] *    HM(i,j,k);
+              + kcol_buf[CollisionalRxnLUT::k129][i] *   HII(i,j,k)
+              + kcol_buf[CollisionalRxnLUT::k132][i] *    de(i,j,k)
+              + kcol_buf[CollisionalRxnLUT::k135][i] *    HM(i,j,k);
         }
         if (my_chemistry->use_radiative_transfer == 1)  {
           if (my_chemistry->radiative_transfer_HDI_dissociation > 0)  {
@@ -751,35 +757,35 @@ inline void species_density_updates_gauss_seidel(
                     ( 1. + acoef*dtit[i] );
 
         // 2) DII
-        scoef =   (   kcol_buf.data[CollisionalRxnLUT::k1][i]  * DI(i,j,k) * de(i,j,k)
-              +       kcol_buf.data[CollisionalRxnLUT::k50][i] * HII(i,j,k)* DI(i,j,k)
-              +  2.*kcol_buf.data[CollisionalRxnLUT::k53][i] * HII(i,j,k)* HDI(i,j,k)/3.
+        scoef =   (   kcol_buf[CollisionalRxnLUT::k1][i]  * DI(i,j,k) * de(i,j,k)
+              +       kcol_buf[CollisionalRxnLUT::k50][i] * HII(i,j,k)* DI(i,j,k)
+              +  2.*kcol_buf[CollisionalRxnLUT::k53][i] * HII(i,j,k)* HDI(i,j,k)/3.
               )
-              + kshield_buf.k24[i]*DI(i,j,k);
+              + kph_buf.k24[i]*DI(i,j,k);
         acoef = 0.;
         // ! initialize GC202002
         if (my_chemistry->use_radiative_transfer == 1) { scoef = scoef + kphHI(i,j,k)*DI(i,j,k); }
-        acoef =    kcol_buf.data[CollisionalRxnLUT::k2][i]  * de(i,j,k)
-              +    kcol_buf.data[CollisionalRxnLUT::k51][i] * HI(i,j,k)
-              +    kcol_buf.data[CollisionalRxnLUT::k52][i] * H2I(i,j,k)/2.;
+        acoef =    kcol_buf[CollisionalRxnLUT::k2][i]  * de(i,j,k)
+              +    kcol_buf[CollisionalRxnLUT::k51][i] * HI(i,j,k)
+              +    kcol_buf[CollisionalRxnLUT::k52][i] * H2I(i,j,k)/2.;
         if (my_chemistry->primordial_chemistry > 3)  {
           acoef = acoef
-              + kcol_buf.data[CollisionalRxnLUT::k130][i] *    HI(i,j,k)
-              + kcol_buf.data[CollisionalRxnLUT::k133][i] *    DM(i,j,k) /  2.;
+              + kcol_buf[CollisionalRxnLUT::k130][i] *    HI(i,j,k)
+              + kcol_buf[CollisionalRxnLUT::k133][i] *    DM(i,j,k) /  2.;
         }
         out_spdens.data[SpLUT::DII][i]   = ( scoef*dtit[i] + DII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
         // 3) HDI
-        scoef = 3.*(kcol_buf.data[CollisionalRxnLUT::k52][i] * DII(i,j,k)*
+        scoef = 3.*(kcol_buf[CollisionalRxnLUT::k52][i] * DII(i,j,k)*
              H2I(i,j,k)/2./2.
-             + kcol_buf.data[CollisionalRxnLUT::k54][i] * DI(i,j,k) * H2I(i,j,k)/2./2.
+             + kcol_buf[CollisionalRxnLUT::k54][i] * DI(i,j,k) * H2I(i,j,k)/2./2.
         // !   &           + 2._DKIND*k56(i) * DI(i,j,k) * HM(i,j,k)/2._DKIND
         //- ! corrected by GC202005
-             +          kcol_buf.data[CollisionalRxnLUT::k56][i] * DI(i,j,k) * HM(i,j,k)/2.
+             +          kcol_buf[CollisionalRxnLUT::k56][i] * DI(i,j,k) * HM(i,j,k)/2.
                    );
-        acoef  =    kcol_buf.data[CollisionalRxnLUT::k53][i] * HII(i,j,k)
-               +    kcol_buf.data[CollisionalRxnLUT::k55][i] * HI(i,j,k);
+        acoef  =    kcol_buf[CollisionalRxnLUT::k53][i] * HII(i,j,k)
+               +    kcol_buf[CollisionalRxnLUT::k55][i] * HI(i,j,k);
         if (my_chemistry->use_radiative_transfer == 1)  {
           if (my_chemistry->radiative_transfer_HDI_dissociation > 0)  {
             acoef = acoef
@@ -788,8 +794,8 @@ inline void species_density_updates_gauss_seidel(
         }
         if (my_chemistry->primordial_chemistry > 3)  {
           scoef = scoef +  3. * ( 0.
-              + kcol_buf.data[CollisionalRxnLUT::k125][i] *  HDII(i,j,k) *    HI(i,j,k) /  3.
-              + kcol_buf.data[CollisionalRxnLUT::k137][i] *    DM(i,j,k) *    HI(i,j,k) /  2.
+              + kcol_buf[CollisionalRxnLUT::k125][i] *  HDII(i,j,k) *    HI(i,j,k) /  3.
+              + kcol_buf[CollisionalRxnLUT::k137][i] *    DM(i,j,k) *    HI(i,j,k) /  2.
               );
         }
         out_spdens.data[SpLUT::HDI][i]   = ( scoef*dtit[i] + HDI(i,j,k) )
@@ -806,39 +812,39 @@ inline void species_density_updates_gauss_seidel(
         
         // 1) DM
         scoef =
-              kcol_buf.data[CollisionalRxnLUT::k132][i] *    DI(i,j,k) *    de(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::k135][i] *    HM(i,j,k) *    DI(i,j,k);
+              kcol_buf[CollisionalRxnLUT::k132][i] *    DI(i,j,k) *    de(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::k135][i] *    HM(i,j,k) *    DI(i,j,k);
         acoef =
-              kcol_buf.data[CollisionalRxnLUT::k133][i] *   DII(i,j,k) /  2.
-            + kcol_buf.data[CollisionalRxnLUT::k134][i] *   HII(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::k136][i] *    HI(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::k137][i] *    HI(i,j,k);
+              kcol_buf[CollisionalRxnLUT::k133][i] *   DII(i,j,k) /  2.
+            + kcol_buf[CollisionalRxnLUT::k134][i] *   HII(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::k136][i] *    HI(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::k137][i] *    HI(i,j,k);
 
         out_spdens.data[SpLUT::DM][i]    = ( scoef*dtit[i] + DM(i,j,k) ) /
                     ( 1. + acoef*dtit[i] );
 
         // 2) HDII
         scoef = 3. * (
-              kcol_buf.data[CollisionalRxnLUT::k129][i] *    DI(i,j,k) *   HII(i,j,k) /  2.
-            + kcol_buf.data[CollisionalRxnLUT::k130][i] *   DII(i,j,k) *    HI(i,j,k) /  2.
+              kcol_buf[CollisionalRxnLUT::k129][i] *    DI(i,j,k) *   HII(i,j,k) /  2.
+            + kcol_buf[CollisionalRxnLUT::k130][i] *   DII(i,j,k) *    HI(i,j,k) /  2.
             );
         acoef =
-              kcol_buf.data[CollisionalRxnLUT::k125][i] *    HI(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::k131][i] *    de(i,j,k);
+              kcol_buf[CollisionalRxnLUT::k125][i] *    HI(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::k131][i] *    de(i,j,k);
 
         out_spdens.data[SpLUT::HDII][i]   = ( scoef*dtit[i] + HDII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
         // 3) HeHII
         scoef = 5. * (
-              kcol_buf.data[CollisionalRxnLUT::k148][i] *   HeI(i,j,k) *   HII(i,j,k) /  4.
-            + kcol_buf.data[CollisionalRxnLUT::k149][i] *   HeI(i,j,k) *   HII(i,j,k) /  4.
-            + kcol_buf.data[CollisionalRxnLUT::k150][i] *   HeI(i,j,k) *  H2II(i,j,k) /  8.
-            + kcol_buf.data[CollisionalRxnLUT::k151][i] *  HeII(i,j,k) *    HI(i,j,k) /  4.
+              kcol_buf[CollisionalRxnLUT::k148][i] *   HeI(i,j,k) *   HII(i,j,k) /  4.
+            + kcol_buf[CollisionalRxnLUT::k149][i] *   HeI(i,j,k) *   HII(i,j,k) /  4.
+            + kcol_buf[CollisionalRxnLUT::k150][i] *   HeI(i,j,k) *  H2II(i,j,k) /  8.
+            + kcol_buf[CollisionalRxnLUT::k151][i] *  HeII(i,j,k) *    HI(i,j,k) /  4.
             );
         acoef =
-              kcol_buf.data[CollisionalRxnLUT::k152][i] *    HI(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::k153][i] *    de(i,j,k);
+              kcol_buf[CollisionalRxnLUT::k152][i] *    HI(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::k153][i] *    de(i,j,k);
 
         out_spdens.data[SpLUT::HeHII][i]   = ( scoef*dtit[i] + HeHII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -854,19 +860,19 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** CI **********
         scoef = 0. + 12. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz15][i] *    HI(i,j,k) *    CH(i,j,k) / 13.
-            + kcol_buf.data[CollisionalRxnLUT::kz44][i] *   CII(i,j,k) *    de(i,j,k) / 12.
+            + kcol_buf[CollisionalRxnLUT::kz15][i] *    HI(i,j,k) *    CH(i,j,k) / 13.
+            + kcol_buf[CollisionalRxnLUT::kz44][i] *   CII(i,j,k) *    de(i,j,k) / 12.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz20][i] *   H2I(i,j,k) /  2.
-            + kcol_buf.data[CollisionalRxnLUT::kz27][i] *    HI(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz28][i] *    OH(i,j,k) / 17.
-            + kcol_buf.data[CollisionalRxnLUT::kz29][i] *    O2(i,j,k) / 32.
-            + kcol_buf.data[CollisionalRxnLUT::kz51][i] *   H2I(i,j,k) /  2.;
+            + kcol_buf[CollisionalRxnLUT::kz20][i] *   H2I(i,j,k) /  2.
+            + kcol_buf[CollisionalRxnLUT::kz27][i] *    HI(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz28][i] *    OH(i,j,k) / 17.
+            + kcol_buf[CollisionalRxnLUT::kz29][i] *    O2(i,j,k) / 32.
+            + kcol_buf[CollisionalRxnLUT::kz51][i] *   H2I(i,j,k) /  2.;
         if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
           if (my_chemistry->dust_species > 0)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::AC_dust]      [i] / CI(i,j,k) * 12.;
+            + grain_growth_rates[OnlyGrainSpLUT::AC_dust]      [i] / CI(i,j,k) * 12.;
           }
         }
         if (my_chemistry->use_radiative_transfer == 1)  {
@@ -888,9 +894,9 @@ inline void species_density_updates_gauss_seidel(
         scoef = 0. + 12. * ( 0.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz37][i] *    OH(i,j,k) / 17.
-            + kcol_buf.data[CollisionalRxnLUT::kz38][i] *    O2(i,j,k) / 32.
-            + kcol_buf.data[CollisionalRxnLUT::kz44][i] *    de(i,j,k);
+            + kcol_buf[CollisionalRxnLUT::kz37][i] *    OH(i,j,k) / 17.
+            + kcol_buf[CollisionalRxnLUT::kz38][i] *    O2(i,j,k) / 32.
+            + kcol_buf[CollisionalRxnLUT::kz44][i] *    de(i,j,k);
         if (my_chemistry->use_radiative_transfer == 1)  {
           if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
             scoef = scoef
@@ -904,19 +910,19 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** CO **********
         scoef = 0. + 28. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz28][i] *    CI(i,j,k) *    OH(i,j,k) / 204.
-            + kcol_buf.data[CollisionalRxnLUT::kz29][i] *    CI(i,j,k) *    O2(i,j,k) / 384.
-            + kcol_buf.data[CollisionalRxnLUT::kz32][i] *    OI(i,j,k) *    CH(i,j,k) / 208.
-            + kcol_buf.data[CollisionalRxnLUT::kz38][i] *   CII(i,j,k) *    O2(i,j,k) / 384.
-            + kcol_buf.data[CollisionalRxnLUT::kz43][i] *  COII(i,j,k) *    HI(i,j,k) / 28.
+            + kcol_buf[CollisionalRxnLUT::kz28][i] *    CI(i,j,k) *    OH(i,j,k) / 204.
+            + kcol_buf[CollisionalRxnLUT::kz29][i] *    CI(i,j,k) *    O2(i,j,k) / 384.
+            + kcol_buf[CollisionalRxnLUT::kz32][i] *    OI(i,j,k) *    CH(i,j,k) / 208.
+            + kcol_buf[CollisionalRxnLUT::kz38][i] *   CII(i,j,k) *    O2(i,j,k) / 384.
+            + kcol_buf[CollisionalRxnLUT::kz43][i] *  COII(i,j,k) *    HI(i,j,k) / 28.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz26][i] *    OH(i,j,k) / 17.;
+            + kcol_buf[CollisionalRxnLUT::kz26][i] *    OH(i,j,k) / 17.;
         if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
           if (my_chemistry->dust_species > 2)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust]  [i] / CO(i,j,k) * 17. * 0.5
-            + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust]  [i] / CO(i,j,k) * 17.;
+            + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust]  [i] / CO(i,j,k) * 17. * 0.5
+            + grain_growth_rates[OnlyGrainSpLUT::vol_org_dust]  [i] / CO(i,j,k) * 17.;
           }
         }
         if (my_chemistry->use_radiative_transfer == 1)  {
@@ -932,7 +938,7 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** CO2 **********
         scoef = 0. + 44. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz26][i] *    OH(i,j,k) *    CO(i,j,k) / 476.
+            + kcol_buf[CollisionalRxnLUT::kz26][i] *    OH(i,j,k) *    CO(i,j,k) / 476.
            );
         acoef = 0.;
 
@@ -942,23 +948,23 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** OI **********
         scoef = 0. + 16. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz17][i] *    HI(i,j,k) *    OH(i,j,k) / 17.
-            + kcol_buf.data[CollisionalRxnLUT::kz19][i] *    HI(i,j,k) *    O2(i,j,k) / 32.
-            + kcol_buf.data[CollisionalRxnLUT::kz25][i] *    OH(i,j,k) *    OH(i,j,k) / 289.
-            + kcol_buf.data[CollisionalRxnLUT::kz29][i] *    CI(i,j,k) *    O2(i,j,k) / 384.
-            + kcol_buf.data[CollisionalRxnLUT::kz39][i] *   OII(i,j,k) *    HI(i,j,k) / 16.
-            + kcol_buf.data[CollisionalRxnLUT::kz45][i] *   OII(i,j,k) *    de(i,j,k) / 16.
-            + kcol_buf.data[CollisionalRxnLUT::kz47][i] * H2OII(i,j,k) *    de(i,j,k) / 18.
-            + kcol_buf.data[CollisionalRxnLUT::kz50][i] *  O2II(i,j,k) *    de(i,j,k) / 16.
-            + kcol_buf.data[CollisionalRxnLUT::kz53][i] *   SiI(i,j,k) *    O2(i,j,k) / 896.
+            + kcol_buf[CollisionalRxnLUT::kz17][i] *    HI(i,j,k) *    OH(i,j,k) / 17.
+            + kcol_buf[CollisionalRxnLUT::kz19][i] *    HI(i,j,k) *    O2(i,j,k) / 32.
+            + kcol_buf[CollisionalRxnLUT::kz25][i] *    OH(i,j,k) *    OH(i,j,k) / 289.
+            + kcol_buf[CollisionalRxnLUT::kz29][i] *    CI(i,j,k) *    O2(i,j,k) / 384.
+            + kcol_buf[CollisionalRxnLUT::kz39][i] *   OII(i,j,k) *    HI(i,j,k) / 16.
+            + kcol_buf[CollisionalRxnLUT::kz45][i] *   OII(i,j,k) *    de(i,j,k) / 16.
+            + kcol_buf[CollisionalRxnLUT::kz47][i] * H2OII(i,j,k) *    de(i,j,k) / 18.
+            + kcol_buf[CollisionalRxnLUT::kz50][i] *  O2II(i,j,k) *    de(i,j,k) / 16.
+            + kcol_buf[CollisionalRxnLUT::kz53][i] *   SiI(i,j,k) *    O2(i,j,k) / 896.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz21][i] *   H2I(i,j,k) /  2.
-            + kcol_buf.data[CollisionalRxnLUT::kz22][i] *   HII(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz30][i] *    HI(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz31][i] *    OI(i,j,k) / 8.
-            + kcol_buf.data[CollisionalRxnLUT::kz32][i] *    CH(i,j,k) / 13.
-            + kcol_buf.data[CollisionalRxnLUT::kz33][i] *    OH(i,j,k) / 17.;
+            + kcol_buf[CollisionalRxnLUT::kz21][i] *   H2I(i,j,k) /  2.
+            + kcol_buf[CollisionalRxnLUT::kz22][i] *   HII(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz30][i] *    HI(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz31][i] *    OI(i,j,k) / 8.
+            + kcol_buf[CollisionalRxnLUT::kz32][i] *    CH(i,j,k) / 13.
+            + kcol_buf[CollisionalRxnLUT::kz33][i] *    OH(i,j,k) / 17.;
         if (my_chemistry->use_radiative_transfer == 1)  {
           if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
             acoef = acoef
@@ -977,24 +983,24 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** OH **********
         scoef = 0. + 17. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz18][i] *    HI(i,j,k) *   H2O(i,j,k) / 18.
-            + kcol_buf.data[CollisionalRxnLUT::kz19][i] *    HI(i,j,k) *    O2(i,j,k) / 32.
-            + kcol_buf.data[CollisionalRxnLUT::kz21][i] *    OI(i,j,k) *   H2I(i,j,k) / 32.
-            + kcol_buf.data[CollisionalRxnLUT::kz30][i] *    OI(i,j,k) *    HI(i,j,k) / 16.
-            + kcol_buf.data[CollisionalRxnLUT::kz46][i] * H2OII(i,j,k) *    de(i,j,k) / 18.
-            + kcol_buf.data[CollisionalRxnLUT::kz49][i] * H3OII(i,j,k) *    de(i,j,k) / 19.
+            + kcol_buf[CollisionalRxnLUT::kz18][i] *    HI(i,j,k) *   H2O(i,j,k) / 18.
+            + kcol_buf[CollisionalRxnLUT::kz19][i] *    HI(i,j,k) *    O2(i,j,k) / 32.
+            + kcol_buf[CollisionalRxnLUT::kz21][i] *    OI(i,j,k) *   H2I(i,j,k) / 32.
+            + kcol_buf[CollisionalRxnLUT::kz30][i] *    OI(i,j,k) *    HI(i,j,k) / 16.
+            + kcol_buf[CollisionalRxnLUT::kz46][i] * H2OII(i,j,k) *    de(i,j,k) / 18.
+            + kcol_buf[CollisionalRxnLUT::kz49][i] * H3OII(i,j,k) *    de(i,j,k) / 19.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz17][i] *    HI(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz24][i] *   H2I(i,j,k) /  2.
-            + kcol_buf.data[CollisionalRxnLUT::kz25][i] *    OH(i,j,k) / 8.5
-            + kcol_buf.data[CollisionalRxnLUT::kz26][i] *    CO(i,j,k) / 28.
-            + kcol_buf.data[CollisionalRxnLUT::kz28][i] *    CI(i,j,k) / 12.
-            + kcol_buf.data[CollisionalRxnLUT::kz33][i] *    OI(i,j,k) / 16.
-            + kcol_buf.data[CollisionalRxnLUT::kz34][i] *   HII(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz37][i] *   CII(i,j,k) / 12.
-            + kcol_buf.data[CollisionalRxnLUT::kz52][i] *   SiI(i,j,k) / 28.
-            + kcol_buf.data[CollisionalRxnLUT::kz54][i] *  SiOI(i,j,k) / 44.;
+            + kcol_buf[CollisionalRxnLUT::kz17][i] *    HI(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz24][i] *   H2I(i,j,k) /  2.
+            + kcol_buf[CollisionalRxnLUT::kz25][i] *    OH(i,j,k) / 8.5
+            + kcol_buf[CollisionalRxnLUT::kz26][i] *    CO(i,j,k) / 28.
+            + kcol_buf[CollisionalRxnLUT::kz28][i] *    CI(i,j,k) / 12.
+            + kcol_buf[CollisionalRxnLUT::kz33][i] *    OI(i,j,k) / 16.
+            + kcol_buf[CollisionalRxnLUT::kz34][i] *   HII(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz37][i] *   CII(i,j,k) / 12.
+            + kcol_buf[CollisionalRxnLUT::kz52][i] *   SiI(i,j,k) / 28.
+            + kcol_buf[CollisionalRxnLUT::kz54][i] *  SiOI(i,j,k) / 44.;
         if (my_chemistry->use_radiative_transfer == 1)  {
           if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
             acoef = acoef
@@ -1010,28 +1016,28 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** H2O **********
         scoef = 0. + 18. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz24][i] *   H2I(i,j,k) *    OH(i,j,k) / 34.
-            + kcol_buf.data[CollisionalRxnLUT::kz25][i] *    OH(i,j,k) *    OH(i,j,k) / 289.
-            + kcol_buf.data[CollisionalRxnLUT::kz48][i] * H3OII(i,j,k) *    de(i,j,k) / 19.
+            + kcol_buf[CollisionalRxnLUT::kz24][i] *   H2I(i,j,k) *    OH(i,j,k) / 34.
+            + kcol_buf[CollisionalRxnLUT::kz25][i] *    OH(i,j,k) *    OH(i,j,k) / 289.
+            + kcol_buf[CollisionalRxnLUT::kz48][i] * H3OII(i,j,k) *    de(i,j,k) / 19.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz18][i] *    HI(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz35][i] *   HII(i,j,k);
+            + kcol_buf[CollisionalRxnLUT::kz18][i] *    HI(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz35][i] *   HII(i,j,k);
         if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
           if (my_chemistry->dust_species > 0)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust]  [i] / H2O(i,j,k) * 18. * 2.;
+            + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] / H2O(i,j,k) * 18. * 2.;
           }
           if (my_chemistry->dust_species > 1)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust] [i] / H2O(i,j,k) * 18. * 3.
-            + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust]   [i] / H2O(i,j,k) * 18. * 4.
-            + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust]     [i] / H2O(i,j,k) * 18.
-            + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust]   [i] / H2O(i,j,k) * 18. * 3.;
+            + grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust] [i] / H2O(i,j,k) * 18. * 3.
+            + grain_growth_rates[OnlyGrainSpLUT::Fe3O4_dust]   [i] / H2O(i,j,k) * 18. * 4.
+            + grain_growth_rates[OnlyGrainSpLUT::MgO_dust]     [i] / H2O(i,j,k) * 18.
+            + grain_growth_rates[OnlyGrainSpLUT::Al2O3_dust]   [i] / H2O(i,j,k) * 18. * 3.;
           }
           if (my_chemistry->dust_species > 2)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust]  [i] / H2O(i,j,k) * 18.;
+            + grain_growth_rates[OnlyGrainSpLUT::H2O_ice_dust]  [i] / H2O(i,j,k) * 18.;
           }
         }
         if (my_chemistry->use_radiative_transfer == 1)  {
@@ -1047,15 +1053,15 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** O2 **********
         scoef = 0. + 32. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz31][i] *    OI(i,j,k) *    OI(i,j,k) / 256.
-            + kcol_buf.data[CollisionalRxnLUT::kz33][i] *    OI(i,j,k) *    OH(i,j,k) / 272.
+            + kcol_buf[CollisionalRxnLUT::kz31][i] *    OI(i,j,k) *    OI(i,j,k) / 256.
+            + kcol_buf[CollisionalRxnLUT::kz33][i] *    OI(i,j,k) *    OH(i,j,k) / 272.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz19][i] *    HI(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz29][i] *    CI(i,j,k) / 12.
-            + kcol_buf.data[CollisionalRxnLUT::kz36][i] *   HII(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz38][i] *   CII(i,j,k) / 12.
-            + kcol_buf.data[CollisionalRxnLUT::kz53][i] *   SiI(i,j,k) / 28.;
+            + kcol_buf[CollisionalRxnLUT::kz19][i] *    HI(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz29][i] *    CI(i,j,k) / 12.
+            + kcol_buf[CollisionalRxnLUT::kz36][i] *   HII(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz38][i] *   CII(i,j,k) / 12.
+            + kcol_buf[CollisionalRxnLUT::kz53][i] *   SiI(i,j,k) / 28.;
 
         out_spdens.data[SpLUT::O2][i]   = ( scoef*dtit[i] + O2(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -1065,12 +1071,12 @@ inline void species_density_updates_gauss_seidel(
         scoef = 0. + 28. * ( 0.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz52][i] *    OH(i,j,k) / 17.
-            + kcol_buf.data[CollisionalRxnLUT::kz53][i] *    O2(i,j,k) / 32.;
+            + kcol_buf[CollisionalRxnLUT::kz52][i] *    OH(i,j,k) / 17.
+            + kcol_buf[CollisionalRxnLUT::kz53][i] *    O2(i,j,k) / 32.;
         if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
           if (my_chemistry->dust_species > 1)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust]     [i] / SiI(i,j,k) * 28.;
+            + grain_growth_rates[OnlyGrainSpLUT::SiM_dust]     [i] / SiI(i,j,k) * 28.;
           }
         }
 
@@ -1080,19 +1086,19 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** SiOI **********
         scoef = 0. + 44. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz52][i] *   SiI(i,j,k) *    OH(i,j,k) / 476.
-            + kcol_buf.data[CollisionalRxnLUT::kz53][i] *   SiI(i,j,k) *    O2(i,j,k) / 896.
+            + kcol_buf[CollisionalRxnLUT::kz52][i] *   SiI(i,j,k) *    OH(i,j,k) / 476.
+            + kcol_buf[CollisionalRxnLUT::kz53][i] *   SiI(i,j,k) *    O2(i,j,k) / 896.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz54][i] *    OH(i,j,k) / 17.;
+            + kcol_buf[CollisionalRxnLUT::kz54][i] *    OH(i,j,k) / 17.;
         if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
           if (my_chemistry->dust_species > 0)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust]  [i] / SiOI(i,j,k) * 44.;
+            + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] / SiOI(i,j,k) * 44.;
           }
           if (my_chemistry->dust_species > 1)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust] [i] / SiOI(i,j,k) * 44.;
+            + grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust] [i] / SiOI(i,j,k) * 44.;
           }
         }
 
@@ -1102,13 +1108,13 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** SiO2I **********
         scoef = 0. + 60. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz54][i] *  SiOI(i,j,k) *    OH(i,j,k) / 748.
+            + kcol_buf[CollisionalRxnLUT::kz54][i] *  SiOI(i,j,k) *    OH(i,j,k) / 748.
            );
         acoef = 0.;
         if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
           if (my_chemistry->dust_species > 1)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust]   [i] / SiO2I(i,j,k) * 60.;
+            + grain_growth_rates[OnlyGrainSpLUT::SiO2_dust]   [i] / SiO2I(i,j,k) * 60.;
           }
         }
 
@@ -1118,14 +1124,14 @@ inline void species_density_updates_gauss_seidel(
         // MINOR BUT IMPORTANT SPECIES FOR MOLECULAR FORMATION
         //- ***** CH **********
         scoef = 0. + 13. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz16][i] *    HI(i,j,k) *   CH2(i,j,k) / 14.
-            + kcol_buf.data[CollisionalRxnLUT::kz20][i] *    CI(i,j,k) *   H2I(i,j,k) / 24.
-            + kcol_buf.data[CollisionalRxnLUT::kz27][i] *    CI(i,j,k) *    HI(i,j,k) / 12.
+            + kcol_buf[CollisionalRxnLUT::kz16][i] *    HI(i,j,k) *   CH2(i,j,k) / 14.
+            + kcol_buf[CollisionalRxnLUT::kz20][i] *    CI(i,j,k) *   H2I(i,j,k) / 24.
+            + kcol_buf[CollisionalRxnLUT::kz27][i] *    CI(i,j,k) *    HI(i,j,k) / 12.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz15][i] *    HI(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz23][i] *   H2I(i,j,k) /  2.
-            + kcol_buf.data[CollisionalRxnLUT::kz32][i] *    OI(i,j,k) / 16.;
+            + kcol_buf[CollisionalRxnLUT::kz15][i] *    HI(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz23][i] *   H2I(i,j,k) /  2.
+            + kcol_buf[CollisionalRxnLUT::kz32][i] *    OI(i,j,k) / 16.;
 
         out_spdens.data[SpLUT::CH][i]   = ( scoef*dtit[i] + CH(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -1133,15 +1139,15 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** CH2 **********
         scoef = 0. + 14. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz23][i] *   H2I(i,j,k) *    CH(i,j,k) / 26.
-            + kcol_buf.data[CollisionalRxnLUT::kz51][i] *   H2I(i,j,k) *    CI(i,j,k) / 24.
+            + kcol_buf[CollisionalRxnLUT::kz23][i] *   H2I(i,j,k) *    CH(i,j,k) / 26.
+            + kcol_buf[CollisionalRxnLUT::kz51][i] *   H2I(i,j,k) *    CI(i,j,k) / 24.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz16][i] *    HI(i,j,k);
+            + kcol_buf[CollisionalRxnLUT::kz16][i] *    HI(i,j,k);
         if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
           if (my_chemistry->dust_species > 2)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust]  [i] / CH2(i,j,k) * 14. * 0.5;
+            + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust]  [i] / CH2(i,j,k) * 14. * 0.5;
           }
         }
 
@@ -1151,10 +1157,10 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** COII **********
         scoef = 0. + 28. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz37][i] *   CII(i,j,k) *    OH(i,j,k) / 204.
+            + kcol_buf[CollisionalRxnLUT::kz37][i] *   CII(i,j,k) *    OH(i,j,k) / 204.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz43][i] *    HI(i,j,k);
+            + kcol_buf[CollisionalRxnLUT::kz43][i] *    HI(i,j,k);
 
         out_spdens.data[SpLUT::COII][i]   = ( scoef*dtit[i] + COII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -1162,13 +1168,13 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** OII **********
         scoef = 0. + 16. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz22][i] *   HII(i,j,k) *    OI(i,j,k) / 16.
-            + kcol_buf.data[CollisionalRxnLUT::kz38][i] *   CII(i,j,k) *    O2(i,j,k) / 384.
+            + kcol_buf[CollisionalRxnLUT::kz22][i] *   HII(i,j,k) *    OI(i,j,k) / 16.
+            + kcol_buf[CollisionalRxnLUT::kz38][i] *   CII(i,j,k) *    O2(i,j,k) / 384.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz39][i] *    HI(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz40][i] *   H2I(i,j,k) /  2.
-            + kcol_buf.data[CollisionalRxnLUT::kz45][i] *    de(i,j,k);
+            + kcol_buf[CollisionalRxnLUT::kz39][i] *    HI(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz40][i] *   H2I(i,j,k) /  2.
+            + kcol_buf[CollisionalRxnLUT::kz45][i] *    de(i,j,k);
         if (my_chemistry->use_radiative_transfer == 1)  {
           if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
             scoef = scoef
@@ -1182,11 +1188,11 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** OHII **********
         scoef = 0. + 17. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz34][i] *   HII(i,j,k) *    OH(i,j,k) / 17.
-            + kcol_buf.data[CollisionalRxnLUT::kz40][i] *   OII(i,j,k) *   H2I(i,j,k) / 32.
+            + kcol_buf[CollisionalRxnLUT::kz34][i] *   HII(i,j,k) *    OH(i,j,k) / 17.
+            + kcol_buf[CollisionalRxnLUT::kz40][i] *   OII(i,j,k) *   H2I(i,j,k) / 32.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz41][i] *   H2I(i,j,k) /  2.;
+            + kcol_buf[CollisionalRxnLUT::kz41][i] *   H2I(i,j,k) /  2.;
 
         out_spdens.data[SpLUT::OHII][i]   = ( scoef*dtit[i] + OHII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -1194,13 +1200,13 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** H2OII **********
         scoef = 0. + 18. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz35][i] *   HII(i,j,k) *   H2O(i,j,k) / 18.
-            + kcol_buf.data[CollisionalRxnLUT::kz41][i] *  OHII(i,j,k) *   H2I(i,j,k) / 34.
+            + kcol_buf[CollisionalRxnLUT::kz35][i] *   HII(i,j,k) *   H2O(i,j,k) / 18.
+            + kcol_buf[CollisionalRxnLUT::kz41][i] *  OHII(i,j,k) *   H2I(i,j,k) / 34.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz42][i] *   H2I(i,j,k) /  2.
-            + kcol_buf.data[CollisionalRxnLUT::kz46][i] *    de(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz47][i] *    de(i,j,k);
+            + kcol_buf[CollisionalRxnLUT::kz42][i] *   H2I(i,j,k) /  2.
+            + kcol_buf[CollisionalRxnLUT::kz46][i] *    de(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz47][i] *    de(i,j,k);
 
         out_spdens.data[SpLUT::H2OII][i]   = ( scoef*dtit[i] + H2OII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -1208,11 +1214,11 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** H3OII **********
         scoef = 0. + 19. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz42][i] * H2OII(i,j,k) *   H2I(i,j,k) / 36.
+            + kcol_buf[CollisionalRxnLUT::kz42][i] * H2OII(i,j,k) *   H2I(i,j,k) / 36.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz48][i] *    de(i,j,k)
-            + kcol_buf.data[CollisionalRxnLUT::kz49][i] *    de(i,j,k);
+            + kcol_buf[CollisionalRxnLUT::kz48][i] *    de(i,j,k)
+            + kcol_buf[CollisionalRxnLUT::kz49][i] *    de(i,j,k);
 
         out_spdens.data[SpLUT::H3OII][i]   = ( scoef*dtit[i] + H3OII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -1220,10 +1226,10 @@ inline void species_density_updates_gauss_seidel(
 
         // ***** O2II **********
         scoef = 0. + 32. * ( 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz36][i] *   HII(i,j,k) *    O2(i,j,k) / 32.
+            + kcol_buf[CollisionalRxnLUT::kz36][i] *   HII(i,j,k) *    O2(i,j,k) / 32.
            );
         acoef = 0.
-            + kcol_buf.data[CollisionalRxnLUT::kz50][i] *    de(i,j,k);
+            + kcol_buf[CollisionalRxnLUT::kz50][i] *    de(i,j,k);
 
         out_spdens.data[SpLUT::O2II][i]   = ( scoef*dtit[i] + O2II(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -1235,11 +1241,11 @@ inline void species_density_updates_gauss_seidel(
             scoef = 0.;
             acoef = 0.;
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust]  [i] / Mg(i,j,k) * 24.;
+            + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] / Mg(i,j,k) * 24.;
             if (my_chemistry->dust_species > 1)  {
               acoef = acoef
-              + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust] [i] / Mg(i,j,k) * 24. * 2.
-              + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust]     [i] / Mg(i,j,k) * 24.;
+              + grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust] [i] / Mg(i,j,k) * 24. * 2.
+              + grain_growth_rates[OnlyGrainSpLUT::MgO_dust]     [i] / Mg(i,j,k) * 24.;
             }
 
             out_spdens.data[SpLUT::Mg][i]   = ( scoef*dtit[i] + Mg(i,j,k) )
@@ -1252,7 +1258,7 @@ inline void species_density_updates_gauss_seidel(
             scoef = 0.;
             acoef = 0.;
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust]   [i] / Al(i,j,k) * 27. * 2.;
+            + grain_growth_rates[OnlyGrainSpLUT::Al2O3_dust]   [i] / Al(i,j,k) * 27. * 2.;
 
             out_spdens.data[SpLUT::Al][i]   = ( scoef*dtit[i] + Al(i,j,k) )
                        / ( 1. + acoef*dtit[i] );
@@ -1262,7 +1268,7 @@ inline void species_density_updates_gauss_seidel(
             scoef = 0.;
             acoef = 0.;
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust]     [i] / S(i,j,k) * 32.;
+            + grain_growth_rates[OnlyGrainSpLUT::FeS_dust]     [i] / S(i,j,k) * 32.;
 
             out_spdens.data[SpLUT::S][i]    = ( scoef*dtit[i] + S(i,j,k) )
                        / ( 1. + acoef*dtit[i] );
@@ -1272,9 +1278,9 @@ inline void species_density_updates_gauss_seidel(
             scoef = 0.;
             acoef = 0.;
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust]     [i] / Fe(i,j,k) * 56.
-            + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust]   [i] / Fe(i,j,k) * 56. * 3.
-            + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust]     [i] / Fe(i,j,k) * 56.;
+            + grain_growth_rates[OnlyGrainSpLUT::FeM_dust]     [i] / Fe(i,j,k) * 56.
+            + grain_growth_rates[OnlyGrainSpLUT::Fe3O4_dust]   [i] / Fe(i,j,k) * 56. * 3.
+            + grain_growth_rates[OnlyGrainSpLUT::FeS_dust]     [i] / Fe(i,j,k) * 56.;
 
             out_spdens.data[SpLUT::Fe][i]   = ( scoef*dtit[i] + Fe(i,j,k) )
                        / ( 1. + acoef*dtit[i] );
@@ -1295,7 +1301,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** MgSiO3 **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust]  [i] * 100.;
+          + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] * 100.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::MgSiO3_dust][i]   = ( scoef*dtit[i] + MgSiO3(i,j,k) )
@@ -1305,7 +1311,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** AC **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::AC_dust]      [i] * 12.;
+          + grain_growth_rates[OnlyGrainSpLUT::AC_dust]      [i] * 12.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::AC_dust][i]   = ( scoef*dtit[i] + AC(i,j,k) )
@@ -1317,7 +1323,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** SiM **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust]     [i] * 28.;
+          + grain_growth_rates[OnlyGrainSpLUT::SiM_dust]     [i] * 28.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::SiM_dust][i]   = ( scoef*dtit[i] + SiM(i,j,k) )
@@ -1327,7 +1333,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** FeM **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust]     [i] * 56.;
+          + grain_growth_rates[OnlyGrainSpLUT::FeM_dust]     [i] * 56.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::FeM_dust][i]   = ( scoef*dtit[i] + FeM(i,j,k) )
@@ -1337,7 +1343,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** Mg2SiO4 **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust] [i] * 140.;
+          + grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust] [i] * 140.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::Mg2SiO4_dust][i]   = ( scoef*dtit[i] + Mg2SiO4(i,j,k) )
@@ -1347,7 +1353,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** Fe3O4 **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust]   [i] * 232.;
+          + grain_growth_rates[OnlyGrainSpLUT::Fe3O4_dust]   [i] * 232.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::Fe3O4_dust][i]   = ( scoef*dtit[i] + Fe3O4(i,j,k) )
@@ -1357,7 +1363,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** SiO2D **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust]   [i] * 60.;
+          + grain_growth_rates[OnlyGrainSpLUT::SiO2_dust]   [i] * 60.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::SiO2_dust][i]   = ( scoef*dtit[i] + SiO2D(i,j,k) )
@@ -1367,7 +1373,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** MgO **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust]     [i] * 40.;
+          + grain_growth_rates[OnlyGrainSpLUT::MgO_dust]     [i] * 40.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::MgO_dust][i]   = ( scoef*dtit[i] + MgO(i,j,k) )
@@ -1377,7 +1383,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** FeS **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust]     [i] * 88.;
+          + grain_growth_rates[OnlyGrainSpLUT::FeS_dust]     [i] * 88.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::FeS_dust][i]   = ( scoef*dtit[i] + FeS(i,j,k) )
@@ -1387,7 +1393,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** Al2O3 **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust]   [i] * 102.;
+          + grain_growth_rates[OnlyGrainSpLUT::Al2O3_dust]   [i] * 102.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::Al2O3_dust][i]   = ( scoef*dtit[i] + Al2O3(i,j,k) )
@@ -1399,7 +1405,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** reforg **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust]  [i] * 22.68;
+          + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust]  [i] * 22.68;
           acoef = 0.;
 
           out_spdens.data[SpLUT::ref_org_dust][i]   = ( scoef*dtit[i] + reforg(i,j,k) )
@@ -1409,7 +1415,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** volorg **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust]  [i] * 32.;
+          + grain_growth_rates[OnlyGrainSpLUT::vol_org_dust]  [i] * 32.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::vol_org_dust][i]   = ( scoef*dtit[i] + volorg(i,j,k) )
@@ -1419,7 +1425,7 @@ inline void species_density_updates_gauss_seidel(
           // ***** H2Oice **********
           scoef = 0.;
           scoef = scoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust]  [i] * 18.;
+          + grain_growth_rates[OnlyGrainSpLUT::H2O_ice_dust]  [i] * 18.;
           acoef = 0.;
 
           out_spdens.data[SpLUT::H2O_ice_dust][i]   = ( scoef*dtit[i] + H2Oice(i,j,k) )
@@ -1444,17 +1450,14 @@ inline void species_density_updates_gauss_seidel(
 ///     species mass densities. The caller must make sure this is filled with
 ///     zeros before calling this function
 /// @param[in]  anydust
-/// @param[in]  h2dust
 /// @param[in]  rhoH Indicates the mass density of all Hydrogen
 /// @param[in]  itmask_metal Indicates where we should account for metal
 ///     chemistry
 /// @param[in]  my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
 /// @param[in]  my_fields Specifies field data
-/// @param[in]  my_uvb_rates specifies precomputed rxn rates dependent on the
-///     UV background
-/// @param[in]  grain_growth_rates, kcr_buf, kshield_buf specifies the
-///     precomputed rxn rates (depends on local physical conditions)
+/// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
+///     local physical conditions)
 ///
 /// @note
 /// Some of occurences of the const keyword is somewhat symbolic (to indicate
@@ -1479,12 +1482,9 @@ inline void species_density_updates_gauss_seidel(
 ///      is a reasonable motivation for that choice)
 inline void species_density_derivatives_0d(
   grackle::impl::SpeciesCollection deriv, gr_mask_type anydust,
-  const double* h2dust, const double* rhoH, const gr_mask_type* itmask_metal,
+  const double* rhoH, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
-  const photo_rate_storage my_uvb_rates,
-  const grackle::impl::GrainSpeciesCollection grain_growth_rates,
-  const grackle::impl::CollisionalRxnRateCollection kcr_buf,
-  const grackle::impl::PhotoRxnRateCollection kshield_buf
+  const FullRxnRateBuf rxn_rate_buf
 ) {
 
   // define some local variables carried over from the fortran version:
@@ -1551,6 +1551,12 @@ inline void species_density_derivatives_0d(
   gr_float& volorg  = my_fields->vol_org_dust_density[0];
   gr_float& H2Oice  = my_fields->H2O_ice_dust_density[0];
 
+  const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
+  const PhotoRxnRateCollection kph_buf = rxn_rate_buf.radiative;
+  const double* const* grain_growth_rates =
+    FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
+  const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
+
   double scoef, acoef;
 
   // A) the 6-species integrator
@@ -1561,11 +1567,11 @@ inline void species_density_derivatives_0d(
 
     // 1) HI
 
-    scoef  = kcr_buf.data[CollisionalRxnLUT::k2][0]   *HII       *de;
-    acoef  = kcr_buf.data[CollisionalRxnLUT::k1][0]   *de
-           + kcr_buf.data[CollisionalRxnLUT::k57][0]   *HI
-           + kcr_buf.data[CollisionalRxnLUT::k58][0]   *HeI       /4.
-           + kshield_buf.k24[0];
+    scoef  = kcol_buf[CollisionalRxnLUT::k2][0]   *HII       *de;
+    acoef  = kcol_buf[CollisionalRxnLUT::k1][0]   *de
+           + kcol_buf[CollisionalRxnLUT::k57][0]   *HI
+           + kcol_buf[CollisionalRxnLUT::k58][0]   *HeI       /4.
+           + kph_buf.k24[0];
     if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(my_fields->RT_HI_ionization_rate); }
     deriv.data[SpLUT::HI][0] = deriv.data[SpLUT::HI][0] + (scoef - acoef * HI);
 
@@ -1583,13 +1589,13 @@ inline void species_density_derivatives_0d(
 
 
     // 2) HII
-    scoef  = kcr_buf.data[CollisionalRxnLUT::k1][0]   *HI    *de
-           + kcr_buf.data[CollisionalRxnLUT::k57][0]   *HI    *HI
-           + kcr_buf.data[CollisionalRxnLUT::k58][0]   *HI    *HeI       /4.
-           + kshield_buf.k24[0]   *HI;
+    scoef  = kcol_buf[CollisionalRxnLUT::k1][0]   *HI    *de
+           + kcol_buf[CollisionalRxnLUT::k57][0]   *HI    *HI
+           + kcol_buf[CollisionalRxnLUT::k58][0]   *HI    *HeI       /4.
+           + kph_buf.k24[0]   *HI;
     if (my_chemistry->use_radiative_transfer == 1)
         { scoef = scoef + *(my_fields->RT_HI_ionization_rate)       *HI; }
-    acoef  = kcr_buf.data[CollisionalRxnLUT::k2][0]   *de;
+    acoef  = kcol_buf[CollisionalRxnLUT::k2][0]   *de;
     deriv.data[SpLUT::HII][0] = deriv.data[SpLUT::HII][0] + (scoef - acoef * HII);
 
 
@@ -1610,11 +1616,11 @@ inline void species_density_derivatives_0d(
     // 3) Electron density
 
     scoef = 0.
-               + kcr_buf.data[CollisionalRxnLUT::k57][0]   *HI    *HI
-               + kcr_buf.data[CollisionalRxnLUT::k58][0]   *HI    *HeI       /4.
-               + kshield_buf.k24[0]   *HI
-               + kshield_buf.k25[0]   *HeII       /4.
-               + kshield_buf.k26[0]   *HeI       /4.;
+               + kcol_buf[CollisionalRxnLUT::k57][0]   *HI    *HI
+               + kcol_buf[CollisionalRxnLUT::k58][0]   *HI    *HeI       /4.
+               + kph_buf.k24[0]   *HI
+               + kph_buf.k25[0]   *HeII       /4.
+               + kph_buf.k26[0]   *HeI       /4.;
 
     if ( (my_chemistry->use_radiative_transfer == 1)  &&  ( my_chemistry->radiative_transfer_hydrogen_only == 0) )
         { scoef = scoef + *(my_fields->RT_HI_ionization_rate)        * HI
@@ -1625,11 +1631,11 @@ inline void species_density_derivatives_0d(
 
 
 
-    acoef = -(kcr_buf.data[CollisionalRxnLUT::k1][0]   *HI             - kcr_buf.data[CollisionalRxnLUT::k2][0]   *HII
-            + kcr_buf.data[CollisionalRxnLUT::k3][0]   *HeI       /4. -
-         kcr_buf.data[CollisionalRxnLUT::k6][0]   *HeIII       /4.
-            + kcr_buf.data[CollisionalRxnLUT::k5][0]   *HeII       /4. -
-         kcr_buf.data[CollisionalRxnLUT::k4][0]   *HeII       /4.);
+    acoef = -(kcol_buf[CollisionalRxnLUT::k1][0]   *HI             - kcol_buf[CollisionalRxnLUT::k2][0]   *HII
+            + kcol_buf[CollisionalRxnLUT::k3][0]   *HeI       /4. -
+         kcol_buf[CollisionalRxnLUT::k6][0]   *HeIII       /4.
+            + kcol_buf[CollisionalRxnLUT::k5][0]   *HeII       /4. -
+         kcol_buf[CollisionalRxnLUT::k4][0]   *HeII       /4.);
     deriv.data[SpLUT::e][0] = deriv.data[SpLUT::e][0] + (scoef - acoef * de);
 
 
@@ -1645,53 +1651,53 @@ inline void species_density_derivatives_0d(
 
   // 4) HeI
 
-  scoef  = kcr_buf.data[CollisionalRxnLUT::k4][0]   *HeII       *de;
-  acoef  = kcr_buf.data[CollisionalRxnLUT::k3][0]   *de
-               + kshield_buf.k26[0];
+  scoef  = kcol_buf[CollisionalRxnLUT::k4][0]   *HeII       *de;
+  acoef  = kcol_buf[CollisionalRxnLUT::k3][0]   *de
+               + kph_buf.k26[0];
 
   if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
       { acoef = acoef + *(my_fields->RT_HeI_ionization_rate); }
   if (my_chemistry->primordial_chemistry > 3)  {
     scoef = scoef +  4. * ( 0.
-        + kcr_buf.data[CollisionalRxnLUT::k152][0]    * HeHII        *    HI        /  5.
-        + kcr_buf.data[CollisionalRxnLUT::k153][0]    * HeHII        *    de        /  5.
+        + kcol_buf[CollisionalRxnLUT::k152][0]    * HeHII        *    HI        /  5.
+        + kcol_buf[CollisionalRxnLUT::k153][0]    * HeHII        *    de        /  5.
        );
     acoef = acoef
-        + kcr_buf.data[CollisionalRxnLUT::k148][0]    *   HII
-        + kcr_buf.data[CollisionalRxnLUT::k149][0]    *   HII
-        + kcr_buf.data[CollisionalRxnLUT::k150][0]    *  H2II        /  2.;
+        + kcol_buf[CollisionalRxnLUT::k148][0]    *   HII
+        + kcol_buf[CollisionalRxnLUT::k149][0]    *   HII
+        + kcol_buf[CollisionalRxnLUT::k150][0]    *  H2II        /  2.;
   }
   deriv.data[SpLUT::HeI][0] = deriv.data[SpLUT::HeI][0] + (scoef - acoef * HeI);
 
 
   // 5) HeII
 
-  scoef  = kcr_buf.data[CollisionalRxnLUT::k3][0]   *HeI    *de
-         + kcr_buf.data[CollisionalRxnLUT::k6][0]   *HeIII       *de
-         + kshield_buf.k26[0]   *HeI;
+  scoef  = kcol_buf[CollisionalRxnLUT::k3][0]   *HeI    *de
+         + kcol_buf[CollisionalRxnLUT::k6][0]   *HeIII       *de
+         + kph_buf.k26[0]   *HeI;
 
   if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
       { scoef = scoef + *(my_fields->RT_HeI_ionization_rate)       *HeI; }
 
-  acoef  = kcr_buf.data[CollisionalRxnLUT::k4][0]   *de        + kcr_buf.data[CollisionalRxnLUT::k5][0]   *de
-         + kshield_buf.k25[0];
+  acoef  = kcol_buf[CollisionalRxnLUT::k4][0]   *de        + kcol_buf[CollisionalRxnLUT::k5][0]   *de
+         + kph_buf.k25[0];
 
   if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
       { acoef = acoef + *(my_fields->RT_HeII_ionization_rate); }
   if (my_chemistry->primordial_chemistry > 3)  {
     acoef = acoef
-        + kcr_buf.data[CollisionalRxnLUT::k151][0]    *    HI;
+        + kcol_buf[CollisionalRxnLUT::k151][0]    *    HI;
   }
   deriv.data[SpLUT::HeII][0] = deriv.data[SpLUT::HeII][0] + (scoef - acoef * HeII);
 
 
   // 6) HeIII
 
-  scoef   = kcr_buf.data[CollisionalRxnLUT::k5][0]   *HeII    *de
-          + kshield_buf.k25[0]   *HeII;
+  scoef   = kcol_buf[CollisionalRxnLUT::k5][0]   *HeII    *de
+          + kph_buf.k25[0]   *HeII;
   if ((my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
       { scoef = scoef + *(my_fields->RT_HeII_ionization_rate)        * HeII; }
-  acoef   = kcr_buf.data[CollisionalRxnLUT::k6][0]   *de;
+  acoef   = kcol_buf[CollisionalRxnLUT::k6][0]   *de;
   deriv.data[SpLUT::HeIII][0] = deriv.data[SpLUT::HeIII][0] + (scoef - acoef * HeIII);
 
 
@@ -1708,26 +1714,26 @@ inline void species_density_derivatives_0d(
 
 
     // 1) HI
-    scoef  =      kcr_buf.data[CollisionalRxnLUT::k2][0]    * HII        * de
-           + 2.*kcr_buf.data[CollisionalRxnLUT::k13][0]   * HI         * H2I       /2.
-           +      kcr_buf.data[CollisionalRxnLUT::k11][0]   * HII        * H2I       /2.
-           + 2.*kcr_buf.data[CollisionalRxnLUT::k12][0]   * de         * H2I       /2.
-           +      kcr_buf.data[CollisionalRxnLUT::k14][0]   * HM         * de
-           +      kcr_buf.data[CollisionalRxnLUT::k15][0]   * HM         * HI
-           + 2.*kcr_buf.data[CollisionalRxnLUT::k16][0]   * HM         * HII
-           + 2.*kcr_buf.data[CollisionalRxnLUT::k18][0]   * H2II       * de       /2.
-           +      kcr_buf.data[CollisionalRxnLUT::k19][0]   * H2II       * HM       /2.
-           + 2.*kshield_buf.k31[0]      * H2I       /2.;
+    scoef  =      kcol_buf[CollisionalRxnLUT::k2][0]    * HII        * de
+           + 2.*kcol_buf[CollisionalRxnLUT::k13][0]   * HI         * H2I       /2.
+           +      kcol_buf[CollisionalRxnLUT::k11][0]   * HII        * H2I       /2.
+           + 2.*kcol_buf[CollisionalRxnLUT::k12][0]   * de         * H2I       /2.
+           +      kcol_buf[CollisionalRxnLUT::k14][0]   * HM         * de
+           +      kcol_buf[CollisionalRxnLUT::k15][0]   * HM         * HI
+           + 2.*kcol_buf[CollisionalRxnLUT::k16][0]   * HM         * HII
+           + 2.*kcol_buf[CollisionalRxnLUT::k18][0]   * H2II       * de       /2.
+           +      kcol_buf[CollisionalRxnLUT::k19][0]   * H2II       * HM       /2.
+           + 2.*kph_buf.k31[0]      * H2I       /2.;
 
-    acoef  =      kcr_buf.data[CollisionalRxnLUT::k1][0]    * de
-           +      kcr_buf.data[CollisionalRxnLUT::k7][0]    * de
-           +      kcr_buf.data[CollisionalRxnLUT::k8][0]    * HM
-           +      kcr_buf.data[CollisionalRxnLUT::k9][0]    * HII
-           +      kcr_buf.data[CollisionalRxnLUT::k10][0]   * H2II       /2.
-           + 2.*kcr_buf.data[CollisionalRxnLUT::k22][0]   * std::pow(HI       ,2)
-           +      kcr_buf.data[CollisionalRxnLUT::k57][0]   * HI
-           +      kcr_buf.data[CollisionalRxnLUT::k58][0]   * HeI       /4.
-           + kshield_buf.k24[0];
+    acoef  =      kcol_buf[CollisionalRxnLUT::k1][0]    * de
+           +      kcol_buf[CollisionalRxnLUT::k7][0]    * de
+           +      kcol_buf[CollisionalRxnLUT::k8][0]    * HM
+           +      kcol_buf[CollisionalRxnLUT::k9][0]    * HII
+           +      kcol_buf[CollisionalRxnLUT::k10][0]   * H2II       /2.
+           + 2.*kcol_buf[CollisionalRxnLUT::k22][0]   * std::pow(HI       ,2)
+           +      kcol_buf[CollisionalRxnLUT::k57][0]   * HI
+           +      kcol_buf[CollisionalRxnLUT::k58][0]   * HeI       /4.
+           + kph_buf.k24[0];
 
     if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(my_fields->RT_HI_ionization_rate); }
     if (my_chemistry->use_radiative_transfer == 1)  {
@@ -1753,63 +1759,63 @@ inline void species_density_derivatives_0d(
     // contribution of minor species
     if (my_chemistry->primordial_chemistry > 2)  {
       scoef = scoef
-            + kcr_buf.data[CollisionalRxnLUT::k50][0]    * HII        * DI         / 2.
-            + kcr_buf.data[CollisionalRxnLUT::k54][0]    * H2I        * DI         / 4.;
+            + kcol_buf[CollisionalRxnLUT::k50][0]    * HII        * DI         / 2.
+            + kcol_buf[CollisionalRxnLUT::k54][0]    * H2I        * DI         / 4.;
       acoef = acoef
-            + kcr_buf.data[CollisionalRxnLUT::k51][0]    * DII        / 2.
-            + kcr_buf.data[CollisionalRxnLUT::k55][0]    * HDI        / 3.;
+            + kcol_buf[CollisionalRxnLUT::k51][0]    * DII        / 2.
+            + kcol_buf[CollisionalRxnLUT::k55][0]    * HDI        / 3.;
     }
 
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef
-          + kcr_buf.data[CollisionalRxnLUT::k131][0]    *  HDII        *    de        /  3.
-          + kcr_buf.data[CollisionalRxnLUT::k134][0]    *   HII        *    DM        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::k135][0]    *    HM        *    DI        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::k150][0]    *   HeI        *  H2II        /  8.
-          + kcr_buf.data[CollisionalRxnLUT::k153][0]    * HeHII        *    de        /  5.;
+          + kcol_buf[CollisionalRxnLUT::k131][0]    *  HDII        *    de        /  3.
+          + kcol_buf[CollisionalRxnLUT::k134][0]    *   HII        *    DM        /  2.
+          + kcol_buf[CollisionalRxnLUT::k135][0]    *    HM        *    DI        /  2.
+          + kcol_buf[CollisionalRxnLUT::k150][0]    *   HeI        *  H2II        /  8.
+          + kcol_buf[CollisionalRxnLUT::k153][0]    * HeHII        *    de        /  5.;
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::k125][0]    *  HDII        /  3.
-          + kcr_buf.data[CollisionalRxnLUT::k130][0]    *   DII        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::k136][0]    *    DM        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::k137][0]    *    DM        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::k151][0]    *  HeII        /  4.
-          + kcr_buf.data[CollisionalRxnLUT::k152][0]    * HeHII        /  5.;
+          + kcol_buf[CollisionalRxnLUT::k125][0]    *  HDII        /  3.
+          + kcol_buf[CollisionalRxnLUT::k130][0]    *   DII        /  2.
+          + kcol_buf[CollisionalRxnLUT::k136][0]    *    DM        /  2.
+          + kcol_buf[CollisionalRxnLUT::k137][0]    *    DM        /  2.
+          + kcol_buf[CollisionalRxnLUT::k151][0]    *  HeII        /  4.
+          + kcol_buf[CollisionalRxnLUT::k152][0]    * HeHII        /  5.;
     }
 
     if ((my_chemistry->metal_chemistry == 1)  && 
         (itmask_metal[0] != MASK_FALSE))  {
       scoef = scoef
-          + kcr_buf.data[CollisionalRxnLUT::kz20][0]    *    CI        *   H2I        / 24.
-          + kcr_buf.data[CollisionalRxnLUT::kz21][0]    *    OI        *   H2I        / 32.
-          + kcr_buf.data[CollisionalRxnLUT::kz22][0]    *   HII        *    OI        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz23][0]    *   H2I        *    CH        / 26.
-          + kcr_buf.data[CollisionalRxnLUT::kz24][0]    *   H2I        *    OH        / 34.
-          + kcr_buf.data[CollisionalRxnLUT::kz26][0]    *    OH        *    CO        / 476.
-          + kcr_buf.data[CollisionalRxnLUT::kz28][0]    *    CI        *    OH        / 204.
-          + kcr_buf.data[CollisionalRxnLUT::kz32][0]    *    OI        *    CH        / 208.
-          + kcr_buf.data[CollisionalRxnLUT::kz33][0]    *    OI        *    OH        / 272.
-          + kcr_buf.data[CollisionalRxnLUT::kz34][0]    *   HII        *    OH        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz35][0]    *   HII        *   H2O        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz36][0]    *   HII        *    O2        / 32.
-          + kcr_buf.data[CollisionalRxnLUT::kz37][0]    *   CII        *    OH        / 204.
-          + kcr_buf.data[CollisionalRxnLUT::kz40][0]    *   OII        *   H2I        / 32.
-          + kcr_buf.data[CollisionalRxnLUT::kz41][0]    *  OHII        *   H2I        / 34.
-          + kcr_buf.data[CollisionalRxnLUT::kz42][0]    * H2OII        *   H2I        / 36.
-          + kcr_buf.data[CollisionalRxnLUT::kz46][0]    * H2OII        *    de        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz48][0]    * H3OII        *    de        / 19.
-          + kcr_buf.data[CollisionalRxnLUT::kz49][0]    * H3OII        *    de        / 9.5
-          + kcr_buf.data[CollisionalRxnLUT::kz52][0]    *   SiI        *    OH        / 476.
-          + kcr_buf.data[CollisionalRxnLUT::kz54][0]    *  SiOI        *    OH        / 748.;
+          + kcol_buf[CollisionalRxnLUT::kz20][0]    *    CI        *   H2I        / 24.
+          + kcol_buf[CollisionalRxnLUT::kz21][0]    *    OI        *   H2I        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz22][0]    *   HII        *    OI        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz23][0]    *   H2I        *    CH        / 26.
+          + kcol_buf[CollisionalRxnLUT::kz24][0]    *   H2I        *    OH        / 34.
+          + kcol_buf[CollisionalRxnLUT::kz26][0]    *    OH        *    CO        / 476.
+          + kcol_buf[CollisionalRxnLUT::kz28][0]    *    CI        *    OH        / 204.
+          + kcol_buf[CollisionalRxnLUT::kz32][0]    *    OI        *    CH        / 208.
+          + kcol_buf[CollisionalRxnLUT::kz33][0]    *    OI        *    OH        / 272.
+          + kcol_buf[CollisionalRxnLUT::kz34][0]    *   HII        *    OH        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz35][0]    *   HII        *   H2O        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz36][0]    *   HII        *    O2        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz37][0]    *   CII        *    OH        / 204.
+          + kcol_buf[CollisionalRxnLUT::kz40][0]    *   OII        *   H2I        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz41][0]    *  OHII        *   H2I        / 34.
+          + kcol_buf[CollisionalRxnLUT::kz42][0]    * H2OII        *   H2I        / 36.
+          + kcol_buf[CollisionalRxnLUT::kz46][0]    * H2OII        *    de        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz48][0]    * H3OII        *    de        / 19.
+          + kcol_buf[CollisionalRxnLUT::kz49][0]    * H3OII        *    de        / 9.5
+          + kcol_buf[CollisionalRxnLUT::kz52][0]    *   SiI        *    OH        / 476.
+          + kcol_buf[CollisionalRxnLUT::kz54][0]    *  SiOI        *    OH        / 748.;
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::kz15][0]    *    CH        / 13.
-          + kcr_buf.data[CollisionalRxnLUT::kz16][0]    *   CH2        / 14.
-          + kcr_buf.data[CollisionalRxnLUT::kz17][0]    *    OH        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz18][0]    *   H2O        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz19][0]    *    O2        / 32.
-          + kcr_buf.data[CollisionalRxnLUT::kz27][0]    *    CI        / 12.
-          + kcr_buf.data[CollisionalRxnLUT::kz30][0]    *    OI        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz39][0]    *   OII        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz43][0]    *  COII        / 28.;
+          + kcol_buf[CollisionalRxnLUT::kz15][0]    *    CH        / 13.
+          + kcol_buf[CollisionalRxnLUT::kz16][0]    *   CH2        / 14.
+          + kcol_buf[CollisionalRxnLUT::kz17][0]    *    OH        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz18][0]    *   H2O        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz19][0]    *    O2        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz27][0]    *    CI        / 12.
+          + kcol_buf[CollisionalRxnLUT::kz30][0]    *    OI        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz39][0]    *   OII        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz43][0]    *  COII        / 28.;
     }
     deriv.data[SpLUT::HI][0] = deriv.data[SpLUT::HI][0] + (scoef - acoef * HI);
 
@@ -1827,65 +1833,65 @@ inline void species_density_derivatives_0d(
 
     // 2) HII
 
-    scoef  =    kcr_buf.data[CollisionalRxnLUT::k1][0]     * HI        * de
-           +    kcr_buf.data[CollisionalRxnLUT::k10][0]    * H2II       *HI       /2.
-           +    kcr_buf.data[CollisionalRxnLUT::k57][0]    * HI        * HI
-           +    kcr_buf.data[CollisionalRxnLUT::k58][0]    * HI        * HeI       /4.
-           + kshield_buf.k24[0]   *HI;
+    scoef  =    kcol_buf[CollisionalRxnLUT::k1][0]     * HI        * de
+           +    kcol_buf[CollisionalRxnLUT::k10][0]    * H2II       *HI       /2.
+           +    kcol_buf[CollisionalRxnLUT::k57][0]    * HI        * HI
+           +    kcol_buf[CollisionalRxnLUT::k58][0]    * HI        * HeI       /4.
+           + kph_buf.k24[0]   *HI;
 
     if (my_chemistry->use_radiative_transfer == 1)
         { scoef = scoef + *(my_fields->RT_HI_ionization_rate)        * HI; }
 
-    acoef  =    kcr_buf.data[CollisionalRxnLUT::k2][0]     * de
-           +    kcr_buf.data[CollisionalRxnLUT::k9][0]     * HI
-           +    kcr_buf.data[CollisionalRxnLUT::k11][0]    * H2I       /2.
-           +    kcr_buf.data[CollisionalRxnLUT::k16][0]    * HM
-           +    kcr_buf.data[CollisionalRxnLUT::k17][0]    * HM;
+    acoef  =    kcol_buf[CollisionalRxnLUT::k2][0]     * de
+           +    kcol_buf[CollisionalRxnLUT::k9][0]     * HI
+           +    kcol_buf[CollisionalRxnLUT::k11][0]    * H2I       /2.
+           +    kcol_buf[CollisionalRxnLUT::k16][0]    * HM
+           +    kcol_buf[CollisionalRxnLUT::k17][0]    * HM;
     // contribution of minor species
     if (my_chemistry->primordial_chemistry > 2)  {
       scoef = scoef
-            + kcr_buf.data[CollisionalRxnLUT::k51][0]    * HI         * DII        / 2.
-            + kcr_buf.data[CollisionalRxnLUT::k52][0]    * H2I        * DII        / 4.;
+            + kcol_buf[CollisionalRxnLUT::k51][0]    * HI         * DII        / 2.
+            + kcol_buf[CollisionalRxnLUT::k52][0]    * H2I        * DII        / 4.;
       acoef = acoef
-            + kcr_buf.data[CollisionalRxnLUT::k50][0]    * DI         / 2.
-            + kcr_buf.data[CollisionalRxnLUT::k53][0]    * HDI        / 3.;
+            + kcol_buf[CollisionalRxnLUT::k50][0]    * DI         / 2.
+            + kcol_buf[CollisionalRxnLUT::k53][0]    * HDI        / 3.;
     }
 
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef
-          + kcr_buf.data[CollisionalRxnLUT::k125][0]    *  HDII        *    HI        /  3.;
+          + kcol_buf[CollisionalRxnLUT::k125][0]    *  HDII        *    HI        /  3.;
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::k129][0]    *    DI        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::k134][0]    *    DM        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::k148][0]    *   HeI        /  4.
-          + kcr_buf.data[CollisionalRxnLUT::k149][0]    *   HeI        /  4.;
+          + kcol_buf[CollisionalRxnLUT::k129][0]    *    DI        /  2.
+          + kcol_buf[CollisionalRxnLUT::k134][0]    *    DM        /  2.
+          + kcol_buf[CollisionalRxnLUT::k148][0]    *   HeI        /  4.
+          + kcol_buf[CollisionalRxnLUT::k149][0]    *   HeI        /  4.;
     }
 
     if ((my_chemistry->metal_chemistry == 1)  && 
         (itmask_metal[0] != MASK_FALSE))  {
       scoef = scoef
-          + kcr_buf.data[CollisionalRxnLUT::kz39][0]    *   OII        *    HI        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz43][0]    *  COII        *    HI        / 28.;
+          + kcol_buf[CollisionalRxnLUT::kz39][0]    *   OII        *    HI        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz43][0]    *  COII        *    HI        / 28.;
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::kz22][0]    *    OI        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz34][0]    *    OH        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz35][0]    *   H2O        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz36][0]    *    O2        / 32.;
+          + kcol_buf[CollisionalRxnLUT::kz22][0]    *    OI        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz34][0]    *    OH        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz35][0]    *   H2O        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz36][0]    *    O2        / 32.;
     }
     deriv.data[SpLUT::HII][0] = deriv.data[SpLUT::HII][0] + (scoef - acoef * HII);
 
     
     // 3) electrons:
 
-    scoef =   kcr_buf.data[CollisionalRxnLUT::k8][0]    * HM        * HI
-           +  kcr_buf.data[CollisionalRxnLUT::k15][0]   * HM        * HI
-           +  kcr_buf.data[CollisionalRxnLUT::k17][0]   * HM        * HII
-           +  kcr_buf.data[CollisionalRxnLUT::k57][0]   * HI        * HI
-           +  kcr_buf.data[CollisionalRxnLUT::k58][0]   * HI        * HeI       /4.
+    scoef =   kcol_buf[CollisionalRxnLUT::k8][0]    * HM        * HI
+           +  kcol_buf[CollisionalRxnLUT::k15][0]   * HM        * HI
+           +  kcol_buf[CollisionalRxnLUT::k17][0]   * HM        * HII
+           +  kcol_buf[CollisionalRxnLUT::k57][0]   * HI        * HI
+           +  kcol_buf[CollisionalRxnLUT::k58][0]   * HI        * HeI       /4.
     // 
-           + kshield_buf.k24[0]   *HI
-           + kshield_buf.k25[0]   *HeII    /4.
-           + kshield_buf.k26[0]   *HeI    /4.;
+           + kph_buf.k24[0]   *HI
+           + kph_buf.k25[0]   *HeII    /4.
+           + kph_buf.k26[0]   *HeI    /4.;
 
     if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0) )
         { scoef = scoef + *(my_fields->RT_HI_ionization_rate)        * HI
@@ -1904,56 +1910,58 @@ inline void species_density_derivatives_0d(
       }
     }
 
-    acoef = - (kcr_buf.data[CollisionalRxnLUT::k1][0]    *HI           - kcr_buf.data[CollisionalRxnLUT::k2][0]   *HII
-            +  kcr_buf.data[CollisionalRxnLUT::k3][0]    *HeI       /4. -
-         kcr_buf.data[CollisionalRxnLUT::k6][0]   *HeIII       /4.
-            +  kcr_buf.data[CollisionalRxnLUT::k5][0]    *HeII       /4. -
-         kcr_buf.data[CollisionalRxnLUT::k4][0]   *HeII       /4.
-            +  kcr_buf.data[CollisionalRxnLUT::k14][0]   *HM
-            -  kcr_buf.data[CollisionalRxnLUT::k7][0]    *HI
-            -  kcr_buf.data[CollisionalRxnLUT::k18][0]   *H2II       /2.);
+    acoef = - (kcol_buf[CollisionalRxnLUT::k1][0]    *HI           - kcol_buf[CollisionalRxnLUT::k2][0]   *HII
+            +  kcol_buf[CollisionalRxnLUT::k3][0]    *HeI       /4. -
+         kcol_buf[CollisionalRxnLUT::k6][0]   *HeIII       /4.
+            +  kcol_buf[CollisionalRxnLUT::k5][0]    *HeII       /4. -
+         kcol_buf[CollisionalRxnLUT::k4][0]   *HeII       /4.
+            +  kcol_buf[CollisionalRxnLUT::k14][0]   *HM
+            -  kcol_buf[CollisionalRxnLUT::k7][0]    *HI
+            -  kcol_buf[CollisionalRxnLUT::k18][0]   *H2II       /2.);
     // contribution of minor species
     if (my_chemistry->primordial_chemistry > 2)  {
       scoef = scoef
-            + kcr_buf.data[CollisionalRxnLUT::k56][0]    * DI         * HM        / 2.;
+            + kcol_buf[CollisionalRxnLUT::k56][0]    * DI         * HM        / 2.;
       acoef = acoef
-            - kcr_buf.data[CollisionalRxnLUT::k1][0]     * DI         / 2.
-            + kcr_buf.data[CollisionalRxnLUT::k2][0]     * DII        / 2.;
+            - kcol_buf[CollisionalRxnLUT::k1][0]     * DI         / 2.
+            + kcol_buf[CollisionalRxnLUT::k2][0]     * DII        / 2.;
     }
 
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef
-          + kcr_buf.data[CollisionalRxnLUT::k137][0]    *    DM        *    HI        /  2.;
+          + kcol_buf[CollisionalRxnLUT::k137][0]    *    DM        *    HI        /  2.;
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::k131][0]    *  HDII        /  3.
-          + kcr_buf.data[CollisionalRxnLUT::k132][0]    *    DI        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::k153][0]    * HeHII        /  5.;
+          + kcol_buf[CollisionalRxnLUT::k131][0]    *  HDII        /  3.
+          + kcol_buf[CollisionalRxnLUT::k132][0]    *    DI        /  2.
+          + kcol_buf[CollisionalRxnLUT::k153][0]    * HeHII        /  5.;
     }
 
     if ((my_chemistry->metal_chemistry == 1)  && 
         (itmask_metal[0] != MASK_FALSE))  {
-      scoef = scoef;
+      // we comment out the following line that assigns scoef to itself since
+      // it has no practical impact and produces a compiler warning
+      // scoef = scoef;
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::kz44][0]    *   CII        / 12.
-          + kcr_buf.data[CollisionalRxnLUT::kz45][0]    *   OII        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz46][0]    * H2OII        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz47][0]    * H2OII        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz48][0]    * H3OII        / 19.
-          + kcr_buf.data[CollisionalRxnLUT::kz49][0]    * H3OII        / 19.
-          + kcr_buf.data[CollisionalRxnLUT::kz50][0]    *  O2II        / 32.;
+          + kcol_buf[CollisionalRxnLUT::kz44][0]    *   CII        / 12.
+          + kcol_buf[CollisionalRxnLUT::kz45][0]    *   OII        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz46][0]    * H2OII        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz47][0]    * H2OII        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz48][0]    * H3OII        / 19.
+          + kcol_buf[CollisionalRxnLUT::kz49][0]    * H3OII        / 19.
+          + kcol_buf[CollisionalRxnLUT::kz50][0]    *  O2II        / 32.;
     }
     deriv.data[SpLUT::e][0] = deriv.data[SpLUT::e][0] + (scoef - acoef * de);
 
 
     // 7) H2
 
-    scoef = 2.*(kcr_buf.data[CollisionalRxnLUT::k8][0]     * HM          * HI
-          +       kcr_buf.data[CollisionalRxnLUT::k10][0]    * H2II        * HI       /2.
-          +       kcr_buf.data[CollisionalRxnLUT::k19][0]    * H2II        * HM       /2.
-          +       kcr_buf.data[CollisionalRxnLUT::k22][0]    * HI        * std::pow((HI       ),2.));
-    acoef = ( kcr_buf.data[CollisionalRxnLUT::k13][0]   *HI        + kcr_buf.data[CollisionalRxnLUT::k11][0]   *HII
-            + kcr_buf.data[CollisionalRxnLUT::k12][0]   *de        )
-            + kshield_buf.k29[0]    + kshield_buf.k31[0];
+    scoef = 2.*(kcol_buf[CollisionalRxnLUT::k8][0]     * HM          * HI
+          +       kcol_buf[CollisionalRxnLUT::k10][0]    * H2II        * HI       /2.
+          +       kcol_buf[CollisionalRxnLUT::k19][0]    * H2II        * HM       /2.
+          +       kcol_buf[CollisionalRxnLUT::k22][0]    * HI        * std::pow((HI       ),2.));
+    acoef = ( kcol_buf[CollisionalRxnLUT::k13][0]   *HI        + kcol_buf[CollisionalRxnLUT::k11][0]   *HII
+            + kcol_buf[CollisionalRxnLUT::k12][0]   *de        )
+            + kph_buf.k29[0]    + kph_buf.k31[0];
 
     if (anydust != MASK_FALSE)  {
       if(itmask_metal[0] != MASK_FALSE   )  {
@@ -1964,49 +1972,49 @@ inline void species_density_derivatives_0d(
     // contribution of minor species
     if (my_chemistry->primordial_chemistry > 2)  {
       scoef = scoef + 2. * (
-              kcr_buf.data[CollisionalRxnLUT::k53][0]    * HDI        * HII        / 3.
-            + kcr_buf.data[CollisionalRxnLUT::k55][0]    * HDI        * HI         / 3.
+              kcol_buf[CollisionalRxnLUT::k53][0]    * HDI        * HII        / 3.
+            + kcol_buf[CollisionalRxnLUT::k55][0]    * HDI        * HI         / 3.
                );
       acoef = acoef
-            + kcr_buf.data[CollisionalRxnLUT::k52][0]    * DII        / 2.
-            + kcr_buf.data[CollisionalRxnLUT::k54][0]    * DI         / 2.;
+            + kcol_buf[CollisionalRxnLUT::k52][0]    * DII        / 2.
+            + kcol_buf[CollisionalRxnLUT::k54][0]    * DI         / 2.;
     }
 
     if ((my_chemistry->metal_chemistry == 1)  && 
         (itmask_metal[0] != MASK_FALSE))  {
       scoef = scoef +  2. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz15][0]    *    HI        *    CH        / 13.
-          + kcr_buf.data[CollisionalRxnLUT::kz16][0]    *    HI        *   CH2        / 14.
-          + kcr_buf.data[CollisionalRxnLUT::kz17][0]    *    HI        *    OH        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz18][0]    *    HI        *   H2O        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz47][0]    * H2OII        *    de        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz15][0]    *    HI        *    CH        / 13.
+          + kcol_buf[CollisionalRxnLUT::kz16][0]    *    HI        *   CH2        / 14.
+          + kcol_buf[CollisionalRxnLUT::kz17][0]    *    HI        *    OH        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz18][0]    *    HI        *   H2O        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz47][0]    * H2OII        *    de        / 18.
          );
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::kz20][0]    *    CI        / 12.
-          + kcr_buf.data[CollisionalRxnLUT::kz21][0]    *    OI        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz23][0]    *    CH        / 13.
-          + kcr_buf.data[CollisionalRxnLUT::kz24][0]    *    OH        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz40][0]    *   OII        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz41][0]    *  OHII        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz42][0]    * H2OII        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz51][0]    *    CI        / 12.;
+          + kcol_buf[CollisionalRxnLUT::kz20][0]    *    CI        / 12.
+          + kcol_buf[CollisionalRxnLUT::kz21][0]    *    OI        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz23][0]    *    CH        / 13.
+          + kcol_buf[CollisionalRxnLUT::kz24][0]    *    OH        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz40][0]    *   OII        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz41][0]    *  OHII        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz42][0]    * H2OII        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz51][0]    *    CI        / 12.;
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 0)  {
           scoef = scoef + 2. *
-                grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      * 2.;
+                grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      * 2.;
 
         }
         if (my_chemistry->dust_species > 1)  {
           scoef = scoef + 2. * (
-                grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     * 3.
-              + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][0]       * 4.
-              + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][0]
-              + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][0]       * 3.
+                grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust][0]     * 3.
+              + grain_growth_rates[OnlyGrainSpLUT::Fe3O4_dust][0]       * 4.
+              + grain_growth_rates[OnlyGrainSpLUT::MgO_dust][0]
+              + grain_growth_rates[OnlyGrainSpLUT::Al2O3_dust][0]       * 3.
             );
         }
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][0]      / H2I        * 2. * 2.;
+          + grain_growth_rates[OnlyGrainSpLUT::vol_org_dust][0]      / H2I        * 2. * 2.;
         }
       }
     }
@@ -2015,22 +2023,22 @@ inline void species_density_derivatives_0d(
 
     // 8) H-
 
-    scoef = kcr_buf.data[CollisionalRxnLUT::k7][0]    * HI        * de;
-    acoef = (kcr_buf.data[CollisionalRxnLUT::k8][0]     + kcr_buf.data[CollisionalRxnLUT::k15][0]   )  * HI        +
-            (kcr_buf.data[CollisionalRxnLUT::k16][0]    + kcr_buf.data[CollisionalRxnLUT::k17][0]   )  * HII        +
-            kcr_buf.data[CollisionalRxnLUT::k14][0]    * de        + kcr_buf.data[CollisionalRxnLUT::k19][0]    * H2II       /2.0f +
-            my_uvb_rates.k27;
+    scoef = kcol_buf[CollisionalRxnLUT::k7][0]    * HI        * de;
+    acoef = (kcol_buf[CollisionalRxnLUT::k8][0]     + kcol_buf[CollisionalRxnLUT::k15][0]   )  * HI        +
+            (kcol_buf[CollisionalRxnLUT::k16][0]    + kcol_buf[CollisionalRxnLUT::k17][0]   )  * HII        +
+            kcol_buf[CollisionalRxnLUT::k14][0]    * de        + kcol_buf[CollisionalRxnLUT::k19][0]    * H2II       /2.0f +
+            kph_buf.k27[0];
     // contribution of minor species
     if (my_chemistry->primordial_chemistry > 2)  {
       acoef = acoef
-            + kcr_buf.data[CollisionalRxnLUT::k56][0]    * DI         / 2.;
+            + kcol_buf[CollisionalRxnLUT::k56][0]    * DI         / 2.;
     }
 
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef
-          + kcr_buf.data[CollisionalRxnLUT::k136][0]    *    DM        *    HI        /  2.;
+          + kcol_buf[CollisionalRxnLUT::k136][0]    *    DM        *    HI        /  2.;
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::k135][0]    *    DI        /  2.;
+          + kcol_buf[CollisionalRxnLUT::k135][0]    *    DI        /  2.;
     }
     deriv.data[SpLUT::HM][0] = deriv.data[SpLUT::HM][0] + (scoef - acoef * HM);
 
@@ -2038,20 +2046,20 @@ inline void species_density_derivatives_0d(
 
     // 9) H2+
 
-    scoef =    2.*( kcr_buf.data[CollisionalRxnLUT::k9][0]    *HI    *HII
-                  +   kcr_buf.data[CollisionalRxnLUT::k11][0]   *H2I    /2.*HII
-                  +   kcr_buf.data[CollisionalRxnLUT::k17][0]   *HM    *HII
-                  + kshield_buf.k29[0]   *H2I    /2.
+    scoef =    2.*( kcol_buf[CollisionalRxnLUT::k9][0]    *HI    *HII
+                  +   kcol_buf[CollisionalRxnLUT::k11][0]   *H2I    /2.*HII
+                  +   kcol_buf[CollisionalRxnLUT::k17][0]   *HM    *HII
+                  + kph_buf.k29[0]   *H2I    /2.
                   );
-    acoef =         kcr_buf.data[CollisionalRxnLUT::k10][0]   *HI     + kcr_buf.data[CollisionalRxnLUT::k18][0]   *de
-                  + kcr_buf.data[CollisionalRxnLUT::k19][0]   *HM
-                  + (kshield_buf.k28[0]   +kshield_buf.k30[0]   );
+    acoef =         kcol_buf[CollisionalRxnLUT::k10][0]   *HI     + kcol_buf[CollisionalRxnLUT::k18][0]   *de
+                  + kcol_buf[CollisionalRxnLUT::k19][0]   *HM
+                  + (kph_buf.k28[0]   +kph_buf.k30[0]   );
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef +  2. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::k152][0]    * HeHII        *    HI        /  5.
+          + kcol_buf[CollisionalRxnLUT::k152][0]    * HeHII        *    HI        /  5.
          );
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::k150][0]    *   HeI        /  4.;
+          + kcol_buf[CollisionalRxnLUT::k150][0]    *   HeI        /  4.;
     }
     deriv.data[SpLUT::H2II][0] = deriv.data[SpLUT::H2II][0] + (scoef - acoef * H2II);
 
@@ -2071,28 +2079,28 @@ inline void species_density_derivatives_0d(
 
     
     // 1) DI
-    scoef =   (       kcr_buf.data[CollisionalRxnLUT::k2][0]    * DII        * de
-               +      kcr_buf.data[CollisionalRxnLUT::k51][0]   * DII        * HI
-               + 2.*kcr_buf.data[CollisionalRxnLUT::k55][0]   * HDI        *
+    scoef =   (       kcol_buf[CollisionalRxnLUT::k2][0]    * DII        * de
+               +      kcol_buf[CollisionalRxnLUT::k51][0]   * DII        * HI
+               + 2.*kcol_buf[CollisionalRxnLUT::k55][0]   * HDI        *
             HI       /3.
                );
-    acoef  =    kcr_buf.data[CollisionalRxnLUT::k1][0]    * de
-           +    kcr_buf.data[CollisionalRxnLUT::k50][0]    * HII
-           +    kcr_buf.data[CollisionalRxnLUT::k54][0]    * H2I       /2.
-           +    kcr_buf.data[CollisionalRxnLUT::k56][0]    * HM
-           + kshield_buf.k24[0];
+    acoef  =    kcol_buf[CollisionalRxnLUT::k1][0]    * de
+           +    kcol_buf[CollisionalRxnLUT::k50][0]    * HII
+           +    kcol_buf[CollisionalRxnLUT::k54][0]    * H2I       /2.
+           +    kcol_buf[CollisionalRxnLUT::k56][0]    * HM
+           + kph_buf.k24[0];
     if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(my_fields->RT_HI_ionization_rate); }
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef +  2. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::k131][0]    *  HDII        *    de        /  3.
-          + kcr_buf.data[CollisionalRxnLUT::k133][0]    *   DII        *    DM        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::k134][0]    *   HII        *    DM        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::k136][0]    *    DM        *    HI        /  2.
+          + kcol_buf[CollisionalRxnLUT::k131][0]    *  HDII        *    de        /  3.
+          + kcol_buf[CollisionalRxnLUT::k133][0]    *   DII        *    DM        /  2.
+          + kcol_buf[CollisionalRxnLUT::k134][0]    *   HII        *    DM        /  2.
+          + kcol_buf[CollisionalRxnLUT::k136][0]    *    DM        *    HI        /  2.
           );
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::k129][0]    *   HII
-          + kcr_buf.data[CollisionalRxnLUT::k132][0]    *    de
-          + kcr_buf.data[CollisionalRxnLUT::k135][0]    *    HM;
+          + kcol_buf[CollisionalRxnLUT::k129][0]    *   HII
+          + kcol_buf[CollisionalRxnLUT::k132][0]    *    de
+          + kcol_buf[CollisionalRxnLUT::k135][0]    *    HM;
     }
     if (my_chemistry->use_radiative_transfer == 1)  {
       if (my_chemistry->radiative_transfer_HDI_dissociation > 0)  {
@@ -2104,35 +2112,35 @@ inline void species_density_derivatives_0d(
                                                     
 
     // 2) DII
-    scoef =   (   kcr_buf.data[CollisionalRxnLUT::k1][0]     * DI        * de
-          +       kcr_buf.data[CollisionalRxnLUT::k50][0]    * HII       * DI
-          +  2.*kcr_buf.data[CollisionalRxnLUT::k53][0]    * HII       * HDI       /3.
+    scoef =   (   kcol_buf[CollisionalRxnLUT::k1][0]     * DI        * de
+          +       kcol_buf[CollisionalRxnLUT::k50][0]    * HII       * DI
+          +  2.*kcol_buf[CollisionalRxnLUT::k53][0]    * HII       * HDI       /3.
           )
-          + kshield_buf.k24[0]   *DI;
+          + kph_buf.k24[0]   *DI;
     acoef = 0.;
     // ! initialize GC202002
     if (my_chemistry->use_radiative_transfer == 1) { scoef = scoef + *(my_fields->RT_HI_ionization_rate)       *DI; }
-    acoef =    kcr_buf.data[CollisionalRxnLUT::k2][0]     * de
-          +    kcr_buf.data[CollisionalRxnLUT::k51][0]    * HI
-          +    kcr_buf.data[CollisionalRxnLUT::k52][0]    * H2I       /2.;
+    acoef =    kcol_buf[CollisionalRxnLUT::k2][0]     * de
+          +    kcol_buf[CollisionalRxnLUT::k51][0]    * HI
+          +    kcol_buf[CollisionalRxnLUT::k52][0]    * H2I       /2.;
     if (my_chemistry->primordial_chemistry > 3)  {
       acoef = acoef
-          + kcr_buf.data[CollisionalRxnLUT::k130][0]    *    HI
-          + kcr_buf.data[CollisionalRxnLUT::k133][0]    *    DM        /  2.;
+          + kcol_buf[CollisionalRxnLUT::k130][0]    *    HI
+          + kcol_buf[CollisionalRxnLUT::k133][0]    *    DM        /  2.;
     }
     deriv.data[SpLUT::DII][0] = deriv.data[SpLUT::DII][0] + (scoef - acoef * DII);
 
 
     // 3) HDI
-    scoef = 3.*(kcr_buf.data[CollisionalRxnLUT::k52][0]    * DII       *
+    scoef = 3.*(kcol_buf[CollisionalRxnLUT::k52][0]    * DII       *
          H2I       /2./2.
-         + kcr_buf.data[CollisionalRxnLUT::k54][0]    * DI        * H2I       /2./2.
-    // !   &           + 2._DKIND*kcr_buf.data[CollisionalRxnLUT::k56][0]    * DI        * HM       /2._DKIND
+         + kcol_buf[CollisionalRxnLUT::k54][0]    * DI        * H2I       /2./2.
+    // !   &           + 2._DKIND*kcol_buf[CollisionalRxnLUT::k56][0]    * DI        * HM       /2._DKIND
     //- ! corrected by GC202005
-         +          kcr_buf.data[CollisionalRxnLUT::k56][0]    * DI        * HM       /2.
+         +          kcol_buf[CollisionalRxnLUT::k56][0]    * DI        * HM       /2.
                );
-    acoef  =    kcr_buf.data[CollisionalRxnLUT::k53][0]    * HII
-           +    kcr_buf.data[CollisionalRxnLUT::k55][0]    * HI;
+    acoef  =    kcol_buf[CollisionalRxnLUT::k53][0]    * HII
+           +    kcol_buf[CollisionalRxnLUT::k55][0]    * HI;
     if (my_chemistry->use_radiative_transfer == 1)  {
       if (my_chemistry->radiative_transfer_HDI_dissociation > 0)  {
         acoef = acoef
@@ -2141,8 +2149,8 @@ inline void species_density_derivatives_0d(
     }
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef +  3. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::k125][0]    *  HDII        *    HI        /  3.
-          + kcr_buf.data[CollisionalRxnLUT::k137][0]    *    DM        *    HI        /  2.
+          + kcol_buf[CollisionalRxnLUT::k125][0]    *  HDII        *    HI        /  3.
+          + kcol_buf[CollisionalRxnLUT::k137][0]    *    DM        *    HI        /  2.
           );
     }
     deriv.data[SpLUT::HDI][0] = deriv.data[SpLUT::HDI][0] + (scoef - acoef * HDI);
@@ -2160,13 +2168,13 @@ inline void species_density_derivatives_0d(
     // 1) DM
 
     scoef =
-          kcr_buf.data[CollisionalRxnLUT::k132][0]    *    DI        *    de
-        + kcr_buf.data[CollisionalRxnLUT::k135][0]    *    HM        *    DI;
+          kcol_buf[CollisionalRxnLUT::k132][0]    *    DI        *    de
+        + kcol_buf[CollisionalRxnLUT::k135][0]    *    HM        *    DI;
     acoef =
-          kcr_buf.data[CollisionalRxnLUT::k133][0]    *   DII        /  2.
-        + kcr_buf.data[CollisionalRxnLUT::k134][0]    *   HII
-        + kcr_buf.data[CollisionalRxnLUT::k136][0]    *    HI
-        + kcr_buf.data[CollisionalRxnLUT::k137][0]    *    HI;
+          kcol_buf[CollisionalRxnLUT::k133][0]    *   DII        /  2.
+        + kcol_buf[CollisionalRxnLUT::k134][0]    *   HII
+        + kcol_buf[CollisionalRxnLUT::k136][0]    *    HI
+        + kcol_buf[CollisionalRxnLUT::k137][0]    *    HI;
 
     deriv.data[SpLUT::DM][0] = deriv.data[SpLUT::DM][0] + (scoef - acoef * DM);
 
@@ -2174,12 +2182,12 @@ inline void species_density_derivatives_0d(
     // 2) HDII
 
     scoef = 3. * (
-          kcr_buf.data[CollisionalRxnLUT::k129][0]    *    DI        *   HII        /  2.
-        + kcr_buf.data[CollisionalRxnLUT::k130][0]    *   DII        *    HI        /  2.
+          kcol_buf[CollisionalRxnLUT::k129][0]    *    DI        *   HII        /  2.
+        + kcol_buf[CollisionalRxnLUT::k130][0]    *   DII        *    HI        /  2.
        );
     acoef =
-          kcr_buf.data[CollisionalRxnLUT::k125][0]    *    HI
-        + kcr_buf.data[CollisionalRxnLUT::k131][0]    *    de;
+          kcol_buf[CollisionalRxnLUT::k125][0]    *    HI
+        + kcol_buf[CollisionalRxnLUT::k131][0]    *    de;
 
     deriv.data[SpLUT::HDII][0] = deriv.data[SpLUT::HDII][0] + (scoef - acoef * HDII);
 
@@ -2187,14 +2195,14 @@ inline void species_density_derivatives_0d(
     // 3) HeHII
 
     scoef = 5. * (
-          kcr_buf.data[CollisionalRxnLUT::k148][0]    *   HeI        *   HII        /  4.
-        + kcr_buf.data[CollisionalRxnLUT::k149][0]    *   HeI        *   HII        /  4.
-        + kcr_buf.data[CollisionalRxnLUT::k150][0]    *   HeI        *  H2II        /  8.
-        + kcr_buf.data[CollisionalRxnLUT::k151][0]    *  HeII        *    HI        /  4.
+          kcol_buf[CollisionalRxnLUT::k148][0]    *   HeI        *   HII        /  4.
+        + kcol_buf[CollisionalRxnLUT::k149][0]    *   HeI        *   HII        /  4.
+        + kcol_buf[CollisionalRxnLUT::k150][0]    *   HeI        *  H2II        /  8.
+        + kcol_buf[CollisionalRxnLUT::k151][0]    *  HeII        *    HI        /  4.
        );
     acoef =
-          kcr_buf.data[CollisionalRxnLUT::k152][0]    *    HI
-        + kcr_buf.data[CollisionalRxnLUT::k153][0]    *    de;
+          kcol_buf[CollisionalRxnLUT::k152][0]    *    HI
+        + kcol_buf[CollisionalRxnLUT::k153][0]    *    de;
 
     deriv.data[SpLUT::HeHII][0] = deriv.data[SpLUT::HeHII][0] + (scoef - acoef * HeHII);
 
@@ -2210,19 +2218,19 @@ inline void species_density_derivatives_0d(
 
       // ***** CI **********
       scoef = 0. + 12. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz15][0]    *    HI        *    CH        / 13.
-          + kcr_buf.data[CollisionalRxnLUT::kz44][0]    *   CII        *    de        / 12.
+          + kcol_buf[CollisionalRxnLUT::kz15][0]    *    HI        *    CH        / 13.
+          + kcol_buf[CollisionalRxnLUT::kz44][0]    *   CII        *    de        / 12.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz20][0]    *   H2I        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::kz27][0]    *    HI
-          + kcr_buf.data[CollisionalRxnLUT::kz28][0]    *    OH        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz29][0]    *    O2        / 32.
-          + kcr_buf.data[CollisionalRxnLUT::kz51][0]    *   H2I        /  2.;
+          + kcol_buf[CollisionalRxnLUT::kz20][0]    *   H2I        /  2.
+          + kcol_buf[CollisionalRxnLUT::kz27][0]    *    HI
+          + kcol_buf[CollisionalRxnLUT::kz28][0]    *    OH        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz29][0]    *    O2        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz51][0]    *   H2I        /  2.;
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][0]          / CI        * 12.;
+          + grain_growth_rates[OnlyGrainSpLUT::AC_dust][0]          / CI        * 12.;
         }
       }
       if (my_chemistry->use_radiative_transfer == 1)  {
@@ -2244,9 +2252,9 @@ inline void species_density_derivatives_0d(
       scoef = 0. + 12. * ( 0.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz37][0]    *    OH        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz38][0]    *    O2        / 32.
-          + kcr_buf.data[CollisionalRxnLUT::kz44][0]    *    de;
+          + kcol_buf[CollisionalRxnLUT::kz37][0]    *    OH        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz38][0]    *    O2        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz44][0]    *    de;
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
           scoef = scoef
@@ -2260,19 +2268,19 @@ inline void species_density_derivatives_0d(
 
       // ***** CO **********
       scoef = 0. + 28. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz28][0]    *    CI        *    OH        / 204.
-          + kcr_buf.data[CollisionalRxnLUT::kz29][0]    *    CI        *    O2        / 384.
-          + kcr_buf.data[CollisionalRxnLUT::kz32][0]    *    OI        *    CH        / 208.
-          + kcr_buf.data[CollisionalRxnLUT::kz38][0]    *   CII        *    O2        / 384.
-          + kcr_buf.data[CollisionalRxnLUT::kz43][0]    *  COII        *    HI        / 28.
+          + kcol_buf[CollisionalRxnLUT::kz28][0]    *    CI        *    OH        / 204.
+          + kcol_buf[CollisionalRxnLUT::kz29][0]    *    CI        *    O2        / 384.
+          + kcol_buf[CollisionalRxnLUT::kz32][0]    *    OI        *    CH        / 208.
+          + kcol_buf[CollisionalRxnLUT::kz38][0]    *   CII        *    O2        / 384.
+          + kcol_buf[CollisionalRxnLUT::kz43][0]    *  COII        *    HI        / 28.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz26][0]    *    OH        / 17.;
+          + kcol_buf[CollisionalRxnLUT::kz26][0]    *    OH        / 17.;
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][0]      / CO        * 17. * 0.5
-          + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][0]      / CO        * 17.;
+          + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust][0]      / CO        * 17. * 0.5
+          + grain_growth_rates[OnlyGrainSpLUT::vol_org_dust][0]      / CO        * 17.;
         }
       }
       if (my_chemistry->use_radiative_transfer == 1)  {
@@ -2288,7 +2296,7 @@ inline void species_density_derivatives_0d(
 
       // ***** CO2 **********
       scoef = 0. + 44. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz26][0]    *    OH        *    CO        / 476.
+          + kcol_buf[CollisionalRxnLUT::kz26][0]    *    OH        *    CO        / 476.
          );
       acoef = 0.;
 
@@ -2298,23 +2306,23 @@ inline void species_density_derivatives_0d(
 
       // ***** OI **********
       scoef = 0. + 16. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz17][0]    *    HI        *    OH        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz19][0]    *    HI        *    O2        / 32.
-          + kcr_buf.data[CollisionalRxnLUT::kz25][0]    *    OH        *    OH        / 289.
-          + kcr_buf.data[CollisionalRxnLUT::kz29][0]    *    CI        *    O2        / 384.
-          + kcr_buf.data[CollisionalRxnLUT::kz39][0]    *   OII        *    HI        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz45][0]    *   OII        *    de        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz47][0]    * H2OII        *    de        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz50][0]    *  O2II        *    de        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz53][0]    *   SiI        *    O2        / 896.
+          + kcol_buf[CollisionalRxnLUT::kz17][0]    *    HI        *    OH        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz19][0]    *    HI        *    O2        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz25][0]    *    OH        *    OH        / 289.
+          + kcol_buf[CollisionalRxnLUT::kz29][0]    *    CI        *    O2        / 384.
+          + kcol_buf[CollisionalRxnLUT::kz39][0]    *   OII        *    HI        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz45][0]    *   OII        *    de        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz47][0]    * H2OII        *    de        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz50][0]    *  O2II        *    de        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz53][0]    *   SiI        *    O2        / 896.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz21][0]    *   H2I        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::kz22][0]    *   HII
-          + kcr_buf.data[CollisionalRxnLUT::kz30][0]    *    HI
-          + kcr_buf.data[CollisionalRxnLUT::kz31][0]    *    OI        / 8.
-          + kcr_buf.data[CollisionalRxnLUT::kz32][0]    *    CH        / 13.
-          + kcr_buf.data[CollisionalRxnLUT::kz33][0]    *    OH        / 17.;
+          + kcol_buf[CollisionalRxnLUT::kz21][0]    *   H2I        /  2.
+          + kcol_buf[CollisionalRxnLUT::kz22][0]    *   HII
+          + kcol_buf[CollisionalRxnLUT::kz30][0]    *    HI
+          + kcol_buf[CollisionalRxnLUT::kz31][0]    *    OI        / 8.
+          + kcol_buf[CollisionalRxnLUT::kz32][0]    *    CH        / 13.
+          + kcol_buf[CollisionalRxnLUT::kz33][0]    *    OH        / 17.;
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
           acoef = acoef
@@ -2333,24 +2341,24 @@ inline void species_density_derivatives_0d(
 
       // ***** OH **********
       scoef = 0. + 17. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz18][0]    *    HI        *   H2O        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz19][0]    *    HI        *    O2        / 32.
-          + kcr_buf.data[CollisionalRxnLUT::kz21][0]    *    OI        *   H2I        / 32.
-          + kcr_buf.data[CollisionalRxnLUT::kz30][0]    *    OI        *    HI        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz46][0]    * H2OII        *    de        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz49][0]    * H3OII        *    de        / 19.
+          + kcol_buf[CollisionalRxnLUT::kz18][0]    *    HI        *   H2O        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz19][0]    *    HI        *    O2        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz21][0]    *    OI        *   H2I        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz30][0]    *    OI        *    HI        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz46][0]    * H2OII        *    de        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz49][0]    * H3OII        *    de        / 19.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz17][0]    *    HI
-          + kcr_buf.data[CollisionalRxnLUT::kz24][0]    *   H2I        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::kz25][0]    *    OH        / 8.5
-          + kcr_buf.data[CollisionalRxnLUT::kz26][0]    *    CO        / 28.
-          + kcr_buf.data[CollisionalRxnLUT::kz28][0]    *    CI        / 12.
-          + kcr_buf.data[CollisionalRxnLUT::kz33][0]    *    OI        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz34][0]    *   HII
-          + kcr_buf.data[CollisionalRxnLUT::kz37][0]    *   CII        / 12.
-          + kcr_buf.data[CollisionalRxnLUT::kz52][0]    *   SiI        / 28.
-          + kcr_buf.data[CollisionalRxnLUT::kz54][0]    *  SiOI        / 44.;
+          + kcol_buf[CollisionalRxnLUT::kz17][0]    *    HI
+          + kcol_buf[CollisionalRxnLUT::kz24][0]    *   H2I        /  2.
+          + kcol_buf[CollisionalRxnLUT::kz25][0]    *    OH        / 8.5
+          + kcol_buf[CollisionalRxnLUT::kz26][0]    *    CO        / 28.
+          + kcol_buf[CollisionalRxnLUT::kz28][0]    *    CI        / 12.
+          + kcol_buf[CollisionalRxnLUT::kz33][0]    *    OI        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz34][0]    *   HII
+          + kcol_buf[CollisionalRxnLUT::kz37][0]    *   CII        / 12.
+          + kcol_buf[CollisionalRxnLUT::kz52][0]    *   SiI        / 28.
+          + kcol_buf[CollisionalRxnLUT::kz54][0]    *  SiOI        / 44.;
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
           acoef = acoef
@@ -2366,28 +2374,28 @@ inline void species_density_derivatives_0d(
 
       // ***** H2O **********
       scoef = 0. + 18. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz24][0]    *   H2I        *    OH        / 34.
-          + kcr_buf.data[CollisionalRxnLUT::kz25][0]    *    OH        *    OH        / 289.
-          + kcr_buf.data[CollisionalRxnLUT::kz48][0]    * H3OII        *    de        / 19.
+          + kcol_buf[CollisionalRxnLUT::kz24][0]    *   H2I        *    OH        / 34.
+          + kcol_buf[CollisionalRxnLUT::kz25][0]    *    OH        *    OH        / 289.
+          + kcol_buf[CollisionalRxnLUT::kz48][0]    * H3OII        *    de        / 19.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz18][0]    *    HI
-          + kcr_buf.data[CollisionalRxnLUT::kz35][0]    *   HII;
+          + kcol_buf[CollisionalRxnLUT::kz18][0]    *    HI
+          + kcol_buf[CollisionalRxnLUT::kz35][0]    *   HII;
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      / H2O        * 18. * 2.;
+          + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      / H2O        * 18. * 2.;
         }
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     / H2O        * 18. * 3.
-          + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][0]       / H2O        * 18. * 4.
-          + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][0]         / H2O        * 18.
-          + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][0]       / H2O        * 18. * 3.;
+          + grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust][0]     / H2O        * 18. * 3.
+          + grain_growth_rates[OnlyGrainSpLUT::Fe3O4_dust][0]       / H2O        * 18. * 4.
+          + grain_growth_rates[OnlyGrainSpLUT::MgO_dust][0]         / H2O        * 18.
+          + grain_growth_rates[OnlyGrainSpLUT::Al2O3_dust][0]       / H2O        * 18. * 3.;
         }
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][0]      / H2O        * 18.;
+          + grain_growth_rates[OnlyGrainSpLUT::H2O_ice_dust][0]      / H2O        * 18.;
         }
       }
       if (my_chemistry->use_radiative_transfer == 1)  {
@@ -2403,15 +2411,15 @@ inline void species_density_derivatives_0d(
 
       // ***** O2 **********
       scoef = 0. + 32. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz31][0]    *    OI        *    OI        / 256.
-          + kcr_buf.data[CollisionalRxnLUT::kz33][0]    *    OI        *    OH        / 272.
+          + kcol_buf[CollisionalRxnLUT::kz31][0]    *    OI        *    OI        / 256.
+          + kcol_buf[CollisionalRxnLUT::kz33][0]    *    OI        *    OH        / 272.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz19][0]    *    HI
-          + kcr_buf.data[CollisionalRxnLUT::kz29][0]    *    CI        / 12.
-          + kcr_buf.data[CollisionalRxnLUT::kz36][0]    *   HII
-          + kcr_buf.data[CollisionalRxnLUT::kz38][0]    *   CII        / 12.
-          + kcr_buf.data[CollisionalRxnLUT::kz53][0]    *   SiI        / 28.;
+          + kcol_buf[CollisionalRxnLUT::kz19][0]    *    HI
+          + kcol_buf[CollisionalRxnLUT::kz29][0]    *    CI        / 12.
+          + kcol_buf[CollisionalRxnLUT::kz36][0]    *   HII
+          + kcol_buf[CollisionalRxnLUT::kz38][0]    *   CII        / 12.
+          + kcol_buf[CollisionalRxnLUT::kz53][0]    *   SiI        / 28.;
 
       deriv.data[SpLUT::O2][0] = deriv.data[SpLUT::O2][0] + (scoef - acoef * O2);
 
@@ -2421,12 +2429,12 @@ inline void species_density_derivatives_0d(
       scoef = 0. + 28. * ( 0.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz52][0]    *    OH        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz53][0]    *    O2        / 32.;
+          + kcol_buf[CollisionalRxnLUT::kz52][0]    *    OH        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz53][0]    *    O2        / 32.;
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][0]         / SiI        * 28.;
+          + grain_growth_rates[OnlyGrainSpLUT::SiM_dust][0]         / SiI        * 28.;
         }
       }
 
@@ -2436,19 +2444,19 @@ inline void species_density_derivatives_0d(
 
       // ***** SiOI **********
       scoef = 0. + 44. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz52][0]    *   SiI        *    OH        / 476.
-          + kcr_buf.data[CollisionalRxnLUT::kz53][0]    *   SiI        *    O2        / 896.
+          + kcol_buf[CollisionalRxnLUT::kz52][0]    *   SiI        *    OH        / 476.
+          + kcol_buf[CollisionalRxnLUT::kz53][0]    *   SiI        *    O2        / 896.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz54][0]    *    OH        / 17.;
+          + kcol_buf[CollisionalRxnLUT::kz54][0]    *    OH        / 17.;
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      / SiOI        * 44.;
+          + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      / SiOI        * 44.;
         }
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     / SiOI        * 44.;
+          + grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust][0]     / SiOI        * 44.;
         }
       }
 
@@ -2458,13 +2466,13 @@ inline void species_density_derivatives_0d(
 
       // ***** SiO2I **********
       scoef = 0. + 60. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz54][0]    *  SiOI        *    OH        / 748.
+          + kcol_buf[CollisionalRxnLUT::kz54][0]    *  SiOI        *    OH        / 748.
          );
       acoef = 0.;
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][0]       / SiO2I        * 60.;
+          + grain_growth_rates[OnlyGrainSpLUT::SiO2_dust][0]       / SiO2I        * 60.;
         }
       }
 
@@ -2474,14 +2482,14 @@ inline void species_density_derivatives_0d(
 
       // ***** CH **********
       scoef = 0. + 13. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz16][0]    *    HI        *   CH2        / 14.
-          + kcr_buf.data[CollisionalRxnLUT::kz20][0]    *    CI        *   H2I        / 24.
-          + kcr_buf.data[CollisionalRxnLUT::kz27][0]    *    CI        *    HI        / 12.
+          + kcol_buf[CollisionalRxnLUT::kz16][0]    *    HI        *   CH2        / 14.
+          + kcol_buf[CollisionalRxnLUT::kz20][0]    *    CI        *   H2I        / 24.
+          + kcol_buf[CollisionalRxnLUT::kz27][0]    *    CI        *    HI        / 12.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz15][0]    *    HI
-          + kcr_buf.data[CollisionalRxnLUT::kz23][0]    *   H2I        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::kz32][0]    *    OI        / 16.;
+          + kcol_buf[CollisionalRxnLUT::kz15][0]    *    HI
+          + kcol_buf[CollisionalRxnLUT::kz23][0]    *   H2I        /  2.
+          + kcol_buf[CollisionalRxnLUT::kz32][0]    *    OI        / 16.;
 
       deriv.data[SpLUT::CH][0] = deriv.data[SpLUT::CH][0] + (scoef - acoef * CH);
 
@@ -2489,15 +2497,15 @@ inline void species_density_derivatives_0d(
 
       // ***** CH2 **********
       scoef = 0. + 14. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz23][0]    *   H2I        *    CH        / 26.
-          + kcr_buf.data[CollisionalRxnLUT::kz51][0]    *   H2I        *    CI        / 24.
+          + kcol_buf[CollisionalRxnLUT::kz23][0]    *   H2I        *    CH        / 26.
+          + kcol_buf[CollisionalRxnLUT::kz51][0]    *   H2I        *    CI        / 24.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz16][0]    *    HI;
+          + kcol_buf[CollisionalRxnLUT::kz16][0]    *    HI;
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][0]      / CH2        * 14. * 0.5;
+          + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust][0]      / CH2        * 14. * 0.5;
         }
       }
 
@@ -2507,10 +2515,10 @@ inline void species_density_derivatives_0d(
 
       // ***** COII **********
       scoef = 0. + 28. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz37][0]    *   CII        *    OH        / 204.
+          + kcol_buf[CollisionalRxnLUT::kz37][0]    *   CII        *    OH        / 204.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz43][0]    *    HI;
+          + kcol_buf[CollisionalRxnLUT::kz43][0]    *    HI;
 
       deriv.data[SpLUT::COII][0] = deriv.data[SpLUT::COII][0] + (scoef - acoef * COII);
 
@@ -2518,13 +2526,13 @@ inline void species_density_derivatives_0d(
 
       // ***** OII **********
       scoef = 0. + 16. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz22][0]    *   HII        *    OI        / 16.
-          + kcr_buf.data[CollisionalRxnLUT::kz38][0]    *   CII        *    O2        / 384.
+          + kcol_buf[CollisionalRxnLUT::kz22][0]    *   HII        *    OI        / 16.
+          + kcol_buf[CollisionalRxnLUT::kz38][0]    *   CII        *    O2        / 384.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz39][0]    *    HI
-          + kcr_buf.data[CollisionalRxnLUT::kz40][0]    *   H2I        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::kz45][0]    *    de;
+          + kcol_buf[CollisionalRxnLUT::kz39][0]    *    HI
+          + kcol_buf[CollisionalRxnLUT::kz40][0]    *   H2I        /  2.
+          + kcol_buf[CollisionalRxnLUT::kz45][0]    *    de;
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
           scoef = scoef
@@ -2538,11 +2546,11 @@ inline void species_density_derivatives_0d(
 
       // ***** OHII **********
       scoef = 0. + 17. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz34][0]    *   HII        *    OH        / 17.
-          + kcr_buf.data[CollisionalRxnLUT::kz40][0]    *   OII        *   H2I        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz34][0]    *   HII        *    OH        / 17.
+          + kcol_buf[CollisionalRxnLUT::kz40][0]    *   OII        *   H2I        / 32.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz41][0]    *   H2I        /  2.;
+          + kcol_buf[CollisionalRxnLUT::kz41][0]    *   H2I        /  2.;
 
       deriv.data[SpLUT::OHII][0] = deriv.data[SpLUT::OHII][0] + (scoef - acoef * OHII);
 
@@ -2550,13 +2558,13 @@ inline void species_density_derivatives_0d(
 
       // ***** H2OII **********
       scoef = 0. + 18. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz35][0]    *   HII        *   H2O        / 18.
-          + kcr_buf.data[CollisionalRxnLUT::kz41][0]    *  OHII        *   H2I        / 34.
+          + kcol_buf[CollisionalRxnLUT::kz35][0]    *   HII        *   H2O        / 18.
+          + kcol_buf[CollisionalRxnLUT::kz41][0]    *  OHII        *   H2I        / 34.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz42][0]    *   H2I        /  2.
-          + kcr_buf.data[CollisionalRxnLUT::kz46][0]    *    de
-          + kcr_buf.data[CollisionalRxnLUT::kz47][0]    *    de;
+          + kcol_buf[CollisionalRxnLUT::kz42][0]    *   H2I        /  2.
+          + kcol_buf[CollisionalRxnLUT::kz46][0]    *    de
+          + kcol_buf[CollisionalRxnLUT::kz47][0]    *    de;
 
       deriv.data[SpLUT::H2OII][0] = deriv.data[SpLUT::H2OII][0] + (scoef - acoef * H2OII);
 
@@ -2564,11 +2572,11 @@ inline void species_density_derivatives_0d(
 
       // ***** H3OII **********
       scoef = 0. + 19. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz42][0]    * H2OII        *   H2I        / 36.
+          + kcol_buf[CollisionalRxnLUT::kz42][0]    * H2OII        *   H2I        / 36.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz48][0]    *    de
-          + kcr_buf.data[CollisionalRxnLUT::kz49][0]    *    de;
+          + kcol_buf[CollisionalRxnLUT::kz48][0]    *    de
+          + kcol_buf[CollisionalRxnLUT::kz49][0]    *    de;
 
       deriv.data[SpLUT::H3OII][0] = deriv.data[SpLUT::H3OII][0] + (scoef - acoef * H3OII);
 
@@ -2576,10 +2584,10 @@ inline void species_density_derivatives_0d(
 
       // ***** O2II **********
       scoef = 0. + 32. * ( 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz36][0]    *   HII        *    O2        / 32.
+          + kcol_buf[CollisionalRxnLUT::kz36][0]    *   HII        *    O2        / 32.
          );
       acoef = 0.
-          + kcr_buf.data[CollisionalRxnLUT::kz50][0]    *    de;
+          + kcol_buf[CollisionalRxnLUT::kz50][0]    *    de;
 
       deriv.data[SpLUT::O2II][0] = deriv.data[SpLUT::O2II][0] + (scoef - acoef * O2II);
 
@@ -2591,11 +2599,11 @@ inline void species_density_derivatives_0d(
           scoef = 0.;
           acoef = 0.;
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      / Mg        * 24.;
+          + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      / Mg        * 24.;
           if (my_chemistry->dust_species > 1)  {
             acoef = acoef
-            + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     / Mg        * 24. * 2.
-            + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][0]         / Mg        * 24.;
+            + grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust][0]     / Mg        * 24. * 2.
+            + grain_growth_rates[OnlyGrainSpLUT::MgO_dust][0]         / Mg        * 24.;
           }
 
           deriv.data[SpLUT::Mg][0] = deriv.data[SpLUT::Mg][0] + (scoef - acoef * Mg);
@@ -2608,7 +2616,7 @@ inline void species_density_derivatives_0d(
           scoef = 0.;
           acoef = 0.;
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][0]       / Al        * 27. * 2.;
+          + grain_growth_rates[OnlyGrainSpLUT::Al2O3_dust][0]       / Al        * 27. * 2.;
 
           deriv.data[SpLUT::Al][0] = deriv.data[SpLUT::Al][0] + (scoef - acoef * Al);
 
@@ -2618,7 +2626,7 @@ inline void species_density_derivatives_0d(
           scoef = 0.;
           acoef = 0.;
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][0]         / S        * 32.;
+          + grain_growth_rates[OnlyGrainSpLUT::FeS_dust][0]         / S        * 32.;
 
           deriv.data[SpLUT::S][0] = deriv.data[SpLUT::S][0] + (scoef - acoef * S);
 
@@ -2628,9 +2636,9 @@ inline void species_density_derivatives_0d(
           scoef = 0.;
           acoef = 0.;
           acoef = acoef
-          + grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][0]         / Fe        * 56.
-          + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][0]       / Fe        * 56. * 3.
-          + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][0]         / Fe        * 56.;
+          + grain_growth_rates[OnlyGrainSpLUT::FeM_dust][0]         / Fe        * 56.
+          + grain_growth_rates[OnlyGrainSpLUT::Fe3O4_dust][0]       / Fe        * 56. * 3.
+          + grain_growth_rates[OnlyGrainSpLUT::FeS_dust][0]         / Fe        * 56.;
 
           deriv.data[SpLUT::Fe][0] = deriv.data[SpLUT::Fe][0] + (scoef - acoef * Fe);
 
@@ -2651,7 +2659,7 @@ inline void species_density_derivatives_0d(
         // ***** MgSiO3 **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      * 100.;
+        + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      * 100.;
         acoef = 0.;
 
         deriv.data[SpLUT::MgSiO3_dust][0] = deriv.data[SpLUT::MgSiO3_dust][0] + (scoef - acoef * MgSiO3);
@@ -2661,7 +2669,7 @@ inline void species_density_derivatives_0d(
         // ***** AC **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][0]          * 12.;
+        + grain_growth_rates[OnlyGrainSpLUT::AC_dust][0]          * 12.;
         acoef = 0.;
 
         deriv.data[SpLUT::AC_dust][0] = deriv.data[SpLUT::AC_dust][0] + (scoef - acoef * AC);
@@ -2673,7 +2681,7 @@ inline void species_density_derivatives_0d(
         // ***** SiM **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][0]         * 28.;
+        + grain_growth_rates[OnlyGrainSpLUT::SiM_dust][0]         * 28.;
         acoef = 0.;
 
         deriv.data[SpLUT::SiM_dust][0] = deriv.data[SpLUT::SiM_dust][0] + (scoef - acoef * SiM);
@@ -2683,7 +2691,7 @@ inline void species_density_derivatives_0d(
         // ***** FeM **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][0]         * 56.;
+        + grain_growth_rates[OnlyGrainSpLUT::FeM_dust][0]         * 56.;
         acoef = 0.;
 
         deriv.data[SpLUT::FeM_dust][0] = deriv.data[SpLUT::FeM_dust][0] + (scoef - acoef * FeM);
@@ -2693,7 +2701,7 @@ inline void species_density_derivatives_0d(
         // ***** Mg2SiO4 **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     * 140.;
+        + grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust][0]     * 140.;
         acoef = 0.;
 
         deriv.data[SpLUT::Mg2SiO4_dust][0] = deriv.data[SpLUT::Mg2SiO4_dust][0] + (scoef - acoef * Mg2SiO4);
@@ -2703,7 +2711,7 @@ inline void species_density_derivatives_0d(
         // ***** Fe3O4 **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][0]       * 232.;
+        + grain_growth_rates[OnlyGrainSpLUT::Fe3O4_dust][0]       * 232.;
         acoef = 0.;
 
         deriv.data[SpLUT::Fe3O4_dust][0] = deriv.data[SpLUT::Fe3O4_dust][0] + (scoef - acoef * Fe3O4);
@@ -2713,7 +2721,7 @@ inline void species_density_derivatives_0d(
         // ***** SiO2D **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][0]       * 60.;
+        + grain_growth_rates[OnlyGrainSpLUT::SiO2_dust][0]       * 60.;
         acoef = 0.;
 
         deriv.data[SpLUT::SiO2_dust][0] = deriv.data[SpLUT::SiO2_dust][0] + (scoef - acoef * SiO2D);
@@ -2723,7 +2731,7 @@ inline void species_density_derivatives_0d(
         // ***** MgO **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][0]         * 40.;
+        + grain_growth_rates[OnlyGrainSpLUT::MgO_dust][0]         * 40.;
         acoef = 0.;
 
         deriv.data[SpLUT::MgO_dust][0] = deriv.data[SpLUT::MgO_dust][0] + (scoef - acoef * MgO);
@@ -2733,7 +2741,7 @@ inline void species_density_derivatives_0d(
         // ***** FeS **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][0]         * 88.;
+        + grain_growth_rates[OnlyGrainSpLUT::FeS_dust][0]         * 88.;
         acoef = 0.;
 
         deriv.data[SpLUT::FeS_dust][0] = deriv.data[SpLUT::FeS_dust][0] + (scoef - acoef * FeS);
@@ -2743,7 +2751,7 @@ inline void species_density_derivatives_0d(
         // ***** Al2O3 **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][0]       * 102.;
+        + grain_growth_rates[OnlyGrainSpLUT::Al2O3_dust][0]       * 102.;
         acoef = 0.;
 
         deriv.data[SpLUT::Al2O3_dust][0] = deriv.data[SpLUT::Al2O3_dust][0] + (scoef - acoef * Al2O3);
@@ -2755,7 +2763,7 @@ inline void species_density_derivatives_0d(
         // ***** reforg **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][0]      * 22.68;
+        + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust][0]      * 22.68;
         acoef = 0.;
 
         deriv.data[SpLUT::ref_org_dust][0] = deriv.data[SpLUT::ref_org_dust][0] + (scoef - acoef * reforg);
@@ -2765,7 +2773,7 @@ inline void species_density_derivatives_0d(
         // ***** volorg **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][0]      * 32.;
+        + grain_growth_rates[OnlyGrainSpLUT::vol_org_dust][0]      * 32.;
         acoef = 0.;
 
         deriv.data[SpLUT::vol_org_dust][0] = deriv.data[SpLUT::vol_org_dust][0] + (scoef - acoef * volorg);
@@ -2775,7 +2783,7 @@ inline void species_density_derivatives_0d(
         // ***** H2Oice **********
         scoef = 0.;
         scoef = scoef
-        + grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][0]      * 18.;
+        + grain_growth_rates[OnlyGrainSpLUT::H2O_ice_dust][0]      * 18.;
         acoef = 0.;
 
         deriv.data[SpLUT::H2O_ice_dust][0] = deriv.data[SpLUT::H2O_ice_dust][0] + (scoef - acoef * H2Oice);

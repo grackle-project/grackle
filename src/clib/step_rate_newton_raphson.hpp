@@ -138,7 +138,7 @@ inline void wrapped_calc_derivatives(
 ///
 /// @note
 /// The values in the various buffers (p2d, tgas, tdust, metallicity, dust2gas,
-/// rhoH, mmw, h2dust, edot, grain_temperatures, logTlininterp_buf,
+/// rhoH, mmw, edot, grain_temperatures, logTlininterp_buf,
 /// cool1dmulti_buf, coolingheating_buf, chemheatrates_buf), hold undefined
 /// values after this function call wherever `itmask_nr` indicates that this
 /// function runs.
@@ -148,7 +148,7 @@ inline void step_rate_newton_raphson(
   int imetal, IndexRange idx_range, int iter, double dom, double chunit,
   double dx_cgs, double c_ljeans, double* dtit, double* p2d, double* tgas,
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
-  double* mmw, double* h2dust, double* edot, gr_mask_type anydust,
+  double* mmw, double* edot, gr_mask_type anydust,
   gr_mask_type* itmask_nr, gr_mask_type* itmask_metal, int* imp_eng,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
@@ -501,7 +501,7 @@ inline void step_rate_newton_raphson(
       //    copying is the value of cool1dmulti_buf.tgasold -- and that doesn't
       //    currently get used)
       t_deriv::scratchbufs_copy_into_pack(
-        i, &pack, p2d, tgas, tdust, metallicity, dust2gas, rhoH, mmw, h2dust,
+        i, &pack, p2d, tgas, tdust, metallicity, dust2gas, rhoH, mmw,
         edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf, chemheatrates_buf
       );
@@ -659,7 +659,7 @@ label_9996:
       // -> we should totally delete this function (we may already be able to
       //    do so)
       t_deriv::scratchbufs_copy_from_pack(
-        i, &pack, p2d, tgas, tdust, metallicity, dust2gas, rhoH, mmw, h2dust,
+        i, &pack, p2d, tgas, tdust, metallicity, dust2gas, rhoH, mmw,
         edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf, chemheatrates_buf
       );

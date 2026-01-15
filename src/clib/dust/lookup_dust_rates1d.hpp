@@ -59,15 +59,14 @@ namespace grackle::impl {
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
 /// @param[in] my_fields Specifies the field data.
-/// @param[out] grain_growth_rates output buffers that are used to hold the
-///     net grain growth rates at each @p idx_range (only used in certain
-///     configurations)
 /// @param[in] grain_temperatures individual grain species temperatures. This
 ///     is only used in certain configurations (i.e. when we aren't using the
 ///     tdust argument)
 /// @param[in] logTlininterp_buf Specifies precomputed arrays of values (for
 ///    each location in the index range) that are used to linearly interpolate
 ///    tables with respect to logT (the natural log of the gas temperature).
+/// @param[out] rxn_rate_buf output buffers to be filled with computed reaction
+///    rates for @p idx_range
 /// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
 ///     temporary grain species properties (only used in certain configurations)
 ///
@@ -105,12 +104,12 @@ namespace grackle::impl {
 /// > dust-grain density is already 0.
 inline void lookup_dust_rates1d(
     IndexRange idx_range, double dlogtem, const double* tdust,
-    const double* dust2gas, double* h2dust, double dom,
-    const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    grackle::impl::GrainSpeciesCollection grain_growth_rates,
+    const double* dust2gas, double dom, const gr_mask_type* itmask_metal,
+    double dt, chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    grackle_field_data* my_fields,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+    FullRxnRateBuf rxn_rate_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
@@ -124,6 +123,10 @@ inline void lookup_dust_rates1d(
 
   // we should probably enforce the following at initialization!
   GRIMPL_REQUIRE(my_chemistry->dust_species >= 0, "sanity-check!");
+
+  // h2dust is the buffer that gets filled with the rate for forming
+  // molecular hydrogen on dust grains
+  double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
 
   if (my_chemistry->dust_species == 0) {
     // in this branch, we are just tracking a single generic dust field
@@ -299,6 +302,8 @@ inline void lookup_dust_rates1d(
 
     // Compute net grain growth rates
     // ------------------------------
+    double* const* grain_growth_rates =
+        FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
 
     long long nratec_single_elem_arr[1] = {
         (long long)(my_chemistry->NumberOfTemperatureBins)};
@@ -366,7 +371,7 @@ inline void lookup_dust_rates1d(
                 interp_props.parameters[1], dlogtem, nratec_single_elem_arr[0],
                 my_rates->grain_growth_rate);
 
-            grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
+            grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][i] =
                 kd * grain_sigma_per_gas_mass[i] *
                 d(i, idx_range.j, idx_range.k) * limiting_factor;
           }
@@ -402,13 +407,13 @@ inline void lookup_dust_rates1d(
         for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           if (itmask_metal[i] != MASK_FALSE) {
             // zero-out the grain growth rate
-            grain_growth_rates.data[gsp_idx][i] = 0.0;
+            grain_growth_rates[gsp_idx][i] = 0.0;
 
             // set the growth rate to a negative value that will destroy the
             // grain over the interval `dt` if the dust temperature exceeds
             // the grain species's sublimation temperature
             if (temdust_arr[i] > temdust_sublimation) {
-              grain_growth_rates.data[gsp_idx][i] =
+              grain_growth_rates[gsp_idx][i] =
                   (tiny8 - rho_gsp(i, idx_range.j, idx_range.k)) / dt;
             }
           }

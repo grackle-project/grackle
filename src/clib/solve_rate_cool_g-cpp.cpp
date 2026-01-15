@@ -20,6 +20,7 @@
 #include <iostream>
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
+#include "full_rxn_rate_buf.hpp"
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
@@ -32,6 +33,7 @@
 #include "visitor/memory.hpp"
 
 #include "ceiling_species.hpp"
+#include "rate_timestep_g.hpp"
 #include "scale_fields_g-cpp.h"
 #include "solve_rate_cool_g-cpp.h"
 
@@ -313,7 +315,7 @@ static double calc_Heq_div_dHeqdt_(
 /// @param[in] logTlininterp_buf Specifies the information related to the
 ///    position in the logT interpolations (for a number of chemistry zones)
 /// @param[in] my_fields specifies the field data
-/// @param[in] kcr_buf holds various pre-computed chemical reaction rates for
+/// @param[in] rxn_rate_buf holds various pre-computed reaction rates for
 ///    each location in `idx_range`.
 ///
 /// @todo
@@ -331,8 +333,10 @@ static void set_subcycle_dt_from_chemistry_scheme_(
   double dlogtem,
   const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
   grackle_field_data* my_fields,
-  grackle::impl::CollisionalRxnRateCollection kcr_buf
+  grackle::impl::FullRxnRateBuf rxn_rate_buf
 ) {
+  const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
+
   const int j = idx_range.j;
   const int k = idx_range.k;
 
@@ -376,9 +380,9 @@ static void set_subcycle_dt_from_chemistry_scheme_(
       // If the net rate is almost perfectly balanced then set
       //     it to zero (since it is zero to available precision)
       {
-        double ion_rate = std::fabs(kcr_buf.data[CollisionalRxnLUT::k1][i] *
+        double ion_rate = std::fabs(kcol_buf[CollisionalRxnLUT::k1][i] *
                                     de(i,j,k) * HI(i,j,k));
-        double recomb_rate = std::fabs(kcr_buf.data[CollisionalRxnLUT::k2][i] *
+        double recomb_rate = std::fabs(kcol_buf[CollisionalRxnLUT::k2][i] *
                                        HII(i,j,k) * de(i,j,k));
         double ratio = (std::fmin(ion_rate, recomb_rate) /
                         std::fmax(std::fabs(dedot[i]), std::fabs(HIdot[i])));
@@ -413,8 +417,8 @@ static void set_subcycle_dt_from_chemistry_scheme_(
         // Hydrogen changes by 10% or less
         double Heq_div_dHeqdt = calc_Heq_div_dHeqdt_(
           my_chemistry, my_rates, dlogtem, logTlininterp_buf,
-          kcr_buf.data[CollisionalRxnLUT::k13],
-          kcr_buf.data[CollisionalRxnLUT::k22],
+          kcol_buf[CollisionalRxnLUT::k13],
+          kcol_buf[CollisionalRxnLUT::k22],
           d(i,j,k), tgas, p2d, edot, i
         );
 
@@ -530,9 +534,6 @@ struct SpeciesRateSolverScratchBuf {
   /// for index_range computed during the previous cycle
   double *dedot_prev, *HIdot_prev;
 
-  /// buffer used to track the rate of H2 formation on dust grains
-  double* h2dust;
-
   /// iteration mask denoting where the Gauss-Seidel scheme will be used
   gr_mask_type* itmask_gs;
 
@@ -547,21 +548,13 @@ struct SpeciesRateSolverScratchBuf {
   // (currently only used by step_rate_g)
   grackle::impl::SpeciesCollection species_tmpdens;
 
-  // buffers in the following data structure are used to temporarily hold
-  // the interpolated Collisional Rxn Rates that have been
-  // interpolated using the standard 1D log temperature table.
-  grackle::impl::CollisionalRxnRateCollection kcr_buf;
-
-  // buffers in the following data structure are used to temporarily hold
-  // the computed radiative reaction rates
-  grackle::impl::PhotoRxnRateCollection kshield_buf;
+  /// buffers in the following data structure are used to temporarily hold
+  /// all reaction rates
+  FullRxnRateBuf rxn_rate_buf;
 
   // buffers in the following data structure are used to temporarily hold
   // the interpolated chemistry-heating rates at each index-range location
   grackle::impl::ChemHeatingRates chemheatrates_buf;
-
-  // holds computed grain growth/destruction rates:
-  grackle::impl::GrainSpeciesCollection grain_growth_rates;
 
 };
 
@@ -580,7 +573,6 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
   f(VIS_MEMBER_NAME("HIdot"), obj0.HIdot, obj1.HIdot, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("dedot_prev"), obj0.dedot_prev, obj1.dedot_prev, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("HIdot_prev"), obj0.HIdot_prev, obj1.HIdot_prev, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("h2dust"), obj0.h2dust, obj1.h2dust, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("itmask_gs"), obj0.itmask_gs, obj1.itmask_gs, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("itmask_nr"), obj0.itmask_nr, obj1.itmask_nr, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("imp_eng"), obj0.imp_eng, obj1.imp_eng, vis::idx_range_len_multiple(1));
@@ -588,17 +580,11 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
   vis::previsit_struct_member(VIS_MEMBER_NAME("species_tmpdens"), f);
   visit_member_pair(obj0.species_tmpdens, obj1.species_tmpdens, f);
 
-  vis::previsit_struct_member(VIS_MEMBER_NAME("kcr_buf"), f);
-  visit_member_pair(obj0.kcr_buf, obj1.kcr_buf, f);
-
-  vis::previsit_struct_member(VIS_MEMBER_NAME("kshield_buf"), f);
-  visit_member_pair(obj0.kshield_buf, obj1.kshield_buf, f);
+  vis::previsit_struct_member(VIS_MEMBER_NAME("rxn_rate_buf"), f);
+  visit_member_pair(obj0.rxn_rate_buf, obj1.rxn_rate_buf, f);
 
   vis::previsit_struct_member(VIS_MEMBER_NAME("chemheatrates_buf"), f);
   visit_member_pair(obj0.chemheatrates_buf, obj1.chemheatrates_buf, f);
-
-  vis::previsit_struct_member(VIS_MEMBER_NAME("grain_growth_rates"), f);
-  visit_member_pair(obj0.grain_growth_rates, obj1.grain_growth_rates, f);
 
   vis::end_visit(f);
 }
@@ -642,8 +628,6 @@ int solve_rate_cool_g(
   grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 )
 {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
 #ifdef GRACKLE_FLOAT_4
   const gr_float tolerance = (gr_float)(1.0e-05);
@@ -791,7 +775,7 @@ int solve_rate_cool_g(
       // declare 2 variables (primarily used for subcycling, but also used in
       // error reporting)
       int iter;
-      double ttmin;
+      double ttmin = huge8;
 
       // ------------------ Loop over subcycles ----------------
 
@@ -826,23 +810,22 @@ int solve_rate_cool_g(
           //    the C++ docstring for a longer discussion
           grackle::impl::lookup_cool_rates1d(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
-            dust2gas.data(), spsolvbuf.h2dust, dom, dx_cgs,
-            c_ljeans, itmask.data(), itmask_metal.data(), dt, my_chemistry,
+            dust2gas.data(), dom, dx_cgs, c_ljeans, itmask.data(),
+            itmask_metal.data(), dt, my_chemistry,
             my_rates, my_fields, *my_uvb_rates, internalu,
-            spsolvbuf.grain_growth_rates, grain_temperatures,
-            logTlininterp_buf, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
-            spsolvbuf.chemheatrates_buf, internal_dust_prop_scratch_buf
+            grain_temperatures, logTlininterp_buf,
+            spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
+            internal_dust_prop_scratch_buf
           );
 
           // Compute dedot and HIdot, the rates of change of de and HI
           //   (should add itmask to this call)
 
-          f_wrap::rate_timestep_g(
-            spsolvbuf.dedot, spsolvbuf.HIdot, anydust, idx_range,
-            spsolvbuf.h2dust, rhoH.data(), itmask.data(), edot.data(),
-            chunit, dom, my_chemistry, my_fields, *my_uvb_rates,
-            spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
-            spsolvbuf.chemheatrates_buf
+          grackle::impl::rate_timestep_g(
+            spsolvbuf.dedot, spsolvbuf.HIdot, anydust,
+            rhoH.data(), itmask.data(), edot.data(),
+            chunit, dom, my_chemistry, my_fields, idx_range,
+            spsolvbuf.chemheatrates_buf, spsolvbuf.rxn_rate_buf
           );
 
           // Setup masks to identify which chemistry schemes to use. We split
@@ -869,7 +852,7 @@ int solve_rate_cool_g(
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev,
             spsolvbuf.ddom, tgas.data(), p2d.data(), edot.data(),
             my_chemistry, my_rates, dlogtem, logTlininterp_buf, my_fields,
-            spsolvbuf.kcr_buf
+            spsolvbuf.rxn_rate_buf
           );
         }
 
@@ -901,11 +884,10 @@ int solve_rate_cool_g(
           // sweep of a backward Euler method (for all cells specified by
           // itmask_gs)
           grackle::impl::step_rate_gauss_seidel(
-            dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
+            dtit.data(), idx_range, anydust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
-            itmask_metal.data(), my_chemistry, my_fields, *my_uvb_rates,
-            spsolvbuf.grain_growth_rates, spsolvbuf.species_tmpdens,
-            spsolvbuf.kcr_buf, spsolvbuf.kshield_buf
+            itmask_metal.data(), my_chemistry, my_fields,
+            spsolvbuf.species_tmpdens, spsolvbuf.rxn_rate_buf
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel
@@ -915,7 +897,7 @@ int solve_rate_cool_g(
             imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
             dtit.data(), p2d.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
-            spsolvbuf.h2dust, edot.data(), anydust, spsolvbuf.itmask_nr,
+            edot.data(), anydust, spsolvbuf.itmask_nr,
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
             my_fields, *my_uvb_rates, internalu, grain_temperatures,
             logTlininterp_buf, cool1dmulti_buf, coolingheating_buf,
