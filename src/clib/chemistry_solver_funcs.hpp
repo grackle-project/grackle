@@ -57,8 +57,6 @@ namespace grackle::impl::chemistry {
 /// @param[in] my_uvb_rates specifies precomputed rxn rates dependent on the
 ///     UV background, without accounting for self-shield (we probably don't
 ///     need to pass the whole thing since we also pass kshield_buf)
-/// @param[in] kshield_buf specifies the
-///     precomputed rxn rates (depends on local physical conditions)
 /// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
 ///     local physical conditions)
 ///
@@ -114,7 +112,6 @@ inline void species_density_updates_gauss_seidel(
   const double* rhoH, const gr_mask_type* itmask,
   const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-  grackle::impl::PhotoRxnRateCollection kshield_buf,
   const FullRxnRateBuf rxn_rate_buf
 )
 {
@@ -186,6 +183,7 @@ inline void species_density_updates_gauss_seidel(
 
   // locals
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
+  const PhotoRxnRateCollection kshield_buf = rxn_rate_buf.radiative;
   const double* const* grain_growth_rates =
     FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
 
@@ -1467,8 +1465,6 @@ inline void species_density_updates_gauss_seidel(
 /// @param[in]  my_fields Specifies field data
 /// @param[in]  my_uvb_rates specifies precomputed rxn rates dependent on the
 ///     UV background
-/// @param[in]  kshield_buf specifies the
-///     precomputed rxn rates (depends on local physical conditions)
 /// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
 ///     local physical conditions)
 ///
@@ -1497,9 +1493,7 @@ inline void species_density_derivatives_0d(
   grackle::impl::SpeciesCollection deriv, gr_mask_type anydust,
   const double* h2dust, const double* rhoH, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
-  const photo_rate_storage my_uvb_rates,
-  const grackle::impl::PhotoRxnRateCollection kshield_buf,
-  const FullRxnRateBuf rxn_rate_buf
+  const photo_rate_storage my_uvb_rates, const FullRxnRateBuf rxn_rate_buf
 ) {
 
   // define some local variables carried over from the fortran version:
@@ -1567,6 +1561,7 @@ inline void species_density_derivatives_0d(
   gr_float& H2Oice  = my_fields->H2O_ice_dust_density[0];
 
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
+  const PhotoRxnRateCollection kshield_buf = rxn_rate_buf.radiative;
   const double* const* grain_growth_rates =
     FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
 

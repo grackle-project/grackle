@@ -551,10 +551,6 @@ struct SpeciesRateSolverScratchBuf {
   // (currently only used by step_rate_g)
   grackle::impl::SpeciesCollection species_tmpdens;
 
-  // buffers in the following data structure are used to temporarily hold
-  // the computed radiative reaction rates
-  grackle::impl::PhotoRxnRateCollection kshield_buf;
-
   /// buffers in the following data structure are used to temporarily hold
   /// all reaction rates
   FullRxnRateBuf rxn_rate_buf;
@@ -587,9 +583,6 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
 
   vis::previsit_struct_member(VIS_MEMBER_NAME("species_tmpdens"), f);
   visit_member_pair(obj0.species_tmpdens, obj1.species_tmpdens, f);
-
-  vis::previsit_struct_member(VIS_MEMBER_NAME("kshield_buf"), f);
-  visit_member_pair(obj0.kshield_buf, obj1.kshield_buf, f);
 
   vis::previsit_struct_member(VIS_MEMBER_NAME("rxn_rate_buf"), f);
   visit_member_pair(obj0.rxn_rate_buf, obj1.rxn_rate_buf, f);
@@ -824,8 +817,7 @@ int solve_rate_cool_g(
             dust2gas.data(), spsolvbuf.h2dust, dom, dx_cgs,
             c_ljeans, itmask.data(), itmask_metal.data(), dt, my_chemistry,
             my_rates, my_fields, *my_uvb_rates, internalu,
-            grain_temperatures,
-            logTlininterp_buf, spsolvbuf.kshield_buf,
+            grain_temperatures, logTlininterp_buf,
             spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
             internal_dust_prop_scratch_buf
           );
@@ -837,8 +829,7 @@ int solve_rate_cool_g(
             spsolvbuf.dedot, spsolvbuf.HIdot, anydust, spsolvbuf.h2dust,
             rhoH.data(), itmask.data(), edot.data(),
             chunit, dom, my_chemistry, my_fields, idx_range,
-            spsolvbuf.kshield_buf, spsolvbuf.chemheatrates_buf,
-            spsolvbuf.rxn_rate_buf
+            spsolvbuf.chemheatrates_buf, spsolvbuf.rxn_rate_buf
           );
 
           // Setup masks to identify which chemistry schemes to use. We split
@@ -900,8 +891,7 @@ int solve_rate_cool_g(
             dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
             itmask_metal.data(), my_chemistry, my_fields, *my_uvb_rates,
-            spsolvbuf.species_tmpdens,
-            spsolvbuf.kshield_buf, spsolvbuf.rxn_rate_buf
+            spsolvbuf.species_tmpdens, spsolvbuf.rxn_rate_buf
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel

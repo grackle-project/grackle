@@ -44,7 +44,6 @@ namespace grackle::impl {
 /// @param[in] my_chemistry Holds a number of configuration parameters
 /// @param[in] my_fields Specifies the field data
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] kshield_buf Holds various pre-computed radiative reaction rates
 /// @param[in] chemheatrates_buf Holds various pre-computed chemistry-heating
 /// rates at each index-range location
 /// @param[in] rxn_rate_buf Holds pre-computed reaction rates for each location
@@ -58,7 +57,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
                      const gr_mask_type* itmask, double* edot, double chunit,
                      double dom, chemistry_data* my_chemistry,
                      grackle_field_data* my_fields, IndexRange idx_range,
-                     grackle::impl::PhotoRxnRateCollection kshield_buf,
                      grackle::impl::ChemHeatingRates chemheatrates_buf,
                      FullRxnRateBuf rxn_rate_buf);
 

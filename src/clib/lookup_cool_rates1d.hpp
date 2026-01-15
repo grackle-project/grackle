@@ -756,8 +756,6 @@ inline void apply_misc_shield_factors(
 /// @param[out] logTlininterp_buf Buffers that are filled with values for each
 ///     location in @p idx_range with valuea that are used to linearly
 ///     interpolate tables with respect to the natural log of @p tgas1d
-/// @param[out] kshield_buf Buffers filled with shielding-adjusted photo
-///     reaction rates for @p idx_range
 /// @param[out] rxn_rate_buf output buffers to be filled with computed reaction
 ///    rates for @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
@@ -778,7 +776,6 @@ inline void lookup_cool_rates1d(
     InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-    grackle::impl::PhotoRxnRateCollection kshield_buf,
     FullRxnRateBuf rxn_rate_buf,
     grackle::impl::ChemHeatingRates chemheatrates_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
@@ -848,20 +845,20 @@ inline void lookup_cool_rates1d(
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      kshield_buf.k24[i] = my_uvb_rates.k24;
-      kshield_buf.k25[i] = my_uvb_rates.k25;
-      kshield_buf.k26[i] = my_uvb_rates.k26;
-      kshield_buf.k28[i] = my_uvb_rates.k28;
-      kshield_buf.k29[i] = my_uvb_rates.k29;
-      kshield_buf.k30[i] = my_uvb_rates.k30;
+      rxn_rate_buf.radiative.k24[i] = my_uvb_rates.k24;
+      rxn_rate_buf.radiative.k25[i] = my_uvb_rates.k25;
+      rxn_rate_buf.radiative.k26[i] = my_uvb_rates.k26;
+      rxn_rate_buf.radiative.k28[i] = my_uvb_rates.k28;
+      rxn_rate_buf.radiative.k29[i] = my_uvb_rates.k29;
+      rxn_rate_buf.radiative.k30[i] = my_uvb_rates.k30;
     }
   }
 
   // model the effects of H2 self-shielding
   if (my_chemistry->primordial_chemistry > 1) {
-    model_H2I_dissociation_shielding(kshield_buf, idx_range, tgas1d, mmw, dom,
-                                     dx_cgs, c_ljeans, itmask, my_chemistry,
-                                     my_fields, my_uvb_rates, internalu);
+    model_H2I_dissociation_shielding(
+        rxn_rate_buf.radiative, idx_range, tgas1d, mmw, dom, dx_cgs, c_ljeans,
+        itmask, my_chemistry, my_fields, my_uvb_rates, internalu);
   }
 
   // apply some miscellaneous self-shielding adjustments
@@ -869,7 +866,7 @@ inline void lookup_cool_rates1d(
     ShieldFactorCalculator calculator =
         setup_shield_factor_calculator(tgas1d, idx_range, dom, my_chemistry,
                                        my_fields, my_uvb_rates, internalu);
-    apply_misc_shield_factors(kshield_buf, idx_range, itmask,
+    apply_misc_shield_factors(rxn_rate_buf.radiative, idx_range, itmask,
                               my_chemistry->self_shielding_method, my_uvb_rates,
                               &calculator);
   }
@@ -879,7 +876,7 @@ inline void lookup_cool_rates1d(
   //   effects of secondary electrons (Shull * Steenberg 1985)
   //   (see calc_rate.src)
   secondary_ionization_adjustments(idx_range, itmask, my_fields, my_uvb_rates,
-                                   internalu, kshield_buf);
+                                   internalu, rxn_rate_buf.radiative);
 #endif
 }
 
