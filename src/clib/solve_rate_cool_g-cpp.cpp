@@ -838,7 +838,8 @@ int solve_rate_cool_g(
             my_rates, my_fields, *my_uvb_rates, internalu,
             spsolvbuf.grain_growth_rates, grain_temperatures,
             logTlininterp_buf, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
-            spsolvbuf.chemheatrates_buf, internal_dust_prop_scratch_buf
+            spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
+            internal_dust_prop_scratch_buf
           );
 
           // Compute dedot and HIdot, the rates of change of de and HI

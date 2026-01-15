@@ -508,6 +508,7 @@ void derivatives(
     pack.main_scratch_buf.grain_temperatures,
     pack.main_scratch_buf.logTlininterp_buf,
     pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf,
+    pack.main_scratch_buf.rxn_rate_buf,
     pack.main_scratch_buf.chemheatrates_buf,
     pack.main_scratch_buf.internal_dust_prop_scratch_buf
   );

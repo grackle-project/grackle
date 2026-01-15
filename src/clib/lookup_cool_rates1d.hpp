@@ -21,6 +21,7 @@
 #include "dust/lookup_dust_rates1d.hpp"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
+#include "full_rxn_rate_buf.hpp"
 #include "internal_types.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
@@ -761,6 +762,8 @@ inline void apply_misc_shield_factors(
 ///     each location in @p idx_range
 /// @param[out] kshield_buf Buffers filled with shielding-adjusted photo
 ///     reaction rates for @p idx_range
+/// @param[out] rxn_rate_buf Buffers filled with computed reaction rates for
+///     @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
 ///     values that are used to compute heating from certain chemical reactions.
 /// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
@@ -782,6 +785,7 @@ inline void lookup_cool_rates1d(
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
     grackle::impl::CollisionalRxnRateCollection kcol_buf,
     grackle::impl::PhotoRxnRateCollection kshield_buf,
+    FullRxnRateBuf rxn_rate_buf,
     grackle::impl::ChemHeatingRates chemheatrates_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
   // Construct views of fields referenced in several parts of this function.
