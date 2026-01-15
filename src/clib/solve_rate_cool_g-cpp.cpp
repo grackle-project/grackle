@@ -32,6 +32,7 @@
 #include "visitor/memory.hpp"
 
 #include "ceiling_species.hpp"
+#include "rate_timestep_g.hpp"
 #include "scale_fields_g-cpp.h"
 #include "solve_rate_cool_g-cpp.h"
 
@@ -642,8 +643,6 @@ int solve_rate_cool_g(
   grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 )
 {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
 #ifdef GRACKLE_FLOAT_4
   const gr_float tolerance = (gr_float)(1.0e-05);
@@ -837,10 +836,10 @@ int solve_rate_cool_g(
           // Compute dedot and HIdot, the rates of change of de and HI
           //   (should add itmask to this call)
 
-          f_wrap::rate_timestep_g(
-            spsolvbuf.dedot, spsolvbuf.HIdot, anydust, idx_range,
-            spsolvbuf.h2dust, rhoH.data(), itmask.data(), edot.data(),
-            chunit, dom, my_chemistry, my_fields, *my_uvb_rates,
+          grackle::impl::rate_timestep_g(
+            spsolvbuf.dedot, spsolvbuf.HIdot, anydust, spsolvbuf.h2dust,
+            rhoH.data(), itmask.data(), edot.data(),
+            chunit, dom, my_chemistry, my_fields, idx_range,
             spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
             spsolvbuf.chemheatrates_buf
           );
