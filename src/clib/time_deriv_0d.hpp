@@ -62,7 +62,6 @@ struct MainScratchBuf {
   // the remaining buffers were originally reallocated (mostly on the stack)
   // every time calculated the time derivatives were computed
   PhotoRxnRateCollection kshield_buf;
-  GrainSpeciesCollection grain_growth_rates;
   FullRxnRateBuf rxn_rate_buf;
 };
 
@@ -82,7 +81,6 @@ MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
 
 
   out.kshield_buf = new_PhotoRxnRateCollection(nelem);
-  out.grain_growth_rates = new_GrainSpeciesCollection(nelem);
   out.rxn_rate_buf = new_FullRxnRateBuf(nelem);
   return out;
 }
@@ -96,7 +94,6 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_InternalDustPropBuf(&ptr->internal_dust_prop_scratch_buf);
 
   drop_PhotoRxnRateCollection(&ptr->kshield_buf);
-  drop_GrainSpeciesCollection(&ptr->grain_growth_rates);
   drop_FullRxnRateBuffer(&ptr->rxn_rate_buf);
 }
 
@@ -501,7 +498,6 @@ void derivatives(
     pack.fwd_args.dom, pack.fwd_args.dx_cgs, pack.fwd_args.c_ljeans,
     pack.other_scratch_buf.itmask, &pack.local_itmask_metal, dt_FIXME,
     my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
-    pack.main_scratch_buf.grain_growth_rates,
     pack.main_scratch_buf.grain_temperatures,
     pack.main_scratch_buf.logTlininterp_buf,
     pack.main_scratch_buf.kshield_buf,
@@ -548,7 +544,7 @@ void derivatives(
   gr_chem::species_density_derivatives_0d(
     rhosp_dot, pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
     pack.other_scratch_buf.rhoH, &pack.local_itmask_metal, my_chemistry,
-    &pack.fields, my_uvb_rates, pack.main_scratch_buf.grain_growth_rates,
+    &pack.fields, my_uvb_rates,
     pack.main_scratch_buf.kshield_buf,
     pack.main_scratch_buf.rxn_rate_buf
   );

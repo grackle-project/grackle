@@ -750,9 +750,6 @@ inline void apply_misc_shield_factors(
 /// @param[in] my_uvb_rates Holds precomputed photorates that depend on the UV
 ///     background. These rates do not include the effects of self-shielding.
 /// @param[in] internalu Specifies Grackle's internal unit-system
-/// @param[out] grain_growth_rates output buffers that are used to hold the
-///     net grain growth rates at each @p idx_range (only used in certain
-///     configurations)
 /// @param[in] grain_temperatures individual grain species temperatures. This
 ///     is only used in certain configurations (i.e. when we aren't using the
 ///     tdust argument)
@@ -761,8 +758,8 @@ inline void apply_misc_shield_factors(
 ///     interpolate tables with respect to the natural log of @p tgas1d
 /// @param[out] kshield_buf Buffers filled with shielding-adjusted photo
 ///     reaction rates for @p idx_range
-/// @param[out] rxn_rate_buf Buffers filled with computed reaction rates for
-///     @p idx_range
+/// @param[out] rxn_rate_buf output buffers to be filled with computed reaction
+///    rates for @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
 ///     values that are used to compute heating from certain chemical reactions.
 /// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
@@ -779,7 +776,6 @@ inline void lookup_cool_rates1d(
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
     InternalGrUnits internalu,
-    grackle::impl::GrainSpeciesCollection grain_growth_rates,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
     grackle::impl::PhotoRxnRateCollection kshield_buf,
@@ -840,8 +836,8 @@ inline void lookup_cool_rates1d(
   if (anydust != MASK_FALSE) {
     lookup_dust_rates1d(idx_range, dlogtem, tdust, dust2gas, h2dust, dom,
                         itmask_metal, dt, my_chemistry, my_rates, my_fields,
-                        grain_growth_rates, grain_temperatures,
-                        logTlininterp_buf, internal_dust_prop_scratch_buf);
+                        grain_temperatures, logTlininterp_buf, rxn_rate_buf,
+                        internal_dust_prop_scratch_buf);
   }
 
   // Deal with the photo reaction rates

@@ -563,9 +563,6 @@ struct SpeciesRateSolverScratchBuf {
   // the interpolated chemistry-heating rates at each index-range location
   grackle::impl::ChemHeatingRates chemheatrates_buf;
 
-  // holds computed grain growth/destruction rates:
-  grackle::impl::GrainSpeciesCollection grain_growth_rates;
-
 };
 
 /// used to help implement the visitor design pattern
@@ -599,9 +596,6 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
 
   vis::previsit_struct_member(VIS_MEMBER_NAME("chemheatrates_buf"), f);
   visit_member_pair(obj0.chemheatrates_buf, obj1.chemheatrates_buf, f);
-
-  vis::previsit_struct_member(VIS_MEMBER_NAME("grain_growth_rates"), f);
-  visit_member_pair(obj0.grain_growth_rates, obj1.grain_growth_rates, f);
 
   vis::end_visit(f);
 }
@@ -830,7 +824,7 @@ int solve_rate_cool_g(
             dust2gas.data(), spsolvbuf.h2dust, dom, dx_cgs,
             c_ljeans, itmask.data(), itmask_metal.data(), dt, my_chemistry,
             my_rates, my_fields, *my_uvb_rates, internalu,
-            spsolvbuf.grain_growth_rates, grain_temperatures,
+            grain_temperatures,
             logTlininterp_buf, spsolvbuf.kshield_buf,
             spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
             internal_dust_prop_scratch_buf
@@ -906,7 +900,7 @@ int solve_rate_cool_g(
             dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
             itmask_metal.data(), my_chemistry, my_fields, *my_uvb_rates,
-            spsolvbuf.grain_growth_rates, spsolvbuf.species_tmpdens,
+            spsolvbuf.species_tmpdens,
             spsolvbuf.kshield_buf, spsolvbuf.rxn_rate_buf
           );
 
