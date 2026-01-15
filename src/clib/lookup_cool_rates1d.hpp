@@ -841,12 +841,23 @@ inline void lookup_cool_rates1d(
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
+      // historically, k27 was treated as a special case:
+      // - At this time, k27 is always the same everywhere. So we could pass the
+      //   unmodified scalar value rather than use a 1D array
+      // - For simpler bookkeeping & clarity, we choose to handle k27 using a 1D
+      //   array all other reaction rates (radiative & otherwise).
+      // - For now, the performance benefits from special treatment would be
+      //   marginal (it is always used with at least ~30 other rates)
+      rxn_rate_buf.radiative.k27[i] = my_uvb_rates.k27;
+
+      // handle cases that may be corrected
       rxn_rate_buf.radiative.k24[i] = my_uvb_rates.k24;
       rxn_rate_buf.radiative.k25[i] = my_uvb_rates.k25;
       rxn_rate_buf.radiative.k26[i] = my_uvb_rates.k26;
       rxn_rate_buf.radiative.k28[i] = my_uvb_rates.k28;
       rxn_rate_buf.radiative.k29[i] = my_uvb_rates.k29;
       rxn_rate_buf.radiative.k30[i] = my_uvb_rates.k30;
+      // k31 is handled separately
     }
   }
 

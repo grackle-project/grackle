@@ -52,9 +52,6 @@ namespace grackle::impl::chemistry {
 /// @param[in] my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
 /// @param[in] my_fields Specifies the current values of the field data
-/// @param[in] my_uvb_rates specifies precomputed rxn rates dependent on the
-///     UV background, without accounting for self-shield (we probably don't
-///     need to pass the whole thing since we also pass kshield_buf)
 /// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
 ///     local physical conditions)
 ///
@@ -108,7 +105,7 @@ inline void species_density_updates_gauss_seidel(
   const double* dtit, gr_mask_type anydust, const double* rhoH,
   const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, grackle_field_data* my_fields,
-  photo_rate_storage my_uvb_rates, const FullRxnRateBuf rxn_rate_buf
+  const FullRxnRateBuf rxn_rate_buf
 )
 {
 
@@ -675,7 +672,7 @@ inline void species_density_updates_gauss_seidel(
         acoef = (kcol_buf[CollisionalRxnLUT::k8][i]  + kcol_buf[CollisionalRxnLUT::k15][i])  * HI(i,j,k) +
                 (kcol_buf[CollisionalRxnLUT::k16][i] + kcol_buf[CollisionalRxnLUT::k17][i])  * HII(i,j,k) +
                kcol_buf[CollisionalRxnLUT::k14][i] * de(i,j,k) + kcol_buf[CollisionalRxnLUT::k19][i] * H2II(i,j,k)/2.0f +
-               my_uvb_rates.k27;
+               kshield_buf.k27[i];
 #ifdef CONTRIBUTION_OF_MINOR_SPECIES
         if (my_chemistry->primordial_chemistry > 2)  {
           acoef = acoef
@@ -1459,8 +1456,6 @@ inline void species_density_updates_gauss_seidel(
 /// @param[in]  my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
 /// @param[in]  my_fields Specifies field data
-/// @param[in]  my_uvb_rates specifies precomputed rxn rates dependent on the
-///     UV background
 /// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
 ///     local physical conditions)
 ///
@@ -1489,7 +1484,7 @@ inline void species_density_derivatives_0d(
   grackle::impl::SpeciesCollection deriv, gr_mask_type anydust,
   const double* rhoH, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
-  const photo_rate_storage my_uvb_rates, const FullRxnRateBuf rxn_rate_buf
+  const FullRxnRateBuf rxn_rate_buf
 ) {
 
   // define some local variables carried over from the fortran version:
@@ -2032,7 +2027,7 @@ inline void species_density_derivatives_0d(
     acoef = (kcol_buf[CollisionalRxnLUT::k8][0]     + kcol_buf[CollisionalRxnLUT::k15][0]   )  * HI        +
             (kcol_buf[CollisionalRxnLUT::k16][0]    + kcol_buf[CollisionalRxnLUT::k17][0]   )  * HII        +
             kcol_buf[CollisionalRxnLUT::k14][0]    * de        + kcol_buf[CollisionalRxnLUT::k19][0]    * H2II       /2.0f +
-            my_uvb_rates.k27;
+            kshield_buf.k27[0];
     // contribution of minor species
     if (my_chemistry->primordial_chemistry > 2)  {
       acoef = acoef

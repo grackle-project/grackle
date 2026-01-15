@@ -886,7 +886,7 @@ int solve_rate_cool_g(
           grackle::impl::step_rate_gauss_seidel(
             dtit.data(), idx_range, anydust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
-            itmask_metal.data(), my_chemistry, my_fields, *my_uvb_rates,
+            itmask_metal.data(), my_chemistry, my_fields,
             spsolvbuf.species_tmpdens, spsolvbuf.rxn_rate_buf
           );
 
