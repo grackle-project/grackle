@@ -111,6 +111,7 @@ add_library(Grackle_Grackle
   dust_props.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp
+  full_rxn_rate_buf.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_dust_yields.cpp initialize_dust_yields.hpp

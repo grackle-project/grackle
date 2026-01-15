@@ -20,6 +20,7 @@
 #include <iostream>
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
+#include "full_rxn_rate_buf.hpp"
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
@@ -557,6 +558,10 @@ struct SpeciesRateSolverScratchBuf {
   // the computed radiative reaction rates
   grackle::impl::PhotoRxnRateCollection kshield_buf;
 
+  /// buffers in the following data structure are used to temporarily hold
+  /// all reaction rates
+  FullRxnRateBuf rxn_rate_buf;
+
   // buffers in the following data structure are used to temporarily hold
   // the interpolated chemistry-heating rates at each index-range location
   grackle::impl::ChemHeatingRates chemheatrates_buf;
@@ -594,6 +599,9 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
 
   vis::previsit_struct_member(VIS_MEMBER_NAME("kshield_buf"), f);
   visit_member_pair(obj0.kshield_buf, obj1.kshield_buf, f);
+
+  vis::previsit_struct_member(VIS_MEMBER_NAME("rxn_rate_buf"), f);
+  visit_member_pair(obj0.rxn_rate_buf, obj1.rxn_rate_buf, f);
 
   vis::previsit_struct_member(VIS_MEMBER_NAME("chemheatrates_buf"), f);
   visit_member_pair(obj0.chemheatrates_buf, obj1.chemheatrates_buf, f);

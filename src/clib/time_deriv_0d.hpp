@@ -10,6 +10,7 @@
 #include "chemistry_solver_funcs.hpp"
 #include "dust_props.hpp"
 #include "fortran_func_wrappers.hpp"
+#include "full_rxn_rate_buf.hpp"
 #include "grackle.h"
 #include "grackle_macros.h" // GRACKLE_FREE
 #include "index_helper.h"
@@ -63,6 +64,7 @@ struct MainScratchBuf {
   CollisionalRxnRateCollection kcr_buf;
   PhotoRxnRateCollection kshield_buf;
   GrainSpeciesCollection grain_growth_rates;
+  FullRxnRateBuf rxn_rate_buf;
 };
 
 
@@ -83,6 +85,7 @@ MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
   out.kcr_buf = new_CollisionalRxnRateCollection(nelem);
   out.kshield_buf = new_PhotoRxnRateCollection(nelem);
   out.grain_growth_rates = new_GrainSpeciesCollection(nelem);
+  out.rxn_rate_buf = new_FullRxnRateBuf(nelem);
   return out;
 }
 
@@ -97,6 +100,7 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_CollisionalRxnRateCollection(&ptr->kcr_buf);
   drop_PhotoRxnRateCollection(&ptr->kshield_buf);
   drop_GrainSpeciesCollection(&ptr->grain_growth_rates);
+  drop_FullRxnRateBuffer(&ptr->rxn_rate_buf);
 }
 
 /// this is a collections of values intended to act as 1-element arrays and
