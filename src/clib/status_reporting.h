@@ -230,6 +230,7 @@ ERRFMT_ATTR_(2) NORETURN_ATTR_ void grimpl_abort_with_internal_err_(
 #define GRIMPL_ERROR(...)                                                 \
   { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
 
+
 /// @def GR_INTERNAL_REQUIRE
 /// @brief implements functionality analogous to the assert() macro
 ///
@@ -254,6 +255,24 @@ ERRFMT_ATTR_(2) NORETURN_ATTR_ void grimpl_abort_with_internal_err_(
 #define GRIMPL_REQUIRE(cond, ...)                                             \
   {  if (!(cond))                                                             \
       { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); } }
+
+
+/// @def GR_INTERNAL_UNREACHABLE_ERROR()
+/// @brief function-like macro that aborts with a (lethal) error message
+///     indicating that 
+///
+/// This macro should be treated as a function with the signature:
+///
+///   [[noreturn]] void GR_INTERNAL_UNREACHABLE_ERROR();
+///
+/// @note
+/// Unlike gcc/clang's __builtin_unreachable or C++23's std::unreachable, this
+/// aborts the program with an error if its executed (the other cases produce
+/// undefined behavior). (An argument could be made for conditionally compiling
+/// this macro into the alternatives to test speed)
+#define GR_INTERNAL_UNREACHABLE_ERROR()                                    \
+  { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__,                     \
+                                    "location shouldn't be reachable"); }
 
 // helper function
 ERRFMT_ATTR_(2) NODISCARD_ATTR_ int grimpl_print_and_return_err_(
@@ -320,6 +339,22 @@ ERRFMT_ATTR_(2) void grimpl_print_err_msg_(
 #define GrPrintErrMsg(...)                              \
   grimpl_print_err_msg_(__GRIMPL_SRCLOC__, __VA_ARGS__);
 
+/// @def GR_INTERNAL_UNREACHABLE_ERROR()
+/// @brief function-like macro that aborts with a (lethal) error message
+///     indicating that
+///
+/// This macro should be treated as a function with the signature:
+///
+///   [[noreturn]] void GR_INTERNAL_UNREACHABLE_ERROR();
+///
+/// @note
+/// Unlike gcc/clang's __builtin_unreachable or C++23's std::unreachable, this
+/// aborts the program with an error if its executed (the other cases produce
+/// undefined behavior). (An argument could be made for conditionally compiling
+/// this macro into the alternatives to test speed)
+#define GR_INTERNAL_UNREACHABLE_ERROR()                                    \
+{ grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__,                     \
+"location shouldn't be reachable"); }
 
 // undefine the attributes so we avoid leaking them
 // ------------------------------------------------

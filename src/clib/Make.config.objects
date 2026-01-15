@@ -50,7 +50,7 @@ OBJS_CONFIG_LIB = \
         calc_tdust_3d.lo \
         calc_grain_size_increment_1d.lo \
         rate_functions.lo \
-        rate_utils.lo \
+        ratequery.lo \
         gaussj_g.lo \
         utils.lo \
         utils-cpp.lo \
