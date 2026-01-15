@@ -238,7 +238,6 @@ inline void step_rate_gauss_seidel(
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
   grackle::impl::GrainSpeciesCollection grain_growth_rates,
   grackle::impl::SpeciesCollection species_tmpdens,
-  grackle::impl::CollisionalRxnRateCollection kcol_buf,
   grackle::impl::PhotoRxnRateCollection kshield_buf,
   const FullRxnRateBuf rxn_rate_buf
 ) {
@@ -248,7 +247,7 @@ inline void step_rate_gauss_seidel(
   grackle::impl::chemistry::species_density_updates_gauss_seidel(
       species_tmpdens, idx_range, dtit, anydust, h2dust, rhoH, itmask,
       itmask_metal, my_chemistry, my_fields, my_uvb_rates, grain_growth_rates,
-      kcol_buf, kshield_buf, rxn_rate_buf);
+      kshield_buf, rxn_rate_buf);
 
   // update the entries from my_fields with the values in species_tmpdens
   update_fields_from_tmpdens_gauss_seidel(

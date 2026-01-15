@@ -315,8 +315,6 @@ static double calc_Heq_div_dHeqdt_(
 /// @param[in] logTlininterp_buf Specifies the information related to the
 ///    position in the logT interpolations (for a number of chemistry zones)
 /// @param[in] my_fields specifies the field data
-/// @param[in] kcr_buf holds various pre-computed chemical reaction rates for
-///    each location in `idx_range`.
 /// @param[in] rxn_rate_buf holds various pre-computed reaction rates for
 ///    each location in `idx_range`.
 ///
@@ -335,9 +333,10 @@ static void set_subcycle_dt_from_chemistry_scheme_(
   double dlogtem,
   const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
   grackle_field_data* my_fields,
-  grackle::impl::CollisionalRxnRateCollection kcr_buf,
   grackle::impl::FullRxnRateBuf rxn_rate_buf
 ) {
+  const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
+
   const int j = idx_range.j;
   const int k = idx_range.k;
 
@@ -381,9 +380,9 @@ static void set_subcycle_dt_from_chemistry_scheme_(
       // If the net rate is almost perfectly balanced then set
       //     it to zero (since it is zero to available precision)
       {
-        double ion_rate = std::fabs(kcr_buf.data[CollisionalRxnLUT::k1][i] *
+        double ion_rate = std::fabs(kcol_buf[CollisionalRxnLUT::k1][i] *
                                     de(i,j,k) * HI(i,j,k));
-        double recomb_rate = std::fabs(kcr_buf.data[CollisionalRxnLUT::k2][i] *
+        double recomb_rate = std::fabs(kcol_buf[CollisionalRxnLUT::k2][i] *
                                        HII(i,j,k) * de(i,j,k));
         double ratio = (std::fmin(ion_rate, recomb_rate) /
                         std::fmax(std::fabs(dedot[i]), std::fabs(HIdot[i])));
@@ -418,8 +417,8 @@ static void set_subcycle_dt_from_chemistry_scheme_(
         // Hydrogen changes by 10% or less
         double Heq_div_dHeqdt = calc_Heq_div_dHeqdt_(
           my_chemistry, my_rates, dlogtem, logTlininterp_buf,
-          kcr_buf.data[CollisionalRxnLUT::k13],
-          kcr_buf.data[CollisionalRxnLUT::k22],
+          kcol_buf[CollisionalRxnLUT::k13],
+          kcol_buf[CollisionalRxnLUT::k22],
           d(i,j,k), tgas, p2d, edot, i
         );
 
@@ -553,11 +552,6 @@ struct SpeciesRateSolverScratchBuf {
   grackle::impl::SpeciesCollection species_tmpdens;
 
   // buffers in the following data structure are used to temporarily hold
-  // the interpolated Collisional Rxn Rates that have been
-  // interpolated using the standard 1D log temperature table.
-  grackle::impl::CollisionalRxnRateCollection kcr_buf;
-
-  // buffers in the following data structure are used to temporarily hold
   // the computed radiative reaction rates
   grackle::impl::PhotoRxnRateCollection kshield_buf;
 
@@ -596,9 +590,6 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
 
   vis::previsit_struct_member(VIS_MEMBER_NAME("species_tmpdens"), f);
   visit_member_pair(obj0.species_tmpdens, obj1.species_tmpdens, f);
-
-  vis::previsit_struct_member(VIS_MEMBER_NAME("kcr_buf"), f);
-  visit_member_pair(obj0.kcr_buf, obj1.kcr_buf, f);
 
   vis::previsit_struct_member(VIS_MEMBER_NAME("kshield_buf"), f);
   visit_member_pair(obj0.kshield_buf, obj1.kshield_buf, f);
@@ -840,7 +831,7 @@ int solve_rate_cool_g(
             c_ljeans, itmask.data(), itmask_metal.data(), dt, my_chemistry,
             my_rates, my_fields, *my_uvb_rates, internalu,
             spsolvbuf.grain_growth_rates, grain_temperatures,
-            logTlininterp_buf, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
+            logTlininterp_buf, spsolvbuf.kshield_buf,
             spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
             internal_dust_prop_scratch_buf
           );
@@ -852,8 +843,8 @@ int solve_rate_cool_g(
             spsolvbuf.dedot, spsolvbuf.HIdot, anydust, spsolvbuf.h2dust,
             rhoH.data(), itmask.data(), edot.data(),
             chunit, dom, my_chemistry, my_fields, idx_range,
-            spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
-            spsolvbuf.chemheatrates_buf, spsolvbuf.rxn_rate_buf
+            spsolvbuf.kshield_buf, spsolvbuf.chemheatrates_buf,
+            spsolvbuf.rxn_rate_buf
           );
 
           // Setup masks to identify which chemistry schemes to use. We split
@@ -880,7 +871,7 @@ int solve_rate_cool_g(
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev,
             spsolvbuf.ddom, tgas.data(), p2d.data(), edot.data(),
             my_chemistry, my_rates, dlogtem, logTlininterp_buf, my_fields,
-            spsolvbuf.kcr_buf, spsolvbuf.rxn_rate_buf
+            spsolvbuf.rxn_rate_buf
           );
         }
 
@@ -916,7 +907,7 @@ int solve_rate_cool_g(
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
             itmask_metal.data(), my_chemistry, my_fields, *my_uvb_rates,
             spsolvbuf.grain_growth_rates, spsolvbuf.species_tmpdens,
-            spsolvbuf.kcr_buf, spsolvbuf.kshield_buf, spsolvbuf.rxn_rate_buf
+            spsolvbuf.kshield_buf, spsolvbuf.rxn_rate_buf
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel

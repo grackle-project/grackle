@@ -61,7 +61,6 @@ struct MainScratchBuf {
 
   // the remaining buffers were originally reallocated (mostly on the stack)
   // every time calculated the time derivatives were computed
-  CollisionalRxnRateCollection kcr_buf;
   PhotoRxnRateCollection kshield_buf;
   GrainSpeciesCollection grain_growth_rates;
   FullRxnRateBuf rxn_rate_buf;
@@ -82,7 +81,6 @@ MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
     new_InternalDustPropBuf(nelem, grain_opacity_table_size);
 
 
-  out.kcr_buf = new_CollisionalRxnRateCollection(nelem);
   out.kshield_buf = new_PhotoRxnRateCollection(nelem);
   out.grain_growth_rates = new_GrainSpeciesCollection(nelem);
   out.rxn_rate_buf = new_FullRxnRateBuf(nelem);
@@ -97,7 +95,6 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_ChemHeatingRates(&ptr->chemheatrates_buf);
   drop_InternalDustPropBuf(&ptr->internal_dust_prop_scratch_buf);
 
-  drop_CollisionalRxnRateCollection(&ptr->kcr_buf);
   drop_PhotoRxnRateCollection(&ptr->kshield_buf);
   drop_GrainSpeciesCollection(&ptr->grain_growth_rates);
   drop_FullRxnRateBuffer(&ptr->rxn_rate_buf);
@@ -507,7 +504,7 @@ void derivatives(
     pack.main_scratch_buf.grain_growth_rates,
     pack.main_scratch_buf.grain_temperatures,
     pack.main_scratch_buf.logTlininterp_buf,
-    pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf,
+    pack.main_scratch_buf.kshield_buf,
     pack.main_scratch_buf.rxn_rate_buf,
     pack.main_scratch_buf.chemheatrates_buf,
     pack.main_scratch_buf.internal_dust_prop_scratch_buf
@@ -528,7 +525,6 @@ void derivatives(
       pack.other_scratch_buf.edot, pack.fwd_args.chunit,
       pack.fwd_args.dom, my_chemistry, &pack.fields,
       pack.idx_range_1_element,
-      pack.main_scratch_buf.kcr_buf,
       pack.main_scratch_buf.kshield_buf,
       pack.main_scratch_buf.chemheatrates_buf,
       pack.main_scratch_buf.rxn_rate_buf
@@ -553,7 +549,7 @@ void derivatives(
     rhosp_dot, pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
     pack.other_scratch_buf.rhoH, &pack.local_itmask_metal, my_chemistry,
     &pack.fields, my_uvb_rates, pack.main_scratch_buf.grain_growth_rates,
-    pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf,
+    pack.main_scratch_buf.kshield_buf,
     pack.main_scratch_buf.rxn_rate_buf
   );
 }
