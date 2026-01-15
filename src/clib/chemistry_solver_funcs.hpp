@@ -44,8 +44,6 @@ namespace grackle::impl::chemistry {
 /// @param[in] dtit Specifies the timestep of the current sub-cycle for each
 ///     index in @p idx_range.
 /// @param[in] anydust Indicates whether we are modelling dust
-/// @param[in] h2dust Specifies the rate of H2 dust-formation on dust grains
-///     for eacg k
 /// @param[in] rhoH Indicates the mass density of all Hydrogen
 /// @param[in] itmask The general iteration mask for @p idx_range.
 /// @param[in] itmask_metal The iteration mask @p idx_range that specifies
@@ -108,11 +106,10 @@ namespace grackle::impl::chemistry {
 ///   performance).
 inline void species_density_updates_gauss_seidel(
   grackle::impl::SpeciesCollection out_spdens, IndexRange idx_range,
-  const double* dtit, gr_mask_type anydust, const double* h2dust,
-  const double* rhoH, const gr_mask_type* itmask,
-  const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-  grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-  const FullRxnRateBuf rxn_rate_buf
+  const double* dtit, gr_mask_type anydust, const double* rhoH,
+  const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
+  const chemistry_data* my_chemistry, grackle_field_data* my_fields,
+  photo_rate_storage my_uvb_rates, const FullRxnRateBuf rxn_rate_buf
 )
 {
 
@@ -186,6 +183,7 @@ inline void species_density_updates_gauss_seidel(
   const PhotoRxnRateCollection kshield_buf = rxn_rate_buf.radiative;
   const double* const* grain_growth_rates =
     FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
+  const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
 
   int i;
   double scoef, acoef;
@@ -1456,7 +1454,6 @@ inline void species_density_updates_gauss_seidel(
 ///     species mass densities. The caller must make sure this is filled with
 ///     zeros before calling this function
 /// @param[in]  anydust
-/// @param[in]  h2dust
 /// @param[in]  rhoH Indicates the mass density of all Hydrogen
 /// @param[in]  itmask_metal Indicates where we should account for metal
 ///     chemistry
@@ -1491,7 +1488,7 @@ inline void species_density_updates_gauss_seidel(
 ///      is a reasonable motivation for that choice)
 inline void species_density_derivatives_0d(
   grackle::impl::SpeciesCollection deriv, gr_mask_type anydust,
-  const double* h2dust, const double* rhoH, const gr_mask_type* itmask_metal,
+  const double* rhoH, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
   const photo_rate_storage my_uvb_rates, const FullRxnRateBuf rxn_rate_buf
 ) {
@@ -1564,6 +1561,7 @@ inline void species_density_derivatives_0d(
   const PhotoRxnRateCollection kshield_buf = rxn_rate_buf.radiative;
   const double* const* grain_growth_rates =
     FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
+  const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
 
   double scoef, acoef;
 

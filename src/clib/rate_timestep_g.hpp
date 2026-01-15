@@ -33,7 +33,6 @@ namespace grackle::impl {
 /// @param[in] dedot Time derivatives of free electron mass density
 /// @param[in] HIdot Time derivatives of HI mass density
 /// @param[in] anydust Indicates whether we are modelling dust
-/// @param[in] h2dust Rate of H2 formation on dust grains
 /// @param[in] rhoH Indicates the mass density of all Hydrogen
 /// @param[in] itmask Specifies the `idx_range`'s iteration-mask for this
 ///    calculation
@@ -53,9 +52,9 @@ namespace grackle::impl {
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
 void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
-                     const double* h2dust, const double* rhoH,
-                     const gr_mask_type* itmask, double* edot, double chunit,
-                     double dom, chemistry_data* my_chemistry,
+                     const double* rhoH, const gr_mask_type* itmask,
+                     double* edot, double chunit, double dom,
+                     chemistry_data* my_chemistry,
                      grackle_field_data* my_fields, IndexRange idx_range,
                      grackle::impl::ChemHeatingRates chemheatrates_buf,
                      FullRxnRateBuf rxn_rate_buf);

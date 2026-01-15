@@ -534,9 +534,6 @@ struct SpeciesRateSolverScratchBuf {
   /// for index_range computed during the previous cycle
   double *dedot_prev, *HIdot_prev;
 
-  /// buffer used to track the rate of H2 formation on dust grains
-  double* h2dust;
-
   /// iteration mask denoting where the Gauss-Seidel scheme will be used
   gr_mask_type* itmask_gs;
 
@@ -576,7 +573,6 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
   f(VIS_MEMBER_NAME("HIdot"), obj0.HIdot, obj1.HIdot, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("dedot_prev"), obj0.dedot_prev, obj1.dedot_prev, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("HIdot_prev"), obj0.HIdot_prev, obj1.HIdot_prev, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("h2dust"), obj0.h2dust, obj1.h2dust, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("itmask_gs"), obj0.itmask_gs, obj1.itmask_gs, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("itmask_nr"), obj0.itmask_nr, obj1.itmask_nr, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("imp_eng"), obj0.imp_eng, obj1.imp_eng, vis::idx_range_len_multiple(1));
@@ -814,8 +810,8 @@ int solve_rate_cool_g(
           //    the C++ docstring for a longer discussion
           grackle::impl::lookup_cool_rates1d(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
-            dust2gas.data(), spsolvbuf.h2dust, dom, dx_cgs,
-            c_ljeans, itmask.data(), itmask_metal.data(), dt, my_chemistry,
+            dust2gas.data(), dom, dx_cgs, c_ljeans, itmask.data(),
+            itmask_metal.data(), dt, my_chemistry,
             my_rates, my_fields, *my_uvb_rates, internalu,
             grain_temperatures, logTlininterp_buf,
             spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
@@ -826,7 +822,7 @@ int solve_rate_cool_g(
           //   (should add itmask to this call)
 
           grackle::impl::rate_timestep_g(
-            spsolvbuf.dedot, spsolvbuf.HIdot, anydust, spsolvbuf.h2dust,
+            spsolvbuf.dedot, spsolvbuf.HIdot, anydust,
             rhoH.data(), itmask.data(), edot.data(),
             chunit, dom, my_chemistry, my_fields, idx_range,
             spsolvbuf.chemheatrates_buf, spsolvbuf.rxn_rate_buf
@@ -888,7 +884,7 @@ int solve_rate_cool_g(
           // sweep of a backward Euler method (for all cells specified by
           // itmask_gs)
           grackle::impl::step_rate_gauss_seidel(
-            dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
+            dtit.data(), idx_range, anydust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
             itmask_metal.data(), my_chemistry, my_fields, *my_uvb_rates,
             spsolvbuf.species_tmpdens, spsolvbuf.rxn_rate_buf
@@ -901,7 +897,7 @@ int solve_rate_cool_g(
             imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
             dtit.data(), p2d.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
-            spsolvbuf.h2dust, edot.data(), anydust, spsolvbuf.itmask_nr,
+            edot.data(), anydust, spsolvbuf.itmask_nr,
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
             my_fields, *my_uvb_rates, internalu, grain_temperatures,
             logTlininterp_buf, cool1dmulti_buf, coolingheating_buf,

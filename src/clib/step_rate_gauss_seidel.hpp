@@ -232,7 +232,7 @@ inline void update_fields_from_tmpdens_gauss_seidel(
 /// integrator to advance the rate equations by one (sub-)cycle (dtit).
 inline void step_rate_gauss_seidel(
   const double* dtit, IndexRange idx_range, gr_mask_type anydust,
-  const double* h2dust, const double* rhoH, double* dedot_prev,
+  const double* rhoH, double* dedot_prev,
   double* HIdot_prev, const gr_mask_type* itmask,
   const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
@@ -243,7 +243,7 @@ inline void step_rate_gauss_seidel(
   // perform the Gauss-Seidel sweep to compute the species densities at the
   // end of the current timestep. The results are saved in species_tmpdens
   grackle::impl::chemistry::species_density_updates_gauss_seidel(
-      species_tmpdens, idx_range, dtit, anydust, h2dust, rhoH, itmask,
+      species_tmpdens, idx_range, dtit, anydust, rhoH, itmask,
       itmask_metal, my_chemistry, my_fields, my_uvb_rates, rxn_rate_buf);
 
   // update the entries from my_fields with the values in species_tmpdens

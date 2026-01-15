@@ -27,9 +27,9 @@
 namespace grackle::impl {
 
 void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
-                     const double* h2dust, const double* rhoH,
-                     const gr_mask_type* itmask, double* edot, double chunit,
-                     double dom, chemistry_data* my_chemistry,
+                     const double* rhoH, const gr_mask_type* itmask,
+                     double* edot, double chunit, double dom,
+                     chemistry_data* my_chemistry,
                      grackle_field_data* my_fields, IndexRange idx_range,
                      grackle::impl::ChemHeatingRates chemheatrates_buf,
                      FullRxnRateBuf rxn_rate_buf) {
@@ -114,6 +114,7 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // locals
+  const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
   const PhotoRxnRateCollection kshield_buf = rxn_rate_buf.radiative;
 

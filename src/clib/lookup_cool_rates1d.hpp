@@ -731,9 +731,6 @@ inline void apply_misc_shield_factors(
 /// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
 ///     index range. In other words, this holds the dust mass per unit gas mass
 ///     (only used in certain configuration)
-/// @param[out] h2dust Buffer that gets filled with the rate for forming
-///     molecular hydrogen on dust grains. (This is filled whenever @p anydust
-///     holds `MASK_TRUE`.
 /// @param[in] dom a standard quantity used throughout the codebase
 /// @param[in] dx_cgs The width of a cell in comoving cm (I think). Used in
 ///     certain self-shielding calculations.
@@ -768,12 +765,11 @@ inline void apply_misc_shield_factors(
 /// > docstring of @ref grackle::impl::lookup_dust_rates1d for more details
 inline void lookup_cool_rates1d(
     IndexRange idx_range, gr_mask_type anydust, const double* tgas1d,
-    const double* mmw, const double* tdust, const double* dust2gas,
-    double* h2dust, double dom, double dx_cgs, double c_ljeans,
-    const gr_mask_type* itmask, const gr_mask_type* itmask_metal, double dt,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-    InternalGrUnits internalu,
+    const double* mmw, const double* tdust, const double* dust2gas, double dom,
+    double dx_cgs, double c_ljeans, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
@@ -831,8 +827,8 @@ inline void lookup_cool_rates1d(
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
-    lookup_dust_rates1d(idx_range, dlogtem, tdust, dust2gas, h2dust, dom,
-                        itmask_metal, dt, my_chemistry, my_rates, my_fields,
+    lookup_dust_rates1d(idx_range, dlogtem, tdust, dust2gas, dom, itmask_metal,
+                        dt, my_chemistry, my_rates, my_fields,
                         grain_temperatures, logTlininterp_buf, rxn_rate_buf,
                         internal_dust_prop_scratch_buf);
   }

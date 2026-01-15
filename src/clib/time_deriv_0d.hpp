@@ -110,7 +110,6 @@ struct Assorted1ElemBuf {
   double dust2gas[1];
   double rhoH[1];
   double mmw[1];
-  double h2dust[1];
   double edot[1];
 
   // the remaining buffers were originally reallocated (on the stack)
@@ -268,7 +267,7 @@ inline void configure_ContextPack(
 inline void scratchbufs_copy_into_pack(
   int index, ContextPack* pack, const double* p2d, const double* tgas,
   const double* tdust, const double* metallicity, const double* dust2gas,
-  const double* rhoH, const double* mmw, const double* h2dust,
+  const double* rhoH, const double* mmw,
   const double* edot, grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
@@ -331,7 +330,6 @@ inline void scratchbufs_copy_into_pack(
   pack->other_scratch_buf.dust2gas[0] = dust2gas[index];
   pack->other_scratch_buf.rhoH[0] = rhoH[index];
   pack->other_scratch_buf.mmw[0] = mmw[index];
-  pack->other_scratch_buf.h2dust[0] = h2dust[index];
   pack->other_scratch_buf.edot[0] = edot[index];
 }
 
@@ -346,7 +344,7 @@ inline void scratchbufs_copy_into_pack(
 inline void scratchbufs_copy_from_pack(
   int index, ContextPack* pack, double* p2d, double* tgas,
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
-  double* mmw, double* h2dust, double* edot,
+  double* mmw, double* edot,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
@@ -387,7 +385,6 @@ inline void scratchbufs_copy_from_pack(
   dust2gas[index] = pack->other_scratch_buf.dust2gas[0];
   rhoH[index] = pack->other_scratch_buf.rhoH[0];
   mmw[index] = pack->other_scratch_buf.mmw[0];
-  h2dust[index] = pack->other_scratch_buf.h2dust[0];
   edot[index] = pack->other_scratch_buf.edot[0];
 
 }
@@ -491,7 +488,6 @@ void derivatives(
     pack.idx_range_1_element, pack.fwd_args.anydust,
     pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
     pack.other_scratch_buf.tdust, pack.other_scratch_buf.dust2gas,
-    pack.other_scratch_buf.h2dust,
     pack.fwd_args.dom, pack.fwd_args.dx_cgs, pack.fwd_args.c_ljeans,
     pack.other_scratch_buf.itmask, &pack.local_itmask_metal, dt_FIXME,
     my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
@@ -512,10 +508,9 @@ void derivatives(
 
     grackle::impl::rate_timestep_g(
       pack.other_scratch_buf.dedot, pack.other_scratch_buf.HIdot,
-      pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
-      pack.other_scratch_buf.rhoH, pack.other_scratch_buf.itmask,
-      pack.other_scratch_buf.edot, pack.fwd_args.chunit,
-      pack.fwd_args.dom, my_chemistry, &pack.fields,
+      pack.fwd_args.anydust, pack.other_scratch_buf.rhoH,
+      pack.other_scratch_buf.itmask, pack.other_scratch_buf.edot,
+      pack.fwd_args.chunit, pack.fwd_args.dom, my_chemistry, &pack.fields,
       pack.idx_range_1_element,
       pack.main_scratch_buf.chemheatrates_buf,
       pack.main_scratch_buf.rxn_rate_buf
@@ -537,9 +532,8 @@ void derivatives(
   }
 
   gr_chem::species_density_derivatives_0d(
-    rhosp_dot, pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
-    pack.other_scratch_buf.rhoH, &pack.local_itmask_metal, my_chemistry,
-    &pack.fields, my_uvb_rates,
+    rhosp_dot, pack.fwd_args.anydust, pack.other_scratch_buf.rhoH,
+    &pack.local_itmask_metal, my_chemistry, &pack.fields, my_uvb_rates,
     pack.main_scratch_buf.rxn_rate_buf
   );
 }

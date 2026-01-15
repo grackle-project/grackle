@@ -104,9 +104,9 @@ namespace grackle::impl {
 /// > dust-grain density is already 0.
 inline void lookup_dust_rates1d(
     IndexRange idx_range, double dlogtem, const double* tdust,
-    const double* dust2gas, double* h2dust, double dom,
-    const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    const double* dust2gas, double dom, const gr_mask_type* itmask_metal,
+    double dt, chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    grackle_field_data* my_fields,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
@@ -123,6 +123,10 @@ inline void lookup_dust_rates1d(
 
   // we should probably enforce the following at initialization!
   GRIMPL_REQUIRE(my_chemistry->dust_species >= 0, "sanity-check!");
+
+  // h2dust is the buffer that gets filled with the rate for forming
+  // molecular hydrogen on dust grains
+  double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
 
   if (my_chemistry->dust_species == 0) {
     // in this branch, we are just tracking a single generic dust field
