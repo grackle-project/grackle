@@ -849,7 +849,7 @@ int solve_rate_cool_g(
             rhoH.data(), itmask.data(), edot.data(),
             chunit, dom, my_chemistry, my_fields, idx_range,
             spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
-            spsolvbuf.chemheatrates_buf
+            spsolvbuf.chemheatrates_buf, spsolvbuf.rxn_rate_buf
           );
 
           // Setup masks to identify which chemistry schemes to use. We split

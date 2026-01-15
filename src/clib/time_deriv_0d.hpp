@@ -529,7 +529,8 @@ void derivatives(
       pack.idx_range_1_element,
       pack.main_scratch_buf.kcr_buf,
       pack.main_scratch_buf.kshield_buf,
-      pack.main_scratch_buf.chemheatrates_buf
+      pack.main_scratch_buf.chemheatrates_buf,
+      pack.main_scratch_buf.rxn_rate_buf
     );
 
   }

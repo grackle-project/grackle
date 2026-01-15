@@ -33,7 +33,8 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
                      grackle_field_data* my_fields, IndexRange idx_range,
                      grackle::impl::CollisionalRxnRateCollection kcr_buf,
                      grackle::impl::PhotoRxnRateCollection kshield_buf,
-                     grackle::impl::ChemHeatingRates chemheatrates_buf) {
+                     grackle::impl::ChemHeatingRates chemheatrates_buf,
+                     FullRxnRateBuf rxn_rate_buf) {
   // Density fields
 
   grackle::impl::View<gr_float***> de(
