@@ -317,6 +317,8 @@ static double calc_Heq_div_dHeqdt_(
 /// @param[in] my_fields specifies the field data
 /// @param[in] kcr_buf holds various pre-computed chemical reaction rates for
 ///    each location in `idx_range`.
+/// @param[in] rxn_rate_buf holds various pre-computed reaction rates for
+///    each location in `idx_range`.
 ///
 /// @todo
 /// Consider breaking this into 2 functions that separately determines dtit for
@@ -333,7 +335,8 @@ static void set_subcycle_dt_from_chemistry_scheme_(
   double dlogtem,
   const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
   grackle_field_data* my_fields,
-  grackle::impl::CollisionalRxnRateCollection kcr_buf
+  grackle::impl::CollisionalRxnRateCollection kcr_buf,
+  grackle::impl::FullRxnRateBuf rxn_rate_buf
 ) {
   const int j = idx_range.j;
   const int k = idx_range.k;
@@ -877,7 +880,7 @@ int solve_rate_cool_g(
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev,
             spsolvbuf.ddom, tgas.data(), p2d.data(), edot.data(),
             my_chemistry, my_rates, dlogtem, logTlininterp_buf, my_fields,
-            spsolvbuf.kcr_buf
+            spsolvbuf.kcr_buf, spsolvbuf.rxn_rate_buf
           );
         }
 
