@@ -64,8 +64,8 @@ namespace grackle::impl::chemistry {
 /// Right now the implementation of every rate is **very** manual, which makes
 /// it very easy to forget to add a rate.
 ///
-/// The shorter-term goal is to deduplicate as much as possible with between
-/// this function & grackle::impl::chemistry::species_density_derivatives_0d.
+/// The shorter-term goal is to deduplicate as much as possible between this
+/// function & @ref species_density_derivatives_0d.
 /// Some important considerations:
 /// - it will be easiest to deduplicate the metal-chemistry and grain-species
 ///   growth rates (we only need to introduce some light usage of templates)
@@ -79,7 +79,7 @@ namespace grackle::impl::chemistry {
 /// - In the longer term, it would make more sense to use more of a "table
 ///   based approach" in the regime where we have lots of chemistry.
 /// - We elaborate a little more down below:
-///   - we already have a table of 1d rate buffers (i.e. @p kcol_buf ).
+///   - we already have a table of 1d rate buffers: @p rxn_rate_buf.
 ///   - we might also track a table (with matching indices) where we track the
 ///     indexes associated with each reactant/product of a rate as well as
 ///     stoichiometric coefficients.
@@ -90,14 +90,13 @@ namespace grackle::impl::chemistry {
 ///     by index. Essentially, we would dynamically build up the creational
 ///     & destructive coefficients (``acoef`` & ``scoef``) for a full row and
 ///     use the values to then perform the update.
-///   - in practice things would be a little more complex since we have lots
-///     of rates not stored in @p kcol_buf, but it's still **very** doable
+///   - in practice things would be a little more complex since we have to deal
+///     dissociation rates, but it's still **very** doable
 ///   - once this infrastructure is in place, we could replace
-///     grackle::impl::chemistry::species_density_derivatives_0d
-///     that iterates through all of the rates in a very different manner
-///     and directly compute partial derivatives in a much more efficient
-///     manner (currently, it's used with finite derivatives for computing
-///     these partial derivatives)
+///     @ref chemistry::species_density_derivatives_0d with logic that iterates
+///     through rates in a very different manner and directly compute partial
+///     derivatives in a much more efficient manner (currently, it's used with
+///     finite differences for computing the partial derivatives)
 /// - Importantly, the table-based approach is *probably* slower than the
 ///   manual, hand-coded approach in the limit of a small chemical network.
 ///   I suspect that we'll preserve the hand-coded approach for
