@@ -27,6 +27,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"  // gr_mask_type
+#include "full_rxn_rate_buf.hpp"
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "LUT.hpp"
@@ -58,6 +59,8 @@ namespace grackle::impl::chemistry {
 ///     need to pass the whole thing since we also pass kshield_buf)
 /// @param[in] grain_growth_rates, kcr_buf, kshield_buf specifies the
 ///     precomputed rxn rates (depends on local physical conditions)
+/// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
+///     local physical conditions)
 ///
 /// Refactoring Goals
 /// -----------------
@@ -113,7 +116,8 @@ inline void species_density_updates_gauss_seidel(
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
   grackle::impl::GrainSpeciesCollection grain_growth_rates,
   grackle::impl::CollisionalRxnRateCollection kcol_buf,
-  grackle::impl::PhotoRxnRateCollection kshield_buf
+  grackle::impl::PhotoRxnRateCollection kshield_buf,
+  const FullRxnRateBuf rxn_rate_buf
 )
 {
 
@@ -1464,6 +1468,8 @@ inline void species_density_updates_gauss_seidel(
 ///     UV background
 /// @param[in]  grain_growth_rates, kcr_buf, kshield_buf specifies the
 ///     precomputed rxn rates (depends on local physical conditions)
+/// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
+///     local physical conditions)
 ///
 /// @note
 /// Some of occurences of the const keyword is somewhat symbolic (to indicate
@@ -1493,7 +1499,8 @@ inline void species_density_derivatives_0d(
   const photo_rate_storage my_uvb_rates,
   const grackle::impl::GrainSpeciesCollection grain_growth_rates,
   const grackle::impl::CollisionalRxnRateCollection kcr_buf,
-  const grackle::impl::PhotoRxnRateCollection kshield_buf
+  const grackle::impl::PhotoRxnRateCollection kshield_buf,
+  const FullRxnRateBuf rxn_rate_buf
 ) {
 
   // define some local variables carried over from the fortran version:

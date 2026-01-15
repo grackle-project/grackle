@@ -551,7 +551,8 @@ void derivatives(
     rhosp_dot, pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
     pack.other_scratch_buf.rhoH, &pack.local_itmask_metal, my_chemistry,
     &pack.fields, my_uvb_rates, pack.main_scratch_buf.grain_growth_rates,
-    pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf
+    pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf,
+    pack.main_scratch_buf.rxn_rate_buf
   );
 }
 

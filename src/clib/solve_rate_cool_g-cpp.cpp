@@ -912,7 +912,7 @@ int solve_rate_cool_g(
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
             itmask_metal.data(), my_chemistry, my_fields, *my_uvb_rates,
             spsolvbuf.grain_growth_rates, spsolvbuf.species_tmpdens,
-            spsolvbuf.kcr_buf, spsolvbuf.kshield_buf
+            spsolvbuf.kcr_buf, spsolvbuf.kshield_buf, spsolvbuf.rxn_rate_buf
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel
