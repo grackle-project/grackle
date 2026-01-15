@@ -128,34 +128,33 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
       if (itmask[i] != MASK_FALSE) {
         // Compute the electron density rate-of-change
 
-        dedot[i] =
-            +kcol_buf[CollisionalRxnLUT::k1][i] *
-                HI(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) +
-            kcol_buf[CollisionalRxnLUT::k3][i] *
-                HeI(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) / 4. +
-            kcol_buf[CollisionalRxnLUT::k5][i] *
-                HeII(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) / 4. -
-            kcol_buf[CollisionalRxnLUT::k2][i] *
-                HII(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) -
-            kcol_buf[CollisionalRxnLUT::k4][i] *
-                HeII(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) / 4. -
-            kcol_buf[CollisionalRxnLUT::k6][i] *
-                HeIII(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) / 4. +
-            kcol_buf[CollisionalRxnLUT::k57][i] *
-                HI(i, idx_range.j, idx_range.k) *
-                HI(i, idx_range.j, idx_range.k) +
-            kcol_buf[CollisionalRxnLUT::k58][i] *
-                HI(i, idx_range.j, idx_range.k) *
-                HeI(i, idx_range.j, idx_range.k) / 4. +
-            (kph_buf.k24[i] * HI(i, idx_range.j, idx_range.k) +
-             kph_buf.k25[i] * HeII(i, idx_range.j, idx_range.k) / 4. +
-             kph_buf.k26[i] * HeI(i, idx_range.j, idx_range.k) / 4.);
+        dedot[i] = +kcol_buf[CollisionalRxnLUT::k1][i] *
+                       HI(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) +
+                   kcol_buf[CollisionalRxnLUT::k3][i] *
+                       HeI(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) / 4. +
+                   kcol_buf[CollisionalRxnLUT::k5][i] *
+                       HeII(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) / 4. -
+                   kcol_buf[CollisionalRxnLUT::k2][i] *
+                       HII(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) -
+                   kcol_buf[CollisionalRxnLUT::k4][i] *
+                       HeII(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) / 4. -
+                   kcol_buf[CollisionalRxnLUT::k6][i] *
+                       HeIII(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) / 4. +
+                   kcol_buf[CollisionalRxnLUT::k57][i] *
+                       HI(i, idx_range.j, idx_range.k) *
+                       HI(i, idx_range.j, idx_range.k) +
+                   kcol_buf[CollisionalRxnLUT::k58][i] *
+                       HI(i, idx_range.j, idx_range.k) *
+                       HeI(i, idx_range.j, idx_range.k) / 4. +
+                   (kph_buf.k24[i] * HI(i, idx_range.j, idx_range.k) +
+                    kph_buf.k25[i] * HeII(i, idx_range.j, idx_range.k) / 4. +
+                    kph_buf.k26[i] * HeI(i, idx_range.j, idx_range.k) / 4.);
 
         // Compute the HI density rate-of-change
 
@@ -246,52 +245,51 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
 
         // Compute the electron density rate-of-change
 
-        dedot[i] =
-            +kcol_buf[CollisionalRxnLUT::k1][i] *
-                HI(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) +
-            kcol_buf[CollisionalRxnLUT::k3][i] *
-                HeI(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) / 4. +
-            kcol_buf[CollisionalRxnLUT::k5][i] *
-                HeII(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) / 4. +
-            kcol_buf[CollisionalRxnLUT::k8][i] *
-                HM(i, idx_range.j, idx_range.k) *
-                HI(i, idx_range.j, idx_range.k) +
-            kcol_buf[CollisionalRxnLUT::k15][i] *
-                HM(i, idx_range.j, idx_range.k) *
-                HI(i, idx_range.j, idx_range.k) +
-            kcol_buf[CollisionalRxnLUT::k17][i] *
-                HM(i, idx_range.j, idx_range.k) *
-                HII(i, idx_range.j, idx_range.k) +
-            kcol_buf[CollisionalRxnLUT::k14][i] *
-                HM(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) -
-            kcol_buf[CollisionalRxnLUT::k2][i] *
-                HII(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) -
-            kcol_buf[CollisionalRxnLUT::k4][i] *
-                HeII(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) / 4. -
-            kcol_buf[CollisionalRxnLUT::k6][i] *
-                HeIII(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) / 4. -
-            kcol_buf[CollisionalRxnLUT::k7][i] *
-                HI(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) -
-            kcol_buf[CollisionalRxnLUT::k18][i] *
-                H2II(i, idx_range.j, idx_range.k) *
-                de(i, idx_range.j, idx_range.k) / 2. +
-            kcol_buf[CollisionalRxnLUT::k57][i] *
-                HI(i, idx_range.j, idx_range.k) *
-                HI(i, idx_range.j, idx_range.k) +
-            kcol_buf[CollisionalRxnLUT::k58][i] *
-                HI(i, idx_range.j, idx_range.k) *
-                HeI(i, idx_range.j, idx_range.k) / 4. +
-            (kph_buf.k24[i] * HI(i, idx_range.j, idx_range.k) +
-             kph_buf.k25[i] * HeII(i, idx_range.j, idx_range.k) / 4. +
-             kph_buf.k26[i] * HeI(i, idx_range.j, idx_range.k) / 4.);
+        dedot[i] = +kcol_buf[CollisionalRxnLUT::k1][i] *
+                       HI(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) +
+                   kcol_buf[CollisionalRxnLUT::k3][i] *
+                       HeI(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) / 4. +
+                   kcol_buf[CollisionalRxnLUT::k5][i] *
+                       HeII(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) / 4. +
+                   kcol_buf[CollisionalRxnLUT::k8][i] *
+                       HM(i, idx_range.j, idx_range.k) *
+                       HI(i, idx_range.j, idx_range.k) +
+                   kcol_buf[CollisionalRxnLUT::k15][i] *
+                       HM(i, idx_range.j, idx_range.k) *
+                       HI(i, idx_range.j, idx_range.k) +
+                   kcol_buf[CollisionalRxnLUT::k17][i] *
+                       HM(i, idx_range.j, idx_range.k) *
+                       HII(i, idx_range.j, idx_range.k) +
+                   kcol_buf[CollisionalRxnLUT::k14][i] *
+                       HM(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) -
+                   kcol_buf[CollisionalRxnLUT::k2][i] *
+                       HII(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) -
+                   kcol_buf[CollisionalRxnLUT::k4][i] *
+                       HeII(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) / 4. -
+                   kcol_buf[CollisionalRxnLUT::k6][i] *
+                       HeIII(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) / 4. -
+                   kcol_buf[CollisionalRxnLUT::k7][i] *
+                       HI(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) -
+                   kcol_buf[CollisionalRxnLUT::k18][i] *
+                       H2II(i, idx_range.j, idx_range.k) *
+                       de(i, idx_range.j, idx_range.k) / 2. +
+                   kcol_buf[CollisionalRxnLUT::k57][i] *
+                       HI(i, idx_range.j, idx_range.k) *
+                       HI(i, idx_range.j, idx_range.k) +
+                   kcol_buf[CollisionalRxnLUT::k58][i] *
+                       HI(i, idx_range.j, idx_range.k) *
+                       HeI(i, idx_range.j, idx_range.k) / 4. +
+                   (kph_buf.k24[i] * HI(i, idx_range.j, idx_range.k) +
+                    kph_buf.k25[i] * HeII(i, idx_range.j, idx_range.k) / 4. +
+                    kph_buf.k26[i] * HeI(i, idx_range.j, idx_range.k) / 4.);
 
         // HII, HeII, HeIII recombination heating
 

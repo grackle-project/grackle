@@ -50,8 +50,7 @@ namespace grackle::impl {
 void secondary_ionization_adjustments(
     IndexRange idx_range, const gr_mask_type* itmask,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-    InternalGrUnits internalu,
-    grackle::impl::PhotoRxnRateCollection kph_buf) {
+    InternalGrUnits internalu, grackle::impl::PhotoRxnRateCollection kph_buf) {
   // construct views of HI_density & HII_density fields
   grackle::impl::View<gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
@@ -409,8 +408,7 @@ inline void model_H2I_dissociation_shielding(
     // write(*,*) 'kdissH2I included'
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kph_buf.k31[i] =
-            kph_buf.k31[i] + kdissH2I(i, idx_range.j, idx_range.k);
+        kph_buf.k31[i] = kph_buf.k31[i] + kdissH2I(i, idx_range.j, idx_range.k);
       }
     }
   }
