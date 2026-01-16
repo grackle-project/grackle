@@ -20,9 +20,9 @@
 #include "grackle_macros.h"
 #include "auto_general.h"
 #include "interp_table_utils.h" // free_interp_grid_
+#include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_cloudy_data.h"
 #include "initialize_dust_yields.hpp"  // free_dust_yields
-#include "initialize_metal_chemistry_rates.hpp"  // free_metal_chemistry_rates
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.h"
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
@@ -49,18 +49,21 @@ static void show_version(FILE *fp)
   fprintf (fp, "\n");
 }
 
-/**
- * Initialize an empty #gr_interp_grid
- */
+/// initialize an empty #gr_interp_grid_props
+static void init_empty_interp_grid_props_(gr_interp_grid_props* props) {
+  props->rank = 0;
+  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
+    props->dimension[i] = 0;
+    props->parameters[i] = nullptr;
+    props->parameter_spacing[i] = 0.0;
+  }
+  props->data_size = 0;
+}
+
+/// Initialize an empty #gr_interp_grid
 static void initialize_empty_interp_grid_(gr_interp_grid* grid)
 {
-  grid->props.rank = 0;
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
-    grid->props.dimension[i] = 0;
-    grid->props.parameters[i] = NULL;
-    grid->props.parameter_spacing[i] = 0.0;
-  }
-  grid->props.data_size = 0;
+  init_empty_interp_grid_props_(&(grid->props));
   grid->data=NULL;
 }
 
@@ -395,6 +398,11 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   // perform some basic allocations
   my_rates->opaque_storage = new gr_opaque_storage;
   my_rates->opaque_storage->kcol_rate_tables = nullptr;
+  my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
+  my_rates->opaque_storage->n_kcol_rate_indices = 0;
+  init_empty_interp_grid_props_(
+    &my_rates->opaque_storage->h2dust_grain_interp_props);
+  my_rates->opaque_storage->grain_species_info = nullptr;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -570,7 +578,7 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     free_interp_grid_(&my_rates->LHD);
 
     // we deal with freeing other interp grids inside of
-    // local_free_metal_chemistry_rates
+    // free_misc_species_cool_rates
 
     free_interp_grid_(&my_rates->alphap);
 
@@ -612,9 +620,9 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
   }
 
-  if (grackle::impl::free_metal_chemistry_rates(my_chemistry, my_rates) == FAIL) {
+  if (grackle::impl::free_misc_species_cool_rates(my_chemistry, my_rates) != GR_SUCCESS) {
     fprintf(stderr, "Error in free_metal_chemistry_rates.\n");
-    return FAIL;
+    return GR_FAIL;
   }
 
   if (grackle::impl::free_dust_yields(my_chemistry, my_rates) == FAIL) {
@@ -622,10 +630,35 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     return FAIL;
   }
 
+  // start freeing memory associated with opaque storage
+  // ---------------------------------------------------
   if (my_rates->opaque_storage->kcol_rate_tables != nullptr) {
+    // delete contents of kcol_rate_tables
     drop_CollisionalRxnRateCollection(my_rates->opaque_storage->kcol_rate_tables);
+    // delete kcol_rate_tables, itself
     delete my_rates->opaque_storage->kcol_rate_tables;
   }
+
+  if (my_rates->opaque_storage->used_kcol_rate_indices !=nullptr) {
+    // since used_kcol_rate_indices are just integers, we can directly
+    // deallocate them
+    delete[] my_rates->opaque_storage->used_kcol_rate_indices;
+  }
+
+  // delete contents of h2dust_grain_interp_props (automatically handles the
+  // case where we didn't allocate anything)
+  free_interp_grid_props_(&my_rates->opaque_storage->h2dust_grain_interp_props);
+  // since h2dust_grain_interp_props isn't a pointer, there is nothing more to
+  // allocate right here
+
+  if (my_rates->opaque_storage->grain_species_info != nullptr) {
+    // delete contents of grain_species_info
+    grackle::impl::drop_GrainSpeciesInfo(
+      my_rates->opaque_storage->grain_species_info);
+    // delete kcol_rate_tables, itself
+    delete my_rates->opaque_storage->grain_species_info;
+  }
+
   delete my_rates->opaque_storage;
   my_rates->opaque_storage = nullptr;
 
