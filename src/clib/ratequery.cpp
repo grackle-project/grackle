@@ -13,8 +13,7 @@
 #include <cstring>  // strcmp
 #include <climits>  // LLONG_MAX
 #include "grackle.h"
-#include "internal_types.hpp"  // CollisionalRxnRateCollection
-#include "LUT.hpp"             // CollisionalRxnLUT
+#include "LUT.hpp"             // PhotoRxnLUT
 #include "opaque_storage.hpp"  // gr_opaque_storage
 #include "ratequery.hpp"
 #include "status_reporting.h"
@@ -47,43 +46,28 @@ enum { UNDEFINED_RATE_ID_ = 0 };
 // Create machinery to lookup Other Miscellaneous Rates
 // ----------------------------------------------------
 // -> ideally this should get relocated to a more sensible location (but not
-//    sure where that is...
+//    sure where that is...)
 
-enum MiscRxnRateKind_ {
-  MiscRxn_k24,
-  MiscRxn_k25,
-  MiscRxn_k26,
-  MiscRxn_k27,
-  MiscRxn_k28,
-  MiscRxn_k29,
-  MiscRxn_k30,
-  MiscRxn_k31,
-
-  MiscRxn_NRATES  // <- will hold the number of reactions
-};
-
-static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
+static Entry get_PhotoRxn_Entry(chemistry_data_storage* my_rates, int i) {
   if (my_rates == nullptr) {  // <- shouldn't come up
     return mk_invalid_Entry();
   }
   switch (i) {
-    // Radiative rates for 6-species (for external field):
-    case MiscRxn_k24:
+    case PhotoRxnLUT::k24:
       return new_Entry(&my_rates->k24, "k24");
-    case MiscRxn_k25:
+    case PhotoRxnLUT::k25:
       return new_Entry(&my_rates->k25, "k25");
-    case MiscRxn_k26:
+    case PhotoRxnLUT::k26:
       return new_Entry(&my_rates->k26, "k26");
-      // Radiative rates for 9-species
-    case MiscRxn_k27:
+    case PhotoRxnLUT::k27:
       return new_Entry(&my_rates->k27, "k27");
-    case MiscRxn_k28:
+    case PhotoRxnLUT::k28:
       return new_Entry(&my_rates->k28, "k28");
-    case MiscRxn_k29:
+    case PhotoRxnLUT::k29:
       return new_Entry(&my_rates->k29, "k29");
-    case MiscRxn_k30:
+    case PhotoRxnLUT::k30:
       return new_Entry(&my_rates->k30, "k30");
-    case MiscRxn_k31:
+    case PhotoRxnLUT::k31:
       return new_Entry(&my_rates->k31, "k31");
     default: {
       return mk_invalid_Entry();
@@ -95,7 +79,8 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
 int grackle::impl::ratequery::RegBuilder_misc_recipies(
     RegBuilder* ptr, const chemistry_data* my_chemistry) {
   if (my_chemistry->primordial_chemistry != 0) {
-    return RegBuilder_recipe_scalar(ptr, MiscRxn_NRATES, &get_MiscRxn_Entry);
+    return RegBuilder_recipe_scalar(ptr, PhotoRxnLUT::NUM_ENTRIES,
+                                    &get_PhotoRxn_Entry);
   }
   return GR_SUCCESS;
 }
