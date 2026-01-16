@@ -124,7 +124,7 @@ add_library(Grackle_Grackle
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
   set_default_chemistry_parameters.cpp
-  solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
+  solve_rate_cool.cpp solve_rate_cool.hpp
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp
@@ -144,7 +144,6 @@ add_library(Grackle_Grackle
   cool1d_cloudy_g.F
   cool1d_cloudy_old_tables_g.F
   interpolators_g.F
-  solve_rate_cool_g.F
   calc_grain_size_increment_1d.F
   gaussj_g.F
 
