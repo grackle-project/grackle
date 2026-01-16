@@ -237,69 +237,6 @@ void drop_LogTLinInterpScratchBuf(LogTLinInterpScratchBuf*);
 
 // -----------------------------------------------------------------
 
-/// holds radiative reaction rate buffers
-///
-/// @note
-/// In the future, it would be nice to use this within the general rate
-/// storage struct (and maybe also within the photo_rate_storage struct).
-/// Since the storage struct only needs to store these rates as scalars we
-/// would need to adopt the LUT strategy (or templates)
-struct PhotoRxnRateCollection {
-  /* Radiative rates for 6-species. */
-  double* k24;
-  double* k25;
-  double* k26;
-
-  /* Radiative rates for 6-species. */
-  double* k27;
-  double* k28;
-  double* k29;
-  double* k30;
-  double* k31;
-};
-
-/// used to help implement the visitor design pattern
-///
-/// (avoid using this unless you really have to)
-template<class BinaryFn>
-void visit_member_pair(
-  PhotoRxnRateCollection& obj0, PhotoRxnRateCollection& obj1, BinaryFn f
-) {
-  namespace vis = ::grackle::impl::visitor;
-
-  vis::begin_visit("PhotoRxnRateCollection", f);
-  f(VIS_MEMBER_NAME("k24"), obj0.k24, obj1.k24, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k25"), obj0.k25, obj1.k25, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k26"), obj0.k26, obj1.k26, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k27"), obj0.k27, obj1.k27, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k28"), obj0.k28, obj1.k28, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k29"), obj0.k29, obj1.k29, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k30"), obj0.k30, obj1.k30, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k31"), obj0.k31, obj1.k31, vis::idx_range_len_multiple(1));
-  vis::end_visit(f);
-}
-
-/// implements the visitor design pattern
-///
-/// @param ptr[in,out] Members of the specified object will be visited
-/// @param fn[in] Calls function that will be applied to each function
-template <class UnaryVisitor>
-inline void visit_member(PhotoRxnRateCollection* ptr, UnaryVisitor fn) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, PhotoRxnRateCollection, ptr, fn)
-}
-
-/// allocates the contents of a new PhotoRxnRateCollection
-///
-/// @param nelem The number of elements in each buffer
-PhotoRxnRateCollection new_PhotoRxnRateCollection(int nelem);
-
-/// performs cleanup of the contents of PhotoRxnRateCollection
-///
-/// This effectively invokes a destructor
-void drop_PhotoRxnRateCollection(PhotoRxnRateCollection*);
-
-// -----------------------------------------------------------------
-
 /// holds reaction rates chemical heating reaction rates
 ///
 /// @note
