@@ -14,7 +14,7 @@
 #include <cstdio>
 #include "grackle.h"
 #include "internal_units.h"
-#include "solve_rate_cool_g-cpp.h"
+#include "solve_rate_cool.hpp"
 #include "update_UVbackground_rates.hpp"
 #include "utils.h"
 

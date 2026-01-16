@@ -13,8 +13,8 @@
 // This file was initially generated automatically during conversion of the
 // solve_rate_cool_g function from FORTRAN to C++
 
-#ifndef SOLVE_RATE_COOL_G_CPP_H
-#define SOLVE_RATE_COOL_G_CPP_H
+#ifndef GRACKLE_SOLVE_RATE_COOL_HPP
+#define GRACKLE_SOLVE_RATE_COOL_HPP
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
@@ -54,4 +54,4 @@ int solve_rate_cool_g(int imetal, double dt, InternalGrUnits internalu,
 }  // extern "C"
 #endif /* __cplusplus */
 
-#endif /* SOLVE_RATE_COOL_G_CPP_H */
+#endif  // GRACKLE_SOLVE_RATE_COOL_HPP

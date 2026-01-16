@@ -42,7 +42,7 @@ src/clib/phys_constants.h
 src/clib/rate_functions.c
 src/clib/set_default_chemistry_parameters.cpp
 src/clib/solve_chemistry.cpp
-src/clib/solve_rate_cool_g-cpp.cpp
+src/clib/solve_rate_cool.cpp
 src/clib/status_reporting.c
 src/clib/status_reporting.h
 src/clib/step_rate_gauss_seidel.hpp

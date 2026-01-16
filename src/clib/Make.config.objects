@@ -41,7 +41,7 @@ OBJS_CONFIG_LIB = \
         scale_fields.lo \
         set_default_chemistry_parameters.lo \
         solve_chemistry.lo \
-        solve_rate_cool_g-cpp.lo \
+        solve_rate_cool.lo \
         status_reporting.lo \
         update_UVbackground_rates.lo \
         calc_all_tdust_gasgr_1d_g.lo \
