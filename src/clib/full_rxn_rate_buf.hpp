@@ -70,14 +70,8 @@ inline constexpr int MAX_LEN = SectionOffset::MISC + MaxSize::MISC;
 /// kind of rate.
 ///
 /// To access a buffer, use the associated functions
-/// (@ref FullRxnRateBuf_kcol_bufs, @ref FullRxnRateBuf_grain_growth_bufs, or
-/// @ref FullRxnRateBuf_h2dust) or directly access the struct's @ref radiative
-/// member.
-///
-/// @todo
-/// Ideally, we would embed all the members of @ref radiative directly as
-/// elements of the @ref data member (and delete the @ref PhotoRxnRateCollection
-/// type)
+/// (@ref FullRxnRateBuf_kcol_bufs, @ref FullRxnRateBuf_kph_bufs,
+/// @ref FullRxnRateBuf_grain_growth_bufs, or @ref FullRxnRateBuf_h2dust).
 ///
 /// @par Implementation Strategy
 /// Our current strategy involves aggregating as many of the rate buffers in
@@ -99,11 +93,7 @@ inline constexpr int MAX_LEN = SectionOffset::MISC + MaxSize::MISC;
 /// This will be a lot easier if the various rate buffers are aggregated behind
 /// accessible by indexing into a single array
 struct FullRxnRateBuf {
-  /// holds everything but the radiative rates
   double* data[rxn_rate_buf_detail::MAX_LEN];
-
-  /// holds the radiative rates
-  PhotoRxnRateCollection radiative;
 };
 
 /// used to help implement the visitor design pattern
@@ -116,9 +106,6 @@ void visit_member_pair(FullRxnRateBuf& obj0, FullRxnRateBuf& obj1, BinaryFn f) {
     f(VIS_MEMBER_NAME("data[...]"), obj0.data[i], obj1.data[i],
       visitor::idx_range_len_multiple(1));
   }
-
-  visitor::previsit_struct_member(VIS_MEMBER_NAME("radiative"), f);
-  visit_member_pair(obj0.radiative, obj1.radiative, f);
 
   visitor::end_visit(f);
 }
@@ -141,7 +128,6 @@ inline FullRxnRateBuf new_FullRxnRateBuf(int nelem) {
   for (int i = 0; i < rxn_rate_buf_detail::MAX_LEN; i++) {
     out.data[i] = ptr + (i * nelem);
   }
-  out.radiative = new_PhotoRxnRateCollection(nelem);
   return out;
 }
 
@@ -152,7 +138,6 @@ inline void drop_FullRxnRateBuffer(FullRxnRateBuf* ptr) {
   // since we only allocate a single pointer for the data member, we only need
   // to call delete on the very first entry of data
   delete[] ptr->data[0];
-  drop_PhotoRxnRateCollection(&ptr->radiative);
 }
 
 // helper functions to retrieve the relevant sections of the buffers
