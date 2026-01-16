@@ -25,21 +25,24 @@ namespace grackle::impl {
 
 /// Calculate various dust related properties
 ///
+/// @param[in] anydust Whether dust chemistry is enabled
 /// @param[in] tgas gas temperature
 inline void dust_related_props(
-    double* tgas, double* metallicity, const gr_mask_type* itmask,
-    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    gr_mask_type anydust, double* tgas, double* metallicity,
+    const gr_mask_type* itmask, gr_mask_type* itmask_metal,
+    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    grackle_field_data* my_fields, InternalGrUnits internalu,
     IndexRange idx_range, LogTLinInterpScratchBuf logTlininterp_buf,
-    Cool1DMultiScratchBuf cool1dmulti_buf, View<double***> d,
-    View<double***> dust, View<double***> isrf_habing, double dom,
-    double coolunit, double comp2, double* dust2gas,
+    Cool1DMultiScratchBuf cool1dmulti_buf, double comp2, double* dust2gas,
     std::vector<double>& myisrf, double* tdust,
     GrainSpeciesCollection grain_temperatures, std::vector<double>& gasgr,
     GrainSpeciesCollection gas_grainsp_heatrate,
-    InternalDustPropBuf internal_dust_prop_buf,
     GrainSpeciesCollection grain_kappa, std::vector<double>& kappa_tot,
-    gr_mask_type anydust) {
+    InternalDustPropBuf internal_dust_prop_buf) {
+  // get relevant unit values
+  double dom = internalu_calc_dom_(internalu);
+  double coolunit = internalu.coolunit;
+
   // Compute grain size increment
   if ((my_chemistry->use_dust_density_field > 0) &&
       (my_chemistry->dust_species > 0)) {
@@ -58,6 +61,13 @@ inline void dust_related_props(
   //    faster when there is no branching
 
   if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 0)) {
+    grackle::impl::View<const gr_float***> d(
+        my_fields->density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<const gr_float***> dust(
+        my_fields->dust_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
     if (my_chemistry->use_dust_density_field > 0) {
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         // REMINDER: use of `itmask` over `itmask_metal` is
@@ -77,6 +87,10 @@ inline void dust_related_props(
 
   if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 1)) {
     if (my_chemistry->use_isrf_field > 0) {
+      grackle::impl::View<const gr_float***> isrf_habing(
+          my_fields->isrf_habing, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         myisrf[i] = isrf_habing(i, idx_range.j, idx_range.k);
       }

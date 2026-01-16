@@ -78,9 +78,6 @@ void grackle::impl::cool1d_multi_g(
   grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust(
-      my_fields->dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> Vheat(
       my_fields->volumetric_heating_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -92,9 +89,6 @@ void grackle::impl::cool1d_multi_g(
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> photogamma(
       my_fields->RT_heating_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> isrf_habing(
-      my_fields->isrf_habing, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> CI(
       my_fields->CI_density, my_fields->grid_dimension[0],
@@ -1100,12 +1094,11 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  dust_related_props(tgas, metallicity, itmask, itmask_metal, my_chemistry,
-                     my_rates, my_fields, idx_range, logTlininterp_buf,
-                     cool1dmulti_buf, d, dust, isrf_habing, dom, coolunit,
-                     comp2, dust2gas, myisrf, tdust, grain_temperatures, gasgr,
-                     gas_grainsp_heatrate, internal_dust_prop_buf, grain_kappa,
-                     kappa_tot, anydust);
+  dust_related_props(
+      anydust, tgas, metallicity, itmask, itmask_metal, my_chemistry, my_rates,
+      my_fields, internalu, idx_range, logTlininterp_buf, cool1dmulti_buf,
+      comp2, dust2gas, myisrf, tdust, grain_temperatures, gasgr,
+      gas_grainsp_heatrate, grain_kappa, kappa_tot, internal_dust_prop_buf);
 
   // Calculate dust cooling rate
   if (anydust != MASK_FALSE) {
