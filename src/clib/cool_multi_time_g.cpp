@@ -26,7 +26,7 @@
 #include "utils-cpp.hpp"
 
 #include "cool_multi_time_g.h"
-#include "scale_fields_g-cpp.h"
+#include "scale_fields.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,15 +38,12 @@ void cool_multi_time_g(
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates
 )
 {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
   // Convert densities from comoving to 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields(imetal, factor, my_chemistry, my_fields);
   }
 
 
@@ -136,7 +133,7 @@ void cool_multi_time_g(
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields(imetal, factor, my_chemistry, my_fields);
   }
 
   return;

@@ -67,9 +67,10 @@ static inline rateprop_ mk_rateprop_standard_kcol_(
   }
 }
 
-#define MKPROP_(PTR, NAME) mk_rateprop_((PTR == NULL) ? NULL : PTR->NAME, #NAME)
+#define MKPROP_(PTR, NAME)                                                     \
+  mk_rateprop_(((PTR) == NULL) ? NULL : (PTR)->NAME, #NAME)
 #define MKPROP_SCALAR_(PTR, NAME)                                              \
-  mk_rateprop_((PTR == NULL) ? NULL : &(PTR->NAME), #NAME)
+  mk_rateprop_(((PTR) == NULL) ? NULL : &((PTR)->NAME), #NAME)
 #define MKPROP_STANDARD_KCOL_(PTR, NAME, INDEX)                                \
   mk_rateprop_standard_kcol_(PTR, #NAME, INDEX)
 

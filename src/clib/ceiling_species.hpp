@@ -5,24 +5,24 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-/// @file
-/// Implements the scale_fields function
+/// @file ceiling_species.hpp
+/// @brief Implements ceiling_species
+/// Applies a floor to all species densities.
+///
+/// @todo consider renaming this (maybe enforce_species_floor)
 ///
 //===----------------------------------------------------------------------===//
 
-#include <cstdio>
-#include <vector>
+// This file was initially generated automatically during conversion of the
+// ceiling_species_g function from FORTRAN to C++
 
-#include "grackle.h"
-#include "fortran_func_decls.h"
-#include "utils-cpp.hpp"
-
-#include "scale_fields.hpp"
+#ifndef CEILING_SPECIES_HPP
+#define CEILING_SPECIES_HPP
 
 namespace grackle::impl {
 
-void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
-                  grackle_field_data* my_fields) {
+inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
+                            grackle_field_data* my_fields) {
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -62,6 +62,12 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
   grackle::impl::View<gr_float***> HDI(
       my_fields->HDI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal(
+      my_fields->metal_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust(
+      my_fields->dust_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> DM(
       my_fields->DM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -70,12 +76,6 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> HeHII(
       my_fields->HeHII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal(
-      my_fields->metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust(
-      my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> CI(
       my_fields->CI_density, my_fields->grid_dimension[0],
@@ -185,199 +185,158 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
   grackle::impl::View<gr_float***> H2Oice(
       my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_loc(
-      my_fields->local_ISM_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C13(
-      my_fields->ccsn13_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C20(
-      my_fields->ccsn20_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C25(
-      my_fields->ccsn25_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C30(
-      my_fields->ccsn30_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F13(
-      my_fields->fsn13_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F15(
-      my_fields->fsn15_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F50(
-      my_fields->fsn50_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F80(
-      my_fields->fsn80_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P170(
-      my_fields->pisn170_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P200(
-      my_fields->pisn200_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_Y19(
-      my_fields->y19_metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  int dj, dk;
-  dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
-  dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
+  // locals
 
-  // parallelize the k and j loops with OpenMP
-  // flat j and k loops for better parallelism
-  OMP_PRAGMA("omp parallel") {
-    int i, j, k;
+  int i, j, k;
 
-    OMP_PRAGMA("omp for schedule(runtime)")
-    for (int t = 0; t <= (dk * dj - 1); t++) {
-      k = t / dj + my_fields->grid_start[2];
-      j = grackle::impl::mod(t, dj) + my_fields->grid_start[1];
-
-      for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-        d(i, j, k) = d(i, j, k) * factor;
-      }
-
-      if (my_chemistry->primordial_chemistry > 0) {
+  if (my_chemistry->primordial_chemistry > 0) {
+    for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+      for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          de(i, j, k) = de(i, j, k) * factor;
-          HI(i, j, k) = HI(i, j, k) * factor;
-          HII(i, j, k) = HII(i, j, k) * factor;
-          HeI(i, j, k) = HeI(i, j, k) * factor;
-          HeII(i, j, k) = HeII(i, j, k) * factor;
-          HeIII(i, j, k) = HeIII(i, j, k) * factor;
+          de(i, j, k) = std::fmax(de(i, j, k), tiny_fortran_val);
+          HI(i, j, k) = std::fmax(HI(i, j, k), tiny_fortran_val);
+          HII(i, j, k) = std::fmax(HII(i, j, k), tiny_fortran_val);
+          HeI(i, j, k) = std::fmax(HeI(i, j, k), tiny_fortran_val);
+          HeII(i, j, k) = std::fmax(HeII(i, j, k), tiny_fortran_val);
+          HeIII(i, j, k) =
+              std::fmax(HeIII(i, j, k), (gr_float)(1e-5) * tiny_fortran_val);
         }
       }
-      if (my_chemistry->primordial_chemistry > 1) {
+    }
+  }
+  if (my_chemistry->primordial_chemistry > 1) {
+    for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+      for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          HM(i, j, k) = HM(i, j, k) * factor;
-          H2I(i, j, k) = H2I(i, j, k) * factor;
-          H2II(i, j, k) = H2II(i, j, k) * factor;
+          HM(i, j, k) = std::fmax(HM(i, j, k), tiny_fortran_val);
+          H2I(i, j, k) = std::fmax(H2I(i, j, k), tiny_fortran_val);
+          H2II(i, j, k) = std::fmax(H2II(i, j, k), tiny_fortran_val);
         }
       }
-      if (my_chemistry->primordial_chemistry > 2) {
+    }
+  }
+  if (my_chemistry->primordial_chemistry > 2) {
+    for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+      for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          DI(i, j, k) = DI(i, j, k) * factor;
-          DII(i, j, k) = DII(i, j, k) * factor;
-          HDI(i, j, k) = HDI(i, j, k) * factor;
+          DI(i, j, k) = std::fmax(DI(i, j, k), tiny_fortran_val);
+          DII(i, j, k) = std::fmax(DII(i, j, k), tiny_fortran_val);
+          HDI(i, j, k) = std::fmax(HDI(i, j, k), tiny_fortran_val);
         }
       }
-      if (my_chemistry->primordial_chemistry > 3) {
+    }
+  }
+  if (my_chemistry->primordial_chemistry > 3) {
+    for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+      for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          DM(i, j, k) = DM(i, j, k) * factor;
-          HDII(i, j, k) = HDII(i, j, k) * factor;
-          HeHII(i, j, k) = HeHII(i, j, k) * factor;
+          DM(i, j, k) = std::fmax(DM(i, j, k), tiny_fortran_val);
+          HDII(i, j, k) = std::fmax(HDII(i, j, k), tiny_fortran_val);
+          HeHII(i, j, k) = std::fmax(HeHII(i, j, k), tiny_fortran_val);
         }
       }
-
-      if (imetal == 1) {
+    }
+  }
+  if (imetal == 1) {
+    for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+      for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          metal(i, j, k) = metal(i, j, k) * factor;
-        }
-
-        if (my_chemistry->metal_chemistry == 1) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            CI(i, j, k) = CI(i, j, k) * factor;
-            CII(i, j, k) = CII(i, j, k) * factor;
-            CO(i, j, k) = CO(i, j, k) * factor;
-            CO2(i, j, k) = CO2(i, j, k) * factor;
-            OI(i, j, k) = OI(i, j, k) * factor;
-            OH(i, j, k) = OH(i, j, k) * factor;
-            H2O(i, j, k) = H2O(i, j, k) * factor;
-            O2(i, j, k) = O2(i, j, k) * factor;
-            SiI(i, j, k) = SiI(i, j, k) * factor;
-            SiOI(i, j, k) = SiOI(i, j, k) * factor;
-            SiO2I(i, j, k) = SiO2I(i, j, k) * factor;
-            CH(i, j, k) = CH(i, j, k) * factor;
-            CH2(i, j, k) = CH2(i, j, k) * factor;
-            COII(i, j, k) = COII(i, j, k) * factor;
-            OII(i, j, k) = OII(i, j, k) * factor;
-            OHII(i, j, k) = OHII(i, j, k) * factor;
-            H2OII(i, j, k) = H2OII(i, j, k) * factor;
-            H3OII(i, j, k) = H3OII(i, j, k) * factor;
-            O2II(i, j, k) = O2II(i, j, k) * factor;
+          metal(i, j, k) = std::fmax(metal(i, j, k), tiny_fortran_val);
+          if (metal(i, j, k) > d(i, j, k)) {
+            eprintf("WARNING: metal density exceeds  total density!\n");
+            eprintf("i, j, k, metal, density =  %d %d %d %g %g\n", i, j, k,
+                    metal(i, j, k), d(i, j, k));
           }
-        }
-
-        if (my_chemistry->multi_metals > 0) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            metal_loc(i, j, k) = metal_loc(i, j, k) * factor;
-            metal_C13(i, j, k) = metal_C13(i, j, k) * factor;
-            metal_C20(i, j, k) = metal_C20(i, j, k) * factor;
-            metal_C25(i, j, k) = metal_C25(i, j, k) * factor;
-            metal_C30(i, j, k) = metal_C30(i, j, k) * factor;
-            metal_F13(i, j, k) = metal_F13(i, j, k) * factor;
-            metal_F15(i, j, k) = metal_F15(i, j, k) * factor;
-            metal_F50(i, j, k) = metal_F50(i, j, k) * factor;
-            metal_F80(i, j, k) = metal_F80(i, j, k) * factor;
-            metal_P170(i, j, k) = metal_P170(i, j, k) * factor;
-            metal_P200(i, j, k) = metal_P200(i, j, k) * factor;
-            metal_Y19(i, j, k) = metal_Y19(i, j, k) * factor;
-          }
-        }
-
-        if ((my_chemistry->grain_growth == 1) ||
-            (my_chemistry->dust_sublimation == 1)) {
-          if (my_chemistry->dust_species > 0) {
-            for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                 i++) {
-              Mg(i, j, k) = Mg(i, j, k) * factor;
+          // if( immulti .gt. 0 ) then
+          //    metal_loc(i,j,k) = max(metal_loc(i,j,k), tiny)
+          //    metal_C13(i,j,k) = max(metal_C13(i,j,k), tiny)
+          //    metal_C20(i,j,k) = max(metal_C20(i,j,k), tiny)
+          //    metal_C25(i,j,k) = max(metal_C25(i,j,k), tiny)
+          //    metal_C30(i,j,k) = max(metal_C30(i,j,k), tiny)
+          //    metal_F13(i,j,k) = max(metal_F13(i,j,k), tiny)
+          //    metal_F15(i,j,k) = max(metal_F15(i,j,k), tiny)
+          //    metal_F50(i,j,k) = max(metal_F50(i,j,k), tiny)
+          //    metal_F80(i,j,k) = max(metal_F80(i,j,k), tiny)
+          //    metal_P170(i,j,k)= max(metal_P170(i,j,k),tiny)
+          //    metal_P200(i,j,k)= max(metal_P200(i,j,k),tiny)
+          //    metal_Y19(i,j,k) = max(metal_Y19(i,j,k), tiny)
+          // endif
+          //- !                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+          if (my_chemistry->metal_chemistry == 1) {
+            CI(i, j, k) = std::fmax(CI(i, j, k), tiny_fortran_val);
+            CII(i, j, k) = std::fmax(CII(i, j, k), tiny_fortran_val);
+            CO(i, j, k) = std::fmax(CO(i, j, k), tiny_fortran_val);
+            CO2(i, j, k) = std::fmax(CO2(i, j, k), tiny_fortran_val);
+            OI(i, j, k) = std::fmax(OI(i, j, k), tiny_fortran_val);
+            OH(i, j, k) = std::fmax(OH(i, j, k), tiny_fortran_val);
+            H2O(i, j, k) = std::fmax(H2O(i, j, k), tiny_fortran_val);
+            O2(i, j, k) = std::fmax(O2(i, j, k), tiny_fortran_val);
+            SiI(i, j, k) = std::fmax(SiI(i, j, k), tiny_fortran_val);
+            SiOI(i, j, k) = std::fmax(SiOI(i, j, k), tiny_fortran_val);
+            SiO2I(i, j, k) = std::fmax(SiO2I(i, j, k), tiny_fortran_val);
+            CH(i, j, k) = std::fmax(CH(i, j, k), tiny_fortran_val);
+            CH2(i, j, k) = std::fmax(CH2(i, j, k), tiny_fortran_val);
+            COII(i, j, k) = std::fmax(COII(i, j, k), tiny_fortran_val);
+            OII(i, j, k) = std::fmax(OII(i, j, k), tiny_fortran_val);
+            OHII(i, j, k) = std::fmax(OHII(i, j, k), tiny_fortran_val);
+            H2OII(i, j, k) = std::fmax(H2OII(i, j, k), tiny_fortran_val);
+            H3OII(i, j, k) = std::fmax(H3OII(i, j, k), tiny_fortran_val);
+            O2II(i, j, k) = std::fmax(O2II(i, j, k), tiny_fortran_val);
+            if ((my_chemistry->grain_growth == 1) ||
+                (my_chemistry->dust_sublimation == 1)) {
+              if (my_chemistry->dust_species > 0) {
+                Mg(i, j, k) = std::fmax(Mg(i, j, k), tiny_fortran_val);
+              }
+              if (my_chemistry->dust_species > 1) {
+                Al(i, j, k) = std::fmax(Al(i, j, k), tiny_fortran_val);
+                S(i, j, k) = std::fmax(S(i, j, k), tiny_fortran_val);
+                Fe(i, j, k) = std::fmax(Fe(i, j, k), tiny_fortran_val);
+              }
             }
           }
-          if (my_chemistry->dust_species > 1) {
-            for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                 i++) {
-              Al(i, j, k) = Al(i, j, k) * factor;
-              S(i, j, k) = S(i, j, k) * factor;
-              Fe(i, j, k) = Fe(i, j, k) * factor;
-            }
-          }
+          // !                endif
         }
-
-        if (my_chemistry->use_dust_density_field == 1) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            dust(i, j, k) = dust(i, j, k) * factor;
-          }
-
+      }
+    }
+  }
+  if (my_chemistry->use_dust_density_field == 1) {
+    for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+      for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          dust(i, j, k) = std::fmax(dust(i, j, k), tiny_fortran_val);
           if ((my_chemistry->grain_growth == 1) ||
               (my_chemistry->dust_sublimation == 1)) {
+            // !                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
             if (my_chemistry->dust_species > 0) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
-                AC(i, j, k) = AC(i, j, k) * factor;
-              }
+              MgSiO3(i, j, k) = std::fmax(MgSiO3(i, j, k), tiny_fortran_val);
+              AC(i, j, k) = std::fmax(AC(i, j, k), tiny_fortran_val);
             }
             if (my_chemistry->dust_species > 1) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                SiM(i, j, k) = SiM(i, j, k) * factor;
-                FeM(i, j, k) = FeM(i, j, k) * factor;
-                Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
-                Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
-                SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
-                MgO(i, j, k) = MgO(i, j, k) * factor;
-                FeS(i, j, k) = FeS(i, j, k) * factor;
-                Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
-              }
+              SiM(i, j, k) = std::fmax(SiM(i, j, k), tiny_fortran_val);
+              FeM(i, j, k) = std::fmax(FeM(i, j, k), tiny_fortran_val);
+              Mg2SiO4(i, j, k) = std::fmax(Mg2SiO4(i, j, k), tiny_fortran_val);
+              Fe3O4(i, j, k) = std::fmax(Fe3O4(i, j, k), tiny_fortran_val);
+              SiO2D(i, j, k) = std::fmax(SiO2D(i, j, k), tiny_fortran_val);
+              MgO(i, j, k) = std::fmax(MgO(i, j, k), tiny_fortran_val);
+              FeS(i, j, k) = std::fmax(FeS(i, j, k), tiny_fortran_val);
+              Al2O3(i, j, k) = std::fmax(Al2O3(i, j, k), tiny_fortran_val);
             }
             if (my_chemistry->dust_species > 2) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                reforg(i, j, k) = reforg(i, j, k) * factor;
-                volorg(i, j, k) = volorg(i, j, k) * factor;
-                H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
-              }
+              reforg(i, j, k) = std::fmax(reforg(i, j, k), tiny_fortran_val);
+              volorg(i, j, k) = std::fmax(volorg(i, j, k), tiny_fortran_val);
+              H2Oice(i, j, k) = std::fmax(H2Oice(i, j, k), tiny_fortran_val);
             }
+            // !                endif
           }
         }
       }
     }
-  }  // OMP_PRAGMA("omp parallel")
+  }
 
   return;
 }
 
 }  // namespace grackle::impl
+
+#endif /* CEILING_SPECIES_CPP_H */
