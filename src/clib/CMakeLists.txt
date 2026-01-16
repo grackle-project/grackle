@@ -111,6 +111,7 @@ add_library(Grackle_Grackle
   dust_props.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp
+  full_rxn_rate_buf.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_dust_yields.cpp initialize_dust_yields.hpp
@@ -119,7 +120,8 @@ add_library(Grackle_Grackle
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
-  rate_utils.cpp
+  ratequery.cpp ratequery.hpp
+  rate_timestep_g.cpp rate_timestep_g.hpp
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
   set_default_chemistry_parameters.cpp
@@ -131,6 +133,7 @@ add_library(Grackle_Grackle
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
+  support/config.hpp
   visitor/common.hpp
   visitor/copy.hpp
   visitor/memory.hpp
