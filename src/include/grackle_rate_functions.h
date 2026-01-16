@@ -99,7 +99,14 @@ double HDlow_rate(double T, double units, chemistry_data *my_chemistry);
 double cie_thin_cooling_rate(double T);
 double cieco_rate(double T, double units, chemistry_data *my_chemistry);
 
+/// Calculate gas_grain, the Gas/grain energy transfer rate
 double gasGrain_rate(double T, double units, chemistry_data *my_chemistry);
+
+/// Calculate gas_grain2
+///
+/// The resulting value is similar to the value returned by @ref gasGrain_rate.
+/// It is used to compute the Gas/grain energy transfer rate for arbitrary size
+/// distributions.
 double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry);
 
 /// Calculate regr (as in GRain REcombination cooling)

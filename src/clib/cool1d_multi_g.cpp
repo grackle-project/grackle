@@ -1160,8 +1160,8 @@ void grackle::impl::cool1d_multi_g(
   // Calculate dust cooling rate
   if (anydust != MASK_FALSE) {
     dust_gas_edot::update_edot_dust_cooling_rate(
-        edot, tgas, tdust, dust2gas, rhoH, itmask_metal, my_chemistry,
-        idx_range, grain_temperatures, d, gasgr.data(), gas_grainsp_heatrate);
+        edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
+        my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
   }
 
   // Compute continuum opacity

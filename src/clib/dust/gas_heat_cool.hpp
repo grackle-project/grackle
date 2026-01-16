@@ -171,14 +171,50 @@ inline void update_edot_dust_recombination(
   }
 }
 
+/// update edot, in place, to account for energy transfer between gas and dust
+/// grains.
+///
+/// Each of the 1D arrays is only valid for the specified @p idx_range.
+///
+/// The rates of energy transfer are computed, from interpolation tables, at
+/// the same time that @p tdust (or @p grain_temperatures) is computed. Based
+/// on the configuration, the original interpolation table was computed by
+/// @ref gasGrain_rate or @ref gasGrain2_rate.
+///
+/// @todo
+/// Consider refactoring so that the updates to @p edot are directly computed
+/// at the same time as the dust temperatures. If we opt not to do this, then
+/// we should probably refactor to ensure that the definition of the
+/// gas-to-grain rate is more consistent between configurations (and so that we
+/// don't need to pass d to this function).
+///
+/// @param [in,out] edot 1D array being used to accumulate the net rate of
+///     change in internal energy of the gas
+/// @param[in] tgas 1D array of gas temperatures
+/// @param[in] tdust, grain_temperatures Specifies dust temperatures. The
+///     former is used in some configurations to provide a 1D array of dust
+///     temperatures for all dust. The latter is used in other configurations
+///     to provide separate 1d dust temperature arrays for each modeled grain
+///     species.
+/// @param[in] dust2gas 1D array of ratios between dust & gas densities
+/// @param[in] rhoH 1D array holding the Hydrogen mass density
+/// @param[in] itmask_metal Specifies the iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] my_chemistry Holds various configuration parameters
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] d The 3D mass density array
+/// @param[in] gasgr, gas_grainsp_heatrate Specifies gas-to-grain heat transfer
+///     rates (the precise definition of this "rate" varies a lot!). The
+///     former is used in some configurations to provide a 1D array of rates
+///     for all dust. The latter is used in other configurations to provide
+///     separate 1d dust temperature arrays for each modeled grain species.
 void update_edot_dust_cooling_rate(
     double* edot, const double* tgas, const double* tdust,
-    const double* dust2gas, const double* rhoH,
-    const gr_mask_type* itmask_metal, const chemistry_data* my_chemistry,
-    IndexRange idx_range,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::View<gr_float***> d, const double* gasgr,
-    grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate) {
+    const GrainSpeciesCollection& grain_temperatures, const double* dust2gas,
+    const double* rhoH, const gr_mask_type* itmask_metal,
+    const chemistry_data* my_chemistry, IndexRange idx_range,
+    View<gr_float***> d, const double* gasgr,
+    const GrainSpeciesCollection& gas_grainsp_heatrate) {
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask_metal[i] != MASK_FALSE) {
       double Ldst;
