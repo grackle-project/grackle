@@ -12,7 +12,6 @@
 #ifndef GRACKLE_DUST_MISC_HPP
 #define GRACKLE_DUST_MISC_HPP
 
-#include <vector>
 #include "grackle.h"
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "fortran_func_wrappers.hpp"
@@ -34,10 +33,9 @@ inline void dust_related_props(
     grackle_field_data* my_fields, InternalGrUnits internalu,
     IndexRange idx_range, LogTLinInterpScratchBuf logTlininterp_buf,
     Cool1DMultiScratchBuf cool1dmulti_buf, double comp2, double* dust2gas,
-    std::vector<double>& myisrf, double* tdust,
-    GrainSpeciesCollection grain_temperatures, std::vector<double>& gasgr,
-    GrainSpeciesCollection gas_grainsp_heatrate,
-    GrainSpeciesCollection grain_kappa, std::vector<double>& kappa_tot,
+    double* myisrf, double* tdust, GrainSpeciesCollection grain_temperatures,
+    double* gasgr, GrainSpeciesCollection gas_grainsp_heatrate,
+    GrainSpeciesCollection grain_kappa, double* kappa_tot,
     InternalDustPropBuf internal_dust_prop_buf) {
   // get relevant unit values
   double dom = internalu_calc_dom_(internalu);
@@ -106,9 +104,9 @@ inline void dust_related_props(
     // TODO: trad -> comp2
     grackle::impl::fortran_wrapper::calc_all_tdust_gasgr_1d_g(
         comp2, tgas, tdust, metallicity, dust2gas, cool1dmulti_buf.mynh,
-        cool1dmulti_buf.gasgr_tdust, itmask_metal, coolunit, gasgr.data(),
-        myisrf.data(), kappa_tot.data(), my_chemistry, my_rates, my_fields,
-        idx_range, grain_temperatures, gas_grainsp_heatrate, grain_kappa,
+        cool1dmulti_buf.gasgr_tdust, itmask_metal, coolunit, gasgr, myisrf,
+        kappa_tot, my_chemistry, my_rates, my_fields, idx_range,
+        grain_temperatures, gas_grainsp_heatrate, grain_kappa,
         logTlininterp_buf, internal_dust_prop_buf);
   }
 }
