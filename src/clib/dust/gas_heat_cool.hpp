@@ -16,6 +16,7 @@
 #include "grackle.h"
 #include "index_helper.h"
 #include "internal_types.hpp"
+#include "status_reporting.h"
 
 #include <cmath>
 
@@ -173,7 +174,7 @@ inline void update_edot_dust_recombination(
 void update_edot_dust_cooling_rate(
     double* edot, const double* tgas, const double* tdust,
     const double* dust2gas, const double* rhoH,
-    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    const gr_mask_type* itmask_metal, const chemistry_data* my_chemistry,
     IndexRange idx_range,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::View<gr_float***> d, const double* gasgr,
@@ -185,21 +186,19 @@ void update_edot_dust_cooling_rate(
         Ldst =
             -gasgr[i] * (tgas[i] - tdust[i]) * dust2gas[i] * rhoH[i] * rhoH[i];
 
-      } else {
+      } else {  // my_chemistry->dust_species > 0
         if (my_chemistry->use_multiple_dust_temperatures == 0) {
           Ldst = -gasgr[i] * (tgas[i] - tdust[i]) *
                  d(i, idx_range.j, idx_range.k) * rhoH[i];
         } else {
-          if (my_chemistry->dust_species > 0) {
-            Ldst =
-                -(gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust][i] *
-                      (tgas[i] - grain_temperatures
-                                     .data[OnlyGrainSpLUT::MgSiO3_dust][i]) +
-                  gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust][i] *
-                      (tgas[i] -
-                       grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i])) *
-                d(i, idx_range.j, idx_range.k) * rhoH[i];
-          }
+          Ldst =
+              -(gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust][i] *
+                    (tgas[i] -
+                     grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i]) +
+                gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust][i] *
+                    (tgas[i] -
+                     grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i])) *
+              d(i, idx_range.j, idx_range.k) * rhoH[i];
 
           if (my_chemistry->dust_species > 1) {
             Ldst =
