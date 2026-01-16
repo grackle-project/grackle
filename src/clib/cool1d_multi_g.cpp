@@ -176,7 +176,6 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> LCO(my_fields->grid_dimension[0]);
   std::vector<double> LOH(my_fields->grid_dimension[0]);
   std::vector<double> LH2O(my_fields->grid_dimension[0]);
-  std::vector<double> Ldst(my_fields->grid_dimension[0]);
   std::vector<double> alpha(my_fields->grid_dimension[0]);
   std::vector<double> alphad(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
@@ -1162,8 +1161,7 @@ void grackle::impl::cool1d_multi_g(
   if (anydust != MASK_FALSE) {
     dust_gas_edot::update_edot_dust_cooling_rate(
         edot, tgas, tdust, dust2gas, rhoH, itmask_metal, my_chemistry,
-        idx_range, grain_temperatures, d, gasgr.data(), Ldst.data(),
-        gas_grainsp_heatrate);
+        idx_range, grain_temperatures, d, gasgr.data(), gas_grainsp_heatrate);
   }
 
   // Compute continuum opacity

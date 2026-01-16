@@ -176,21 +176,22 @@ void update_edot_dust_cooling_rate(
     const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     IndexRange idx_range,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::View<double***> d, const double* gasgr, double* Ldst,
+    grackle::impl::View<gr_float***> d, const double* gasgr,
     grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate) {
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask_metal[i] != MASK_FALSE) {
+      double Ldst;
       if (my_chemistry->dust_species == 0) {
-        Ldst[i] =
+        Ldst =
             -gasgr[i] * (tgas[i] - tdust[i]) * dust2gas[i] * rhoH[i] * rhoH[i];
 
       } else {
         if (my_chemistry->use_multiple_dust_temperatures == 0) {
-          Ldst[i] = -gasgr[i] * (tgas[i] - tdust[i]) *
-                    d(i, idx_range.j, idx_range.k) * rhoH[i];
+          Ldst = -gasgr[i] * (tgas[i] - tdust[i]) *
+                 d(i, idx_range.j, idx_range.k) * rhoH[i];
         } else {
           if (my_chemistry->dust_species > 0) {
-            Ldst[i] =
+            Ldst =
                 -(gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust][i] *
                       (tgas[i] - grain_temperatures
                                      .data[OnlyGrainSpLUT::MgSiO3_dust][i]) +
@@ -201,8 +202,8 @@ void update_edot_dust_cooling_rate(
           }
 
           if (my_chemistry->dust_species > 1) {
-            Ldst[i] =
-                Ldst[i] -
+            Ldst =
+                Ldst -
                 (gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiM_dust][i] *
                      (tgas[i] -
                       grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i]) +
@@ -231,8 +232,8 @@ void update_edot_dust_cooling_rate(
           }
 
           if (my_chemistry->dust_species > 2) {
-            Ldst[i] =
-                Ldst[i] -
+            Ldst =
+                Ldst -
                 (gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust][i] *
                      (tgas[i] - grain_temperatures
                                     .data[OnlyGrainSpLUT::ref_org_dust][i]) +
@@ -247,7 +248,7 @@ void update_edot_dust_cooling_rate(
         }
       }
 
-      edot[i] = edot[i] + Ldst[i];
+      edot[i] = edot[i] + Ldst;
     }
   }
 }
