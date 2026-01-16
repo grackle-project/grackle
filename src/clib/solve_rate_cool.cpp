@@ -630,15 +630,11 @@ void drop_SpeciesRateSolverScratchBuf(SpeciesRateSolverScratchBuf* ptr) {
 }
 
 
-} // namespace grackle::impl
 
 // -------------------------------------------------------------
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
 
-int solve_rate_cool_g(
+int solve_rate_cool(
   int imetal, double dt, InternalGrUnits internalu,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
@@ -1016,6 +1012,4 @@ int solve_rate_cool_g(
   return ierr;
 }
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace grackle::impl

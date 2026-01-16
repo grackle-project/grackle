@@ -20,10 +20,7 @@
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "internal_units.h"      // InternalGrUnits
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-// the following function can be called from C or C++
+namespace grackle::impl {
 
 /// Solve the multi-species rate and cooling equations
 ///
@@ -38,20 +35,12 @@ extern "C" {
 /// modified7:  January, 2025 by Matthew Abruzzo; ported to C++
 ///
 /// @return Returns GR_SUCCESS or GR_FAIL to indicate whether there was an error
-///
-/// @todo
-/// Once the file where this routine called is adjusted to be compiled with a
-/// C++ compiler, modify this function (prototype & implementation) such that:
-/// - it's not enclosed by a `extern "C"` block
-/// - it's defined within a `grackle::impl` namespace
-int solve_rate_cool_g(int imetal, double dt, InternalGrUnits internalu,
-                      chemistry_data* my_chemistry,
-                      chemistry_data_storage* my_rates,
-                      grackle_field_data* my_fields,
-                      photo_rate_storage* my_uvb_rates);
+int solve_rate_cool(int imetal, double dt, InternalGrUnits internalu,
+                    chemistry_data* my_chemistry,
+                    chemistry_data_storage* my_rates,
+                    grackle_field_data* my_fields,
+                    photo_rate_storage* my_uvb_rates);
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace grackle::impl
 
 #endif  // GRACKLE_SOLVE_RATE_COOL_HPP
