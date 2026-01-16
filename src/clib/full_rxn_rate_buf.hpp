@@ -29,6 +29,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 ///
 /// The known reaction rate kinds are currently:
 /// - COLLISIONAL (collisional reaction rates)
+/// - PHOTO (radiative reaction rates)
 /// - GRAIN_GROWTH (tracks grain species growth rates)
 /// - MISC (namely just tracks the h2dust buffer)
 namespace rxn_rate_buf_detail {
@@ -38,6 +39,7 @@ namespace rxn_rate_buf_detail {
 struct MaxSize {
   enum {
     COLLISIONAL = CollisionalRxnLUT::NUM_ENTRIES,
+    PHOTO = PhotoRxnLUT::NUM_ENTRIES,
     GRAIN_GROWTH = OnlyGrainSpLUT::NUM_ENTRIES,
     MISC = 1
   };
@@ -48,7 +50,8 @@ struct MaxSize {
 struct SectionOffset {
   enum {
     COLLISIONAL = 0,
-    GRAIN_GROWTH = COLLISIONAL + MaxSize::COLLISIONAL,
+    PHOTO = COLLISIONAL + MaxSize::COLLISIONAL,
+    GRAIN_GROWTH = PHOTO + MaxSize::PHOTO,
     MISC = GRAIN_GROWTH + MaxSize::GRAIN_GROWTH
   };
 };
@@ -161,6 +164,15 @@ inline void drop_FullRxnRateBuffer(FullRxnRateBuf* ptr) {
 /// called `<rate>`.
 inline double* const* FullRxnRateBuf_kcol_bufs(const FullRxnRateBuf* ptr) {
   return ptr->data + rxn_rate_buf_detail::SectionOffset::COLLISIONAL;
+}
+
+/// fetch array of buffers reserved for holding radiative reaction rates
+///
+/// The returned array is expected to be indexed with @ref PhotoRxnLUT.
+/// The buffer at index `PhotoRxnLUT::<rate>`, is reserved for a rate
+/// called `<rate>`.
+inline double* const* FullRxnRateBuf_kph_bufs(const FullRxnRateBuf* ptr) {
+  return ptr->data + rxn_rate_buf_detail::SectionOffset::PHOTO;
 }
 
 /// fetch array of buffers reserved for holding grain growth rates
