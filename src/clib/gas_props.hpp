@@ -69,6 +69,42 @@ inline double variable_gamma(double tgas, double nH2, double n_other,
                   (nH2 * inv_gm1_for_H2 + n_other / (gamma_other - 1.));
 }
 
+/// use "fixed point iteration" to solve for a self-consistent gas temperature
+///
+/// For the uninitiated, "fixed point iteration" is a scheme where we solve for
+/// a so-called "fixed-point" of a function `f(x)`. This scheme produces a
+/// sequence of values `x₀, x₁, x₂, ...`, where `xₙ₊₁ = f(xₙ)`. Essentially, we
+/// "hope" that the sequence converges to a fixed point `xfix` (i.e. where
+/// `xfix == f(xfix)`).
+///
+/// In the context, we try to iterate to a self-consistent gas temperature
+/// using the variable adiabatic index implemented in @ref variable_gamma.
+///
+/// @param tgas0 Initial guess of the gas temperature
+/// @param nH2, n_other number densities of H2 and of all other species. In
+///     practice, these can both be multiplied by a constant (typically the
+///     Hydrogen mass)
+/// @param gamma_other The adiabatic index of all material other than H2
+/// @param tgas_div_gm1 The gas temperature divided by `(gamma - 1)`. This is
+///     always exactly known.
+/// @param tgas_floor The floor to apply to the gas temperature
+/// @param n_iter Number of iterations
+inline double self_consistent_Tgas(double tgas0, double nH2, double n_other,
+                                   double gamma_other, double tgas_div_gm1,
+                                   double tgas_floor, unsigned int n_iter) {
+  double tgas = tgas0;
+
+  for (unsigned int n = 0; n < n_iter; n++) {
+    double gamma = variable_gamma(tgas0, nH2, n_other, gamma_other);
+    tgas = std::fmax((gamma - 1.) * tgas_div_gm1, tgas_floor);
+    if (std::fabs(tgas0 - tgas) <= tgas0 * 1.0e-3) {
+      break;
+    };
+    tgas0 = tgas;
+  }
+  return tgas;
+}
+
 }  // namespace chemistry_T_detail
 
 /// calculate basic gas properties for the specified @p idx_range
@@ -201,11 +237,23 @@ inline void basic_gas_props(int imetal, double* tgas, double* mmw, double* rhoH,
       }
     }
 
-    // Correct temperature for gamma from H2
-
+    // If the chemical network includes H2, adjust tgas to account for the fact
+    // that adiabatic index actually depends on H2 abundance & on tgas
+    //
+    // IDEA for the future if we eventually decide that the accuracy of this
+    // quantity needs to be improved. We should adjust the initial guess for
+    // tgas (in cases where the `Gamma` parameter is 5/3):
+    // - the new initial guess should assume that gamma=7/5 for H2 (accounting
+    //   for rotational degrees of freedom). Then the adjustment only adjusts
+    //   for the relevance of the single vibrational degree of freedom
+    // - the current initial guess implicitly assumes H2's gamma is the same
+    //   as monatomic species (so it's initially less accurate)
     if (my_chemistry->primordial_chemistry > 1) {
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
+          // compute number densities of H2 and all other primordial species
+          // -> technically, we're computing number density time Hydrogen mass,
+          //    but that's ok for our purposes
           double nH2 = 0.5 * (H2I(i, idx_range.j, idx_range.k) +
                               H2II(i, idx_range.j, idx_range.k));
           double nother = (HeI(i, idx_range.j, idx_range.k) +
@@ -216,25 +264,28 @@ inline void basic_gas_props(int imetal, double* tgas, double* mmw, double* rhoH,
                           HII(i, idx_range.j, idx_range.k) +
                           de(i, idx_range.j, idx_range.k);
 
-          int iter_tgas = 0;
-          double tgas_err = huge8;
-          while ((iter_tgas < 100) && (tgas_err > 1.e-3)) {
-            // tgas0 is used when CALCULATE_TGAS_SELF_CONSISTENTLY is defined
-            [[maybe_unused]] double tgas0 = tgas[i];
-            double gamma2 = chemistry_T_detail::variable_gamma(
-                tgas[i], nH2, nother, my_chemistry->Gamma);
+          // the quality of the adjustment varies between branches
 #ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
-            tgas[i] =
-                std::fmax((gamma2 - 1.) * mmw[i] *
-                              e(i, idx_range.j, idx_range.k) * internalu.utem,
-                          my_chemistry->TemperatureStart);
-            tgas_err = grackle::impl::dabs(tgas0 - tgas[i]) / tgas0;
-            iter_tgas = iter_tgas + 1;
+          // iteratively solve for a self-consistent gas temperature
+          // -> the current strategy uses fixed point iteration. This isn't
+          //    practical (and it's not totally obvious that it converges)
+          constexpr unsigned int n_iter = 100u;
+          const double tgas_div_gm1 =
+              mmw[i] * e(i, idx_range.j, idx_range.k) * internalu.utem;
+          const double tgas_floor = my_chemistry->TemperatureStart;
+          tgas[i] = chemistry_T_detail::self_consistent_Tgas(
+              tgas[i], nH2, nother, my_chemistry->Gamma, tgas_div_gm1,
+              tgas_floor, n_iter);
 #else
-            tgas[i] = tgas[i] * (gamma2 - 1.) / (my_chemistry->Gamma - 1.);
-            iter_tgas = 101;
+          // in this branch, we roughly approximate the adjustment
+          // -> it's equivalent to a single iteration of fixed point iteration
+          // -> the resulting tgas is technically not self-consistent (i.e.
+          //    applying the adjustment again would yield a different answer)
+          double adjusted_gamma = chemistry_T_detail::variable_gamma(
+              tgas[i], nH2, nother, my_chemistry->Gamma);
+          tgas[i] =
+              tgas[i] * (adjusted_gamma - 1.) / (my_chemistry->Gamma - 1.);
 #endif
-          }
         }
       }
     }
