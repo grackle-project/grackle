@@ -62,20 +62,20 @@ inline double inverse_gm1_for_H2(double x) {
 /// @param gamma_other The adiabatic index of all material other than H2
 inline double variable_gamma(double tgas, double nH2, double n_other,
                              double gamma_other) {
+  constexpr double ndens_ratio_threshold = 1.0e-3;
   double inv_gm1_for_H2;
-  if (nH2 / n_other > 1.0e-3) {
+  if (nH2 > (ndens_ratio_threshold * n_other)) {
     double x = 6100. / tgas;
-    if (x > 10.) {
-      inv_gm1_for_H2 = 0.5 * 5.;
-    } else {
+    if (x <= 10.) {
       inv_gm1_for_H2 = inverse_gm1_for_H2(x);
+    } else {
+      inv_gm1_for_H2 = 0.5 * 5.;
     }
   } else {
     inv_gm1_for_H2 = 2.5;
   }
-  double gamma2 = 1. + (nH2 + n_other) / (nH2 * inv_gm1_for_H2 +
-                                          n_other / (gamma_other - 1.));
-  return gamma2;
+  return 1. + (nH2 + n_other) /
+                  (nH2 * inv_gm1_for_H2 + n_other / (gamma_other - 1.));
 }
 
 }  // namespace chemistry_T_detail
