@@ -37,6 +37,21 @@ inline double calc_pressure(double gamma, double density,
   return (gamma - 1.) * density * specific_eint;
 }
 
+namespace chemistry_T_detail {
+
+/// computes temperature dependent `1 / (γ_H₂ - 1)`
+///
+/// This is based on equation 6 from Omukai & Nishi (1998)
+/// https://ui.adsabs.harvard.edu/abs/1998ApJ...508..141O/abstract
+///
+/// @param x the value of `(6100 K / Tgas)`
+inline double inverse_gm1_for_H2(double x) {
+  return 0.5 * (5. + 2. * std::pow(x, 2) * std::exp(x) /
+                         std::pow((std::exp(x) - 1), 2));
+}
+
+}  // namespace chemistry_T_detail
+
 /// calculate basic gas properties for the specified @p idx_range
 inline void basic_gas_props(int imetal, double* tgas, double* mmw, double* rhoH,
                             gr_mask_type* itmask, chemistry_data* my_chemistry,
@@ -193,8 +208,7 @@ inline void basic_gas_props(int imetal, double* tgas, double* mmw, double* rhoH,
               if (x > 10.) {
                 gamma2 = 0.5 * 5.;
               } else {
-                gamma2 = 0.5 * (5. + 2. * std::pow(x, 2) * std::exp(x) /
-                                         std::pow((std::exp(x) - 1), 2));
+                gamma2 = chemistry_T_detail::inverse_gm1_for_H2(x);
               }
             } else {
               gamma2 = 2.5;
