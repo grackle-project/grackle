@@ -116,7 +116,6 @@ void grackle::impl::cool1d_multi_g(
 
   // Declare some constants:
   const double mh_local_var = mh_grflt;
-  const double mu_metal = 16.;  // approx. mean molecular weight of metals
 
   // Locals
   int i, iZscale, mycmbTfloor;
@@ -1248,7 +1247,7 @@ void grackle::impl::cool1d_multi_g(
           cool1dmulti_buf.myde[i] =
               cool1dmulti_buf.myde[i] -
               mmw[i] * metal(i, idx_range.j, idx_range.k) /
-                  (d(i, idx_range.j, idx_range.k) * mu_metal);
+                  (d(i, idx_range.j, idx_range.k) * MU_METAL);
         }
         cool1dmulti_buf.myde[i] =
             d(i, idx_range.j, idx_range.k) * cool1dmulti_buf.myde[i] / mmw[i];

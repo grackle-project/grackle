@@ -22,6 +22,13 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
+/// Approximate mean molecular weight of metals
+///
+/// @todo
+/// Consider moving this to phys_constants.h. It may not be necessary since
+/// this may only ultimately get used in 2 places.
+inline constexpr double MU_METAL = 16.;
+
 /// Calculate thermal pressure
 ///
 /// @todo find a better home for this function
@@ -42,9 +49,6 @@ inline void basic_gas_props(
     grackle::impl::View<double***> HeIII, grackle::impl::View<double***> HM,
     grackle::impl::View<double***> H2I, grackle::impl::View<double***> H2II,
     grackle::impl::View<double***> metal, double dom, double zr) {
-  // todo: this should be elevated to a constant
-  const double mu_metal = 16.;  // approx. mean molecular weight of metals
-
   // If no chemistry, use a tabulated mean molecular weight
   // and iterate to convergence.
 
@@ -109,7 +113,7 @@ inline void basic_gas_props(
     if (imetal == 1) {
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
-          mmw[i] = mmw[i] + metal(i, idx_range.j, idx_range.k) / mu_metal;
+          mmw[i] = mmw[i] + metal(i, idx_range.j, idx_range.k) / MU_METAL;
         }
       }
     }
