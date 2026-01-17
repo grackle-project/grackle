@@ -40,7 +40,7 @@ inline double calc_pressure(double gamma, double density,
 /// calculate basic gas properties for the specified @p idx_range
 inline void basic_gas_props(int imetal, double* tgas, double* mmw, double* rhoH,
                             gr_mask_type* itmask, chemistry_data* my_chemistry,
-                            chemistry_data_storage* my_rates,
+                            cloudy_data* primordial_cloudy_data,
                             grackle_field_data* my_fields,
                             InternalGrUnits internalu, IndexRange idx_range,
                             double zr) {
@@ -83,7 +83,7 @@ inline void basic_gas_props(int imetal, double* tgas, double* mmw, double* rhoH,
 
     grackle::impl::calc_temp1d_cloudy_g(
         rhoH, tgas, mmw, dom, zr, imetal, itmask, my_chemistry,
-        my_rates->cloudy_primordial, my_fields, internalu, idx_range);
+        *primordial_cloudy_data, my_fields, internalu, idx_range);
 
   } else {
     // get 3D views
