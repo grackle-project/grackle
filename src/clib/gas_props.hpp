@@ -50,6 +50,34 @@ inline double inverse_gm1_for_H2(double x) {
                          std::pow((std::exp(x) - 1), 2));
 }
 
+/// calculate the adiabatic index for gas at a given temperature
+///
+/// This is based on equation 5 from Omukai & Nishi (1998)
+/// https://ui.adsabs.harvard.edu/abs/1998ApJ...508..141O/abstract
+///
+/// @param tgas temperature of the gas
+/// @param nH2, n_other number densities of H2 and of all other species. In
+///     practice, these can both be multiplied by a constant (typically the
+///     Hydrogen mass)
+/// @param gamma_other The adiabatic index of all material other than H2
+inline double variable_gamma(double tgas, double nH2, double n_other,
+                             double gamma_other) {
+  double inv_gm1_for_H2;
+  if (nH2 / n_other > 1.0e-3) {
+    double x = 6100. / tgas;
+    if (x > 10.) {
+      inv_gm1_for_H2 = 0.5 * 5.;
+    } else {
+      inv_gm1_for_H2 = inverse_gm1_for_H2(x);
+    }
+  } else {
+    inv_gm1_for_H2 = 2.5;
+  }
+  double gamma2 = 1. + (nH2 + n_other) / (nH2 * inv_gm1_for_H2 +
+                                          n_other / (gamma_other - 1.));
+  return gamma2;
+}
+
 }  // namespace chemistry_T_detail
 
 /// calculate basic gas properties for the specified @p idx_range
@@ -200,22 +228,10 @@ inline void basic_gas_props(int imetal, double* tgas, double* mmw, double* rhoH,
           int iter_tgas = 0;
           double tgas_err = huge8;
           while ((iter_tgas < 100) && (tgas_err > 1.e-3)) {
-            double gamma2;
             // tgas0 is used when CALCULATE_TGAS_SELF_CONSISTENTLY is defined
             [[maybe_unused]] double tgas0 = tgas[i];
-            if (nH2 / nother > 1.0e-3) {
-              double x = 6100. / tgas[i];  // not quite self-consistent
-              if (x > 10.) {
-                gamma2 = 0.5 * 5.;
-              } else {
-                gamma2 = chemistry_T_detail::inverse_gm1_for_H2(x);
-              }
-            } else {
-              gamma2 = 2.5;
-            }
-            gamma2 =
-                1. + (nH2 + nother) /
-                         (nH2 * gamma2 + nother / (my_chemistry->Gamma - 1.));
+            double gamma2 = chemistry_T_detail::variable_gamma(
+                tgas[i], nH2, nother, my_chemistry->Gamma);
 #ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
             tgas[i] =
                 std::fmax((gamma2 - 1.) * mmw[i] *
