@@ -65,8 +65,8 @@ inline double variable_gamma(double tgas, double nH2, double n_other,
   constexpr double ndens_ratio_threshold = 1.0e-3;
   double inv_gm1_for_H2;
   if (nH2 > (ndens_ratio_threshold * n_other)) {
-    double x = 6100. / tgas;
-    if (x <= 10.) {
+    if (tgas >= 610.) {  // aka x <= 10.0
+      double x = 6100. / tgas;
       inv_gm1_for_H2 = inverse_gm1_for_H2(x);
     } else {
       inv_gm1_for_H2 = 0.5 * 5.;
