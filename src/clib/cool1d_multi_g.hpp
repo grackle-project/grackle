@@ -24,14 +24,6 @@
 
 namespace grackle::impl {
 
-/// Calculate thermal pressure
-///
-/// @todo find a better home for this function
-inline double calc_pressure(double gamma, double density,
-                            double specific_eint) {
-  return (gamma - 1.) * density * specific_eint;
-}
-
 /// Solve radiative cooling/heating equations
 ///
 /// This function does a lot. It probably makes sense to break off some of

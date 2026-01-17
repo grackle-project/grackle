@@ -17,6 +17,7 @@
 
 #include "cool1d_multi_g.hpp"
 #include "cool_multi_time.hpp"
+#include "gas_props.hpp"
 #include "grackle.h"
 #include "index_helper.h"
 #include "inject_model/misc.hpp"

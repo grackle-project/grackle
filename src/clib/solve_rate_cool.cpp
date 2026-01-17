@@ -17,6 +17,7 @@
 #include <cstdlib> // std::malloc, std::free
 #include <cstring> // std::memcpy
 #include <vector>
+#include "gas_props.hpp"
 #include "grackle.h"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
