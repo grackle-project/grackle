@@ -38,17 +38,26 @@ inline double calc_pressure(double gamma, double density,
 }
 
 /// calculate basic gas properties for the specified @p idx_range
-inline void basic_gas_props(
-    int imetal, double* tgas, double* mmw, double* rhoH, gr_mask_type* itmask,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields, InternalGrUnits internalu,
-    IndexRange idx_range, grackle::impl::View<double***> d,
-    grackle::impl::View<double***> e, grackle::impl::View<double***> de,
-    grackle::impl::View<double***> HI, grackle::impl::View<double***> HII,
-    grackle::impl::View<double***> HeI, grackle::impl::View<double***> HeII,
-    grackle::impl::View<double***> HeIII, grackle::impl::View<double***> HM,
-    grackle::impl::View<double***> H2I, grackle::impl::View<double***> H2II,
-    grackle::impl::View<double***> metal, double dom, double zr) {
+inline void basic_gas_props(int imetal, double* tgas, double* mmw, double* rhoH,
+                            gr_mask_type* itmask, chemistry_data* my_chemistry,
+                            chemistry_data_storage* my_rates,
+                            grackle_field_data* my_fields,
+                            InternalGrUnits internalu, IndexRange idx_range,
+                            double zr) {
+  // construct 3d views
+  View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                            my_fields->grid_dimension[1],
+                            my_fields->grid_dimension[2]);
+  View<const gr_float***> e(
+      my_fields->internal_energy, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  View<const gr_float***> metal(
+      my_fields->metal_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  // get the appropriate constant
+  const double dom = internalu_calc_dom_(internalu);
+
   // If no chemistry, use a tabulated mean molecular weight
   // and iterate to convergence.
 
@@ -77,6 +86,35 @@ inline void basic_gas_props(
         my_rates->cloudy_primordial, my_fields, internalu, idx_range);
 
   } else {
+    // get 3D views
+    View<const gr_float***> de(
+        my_fields->e_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HI(
+        my_fields->HI_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HII(
+        my_fields->HII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HeI(
+        my_fields->HeI_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HeII(
+        my_fields->HeII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HeIII(
+        my_fields->HeIII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HM(
+        my_fields->HM_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> H2I(
+        my_fields->H2I_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> H2II(
+        my_fields->H2II_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
     // Compute mean molecular weight (and temperature) directly
 
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
