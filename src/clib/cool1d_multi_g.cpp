@@ -1094,11 +1094,11 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  dust_related_props(anydust, tgas, metallicity, itmask, itmask_metal,
-                     my_chemistry, my_rates, my_fields, internalu, idx_range,
-                     logTlininterp_buf, comp2, dust2gas, tdust,
+  dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
+                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
+                     idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
                      grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
-                     kappa_tot.data(), grain_kappa, cool1dmulti_buf,
+                     kappa_tot.data(), grain_kappa, cool1dmulti_buf.gasgr_tdust,
                      myisrf.data(), internal_dust_prop_buf);
 
   // Calculate dust cooling rate

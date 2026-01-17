@@ -27,14 +27,15 @@ namespace grackle::impl {
 /// @todo
 /// All the following items should wait until after the transcription PRs for
 /// the wrapped Fortran routines are merged:
-/// - Stop passing @p cool1dmulti_buf and instead pass the `mynh` and
-///   `gasgr_tdust` members directly. The former is unmodified while the latter
-///   is used as a scratch buffer
-/// - Make all non-modified `double*` arguments `const double*`
-/// - rename the @p comp2 argument so that it's known as Tcmb
+/// - Make all non-modified `double*` arguments `const double*`.
+/// - consider accepting `rhoH` instead of @p nH and computing the value of `nH`
+///   just when we need it (to be clear, there's a chance that this plan may
+///   not be entirely viable).
 ///
 /// @param[in] anydust Whether dust chemistry is enabled
 /// @param[in] tgas 1d array of gas temperature
+/// @param[in] nH 1d array of Hydrogen number densities
+/// @param[in] metallicity 1d array of metallicities
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
 /// @param[in] itmask_metal Specifies the metal/dust-specific iteration-mask of
@@ -48,7 +49,7 @@ namespace grackle::impl {
 /// @param[in] logTlininterp_buf hold values for each location in @p idx_range
 ///     that are used to linearly interpolate tables with respect to the
 ///     natural log of @p tgas.
-/// @param[in] comp2 Holds the CMB temperature at the current redshift
+/// @param[in] trad Holds the CMB temperature at the current redshift
 /// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
 ///     location in the index range. In other words, this holds the dust mass
 ///     per unit gas mass (only used in certain configuration)
@@ -58,23 +59,23 @@ namespace grackle::impl {
 ///     be written to one of these variables, based on configuration
 /// @param[out] kappa_tot, grain_kappa Opacity-related information may be
 ///     written to one of these variables, based on configuration
-/// @param[in,out] cool1dmulti_buf The mynh member holds a 1D array of number
-///     densities while the gasgr_tdust member is just a scratch buffer
+/// @param[in,out] gasgr_tdust A 1D array of that acts as a scratch buffer
+///     (with some refactoring, this can probably be removed)
 /// @param[in,out] myisrf a scratch buffer that may be used to temporarily
 ///     record the interstellar radiation field
 /// @param[in,out] internal_dust_prop_buf Holds scratch-space for holding
 ///     grain-specific information
 inline void dust_related_props(
-    gr_mask_type anydust, double* tgas, double* metallicity,
+    gr_mask_type anydust, double* tgas, double* nH, double* metallicity,
     const gr_mask_type* itmask, gr_mask_type* itmask_metal,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
     grackle_field_data* my_fields, InternalGrUnits internalu,
     IndexRange idx_range, LogTLinInterpScratchBuf logTlininterp_buf,
-    double comp2, double* dust2gas, double* tdust,
+    double trad, double* dust2gas, double* tdust,
     GrainSpeciesCollection grain_temperatures, double* gasgr,
     GrainSpeciesCollection gas_grainsp_heatrate, double* kappa_tot,
-    GrainSpeciesCollection grain_kappa, Cool1DMultiScratchBuf cool1dmulti_buf,
-    double* myisrf, InternalDustPropBuf internal_dust_prop_buf) {
+    GrainSpeciesCollection grain_kappa, double* gasgr_tdust, double* myisrf,
+    InternalDustPropBuf internal_dust_prop_buf) {
   // get relevant unit values
   double dom = internalu_calc_dom_(internalu);
   double coolunit = internalu.coolunit;
@@ -140,10 +141,9 @@ inline void dust_related_props(
   // compute dust temperature and cooling due to dust
   if (anydust != MASK_FALSE) {
     grackle::impl::fortran_wrapper::calc_all_tdust_gasgr_1d_g(
-        comp2, tgas, tdust, metallicity, dust2gas, cool1dmulti_buf.mynh,
-        cool1dmulti_buf.gasgr_tdust, itmask_metal, coolunit, gasgr, myisrf,
-        kappa_tot, my_chemistry, my_rates, my_fields, idx_range,
-        grain_temperatures, gas_grainsp_heatrate, grain_kappa,
+        trad, tgas, tdust, metallicity, dust2gas, nH, gasgr_tdust, itmask_metal,
+        coolunit, gasgr, myisrf, kappa_tot, my_chemistry, my_rates, my_fields,
+        idx_range, grain_temperatures, gas_grainsp_heatrate, grain_kappa,
         logTlininterp_buf, internal_dust_prop_buf);
   }
 }
