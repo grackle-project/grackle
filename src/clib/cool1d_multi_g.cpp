@@ -260,7 +260,7 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // calculate the basic gas properties (tgas, mmw, p2d, rhoH)
-  basic_gas_props(imetal, tgas, mmw, rhoH, itmask, my_chemistry,
+  basic_gas_props(tgas, mmw, rhoH, imetal, itmask, my_chemistry,
                   &my_rates->cloudy_primordial, my_fields, internalu, idx_range,
                   zr);
 

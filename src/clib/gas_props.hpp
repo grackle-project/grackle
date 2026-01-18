@@ -108,8 +108,30 @@ inline double self_consistent_Tgas(double tgas0, double nH2, double n_other,
 }  // namespace chemistry_T_detail
 
 /// calculate basic gas properties for the specified @p idx_range
-inline void basic_gas_props(int imetal, double* tgas, double* mmw, double* rhoH,
-                            gr_mask_type* itmask, chemistry_data* my_chemistry,
+///
+/// Basic properties include @p tgas, @p mmw, and @p rhoH. For some context,
+/// we effectively compute @p tgas and @p mmw at the same time, and @p rhoH is
+/// required for the calculation along some execution pathways.
+///
+/// @param[out] tgas 1D array to hold the computed gas temperatures in the
+///     @p idx_range
+/// @param[out] mmw 1D array to hold the computed mean molecular weight
+///     in the @p idx_range
+/// @param[out] rhoH 1D array to hold the computed Hydrogen mass density
+///     for the @p idx_range
+/// @param[in] imetal Indicates whether metals are evolved
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] primordial_cloudy_data Cloudy cooling table data for primordial
+///     species. (Only used when my_chemistry->primordial_chemistry is 0)
+/// @param[in] my_fields Specifies the field data.
+/// @param[in] internalu Specifies Grackle's internal unit-system
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] zr Current redshift
+inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
+                            const gr_mask_type* itmask,
+                            chemistry_data* my_chemistry,
                             cloudy_data* primordial_cloudy_data,
                             grackle_field_data* my_fields,
                             InternalGrUnits internalu, IndexRange idx_range,
