@@ -22,6 +22,7 @@
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "dust_props.hpp"
+#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
@@ -184,8 +185,10 @@ void grackle::impl::cool1d_multi_g(
   // buffers of intermediate quantities used within dust-routines (for
   // calculating quantites related to heating/cooling)
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
-      grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
-                                             my_rates->gr_N[1]);
+      grackle::impl::new_InternalDustPropBuf(
+          my_fields->grid_dimension[0],
+          GrainMetalInjectPathways_get_n_log10Tdust_vals(
+              my_rates->opaque_storage->inject_pathway_props));
   // opacity coefficients for each dust grain (the product of opacity
   // coefficient & gas mass density is the linear absortpion coefficient)
   grackle::impl::GrainSpeciesCollection grain_kappa =
@@ -1102,7 +1105,8 @@ void grackle::impl::cool1d_multi_g(
   if ((my_chemistry->use_dust_density_field > 0) &&
       (my_chemistry->dust_species > 0)) {
     grackle::impl::fortran_wrapper::calc_grain_size_increment_1d(
-        dom, idx_range, itmask_metal, my_chemistry, my_rates, my_fields,
+        dom, idx_range, itmask_metal, my_chemistry,
+        my_rates->opaque_storage->inject_pathway_props, my_fields,
         internal_dust_prop_buf);
   }
 
