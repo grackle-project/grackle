@@ -18,6 +18,13 @@
 !  PURPOSE:
 !    Calculate dust temperature.
 !
+!  TODO:
+!    this docstring, and the docstrings of all helper functions should
+!    EXPLICITLY document how the meaning of arguments change based on
+!    whether we are using the single-field dust model or the
+!    multi-species dust model. The different meaning of each variable
+!    gets VERY confusing
+!
 !  INPUTS:
 !     in       - dimension of 1D slice
 !
@@ -347,10 +354,21 @@ c               ERROR_MESSAGE
 !
 !  written by: Britton Smith
 !  date:       September, 2011
-!  modified1: 
 !
 !  PURPOSE:
 !    Calculate grain plank mean opacity
+!
+!  TODO:
+!    this docstring should EXPLICITLY document how the action of this
+!    function changes based on whether we are using the single-field
+!    dust model or the multi-species dust model.
+!
+!    In the classic single single-field model, the returned opacities
+!    have units of cm^2/g and they are measured "per unit grain mass"
+!
+!    In the multi-species dust model, I THINK that the returned
+!    opacities have units of cm^2/g and they are measured "per unit
+!    gas mass."
 !
 !  INPUTS:
 !     in       - i dimension of 3D fields
@@ -472,6 +490,19 @@ c               ERROR_MESSAGE
 !
 !  PURPOSE:
 !    Calculate grain heating/cooling balance
+
+!  TODO:
+!    this docstring should EXPLICITLY document how the action of this
+!    function changes based on whether we are using the single-field
+!    dust model or the multi-species dust model.
+!
+!    In the classic single single-field model, the returned values
+!    are emission/absorption rate per unit grain mass with units of
+!    erg/s/g
+!
+!    In the multi-species dust model, I **THINK** that the returned
+!    values are emission/absorption rate per unit gas mass with units
+!    of erg/s/g (But I'm not entirely unsure).
 !
 !  INPUTS:
 !     in       - i dimension of 3D fields
@@ -531,8 +562,12 @@ c               ERROR_MESSAGE
      &           (trad4 - tdust(i)**4) +
      &           (gasgr(i) * nh(i) *
      &           (tgas(i) - tdust(i)))
-       ! emission/absorption rate per unit grain mass [erg/s/g]
-       ! for Z = Zsun (default)
+       ! Historically, the following comment was present here:
+       !     emission/absorption rate per unit grain mass [erg/s/g]
+       !     for Z = Zsun (default)
+       ! This comment is **ONLY** correct when the function used as
+       ! part of the single-field dust model. See the docstring for
+       ! more details.
 
          endif
       enddo

@@ -15,6 +15,7 @@
 
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
+#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 
 /// a struct that used to wrap some private storage details
@@ -95,6 +96,10 @@ struct gr_opaque_storage {
   /// > calculations). An alternative would be to briefly initialize an
   /// > instance during setup and then repack the data.
   grackle::impl::GrainSpeciesInfo* grain_species_info;
+
+  /// Tracks metal and grain yields for each modeled injection pathway as well
+  /// as other grain properties
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props;
 };
 
 #endif /* OPAQUE_STORAGE_HPP */
