@@ -12,7 +12,7 @@
 #include "grackle.h" // GR_FAIL
 #include "status_reporting.h"
 
-#include "grtest_os.hpp"
+#include "grtestutils/os.hpp"
 
 
 testing::AssertionResult ContainsFormattedMessage_(int n) {
