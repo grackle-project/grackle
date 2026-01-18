@@ -17,7 +17,7 @@
 #include <vector>
 #include <iostream>
 
-#include "calc_all_tdust_gasgr_1d_g.hpp"
+#include "dust/calc_all_tdust_gasgr_1d_g.hpp"
 #include "cool1d_multi_g.hpp"
 #include "grackle.h"
 #include "fortran_func_decls.h"

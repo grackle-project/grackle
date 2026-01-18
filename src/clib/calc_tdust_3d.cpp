@@ -16,7 +16,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "calc_all_tdust_gasgr_1d_g.hpp"
+#include "dust/calc_all_tdust_gasgr_1d_g.hpp"
 #include "calc_tdust_3d.h"
 #include "dust_props.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
