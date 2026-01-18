@@ -97,7 +97,6 @@ add_library(Grackle_Grackle
   auto_general.h
 
   # C++ Source (and Private Header Files)
-  calc_all_tdust_gasgr_1d_g.cpp calc_all_tdust_gasgr_1d_g.hpp
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
   calculate_cooling_time.cpp
@@ -110,6 +109,7 @@ add_library(Grackle_Grackle
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
+  dust/calc_all_tdust_gasgr_1d_g.cpp dust/calc_all_tdust_gasgr_1d_g.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp
   dust/multi_grain_species/calc_grain_size_increment_1d.hpp

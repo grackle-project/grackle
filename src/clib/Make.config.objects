@@ -25,6 +25,7 @@ OBJS_CONFIG_LIB = \
         cool1d_cloudy_old_tables_g.lo \
         cool1d_multi_g.lo \
         cool_multi_time_g.lo \
+        dust/calc_all_tdust_gasgr_1d_g.lo \
         dust/grain_species_info.lo \
         dynamic_api.lo \
         grackle_units.lo \
@@ -45,7 +46,6 @@ OBJS_CONFIG_LIB = \
         solve_rate_cool_g-cpp.lo \
         status_reporting.lo \
         update_UVbackground_rates.lo \
-        calc_all_tdust_gasgr_1d_g.lo \
         calc_tdust_1d_g.lo \
         calc_tdust_3d.lo \
         calc_grain_size_increment_1d.lo \
