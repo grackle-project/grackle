@@ -15,8 +15,8 @@
 #include "grackle.h"
 #include "internal_units.h"
 #include "solve_rate_cool_g-cpp.h"
+#include "self_shielding_err_check.hpp"
 #include "update_UVbackground_rates.hpp"
-#include "utils.h"
 
 extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
                                      chemistry_data_storage *my_rates,
@@ -75,9 +75,10 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
   InternalGrUnits internalu = new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
-  if (self_shielding_err_check(my_chemistry, my_fields,
-                               "local_solve_chemistry") != GR_SUCCESS) {
-    return GR_SUCCESS;
+  if (grackle::impl::self_shielding_err_check(my_chemistry, my_fields,
+                                              "local_solve_chemistry")
+      != GR_SUCCESS) {
+    return GR_FAIL;
   }
 
   /* Call the routine to solve cooling equations. */
