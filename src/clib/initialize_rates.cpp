@@ -366,6 +366,7 @@ int init_kcol_rate_tables(
   if (n_kcol_rate_indices > (unsigned int)CollisionalRxnLUT::NUM_ENTRIES) {
     GRIMPL_ERROR("something went very wrong when counting up rates");
   } else if (n_kcol_rate_indices == 0) {
+    delete tables;
     return GrPrintAndReturnErr("this logic shouldn't be executed in a config "
                                "with 0 \"ordinary\" collisional rxn rates");
   }

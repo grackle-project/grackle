@@ -40,12 +40,16 @@ Checks: >
   cert-flp30-c,
   cert-mem57-cpp,
 
+  clang-analyzer-*,
+  -clang-analyzer-cplusplus.NewDeleteLeaks
+
   cppcoreguidelines-avoid-goto,
   cppcoreguidelines-avoid-non-const-global-variables,
   cppcoreguidelines-virtual-class-destructor
 
   google-build-using-namespace,
   google-explicit-constructor,
+  google-global-names-in-headers,
   google-readability-avoid-underscore-in-googletest-name,
   google-runtime-float,
   google-upgrade-googletest-case,
