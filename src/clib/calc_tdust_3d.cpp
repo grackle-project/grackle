@@ -38,8 +38,6 @@ void calc_tdust_3d_g(
   grackle_field_data* my_fields, InternalGrUnits internalu
 )
 {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
   const double mh_local_var = mh_grflt;
 
