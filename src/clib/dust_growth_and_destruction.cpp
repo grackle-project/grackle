@@ -27,6 +27,7 @@ void grackle::impl::dust_growth(
     grackle_field_data* my_fields,
     InternalGrUnits internalu,
     IndexRange idx_range,
+    const gr_mask_type* itmask,
     double* dt_value,
     double* t_gas,
     bool dryrun)
@@ -47,46 +48,87 @@ void grackle::impl::dust_growth(
 
     // --- MAIN LOOP ---
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        if (itmask[i] != MASK_FALSE) {
         
-        double rho_gas      = d(i,idx_range.j,idx_range.k);
-        double rho_dust = dust(i,idx_range.j,idx_range.k);
-        double rho_metal= metal(i,idx_range.j,idx_range.k);
-        double temp     = t_gas[i];
-        double dt = dt_value[i];
+            double rho_gas      = d(i,idx_range.j,idx_range.k);
+            double rho_dust = dust(i,idx_range.j,idx_range.k);
+            double rho_metal= metal(i,idx_range.j,idx_range.k);
+            double temp     = t_gas[i];
+            double dt = dt_value[i];
+            // fprintf(stderr,"---------------\n");
 
-        double tau_accr0 = tau_ref*(my_chemistry->dust_growth_densref/dens_proper)* std::pow(t_ref/temp,0.5);
-        double tau_accr = huge_value;
-        tau_accr = std::min(tau_accr0*(my_chemistry->SolarMetalFractionByMass/rho_metal),tau_accr);
-        double total_density_init = rho_metal + rho_dust;
-        double dM = 0;
-        dM = dM + std::min((1 - rho_dust/total_density_init)*(rho_dust/tau_accr)*dt, (total_density_init - rho_dust));
-        double dM_tau_accr = dM;
+            double tau_accr0 = tau_ref *
+            (my_chemistry->dust_growth_densref / dens_proper) *
+            std::pow(t_ref / temp, 0.5);
+            double rho_metal_eff = std::max(rho_metal, tiny_value);
+            double tau_accr = tau_accr0 * (my_chemistry->SolarMetalFractionByMass / rho_metal_eff);
+            tau_accr = std::min(tau_accr, huge_value);
+            tau_accr = std::max(tau_accr, tiny_value);
+            double frac_metal_available = 0.0;
+            if (rho_metal <= 0.0) {
+            frac_metal_available = 0.0;
+            } else if (rho_dust > 0.0 && rho_metal < 1e-12 * rho_dust) {
+            frac_metal_available = rho_metal / rho_dust;
+            } else {
+            frac_metal_available = rho_metal / (rho_dust + rho_metal);
+            }
+            frac_metal_available = std::clamp(frac_metal_available, 0.0, 1.0);
+            double growth = frac_metal_available * (rho_dust / tau_accr) * dt;
+            double dM = std::min(growth, rho_metal);
 
-        // recalculate metallicity
-        dM = std::max(-1*rho_dust, dM);
-        dM = std::min(0.9*rho_metal, dM);
-        double dM_conserv = 0.0;
-        if (rho_dust >= 0.0) {
-            rho_dust = rho_dust + dM;
-            rho_metal = rho_metal - dM;
-        } else {
-            dM_conserv = rho_dust;
-            rho_dust = rho_dust - dM_conserv;
-            rho_metal = rho_metal + dM_conserv;
+            // fprintf(stderr,
+            //         "internal: frac=%e growth=%e dM=%e grainsize=%e\n",
+            //         frac_metal_available, growth, dM, my_chemistry->dust_grainsize);
+
+            double dM_tau_accr = dM;
+
+
+            // recalculate metallicity
+            dM = std::max(-1*rho_dust, dM);
+            dM = std::min(0.9*rho_metal, dM);
+            double dM_conserv = 0.0;
+            long double change = rho_gas;
+            long double dM_change = (long double)dM;
+            if (rho_dust >= 0.0) {
+                rho_dust = rho_dust + dM;
+                rho_metal = rho_metal - dM;
+            } else {
+                dM_conserv = rho_dust;
+                rho_dust = rho_dust - dM_conserv;
+                rho_metal = rho_metal + dM_conserv;
+            }
+            // fprintf(stderr,
+            // "after dM calc dust=%e gas=%e metal=%e change=%0.18Le\n",
+            // rho_dust,
+            // rho_gas,
+            // rho_metal,
+            // (change - dM_change)/change);
+            rho_gas = rho_gas + (rho_metal - metal(i,idx_range.j,idx_range.k));
+            if (rho_dust < 0) {
+                std::exit(21);
+            }
+            // double total_density_final = rho_metal + rho_dust;
+            // if (std::abs(total_density_final - total_density_init) > 1e-8){
+            //     std::exit(21);
+            // }
+            if (dryrun == false) {
+                dust(i,idx_range.j,idx_range.k) = (gr_float)rho_dust;
+                metal(i,idx_range.j,idx_range.k) = (gr_float)rho_metal; 
+                d(i,idx_range.j,idx_range.k) = (gr_float)rho_gas;
+                // fprintf(stderr,"------\n");
+                // fprintf(stderr,
+                //         "dust=%0.18Le gas=%0.18Le metal=%0.18Le\n",
+                //         rho_dust,
+                //         rho_gas,
+                //         rho_metal);
+                // fprintf(stderr,
+                //     "dust=%0.18Le gas=%0.18Le metal=%0.18Le\n",
+                //     dust(i, idx_range.j, idx_range.k),
+                //     d(i, idx_range.j, idx_range.k),
+                //     metal(i, idx_range.j, idx_range.k));
+            }
         }
-        rho_gas = rho_gas + (rho_metal - metal(i,idx_range.j,idx_range.k));
-        if (rho_dust < 0) {
-            std::exit(21);
-        }
-        double total_density_final = rho_metal + rho_dust;
-        if (std::abs(total_density_final - total_density_init) > 1e-8){
-            std::exit(21);
-        }
-        if (dryrun == false) {
-            dust(i,idx_range.j,idx_range.k) = rho_dust;
-            metal(i,idx_range.j,idx_range.k) = rho_metal; 
-            d(i,idx_range.j,idx_range.k) = rho_gas;
-        }
+
     }
 }
 

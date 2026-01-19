@@ -96,8 +96,7 @@ void cool1d_multi_g(int imetal, int iter, double* edot, double* tgas,
                     grackle::impl::GrainSpeciesCollection grain_temperatures,
                     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
                     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
-                    grackle::impl::CoolHeatScratchBuf coolingheating_buf,
-                    double* dtit);
+                    grackle::impl::CoolHeatScratchBuf coolingheating_buf);
 
 };  // namespace grackle::impl
 

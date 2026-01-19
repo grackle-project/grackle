@@ -39,6 +39,7 @@
 #include "cool1d_multi_g.hpp"
 #include "scale_fields.hpp"
 #include "solve_rate_cool.hpp"
+#include "dust_growth_and_destruction.hpp"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
 /// selected by the given itmask) with the maximum allowed heating/cooling
@@ -803,8 +804,7 @@ int solve_rate_cool(
           *my_uvb_rates, internalu,
           idx_range,
           grain_temperatures, logTlininterp_buf,
-          cool1dmulti_buf, coolingheating_buf,
-          dtit.data()
+          cool1dmulti_buf, coolingheating_buf
         );
 
         if (my_chemistry->primordial_chemistry > 0)  {
@@ -912,6 +912,9 @@ int solve_rate_cool(
 
         }
 
+        grackle::impl::dust_growth(
+          my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(), tgas.data(), false);
+
         // Add the timestep to the elapsed time for each cell and find
         //  minimum elapsed time step in this row
         ttmin = huge8;
@@ -925,6 +928,9 @@ int solve_rate_cool(
 
         // If all cells are done (in idx_range), break out of subcycle loop
         if (std::fabs(dt-ttmin) < tolerance*dt) { break; }
+
+        // grackle::impl::dust_growth(
+        //   my_chemistry, my_fields, internalu, idx_range, dtit.data(), tgas.data(), false);
 
       }  // subcycle iteration loop (for current idx_range)
 
