@@ -41,8 +41,7 @@ void grackle::impl::cool1d_multi_g(
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
-    grackle::impl::CoolHeatScratchBuf coolingheating_buf,
-    double* dtit) {
+    grackle::impl::CoolHeatScratchBuf coolingheating_buf) {
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -1105,16 +1104,12 @@ void grackle::impl::cool1d_multi_g(
     }
   }
   // Compute grain size increment
-  if ((my_chemistry->use_dust_density_field > 0) &&
-      (my_chemistry->dust_species > 0)) {
-    grackle::impl::calc_grain_size_increment_1d(
-        dom, idx_range, itmask_metal, my_chemistry,
-        my_rates->opaque_storage->grain_species_info,
-        my_rates->opaque_storage->inject_pathway_props, my_fields,
-        internal_dust_prop_buf);
-    grackle::impl::dust_growth(
-      my_chemistry, my_fields, internalu, idx_range, dtit, tgas, true);
-  }
+  // if ((my_chemistry->use_dust_density_field > 0) &&
+  //     (my_chemistry->dust_species > 0)) {
+  //   grackle::impl::fortran_wrapper::calc_grain_size_increment_1d(
+  //       dom, idx_range, itmask_metal, my_chemistry, my_rates, my_fields,
+  //       internal_dust_prop_buf);
+  // }
 
   // Calculate dust to gas ratio AND interstellar radiation field
   // -> an earlier version of this logic would store values @ indices
@@ -1938,6 +1933,7 @@ void grackle::impl::cool1d_multi_g(
       cool1dmulti_buf.tgasold[i] = tgas[i];
     }
   }
+
 
   // Free memory
   grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
