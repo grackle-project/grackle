@@ -787,7 +787,7 @@ int solve_rate_cool(
       // declare 2 variables (primarily used for subcycling, but also used in
       // error reporting)
       int iter;
-      double ttmin;
+      double ttmin = huge8;
 
       // ------------------ Loop over subcycles ----------------
 

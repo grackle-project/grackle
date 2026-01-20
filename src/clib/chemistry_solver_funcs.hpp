@@ -1,6 +1,11 @@
-// See LICENSE file for license and copyright information
-
-/// @file chemistry_solver_funcs.hpp
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
 /// @brief Defines chemistry reaction related functions invoked by the
 ///     grackle solver in order to integrate the species densities over time.
 ///
@@ -14,6 +19,8 @@
 ///     be decoupled from the derivative calculation for primoridial species
 ///   - it may also make sense to further divide logic by the kinds of species
 ///     that are affected (e.g. primordial vs grains)
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef CHEMISTRY_SOLVER_FUNCS_HPP
 #define CHEMISTRY_SOLVER_FUNCS_HPP
@@ -579,7 +586,6 @@ inline void species_density_updates_gauss_seidel(
 
         if ( (my_chemistry->metal_chemistry == 1)  && 
              (itmask_metal[i] != MASK_FALSE) )  {
-          scoef = scoef;
           acoef = acoef
               + kcol_buf.data[CollisionalRxnLUT::kz44][i] *   CII(i,j,k) / 12.
               + kcol_buf.data[CollisionalRxnLUT::kz45][i] *   OII(i,j,k) / 16.
@@ -1932,7 +1938,6 @@ inline void species_density_derivatives_0d(
 
     if ((my_chemistry->metal_chemistry == 1)  && 
         (itmask_metal[0] != MASK_FALSE))  {
-      scoef = scoef;
       acoef = acoef
           + kcr_buf.data[CollisionalRxnLUT::kz44][0]    *   CII        / 12.
           + kcr_buf.data[CollisionalRxnLUT::kz45][0]    *   OII        / 16.
