@@ -194,8 +194,8 @@ void grackle::impl::calc_temp1d_cloudy_g(
 
       if (!skip_mmw_update) {
         mmw[i] = munew;
-        printf("Mean molecular weight not converged! %e %e %e\n", munew,
-                muold, std::fabs((munew / muold) - 1.));
+        printf("Mean molecular weight not converged! %e %e %e\n", munew, muold,
+               std::fabs((munew / muold) - 1.));
       }
     }
   }
