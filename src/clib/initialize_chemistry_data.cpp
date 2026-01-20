@@ -19,13 +19,13 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "auto_general.hpp"
-#include "interp_table_utils.hpp" // free_interp_grid_
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_cloudy_data.hpp"
 #include "initialize_dust_yields.hpp"  // free_dust_yields
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.hpp"
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
+#include "interp_table_utils.hpp" // free_interp_grid_
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 
