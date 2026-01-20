@@ -32,7 +32,9 @@
 #include "visitor/memory.hpp"
 
 #include "ceiling_species.hpp"
-#include "scale_fields_g-cpp.h"
+#include "rate_timestep_g.hpp"
+#include "cool1d_multi_g.hpp"
+#include "scale_fields.hpp"
 #include "solve_rate_cool_g-cpp.h"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
@@ -150,7 +152,17 @@ static void setup_chem_scheme_masks_(
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if ( itmask[i] != MASK_FALSE )  {
       bool usemetal = (imetal == 1) && (metallicity[i] > min_metallicity);
-      bool is_hi_dens = (ddom[i] >= 1.e8) || (usemetal && (ddom[i] >= 1.0e6));
+      bool is_hi_dens;
+      if (my_chemistry->solver_method == 2) {
+        // Force Gauss-Seidel
+        is_hi_dens = false;
+      } else if (my_chemistry->solver_method == 3) {
+        // Force Newton-Raphson
+        is_hi_dens = true;
+      } else {
+        // Default
+        is_hi_dens = (ddom[i] >= 1.e8) || (usemetal && (ddom[i] >= 1.0e6));
+      }
 
       itmask_gs[i] = (!is_hi_dens) ? MASK_TRUE : MASK_FALSE;
       itmask_nr[i] = (is_hi_dens) ? MASK_TRUE : MASK_FALSE;
@@ -632,8 +644,6 @@ int solve_rate_cool_g(
   grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 )
 {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
 #ifdef GRACKLE_FLOAT_4
   const gr_float tolerance = (gr_float)(1.0e-05);
@@ -671,7 +681,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields(imetal, factor, my_chemistry, my_fields);
   }
 
   grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
@@ -827,10 +837,10 @@ int solve_rate_cool_g(
           // Compute dedot and HIdot, the rates of change of de and HI
           //   (should add itmask to this call)
 
-          f_wrap::rate_timestep_g(
-            spsolvbuf.dedot, spsolvbuf.HIdot, anydust, idx_range,
-            spsolvbuf.h2dust, rhoH.data(), itmask.data(), edot.data(),
-            chunit, dom, my_chemistry, my_fields, *my_uvb_rates,
+          grackle::impl::rate_timestep_g(
+            spsolvbuf.dedot, spsolvbuf.HIdot, anydust, spsolvbuf.h2dust,
+            rhoH.data(), itmask.data(), edot.data(),
+            chunit, dom, my_chemistry, my_fields, idx_range,
             spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
             spsolvbuf.chemheatrates_buf
           );
@@ -890,12 +900,12 @@ int solve_rate_cool_g(
           // Solve rate equations with one linearly implicit Gauss-Seidel
           // sweep of a backward Euler method (for all cells specified by
           // itmask_gs)
-          f_wrap::step_rate_g(
+          grackle::impl::step_rate_gauss_seidel(
             dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
-            itmask_metal.data(), imetal, my_chemistry, my_fields,
-            *my_uvb_rates, spsolvbuf.grain_growth_rates,
-            spsolvbuf.species_tmpdens, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf
+            itmask_metal.data(), my_chemistry, my_fields, *my_uvb_rates,
+            spsolvbuf.grain_growth_rates, spsolvbuf.species_tmpdens,
+            spsolvbuf.kcr_buf, spsolvbuf.kshield_buf
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel
@@ -992,7 +1002,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields(imetal, factor, my_chemistry, my_fields);
   }
 
   if (my_chemistry->primordial_chemistry > 0)  {

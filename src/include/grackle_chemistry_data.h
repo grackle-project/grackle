@@ -305,6 +305,13 @@ typedef struct
   /* number of OpenMP threads, if supported */
   int omp_nthreads;
 
+   /* solver to be used 
+   * 1: Gauss-Seidel-Newton-Raphson
+   * 2: Gauss-Seidel-only
+   * 3: Newton-Raphson-only
+   */
+  int solver_method;
+
 } chemistry_data;
 
 /*****************************

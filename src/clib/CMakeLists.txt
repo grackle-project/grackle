@@ -82,21 +82,13 @@ configure_file(auto_general.c.in auto_general.c @ONLY)
 add_library(Grackle_Grackle
 
   # C source files
-  calculate_cooling_time.c
-  calculate_dust_temperature.c
-  calculate_gamma.c
-  calculate_pressure.c
-  calculate_temperature.c
   dynamic_api.c
   grackle_units.c
   index_helper.c
   initialize_cloudy_data.c initialize_cloudy_data.h
   initialize_UVbackground_data.c  initialize_UVbackground_data.h
   rate_functions.c
-  set_default_chemistry_parameters.c
-  solve_chemistry.c
   status_reporting.c status_reporting.h
-  update_UVbackground_rates.c
   utils.c
 
   # auto-generated C source files
@@ -107,12 +99,19 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
+  calculate_cooling_time.cpp
+  calculate_dust_temperature.cpp
+  calculate_gamma.cpp
+  calculate_pressure.cpp
+  calculate_temperature.cpp
   ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_cloudy_g.cpp cool1d_cloudy_g.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
+  dust/grain_species_info.cpp dust/grain_species_info.hpp
+  dust/lookup_dust_rates1d.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_dust_yields.cpp initialize_dust_yields.hpp
@@ -121,11 +120,16 @@ add_library(Grackle_Grackle
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
+  rate_timestep_g.cpp rate_timestep_g.hpp
   rate_utils.cpp
+  solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
+  set_default_chemistry_parameters.cpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
+  step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp
+  update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
