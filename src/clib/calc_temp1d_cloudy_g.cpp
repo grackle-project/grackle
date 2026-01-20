@@ -52,7 +52,7 @@ void grackle::impl::calc_temp1d_cloudy_g(
   int i, ti;
   long long zindex, zmidpt, zhighpt;
   double inv_log10, muold, munew;
-  std::vector<double> dclPar(cloudy_table.grid_rank);
+  double dclPar[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
   long long end_int;
 
   // Slice locals
@@ -165,7 +165,7 @@ void grackle::impl::calc_temp1d_cloudy_g(
               cloudy_table.grid_parameters[2], dclPar[2],
               cloudy_table.data_size, cloudy_table.mmw_data, end_int);
         } else {
-          OMP_PRAGMA_CRITICAL { printf("Maximum mmw data grid rank is 3!\n"); }
+          printf("Maximum mmw data grid rank is 3!\n");
           return;
         }
 
@@ -189,19 +189,14 @@ void grackle::impl::calc_temp1d_cloudy_g(
           mmw[i] = munew;
           skip_mmw_update = true;
           break;
-          //          goto label_9998;
         }
       }
 
       if (!skip_mmw_update) {
         mmw[i] = munew;
-
-        OMP_PRAGMA_CRITICAL {
-          printf("Mean molecular weight not converged! %e %e %e\n", munew,
-                 muold, std::fabs((munew / muold) - 1.));
-        }
+        printf("Mean molecular weight not converged! %e %e %e\n", munew,
+                muold, std::fabs((munew / muold) - 1.));
       }
-      // label_9998:
     }
   }
 
