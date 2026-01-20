@@ -85,8 +85,6 @@ add_library(Grackle_Grackle
   dynamic_api.c
   grackle_units.c
   index_helper.c
-  initialize_cloudy_data.c initialize_cloudy_data.h
-  initialize_UVbackground_data.c  initialize_UVbackground_data.h
   rate_functions.c
   status_reporting.c status_reporting.h
   utils.c
@@ -113,8 +111,10 @@ add_library(Grackle_Grackle
   dust/lookup_dust_rates1d.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
+  initialize_cloudy_data.cpp initialize_cloudy_data.hpp
   initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
+  initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp
   internal_types.cpp internal_types.hpp
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
