@@ -18,13 +18,13 @@
 #include <math.h>
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "auto_general.h"
-#include "interp_table_utils.hpp"
+#include "auto_general.hpp"
+#include "interp_table_utils.hpp" // free_interp_grid_
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
-#include "initialize_cloudy_data.h"
+#include "initialize_cloudy_data.hpp"
 #include "initialize_dust_yields.hpp"  // free_dust_yields
 #include "initialize_rates.hpp"
-#include "initialize_UVbackground_data.h"
+#include "initialize_UVbackground_data.hpp"
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
@@ -413,25 +413,25 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   /* Primordial tables. */
   read_data = my_chemistry->primordial_chemistry == 0;
-  if (initialize_cloudy_data(my_chemistry, my_rates,
-                             &my_rates->cloudy_primordial,
-                             "Primordial", my_units, read_data) == GR_FAIL) {
+  if (grackle::impl::initialize_cloudy_data(
+        my_chemistry, my_rates, &my_rates->cloudy_primordial,
+        "Primordial", my_units, read_data) != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
     return GR_FAIL;
   }
 
   /* Metal tables. */
   read_data = my_chemistry->metal_cooling == TRUE;
-  if (initialize_cloudy_data(my_chemistry, my_rates,
-                             &my_rates->cloudy_metal,
-                             "Metals", my_units, read_data) == GR_FAIL) {
+  if (grackle::impl::initialize_cloudy_data(
+        my_chemistry, my_rates, &my_rates->cloudy_metal,
+        "Metals", my_units, read_data) != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
     return GR_FAIL;
   }
 
   /* Initialize UV Background data. */
-  initialize_empty_UVBtable_struct(&(my_rates->UVbackground_table));
-  if (initialize_UVbackground_data(my_chemistry, my_rates) == GR_FAIL) {
+  if (grackle::impl::initialize_UVbackground_data(my_chemistry, my_rates)
+      != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");
     return GR_FAIL;
   }
@@ -577,31 +577,11 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->grain_growth_rate);
   }
 
-  free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
-  free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
-
-  GRACKLE_FREE(my_rates->UVbackground_table.z);
-  GRACKLE_FREE(my_rates->UVbackground_table.k24);
-  GRACKLE_FREE(my_rates->UVbackground_table.k25);
-  GRACKLE_FREE(my_rates->UVbackground_table.k26);
-
-  if (my_chemistry->primordial_chemistry > 1) {
-    GRACKLE_FREE(my_rates->UVbackground_table.k27);
-    GRACKLE_FREE(my_rates->UVbackground_table.k28);
-    GRACKLE_FREE(my_rates->UVbackground_table.k29);
-    GRACKLE_FREE(my_rates->UVbackground_table.k30);
-    GRACKLE_FREE(my_rates->UVbackground_table.k31);
-  }
-
-  GRACKLE_FREE(my_rates->UVbackground_table.piHI);
-  GRACKLE_FREE(my_rates->UVbackground_table.piHeII);
-  GRACKLE_FREE(my_rates->UVbackground_table.piHeI);
-
-  if (my_chemistry->self_shielding_method > 0){
-    GRACKLE_FREE(my_rates->UVbackground_table.crsHI);
-    GRACKLE_FREE(my_rates->UVbackground_table.crsHeII);
-    GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
-  }
+  grackle::impl::free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry,
+                                  /* primordial = */ 1);
+  grackle::impl::free_cloudy_data(&my_rates->cloudy_metal, my_chemistry,
+                                  /* primordial */ 0);
+  grackle::impl::free_UVBtable(&my_rates->UVbackground_table);
 
   if (grackle::impl::free_misc_species_cool_rates(my_chemistry, my_rates) != GR_SUCCESS) {
     fprintf(stderr, "Error in free_metal_chemistry_rates.\n");

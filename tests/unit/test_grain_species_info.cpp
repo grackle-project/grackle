@@ -10,10 +10,12 @@
 //===----------------------------------------------------------------------===//
 
 #include <gtest/gtest.h>
+#include <map>
 #include <memory>
-#include <vector>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "LUT.hpp"
 #include "dust/grain_species_info.hpp"
@@ -43,16 +45,20 @@ struct SpNameIndexPair {
   int index;
 };
 
-/// Returns name-index pairs for all grains from the list of Grackle Species
+/// Returns a SpNameIndexPair for every species for which p returns true
 ///
-/// The index corresponds to the index in global species list
-std::vector<SpNameIndexPair> grain_sp_info_from_species_list() {
+/// p is a unary function that accepts a string_view and returns a boolean
+///
+/// @note
+/// I think we'll be able to dispose of this in the near future
+template <typename UnaryPred>
+std::vector<SpNameIndexPair> selected_sp_info_(UnaryPred p) {
   std::vector<SpNameIndexPair> out;
   int count = 0;
 
 #define STRINGIFY_(NAME) #NAME
 #define ENTRY(NAME)                                                            \
-  if (str_ends_with(STRINGIFY_(NAME), "_dust")) {                              \
+  if (p(STRINGIFY_(NAME))) {                                                   \
     out.push_back(SpNameIndexPair{STRINGIFY_(NAME), count});                   \
   }                                                                            \
   count++;
@@ -60,6 +66,25 @@ std::vector<SpNameIndexPair> grain_sp_info_from_species_list() {
 #undef ENTRY
 #undef STRINGIFY_
 
+  return out;
+}
+
+/// Returns name-index pairs for all grains from the list of Grackle Species
+///
+/// The index corresponds to the index in global species list
+std::vector<SpNameIndexPair> grain_sp_info_from_species_list() {
+  auto fn = [](std::string_view s) { return str_ends_with(s, "_dust"); };
+  return selected_sp_info_(fn);
+}
+
+/// Returns name for every chemical species (in proper order)
+std::vector<std::string> chemical_species_list() {
+  auto fn = [](std::string_view s) { return !str_ends_with(s, "_dust"); };
+  const std::vector<SpNameIndexPair> tmp = selected_sp_info_(fn);
+  std::vector<std::string> out;
+  for (std::size_t i = 0; i < tmp.size(); i++) {
+    out.push_back(tmp[i].name);
+  }
   return out;
 }
 
@@ -181,6 +206,120 @@ TEST_P(GrainSpeciesInfoTest, SpeciesLUTCompare) {
   }
 }
 
+// check that the grackle::impl::max_ingredients_per_grain_species constant
+// indeed holds the maximum number of ingredients that a grain species can
+// have.
+TEST_P(GrainSpeciesInfoTest, MaxIngredientsPerGrainSpecies) {
+  // go through and compute the number of ingredients for each species
+  int n_grain_species = grain_species_info_->n_species;
+  int max_ingredient_count = 0;
+  for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+    max_ingredient_count = std::max(
+        max_ingredient_count,
+        grain_species_info_->species_info[gsp_idx].n_growth_ingredients);
+  }
+
+  if (MAX_dust_species_VAL == GetParam()) {
+    EXPECT_EQ(max_ingredient_count,
+              grackle::impl::max_ingredients_per_grain_species)
+        << "it appears that grackle::impl::max_ingredients_per_grain_species "
+        << "should have a value of " << max_ingredient_count;
+  } else {
+    EXPECT_LE(max_ingredient_count,
+              grackle::impl::max_ingredients_per_grain_species)
+        << "it appears that grackle::impl::max_ingredients_per_grain_species "
+        << "should be at least " << max_ingredient_count;
+  }
+}
+
+// we choose to use std::pair for this purpose since equality is already
+// defined and googletest knows how to compare them
+using CoefNamePair = std::pair<int, std::string>;
+
+// we are intentionally not very exhaustive here
+std::map<std::string, std::vector<CoefNamePair>> get_ingredients(
+    int dust_chemistry_parameter) {
+  std::map<std::string, std::vector<CoefNamePair>> out;
+
+  if (dust_chemistry_parameter > 0) {
+    out["MgSiO3_dust"] =
+        std::vector<CoefNamePair>{{1, "Mg"}, {1, "SiOI"}, {2, "H2O"}};
+    out["AC_dust"] = std::vector<CoefNamePair>{{1, "CI"}};
+  }
+  if (dust_chemistry_parameter > 1) {
+    out["SiM_dust"] = std::vector<CoefNamePair>{{1, "SiI"}};
+    // skip a few!
+    out["Fe3O4_dust"] = std::vector<CoefNamePair>{{3, "Fe"}, {4, "H2O"}};
+    // skip a bunch more
+  }
+  if (dust_chemistry_parameter > 2) {
+    std::string names[3] = {"ref_org_dust", "vol_org_dust", "H2O_ice_dust"};
+    for (int i = 0; i < 3; i++) {
+      out[names[i]] = std::vector<CoefNamePair>();
+    }
+  };
+  return out;
+}
+
+// here we are going to some very simple tests that we properly recorded growth
+// ingredients.
+//
+// NOTE: currently, this is extremely crude! We've almost finished machinery
+// that will make this a lot easier (and less verbose!)
+TEST_P(GrainSpeciesInfoTest, SampledGrainIngredients) {
+  int dust_chemistry_parameter = GetParam();
+
+  // get the list of ALL know chemical species names, in the cannonical order
+  const std::vector<std::string> chem_species_names = chemical_species_list();
+  const int known_chem_species_count =
+      static_cast<int>(chem_species_names.size());
+
+  std::map<std::string, std::vector<CoefNamePair>> ref_ingred_map =
+      get_ingredients(dust_chemistry_parameter);
+
+  // iterate through each grain species from grain_species_info_
+  // - validate that each index of the ingredients is meaningful
+  // - if the dust grain is listed in ingred_map, then we will compare the
+  //   ingredient list
+  int n_grain_species = grain_species_info_->n_species;
+  std::size_t n_comparisons = 0;
+  for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+    const grackle::impl::GrainSpeciesInfoEntry& species_info =
+        grain_species_info_->species_info[gsp_idx];
+    std::string name = species_info.name;
+
+    // try to coerce the ingredients to a vector
+    std::vector<CoefNamePair> ingred_vec;
+    for (int i = 0; i < species_info.n_growth_ingredients; i++) {
+      const grackle::impl::GrainGrowthIngredient& cur =
+          species_info.growth_ingredients[i];
+      ASSERT_TRUE(0 <= cur.species_idx &&
+                  cur.species_idx < known_chem_species_count)
+          << "for ingredient " << i << " of the \"" << name
+          << "\" grain species, "
+          << "the species index, " << cur.species_idx
+          << ", doesn't correspond to a chemical species";
+
+      ingred_vec.push_back({cur.coef, chem_species_names[cur.species_idx]});
+    }
+
+    // now lets check if we can match ingredients
+    auto search = ref_ingred_map.find(name);
+    if (search == ref_ingred_map.end()) {
+      continue;
+    }
+
+    const std::vector<CoefNamePair>& ref_vec = search->second;
+    EXPECT_EQ(ingred_vec, ref_vec)
+        << "there is a disagreement over the number of growth ingredients";
+    n_comparisons++;
+  }
+
+  EXPECT_EQ(n_comparisons, ref_ingred_map.size())
+      << "some of the entries in the reference ingred_map were skipped. This "
+      << "is indicative of a problem.";
+}
+
 INSTANTIATE_TEST_SUITE_P(
     ,  // <- this comma is meaningful
     GrainSpeciesInfoTest, testing::Range(1, MAX_dust_species_VAL + 1),
@@ -232,28 +371,4 @@ TEST(GrainSpeciesInfoTestMisc, DustSpeciesExtremeValues) {
         << "GrainSpeciesInfo::species_info can't be a nullptr when "
         << "GrainSpeciesInfo::n_species is positive";
   }
-}
-
-// check that the grackle::impl::max_ingredients_per_grain_species constant
-// indeed holds the maximum number of ingredients that a grain species can
-// have.
-TEST(GrainSpeciesInfoTestMisc, MaxIngredientsPerGrainSpecies) {
-  // construct a GrainSpeciesInfo instance that holds values for every dust
-  // grain species
-  unique_GrainSpeciesInfo_ptr gsp_info =
-      make_unique_GrainSpeciesInfo(MAX_dust_species_VAL);
-
-  // go through and compute the number of ingredients for each species
-  int n_grain_species = gsp_info->n_species;
-  int max_ingredient_count = 0;
-  for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-    max_ingredient_count =
-        std::max(max_ingredient_count,
-                 gsp_info->species_info[gsp_idx].n_growth_ingredients);
-  }
-
-  EXPECT_EQ(max_ingredient_count,
-            grackle::impl::max_ingredients_per_grain_species)
-      << "it appears that grackle::impl::max_ingredients_per_grain_species "
-      << "should have a value of " << max_ingredient_count;
 }
