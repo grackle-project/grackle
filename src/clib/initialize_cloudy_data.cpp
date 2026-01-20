@@ -16,8 +16,9 @@
 #include <cstring> // std::strcmp
 #include "hdf5.h"
 #include "grackle.h"
-#include "grackle_macros.h" // HDF5_I8, HDF5_R8, TRUE
+#include "grackle_macros.h" // TRUE
 #include "initialize_cloudy_data.hpp"
+#include "support/h5io.hpp"
 
 #define SMALL_LOG_VALUE (-99.0)
 #define MAX_PARAMETER_NAME_LENGTH (512)
@@ -39,6 +40,35 @@ void initialize_empty_cloudy_data_struct(cloudy_data *my_cloudy)
   my_cloudy->data_size = 0LL;
 }
 
+double* load_heatcool_data(hid_t file_id, const char* dset_name,
+                           double CoolUnit,
+                           grackle::impl::h5io::ArrayShape expected_shape) {
+  long long data_size =
+    grackle::impl::h5io::ArrayShape_elem_count(expected_shape);
+  double* tmp_data = new double[data_size];
+
+  if (grackle_verbose) {
+    std::fprintf(stdout,"Reading from \"%s\" dataset.\n", dset_name);
+  }
+  if (grackle::impl::h5io::read_dataset(file_id, dset_name, tmp_data,
+                                        &expected_shape) != GR_SUCCESS) {
+    delete[] tmp_data;
+    return nullptr;
+  }
+
+  double* out = new double[data_size];
+  for (long long q = 0LL; q < data_size; q++) {
+    out[q] = tmp_data[q] > 0 ?
+      (double) std::log10(tmp_data[q]) : (double) SMALL_LOG_VALUE;
+
+    // Convert to code units.
+    out[q] -= std::log10(CoolUnit);
+  }
+  delete[] tmp_data;
+
+  return out;
+}
+
 }  // anonymous namespace
 
 
@@ -50,9 +80,8 @@ int grackle::impl::initialize_cloudy_data(
     code_units *my_units, int read_data)
 {
 
-  long long temp_int;
-  char parameter_name[MAX_PARAMETER_NAME_LENGTH];
-  const std::size_t pname_bufsize =
+  char dset_name[MAX_PARAMETER_NAME_LENGTH];
+  const std::size_t name_bufsize =
     static_cast<std::size_t>(MAX_PARAMETER_NAME_LENGTH);
 
   // Initialize things (to the null-state) even if cloudy cooling is not used.
@@ -90,12 +119,8 @@ int grackle::impl::initialize_cloudy_data(
   ) / (std::pow(tbase1, 3.0) * dbase1);
 
   // Read cooling data in from hdf5 file.
-  hid_t       file_id, dset_id, attr_id;
-  herr_t      status;
-  herr_t      h5_error = -1;
-
-  file_id = H5Fopen(my_chemistry->grackle_data_file,
-                    H5F_ACC_RDONLY, H5P_DEFAULT);
+  hid_t file_id = H5Fopen(my_chemistry->grackle_data_file,
+                          H5F_ACC_RDONLY, H5P_DEFAULT);
 
   if (H5Aexists(file_id, "old_style")) {
     my_rates->cloudy_data_new = 0;
@@ -103,188 +128,86 @@ int grackle::impl::initialize_cloudy_data(
       std::fprintf(stdout, "Loading old-style Cloudy tables.\n");
   }
 
-  // Open cooling dataset and get grid dimensions.
-
-  std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/Cooling",
+  // Determine the name of the dataset
+  std::snprintf(dset_name, name_bufsize, "/CoolingRates/%s/Cooling",
                 group_name);
-  dset_id =  H5Dopen(file_id, parameter_name);
-  if (dset_id == h5_error) {
-    std::fprintf(stderr,"Can't open Cooling in %s.\n",
-            my_chemistry->grackle_data_file);
+
+  // Parse the grid properties from the dataset's attributes
+  h5io::GridTableProps grid_props = h5io::parse_GridTableProps(file_id,
+                                                               dset_name);
+  if (!h5io::GridTableProps_is_valid(grid_props)) {
+    h5io::drop_GridTableProps(&grid_props);
+    H5Fclose (file_id);
+    // error messages were already printed by h5io::parse_GridTableProps
     return GR_FAIL;
   }
 
-  // Grid rank.
-  attr_id = H5Aopen_name(dset_id, "Rank");
-  if (attr_id == h5_error) {
-    std::fprintf(stderr,"Failed to open Rank attribute in Cooling dataset.\n");
-    return GR_FAIL;
-  }
-  status = H5Aread(attr_id, HDF5_I8, &temp_int);
-  if (attr_id == h5_error) {
-    std::fprintf(stderr,"Failed to read Rank attribute in Cooling dataset.\n");
-    return GR_FAIL;
-  }
-  my_cloudy->grid_rank = (long long) temp_int;
-  if (grackle_verbose)
-    std::fprintf(stdout,"Cloudy cooling grid rank: %lld.\n", my_cloudy->grid_rank);
-  status = H5Aclose(attr_id);
-  if (attr_id == h5_error) {
-    std::fprintf(stderr,"Failed to close Rank attribute in Cooling dataset.\n");
-    return GR_FAIL;
+  // use grid_props to initialize parts of my_cloudy
+  // TODO: it would be really nice if we explicitly validated that each
+  //       grid_props.axes[i] held the expected values
+  my_cloudy->grid_rank = static_cast<long long>(grid_props.table_shape.ndim);
+  for (int i = 0; i < grid_props.table_shape.ndim; i++) {
+    my_cloudy->grid_dimension[i]
+      = static_cast<long long>(grid_props.table_shape.shape[i]);
+
+    bool is_temperature =
+      std::strcmp("Temperature", grid_props.axes[i].name) == 0;
+
+    double* buf = new double[my_cloudy->grid_dimension[i]];
+    for (long long w = 0LL; w < my_cloudy->grid_dimension[i]; w++) {
+      if (is_temperature) {
+        buf[w] = std::log10(grid_props.axes[i].values[w]);
+      } else {
+        buf[w] = grid_props.axes[i].values[w];
+      }
+    }
+    my_cloudy->grid_parameters[i] = buf;
   }
 
-  // Grid dimension.
-  long long* temp_int_arr = new long long[my_cloudy->grid_rank];
-  attr_id = H5Aopen_name(dset_id, "Dimension");
-  if (attr_id == h5_error) {
-    std::fprintf(stderr,"Failed to open Dimension attribute in Cooling dataset.\n");
-    return GR_FAIL;
-  }
-  status = H5Aread(attr_id, HDF5_I8, temp_int_arr);
-  if (attr_id == h5_error) {
-    std::fprintf(stderr,"Failed to read Dimension attribute in Cooling dataset.\n");
-    return GR_FAIL;
-  }
   if (grackle_verbose) {
-    std::fprintf(stdout, "Cloudy cooling grid dimensions:");
-  }
-  for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
-    my_cloudy->grid_dimension[q] = (long long) temp_int_arr[q];
-    if (grackle_verbose)
-      std::fprintf(stdout," %lld", my_cloudy->grid_dimension[q]);
-  }
-  if (grackle_verbose)
-    std::fprintf(stdout,".\n");
-  status = H5Aclose(attr_id);
-  if (attr_id == h5_error) {
-    std::fprintf(stderr,"Failed to close Dimension attribute in Cooling dataset.\n");
-    return GR_FAIL;
-  }
-  delete[] temp_int_arr;
-
-  // Grid parameters.
-  for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
-
-    if (q < my_cloudy->grid_rank - 1) {
-      std::snprintf(parameter_name, pname_bufsize, "Parameter%lld",(q+1));
-    }
-    else {
-      std::snprintf(parameter_name, pname_bufsize, "Temperature");
-    }
-
-    attr_id = H5Aopen_name(dset_id, parameter_name);
-    if (attr_id == h5_error) {
-      std::fprintf(stderr,"Failed to open %s attribute in Cooling dataset.\n",
-              parameter_name);
-      return GR_FAIL;
-    }
-
-    double* tmp_param_buf = new double[my_cloudy->grid_dimension[q]];
-    status = H5Aread(attr_id, HDF5_R8, tmp_param_buf);
-    if (attr_id == h5_error) {
-      std::fprintf(stderr,"Failed to read %s attribute in Cooling dataset.\n",
-                   parameter_name);
-      return GR_FAIL;
-    }
-
-    my_cloudy->grid_parameters[q] = new double[my_cloudy->grid_dimension[q]];
-    for (long long w = 0LL; w < my_cloudy->grid_dimension[q]; w++) {
-      if (q < my_cloudy->grid_rank - 1) {
-	my_cloudy->grid_parameters[q][w] = (double) tmp_param_buf[w];
-      }
-      else {
-	// convert temeperature to log
-	my_cloudy->grid_parameters[q][w] = (double) std::log10(tmp_param_buf[w]);
-      }
-
-    }
-    delete[] tmp_param_buf;
-    if (grackle_verbose) {
+    std::fprintf(stdout, "Cloudy cooling grid = {\n");
+    std::fprintf(stdout, "  rank: %lld,\n", my_cloudy->grid_rank);
+    for (long long i = 0LL; i < my_cloudy->grid_rank; i++) {
       std::fprintf(stdout,
-          "%s: %g to %g (%lld steps).\n",
-          parameter_name,
-          my_cloudy->grid_parameters[q][0],
-          my_cloudy->grid_parameters[q][my_cloudy->grid_dimension[q]-1],
-          my_cloudy->grid_dimension[q]);
+          "  axis %lld (\"%s\"): %g to %g (%lld steps),\n",
+          i,
+          grid_props.axes[i].name,
+          my_cloudy->grid_parameters[i][0],
+          my_cloudy->grid_parameters[i][my_cloudy->grid_dimension[i]-1],
+          my_cloudy->grid_dimension[i]);
     }
-    status = H5Aclose(attr_id);
-    if (attr_id == h5_error) {
-      std::fprintf(stderr,"Failed to close %s attribute in Cooling dataset.\n",
-              parameter_name);
-      return GR_FAIL;
-    }
+    fprintf(stdout, "}\n");
   }
+  h5io::ArrayShape expected_shape = grid_props.table_shape;
 
   // Read Cooling data.
-  my_cloudy->data_size = 1;
-  for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
-    my_cloudy->data_size *= my_cloudy->grid_dimension[q];
-  }
-  double* tmp_cool_data = new double[my_cloudy->data_size];
+  my_cloudy->data_size = h5io::ArrayShape_elem_count(expected_shape);
+  my_cloudy->cooling_data = load_heatcool_data(file_id, dset_name, CoolUnit,
+                                               expected_shape);
 
-  status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                   tmp_cool_data);
-  if (grackle_verbose)
-    std::fprintf(stdout,"Reading Cloudy Cooling dataset.\n");
-  if (status == h5_error) {
-    std::fprintf(stderr,"Failed to read Cooling dataset.\n");
-    delete[] tmp_cool_data;
-    return GR_FAIL;
-  }
-
-  my_cloudy->cooling_data = new double[my_cloudy->data_size];
-  for (long long q = 0LL; q < my_cloudy->data_size; q++) {
-    my_cloudy->cooling_data[q] = tmp_cool_data[q] > 0 ?
-      (double) std::log10(tmp_cool_data[q]) : (double) SMALL_LOG_VALUE;
-
-    // Convert to code units.
-    my_cloudy->cooling_data[q] -= std::log10(CoolUnit);
-  }
-  delete[] tmp_cool_data;
-
-  status = H5Dclose(dset_id);
-  if (status == h5_error) {
-    std::fprintf(stderr,"Failed to close Cooling dataset.\n");
+  if (my_cloudy->cooling_data == nullptr) {
+    h5io::drop_GridTableProps(&grid_props);
+    H5Fclose(file_id);
     return GR_FAIL;
   }
 
   // Read Heating data.
   if (my_chemistry->UVbackground == 1) {
-
-    double* tmp_heat_data = new double[my_cloudy->data_size];
-
-    std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/Heating",
+    std::snprintf(dset_name, name_bufsize, "/CoolingRates/%s/Heating",
                   group_name);
-    dset_id =  H5Dopen(file_id, parameter_name);
-    if (dset_id == h5_error) {
-      std::fprintf(stderr,"Can't open Heating in %s.\n",
-              my_chemistry->grackle_data_file);
+
+    // validate that Heating table has have identical GridTableProps
+    if (h5io::assert_has_consistent_GridTableProps(file_id, dset_name,
+                                                   grid_props) != GR_SUCCESS){
+      h5io::drop_GridTableProps(&grid_props);
+      H5Fclose(file_id);
       return GR_FAIL;
     }
-
-    status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                     tmp_heat_data);
-    if (grackle_verbose)
-      std::fprintf(stdout,"Reading Cloudy Heating dataset.\n");
-    if (status == h5_error) {
-      std::fprintf(stderr,"Failed to read Heating dataset.\n");
-      return GR_FAIL;
-    }
-
-    my_cloudy->heating_data = new double[my_cloudy->data_size];
-    for (long long q = 0LL; q < my_cloudy->data_size; q++) {
-      my_cloudy->heating_data[q] = tmp_heat_data[q] > 0 ?
-        (double) std::log10(tmp_heat_data[q]) : (double) SMALL_LOG_VALUE;
-
-      // Convert to code units.
-      my_cloudy->heating_data[q] -= std::log10(CoolUnit);
-    }
-    delete[] tmp_heat_data;
-
-    status = H5Dclose(dset_id);
-    if (status == h5_error) {
-      std::fprintf(stderr,"Failed to close Heating dataset.\n");
+    my_cloudy->heating_data = load_heatcool_data(file_id, dset_name, CoolUnit,
+                                                 expected_shape);
+    if (my_cloudy->heating_data == nullptr) {
+      h5io::drop_GridTableProps(&grid_props);
+      H5Fclose(file_id);
       return GR_FAIL;
     }
   }
@@ -292,35 +215,27 @@ int grackle::impl::initialize_cloudy_data(
   // Read MMW data.
   if (my_chemistry->primordial_chemistry == 0 &&
       std::strcmp(group_name, "Primordial") == 0) {
+    const char* mmw_dset_name = "/CoolingRates/Primordial/MMW";
+
+    // validate that MMW table has have identical GridTableProps
+    if (h5io::assert_has_consistent_GridTableProps(file_id, mmw_dset_name,
+                                                   grid_props) != GR_SUCCESS){
+      h5io::drop_GridTableProps(&grid_props);
+      H5Fclose(file_id);
+      return GR_FAIL;
+    }
 
     my_cloudy->mmw_data = new double[my_cloudy->data_size];
-
-    std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/MMW",
-                  group_name);
-    dset_id =  H5Dopen(file_id, parameter_name);
-    if (dset_id == h5_error) {
-      std::fprintf(stderr,"Can't open MMW in %s.\n",
-              my_chemistry->grackle_data_file);
+    if (h5io::read_dataset(file_id, mmw_dset_name, my_cloudy->mmw_data,
+                           &expected_shape) != GR_SUCCESS) {
+      h5io::drop_GridTableProps(&grid_props);
+      H5Fclose(file_id);
       return GR_FAIL;
     }
 
-    status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                     my_cloudy->mmw_data);
-    if (grackle_verbose)
-      std::fprintf(stdout,"Reading Cloudy MMW dataset.\n");
-    if (status == h5_error) {
-      std::fprintf(stderr,"Failed to read MMW dataset.\n");
-      return GR_FAIL;
-    }
-
-    status = H5Dclose(dset_id);
-    if (status == h5_error) {
-      std::fprintf(stderr,"Failed to close MMW dataset.\n");
-      return GR_FAIL;
-    }
   }
 
-  status = H5Fclose (file_id);
+  H5Fclose (file_id);
 
   if (my_cloudy->grid_rank > GRACKLE_CLOUDY_TABLE_MAX_DIMENSION) {
     std::fprintf(
