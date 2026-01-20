@@ -20,14 +20,14 @@ namespace grackle::impl {
 ///
 /// Solve cloudy metal cooling for old cloudy metal cooling tables
 ///
-/// @param[in] rhoH 1D array to hold the computed Hydrogen mass density for the
+/// @param[in] rhoH 1D array holding the Hydrogen mass density for the
 /// @p idx_range
-/// @param[in] metallicity 1D array to hold the computed metallicity for the @p
+/// @param[in] metallicity 1D array holding the metallicity for the @p
 /// idx_range
 /// @param[in] logtem Natural log of temperature values
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range
-/// @param[in] comp2 Constant factor to convert cooling rates to code units
+/// @param[in] comp2 CMB Temperature at redshift @p zr
 /// @param[in] dom Unit conversion to proper number density in code units
 /// @param[in] zr Current redshift
 /// @param[in] itmask Iteration mask
