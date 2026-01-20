@@ -16,7 +16,7 @@
 #include <cstring> // std::strcmp
 #include "hdf5.h"
 #include "grackle.h"
-#include "grackle_macros.h" // TRUE
+#include "internal_units.h"
 #include "initialize_cloudy_data.hpp"
 #include "support/h5io.hpp"
 
@@ -94,29 +94,9 @@ int grackle::impl::initialize_cloudy_data(
     std::fprintf(stdout,"cloudy_table_file: %s.\n",my_chemistry->grackle_data_file);
   }
 
-  /* Get conversion units. */
-
-  double co_length_units, co_density_units;
-  if (my_units->comoving_coordinates == TRUE) {
-    co_length_units = my_units->length_units;
-    co_density_units = my_units->density_units;
-  }
-  else {
-    co_length_units = my_units->length_units *
-      my_units->a_value * my_units->a_units;
-    co_density_units = my_units->density_units /
-      std::pow(my_units->a_value * my_units->a_units, 3.0);
-  }
-
-  double tbase1 = my_units->time_units;
-  double xbase1 = co_length_units /
-    (my_units->a_value * my_units->a_units);
-  double dbase1 = co_density_units *
-    std::pow(my_units->a_value * my_units->a_units, 3.0);
-  double mh = 1.67e-24;
-  double CoolUnit = (
-    std::pow(my_units->a_units,5.0) * std::pow(xbase1,2.0) * std::pow(mh,2.0)
-  ) / (std::pow(tbase1, 3.0) * dbase1);
+  // get the conversion factor to code units for the cooling rate
+  InternalGrUnits internalu = new_internalu_legacy_init_cloudy_data_(my_units);
+  double CoolUnit = internalu.coolunit;
 
   // Read cooling data in from hdf5 file.
   hid_t file_id = H5Fopen(my_chemistry->grackle_data_file,
