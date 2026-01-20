@@ -18,7 +18,7 @@
 #include "grackle.h"
 #include "internal_units.h"
 #include "initialize_cloudy_data.hpp"
-#include "utils/h5io.hpp"
+#include "support/h5io.hpp"
 
 #define SMALL_LOG_VALUE (-99.0)
 #define MAX_PARAMETER_NAME_LENGTH (512)
@@ -173,19 +173,16 @@ int grackle::impl::initialize_cloudy_data(
 
   // Read Heating data.
   if (my_chemistry->UVbackground == 1) {
-    // Ideally we would parse the attributes describing how the table varies
-    // and confirm it's consistent with the Cooling table
-    // -> at this point, this is easy to do, but it introduces overhead
-
     std::snprintf(dset_name, name_bufsize, "/CoolingRates/%s/Heating",
                   group_name);
 
-    //if (h5io::assert_has_consistent_GridTableProps(file_id, dset_name,
-    //                                               grid_props) != GR_SUCCESS){
-    //  h5io::drop_GridTableProps(&grid_props);
-    //  H5Fclose(file_id);
-    //  return GR_FAIL;
-    //}
+    // validate that Heating table has have identical GridTableProps
+    if (h5io::assert_has_consistent_GridTableProps(file_id, dset_name,
+                                                   grid_props) != GR_SUCCESS){
+      h5io::drop_GridTableProps(&grid_props);
+      H5Fclose(file_id);
+      return GR_FAIL;
+    }
     my_cloudy->heating_data = load_heatcool_data(file_id, dset_name, CoolUnit,
                                                  expected_shape);
     if (my_cloudy->heating_data == nullptr) {
@@ -198,18 +195,15 @@ int grackle::impl::initialize_cloudy_data(
   // Read MMW data.
   if (my_chemistry->primordial_chemistry == 0 &&
       std::strcmp(group_name, "Primordial") == 0) {
-    // Ideally we would parse the attributes describing how the table varies
-    // and confirm it's consistent with the Cooling table
-    // -> at this point, this is easy to do, but it introduces overhead
-
     const char* mmw_dset_name = "/CoolingRates/Primordial/MMW";
 
-    //if (h5io::assert_has_consistent_GridTableProps(file_id, mmw_dset_name,
-    //                                               grid_props) != GR_SUCCESS){
-    //  h5io::drop_GridTableProps(&grid_props);
-    //  H5Fclose(file_id);
-    //  return GR_FAIL;
-    //}
+    // validate that MMW table has have identical GridTableProps
+    if (h5io::assert_has_consistent_GridTableProps(file_id, mmw_dset_name,
+                                                   grid_props) != GR_SUCCESS){
+      h5io::drop_GridTableProps(&grid_props);
+      H5Fclose(file_id);
+      return GR_FAIL;
+    }
 
     my_cloudy->mmw_data = new double[my_cloudy->data_size];
     if (h5io::read_dataset(file_id, mmw_dset_name, my_cloudy->mmw_data,

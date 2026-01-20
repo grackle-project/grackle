@@ -25,6 +25,7 @@ OBJS_CONFIG_LIB = \
         cool1d_cloudy_old_tables_g.lo \
         cool1d_multi_g.lo \
         cool_multi_time_g.lo \
+        dust/grain_species_info.lo \
         dynamic_api.lo \
         grackle_units.lo \
 	index_helper.lo \
@@ -35,6 +36,7 @@ OBJS_CONFIG_LIB = \
         initialize_rates.lo \
         initialize_UVbackground_data.lo \
         interpolators_g.lo \
+        rate_timestep_g.lo \
         make_consistent.lo \
         scale_fields.lo \
         set_default_chemistry_parameters.lo \
@@ -50,7 +52,7 @@ OBJS_CONFIG_LIB = \
         rate_functions.lo \
         rate_utils.lo \
         gaussj_g.lo \
-        utils/h5io.lo \
+        support/h5io.lo \
         utils.lo \
         utils-cpp.lo \
         internal_types.lo
