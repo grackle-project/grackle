@@ -19,13 +19,13 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "auto_general.hpp"
-#include "interp_table_utils.h" // free_interp_grid_
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_cloudy_data.hpp"
 #include "initialize_dust_yields.hpp"  // free_dust_yields
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.hpp"
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
+#include "interp_table_utils.hpp" // free_interp_grid_
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 
@@ -49,23 +49,6 @@ static void show_version(FILE *fp)
   fprintf (fp, "\n");
 }
 
-/// initialize an empty #gr_interp_grid_props
-static void init_empty_interp_grid_props_(gr_interp_grid_props* props) {
-  props->rank = 0;
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
-    props->dimension[i] = 0;
-    props->parameters[i] = nullptr;
-    props->parameter_spacing[i] = 0.0;
-  }
-  props->data_size = 0;
-}
-
-/// Initialize an empty #gr_interp_grid
-static void initialize_empty_interp_grid_(gr_interp_grid* grid)
-{
-  init_empty_interp_grid_props_(&(grid->props));
-  grid->data=NULL;
-}
 
 /**
  * Initializes an empty #chemistry_data_storage struct with zeros and NULLs.
@@ -152,18 +135,18 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
 
   my_rates->cieY06 = NULL;
 
-  initialize_empty_interp_grid_(&my_rates->LH2);
-  initialize_empty_interp_grid_(&my_rates->LHD);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LHD);
 
-  initialize_empty_interp_grid_(&my_rates->LCI);
-  initialize_empty_interp_grid_(&my_rates->LCII);
-  initialize_empty_interp_grid_(&my_rates->LOI);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCI);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCII);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOI);
 
-  initialize_empty_interp_grid_(&my_rates->LCO);
-  initialize_empty_interp_grid_(&my_rates->LOH);
-  initialize_empty_interp_grid_(&my_rates->LH2O);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCO);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOH);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2O);
 
-  initialize_empty_interp_grid_(&my_rates->alphap);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->alphap);
 
   my_rates->gr_N = NULL;
   my_rates->gr_Size = 0;
@@ -400,7 +383,7 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   my_rates->opaque_storage->kcol_rate_tables = nullptr;
   my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
   my_rates->opaque_storage->n_kcol_rate_indices = 0;
-  init_empty_interp_grid_props_(
+  grackle::impl::init_empty_interp_grid_props_(
     &my_rates->opaque_storage->h2dust_grain_interp_props);
   my_rates->opaque_storage->grain_species_info = nullptr;
 
@@ -574,13 +557,13 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->gas_grain);
     GRACKLE_FREE(my_rates->gas_grain2);
 
-    free_interp_grid_(&my_rates->LH2);
-    free_interp_grid_(&my_rates->LHD);
+    grackle::impl::free_interp_grid_(&my_rates->LH2);
+    grackle::impl::free_interp_grid_(&my_rates->LHD);
 
     // we deal with freeing other interp grids inside of
     // free_misc_species_cool_rates
 
-    free_interp_grid_(&my_rates->alphap);
+    grackle::impl::free_interp_grid_(&my_rates->alphap);
 
     GRACKLE_FREE(my_rates->gr_N);
 
@@ -627,7 +610,9 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
 
   // delete contents of h2dust_grain_interp_props (automatically handles the
   // case where we didn't allocate anything)
-  free_interp_grid_props_(&my_rates->opaque_storage->h2dust_grain_interp_props);
+  grackle::impl::free_interp_grid_props_(
+      &my_rates->opaque_storage->h2dust_grain_interp_props,
+      /* use_delete = */ false);
   // since h2dust_grain_interp_props isn't a pointer, there is nothing more to
   // allocate right here
 
