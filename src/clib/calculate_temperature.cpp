@@ -11,14 +11,11 @@
 / software.
 ************************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
 #include "calc_temp_cloudy_g.h"
 #include "grackle.h"
 #include "index_helper.h"
 #include "internal_units.h"
-#include "phys_constants.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -33,11 +30,11 @@
  
 #define MINIMUM_TEMPERATURE 1.0
  
-int local_calculate_temperature(chemistry_data *my_chemistry,
-                                chemistry_data_storage *my_rates,
-                                code_units *my_units,
-                                grackle_field_data *my_fields,
-                                gr_float *temperature)
+extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
+                                           chemistry_data_storage *my_rates,
+                                           code_units *my_units,
+                                           grackle_field_data *my_fields,
+                                           gr_float *temperature)
 {
   if (!my_chemistry->use_grackle) { return GR_SUCCESS; }
 
@@ -55,44 +52,40 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
   /* Compute the pressure first. */
   if (local_calculate_pressure(my_chemistry, my_rates, my_units,
                                my_fields, temperature) != GR_SUCCESS) {
-    fprintf(stderr, "Error in calculate_pressure.\n");
+    std::fprintf(stderr, "Error in calculate_pressure.\n");
     return GR_FAIL;
   }
 
-  /* Calculate temperature units. */
+  // Calculate temperature units and fetch some constants
 
-  double temperature_units = get_temperature_units(my_units);
-
-  double number_density, tiny_number = 1.-20;
-  double inv_metal_mol = 1.0 / MU_METAL;
+  const double temperature_units = get_temperature_units(my_units);
+  const double tiny_number = 1.e-20;
+  const double inv_metal_mol = 1.0 / MU_METAL;
 
   /* Compute properties used to index the field. */
   const grackle_index_helper ind_helper = build_index_helper_(my_fields);
-  int outer_ind, index;
 
   /* Compute temperature with mu calculated directly. */
 
   /* parallelize the k and j loops with OpenMP
    * (these loops are flattened them for better parallelism) */
 # ifdef _OPENMP
-# pragma omp parallel for schedule( runtime ) \
-  private( outer_ind, index, number_density )
+# pragma omp parallel for schedule( runtime )
 # endif
-  for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
+  for (int outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
     const field_flat_index_range range = inner_flat_range_(outer_ind,
                                                            &ind_helper);
 
-    for (index = range.start; index <= range.end; index++) {
- 
-      if (my_chemistry->primordial_chemistry > 0) {
-	number_density =
-	  0.25 * (my_fields->HeI_density[index] +
-		  my_fields->HeII_density[index] +
-		  my_fields->HeIII_density[index]) +
-	  my_fields->HI_density[index] + my_fields->HII_density[index] +
-	  my_fields->e_density[index];
-      }
+    for (int index = range.start; index <= range.end; index++) {
+
+      // we will only be in this loop if primordial_chemistry > 0
+      double number_density =
+        0.25 * (my_fields->HeI_density[index] +
+		    my_fields->HeII_density[index] +
+        my_fields->HeIII_density[index]) +
+        my_fields->HI_density[index] + my_fields->HII_density[index] +
+        my_fields->e_density[index];
 
       /* Add in H2. */
  
@@ -118,13 +111,13 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 }
 
 
-int calculate_temperature(code_units *my_units,
-                          grackle_field_data *my_fields,
-                          gr_float *temperature)
+extern "C" int calculate_temperature(code_units *my_units,
+                                     grackle_field_data *my_fields,
+                                     gr_float *temperature)
 {
   if (local_calculate_temperature(grackle_data, &grackle_rates, my_units,
                                   my_fields, temperature) != GR_SUCCESS) {
-    fprintf(stderr, "Error in local_calculate_temperature.\n");
+    std::fprintf(stderr, "Error in local_calculate_temperature.\n");
     return GR_FAIL;
   }
   return GR_SUCCESS;
