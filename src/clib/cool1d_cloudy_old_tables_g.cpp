@@ -35,7 +35,7 @@ void grackle::impl::cool1d_cloudy_old_tables_g(
 
   int i;
   double inv_log10, log10_tCMB;
-  double dclPar[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+  double dclPar[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION] = {};
 
   // Slice locals
 
