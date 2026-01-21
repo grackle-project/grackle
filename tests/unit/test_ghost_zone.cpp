@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "grtest_utils.hpp"
+#include "grtestutils/utils.hpp"
 
 #include <grackle.h>
 
