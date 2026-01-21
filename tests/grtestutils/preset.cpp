@@ -16,6 +16,7 @@
 #include "grackle.h"
 #include "status_reporting.h"  // GR_INTERNAL_UNREACHABLE_ERROR
 
+namespace grtest {
 static std::string to_string(const grtest::ChemPreset& preset) {
   switch (preset) {
     case grtest::ChemPreset::primchem0:
@@ -33,14 +34,14 @@ static std::string to_string(const grtest::ChemPreset& preset) {
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
-grtest::InitStatus grtest::setup_chemistry_data_from_preset(
-    chemistry_data* my_chem, ChemPreset preset) {
+InitStatus setup_chemistry_data_from_preset(chemistry_data* my_chem,
+                                            ChemPreset preset) {
   if (local_initialize_chemistry_parameters(my_chem) != GR_SUCCESS) {
     return InitStatus::generic_fail;
   }
 
-  if (!grtest::set_standard_datafile(*my_chem, "CloudyData_UVB=HM2012.h5")) {
-    return InitStatus::datafile_notfound;
+  if (!set_standard_datafile(*my_chem, "CloudyData_UVB=HM2012.h5")) {
+    return InitStatus::standard_datafile_notfound;
   }
 
   my_chem->use_grackle = 1;  // chemistry on
@@ -82,7 +83,7 @@ grtest::InitStatus grtest::setup_chemistry_data_from_preset(
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
-static std::string to_string(const grtest::InitialUnitPreset& preset) {
+static std::string to_string(const InitialUnitPreset& preset) {
   switch (preset) {
     case grtest::InitialUnitPreset::simple_z0:
       return "simpleUnit-z=0";
@@ -90,7 +91,7 @@ static std::string to_string(const grtest::InitialUnitPreset& preset) {
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
-code_units grtest::setup_initial_unit(grtest::InitialUnitPreset preset) {
+code_units setup_initial_unit(InitialUnitPreset preset) {
   // since we return in the switch statement, the compiler should always warn
   // us if we're missing an enumeration
   switch (preset) {
@@ -111,7 +112,9 @@ code_units grtest::setup_initial_unit(grtest::InitialUnitPreset preset) {
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
-void grtest::PrintTo(const grtest::FullConfPreset& preset, std::ostream* os) {
+void PrintTo(const grtest::FullConfPreset& preset, std::ostream* os) {
   *os << "Preset{" << to_string(preset.chemistry) << ','
       << to_string(preset.unit) << '}';
 }
+
+}  // namespace grtest
