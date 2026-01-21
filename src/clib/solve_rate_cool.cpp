@@ -32,8 +32,10 @@
 #include "visitor/memory.hpp"
 
 #include "ceiling_species.hpp"
-#include "scale_fields_g-cpp.h"
-#include "solve_rate_cool_g-cpp.h"
+#include "rate_timestep_g.hpp"
+#include "cool1d_multi_g.hpp"
+#include "scale_fields.hpp"
+#include "solve_rate_cool.hpp"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
 /// selected by the given itmask) with the maximum allowed heating/cooling
@@ -628,22 +630,16 @@ void drop_SpeciesRateSolverScratchBuf(SpeciesRateSolverScratchBuf* ptr) {
 }
 
 
-} // namespace grackle::impl
 
 // -------------------------------------------------------------
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
 
-int solve_rate_cool_g(
+int solve_rate_cool(
   int imetal, double dt, InternalGrUnits internalu,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 )
 {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
 #ifdef GRACKLE_FLOAT_4
   const gr_float tolerance = (gr_float)(1.0e-05);
@@ -681,7 +677,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields(imetal, factor, my_chemistry, my_fields);
   }
 
   grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
@@ -837,10 +833,10 @@ int solve_rate_cool_g(
           // Compute dedot and HIdot, the rates of change of de and HI
           //   (should add itmask to this call)
 
-          f_wrap::rate_timestep_g(
-            spsolvbuf.dedot, spsolvbuf.HIdot, anydust, idx_range,
-            spsolvbuf.h2dust, rhoH.data(), itmask.data(), edot.data(),
-            chunit, dom, my_chemistry, my_fields, *my_uvb_rates,
+          grackle::impl::rate_timestep_g(
+            spsolvbuf.dedot, spsolvbuf.HIdot, anydust, spsolvbuf.h2dust,
+            rhoH.data(), itmask.data(), edot.data(),
+            chunit, dom, my_chemistry, my_fields, idx_range,
             spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
             spsolvbuf.chemheatrates_buf
           );
@@ -1002,7 +998,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields(imetal, factor, my_chemistry, my_fields);
   }
 
   if (my_chemistry->primordial_chemistry > 0)  {
@@ -1016,6 +1012,4 @@ int solve_rate_cool_g(
   return ierr;
 }
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace grackle::impl
