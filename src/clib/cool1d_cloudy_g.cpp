@@ -33,7 +33,7 @@ void grackle::impl::cool1d_cloudy_g(
   int i, get_heat;
   long long zindex, zmidpt, zhighpt;
   double inv_log10, log10_tCMB;
-  double dclPar[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+  double dclPar[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION]; // NOLINT
   long long end_int;
 
   // Slice locals
