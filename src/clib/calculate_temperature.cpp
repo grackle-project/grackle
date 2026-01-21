@@ -59,7 +59,7 @@ extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
   // Calculate temperature units and fetch some constants
 
   const double temperature_units = get_temperature_units(my_units);
-  const double tiny_number = 1.-20;
+  const double tiny_number = 1.e-20;
   const double inv_metal_mol = 1.0 / MU_METAL;
 
   /* Compute properties used to index the field. */
