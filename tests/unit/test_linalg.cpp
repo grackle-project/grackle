@@ -1,4 +1,5 @@
 #include <vector>
+#include <ostream>
 #include <gtest/gtest.h>
 
 #include "fortran_func_wrappers.hpp"
@@ -24,6 +25,11 @@ struct LinAlgCase {
       solution_vector(solution_vector)
   { }
 
+  // teach googletest how to print a string representation
+  friend void PrintTo(const LinAlgCase& my_case, std::ostream* os) {
+    *os << "{SolutionVec=" << vec_to_string(my_case.solution_vector) << '}';
+  }
+
 };
 
 static std::vector<double> transpose_matrix(
@@ -44,14 +50,14 @@ static std::vector<double> transpose_matrix(
   return out;
 }
 
-class LinAlgTestSolve : public testing::TestWithParam<LinAlgCase> {
+class LinAlgSolve : public testing::TestWithParam<LinAlgCase> {
   // You can implement all the usual fixture class members here.
   // To access the test parameter, call GetParam() from class
   // TestWithParam<T>.
 };
 
 // Solve a basic linear algebra equation.
-TEST_P(LinAlgTestSolve, CheckSuccessfulSolve) {
+TEST_P(LinAlgSolve, Check) {
   LinAlgCase my_case = GetParam();
   std::vector<double> matrix_colmajor = transpose_matrix(
     my_case.n, my_case.n, my_case.matrix_rowmajor
@@ -68,8 +74,8 @@ TEST_P(LinAlgTestSolve, CheckSuccessfulSolve) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-  LinAlgScenarios,
-  LinAlgTestSolve,
+  /* 1st arg intentionally left blank */,
+  LinAlgSolve,
   testing::Values(
     LinAlgCase(
       2,
@@ -99,7 +105,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 
-TEST(LinAlgTestSolveSingular, SillyScenario) {
+TEST(LinAlgSolveSingular, SillyScenario) {
   int n = 4;
   std::vector<double> matrix_rowmajor{ 1.0, 0.0, 0.0, 0.0,
                                        0.0, 0.0, 0.0, 0.0,
@@ -117,7 +123,7 @@ TEST(LinAlgTestSolveSingular, SillyScenario) {
                      << "the matrix is singular";
 }
 
-TEST(LinAlgTestSolveSingular, AltScenario) {
+TEST(LinAlgSolveSingular, AltScenario) {
   // we are picking a matrix without so many zeros (it is singular since the
   // determinant is 0)
   int n = 2;
