@@ -13,8 +13,94 @@
 #define GRTESTUTILS_GRACKLECTXPACK_HPP
 
 #include "preset.hpp"
+#include <algorithm>  // std::remove_if
+#include <memory>     // std::unique_ptr
 
 namespace grtest {
+
+namespace param_detail {
+
+/// Tracks allocations of string parameters stored by a @ref chemistry_data
+///
+/// The basic premise is that when you construct a @ref chemistry_data instance,
+/// you would also construct a StrAllocTracker instance that has the same
+/// lifetime as @ref chemistry_data. And then you would pass both instances to
+/// @ref set_str when you want to store a string parameter
+///
+/// @par Implementation Notes
+/// * We explicitly avoid tracking the allocations within this type using
+///   std::string because SSO (small string optimization) could cause weird
+///   bugs in the future during refactoring if we aren't super careful
+///
+/// * We assume max number of strings is small (i.e. <=5). If the number grows,
+///   use std::unordered_set instead of std::vector
+class StrAllocTracker {
+  /// manages the lifetime of string allocations
+  std::vector<std::unique_ptr<char[]>> bufs_;
+
+public:
+  /// allocate a new buffer and try to free the old buffer
+  ///
+  /// @param tot_len Total length of new buffer (including the nul terminator)
+  /// @param old The old buffer that we are trying to replace
+  char* alloc_buf_and_free_old(std::size_t tot_len, const char* old) {
+    // erase the entry in bufs_ holding old (this also frees memory). If old
+    // isn't found, it's a nullptr or we assume that it's a string literal
+    for (std::size_t i = 0; i < bufs_.size(); i++) {
+      if (bufs_[i].get() == old) {
+        bufs_.erase(bufs_.begin() + i);
+        break;
+      }
+    }
+
+    if (tot_len == 0) {
+      return nullptr;
+    }
+    const std::unique_ptr<char[]>& p = bufs_.emplace_back(new char[tot_len]);
+    return p.get();
+  }
+};
+
+/// Tries to set a string parameter tracked by @p my_param
+///
+/// @param[in,out] my_chem Tracks various Grackle parameters
+/// @param[in] name The name of the parameter getting updated
+/// @param[in] val The value of the parameter
+/// @param[in] str_allocs Tracks allocations of the strings held by @p my_chem
+/// @returns true if successful and `false` if there was an error (e.g. @p name
+///     isn't a known parameter or is a parameter that doesn't expect a string)
+///
+/// @note
+/// Oridinarily, this function will update @p str_allocs to hold a copy of
+/// @p val and @p my_chem will be updated to store a pointer to that copy. When
+/// @p str_allocs is a nullptr, @p my_chem is directly updated to track the data
+/// referenced by @p val.
+bool set_str(chemistry_data& my_chem, const std::string& name, const char* val,
+             StrAllocTracker* str_allocs);
+bool set_str(chemistry_data& my_chem, const std::string& name,
+             const std::string& val, StrAllocTracker* str_allocs);
+
+inline bool set_int(chemistry_data& my_chem, const std::string& name, int val) {
+  int* dest = local_chemistry_data_access_int(&my_chem, name.c_str());
+  if (dest == nullptr) {
+    return false;
+  }
+  (*dest) = val;
+  return true;
+}
+
+inline bool set_double(chemistry_data& my_chem, const std::string& name,
+                       double val) {
+  double* dest = local_chemistry_data_access_double(&my_chem, name.c_str());
+  if (dest == nullptr) {
+    return false;
+  }
+  (*dest) = val;
+  return true;
+}
+
+}  // namespace param_detail
+
 /// Tracks the group of Grackle objects needed for executing API functions
 ///
 /// The primary motivation for this object's existence is making sure that
