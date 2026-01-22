@@ -61,43 +61,6 @@ public:
   }
 };
 
-/// Tries to set a string parameter tracked by @p my_param
-///
-/// @param[in,out] my_chem Tracks various Grackle parameters
-/// @param[in] name The name of the parameter getting updated
-/// @param[in] val The value of the parameter
-/// @param[in] str_allocs Tracks allocations of the strings held by @p my_chem
-/// @returns true if successful and `false` if there was an error (e.g. @p name
-///     isn't a known parameter or is a parameter that doesn't expect a string)
-///
-/// @note
-/// Oridinarily, this function will update @p str_allocs to hold a copy of
-/// @p val and @p my_chem will be updated to store a pointer to that copy. When
-/// @p str_allocs is a nullptr, @p my_chem is directly updated to track the data
-/// referenced by @p val.
-bool set_str(chemistry_data& my_chem, const std::string& name, const char* val,
-             StrAllocTracker* str_allocs);
-bool set_str(chemistry_data& my_chem, const std::string& name,
-             const std::string& val, StrAllocTracker* str_allocs);
-
-inline bool set_int(chemistry_data& my_chem, const std::string& name, int val) {
-  int* dest = local_chemistry_data_access_int(&my_chem, name.c_str());
-  if (dest == nullptr) {
-    return false;
-  }
-  (*dest) = val;
-  return true;
-}
-
-inline bool set_double(chemistry_data& my_chem, const std::string& name,
-                       double val) {
-  double* dest = local_chemistry_data_access_double(&my_chem, name.c_str());
-  if (dest == nullptr) {
-    return false;
-  }
-  (*dest) = val;
-  return true;
-}
 
 }  // namespace param_detail
 
