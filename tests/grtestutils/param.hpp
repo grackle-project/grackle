@@ -13,11 +13,13 @@
 #define GRTESTUTILS_PARAM_HPP
 
 #include "grackle.h"
+#include <initializer_list>
 #include <iosfwd>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
+#include <vector>
 
 namespace grtest {
 
@@ -104,6 +106,53 @@ inline std::string to_string(const ParamPair& pair) {
   out += str_val;
   out += '}';
   return out;
+}
+
+namespace param_detail {
+
+/// this **ONLY** exists to help implement @ref make_ParamPair_vec
+struct ParamPairInit {
+  ParamPair pair;
+
+  template <class V>
+  ParamPairInit(const char* k, V&& v) : pair(k, ParamVal(std::forward<V>(v))) {}
+};
+
+}  // namespace param_detail
+
+/// A convenience function for easier construction of a vector of Param pairs
+///
+/// This function lets you write code like
+/// @code{C++}
+/// std::vector<ParamPair> v = make_ParamPair_vec({
+///   {"use_grackle", 1},
+///   {"with_radiative_cooling", 1},
+///   {"metal_cooling", 1},
+///   {"UVbackground", 1},
+///   {"primordial_chemistry", 2}
+/// });
+/// @endcode
+///
+/// We could definitely get rid of this function, but then we would need to
+/// rewrite the above snippet as:
+/// @code{C++}
+/// std::vector<ParamPair> v = {
+///   {"use_grackle", ParamVal(1)},
+///   {"with_radiative_cooling", ParamVal(1)},
+///   {"metal_cooling", ParamVal(1)},
+///   {"UVbackground", ParamVal(1)},
+///   {"primordial_chemistry", ParamVal(2)}
+/// };
+inline std::vector<ParamPair> make_ParamPair_vec(
+    std::initializer_list<param_detail::ParamPairInit> l) {
+  // if we were a little more clever, we might be able to get rid of an
+  // intermediate allocation when constructing ParamPairInit...
+  std::vector<ParamPair> v;
+  v.reserve(l.size());
+  for (const param_detail::ParamPairInit& p : l) {
+    v.push_back(p.pair);
+  }
+  return v;
 }
 
 /// Tries to update @p my_chem to hold the value specified by @p par_val
