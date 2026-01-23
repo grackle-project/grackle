@@ -114,7 +114,7 @@ public:
   chemistry_data_storage* my_rates() { return this->my_rates_.get(); }
 
   /// create an initialized instance from a preset
-  static GrackleCtxPack create(const FullConfPreset& preset,
+  static GrackleCtxPack create(const SimpleConfPreset& preset,
                                InitStatus* status) {
     auto erroneous_exit = [&status](InitStatus new_status) {
       if (status != nullptr) {

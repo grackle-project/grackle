@@ -117,7 +117,7 @@ code_units setup_initial_unit(InitialUnitPreset preset) {
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
-void PrintTo(const grtest::FullConfPreset& preset, std::ostream* os) {
+void PrintTo(const grtest::SimpleConfPreset& preset, std::ostream* os) {
   *os << "Preset{" << to_string(preset.chemistry) << ','
       << to_string(preset.unit) << '}';
 }

@@ -44,7 +44,7 @@ protected:
     // called immediately after the constructor (but before the test-case)
 
     grtest::InitStatus status;
-    pack = GrackleCtxPack::create(FullConfPreset{chem_preset, unit_preset},
+    pack = GrackleCtxPack::create(SimpleConfPreset{chem_preset, unit_preset},
                                   &status);
     if (!pack.is_initialized()) {
       if (status == InitStatus::standard_datafile_notfound) {
@@ -74,7 +74,7 @@ protected:
 ///    this class, OR
 /// 2. make a subclass, named `MyFeatureTest`, of this class
 class ParametrizedConfigPresetFixture
-    : public testing::TestWithParam<FullConfPreset> {
+    : public testing::TestWithParam<SimpleConfPreset> {
 protected:
   void SetUp() override {
     // called immediately after the constructor (but before the test-case)

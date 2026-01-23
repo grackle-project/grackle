@@ -78,15 +78,15 @@ TEST_P(ParametrizedRateQueryTest, ConsistentIDs) {
 }
 
 using grtest::ChemPreset;
-using grtest::FullConfPreset;
 using grtest::InitialUnitPreset;
+using grtest::SimpleConfPreset;
 
 INSTANTIATE_TEST_SUITE_P(
     /* 1st arg is intentionally empty */, ParametrizedRateQueryTest,
     ::testing::Values(
-        FullConfPreset{ChemPreset::primchem0, InitialUnitPreset::simple_z0},
-        FullConfPreset{ChemPreset::primchem1, InitialUnitPreset::simple_z0},
-        FullConfPreset{ChemPreset::primchem2, InitialUnitPreset::simple_z0},
-        FullConfPreset{ChemPreset::primchem3, InitialUnitPreset::simple_z0},
-        FullConfPreset{ChemPreset::primchem4_dustspecies3,
-                       InitialUnitPreset::simple_z0}));
+        SimpleConfPreset{ChemPreset::primchem0, InitialUnitPreset::simple_z0},
+        SimpleConfPreset{ChemPreset::primchem1, InitialUnitPreset::simple_z0},
+        SimpleConfPreset{ChemPreset::primchem2, InitialUnitPreset::simple_z0},
+        SimpleConfPreset{ChemPreset::primchem3, InitialUnitPreset::simple_z0},
+        SimpleConfPreset{ChemPreset::primchem4_dustspecies3,
+                         InitialUnitPreset::simple_z0}));

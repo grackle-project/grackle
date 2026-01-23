@@ -55,13 +55,13 @@ enum class InitialUnitPreset {
 code_units setup_initial_unit(InitialUnitPreset preset);
 
 /// Represents the preset for creating a GrackleCtxPack
-struct FullConfPreset {
+struct SimpleConfPreset {
   ChemPreset chemistry;
   InitialUnitPreset unit;
 };
 
-// teach googletest how to print FullConfPreset
-void PrintTo(const FullConfPreset& preset, std::ostream* os);
+// teach googletest how to print SimpleConfPreset
+void PrintTo(const SimpleConfPreset& preset, std::ostream* os);
 
 }  // namespace grtest
 
