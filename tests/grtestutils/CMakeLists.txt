@@ -85,6 +85,7 @@ add_library(grtestutils
   os.hpp os.cpp
   param.hpp param.cpp
   preset.hpp preset.cpp
+  status.hpp status.cpp
   utils.hpp utils.cpp
 
   # files in the googletest subdirectory (reminder: should just be headers!)

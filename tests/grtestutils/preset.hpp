@@ -14,17 +14,11 @@
 
 #include "grackle.h"
 #include "./param.hpp"
+#include "./status.hpp"
 #include <iosfwd>
 #include <vector>
 
 namespace grtest {
-
-/// this only exists so that we can determine the reason that a test fails
-enum class InitStatus {
-  success,
-  generic_fail,
-  standard_datafile_notfound,
-};
 
 /// represents different presets for initializing chemistry_data
 ///
@@ -39,7 +33,7 @@ enum class ChemPreset {
 };
 
 /// override the settings of my_chem based on the specified preset
-std::pair<std::vector<ParamPair>, InitStatus> get_chem_preset_vals_(
+std::pair<std::vector<ParamPair>, Status> get_chem_preset_vals_(
     ChemPreset preset);
 
 /// Preset for constructing the code_unit instance used for initializing the

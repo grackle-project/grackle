@@ -20,6 +20,9 @@
 
 #include "../GrackleCtxPack.hpp"
 #include "../preset.hpp"
+#include "../status.hpp"
+
+#include <utility>  // std::move
 
 namespace grtest {
 
@@ -43,17 +46,14 @@ protected:
   void SetUp() override {
     // called immediately after the constructor (but before the test-case)
 
-    grtest::InitStatus status;
-    pack = GrackleCtxPack::create(SimpleConfPreset{chem_preset, unit_preset},
-                                  &status);
-    if (!pack.is_initialized()) {
-      if (status == InitStatus::standard_datafile_notfound) {
-        GTEST_SKIP()
-            << "something went before initialization while searching for a "
-            << "standard datafile";
-      } else {
-        FAIL() << "Error in initialize_chemistry_data.";
-      }
+    std::pair<GrackleCtxPack, Status> tmp =
+        GrackleCtxPack::create(SimpleConfPreset{chem_preset, unit_preset});
+    if (tmp.second.is_ok()) {
+      pack = std::move(tmp.first);
+    } else if (tmp.second.is_missing_std_file()) {
+      GTEST_SKIP() << tmp.second.to_string();
+    } else {
+      FAIL() << tmp.second.to_string();
     }
   }
 
@@ -78,16 +78,13 @@ class ParametrizedConfigPresetFixture
 protected:
   void SetUp() override {
     // called immediately after the constructor (but before the test-case)
-    grtest::InitStatus status;
-    pack = GrackleCtxPack::create(GetParam(), &status);
-    if (!pack.is_initialized()) {
-      if (status == InitStatus::standard_datafile_notfound) {
-        GTEST_SKIP()
-            << "something went before initialization while searching for a "
-            << "standard datafile";
-      } else {
-        FAIL() << "Error in initialize_chemistry_data.";
-      }
+    std::pair<GrackleCtxPack, Status> tmp = GrackleCtxPack::create(GetParam());
+    if (tmp.second.is_ok()) {
+      pack = std::move(tmp.first);
+    } else if (tmp.second.is_missing_std_file()) {
+      GTEST_SKIP() << tmp.second.to_string();
+    } else {
+      FAIL() << tmp.second.to_string();
     }
   }
 

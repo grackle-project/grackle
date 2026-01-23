@@ -37,7 +37,7 @@ static std::string to_string(const grtest::ChemPreset& preset) {
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
-std::pair<std::vector<ParamPair>, InitStatus> get_chem_preset_vals_(
+std::pair<std::vector<ParamPair>, Status> get_chem_preset_vals_(
     ChemPreset preset) {
   std::vector<std::pair<std::string, ParamVal>> v = make_ParamPair_vec({
       {"use_grackle", 1},  // chemistry on
@@ -50,7 +50,7 @@ std::pair<std::vector<ParamPair>, InitStatus> get_chem_preset_vals_(
   std::optional<std::string> maybe_datafile =
       get_standard_datafile("CloudyData_UVB=HM2012.h5");
   if (!maybe_datafile.has_value()) {
-    return {{}, InitStatus::standard_datafile_notfound};
+    return {{}, error::MissingStdFile()};
   } else {
     v.emplace_back("grackle_data_file", maybe_datafile.value());
   }
@@ -59,22 +59,22 @@ std::pair<std::vector<ParamPair>, InitStatus> get_chem_preset_vals_(
     case ChemPreset::primchem0: {
       v.emplace_back("primordial_chemistry", 0);
       v.emplace_back("dust_chemistry", 0);
-      return {v, InitStatus::success};
+      return {v, OkStatus()};
     }
     case ChemPreset::primchem1: {
       v.emplace_back("primordial_chemistry", 1);
       v.emplace_back("dust_chemistry", 1);
-      return {v, InitStatus::success};
+      return {v, OkStatus()};
     }
     case ChemPreset::primchem2: {
       v.emplace_back("primordial_chemistry", 2);
       v.emplace_back("dust_chemistry", 1);
-      return {v, InitStatus::success};
+      return {v, OkStatus()};
     }
     case ChemPreset::primchem3: {
       v.emplace_back("primordial_chemistry", 3);
       v.emplace_back("dust_chemistry", 1);
-      return {v, InitStatus::success};
+      return {v, OkStatus()};
     }
     case ChemPreset::primchem4_dustspecies3: {
       v.emplace_back("primordial_chemistry", 4);
@@ -82,7 +82,7 @@ std::pair<std::vector<ParamPair>, InitStatus> get_chem_preset_vals_(
       v.emplace_back("metal_chemistry", 1);
       v.emplace_back("dust_species", 3);
       v.emplace_back("use_dust_density_field", 1);
-      return {v, InitStatus::success};
+      return {v, OkStatus()};
     }
   }
   GR_INTERNAL_UNREACHABLE_ERROR();

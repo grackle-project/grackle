@@ -13,6 +13,7 @@
 #define GRTESTUTILS_PARAM_HPP
 
 #include "grackle.h"
+#include "./status.hpp"
 #include <initializer_list>
 #include <iosfwd>
 #include <optional>
@@ -202,17 +203,16 @@ bool set_param(chemistry_data& my_chem, const std::string& name,
 ///     previous values must remain valid). Otherwise, this can also be an
 ///     InputIterator
 template <class It>
-std::optional<std::string> set_params(
-    It first, It last, chemistry_data& my_chem,
-    param_detail::StrAllocTracker* str_allocs) {
+Status set_params(It first, It last, chemistry_data& my_chem,
+                  param_detail::StrAllocTracker* str_allocs) {
   for (It it = first; it != last; ++it) {
     const std::string& name = it->first;
     const ParamVal& val = it->second;
     if (!set_param(my_chem, name, val, str_allocs)) {
-      return std::optional<std::string>(name);
+      return error::Param(name);
     }
   }
-  return std::nullopt;  // we succeeded
+  return OkStatus();
 }
 
 }  // namespace grtest
