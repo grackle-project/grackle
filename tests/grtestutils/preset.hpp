@@ -13,9 +13,9 @@
 #define GRTESTUTILS_PRESET_HPP
 
 #include "grackle.h"
-#include <memory>
-#include <string>
-#include <ostream>
+#include "./param.hpp"
+#include <iosfwd>
+#include <vector>
 
 namespace grtest {
 
@@ -39,8 +39,8 @@ enum class ChemPreset {
 };
 
 /// override the settings of my_chem based on the specified preset
-InitStatus setup_chemistry_data_from_preset(chemistry_data* my_chem,
-                                            ChemPreset preset);
+std::pair<std::vector<ParamPair>, InitStatus> get_chem_preset_vals_(
+    ChemPreset preset);
 
 /// Preset for constructing the code_unit instance used for initializing the
 /// Grackle Solver

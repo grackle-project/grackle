@@ -61,7 +61,6 @@ public:
   }
 };
 
-
 }  // namespace param_detail
 
 /// Tracks the group of Grackle objects needed for executing API functions
@@ -79,6 +78,8 @@ public:
 class GrackleCtxPack {
   /// units used for initializing chemistry_data
   code_units initial_units_;
+  /// tracks string allocations for @ref my_chemistry_
+  param_detail::StrAllocTracker str_allocs_;
   /// the fully initialized chemistry_data instance
   std::unique_ptr<chemistry_data> my_chemistry_;
   /// the fully initialized chemistry_data_storage_instance
@@ -115,30 +116,49 @@ public:
   /// create an initialized instance from a preset
   static GrackleCtxPack create(const FullConfPreset& preset,
                                InitStatus* status) {
-    std::unique_ptr<chemistry_data> my_chemistry(new chemistry_data);
-    InitStatus tmp =
-        setup_chemistry_data_from_preset(my_chemistry.get(), preset.chemistry);
-    if (tmp != InitStatus::success) {
+    auto erroneous_exit = [&status](InitStatus new_status) {
       if (status != nullptr) {
-        *status = tmp;
+        *status = new_status;
       }
-      return GrackleCtxPack();  // return an unitialized instance
+      return GrackleCtxPack();
+    };
+
+    // allocate chemistry_data and set the defaults
+    std::unique_ptr<chemistry_data> my_chem(new chemistry_data);
+    if (local_initialize_chemistry_parameters(my_chem.get()) != GR_SUCCESS) {
+      return erroneous_exit(InitStatus::generic_fail);
     }
 
+    // lookup the parameters associated with the preset
+    std::pair<std::vector<ParamPair>, InitStatus> chem_preset_rslt =
+        get_chem_preset_vals_(preset.chemistry);
+    if (chem_preset_rslt.second != InitStatus::success) {
+      return erroneous_exit(chem_preset_rslt.second);
+    }
+    const std::vector<ParamPair>& params = chem_preset_rslt.first;
+
+    // update my_chem with values from the preset
+    param_detail::StrAllocTracker str_allocs;
+    std::optional<std::string> bad_param =
+        set_params(params.begin(), params.end(), *my_chem, &str_allocs);
+    if (bad_param.has_value()) {
+      // todo: we probably want to tell the caller about the bad parameter
+      return erroneous_exit(InitStatus::generic_fail);
+    }
+
+    // set up chemistry_data_storage
     code_units initial_unit = setup_initial_unit(preset.unit);
     std::unique_ptr<chemistry_data_storage> my_rates(
         new chemistry_data_storage);
-    if (local_initialize_chemistry_data(my_chemistry.get(), my_rates.get(),
+    if (local_initialize_chemistry_data(my_chem.get(), my_rates.get(),
                                         &initial_unit) != GR_SUCCESS) {
-      if (status != nullptr) {
-        *status = InitStatus::generic_fail;
-      }
-      return GrackleCtxPack();  // return an unitialized instance
+      return erroneous_exit(InitStatus::generic_fail);
     }
 
     GrackleCtxPack out;
     out.initial_units_ = initial_unit;
-    out.my_chemistry_ = std::move(my_chemistry);
+    out.str_allocs_ = std::move(str_allocs);
+    out.my_chemistry_ = std::move(my_chem);
     out.my_rates_ = std::move(my_rates);
     return out;
   }

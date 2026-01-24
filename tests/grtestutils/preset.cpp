@@ -10,11 +10,14 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "./param.hpp"
 #include "./preset.hpp"
 #include "./utils.hpp"
 
 #include "grackle.h"
 #include "status_reporting.h"  // GR_INTERNAL_UNREACHABLE_ERROR
+
+#include <ostream>
 
 namespace grtest {
 static std::string to_string(const grtest::ChemPreset& preset) {
@@ -34,50 +37,52 @@ static std::string to_string(const grtest::ChemPreset& preset) {
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
-InitStatus setup_chemistry_data_from_preset(chemistry_data* my_chem,
-                                            ChemPreset preset) {
-  if (local_initialize_chemistry_parameters(my_chem) != GR_SUCCESS) {
-    return InitStatus::generic_fail;
-  }
+std::pair<std::vector<ParamPair>, InitStatus> get_chem_preset_vals_(
+    ChemPreset preset) {
+  std::vector<std::pair<std::string, ParamVal>> v = {
+      {"use_grackle", ParamVal(1)},  // chemistry on
+      {"use_isrf_field", ParamVal(1)},
+      {"with_radiative_cooling", ParamVal(1)},  // cooling on
+      {"metal_cooling", ParamVal(1)},           // metal cooling on
+      {"UVbackground", ParamVal(1)},            // UV background on
+  };
 
-  if (!set_standard_datafile(*my_chem, "CloudyData_UVB=HM2012.h5")) {
-    return InitStatus::standard_datafile_notfound;
+  std::optional<std::string> maybe_datafile =
+      get_standard_datafile("CloudyData_UVB=HM2012.h5");
+  if (!maybe_datafile.has_value()) {
+    return {{}, InitStatus::standard_datafile_notfound};
+  } else {
+    v.emplace_back("grackle_data_file", maybe_datafile.value());
   }
-
-  my_chem->use_grackle = 1;  // chemistry on
-  my_chem->use_isrf_field = 1;
-  my_chem->with_radiative_cooling = 1;  // cooling on
-  my_chem->metal_cooling = 1;           // metal cooling on
-  my_chem->UVbackground = 1;            // UV background on
 
   switch (preset) {
     case ChemPreset::primchem0: {
-      my_chem->primordial_chemistry = 0;
-      my_chem->dust_chemistry = 0;
-      return InitStatus::success;
+      v.emplace_back("primordial_chemistry", 0);
+      v.emplace_back("dust_chemistry", 0);
+      return {v, InitStatus::success};
     }
     case ChemPreset::primchem1: {
-      my_chem->primordial_chemistry = 1;
-      my_chem->dust_chemistry = 1;
-      return InitStatus::success;
+      v.emplace_back("primordial_chemistry", 1);
+      v.emplace_back("dust_chemistry", 1);
+      return {v, InitStatus::success};
     }
     case ChemPreset::primchem2: {
-      my_chem->primordial_chemistry = 2;
-      my_chem->dust_chemistry = 1;
-      return InitStatus::success;
+      v.emplace_back("primordial_chemistry", 2);
+      v.emplace_back("dust_chemistry", 1);
+      return {v, InitStatus::success};
     }
     case ChemPreset::primchem3: {
-      my_chem->primordial_chemistry = 3;
-      my_chem->dust_chemistry = 1;
-      return InitStatus::success;
+      v.emplace_back("primordial_chemistry", 3);
+      v.emplace_back("dust_chemistry", 1);
+      return {v, InitStatus::success};
     }
     case ChemPreset::primchem4_dustspecies3: {
-      my_chem->primordial_chemistry = 4;
-      my_chem->dust_chemistry = 1;
-      my_chem->metal_chemistry = 1;
-      my_chem->dust_species = 3;
-      my_chem->use_dust_density_field = 1;
-      return InitStatus::success;
+      v.emplace_back("primordial_chemistry", 4);
+      v.emplace_back("dust_chemistry", 1);
+      v.emplace_back("metal_chemistry", 1);
+      v.emplace_back("dust_species", 3);
+      v.emplace_back("use_dust_density_field", 1);
+      return {v, InitStatus::success};
     }
   }
   GR_INTERNAL_UNREACHABLE_ERROR();
