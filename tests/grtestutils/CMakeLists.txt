@@ -81,6 +81,8 @@ add_library(grtestutils
   # -> these shouldn't include headers from the googletest subdirectory
   cmd.hpp cmd.cpp
   GrackleCtxPack.cpp GrackleCtxPack.hpp
+  field_container.cpp field_container.hpp
+  field_info_detail.cpp field_info_detail.hpp
   iterator_adaptor.hpp
   os.hpp os.cpp
   param.cpp param.hpp

@@ -113,6 +113,9 @@ public:
   // getter functions
   const code_units& initial_units() const { return this->initial_units_; }
   chemistry_data* my_chemistry() { return this->my_chemistry_.get(); }
+  const chemistry_data* my_chemistry() const {
+    return this->my_chemistry_.get();
+  }
   chemistry_data_storage* my_rates() { return this->my_rates_.get(); }
 
   /// create an initialized instance
