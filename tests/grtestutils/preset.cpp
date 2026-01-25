@@ -18,10 +18,13 @@
 #include "status_reporting.h"  // GR_INTERNAL_UNREACHABLE_ERROR
 
 #include <ostream>
+#include <sstream>
 
 namespace grtest {
-static std::string to_string(const grtest::ChemPreset& preset) {
+std::string to_string(const grtest::ChemPreset& preset) {
   switch (preset) {
+    case grtest::ChemPreset::DEFAULT:
+      return "<DefaultSettings>";
     case grtest::ChemPreset::primchem0:
       return "pc=0";
     case grtest::ChemPreset::primchem1:
@@ -37,8 +40,16 @@ static std::string to_string(const grtest::ChemPreset& preset) {
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
+void PrintTo(const grtest::ChemPreset& chem_preset, std::ostream* os) {
+  *os << to_string(chem_preset);
+}
+
 std::pair<std::vector<ParamPair>, Status> get_chem_preset_vals_(
     ChemPreset preset) {
+  if (preset == ChemPreset::DEFAULT) {
+    return {{}, OkStatus()};
+  }
+
   std::vector<std::pair<std::string, ParamVal>> v = make_ParamPair_vec({
       {"use_grackle", 1},  // chemistry on
       {"use_isrf_field", 1},
@@ -56,6 +67,10 @@ std::pair<std::vector<ParamPair>, Status> get_chem_preset_vals_(
   }
 
   switch (preset) {
+    case ChemPreset::DEFAULT: {
+      // we should have returned before now
+      GR_INTERNAL_UNREACHABLE_ERROR();
+    }
     case ChemPreset::primchem0: {
       v.emplace_back("primordial_chemistry", 0);
       v.emplace_back("dust_chemistry", 0);
@@ -88,7 +103,7 @@ std::pair<std::vector<ParamPair>, Status> get_chem_preset_vals_(
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
-static std::string to_string(const InitialUnitPreset& preset) {
+std::string to_string(const InitialUnitPreset& preset) {
   switch (preset) {
     case grtest::InitialUnitPreset::simple_z0:
       return "simpleUnit-z=0";
@@ -117,9 +132,15 @@ code_units setup_initial_unit(InitialUnitPreset preset) {
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
-void PrintTo(const grtest::SimpleConfPreset& preset, std::ostream* os) {
-  *os << "Preset{" << to_string(preset.chemistry) << ','
-      << to_string(preset.unit) << '}';
+void PrintTo(const ParamConf& param_conf, std::ostream* os) {
+  param_conf.print_descr(os, true);
+}
+
+std::string ParamConf::stringify(bool short_summary,
+                                 const std::string& common_indent) const {
+  std::ostringstream s;
+  this->print_descr(&s, short_summary, common_indent);
+  return s.str();
 }
 
 }  // namespace grtest

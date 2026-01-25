@@ -45,9 +45,8 @@ class ConfigPresetFixture : public testing::Test {
 protected:
   void SetUp() override {
     // called immediately after the constructor (but before the test-case)
-
-    std::pair<GrackleCtxPack, Status> tmp =
-        GrackleCtxPack::create(SimpleConfPreset{chem_preset, unit_preset});
+    ParamConf conf = ParamConf::SimplePreset(chem_preset, unit_preset);
+    std::pair<GrackleCtxPack, Status> tmp = GrackleCtxPack::create(conf);
     if (tmp.second.is_ok()) {
       pack = std::move(tmp.first);
     } else if (tmp.second.is_missing_std_file()) {
@@ -74,7 +73,7 @@ protected:
 ///    this class, OR
 /// 2. make a subclass, named `MyFeatureTest`, of this class
 class ParametrizedConfigPresetFixture
-    : public testing::TestWithParam<SimpleConfPreset> {
+    : public testing::TestWithParam<ParamConf> {
 protected:
   void SetUp() override {
     // called immediately after the constructor (but before the test-case)

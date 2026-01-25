@@ -10,12 +10,13 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "GrackleCtxPack.hpp"
+#include "./GrackleCtxPack.hpp"
+#include "./preset.hpp"
 
 namespace grtest {
 
 std::pair<GrackleCtxPack, Status> GrackleCtxPack::create(
-    const SimpleConfPreset& preset) {
+    const ParamConf& param_conf) {
   // allocate chemistry_data and set the defaults
   std::unique_ptr<chemistry_data> my_chem(new chemistry_data);
   if (local_initialize_chemistry_parameters(my_chem.get()) != GR_SUCCESS) {
@@ -25,22 +26,31 @@ std::pair<GrackleCtxPack, Status> GrackleCtxPack::create(
 
   // lookup the parameters associated with the preset
   std::pair<std::vector<ParamPair>, Status> chem_preset_rslt =
-      get_chem_preset_vals_(preset.chemistry);
-  if (!chem_preset_rslt.second.is_ok()) {
+      get_chem_preset_vals_(param_conf.chem_preset());
+  if (chem_preset_rslt.second.is_err()) {
     return {GrackleCtxPack(), chem_preset_rslt.second};
   }
   const std::vector<ParamPair>& params = chem_preset_rslt.first;
 
-  // update my_chem with values from the preset
+  // initialize my_chem's string storage
   param_detail::StrAllocTracker str_allocs;
+
+  // update my_chem with values from the preset
   Status status =
       set_params(params.begin(), params.end(), *my_chem, &str_allocs);
-  if (!status.is_ok()) {
+  if (status.is_err()) {
+    return {GrackleCtxPack(), status};
+  }
+
+  // update my_chem with values from parameter overrides (if there are any)
+  const std::vector<ParamPair>& po_vec = param_conf.param_overrides();
+  status = set_params(po_vec.begin(), po_vec.end(), *my_chem, &str_allocs);
+  if (status.is_err()) {
     return {GrackleCtxPack(), status};
   }
 
   // set up chemistry_data_storage
-  code_units initial_unit = setup_initial_unit(preset.unit);
+  code_units initial_unit = setup_initial_unit(param_conf.unit_preset());
   std::unique_ptr<chemistry_data_storage> my_rates(new chemistry_data_storage);
   if (local_initialize_chemistry_data(my_chem.get(), my_rates.get(),
                                       &initial_unit) != GR_SUCCESS) {

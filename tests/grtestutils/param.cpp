@@ -26,7 +26,7 @@ constexpr std::false_type always_false_{};
 
 namespace grtest {
 
-std::string ParamVal::to_string() const {
+std::string ParamVal::to_string(bool unwrap) const {
   std::string tmp;
   // this lambda function is passed a reference to the value within this->val_
   auto get_string_repr_ = [&tmp](const auto& v) -> void {
@@ -46,6 +46,9 @@ std::string ParamVal::to_string() const {
   };
   std::visit(get_string_repr_, this->val_);
 
+  if (unwrap) {
+    return tmp;
+  }
   std::string out;
   out.reserve(tmp.size() + 10);
   out = "ParamVal(";

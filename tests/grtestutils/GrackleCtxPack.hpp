@@ -115,9 +115,8 @@ public:
   chemistry_data* my_chemistry() { return this->my_chemistry_.get(); }
   chemistry_data_storage* my_rates() { return this->my_rates_.get(); }
 
-  /// create an initialized instance from a preset
-  static std::pair<GrackleCtxPack, Status> create(
-      const SimpleConfPreset& preset);
+  /// create an initialized instance
+  static std::pair<GrackleCtxPack, Status> create(const ParamConf& param_conf);
 };
 
 }  // namespace grtest

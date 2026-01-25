@@ -58,7 +58,10 @@ public:
   explicit ParamVal(const char* val) : val_(ParamVal::coerce_c_string_(val)) {}
 
   /// return a string-representation of `this`
-  std::string to_string() const;
+  ///
+  /// @param[in] unwrap When true, we just print the inner value. Otherwise,
+  ///     the value is written as `ParamVal(<val>)`
+  std::string to_string(bool unwrap = false) const;
 
   /// teach googletest how to print the value
   friend void PrintTo(const ParamVal& p, std::ostream* os);
@@ -97,8 +100,8 @@ public:
 using ParamPair = std::pair<std::string, ParamVal>;
 
 /// Nicely format a @ref ParamPair as a string
-inline std::string to_string(const ParamPair& pair) {
-  std::string str_val = pair.second.to_string();
+inline std::string to_string(const ParamPair& pair, bool unwrap_val = false) {
+  std::string str_val = pair.second.to_string(unwrap_val);
   std::string out;
   out.reserve(pair.first.size() + str_val.size() + 6);
   out += "{\"";
