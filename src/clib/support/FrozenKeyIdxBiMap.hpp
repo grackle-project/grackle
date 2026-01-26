@@ -110,6 +110,12 @@ struct FrozenKeyIdxBiMap {
   BiMapMode mode;
 };
 
+// ugh, it's unfortunate that we need to make this... but for now its useful.
+// Ideally, we would refactor so that we can get rid of this function.
+inline FrozenKeyIdxBiMap mk_invalid_FrozenKeyIdxBiMap() {
+  return FrozenKeyIdxBiMap{-1, nullptr, BiMapMode::REFS_KEYDATA};
+}
+
 /// Constructs a new FrozenKeyIdxBiMap
 ///
 /// @param[in]  keys Sequence of 1 or more unique strings. Each string must
@@ -126,9 +132,6 @@ struct FrozenKeyIdxBiMap {
 /// std::optional or converting this type to a simple C++ class.
 inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
                                                int key_count, BiMapMode mode) {
-  // this will be returned if there is an error
-  FrozenKeyIdxBiMap erroneous_obj{-1, nullptr, BiMapMode::REFS_KEYDATA};
-
   if (keys == nullptr && key_count == 0) {
     return FrozenKeyIdxBiMap{0, nullptr, mode};
   }
@@ -137,10 +140,10 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
   int max_keys = static_cast<int>(std::numeric_limits<uint16_t>::max());
   if (key_count < 1 || key_count > max_keys) {
     GrPrintErrMsg("key_count must be positive & can't exceed %d", max_keys);
-    return erroneous_obj;
+    return mk_invalid_FrozenKeyIdxBiMap();
   } else if (keys == nullptr) {
     GrPrintErrMsg("keys must not be a nullptr");
-    return erroneous_obj;
+    return mk_invalid_FrozenKeyIdxBiMap();
   }
   for (int i = 0; i < key_count; i++) {
     GR_INTERNAL_REQUIRE(keys[i] != nullptr, "Can't specify a nullptr key");
@@ -151,13 +154,13 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
           "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
           "exceeding %d",
           keys[i], i, bimap_detail::KEYLEN_MAX);
-      return erroneous_obj;
+      return mk_invalid_FrozenKeyIdxBiMap();
     }
     // check uniqueness
     for (int j = 0; j < i; j++) {
       if (strcmp(keys[i], keys[j]) == 0) {
         GrPrintErrMsg("\"%s\" key repeats", keys[i]);
-        return erroneous_obj;
+        return mk_invalid_FrozenKeyIdxBiMap();
       }
     }
   }
@@ -184,7 +187,7 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
     }
     default: {
       GrPrintErrMsg("unknown mode");
-      return erroneous_obj;
+      return mk_invalid_FrozenKeyIdxBiMap();
     }
   }
 
