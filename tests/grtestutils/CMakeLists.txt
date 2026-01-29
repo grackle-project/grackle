@@ -83,6 +83,7 @@ add_library(grtestutils
   GrackleCtxPack.cpp GrackleCtxPack.hpp
   field_container.cpp field_container.hpp
   field_info_detail.cpp field_info_detail.hpp
+  fill_field_vals.hpp
   iterator_adaptor.hpp
   os.hpp os.cpp
   param.cpp param.hpp
