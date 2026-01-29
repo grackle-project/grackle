@@ -66,7 +66,7 @@ def main(args=None):
         in_testing_framework = True
 
     else:  # Just run the script as is.
-        metallicity = 0.01 # Solar
+        metallicity = 10**-3 # Solar
         redshift = 0.
         # dictionary to store extra information in output dataset
         extra_attrs = {}
@@ -87,7 +87,7 @@ def main(args=None):
             my_chemistry,
 
             with_radiative_cooling=1,
-            primordial_chemistry=4,
+            primordial_chemistry=1,
             dust_chemistry = 1,
             metal_cooling=1,
             UVbackground=0,
@@ -95,11 +95,11 @@ def main(args=None):
             Gamma=1.66667,
             h2_on_dust=1,
             use_dust_density_field=1,
-            metal_chemistry=1,
+            metal_chemistry=0,
             multi_metals=0,
             metal_abundances=0,
-            dust_species=3,
-            # dust_temperature_multi=0,
+            dust_species=0,
+            use_multiple_dust_temperatures=0,
             dust_sublimation=1,
             grain_growth=0,
             photoelectric_heating=0,
@@ -143,16 +143,15 @@ def main(args=None):
             radiative_transfer_H2II_diss=1,
             radiative_transfer_HDI_dissociation=1,
             radiative_transfer_metal_ionization=1,
-            radiative_transfer_metal_dissociation=1,
+            radiative_transfer_metal_dissociation=1
 
-            use_multiple_dust_temperatures=1
         )
 
         output_name = _MODEL_NAME
         in_testing_framework = False
 
     density = 0.1 * mass_hydrogen_cgs # g /cm^3
-    temperature = 50000 # K
+    temperature = 15000 # K
     final_time = 100. # Myr
 
     # Set units
