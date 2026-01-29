@@ -127,6 +127,7 @@ add_library(Grackle_Grackle
   opaque_storage.hpp
   rate_utils.cpp
   solve_chemistry.cpp
+  solve_cubic_equation.cpp solve_cubic_equation.hpp
   scale_fields.cpp scale_fields.hpp
   set_default_chemistry_parameters.cpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h

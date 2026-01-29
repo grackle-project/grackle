@@ -42,6 +42,7 @@ OBJS_CONFIG_LIB = \
         scale_fields.lo \
         set_default_chemistry_parameters.lo \
         solve_chemistry.lo \
+        solve_cubic_equation.lo \
         solve_rate_cool_g.lo \
         solve_rate_cool_g-cpp.lo \
         status_reporting.lo \
