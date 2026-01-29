@@ -1,4 +1,15 @@
-// Header file containing all rate function declarations.
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares rate functions
+///
+//===----------------------------------------------------------------------===//
+
 #include "grackle.h"
 
 #ifndef GRACKLE_RATE_FUNCTIONS_H
@@ -88,12 +99,32 @@ double HDlow_rate(double T, double units, chemistry_data *my_chemistry);
 double cie_thin_cooling_rate(double T);
 double cieco_rate(double T, double units, chemistry_data *my_chemistry);
 
+/// Calculate gas_grain, the Gas/grain energy transfer rate
 double gasGrain_rate(double T, double units, chemistry_data *my_chemistry);
+
+/// Calculate gas_grain2
+///
+/// The resulting value is similar to the value returned by @ref gasGrain_rate.
+/// It is used to compute the Gas/grain energy transfer rate for arbitrary size
+/// distributions.
 double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry);
+
+/// Calculate regr (as in GRain REcombination cooling)
+///
+/// This is the value of a cluster of variables taken from equation 9 from
+/// [Wolfire+95](https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract).
 double regr_rate(double T, double units, chemistry_data *my_chemistry);
+
 double grain_growth_rate(double T, double units, chemistry_data *my_chemistry);
 
 double comp_rate(double units, chemistry_data *my_chemistry);
+
+/// Calculate quantity closely related to Γ for photo-electric heating from
+/// photo-electric heating by dust-grains
+///
+/// For added context, we currently use equation 1 (and possibly eqn 2) of
+/// [Wolfire+95](https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract)
+/// to implement photo-electric heating
 double gammah_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf2_rate(double units, chemistry_data *my_chemistry);

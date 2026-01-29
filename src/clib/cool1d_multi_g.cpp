@@ -13,6 +13,9 @@
 // This file was initially generated automatically during conversion of the
 // cool1d_multi_g function from FORTRAN to C++
 
+#include "dust/misc.hpp"
+#include "dust/gas_heat_cool.hpp"
+
 #include <cstdio>
 #include <vector>
 #include <iostream>
@@ -75,9 +78,6 @@ void grackle::impl::cool1d_multi_g(
   grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust(
-      my_fields->dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> Vheat(
       my_fields->volumetric_heating_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -89,9 +89,6 @@ void grackle::impl::cool1d_multi_g(
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> photogamma(
       my_fields->RT_heating_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> isrf_habing(
-      my_fields->isrf_habing, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> CI(
       my_fields->CI_density, my_fields->grid_dimension[0],
@@ -120,8 +117,8 @@ void grackle::impl::cool1d_multi_g(
   int i, iZscale, mycmbTfloor;
   double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2,
       x, fudge, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother,
-      nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta,
-      ih2cox, min_metallicity;
+      nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, ih2cox,
+      min_metallicity;
   double comp1, comp2;
 
   // Performing heap allocations for all of the subsequent buffers within this
@@ -174,7 +171,6 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> LCO(my_fields->grid_dimension[0]);
   std::vector<double> LOH(my_fields->grid_dimension[0]);
   std::vector<double> LH2O(my_fields->grid_dimension[0]);
-  std::vector<double> Ldst(my_fields->grid_dimension[0]);
   std::vector<double> alpha(my_fields->grid_dimension[0]);
   std::vector<double> alphad(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
@@ -1098,138 +1094,18 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  // Compute grain size increment
-  if ((my_chemistry->use_dust_density_field > 0) &&
-      (my_chemistry->dust_species > 0)) {
-    grackle::impl::fortran_wrapper::calc_grain_size_increment_1d(
-        dom, idx_range, itmask_metal, my_chemistry, my_rates, my_fields,
-        internal_dust_prop_buf);
-  }
-
-  // Calculate dust to gas ratio AND interstellar radiation field
-  // -> an earlier version of this logic would store values @ indices
-  //    where `itmask_metal(i) .ne. MASK_FALSE`
-  // -> this was undesirable, b/c these quantities are required for
-  //    photo-electric heating, which can occur when
-  //    `itmask_metal(i) .eq. MASK_FALSE` (we can revisit this choice
-  //    later). Moreover, in most cases, these calculations will be
-  //    faster when there is no branching
-
-  if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 0)) {
-    if (my_chemistry->use_dust_density_field > 0) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        // REMINDER: use of `itmask` over `itmask_metal` is
-        //   currently required by Photo-electric heating
-        if (itmask[i] != MASK_FALSE) {
-          // it may be faster to remove this branching
-          dust2gas[i] = dust(i, idx_range.j, idx_range.k) /
-                        d(i, idx_range.j, idx_range.k);
-        }
-      }
-    } else {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        dust2gas[i] = my_chemistry->local_dust_to_gas_ratio * metallicity[i];
-      }
-    }
-  }
-
-  if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 1)) {
-    if (my_chemistry->use_isrf_field > 0) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        myisrf[i] = isrf_habing(i, idx_range.j, idx_range.k);
-      }
-    } else {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        myisrf[i] = my_chemistry->interstellar_radiation_field;
-      }
-    }
-  }
-
-  // compute dust temperature and cooling due to dust
-  if (anydust != MASK_FALSE) {
-    // TODO: trad -> comp2
-    grackle::impl::fortran_wrapper::calc_all_tdust_gasgr_1d_g(
-        comp2, tgas, tdust, metallicity, dust2gas, cool1dmulti_buf.mynh,
-        cool1dmulti_buf.gasgr_tdust, itmask_metal, coolunit, gasgr.data(),
-        myisrf.data(), kappa_tot.data(), my_chemistry, my_rates, my_fields,
-        idx_range, grain_temperatures, gas_grainsp_heatrate, grain_kappa,
-        logTlininterp_buf, internal_dust_prop_buf);
-  }
+  dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
+                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
+                     idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
+                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
+                     kappa_tot.data(), grain_kappa, cool1dmulti_buf.gasgr_tdust,
+                     myisrf.data(), internal_dust_prop_buf);
 
   // Calculate dust cooling rate
   if (anydust != MASK_FALSE) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask_metal[i] != MASK_FALSE) {
-        if (my_chemistry->dust_species == 0) {
-          Ldst[i] = -gasgr[i] * (tgas[i] - tdust[i]) * dust2gas[i] * rhoH[i] *
-                    rhoH[i];
-
-        } else {
-          if (my_chemistry->use_multiple_dust_temperatures == 0) {
-            Ldst[i] = -gasgr[i] * (tgas[i] - tdust[i]) *
-                      d(i, idx_range.j, idx_range.k) * rhoH[i];
-          } else {
-            if (my_chemistry->dust_species > 0) {
-              Ldst[i] =
-                  -(gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust][i] *
-                        (tgas[i] - grain_temperatures
-                                       .data[OnlyGrainSpLUT::MgSiO3_dust][i]) +
-                    gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust][i] *
-                        (tgas[i] -
-                         grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i])) *
-                  d(i, idx_range.j, idx_range.k) * rhoH[i];
-            }
-
-            if (my_chemistry->dust_species > 1) {
-              Ldst[i] =
-                  Ldst[i] -
-                  (gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiM_dust][i] *
-                       (tgas[i] -
-                        grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i]) +
-                   gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeM_dust][i] *
-                       (tgas[i] -
-                        grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i]) +
-                   gas_grainsp_heatrate.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] *
-                       (tgas[i] - grain_temperatures
-                                      .data[OnlyGrainSpLUT::Mg2SiO4_dust][i]) +
-                   gas_grainsp_heatrate.data[OnlyGrainSpLUT::Fe3O4_dust][i] *
-                       (tgas[i] - grain_temperatures
-                                      .data[OnlyGrainSpLUT::Fe3O4_dust][i]) +
-                   gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiO2_dust][i] *
-                       (tgas[i] -
-                        grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i]) +
-                   gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgO_dust][i] *
-                       (tgas[i] -
-                        grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i]) +
-                   gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeS_dust][i] *
-                       (tgas[i] -
-                        grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i]) +
-                   gas_grainsp_heatrate.data[OnlyGrainSpLUT::Al2O3_dust][i] *
-                       (tgas[i] - grain_temperatures
-                                      .data[OnlyGrainSpLUT::Al2O3_dust][i])) *
-                      d(i, idx_range.j, idx_range.k) * rhoH[i];
-            }
-
-            if (my_chemistry->dust_species > 2) {
-              Ldst[i] =
-                  Ldst[i] -
-                  (gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust][i] *
-                       (tgas[i] - grain_temperatures
-                                      .data[OnlyGrainSpLUT::ref_org_dust][i]) +
-                   gas_grainsp_heatrate.data[OnlyGrainSpLUT::vol_org_dust][i] *
-                       (tgas[i] - grain_temperatures
-                                      .data[OnlyGrainSpLUT::vol_org_dust][i]) +
-                   gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust][i] *
-                       (tgas[i] - grain_temperatures
-                                      .data[OnlyGrainSpLUT::H2O_ice_dust][i])) *
-                      d(i, idx_range.j, idx_range.k) * rhoH[i];
-            }
-          }
-        }
-
-        edot[i] = edot[i] + Ldst[i];
-      }
-    }
+    dust_gas_edot::update_edot_dust_cooling_rate(
+        edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
+        my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
   }
 
   // Compute continuum opacity
@@ -1521,80 +1397,17 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Photo-electric heating by UV-irradiated dust
-
-  if (my_chemistry->photoelectric_heating == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] > 2.e4) {
-          cool1dmulti_buf.gammaha_eff[i] = 0.;
-        } else {
-          cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah;
-        }
-      }
-    }
-
-    // Use eqn. 1 of Wolfire et al. (1995)
-  } else if (my_chemistry->photoelectric_heating == 2) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] > 2.e4) {
-          cool1dmulti_buf.gammaha_eff[i] = 0.;
-        } else {
-          // Assume constant epsilon = 0.05.
-          cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah * 0.05 * myisrf[i];
-        }
-      }
-    }
-
-    // Full calculation of epsilon (eqn. 2 of Wolfire 1995)
-  } else if (my_chemistry->photoelectric_heating == 3) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        pe_X =
-            myisrf[i] * dom_inv * std::sqrt(tgas[i]) / cool1dmulti_buf.myde[i];
-        pe_eps = (4.9e-2 / (1. + std::pow((pe_X / 1925.), 0.73))) +
-                 ((3.7e-2 * std::pow((tgas[i] / 1.e4), 0.7)) /
-                  (1. + (pe_X / 5000.)));
-        cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah * pe_eps * myisrf[i];
-      }
-    }
-  }
-
-  if (my_chemistry->photoelectric_heating > 0) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        edot[i] = edot[i] + cool1dmulti_buf.gammaha_eff[i] * rhoH[i] * dom_inv *
-                                dust2gas[i] /
-                                my_chemistry->local_dust_to_gas_ratio;
-      }
-    }
-  }
+  dust_gas_edot::update_edot_photoelectric_heat(
+      edot, tgas, dust2gas, rhoH, cool1dmulti_buf.myde, myisrf.data(), itmask,
+      my_chemistry, my_rates->gammah, idx_range, dom_inv);
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-
   if ((my_chemistry->dust_chemistry > 0) ||
       (my_chemistry->dust_recombination_cooling > 0)) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        cool1dmulti_buf.regr[i] =
-            my_rates->regr[logTlininterp_buf.indixe[i] - 1] +
-            logTlininterp_buf.tdef[i] *
-                (my_rates->regr[logTlininterp_buf.indixe[i] + 1 - 1] -
-                 my_rates->regr[logTlininterp_buf.indixe[i] - 1]);
-      }
-    }
-
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        grbeta = 0.74 / std::pow(tgas[i], 0.068);
-        edot[i] = edot[i] -
-                  cool1dmulti_buf.regr[i] *
-                      std::pow((myisrf[i] * dom_inv / cool1dmulti_buf.myde[i]),
-                               grbeta) *
-                      cool1dmulti_buf.myde[i] * rhoH[i] * dust2gas[i] /
-                      my_chemistry->local_dust_to_gas_ratio;
-      }
-    }
+    dust_gas_edot::update_edot_dust_recombination(
+        edot, tgas, dust2gas, rhoH, cool1dmulti_buf.myde, myisrf.data(), itmask,
+        my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
+        my_rates->regr, idx_range, dom_inv);
   }
 
   // Compton cooling or heating and X-ray compton heating
