@@ -34,6 +34,9 @@ def check_convergence(fc1, fc2, fields=None, tol=0.01):
     for field in fields:
         if field not in fc2:
             continue
+        if fc1[field] == 0:
+            print(field)
+            print(fc2[field])
         convergence = np.max(np.abs(fc1[field] - fc2[field]) / fc1[field])
         if convergence > max_val:
             max_val = convergence

@@ -29,9 +29,21 @@ void dust_destruction(
     grackle_field_data* my_fields,
     InternalGrUnits internalu,
     IndexRange idx_range,
+    const gr_mask_type* itmask,
     double* dt_value,
     double* t_gas,
     bool dryrun
+);
+
+// Update the density field.
+void dust_update(
+    chemistry_data* my_chemistry,
+    grackle_field_data* my_fields,
+    InternalGrUnits internalu,
+    IndexRange idx_range,
+    const gr_mask_type* itmask,
+    double growth_rate,
+    double*dt_value
 );
 
 }

@@ -943,8 +943,6 @@ int solve_rate_cool(
         // If all cells are done (in idx_range), break out of subcycle loop
         if (std::fabs(dt-ttmin) < tolerance*dt) { break; }
 
-        // grackle::impl::dust_growth(
-        //   my_chemistry, my_fields, internalu, idx_range, dtit.data(), tgas.data(), false);
 
       }  // subcycle iteration loop (for current idx_range)
 
