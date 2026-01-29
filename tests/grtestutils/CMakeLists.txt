@@ -87,6 +87,7 @@ add_library(grtestutils
   harness/grackle_ctx_pack.cpp harness/grackle_ctx_pack.hpp
   harness/field_container.cpp harness/field_container.hpp
   harness/field_info_detail.cpp harness/field_info_detail.hpp
+  harness/fill_field_vals.hpp
   harness/param.cpp harness/param.hpp
   harness/preset.cpp harness/preset.hpp
   harness/status.cpp harness/status.hpp
