@@ -19,9 +19,43 @@
 #include "status_reporting.h"
 
 #include <cstring>  // std::memcmp, std::memcpy
+#include <ostream>
+#include <sstream>
 #include <utility>  // std::pair, std::move
 
 namespace grtest {
+
+bool operator==(const GridLayout& lhs, const GridLayout& rhs) noexcept {
+  bool rank = lhs.rank_ == rhs.rank_;
+  bool start = std::memcmp(lhs.start_, rhs.start_, 3 * sizeof(int)) == 0;
+  bool stop = std::memcmp(lhs.stop_, rhs.stop_, 3 * sizeof(int)) == 0;
+  bool dim = std::memcmp(lhs.dim_, rhs.dim_, 3 * sizeof(int)) == 0;
+  return rank && start && stop && dim;
+}
+
+void PrintTo(const GridLayout& layout, std::ostream* os) {
+  auto write_arr_ = [&](const int* vals) -> void {
+    for (int i = 0; i < layout.rank_; i++) {
+      *os << ((i == 0) ? "{" : ", ");
+      *os << vals[i];
+    }
+    *os << '}';
+  };
+  *os << "GridLayout{ dim: ";
+  write_arr_(layout.dim_);
+  *os << ", start: ";
+  write_arr_(layout.start_);
+  *os << ", stop: ";
+  write_arr_(layout.stop_);
+  *os << '}';
+}
+
+std::string GridLayout::to_string() const {
+  std::stringstream s;
+  PrintTo(*this, &s);
+  return s.str();
+}
+
 namespace field_detail {
 
 /// Construct a name-pointer mapping based on @p ctx_pack
@@ -48,23 +82,19 @@ static MapType make_nullptr_map_(const GrackleCtxPack& ctx_pack,
   return m;
 }
 
-/// Construct a `CorePack` instance by consuming @p premade_map
-///
-/// @param premade_map A string to pointer mapping. The keys of this argument
-///     should specify the names for each desired Grackle field. We assume that
-///     the pointers associated with each key hold meaningless garbage values
-/// @param buf_size The number of elements to allocate per field
-static std::pair<CorePack, Status> setup_1d_CorePack(MapType&& premade_map,
-                                                     int buf_size) {
+std::pair<CorePack, Status> CorePack::setup_1d(MapType&& premade_map,
+                                               int buf_size) {
   if (buf_size <= 0) {
     return {CorePack{}, error::Adhoc("buf_size must be positive")};
   }
   std::size_t data_sz = premade_map.size() * buf_size;
 
+  GridLayout layout = GridLayout::from_dim(1, &buf_size);
+
   CorePack pack{
       // the trailing parentheses when allocating an array of integers or
       // floating point values sets the initial values to 0
-      /* prop_buf */ std::unique_ptr<int[]>(new int[9]()),
+      /* layout */ std::unique_ptr<GridLayout>(new GridLayout(layout)),
       /* data_buf */ std::unique_ptr<gr_float[]>(new gr_float[data_sz]()),
       /* my_fields */
       std::unique_ptr<grackle_field_data>(new grackle_field_data),
@@ -75,9 +105,9 @@ static std::pair<CorePack, Status> setup_1d_CorePack(MapType&& premade_map,
   }
 
   // setup grid properties
-  pack.my_fields->grid_dimension = pack.prop_buf.get();
-  pack.my_fields->grid_start = pack.prop_buf.get() + 3;
-  pack.my_fields->grid_end = pack.prop_buf.get() + 6;
+  pack.my_fields->grid_dimension = pack.layout->dim_;
+  pack.my_fields->grid_start = pack.layout->start_;
+  pack.my_fields->grid_end = pack.layout->end_;
 
   pack.my_fields->grid_rank = 1;
   pack.my_fields->grid_dimension[0] = buf_size;
@@ -120,7 +150,7 @@ std::pair<FieldContainer, Status> FieldContainer::create_1d(
   field_detail::MapType m =
       field_detail::make_nullptr_map_(ctx_pack, disable_metal);
   std::pair<field_detail::CorePack, Status> tmp =
-      field_detail::setup_1d_CorePack(std::move(m), buf_size);
+      field_detail::CorePack::setup_1d(std::move(m), buf_size);
   if (tmp.second.is_err()) {
     return {FieldContainer(), std::move(tmp.second)};
   } else {
@@ -133,38 +163,13 @@ std::pair<FieldContainer, Status> FieldContainer::create_1d(
 std::pair<FieldContainer, Status> FieldContainer::create(
     const GrackleCtxPack& ctx_pack, const GridLayout& layout,
     bool disable_metal) {
-  if (layout.rank < 1 || layout.rank > 3) {
-    return {FieldContainer(), error::Adhoc("layout.rank must be 1, 2, or 3")};
-  }
-  int total_count = 1;
-  for (int i = 0; i < layout.rank; i++) {
-    if (layout.dimension[i] <= 0) {
-      return {FieldContainer(),
-              error::Adhoc("layout.dimension[i] must be positive")};
-    } else if (layout.ghost_depth[i] < 0) {
-      return {FieldContainer(),
-              error::Adhoc("layout.ghost_depth[i] is negative")};
-    } else if (layout.ghost_depth[i] * 2 >= layout.dimension[i]) {
-      return {FieldContainer(),
-              error::Adhoc(
-                  "layout.dimension[i] must exceed 2*layout.ghost_depth[i]")};
-    }
-    total_count *= layout.dimension[i];
-  }
+  int total_count = layout.n_elements();
 
   std::pair<FieldContainer, Status> tmp =
       FieldContainer::create_1d(ctx_pack, total_count, disable_metal);
 
   if (tmp.second.is_ok()) {
-    grackle_field_data* my_fields = tmp.first.data_.my_fields.get();
-    tmp.first.data_.my_fields->grid_rank = layout.rank;
-    for (int i = 0; i < layout.rank; i++) {
-      int dim = layout.dimension[i];
-      int ghost_depth = layout.ghost_depth[i];
-      my_fields->grid_dimension[i] = dim;
-      my_fields->grid_start[i] = ghost_depth;
-      my_fields->grid_end[i] = dim - ghost_depth - 1;
-    }
+    (*tmp.first.data_.layout) = layout;
   }
   return tmp;
 }
@@ -175,20 +180,16 @@ FieldContainer FieldContainer::clone() const {
   // -> right after we create
   field_detail::MapType m = this->data_.map;
   std::pair<field_detail::CorePack, Status> tmp =
-      field_detail::setup_1d_CorePack(std::move(m), this->elements_per_field());
+      field_detail::CorePack::setup_1d(std::move(m),
+                                       this->elements_per_field());
   // it shouldn't be possible for tmp.second.is_err() to return true
   FieldContainer out;
   out.data_ = std::move(tmp.first);
 
   // copy over layout properties
-  int rank = this->rank();
-  for (int i = 0; i < rank; i++) {
-    out.data_.my_fields->grid_start[i] = this->data_.my_fields->grid_start[i];
-    out.data_.my_fields->grid_end[i] = this->data_.my_fields->grid_end[i];
-    out.data_.my_fields->grid_dimension[i] =
-        this->data_.my_fields->grid_dimension[i];
-  }
+  (*out.data_.layout) = *this->data_.layout;
 
+  // now copy over field values
   copy_into_helper_(out);
   return out;
 }
@@ -205,21 +206,6 @@ void FieldContainer::copy_into_helper_(FieldContainer& other) const {
   gr_float* dst = other.data_.data_buf.get();
   int length = this->elements_per_field() * this->n_fields();
   std::memcpy(dst, src, length * sizeof(gr_float));
-}
-
-bool FieldContainer::same_grid_props(const FieldContainer& other) const {
-  const grackle_field_data* a = this->data_.my_fields.get();
-  const grackle_field_data* b = other.data_.my_fields.get();
-
-  if (a->grid_rank != b->grid_rank) {
-    return false;
-  }
-  int rank = a->grid_rank;
-  std::size_t sz = rank * sizeof(int);
-  bool s = std::memcmp(a->grid_start, b->grid_start, sz) == 0;
-  bool e = std::memcmp(a->grid_end, b->grid_end, sz) == 0;
-  bool d = std::memcmp(a->grid_dimension, b->grid_dimension, sz) == 0;
-  return s && d && e;
 }
 
 bool FieldContainer::same_fields(const FieldContainer& other) const {
