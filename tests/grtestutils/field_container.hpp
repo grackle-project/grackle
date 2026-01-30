@@ -16,8 +16,10 @@
 
 #include "./GrackleCtxPack.hpp"
 #include "./status.hpp"
+#include "status_reporting.h"
 
 #include <functional>  // std::less
+#include <iosfwd>
 #include <map>
 #include <memory>  // std::map
 #include <optional>
@@ -26,6 +28,181 @@
 #include <utility>  // std::pair
 
 namespace grtest {
+
+namespace field_detail {
+struct CorePack;
+}  // namespace field_detail
+
+/// Represents Grid Properties
+///
+/// This type is probably a little over-engineered
+///
+/// Broader Context
+/// ===============
+/// To best describe this type, it's insightful to draw comparisons with C++
+/// conventions.
+///
+/// Background
+/// ----------
+/// For some background, C++23 introduced `std::mdspan` to describe
+/// multi-dimensional views. A `std::mdspan` is parameterized by
+/// - the data's extents (aka the shape)
+/// - the data's layout, which dictates how a multidimensional index is mapped
+///   to a 1D pointer offset
+///
+/// For views of contiguous data there are 2 obvious layouts:
+/// 1. layout-right: where the stride is `1` along the rightmost extent.
+///    - for extents `{a,b,c}`, an optimal nested for-loop will iterates from
+//       `0` up to `a` in the outermost loop and from `0` up to `c`
+///      in the innermost loop
+///    - this is the "natural layout" for a multidimensional c-style array
+///      `arr[a][b][c]`
+/// 2. layout-left: where the stride is `1` along the leftmost extent
+///    - for extents `{a,b,c}`, an optimal nested for-loop will iterates from
+//       `0` up to `c` in the outermost loop and from `0` up to `a`
+///      in the innermost loop
+///    - this is the "natural layout" for a multidimensional fortran array ()
+///      `arr[a][b][c]`
+///
+/// > Aside: More sophisticated layouts are possible when strides along each
+/// > axis aren't directly tied to extents (this comes up when making subviews).
+///
+/// About this type
+/// ---------------
+/// This type specifies array extents for a layout-left mapping. It also
+/// specifies the region of valid values. For context, arrays of
+/// fluid-quantities in mesh-based hydro codes have an outer layer "ghost zones"
+/// (Computer Scientists sometimes call this a "halo") that may not contain
+/// valid values when calling Grackle.
+///
+/// > Aside: We only describe the concept of "ghost zones" because we want to
+/// > to support tests for validating that ghost zones aren't modified.
+/// > Otherwise, we could reframe this description in terms of strided layouts.
+class GridLayout {
+  friend field_detail::CorePack;
+
+  /// the number of dimensions
+  int rank_;
+  /// number of elements along an axis
+  int dim_[3];
+
+  /// the first active-zone index along an axis
+  int start_[3];
+
+  /// the last active-zone index along an axis
+  ///
+  /// @note
+  /// We track this because Grackle natively understands this
+  int end_[3];
+
+  /// elements are one larger than the corresponding value in @ref end
+  ///
+  /// @note
+  /// This is the more natural than @ref end for 0-based indexing
+  int stop_[3];
+
+  // only invoked by factory methods
+  GridLayout() = default;
+
+  static std::pair<GridLayout, Status> create_(int rank, const int* dim,
+                                               const int* start,
+                                               const int* stop) {
+    GridLayout out;
+    out.rank_ = rank;
+    if ((rank < 1) || (rank > 3)) {
+      return {out, error::Adhoc("rank is invalid")};
+    } else if (dim == nullptr) {
+      return {out, error::Adhoc("dim is a nullptr")};
+    }
+
+    for (int i = 0; i < 3; i++) {
+      out.dim_[i] = (i < rank) ? dim[i] : 1;
+      out.start_[i] = (start != nullptr && i < rank) ? start[i] : 0;
+      out.stop_[i] = (stop != nullptr && i < rank) ? stop[i] : out.dim_[i];
+      out.end_[i] = out.stop_[i] - 1;
+
+      if (out.dim_[i] < 1) {
+        return {out, error::Adhoc("dim must hold positive vals")};
+      } else if (out.start_[i] < 0) {
+        return {out, error::Adhoc("start must hold non-negative vals")};
+      } else if (out.stop_[i] <= out.start_[i]) {
+        return {out, error::Adhoc("stop must exceed start")};
+      } else if (out.stop_[i] > out.dim_[i]) {
+        return {out, error::Adhoc("stop must not exceed dim")};
+      }
+    }
+
+    return {out, OkStatus()};
+  }
+
+public:
+  /// factory method
+  static std::pair<GridLayout, Status> try_from_dim(int rank, const int* dim) {
+    return GridLayout::create_(rank, dim, nullptr, nullptr);
+  }
+
+  /// factory method (aborts for invalid arguments)
+  static GridLayout from_dim(int rank, const int* dim) {
+    std::pair<GridLayout, Status> tmp = GridLayout::try_from_dim(rank, dim);
+    if (tmp.second.is_err()) {
+      std::string msg = tmp.second.to_string();
+      GR_INTERNAL_ERROR("%s", msg.c_str());
+    }
+    return tmp.first;
+  }
+
+  /// factory method (aborts for invalid arguments)
+  static GridLayout from_ghostdepth_and_dims(int rank, const int* ghostdepth,
+                                             const int* dim) {
+    GR_INTERNAL_REQUIRE(rank == 1 || rank == 2 || rank == 3, "rank is invalid");
+    GR_INTERNAL_REQUIRE(ghostdepth != nullptr, "ghostdepth is a nullptr");
+    GR_INTERNAL_REQUIRE(dim != nullptr, "dim is a nullptr");
+
+    int start[3] = {0, 0, 0};
+    int stop[3] = {1, 1, 1};
+    for (int i = 0; i < rank; i++) {
+      GR_INTERNAL_REQUIRE(ghostdepth[i] >= 0, "ghostdepth must be nonnegative");
+      GR_INTERNAL_REQUIRE(2 * ghostdepth[i] < dim[i],
+                          "dim[i] must exceed 2*ghostdepth[i]")
+      start[i] = ghostdepth[i];
+      stop[i] = dim[i] - ghostdepth[i];
+    }
+
+    std::pair<GridLayout, Status> tmp =
+        GridLayout::create_(rank, dim, start, stop);
+    if (tmp.second.is_err()) {
+      std::string msg = tmp.second.to_string();
+      GR_INTERNAL_ERROR("%s", msg.c_str());
+    }
+    return tmp.first;
+  }
+
+  int rank() const noexcept { return rank_; }
+  const int* dim() const noexcept { return dim_; }
+  const int* start() const noexcept { return start_; }
+  const int* stop() const noexcept { return stop_; }
+  const int* end() const noexcept { return end_; }
+
+  friend bool operator==(const GridLayout& lhs, const GridLayout& rhs) noexcept;
+  friend bool operator!=(const GridLayout& lhs,
+                         const GridLayout& rhs) noexcept {
+    return !(lhs == rhs);
+  }
+
+  int n_elements(bool exclude_inactive = false) const noexcept {
+    int total = 1;
+    for (int i = 0; i < rank_; i++) {
+      total *= (exclude_inactive) ? stop_[i] - start_[i] : dim_[i];
+    }
+    return total;
+  }
+
+  // teach googletest how to print this type
+  friend void PrintTo(const GridLayout& layout, std::ostream* os);
+
+  /// create a string representation
+  std::string to_string() const;
+};
 
 namespace field_detail {
 
@@ -49,7 +226,7 @@ using MapType = std::map<std::string, gr_float*, std::less<>>;
 ///
 /// Consider a case where @ref my_fields is fully initialized:
 /// - each pointer data member for specifying grid properties refers to a
-///   non-overlapping segment of the buffer tracked by @ref prop_buf
+///   memory tracked by @ref grid_layout
 /// - each pointer data member for specifying an unused grackle-field is holds
 ///   a nullptr
 /// - each pointer data member for specifying an actively used grackle-field:
@@ -60,23 +237,25 @@ using MapType = std::map<std::string, gr_float*, std::less<>>;
 ///     is the name of the grackle-field, and the value is associated pointer
 struct CorePack {
   /// the buffer used for holding field shape and ghost zones
-  std::unique_ptr<int[]> prop_buf;
+  std::unique_ptr<GridLayout> layout;
   /// the buffer used to hold all field data
   std::unique_ptr<gr_float[]> data_buf;
   /// the struct understood by Grackle
   std::unique_ptr<grackle_field_data> my_fields;
   /// maps field names to pointers
   MapType map;
+
+  /// factory method that consumes a @p premade_map
+  ///
+  /// @param premade_map A string to pointer mapping. The keys of this argument
+  ///     should specify the names for each desired Grackle field. We assume
+  ///     that pointers associated with each key hold meaningless garbage values
+  /// @param buf_size The number of elements to allocate per field
+  static std::pair<CorePack, Status> setup_1d(MapType&& premade_map,
+                                              int buf_size);
 };
 
 }  // namespace field_detail
-
-/// Encapsulates an arbitrary GridLayout
-struct GridLayout {
-  int rank;
-  int dimension[3];
-  int ghost_depth[3];
-};
 
 /// A container wrapping grackle_field_data that owns the underlying data
 ///
@@ -135,7 +314,9 @@ public:
   }
 
   /// returns whether `this` and @p other contains the same grid properties
-  bool same_grid_props(const FieldContainer& other) const;
+  bool same_grid_props(const FieldContainer& other) const {
+    return (*this->data_.layout) == (*other.data_.layout);
+  }
 
   /// returns whether `this` and @p other contains the same set of fields
   bool same_fields(const FieldContainer& other) const;
@@ -158,9 +339,7 @@ public:
   int rank() const { return data_.my_fields->grid_rank; }
 
   /// the number of elements per field (unaffected by ghost zones)
-  int elements_per_field() const {
-    return field_detail::elements_per_field_(*data_.my_fields);
-  }
+  int elements_per_field() const { return data_.layout->n_elements(); }
 
   // we define both of the following methods to support the writing of
   // range-based for-loops to iterate over key-buffer pairs
