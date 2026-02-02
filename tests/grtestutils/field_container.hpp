@@ -23,6 +23,7 @@
 #include <map>
 #include <memory>  // std::map
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>  // std::pair
@@ -137,6 +138,17 @@ class GridLayout {
 
 public:
   /// factory method
+  ///
+  /// This is for the common case where we want a 1D layout with a hardcoded
+  /// number of entries (and we know at compile-time that it can't fail)
+  template <int N>
+  static GridLayout create_1d() noexcept {
+    static_assert(N >= 1, "N must be positive");
+    int dim[3] = {N, 0, 0};
+    return GridLayout::create_(1, dim, nullptr, nullptr).first;
+  }
+
+  /// factory method
   static std::pair<GridLayout, Status> try_from_dim(int rank, const int* dim) {
     return GridLayout::create_(rank, dim, nullptr, nullptr);
   }
@@ -245,6 +257,19 @@ struct CorePack {
   /// maps field names to pointers
   MapType map;
 
+  /// prefer this method over directly modifying layout
+  ///
+  /// @note This obviously requires that this->layout and this->my_fields are
+  /// not nullptr.
+  void override_layout(const GridLayout& new_layout) noexcept {
+    // overriding this->layout implicitly updates the members of `my_fields`,
+    // `my_fields->grid_(dimension|start|end)`, because these members all point
+    // to statically sized C array members of GridLayout
+    *this->layout = new_layout;
+    // make sure grid_rank remains up to date
+    this->my_fields->grid_rank = this->layout->rank();
+  }
+
   /// factory method that consumes a @p premade_map
   ///
   /// @param premade_map A string to pointer mapping. The keys of this argument
@@ -285,13 +310,24 @@ public:
   ~FieldContainer() = default;
 
   /// A factory method to make a simple 1d container
+  ///
+  /// @param ctx_pack The Grackle Configuration used for initialization
+  /// @param buf_size The positive number of elements in the container
+  /// @param exclude_fields Names of fields that should be excluded
+  ///
+  /// @note This is provided as a convenience. Do we really need it?
   static std::pair<FieldContainer, Status> create_1d(
-      const GrackleCtxPack& ctx_pack, int buf_size, bool disable_metal = false);
+      const GrackleCtxPack& ctx_pack, int buf_size,
+      const std::set<std::string>& exclude_fields = {});
 
   /// A factory method to make a container
+  ///
+  /// @param ctx_pack The Grackle Configuration used for initialization
+  /// @param layout The Grid layout to use
+  /// @param exclude_fields Names of fields that should be excluded
   static std::pair<FieldContainer, Status> create(
       const GrackleCtxPack& ctx_pack, const GridLayout& layout,
-      bool disable_metal = false);
+      const std::set<std::string>& exclude_fields = {});
 
   /// Create a clone of FieldContainer
   FieldContainer clone() const;
@@ -302,7 +338,8 @@ public:
   ///
   /// @warning
   /// Setting bypass_check to `true` is risky. It primarily exists for the
-  /// case where you call this method in a loop
+  /// case where you call this method in a loop and we already know that 2
+  /// containers are compatible
   Status copy_into(FieldContainer& dest, bool bypass_check = false) const {
     if (!(bypass_check || this->same_grid_props(dest))) {
       return error::Adhoc("grid properties are incompatible");
@@ -321,9 +358,20 @@ public:
   /// returns whether `this` and @p other contains the same set of fields
   bool same_fields(const FieldContainer& other) const;
 
+  /**@{*/
+  /// get the pointer to the wrapped @ref grackle_field_data instance
+  ///
+  /// @note
+  /// This primarily exists to support Grackle API function. Avoid mutating
+  /// the returned pointer
   const grackle_field_data* get_ptr() const { return data_.my_fields.get(); }
-  grackle_field_data* get_ptr() { return data_.my_fields.get(); }
 
+  // NOLINTNEXTLINE(readability-make-member-function-const)
+  grackle_field_data* get_ptr() { return data_.my_fields.get(); }
+  /**@}*/
+
+  /**@{*/
+  /// finds the field data pointer for the field with the specified name
   std::optional<gr_float*> find(std::string_view key) {
     auto s = data_.map.find(key);
     return (s != data_.map.end()) ? std::optional{s->second} : std::nullopt;
@@ -333,18 +381,40 @@ public:
     auto s = data_.map.find(key);
     return (s != data_.map.end()) ? std::optional{s->second} : std::nullopt;
   }
+  /**@}*/
+
+  /**@{*/
+  /// finds the field data pointer or aborts the program
+  gr_float* get_or_abort(std::string_view key) {
+    std::optional<gr_float*> tmp = find(key);
+    if (!tmp.has_value()) {
+      std::string key_copy{key};  // required b/c key isn't '\0' terminated
+      GR_INTERNAL_ERROR("\"%s\" field wasn't found", key_copy.c_str());
+    }
+    return *tmp;
+  }
+
+  const gr_float* get_or_abort(std::string_view key) const {
+    std::optional<const gr_float*> tmp = find(key);
+    if (!tmp.has_value()) {
+      std::string key_copy{key};  // required b/c key isn't '\0' terminated
+      GR_INTERNAL_ERROR("\"%s\" field wasn't found", key_copy.c_str());
+    }
+    return *tmp;
+  }
+  /**@}*/
+
+  const GridLayout& grid_layout() const { return *data_.layout; }
 
   int n_fields() const { return static_cast<int>(data_.map.size()); }
-
-  int rank() const { return data_.my_fields->grid_rank; }
-
-  /// the number of elements per field (unaffected by ghost zones)
-  int elements_per_field() const { return data_.layout->n_elements(); }
 
   // we define both of the following methods to support the writing of
   // range-based for-loops to iterate over key-buffer pairs
   MapType::const_iterator begin() const { return data_.map.begin(); }
   MapType::const_iterator end() const { return data_.map.end(); }
+
+  // teach googletest how to print this type
+  friend void PrintTo(const FieldContainer& fc, std::ostream* os);
 };
 }  // namespace grtest
 

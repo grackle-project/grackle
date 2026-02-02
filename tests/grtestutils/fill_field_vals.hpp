@@ -25,20 +25,55 @@
 
 namespace grtest {
 
+/// @defgroup fillfieldsgrp Logic for filling field values
+///
+/// This group of entities defines the logic for initializing values in a
+/// @ref FluidContainer.
+///
+/// Since our testing tools may be used to test (or benchmark) scenarios with
+/// an arbitrarily large number of elements, we adopt a general-purpose scheme
+/// where we essentially repeat a "tile" of field values 1 or more times.
+///
+/// In general, a "tile" refers to an instance of a generic type that implements
+/// the methods illustrated in the following snippet.
+///
+/// @code{C++}
+/// struct MySampleTileType {
+///   /// number of elements in the tile
+///   int get_n_vals() const noexcept;
+///
+///   // iF field_name is known, fill buf with associated values associated
+///   // and return true. Otherwise, return false.
+///   //
+///   // buf should have a length given by get_n_vals()
+///   bool fill_buf(gr_float* buf, std::string_view field_name) const noexcept;
+/// };
+/// @endcode
+///
+/// This approach was picked to maximize flexibility.
+/// - it can work for initializing a single value or an arbitrary number of
+///   values. This reduces the maintenance burden (at the cost of some
+///   performance)
+/// - it should be easy enough to implement a new tile type
+/// - it is conceivable that we could reuse this machinery for initializing
+///   a field from serialized values (maybe from a json or toml or hdf5 file)
+/**@{*/  // open the doxygen group
+
 /// Fill in the values of @p fc by repeating the values from @p field_tile
 ///
-/// @param[in, out] fc The field container that will be filled
 /// @param[in] field_tile Specifies the values to use
+/// @param[in, out] fc The field container that will be filled
 template <class Tile>
-Status fill_field_vals(FieldContainer& fc, const Tile& field_tile) {
+Status fill_field_vals(const Tile& field_tile, FieldContainer& fc) {
   // access field grid index properties
-  int rank = fc.rank();
-  int ix_start = fc.get_ptr()->grid_start[0];
-  int ix_stop = fc.get_ptr()->grid_end[0] + 1;
-  int iy_start = (rank >= 2) ? fc.get_ptr()->grid_start[1] : 0;
-  int iy_stop = (rank >= 2) ? fc.get_ptr()->grid_end[1] + 1 : 1;
-  int iz_start = (rank == 3) ? fc.get_ptr()->grid_start[2] : 0;
-  int iz_stop = (rank == 3) ? fc.get_ptr()->grid_end[2] + 1 : 1;
+  const GridLayout& layout = fc.grid_layout();
+  int rank = layout.rank();
+  int ix_start = layout.start()[0];
+  int ix_stop = layout.stop()[0];
+  int iy_start = (rank >= 2) ? layout.start()[1] : 0;
+  int iy_stop = (rank >= 2) ? layout.stop()[1] : 1;
+  int iz_start = (rank == 3) ? layout.start()[2] : 0;
+  int iz_stop = (rank == 3) ? layout.stop()[2] : 1;
 
   int mx = fc.get_ptr()->grid_dimension[0];
   int my = (rank >= 2) ? fc.get_ptr()->grid_dimension[1] : 1;
@@ -78,6 +113,30 @@ Status fill_field_vals(FieldContainer& fc, const Tile& field_tile) {
   return OkStatus();
 }
 
+/// Create a @ref FieldContainer and fill in values by repeating the values from
+/// @p field_tile
+///
+/// @param field_tile Specifies the values to use
+/// @param ctx_pack The Grackle Configuration used for initialization
+/// @param layout The Grid layout to use
+/// @param exclude_fields Field names that should be excluded during creation
+///
+/// This function is simple: it just calls @ref FieldContainer::create and
+/// @ref fill_field_vals. But because this sequence of events is relatively
+/// common, the aggregation of @ref Status instance is quite convenient.
+template <class Tile>
+std::pair<FieldContainer, Status> create_and_fill_FieldContainer(
+    const Tile& field_tile, const GrackleCtxPack& ctx_pack,
+    const GridLayout& layout,
+    const std::set<std::string>& exclude_fields = {}) {
+  std::pair<grtest::FieldContainer, grtest::Status> out =
+      grtest::FieldContainer::create(ctx_pack, layout, exclude_fields);
+  if (out.second.is_ok()) {
+    out.second = fill_field_vals(field_tile, out.first);
+  }
+  return out;
+}
+
 /// Represents a very simplistic set of conditions
 struct SimpleFieldTile {
   double mfrac_metal;
@@ -89,8 +148,14 @@ struct SimpleFieldTile {
   double common_density;
   double common_eint;
 
+  /// number of values specified by the tile
   int get_n_vals() const noexcept { return 1; }
 
+  /// fill @p buf with values associated with the specified @p field_name
+  ///
+  /// @param[out] buf This is filled. The length is given by @ref get_n_vals()
+  /// @param[in] field_name Name of the field
+  /// @returns `true` if the field is known. Otherwise, returns `false`
   bool fill_buf(gr_float* buf, std::string_view field_name) const noexcept {
     if (field_name == "density") {
       buf[0] = common_density;
@@ -144,6 +209,8 @@ inline SimpleFieldTile make_simple_tile(const GrackleCtxPack& ctx_pack,
       /* common_density = */ 1.0,
       /* common_eint = */ common_eint};
 }
+
+/**@}*/  // close the doxygen group
 
 }  // namespace grtest
 
