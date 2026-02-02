@@ -50,3 +50,9 @@ std::optional<std::string> grtest::get_standard_datafile(const char* datafile) {
   }
   return std::optional<std::string>(tmp);
 }
+
+std::string grtest::to_pretty_string(double val) {
+  char buf[30];
+  snprintf(buf, 30, "%g", val);
+  return std::string(buf);
+}
