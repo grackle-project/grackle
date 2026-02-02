@@ -51,8 +51,7 @@ std::pair<std::vector<ParamPair>, Status> get_chem_preset_vals_(
   }
 
   std::vector<std::pair<std::string, ParamVal>> v = make_ParamPair_vec({
-      {"use_grackle", 1},  // chemistry on
-      {"use_isrf_field", 1},
+      {"use_grackle", 1},             // chemistry on
       {"with_radiative_cooling", 1},  // cooling on
       {"metal_cooling", 1},           // metal cooling on
       {"UVbackground", 1},            // UV background on
