@@ -14,6 +14,7 @@
 #include "./field_container.hpp"
 #include "./field_info_detail.hpp"
 #include "./status.hpp"
+#include "./utils.hpp"
 
 #include "grackle.h"
 #include "status_reporting.h"
@@ -63,7 +64,7 @@ namespace field_detail {
 /// The returned where the keys are the names of every active Grackle field
 /// and the associated values are all nullptr
 static MapType make_nullptr_map_(const GrackleCtxPack& ctx_pack,
-                                 bool exclude_metal) {
+                                 const std::set<std::string>& exclude_fields) {
   MapType m;
   // fill up m with (field, nullptr) pairs for each field enabled by ctx_pack
   auto fn = [&m](const char* name, const FieldInfo& info) {
@@ -73,8 +74,8 @@ static MapType make_nullptr_map_(const GrackleCtxPack& ctx_pack,
   };
   for_each_named_field(ctx_pack, fn);
 
-  if (exclude_metal) {
-    auto search = m.find("metal_density");
+  for (const std::string& name : exclude_fields) {
+    auto search = m.find(name);
     if (search != m.end()) {
       m.erase(search);
     }
@@ -141,14 +142,15 @@ std::pair<CorePack, Status> CorePack::setup_1d(MapType&& premade_map,
 }  // namespace field_detail
 
 std::pair<FieldContainer, Status> FieldContainer::create_1d(
-    const GrackleCtxPack& ctx_pack, int buf_size, bool disable_metal) {
+    const GrackleCtxPack& ctx_pack, int buf_size,
+    const std::set<std::string>& exclude_fields) {
   if (!ctx_pack.is_initialized()) {
     return {FieldContainer{}, error::Adhoc("ctx_pack isn't initialized")};
   }
 
   // construct a map for each relevant field (the values are all nullptr)
   field_detail::MapType m =
-      field_detail::make_nullptr_map_(ctx_pack, disable_metal);
+      field_detail::make_nullptr_map_(ctx_pack, exclude_fields);
   std::pair<field_detail::CorePack, Status> tmp =
       field_detail::CorePack::setup_1d(std::move(m), buf_size);
   if (tmp.second.is_err()) {
@@ -162,14 +164,14 @@ std::pair<FieldContainer, Status> FieldContainer::create_1d(
 
 std::pair<FieldContainer, Status> FieldContainer::create(
     const GrackleCtxPack& ctx_pack, const GridLayout& layout,
-    bool disable_metal) {
+    const std::set<std::string>& exclude_fields) {
   int total_count = layout.n_elements();
 
   std::pair<FieldContainer, Status> tmp =
-      FieldContainer::create_1d(ctx_pack, total_count, disable_metal);
+      FieldContainer::create_1d(ctx_pack, total_count, exclude_fields);
 
   if (tmp.second.is_ok()) {
-    (*tmp.first.data_.layout) = layout;
+    tmp.first.data_.override_layout(layout);
   }
   return tmp;
 }
@@ -181,13 +183,13 @@ FieldContainer FieldContainer::clone() const {
   field_detail::MapType m = this->data_.map;
   std::pair<field_detail::CorePack, Status> tmp =
       field_detail::CorePack::setup_1d(std::move(m),
-                                       this->elements_per_field());
+                                       this->grid_layout().n_elements());
   // it shouldn't be possible for tmp.second.is_err() to return true
   FieldContainer out;
   out.data_ = std::move(tmp.first);
 
   // copy over layout properties
-  (*out.data_.layout) = *this->data_.layout;
+  out.data_.override_layout(*this->data_.layout);
 
   // now copy over field values
   copy_into_helper_(out);
@@ -204,7 +206,7 @@ void FieldContainer::copy_into_helper_(FieldContainer& other) const {
 
   const gr_float* src = this->data_.data_buf.get();
   gr_float* dst = other.data_.data_buf.get();
-  int length = this->elements_per_field() * this->n_fields();
+  int length = this->grid_layout().n_elements() * this->n_fields();
   std::memcpy(dst, src, length * sizeof(gr_float));
 }
 
@@ -220,6 +222,22 @@ bool FieldContainer::same_fields(const FieldContainer& other) const {
     }
   }
   return true;
+}
+
+void PrintTo(const FieldContainer& fc, std::ostream* os) {
+  const GridLayout& layout = fc.grid_layout();
+  *os << "FieldContainer{\n"
+      << "  " << layout.to_string() << ",\n"
+      << "  grid_dx = " << fc.data_.my_fields->grid_dx << ",\n"
+      << "  fields = {\n";
+  std::size_t n_elements = layout.n_elements();
+  for (const auto& it : fc) {
+    const std::string& field_name = it.first;
+    const gr_float* ptr = it.second;
+    *os << "    " << field_name << " =\n";
+    *os << "      " << ptr_to_string(ptr, n_elements) << '\n';
+  }
+  *os << "  }\n}\n";
 }
 
 }  // namespace grtest
