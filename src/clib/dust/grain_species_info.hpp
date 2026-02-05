@@ -13,6 +13,8 @@
 #ifndef GRAIN_SPECIES_INFO_HPP
 #define GRAIN_SPECIES_INFO_HPP
 
+#include "../support/FrozenKeyIdxBiMap.hpp"
+
 namespace grackle::impl {
 
 /// holds information about a single gas species that is an ingredient for
@@ -38,19 +40,6 @@ struct GrainGrowthIngredient {
 struct GrainSpeciesInfoEntry {
   /// the species index of the grain in the #GrainSpLUT lookup table
   int species_idx;
-
-  /// the species index of the grain in the #OnlyGrainSpLUT lookup table
-  ///
-  /// @note
-  /// It's frankly a little redundant to track this information (since an
-  /// instance of this struct is found at this index of an out.species_infoay)
-  int onlygrainsp_idx;
-
-  /// name of the dust species
-  ///
-  /// @note
-  /// This primarily exists for debuging purposes
-  const char* name;
 
   /// indicates whether to use the carbonaceous or silicate coefficient table
   /// to computing contributions of the grain species to the total h2dust rate
@@ -92,17 +81,17 @@ struct GrainSpeciesInfoEntry {
 /// Relationship with OnlyGrainSpLUT
 /// --------------------------------
 /// In the short term, the index of each species in the
-/// @ref GrainSpeciesInfo::species_info out.species_infoay is dictated by the
+/// @ref GrainSpeciesInfo::species_info out.species_info is dictated by the
 /// order of enumerators in the OnlyGrainSpLUT enumeration.
 ///
 /// In the medium term, we plan to entirely eliminate the OnlyGrainSpLUT
-/// enumeration because all of the grain species can be treated very uniformly
-/// uniformly. At the time of writing, just about every place where we would
-/// use OnlyGrainSpLUT corresponds to a location where would enumerate every
+/// enumeration because all of the grain species can be treated very uniformly.
+/// At the time of writing, just about every place where we would use
+/// OnlyGrainSpLUT corresponds to a location where we would enumerate every
 /// possible grain species and perform nearly identical operations on each
 /// species. In each case, it is straight-forward to replace these blocks of
 /// logic with for-loops (we just need to encode species-specific variations in
-/// the calculations in out.species_infoays that have the same ordering as the
+/// the calculations in out.species_info that have the same ordering as the
 /// species). To phrase it another way, in nearly all of the places where we
 /// would use OnlyGrainSpLUT, we don't need to know the grain species identity.
 ///
@@ -113,9 +102,18 @@ struct GrainSpeciesInfo {
   /// number of grain species considered for the current Grackle configuration
   int n_species;
 
-  /// an out.species_infoay of length of length @ref n_species where each entry
+  /// an out.species_info of length of length @ref n_species where each entry
   /// holds info about a separate grain species
   GrainSpeciesInfoEntry* species_info;
+
+  /// maps between grain species names and the associated index. The mapping is
+  /// **ALWAYS** consistent with ``OnlyGrainSpLUT``.
+  ///
+  /// @note
+  /// An argument could be made for storing this separately from the rest of
+  /// the struct since the core grackle calculations don't (or at least
+  /// shouldn't) use this data structure during the calculation.
+  FrozenKeyIdxBiMap name_map;
 };
 
 /// return the number of grain species
@@ -164,6 +162,7 @@ inline void drop_GrainSpeciesInfo(GrainSpeciesInfo* ptr) {
     }
   }
   delete[] ptr->species_info;
+  drop_FrozenKeyIdxBiMap(&ptr->name_map);
   // the following 2 lines are not strictly necessary, but they may help us
   // avoid a double-free and a dangling pointer
   ptr->n_species = 0;
