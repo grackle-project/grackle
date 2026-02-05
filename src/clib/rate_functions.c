@@ -1317,7 +1317,9 @@ double regr_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //(Equation 9, Wolfire et al., 1995)
     double grbeta = 0.74 / pow(T, 0.068);
-    return  4.65e-30 * pow(T, 0.94 + 0.5 * grbeta) / units;
+    // Note, we apply a semi-arbitrary dampener with the exp(-T / 3e4) for
+    // the same reasons as discussed in the gasGrain_rate function.
+    return  4.65e-30 * exp(-T / 3.0e4) * pow(T, 0.94 + 0.5 * grbeta) / units;
 }
 
 //The below rates are scalar -- they have no temperature dependence.
