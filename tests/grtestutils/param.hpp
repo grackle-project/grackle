@@ -85,7 +85,7 @@ public:
 
   /// Returns whether `this` holds an empty string
   bool is_empty_string() const {
-    return std::holds_alternative<nullptr_t>(val_);
+    return std::holds_alternative<std::nullptr_t>(val_);
   }
 
   /*!{*/
