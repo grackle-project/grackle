@@ -1303,7 +1303,12 @@ double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
     double fgr = 0.009387;
     double grainCoeff = 1.2e-31 * pow(1.0e3, -0.5) / fgr;
 
-    return grainCoeff * pow(T, 0.5) *
+    // The exp(-T / 3e4) term below is added as a semi-arbitrary cutoff
+    // to prevent this term from becoming unphysically large at high temperatures.
+    // In fact, it would dominate the cooling at temperature above ~1e6 K.
+    // In a model including dust destruction, grains would not last long at these
+    // temperatures.
+    return grainCoeff * exp(-T / 3.0e4) * pow(T, 0.5) *
             ( 1.0 - 0.8 * exp(-75.0 / T) ) / units;
 }
 
