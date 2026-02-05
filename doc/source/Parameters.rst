@@ -213,6 +213,13 @@ For all on/off integer flags, 0 is off and 1 is on.
      directly from equation 2 of `Wolfire et al. (1995)
      <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__.
 
+.. note:: With :c:data:`primordial_chemistry` > 0, the electron density
+   used to calculate epsilon for :c:data:`photoelectric_heating` = 3
+   only considers the contribution from primordial species, ignoring that
+   of metals and dust grains, and so is most likely underestimated at low
+   temperatures. In practice, epsilon is reasonably approximated as a
+   constant of 0.05 in this regime.
+
 .. c:var:: int dust_recombination_cooling
 
    Flag to enable recombination cooling onto dust grains using 
@@ -221,13 +228,6 @@ For all on/off integer flags, 0 is off and 1 is on.
    rescaled by the local dust-to-gas ratio. This option is automatically 
    set by :c:data:`h2_on_dust` > 0 or :c:data:`dust_chemistry` > 0.
    Default: 0.
-
-.. note:: With :c:data:`primordial_chemistry` > 0, the electron density
-   used to calculate epsilon for :c:data:`photoelectric_heating` = 3
-   only considers the contribution from primordial species, ignoring that
-   of metals and dust grains, and so is most likely underestimated at low
-   temperatures. In practice, epsilon is reasonably approximated as a
-   constant of 0.05 in this regime.
 
 .. c:var:: int photoelectric_heating_rate
 
