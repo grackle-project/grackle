@@ -80,11 +80,20 @@ add_library(grtestutils
   # files outside of the googletest subdirectory
   # -> these shouldn't include headers from the googletest subdirectory
   cmd.hpp cmd.cpp
-  utils.hpp utils.cpp
+  GrackleCtxPack.cpp GrackleCtxPack.hpp
+  field_container.cpp field_container.hpp
+  field_info_detail.cpp field_info_detail.hpp
+  fill_field_vals.hpp
+  iterator_adaptor.hpp
   os.hpp os.cpp
+  param.cpp param.hpp
+  preset.cpp preset.hpp
+  status.cpp status.hpp
+  utils.hpp utils.cpp
 
   # files in the googletest subdirectory (reminder: should just be headers!)
   googletest/check_allclose.hpp
+  googletest/fixtures.hpp
 )
 
 target_link_libraries(grtestutils
