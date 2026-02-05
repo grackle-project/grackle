@@ -14,6 +14,7 @@
 
 #include "grackle.h"
 #include "./status.hpp"
+#include <cstddef>  // std::nullptr_t
 #include <initializer_list>
 #include <iosfwd>
 #include <optional>
@@ -37,7 +38,7 @@ class ParamVal {
                         const ParamVal& par_val,
                         param_detail::StrAllocTracker* str_allocs);
 
-  using val_type = std::variant<std::string, nullptr_t, int, double>;
+  using val_type = std::variant<std::string, std::nullptr_t, int, double>;
 
   // private attribute
   val_type val_;
