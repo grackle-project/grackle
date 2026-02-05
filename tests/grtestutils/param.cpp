@@ -74,7 +74,7 @@ bool ParamVal::is_equal(std::string_view val) const {
 
 bool ParamVal::is_equal(const char* val) const {
   if (val == nullptr) {
-    return std::holds_alternative<nullptr_t>(val_);
+    return std::holds_alternative<std::nullptr_t>(val_);
   }
   return is_equal(std::string_view(val));
 }
