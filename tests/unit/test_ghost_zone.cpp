@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "grtestutils/utils.hpp"
+#include "grtestutils/googletest/fixtures.hpp"
 
 #include <grackle.h>
 
@@ -33,7 +34,8 @@
 #define mh     1.67262171e-24
 #define kboltz 1.3806504e-16
 
-typedef int (*property_func)(code_units*, grackle_field_data*, gr_float*);
+typedef int (*property_func)(chemistry_data*, chemistry_data_storage*,
+                             code_units*, grackle_field_data*, gr_float*);
 
 typedef std::map<std::string, std::vector<gr_float>> val_vec_map_t;
 
@@ -79,7 +81,8 @@ private:
 // allocates the grackle_field_data struct
 void construct_field_data(grackle_field_data& my_fields,
                           grid_props& my_grid_props,
-                          code_units& my_units,
+                          const chemistry_data* my_chemistry,
+                          const code_units& my_units,
                           val_vec_map_t& val_map,
                           std::minstd_rand& generator){
 
@@ -162,11 +165,11 @@ void construct_field_data(grackle_field_data& my_fields,
       for (int ix = gx; ix < (mx - gx); ix++){
         int i = ix + mx * (iy + my*iz);
         my_fields.density[i] = 1.0;
-        my_fields.HI_density[i] = grackle_data->HydrogenFractionByMass *
+        my_fields.HI_density[i] = my_chemistry->HydrogenFractionByMass *
           my_fields.density[i];
         my_fields.HII_density[i] = tiny_number * my_fields.density[i];
         my_fields.HM_density[i] = tiny_number * my_fields.density[i];
-        my_fields.HeI_density[i] = (1.0 - grackle_data->HydrogenFractionByMass)
+        my_fields.HeI_density[i] = (1.0 - my_chemistry->HydrogenFractionByMass)
           * my_fields.density[i];
         my_fields.HeII_density[i] = tiny_number * my_fields.density[i];
         my_fields.HeIII_density[i] = tiny_number * my_fields.density[i];
@@ -177,7 +180,7 @@ void construct_field_data(grackle_field_data& my_fields,
         my_fields.HDI_density[i] = tiny_number * my_fields.density[i];
         my_fields.e_density[i] = tiny_number * my_fields.density[i];
         // solar metallicity
-        my_fields.metal_density[i] = grackle_data->SolarMetalFractionByMass *
+        my_fields.metal_density[i] = my_chemistry->SolarMetalFractionByMass *
           my_fields.density[i];
 
         my_fields.x_velocity[i] = 0.0;
@@ -196,7 +199,7 @@ void construct_field_data(grackle_field_data& my_fields,
         my_fields.RT_H2_dissociation_rate[i] = 0.0;
         my_fields.RT_heating_rate[i] = 0.0;
 
-        my_fields.isrf_habing[i] = grackle_data->interstellar_radiation_field;
+        my_fields.isrf_habing[i] = my_chemistry->interstellar_radiation_field;
       }
     }
   }
@@ -246,116 +249,14 @@ bool equal_ghost_values(val_vec_map_t& ref, val_vec_map_t& actual,
   return true;
 }
 
-namespace { // stuff within anonymous namespace is local to the current file
+using APIGhostZoneTest = grtest::ParametrizedConfigPresetFixture;
 
-/// the following is just a dummy struct that primarily exists to assist with
-/// cleanup (and avoid memory leaks)
-struct GrackleCtxPack {
-  bool successful_default = false;
-  bool successful_data_file = false;
-  bool successful_init = false;
-  code_units my_units;
-  chemistry_data* my_chemistry = nullptr;
-};
-
-void cleanup_grackle_conditions(GrackleCtxPack& pack) {
-  if (pack.successful_init) { free_chemistry_data(); }
-  if (pack.my_chemistry != nullptr) { delete pack.my_chemistry; }
-}
-
-GrackleCtxPack setup_simple_grackle_conditions(int primordial_chemistry) {
-  /*********************************************************************
-  / Initial setup of units and chemistry objects.
-  *********************************************************************/
-
-  GrackleCtxPack pack;
-
-  // Set initial redshift (for internal units).
-  double initial_redshift = 0.;
-
-  // First, set up the units system.
-  // These are conversions from code units to cgs.
-  pack.my_units.comoving_coordinates = 0; // 1 if cosmological sim, 0 if not
-  pack.my_units.density_units = 1.67e-24;
-  pack.my_units.length_units = 1.0;
-  pack.my_units.time_units = 1.0e12;
-  pack.my_units.a_units = 1.0; // units for the expansion factor
-  // Set expansion factor to 1 for non-cosmological simulation.
-  pack.my_units.a_value = 1. / (1. + initial_redshift) / pack.my_units.a_units;
-  set_velocity_units(&pack.my_units);
-
-  // Second, create a chemistry object for parameters.
-  pack.my_chemistry = new chemistry_data;
-  if (set_default_chemistry_parameters(pack.my_chemistry) != GR_SUCCESS) {
-    return pack;
-  }
-  pack.successful_default=true;
-
-  // Set parameter values for chemistry.
-  // Access the parameter storage with the struct you've created
-  // or with the grackle_data pointer declared in grackle.h (see further below).
-  pack.my_chemistry->use_grackle = 1;            // chemistry on
-  pack.my_chemistry->use_isrf_field = 1;
-  pack.my_chemistry->with_radiative_cooling = 1; // cooling on
-  pack.my_chemistry->primordial_chemistry = primordial_chemistry;
-  pack.my_chemistry->dust_chemistry = (primordial_chemistry == 0) ? 0 : 1;
-  pack.my_chemistry->metal_cooling = 1;          // metal cooling on
-  pack.my_chemistry->UVbackground = 1;           // UV background on
-
-  pack.successful_data_file = grtest::set_standard_datafile(
-      *pack.my_chemistry, "CloudyData_UVB=HM2012.h5"
-  );
-  if (!pack.successful_data_file) { return pack; }
-
-  // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(&pack.my_units) != GR_SUCCESS) { return pack; }
-  pack.successful_init = true;
-  return pack;
-}
-
-} // anonymous namespace
-
-// this defines a parameterized test-fixture (it is parameterized on
-// primordial_chemistry)
-// -> it has a GetParam() method to access the parameters
-// -> to assist with avoiding memory leaks, I decided to also make this setup
-//    and teardown GrackleCtxPack.
-//    -> Frankly, I don't love this, but I think it is okay since the test
-//       really doesn't care how grackle is configured (other than that
-//       primordial_chemistry varies and that it will actually perform
-//       calculations)
-class APIConventionTest : public testing::TestWithParam<int> {
- protected:
-  void SetUp() override {
-    // Disable output
-    grackle_verbose = 0;
-
-    // called immediately after the constructor (but before the test-case)
-    int primordial_chemistry = GetParam();
-
-    pack_ = setup_simple_grackle_conditions(primordial_chemistry);
-    if (!pack_.successful_default) {
-      FAIL() << "Error in set_default_chemistry_parameters.";
-    } else if (!pack_.successful_data_file) {
-      GTEST_SKIP() << "something went wrong with finding the data file";
-    } else if (!pack_.successful_init) {
-      FAIL() << "Error in initialize_chemistry_data.";
-    }
-  }
-
-  void TearDown() override {
-    cleanup_grackle_conditions(this->pack_);
-  }
-
-  GrackleCtxPack pack_;
-};
-
-TEST_P(APIConventionTest, GridZoneStartEnd) {
+TEST_P(APIGhostZoneTest, GridZoneStartEnd) {
 
   grid_props my_grid_props = {{5,6,7}, {1,0,2}};
 
-  // alias the pack_ attribute tracked by the fixture
-  GrackleCtxPack& pack = pack_;
+  // the pack attribute holds grtest::GrackleCtxPack
+  code_units my_units = pack.initial_units();
 
   // initialize pseudo random number generator
   std::uint32_t seed = 1379069008;
@@ -377,7 +278,7 @@ TEST_P(APIConventionTest, GridZoneStartEnd) {
   // For example: my_fields.density = my_field_map["density"].data()
   val_vec_map_t my_field_map;
   construct_field_data(
-    my_fields, my_grid_props, pack.my_units, my_field_map, generator
+    my_fields, my_grid_props, pack.my_chemistry(), my_units, my_field_map, generator
   );
 
   // orig_field_map_copy is a deepcopy of my_field_map. We will use this as a
@@ -393,9 +294,11 @@ TEST_P(APIConventionTest, GridZoneStartEnd) {
 
   // Evolving the chemistry.
   // some timestep
-  double dt = 3.15e7 * 1e6 / pack.my_units.time_units;
+  double dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry(&pack.my_units, &my_fields, dt) != GR_SUCCESS) {
+  if (local_solve_chemistry(pack.my_chemistry(), pack.my_rates(),
+                            &my_units, &my_fields,
+                            dt)!= GR_SUCCESS) {
     FAIL() << "Error running solve_chemistry";
   }
 
@@ -404,17 +307,17 @@ TEST_P(APIConventionTest, GridZoneStartEnd) {
     FAIL() << "Some ghost values were modified in solve_chemistry.";
   }
 
-  // Now check what hapens when computing various properties
-  const char* func_names[5] = {"calculate_cooling_time",
-                               "calculate_temperature",
-                               "calculate_pressure",
-                               "calculate_gamma",
-                               "calculate_dust_temperature"}; 
-  property_func func_ptrs[5] = {&calculate_cooling_time,
-                                &calculate_temperature,
-                                &calculate_pressure,
-                                &calculate_gamma,
-                                &calculate_dust_temperature};
+  // Now check what happens when computing various properties
+  const char* func_names[5] = {"local_calculate_cooling_time",
+                               "local_calculate_temperature",
+                               "local_calculate_pressure",
+                               "local_calculate_gamma",
+                               "local_calculate_dust_temperature"};
+  property_func func_ptrs[5] = {&local_calculate_cooling_time,
+                                &local_calculate_temperature,
+                                &local_calculate_pressure,
+                                &local_calculate_gamma,
+                                &local_calculate_dust_temperature};
   for (int i = 0; i < 5; i++){
     std::uint32_t seed2 = 1860889605;
     std::minstd_rand generator2(seed2);
@@ -426,7 +329,7 @@ TEST_P(APIConventionTest, GridZoneStartEnd) {
 
     // perform the calculation
     property_func func_ptr = func_ptrs[i];
-    if ( (*func_ptr)(&pack.my_units, &my_fields, out_vals.data())
+    if ( (*func_ptr)(pack.my_chemistry(), pack.my_rates(), &my_units, &my_fields, out_vals.data())
          != GR_SUCCESS ) {
       FAIL() << "Error reported by " << func_names;
     }
@@ -439,6 +342,18 @@ TEST_P(APIConventionTest, GridZoneStartEnd) {
 
 }
 
+using grtest::ParamConf;
+using grtest::ChemPreset;
+using grtest::InitialUnitPreset;
+
+static const ParamConf my_presets_[] = {
+  ParamConf::SimplePreset(ChemPreset::primchem0, InitialUnitPreset::simple_z0),
+  ParamConf::SimplePreset(ChemPreset::primchem1, InitialUnitPreset::simple_z0),
+  ParamConf::SimplePreset(ChemPreset::primchem2, InitialUnitPreset::simple_z0),
+  ParamConf::SimplePreset(ChemPreset::primchem3, InitialUnitPreset::simple_z0)
+};
+
 INSTANTIATE_TEST_SUITE_P(
-  VaryingPrimordialChem, APIConventionTest, ::testing::Range(0, 4)
+  /* 1st arg is intentionally empty */, APIGhostZoneTest,
+  ::testing::ValuesIn(my_presets_)
 );
