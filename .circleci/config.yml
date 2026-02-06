@@ -200,7 +200,7 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-v4"
+        default: "gold-standard-v5"
     steps:
       - run:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
