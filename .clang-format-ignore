@@ -29,9 +29,10 @@ src/clib/grackle_units.c
 src/clib/index_helper.c
 src/clib/index_helper.h
 src/clib/init_misc_species_cool_rates.cpp
-src/clib/initialize_UVbackground_data.c
+src/clib/initialize_UVbackground_data.cpp
 src/clib/initialize_chemistry_data.cpp
-src/clib/initialize_cloudy_data.c
+src/clib/initialize_cloudy_data.cpp
+src/clib/initialize_dust_yields.cpp
 src/clib/initialize_rates.cpp
 src/clib/internal_types.hpp
 src/clib/internal_units.h
@@ -40,7 +41,7 @@ src/clib/phys_constants.h
 src/clib/rate_functions.c
 src/clib/set_default_chemistry_parameters.cpp
 src/clib/solve_chemistry.cpp
-src/clib/solve_rate_cool_g-cpp.cpp
+src/clib/solve_rate_cool.cpp
 src/clib/status_reporting.c
 src/clib/status_reporting.h
 src/clib/step_rate_gauss_seidel.hpp
@@ -53,9 +54,8 @@ src/clib/utils.c
 src/clib/utils.h
 src/example/c_example.c
 src/example/c_local_example.c
-src/example/cxx_example.C
-src/example/cxx_grid_example.C
-src/example/cxx_omp_example.C
+src/example/cxx_example.cpp
+src/example/cxx_omp_example.cpp
 src/include/grackle.h
 src/include/grackle_chemistry_data.h
 src/include/grackle_float.h.in
