@@ -19,7 +19,10 @@ endif()
 
 # Preamble
 # --------
-cmake_minimum_required(VERSION 3.16)
+# we currently set the minimum required version CMake version to the version
+# that can be downloaded with apt for the oldest Ubuntu LTS release that
+# still receives General Support
+cmake_minimum_required(VERSION 3.22)
 cmake_policy(SET CMP0077 NEW)
 cmake_policy(SET CMP0082 NEW)
 
