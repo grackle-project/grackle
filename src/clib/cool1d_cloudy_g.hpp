@@ -1,0 +1,59 @@
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares the cool1d_cloudy_g function
+///
+//===----------------------------------------------------------------------===//
+
+// This file was initially generated automatically during conversion of the
+// cool1d_cloudy_g function from FORTRAN to C++
+
+#ifndef COOL1D_CLOUDY_G_HPP
+#define COOL1D_CLOUDY_G_HPP
+
+#include "grackle.h"             // gr_float
+#include "fortran_func_decls.h"  // gr_mask_int
+#include "index_helper.h"        // IndexRange
+
+namespace grackle::impl {
+
+/// Solve cloudy metal cooling/heating
+///
+/// Solve cloudy cooling by interpolating from the data.
+///
+/// @param[in] rhoH 1D array holding the Hydrogen mass density for the
+/// @p idx_range
+/// @param[in] metallicity 1D array holding the metallicity for the @p
+/// idx_range
+/// @param[in] logtem Natural log of temperature values
+/// @param[out] edot 1D array holding the time derivative of the
+///     internal energy in the @p idx_range
+/// @param[in] comp2 CMB Temperature at redshift @p zr
+/// @param[in] dom Unit conversion to proper number density in code units
+/// @param[in] zr Current redshift
+/// @param[in] icmbTfloor Flag to include temperature floor from cmb
+/// @param[in] iClHeat Flag to include cloudy heating
+/// @param[in] iZscale Flag to scale cooling by metallicity
+/// @param[in] itmask Iteration mask
+/// @param[in] cloudy_table Cloudy cooling table data
+/// @param[in] idx_range Index range specifying the portion of the grid to
+///     operate on
+///
+/// @par History
+/// written by: Britton Smith, 2009
+/// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
+/// port
+void cool1d_cloudy_g(const double* rhoH, const double* metallicity,
+                     const double* logtem, double* edot, double comp2,
+                     double dom, double zr, int icmbTfloor, int iClHeat,
+                     int iZscale, const gr_mask_type* itmask,
+                     cloudy_data cloudy_table, IndexRange idx_range);
+
+}  // namespace grackle::impl
+
+#endif /* COOL1D_CLOUDY_G_HPP */
