@@ -1303,7 +1303,12 @@ double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
     double fgr = 0.009387;
     double grainCoeff = 1.2e-31 * pow(1.0e3, -0.5) / fgr;
 
-    return grainCoeff * pow(T, 0.5) *
+    // The exp(-T / 3e4) term below is added as a semi-arbitrary cutoff
+    // to prevent this term from becoming unphysically large at high temperatures.
+    // In fact, it would dominate the cooling at temperature above ~1e6 K.
+    // In a model including dust destruction, grains would not last long at these
+    // temperatures.
+    return grainCoeff * exp(-T / 3.0e4) * pow(T, 0.5) *
             ( 1.0 - 0.8 * exp(-75.0 / T) ) / units;
 }
 
@@ -1312,7 +1317,9 @@ double regr_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //(Equation 9, Wolfire et al., 1995)
     double grbeta = 0.74 / pow(T, 0.068);
-    return  4.65e-30 * pow(T, 0.94 + 0.5 * grbeta) / units;
+    // Note, we apply a semi-arbitrary dampener with the exp(-T / 3e4) for
+    // the same reasons as discussed in the gasGrain_rate function.
+    return  4.65e-30 * exp(-T / 3.0e4) * pow(T, 0.94 + 0.5 * grbeta) / units;
 }
 
 //The below rates are scalar -- they have no temperature dependence.
