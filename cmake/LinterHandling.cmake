@@ -69,8 +69,8 @@ unfiltered_args = sys.argv[1:] # sys.argv[0] is equiv to __file__
 sys.exit(subprocess.call(filter_args(unfiltered_args)))
 ]=])
 
-  # in CMake >= 3.19, could replace following with file(CHMOD ...)
-  execute_process(COMMAND chmod +x ${wrapper_script})
+  file(CHMOD ${wrapper_script}
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
 
   set("${OUT_VAR}" "${wrapper_script};${TIDY_COMMAND_LINE}" PARENT_SCOPE)
 
@@ -184,8 +184,7 @@ endfunction()
 macro(convenience_prepare_clang_tidy)
   # do some basic sanity checks to verify that edits to the CMakeLists.txt file
   # did not break any assumptions made by this macro
-  if ((CMAKE_VERSION VERSION_GREATER_EQUAL "3.17") AND
-      (DEFINED CMAKE_CURRENT_FUNCTION))
+  if (DEFINED CMAKE_CURRENT_FUNCTION)
     message(fatal_error
       "convenience_prepare_clang_tidy macro: called from within a function")
   elseif(NOT DEFINED GRACKLE_IS_TOP_LEVEL)

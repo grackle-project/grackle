@@ -38,12 +38,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # determine whether we are building a stand-alone program, or if grackle has
 # been embedded within another project
-set(GRACKLE_IS_TOP_LEVEL ON)
-if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  set(GRACKLE_IS_TOP_LEVEL OFF)
-endif()
+# -> todo gradually replace GRACKLE_IS_TOP_LEVEL with PROJECT_IS_TOP_LEVEL
+set(GRACKLE_IS_TOP_LEVEL ${PROJECT_IS_TOP_LEVEL})
 
-if (GRACKLE_IS_TOP_LEVEL AND ("${CMAKE_EXPORT_COMPILE_COMMANDS}" STREQUAL ""))
+if (PROJECT_IS_TOP_LEVEL AND ("${CMAKE_EXPORT_COMPILE_COMMANDS}" STREQUAL ""))
   # aside: replacing the string-comparison with a check for whether
   #        CMAKE_EXPORT_COMPILE_COMMANDS exists doesn't seem work properly
   set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
