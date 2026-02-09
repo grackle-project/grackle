@@ -1,28 +1,24 @@
-# This module defines functionality to help configure cmake to use clang-tidy
+# This module defines functionality to help configure cmake to use sanitizers
+
+# Clang-Tidy Support
+# ==================
 #
 # Refer to the website documentation for a more detailed overview of what
 # clang-tidy is and how you use it.
 #
-# Goals of this module
-# --------------------
+# Goals of this functionality
+# ---------------------------
 # 1. Make it easier for non-CMake experts to use clang-tidy (in a totally
 #    "opt-in" manner so that CMake experts can do things in the standard way)
 # 2. Backport a change (introduced in CMake 3.25) that alters the arguments
 #    passed to CMake when the `-p` flag is detected. It's important to pass
 #    this flag to work around a well known bug (described further down below)
 #
-# How to use this module
-# ----------------------
+# How to use this functionality
+# -----------------------------
 # Execute `convenience_prepare_clang_tidy()` macro at the top-level of the
 # CMake project BEFORE declaring any targets (the macro's docstring provides
 # further context)
-#
-# Aside
-# -----
-# If we add support for other static analysis tools (e.g. include-what-you-use),
-# we should probably take care of any special-handling in this file (and rename
-# this module so that it broadly refers to static analysis (rather than just
-# clang-tidy)
 
 
 # a helper function that constructs a clang-tidy command line that effectively

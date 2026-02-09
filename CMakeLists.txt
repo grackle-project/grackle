@@ -52,7 +52,7 @@ endif()
 # it's really important that the following is called at the directory-level
 # BEFORE we declare any targets (and after we make sure GRACKLE_IS_TOP_LEVEL
 # and CMAKE_EXPORT_COMPILE_COMMANDS are both defined)
-include(PrepareClangTidy)
+include(LinterHandling)
 convenience_prepare_clang_tidy()
 
 
