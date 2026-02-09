@@ -1,4 +1,210 @@
-# This module defines functionality to help configure cmake to use sanitizers
+# This module defines functionality to help configure cmake to use linters
+#
+# Current Strategy
+# ================
+# Our current strategy for supporting linters assumes that developers will
+# (directly/indirectly) set the standard CMAKE_<LANG>_<STATIC-ANALYSIS>
+# variables (e.g. CMAKE_CXX_CLANG_TIDY or CMAKE_CXX_INCLUDE_WHAT_YOU_USE). For
+# short, let's call these the "standard linter variables"
+#
+# For some context:
+# - "standard linter variables" are used to specify the path to binary for the
+#   static-analysis tool that the variable is named after and (optionally) some
+#   extra args that will be forwarded to the tool
+# - we actually provide a convenience function for setting CMAKE_CXX_CLANG_TIDY
+#   (see convenience_prepare_clang_tidy)
+# - when build-targets are declared, CMake will use the values stored in these
+#   variables to set default values of similarly named target-properties (e.g.
+#   CXX_CLANG_TIDY or CXX_INCLUDE_WHAT_YOU_USE)
+# - During compilation CMake uses these target properties to actually execute
+#   the static analysis tools
+#
+# LinterVar_TmpOverride and LinterVar_Restore
+# ===========================================
+# There is an unfortunate cross-reaction with using "standard linter variables"
+# alongside FetchContent (or git-submodules) to fetch and build dependencies as
+# part of the Grackle Build
+#
+# Explaining the Issue
+# --------------------
+# Strategies involving FetchContent (or git-submodules) essentially involve
+# building dependencies as part of an embedded build. In other words, there is
+# almost always a call to `add_subdirectory(<dependency>)` (it happens
+# implicitly within `FetchContent_MakeAvailable` and explicitly for
+# git-submodules)
+#
+# Now consider what happens if the are defined before this explicit/implicit
+# call to `add_subdirectory`
+# - essentially, CMake will try to apply all of the linters to the dependencies
+# - this could be problematic because dependencies can definitely fail linter
+#   checks
+#
+# The Solution
+# ------------
+# To work around this issue, we have created the `LinterVar_TmpOverride` and
+# `LinterVar_Restore` variables.
+#
+# The former command should get called before any calls to
+# `FetchContent_MakeAvailable` and the latter should be invoked after all calls
+# to `FetchContent_MakeAvailable`. These do something quite crude:
+# - `LinterVar_TmpOverride` overrides all "standard linter variables" that are
+#   defined and don't hold an empty string. After invoking this comand, any
+#   variable expansion ${<standard-linter-variable>} produces an empty string
+# - `LinterVar_Restore` reverts all changes made by `LinterVar_TmpOverride`
+#
+# Alternatives
+# ------------
+# AFAICT, there isn't really any good robust alternative to this approach.
+# - I can think of a few ideas, but they all prevent the direct usage of all
+#   built-in "standard-linter-variables" (and we would need to write separate
+#   logic to enable each kind of linter)
+# - I can think of 2 simplified variants of this approach
+#   - starting in CMake 3.25+, we **MIGHT** be able to put the
+#     `FetchContent_MakeAvailable` calls within a block() like so:
+#     ```
+#     block(SCOPE_FOR VARIABLES)
+#       set(linter_l "CPPLINT;CLANG_TIDY;CPPCHECK;ICSTAT;INCLUDE_WHAT_YOU_USE")
+#       foreach(LINTER IN LISTS linter_list)
+#         foreach(LANG IN ITEMS "C" "CXX")
+#           set(CMAKE_${LANG}_${LINTER} "")
+#         endforeach()
+#        endforeach()
+#
+#        # <inject all of the FetchContent_MakeAvailable logic...>
+#
+#      endblock()
+#      ```
+#      We could actually accomplish the exact same effect right now by moving
+#      the body of the `block()` into a function and immediately calling the
+#      function. While I think this probably works, there's a chance it won't
+#      work if CMake assumes that it can propatate info back to the project's
+#      primary scope
+#    - starting CMake 4.2, we can leverage the CMAKE_SKIP_LINTING variable. The
+#      ../dependencies.cmake file demonstrates how this works
+
+# set `<out>` to 1 or 0 to indicate if `${<variable>}` refers to the value of a
+# non-cache variable
+#
+# Context:
+# - `$CACHE{<variable>}` expands to the value of the cache variable named
+#   `<variable>` if it exists or to an empty string
+# - `${<varname>}` to a value determined by the following order of preference:
+#   1. the value of the variable named `<variable>`, if it exists
+#   2. the value of the cache variable named `<variable>`, if it exists
+#   3. an empty string
+function(_has_noncache_definition variable out)
+  if (NOT DEFINED ${variable})
+    set(${out} 0 PARENT_SCOPE)
+  elseif(DEFINED ${variable} AND NOT DEFINED CACHE{${variable}})
+    set(${out} 1 PARENT_SCOPE)
+  elseif(NOT ("${${variable}}" STREQUAL "$CACHE{${variable}}"))
+    set(${out} 1 PARENT_SCOPE)
+  else()
+    # we know that a cache variable named <variable> definitely exists and a
+    # non-cache variable named <variable> only exists if it stores exactly
+    # the same value as the cache variable
+    set(original_val $CACHE{${variable}})
+
+    # we use set_property to overwrite $CACHE{${variable}} rather than set(...)
+    # because the latter requires us to specify the TYPE and HELPSTRING
+    if (NOT ("${original_val}" STREQUAL ""))
+      set_property(CACHE ${variable} PROPERTY VALUE "")
+    else()  # use a different dummy value
+      set_property(CACHE ${variable} PROPERTY VALUE "<DUMMY>")
+    endif()
+
+    # now we do the comparison
+    if ("${${variable}}" STREQUAL "${original_val}")
+      set(${out} 1 PARENT_SCOPE)
+    else()
+      set(${out} 0 PARENT_SCOPE)
+    endif()
+
+    # restore the value of the cache value...
+    set_property(CACHE ${variable} PROPERTY VALUE "${original_val}")
+  endif()
+endfunction()
+
+# for each standard linter variable name (e.g. CMAKE_CXX_CLANG_TIDY or
+# CMAKE_C_INCLUDE_WHAT_YOU_USE) that doesn't expand to an empty string,
+# - create a non-CACHE variable with the same name that holds an empty string
+#   (if a non-CACHE variable with that name exists, it is overridden)
+# - AND save the information needed to undo this operation in a collection
+#   of variables named `<prefix>_<n>` where `<n>` is an integer from 0 through
+#   the value stored in `<prefix>_<COUNT>`
+#
+# This function is undone by passing the same `prefix` arg to the
+# `LinterVar_Restore` command
+#
+# Implementation Notes:
+# - we create separate variables for each overridden variable (rather than a
+#   list) because the "standard linter variables" already hold a list (i.e.
+#   semi-colons delimit extra arguments passed to the linter)
+# - we choose to overwrite variables, rather than simply unset them because
+#   restoring cache variables gets messy. Specifically, we would need to:
+#   - track and restore the ADVANCED, HELPSTRING, STRINGS, and TYPE properties
+#     of each cache variable and make sure we properly restore them.
+#   - technically, we can't perfectly do this for a TYPE value of INTERNAL
+#     (but I think that's ok)
+#   - plus, we would have to ignore the cache variable's MODIFIED property that
+#     CMake internally manages for tracking interactive modification (it's not
+#     totally clear if there would be any ramifications for doing this would be)
+function(LinterVar_TmpOverride prefix)
+  set(counter 0)
+  set(linter_list "CPPLINT;CLANG_TIDY;CPPCHECK;ICSTAT;INCLUDE_WHAT_YOU_USE")
+  foreach(LINTER IN LISTS linter_list)
+    foreach(LANG IN ITEMS "C" "CXX")
+      set(varname "CMAKE_${LANG}_${LINTER}")
+      if ((NOT DEFINED "${varname}") OR ("${${varname}}" STREQUAL ""))
+        continue()
+      endif()
+
+      _has_noncache_definition(${varname} has_noncache_def)
+      if ("${has_noncache_def}")
+        set(old_nameval_pair "${varname}:${${varname}}")
+      else()
+        set(old_nameval_pair "${varname}:")
+      endif()
+
+      set(${prefix}_${counter} "${old_nameval_pair}" PARENT_SCOPE)
+      set(${varname} "" PARENT_SCOPE)
+
+      math(EXPR counter "${counter} + 1")
+    endforeach()
+  endforeach()
+
+  set("${prefix}_COUNT" ${counter} PARENT_SCOPE)
+endfunction()
+
+# reverts all modifications made an earlier call to LinterVar_TmpOverride (the
+# `prefix` arguments must match)
+function(LinterVar_Restore prefix)
+  if (NOT DEFINED "${prefix}_COUNT")
+    message(FATAL_ERROR "no variable named: ${prefix}_COUNT")
+  endif()
+
+  math(EXPR loop_end "${${prefix}_COUNT} - 1")
+  unset(${prefix}_COUNT PARENT_SCOPE)
+  foreach(counter RANGE ${loop_end})  # upper bound of CMake range is inclusive
+    # nameval_pair holds a string of the form "<varname>:<varval>""
+    set(nameval_pair "${${prefix}_${counter}}")
+    unset(${prefix}_${counter} PARENT_SCOPE)
+
+    string(FIND "${nameval_pair}" ":" sep_pos)
+    string(LENGTH "${nameval_pair}" len)
+
+    string(SUBSTRING "${nameval_pair}" 0 ${sep_pos} variable_name)
+    math(EXPR sep_pos "${sep_pos} + 1")
+
+    if ("${sep_pos}" EQUAL "${len}")
+      unset(${variable_name} PARENT_SCOPE)
+    else()
+      string(SUBSTRING "${nameval_pair}" ${sep_pos} ${len} variable_val)
+      set(${variable_name} ${variable_val} PARENT_SCOPE)
+    endif()
+  endforeach()
+endfunction()
+
 
 # Clang-Tidy Support
 # ==================

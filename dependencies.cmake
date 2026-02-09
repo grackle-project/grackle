@@ -8,11 +8,31 @@ if (GRACKLE_IS_TOP_LEVEL AND
     "- replace `include(Backport_FetchContent)` with `include(FetchContent)`\n"
     "- delete `Backport_FetchContent.cmake`"
   )
+elseif(GRACKLE_IS_TOP_LEVEL AND
+    (CMAKE_MINIMUM_REQUIRED_VERSION VERSION_GREATER_EQUAL "4.2"))
+  message(FATAL_ERROR
+    "Reminder: now that Grackle's minimum required CMake version >=4.2, "
+    "delete `LinterVar_TmpOverride` & `LinterVar_Restore`"
+  )
 endif()
 
 # load drop-in wrappers for FetchContent_Declare & FetchContent_MakeAvailable
 # that backport support for FIND_PACKAGE_ARGS kwarg
 include(Backport_FetchContent)
+# load LinterVar_<action> commands
+include(LinterHandling)
+
+# modify standard variables to instruct CMake not to run static-analyis linters
+# on any embedded build-targets created in calls to FetchContent_MakeAvailable
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "4.2")
+  _has_noncache_definition(CMAKE_SKIP_LINTING _GRACKLE_PREDEFINED_SKIP_LINTING)
+  if (_GRACKLE_PREDEFINED_SKIP_LINTING)
+    set(_GRACKLE_ORIG_NONCACHE_SKIP_LINTING_VAR ${CMAKE_SKIP_LINTING})
+  endif()
+  set(CMAKE_SKIP_LINTING OFF)
+else()
+  LinterVar_TmpOverride(_GRACKLE_OLD_LINTER_VARS)
+endif()
 
 # Handle external dependencies that will must be downloaded and built from
 # source if pre-built copies can't be found
@@ -46,6 +66,15 @@ if (GRACKLE_BUILD_TESTS)  # deal with testing dependencies
   GrBackport_FetchContent_MakeAvailable(googletest)
 
 endif() # GRACKLE_BUILD_TESTS
+
+# restore CMake linting variables controlling linting
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "4.2")
+  if (DEFINED _GRACKLE_ORIG_NONCACHE_SKIP_LINTING_VAR)
+    set(CMAKE_SKIP_LINTING ${_GRACKLE_ORIG_NONCACHE_SKIP_LINTING_VAR})
+  endif()
+else()
+  LinterVar_Restore(_GRACKLE_OLD_LINTER_VARS)
+endif()
 
 # find all of the other dependencies
 # -> we expect the caller of the build to make these available to us in one
