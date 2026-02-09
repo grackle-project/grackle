@@ -13,11 +13,11 @@
 #   wrapper intercepts the FIND_PACKAGE_ARGS kwarg, slightly modifies behavior,
 #   and the GrBackport_FetchContent_MakeAvailable wrapper does the "right thing"
 # - compared to the CMake =>3.24 implementation, our versions:
+#   - don't understand the OVERRIDE_FIND_PACKAGE kwarg
 #   - are a little more "eager" (i.e. internal find_package calls that we do
 #     in GrBackport_FetchContent_Declare should technically happen in
 #     GrBackport_FetchContent_MakeAvailable backported versions.
-#   - don't understand some global configuration cache variables
-#     (e.g. FETCHCONTENT_TRY_FIND_PACKAGE_MODE)
+#   - don't support dependency-provider machinery
 #   - this is all "good enough" for our purposes
 # - when using a cmake version >= 3.24, the wrappers just directly forwards all
 #   arguments onto the canonical implementations of FetchContent_Declare &
@@ -78,11 +78,6 @@ else()
   # I'm choosing to use a GLOBAL property in this case b/c it's plausible that
   # caching this information could cause problems (it probably would be fine, but
   # I don't want to take that chance)
-  define_property(
-    GLOBAL
-    PROPERTY _GRACKLE_Backport_FetchContent_BYPASS_DOWNLOAD
-    BRIEF_DOCS "" FULL_DOCS "" # <- these are required but totally unused
-    )
   
   function(GrBackport_FetchContent_Declare content_name)
 
@@ -95,12 +90,35 @@ else()
     foreach(arg IN LISTS FWD_UNPARSED_ARGUMENTS)
       if (DEFINED quotedFindPackageArgs)
         string(APPEND quotedFindPackageArgs " [===[${arg}]===]")
+      elseif("${arg}" STREQUAL "OVERRIDE_FIND_PACKAGE")
+        message(FATAL_ERROR "Our backport can't handle the `${arg}` keyword")
       elseif("${arg}" STREQUAL "FIND_PACKAGE_ARGS")
         set(quotedFindPackageArgs "")
       else()
         string(APPEND quotedNormalArgs " [===[${arg}]===]")
       endif()
     endforeach()
+
+    # store effective val of FETCHCONTENT_TRY_FIND_PACKAGE_MODE in tfpmode
+    string(TOUPPER "${content_name}" UPPER_CONTENT_NAME)
+    if (NOT("${FETCHCONTENT_SOURCE_DIR_${UPPER_CONTENT_NAME}}" STREQUAL ""))
+      set(tfpmode NEVER)
+    elseif(NOT DEFINED FETCHCONTENT_TRY_FIND_PACKAGE_MODE)
+      set(tfpmode OPT_IN)
+    elseif(FETCHCONTENT_TRY_FIND_PACKAGE_MODE MATCHES "^OPT_IN|ALWAYS|NEVER$")
+      set(tfpmode ${FETCHCONTENT_TRY_FIND_PACKAGE_MODE})
+    else()
+      message(FATAL_ERRROR
+          "FETCHCONTENT_TRY_FIND_PACKAGE_MODE was set to a value other than "
+          "OPT_IN, ALWAYS, or NEVER")
+    endif()
+
+    # possibly modify quotedFindPackageArgs
+    if ("${tfpmode}" STREQUAL "ALWAYS" AND NOT DEFINED quotedFindPackageArgs)
+      set(quotedFindPackageArgs "")
+    elseif("${tfpmode}" STREQUAL "NEVER" AND DEFINED quotedFindPackageArgs)
+      unset(quotedFindPackageArgs)
+    endif()
 
 
     if (DEFINED quotedFindPackageArgs)
