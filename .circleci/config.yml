@@ -449,14 +449,14 @@ workflows:
      jobs:
        - test-suite:
            name: "Pygrackle test suite - Python 3.10"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
    weekly:
      triggers:
@@ -469,11 +469,11 @@ workflows:
      jobs:
        - test-suite:
            name: "Pygrackle test suite - Python 3.10"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.10.3"
+           tag: "3.10.14"
