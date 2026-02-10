@@ -16,173 +16,177 @@
 // This file was initially generated automatically during conversion of the
 // ceiling_species_g function from FORTRAN to C++
 
+#include "grackle.h"  // my_chemistry, my_fields
+#include "support/config.hpp"
+#include <cmath>  // std::fmax
+
 #ifndef CEILING_SPECIES_HPP
 #define CEILING_SPECIES_HPP
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
                             grackle_field_data* my_fields) {
-  grackle::impl::View<gr_float***> d(
+  GRIMPL_NS::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> de(
+  GRIMPL_NS::View<gr_float***> de(
       my_fields->e_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HI(
+  GRIMPL_NS::View<gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HII(
+  GRIMPL_NS::View<gr_float***> HII(
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeI(
+  GRIMPL_NS::View<gr_float***> HeI(
       my_fields->HeI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeII(
+  GRIMPL_NS::View<gr_float***> HeII(
       my_fields->HeII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeIII(
+  GRIMPL_NS::View<gr_float***> HeIII(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HM(
+  GRIMPL_NS::View<gr_float***> HM(
       my_fields->HM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2I(
+  GRIMPL_NS::View<gr_float***> H2I(
       my_fields->H2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2II(
+  GRIMPL_NS::View<gr_float***> H2II(
       my_fields->H2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DI(
+  GRIMPL_NS::View<gr_float***> DI(
       my_fields->DI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DII(
+  GRIMPL_NS::View<gr_float***> DII(
       my_fields->DII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HDI(
+  GRIMPL_NS::View<gr_float***> HDI(
       my_fields->HDI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal(
+  GRIMPL_NS::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust(
+  GRIMPL_NS::View<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DM(
+  GRIMPL_NS::View<gr_float***> DM(
       my_fields->DM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HDII(
+  GRIMPL_NS::View<gr_float***> HDII(
       my_fields->HDII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeHII(
+  GRIMPL_NS::View<gr_float***> HeHII(
       my_fields->HeHII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CI(
+  GRIMPL_NS::View<gr_float***> CI(
       my_fields->CI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CII(
+  GRIMPL_NS::View<gr_float***> CII(
       my_fields->CII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CO(
+  GRIMPL_NS::View<gr_float***> CO(
       my_fields->CO_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CO2(
+  GRIMPL_NS::View<gr_float***> CO2(
       my_fields->CO2_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OI(
+  GRIMPL_NS::View<gr_float***> OI(
       my_fields->OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OH(
+  GRIMPL_NS::View<gr_float***> OH(
       my_fields->OH_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2O(
+  GRIMPL_NS::View<gr_float***> H2O(
       my_fields->H2O_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> O2(
+  GRIMPL_NS::View<gr_float***> O2(
       my_fields->O2_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiI(
+  GRIMPL_NS::View<gr_float***> SiI(
       my_fields->SiI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiOI(
+  GRIMPL_NS::View<gr_float***> SiOI(
       my_fields->SiOI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiO2I(
+  GRIMPL_NS::View<gr_float***> SiO2I(
       my_fields->SiO2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CH(
+  GRIMPL_NS::View<gr_float***> CH(
       my_fields->CH_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CH2(
+  GRIMPL_NS::View<gr_float***> CH2(
       my_fields->CH2_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> COII(
+  GRIMPL_NS::View<gr_float***> COII(
       my_fields->COII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OII(
+  GRIMPL_NS::View<gr_float***> OII(
       my_fields->OII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OHII(
+  GRIMPL_NS::View<gr_float***> OHII(
       my_fields->OHII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2OII(
+  GRIMPL_NS::View<gr_float***> H2OII(
       my_fields->H2OII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H3OII(
+  GRIMPL_NS::View<gr_float***> H3OII(
       my_fields->H3OII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> O2II(
+  GRIMPL_NS::View<gr_float***> O2II(
       my_fields->O2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mg(
+  GRIMPL_NS::View<gr_float***> Mg(
       my_fields->Mg_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Al(
+  GRIMPL_NS::View<gr_float***> Al(
       my_fields->Al_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> S(
+  GRIMPL_NS::View<gr_float***> S(
       my_fields->S_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Fe(
+  GRIMPL_NS::View<gr_float***> Fe(
       my_fields->Fe_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiM(
+  GRIMPL_NS::View<gr_float***> SiM(
       my_fields->SiM_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeM(
+  GRIMPL_NS::View<gr_float***> FeM(
       my_fields->FeM_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mg2SiO4(
+  GRIMPL_NS::View<gr_float***> Mg2SiO4(
       my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgSiO3(
+  GRIMPL_NS::View<gr_float***> MgSiO3(
       my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Fe3O4(
+  GRIMPL_NS::View<gr_float***> Fe3O4(
       my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> AC(
+  GRIMPL_NS::View<gr_float***> AC(
       my_fields->AC_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiO2D(
+  GRIMPL_NS::View<gr_float***> SiO2D(
       my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgO(
+  GRIMPL_NS::View<gr_float***> MgO(
       my_fields->MgO_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeS(
+  GRIMPL_NS::View<gr_float***> FeS(
       my_fields->FeS_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Al2O3(
+  GRIMPL_NS::View<gr_float***> Al2O3(
       my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> reforg(
+  GRIMPL_NS::View<gr_float***> reforg(
       my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> volorg(
+  GRIMPL_NS::View<gr_float***> volorg(
       my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2Oice(
+  GRIMPL_NS::View<gr_float***> H2Oice(
       my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -337,6 +341,6 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
   return;
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* CEILING_SPECIES_CPP_H */
