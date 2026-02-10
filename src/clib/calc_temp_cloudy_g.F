@@ -6,9 +6,8 @@
       subroutine calc_temp_cloudy_g(d, e, metal, temperature,
      &                in, jn, kn, iexpand, imetal,
      &                is, js, ks, ie, je, ke,
-     &                aye, temstart, temend, 
-     &                utem, uxyz, uaye, urho, utim,
-     &                gamma, fh, 
+     &                dom, zr, temstart, temend,
+     &                utem, gamma, fh,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priMMW)
@@ -34,13 +33,10 @@
 !    iexpand  - comoving coordinates flag (0 = off, 1 = on)
 !    imetal   - flag if metal field is active (0 = no, 1 = yes)
 !
+!    dom      - unit conversion to proper number density in code units
+!    zr       - current redshift
 !    fh       - Hydrogen mass fraction (typically 0.76)
-!    aye      - expansion factor (in code units)
 !
-!    utim     - time units (i.e. code units to CGS conversion factor)
-!    uaye     - expansion factor conversion factor (uaye = 1/(1+zinit))
-!    urho     - density units
-!    uxyz     - length units
 !    utem     - temperature(-like) units
 !
 !    temstart, temend - start and end of temperature range for rate table
@@ -69,8 +65,8 @@
 
       integer in, jn, kn, is, js, ks, ie, je, ke, 
      &        iexpand, imetal
-      real*8  aye, temstart, temend, gamma,
-     &        utim, uxyz, uaye, urho, utem, fh
+      real*8  temstart, temend, gamma, utem, fh,
+     &        dom, zr
 
 !  Density, energy and velocity fields fields
 
@@ -84,17 +80,10 @@
       real*8 priPar1(priGridDim(1)), priPar2(priGridDim(2)), 
      &     priPar3(priGridDim(3)), priMMW(priDataSize)
 
-!  Parameters
-
-      real*8 mh
-      parameter (mh = mass_h)
-
 !  Locals
 
       integer i, j, k
       integer t, dj, dk
-      real*8 dom, zr
-      real*8 dbase1, tbase1, xbase1
 
 !  row temporaries
 
@@ -107,23 +96,10 @@
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
       
-!     Set units
+!  We explicitly assume that the densities have already been converted
+!  from comoving to proper (if iexpand .eq. 1), before this function is
+!  called. (Historically that logic was handled here.
 
-      dom      = urho*(aye**3)/mh
-      tbase1   = utim
-      xbase1   = uxyz/(aye*uaye)    ! uxyz is [x]*a      = [x]*[a]*a'        '
-      dbase1   = urho*(aye*uaye)**3 ! urho is [dens]/a^3 = [dens]/([a]*a')^3 '
-      zr       = 1._DKIND/(aye*uaye) - 1._DKIND
-
-!  Convert densities from comoving to proper
-
-      if (iexpand .eq. 1) then
-
-         call scale_fields_table_g(d, metal,
-     &                  is, ie, js, je, ks, ke,
-     &                  in, jn, kn, imetal, aye**(-3))
-
-      endif
 
 !  Loop over zones, and do an entire i-column in one go
 
@@ -177,61 +153,6 @@
 #ifdef _OPENMP
 !$omp end parallel do
 #endif
-
-!     Convert densities back to comoving from proper
-
-      if (iexpand .eq. 1) then
-
-         call scale_fields_table_g(d, metal,
-     &                  is, ie, js, je, ks, ke,
-     &                  in, jn, kn, imetal, aye**3)
-
-      endif
-
-      return
-      end
-
-c -----------------------------------------------------------
-!   This routine scales the density fields from comoving to
-!     proper densities (and back again).
-
-      subroutine scale_fields_table_g(d, metal,
-     &                        is, ie, js, je, ks, ke,
-     &                        in, jn, kn, imetal, factor)
-c -------------------------------------------------------------------
-
-      implicit NONE
-#include "grackle_fortran_types.def"
-
-!     Arguments
-
-      integer in, jn, kn, is, ie, js, je, ks, ke, imetal
-      R_PREC  d(in,jn,kn), metal(in,jn,kn)
-      real*8 factor
-
-!     locals
-
-      integer i, j, k
-
-!     Multiply all fields by factor (1/a^3 or a^3)
-
-      do k = ks+1, ke+1
-         do j = js+1, je+1
-            do i = is+1, ie+1
-               d(i,j,k)        = d(i,j,k) * factor
-            enddo
-         enddo
-      enddo
-
-      if (imetal .eq. 1) then
-         do k = ks+1, ke+1
-            do j = js+1, je+1
-               do i = is+1, ie+1
-                  metal(i,j,k) = metal(i,j,k) * factor
-               enddo
-            enddo
-         enddo
-      endif
 
       return
       end

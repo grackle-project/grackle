@@ -40,9 +40,8 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
         gr_float *d, gr_float *e, gr_float *metal, gr_float *temperature,
 	int *in, int *jn, int *kn, int *iexpand, int *imetal,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke,
-	double *aye, double *temstart, double *temend,
-	double *utem, double *uxyz, double *uaye, double *urho, double *utim,
-	double *gamma, double *fh,
+  double *dom, double *zr, double *temstart, double *temend,
+	double *utem, double *gamma, double *fh,
         long long *priGridRank, long long *priGridDim,
         double *priPar1, double *priPar2, double *priPar3, 
  	long long *priDataSize, double *priMMW);
@@ -147,6 +146,34 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
+// This routine scales the density (and possibly metal) field(s) from
+// comoving units to proper units (and back again)
+static void scale_fields_table_g_cversion(grackle_field_data* my_fields,
+                                          int imetal, double factor)
+{
+  /* Compute properties used to index the field. */
+  const grackle_index_helper ind_helper = _build_index_helper(my_fields);
+
+  for (int outer_i = 0; outer_i < ind_helper.outer_ind_size; outer_i++) {
+    const grackle_index_range range = _inner_range(outer_i, &ind_helper);
+    for (int i = range.start; i <= range.end; i++) {
+      my_fields->density[i] *= factor;
+    } // end: loop over i
+  } // end: loop over outer_ind
+
+  if (imetal) {
+
+    for (int outer_i = 0; outer_i < ind_helper.outer_ind_size; outer_i++) {
+      const grackle_index_range range = _inner_range(outer_i, &ind_helper);
+      for (int i = range.start; i <= range.end; i++) {
+        my_fields->metal_density[i] *= factor;
+      } // end: loop over i
+    } // end: loop over outer_ind
+
+  }
+
+}
+
 int local_calculate_temperature_table(chemistry_data *my_chemistry,
                                       chemistry_data_storage *my_rates,
                                       code_units *my_units,
@@ -184,6 +211,15 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
 
   double temperature_units = get_temperature_units(my_units);
 
+  if (my_units->comoving_coordinates == 1) {
+    // convert density (& possibly metal) field(s) from comoving to proper
+    scale_fields_table_g_cversion(my_fields, metal_field_present,
+                                  pow(my_units->a_value, -3.0));
+  }
+
+  double dom = co_density_units * pow(my_units->a_value, 3) / mh;
+  double zr = 1.0/(my_units->a_value * my_units->a_units) - 1.0;
+
   FORTRAN_NAME(calc_temp_cloudy_g)(
         my_fields->density,
         my_fields->internal_energy,
@@ -200,14 +236,11 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
         my_fields->grid_end,
         my_fields->grid_end+1,
         my_fields->grid_end+2,
-        &my_units->a_value,
+        &dom,
+        &zr,
         &my_chemistry->TemperatureStart,
         &my_chemistry->TemperatureEnd,
         &temperature_units,
-        &co_length_units,
-        &my_units->a_units,
-        &co_density_units,
-        &my_units->time_units,
         &my_chemistry->Gamma,
         &my_chemistry->HydrogenFractionByMass,
         &my_rates->cloudy_primordial.grid_rank,
@@ -217,6 +250,13 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
         my_rates->cloudy_primordial.grid_parameters[2],
         &my_rates->cloudy_primordial.data_size,
         my_rates->cloudy_primordial.mmw_data);
+
+
+  if (my_units->comoving_coordinates == 1) {
+    // convert density (& possibly metal) field(s) back to comoving from proper
+    scale_fields_table_g_cversion(my_fields, metal_field_present,
+                                  pow(my_units->a_value, 3.0));
+  }
 
   return SUCCESS;
 }
