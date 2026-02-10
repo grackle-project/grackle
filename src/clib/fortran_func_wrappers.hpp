@@ -22,6 +22,9 @@
 #error "This file must be read by a c++ compiler"
 #endif
 
+
+#include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+
 #include "grackle.h"
 #include "dust_props.hpp"
 #include "fortran_func_decls.h"
@@ -102,101 +105,6 @@ inline void calc_all_tdust_gasgr_1d_g(
     gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust]
   );
 
-}
-
-/// Compute grain size increment
-///
-/// @note
-/// The description could obviously be improved! My general sense is that we
-/// are computing dust-properties in each zone. Among other things, this
-/// computes size and precomputes the dust opacity table
-///
-/// @param[in] dom a standard quantity used throughout the codebase
-/// @param[in] idx_range Specifies the current index-range
-/// @param[in] itmask_metal Specifies the `idx_range`'s iteration-mask
-/// @param[in] my_chemistry holds a number of configuration parameters
-/// @param[in] inject_pathway_props holds data about the modelled injection
-///     pathways for all of the grain species.
-/// @param[in] my_fields specifies the field data
-/// @param[in,out] internal_dust_prop_buf Holds dust-specific information that
-///     gets updated by this function
-inline void calc_grain_size_increment_1d (
-  double dom, IndexRange idx_range, const gr_mask_type* itmask_metal,
-  chemistry_data* my_chemistry,
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
-  grackle_field_data* my_fields,
-  grackle::impl::InternalDustPropBuf internal_dust_prop_buf
-) {
-
-  // NOTE: gr_N and gr_Size are historical names
-  // -> they are pretty uninformative and should be changed!
-  int gr_N[2] = {
-    inject_pathway_props->n_opac_poly_coef,
-    static_cast<int>(inject_pathway_props->log10Tdust_interp_props.dimension[0])
-  };
-  int gr_Size = gr_N[0] * gr_N[1];
-
-
-  FORTRAN_NAME(calc_grain_size_increment_1d)(
-    &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->grain_growth, itmask_metal,
-    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-    my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
-    my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
-    my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
-    my_fields->metal_density, my_fields->local_ISM_metal_density,
-    my_fields->ccsn13_metal_density, my_fields->ccsn20_metal_density, my_fields->ccsn25_metal_density, my_fields->ccsn30_metal_density,
-    my_fields->fsn13_metal_density, my_fields->fsn15_metal_density, my_fields->fsn50_metal_density, my_fields->fsn80_metal_density,
-    my_fields->pisn170_metal_density, my_fields->pisn200_metal_density, my_fields->y19_metal_density,
-    &inject_pathway_props->n_pathways,
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::ref_org_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::vol_org_dust],
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::SiM_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::FeM_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Mg2SiO4_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::MgSiO3_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Fe3O4_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::AC_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::SiO2_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::MgO_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::FeS_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Al2O3_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::ref_org_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::vol_org_dust],
-    inject_pathway_props->size_moments.data[OnlyGrainSpLUT::H2O_ice_dust],
-    gr_N, &gr_Size,
-    &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0],
-    inject_pathway_props->log10Tdust_interp_props.parameters[0],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::SiM_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::FeM_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Mg2SiO4_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::MgSiO3_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Fe3O4_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::AC_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::SiO2_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::MgO_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::FeS_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Al2O3_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::ref_org_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::vol_org_dust],
-    inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::H2O_ice_dust],
-    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Mg2SiO4_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgSiO3_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Fe3O4_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::AC_dust],
-    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiO2_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgO_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeS_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Al2O3_dust],
-    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::ref_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.sigma_per_gas_mass_tot,
-    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiM_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeM_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgSiO3_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Fe3O4_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::AC_dust],
-    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiO2_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgO_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeS_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Al2O3_dust],
-    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::ref_org_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.dyntab_kappa_tot
-  );
 }
 
 inline void calc_temp1d_cloudy_g(
