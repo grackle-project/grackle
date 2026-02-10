@@ -18,6 +18,7 @@
 #include <iostream>
 
 #include "cool1d_cloudy_g.hpp"
+#include "cool1d_cloudy_old_tables_g.hpp"
 #include "cool1d_multi_g.hpp"
 #include "grackle.h"
 #include "fortran_func_decls.h"
@@ -1659,24 +1660,10 @@ void grackle::impl::cool1d_multi_g(
           iZscale, itmask_tab.data(), my_rates->cloudy_metal, idx_range);
 
     } else {
-      FORTRAN_NAME(cool1d_cloudy_old_tables_g)(
-          d.data(), de.data(), rhoH, metallicity, &my_fields->grid_dimension[0],
-          &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
-          &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-          logTlininterp_buf.logtem, edot, &comp2,
-          &my_chemistry->primordial_chemistry, &dom, &zr,
-          &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground,
-          &my_chemistry->cloudy_electron_fraction_factor,
-          &my_rates->cloudy_metal.grid_rank,
-          my_rates->cloudy_metal.grid_dimension,
-          my_rates->cloudy_metal.grid_parameters[0],
-          my_rates->cloudy_metal.grid_parameters[1],
-          my_rates->cloudy_metal.grid_parameters[2],
-          my_rates->cloudy_metal.grid_parameters[3],
-          my_rates->cloudy_metal.grid_parameters[4],
-          &my_rates->cloudy_metal.data_size,
-          my_rates->cloudy_metal.cooling_data,
-          my_rates->cloudy_metal.heating_data, itmask_tab.data());
+      grackle::impl::cool1d_cloudy_old_tables_g(
+          rhoH, metallicity, logTlininterp_buf.logtem, edot, comp2, dom, zr,
+          itmask_tab.data(), my_chemistry, my_rates->cloudy_metal,
+          my_fields->density, my_fields->e_density, my_fields, idx_range);
     }
 
     if (my_chemistry->metal_chemistry == 1) {

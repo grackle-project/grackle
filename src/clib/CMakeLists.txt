@@ -105,6 +105,7 @@ add_library(Grackle_Grackle
   ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_cloudy_g.cpp cool1d_cloudy_g.hpp
+  cool1d_cloudy_old_tables_g.cpp cool1d_cloudy_old_tables_g.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
@@ -147,7 +148,6 @@ add_library(Grackle_Grackle
   calc_all_tdust_gasgr_1d_g.F
   calc_tdust_1d_g.F
   calc_temp1d_cloudy_g.F
-  cool1d_cloudy_old_tables_g.F
   interpolators_g.F
   calc_grain_size_increment_1d.F
   gaussj_g.F
