@@ -23,7 +23,7 @@
 namespace {  // stuff inside an anonymous namespace is local to this file
 
 /// names of all injection pathways known to grackle listed in the order
-/// in other parts of the codebase
+/// consistent with the logic for implementing InjectPathFieldPack
 ///
 /// @see SetupCallbackCtx::inj_path_names - The entity that is initialized with
 ///   the values in this variable. Its docstring provides more details.
@@ -31,6 +31,12 @@ constexpr const char* const known_inj_path_names[] = {
     "local_ISM", "ccsn13", "ccsn20", "ccsn25",  "ccsn30",  "fsn13",
     "fsn15",     "fsn50",  "fsn80",  "pisn170", "pisn200", "y19",
 };
+
+static_assert(sizeof(known_inj_path_names) ==
+                  (sizeof(char*) *
+                   grackle::impl::inj_model_input::N_Injection_Pathways),
+              "inconsistency b/t number of entries in known_inj_path_names and "
+              "grackle::impl::inj_model_input::N_Injection_Pathways");
 
 /// a crude map-like function
 bool lookup_metal_yield_ptrs(
@@ -75,11 +81,6 @@ struct SetupCallbackCtx {
 
   /// maps the names of known injection pathways to a unique index
   ///
-  /// The callback function reports an error if an injection is encountered
-  /// that has a name that isn't included in this map. Furthermore, data is
-  /// organized within GrainMetalInjectPathways according to the order of keys
-  /// in this map.
-  ///
   /// @par Why This Is Needed
   /// For some background context:
   /// - to make use of the injection pathway information, Grackle requires
@@ -94,8 +95,12 @@ struct SetupCallbackCtx {
   /// Before any functionality involving injection pathways is included in a
   /// public release of Grackle, the plan is to stop hard-coding the names of
   /// injection pathway density fields, and to load in injection pathway data
-  /// from HDF5 files. At that point, we'll need to tweak the callback function
-  /// to load in data for models with arbitrary names.
+  /// from HDF5 files.
+  /// - At that point, we'll need to tweak the callback function to load in
+  ///   data for models with arbitrary names.
+  /// - I suspect that we'll want to adopt a policy for ensuring that the order
+  ///   of models is well-defined (to make results bitwise reproducible). In
+  ///   that scenario, we might use this to enforce an alphanumberic ordering
   const grackle::impl::FrozenKeyIdxBiMap* inj_path_names;
 
   /// maps the names of the grain species for which data will be loaded to the
@@ -129,8 +134,7 @@ extern "C" int setup_yield_table_callback(
   bimap::AccessRslt maybe_pathway_idx =
       FrozenKeyIdxBiMap_find(my_ctx->inj_path_names, name);
   if (!maybe_pathway_idx.has_value) {
-    return GrPrintAndReturnErr("`%s` is an unexpected injection pathway name",
-                               name);
+    return GR_SUCCESS;
   }
   int pathway_idx = static_cast<int>(maybe_pathway_idx.value);
 
@@ -259,15 +263,41 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
     return GR_SUCCESS;
   }
 
-  // construct a mapping of all known models
-  // -> in the future, we are going to move away from this hardcoded approach
-  // -> since the strings are statically allocates, the map won't make copies
-  //    of the strings
-  constexpr int n_pathways =
-      static_cast<int>(sizeof(known_inj_path_names) / sizeof(char*));
+  // an upper bound on the number of allowed injection pathways
+  int max_n_pathways = grackle::impl::inj_model_input::N_Injection_Pathways;
 
+  // get the list of injection pathways
+  // -> currently this requires us to look at the my_chemistry->multi_metals
+  //    and my_chemstry->metal_abundances variables.
+  // -> when we move away from hardcoded names and start loading from HDF5,
+  //    we'll remove these variables
+  const char* const* inj_path_name_l = nullptr;
+  int n_pathways = 0;
+  bool valid_metal_abundances =
+      ((0 <= my_chemistry->metal_abundances) &&
+       (my_chemistry->metal_abundances < max_n_pathways));
+
+  if ((my_chemistry->multi_metals == 0) && !valid_metal_abundances) {
+    return GrPrintAndReturnErr(
+        "the metal_abundances parameter must not be negative or exceed %d",
+        max_n_pathways - 1);
+  } else if (my_chemistry->multi_metals == 0) {
+    inj_path_name_l = known_inj_path_names + my_chemistry->metal_abundances;
+    n_pathways = 1;
+  } else if (my_chemistry->multi_metals == 1) {
+    inj_path_name_l = known_inj_path_names;
+    n_pathways = max_n_pathways;
+  } else {
+    return GrPrintAndReturnErr("the multi_metals parameter isn't 0 or 1");
+  }
+
+  // construct a mapping of the injection pathway names
+  // -> right now, since the strings are statically allocated, we use
+  //    BiMapMode::REFS_KEYDATA to instruct the map to avoid making copies.
+  // -> In the future, when model names are dynamically specified by an HDF5
+  //    file, we'll need to use BiMapMode::COPIES_KEYDATA.
   FrozenKeyIdxBiMap inj_path_names = new_FrozenKeyIdxBiMap(
-      known_inj_path_names, n_pathways, BiMapMode::REFS_KEYDATA);
+      inj_path_name_l, n_pathways, BiMapMode::REFS_KEYDATA);
   if (!FrozenKeyIdxBiMap_is_ok(&inj_path_names)) {
     return GrPrintAndReturnErr(
         "there was a problem building the map of model names");
