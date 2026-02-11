@@ -42,6 +42,26 @@ endif()
 # the name of a tag/branch, then CMake will query GitHub on every
 # subsequent build to check whether the tag/branch is still the same
 
+
+if(GRACKLE_BUILD_BENCHMARKS)
+  message(STATUS
+    "If google benchmark can't be found, it will be downloaded & compiled"
+  )
+  GrBackport_FetchContent_Declare(
+    benchmark # the url contains the hash for version 1.9.5
+    URL https://github.com/google/benchmark/archive/192ef10025eb2c4cdd392bc502f0c852196baa48.zip
+    FIND_PACKAGE_ARGS    
+  )
+
+  # In case Google-Benchmark is downloaded & compiled as part of the build:
+  # -> Tell its build-system not to define installation rules
+  set(BENCHMARK_ENABLE_TESTING OFF)
+  set(BENCHMARK_ENABLE_GTEST_TESTS OFF)
+  set(BENCHMARK_ENABLE_WERROR OFF)
+  set(BENCHMARK_INSTALL_DOCS OFF)
+  set(BENCHMARK_INSTALL_TOOLS OFF)
+endif()
+
 if (GRACKLE_BUILD_TESTS)  # deal with testing dependencies
 
   # the only testing dependency is googletest.
@@ -61,11 +81,22 @@ if (GRACKLE_BUILD_TESTS)  # deal with testing dependencies
   set(INSTALL_GTEST OFF)
   # -> For Windows: Prevent overriding parent project's compiler/linker settings
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif()
 
-  # actually fetch & configure googletest (if it wasn't found)
+# call FetchContent_MakeAvailable for our dependencies
+# - this is where we actually download the enumerated dependencies (if they
+#   aren't found via find_package)
+# - while not currently relevant for us, it's good practice to aggregate
+#   FetchContent_MakeAvailable calls because it helps us resolve situations
+#   where 2 or more direct dependencies internally call FetchContent to get
+#   conflicting versions of a common indirect dependency
+if (GRACKLE_BUILD_BENCHMARKS AND GRACKLE_BUILD_TESTS)
+  GrBackport_FetchContent_MakeAvailable(googletest benchmark)
+elseif (GRACKLE_BUILD_BENCHMARKS)
+  GrBackport_FetchContent_MakeAvailable(benchmark)
+elseif (GRACKLE_BUILD_TESTS)
   GrBackport_FetchContent_MakeAvailable(googletest)
-
-endif() # GRACKLE_BUILD_TESTS
+endif()
 
 # restore CMake linting variables controlling linting
 if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "4.2")

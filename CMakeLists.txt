@@ -38,10 +38,12 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # determine whether we are building a stand-alone program, or if grackle has
 # been embedded within another project
-# -> todo gradually replace GRACKLE_IS_TOP_LEVEL with PROJECT_IS_TOP_LEVEL
-set(GRACKLE_IS_TOP_LEVEL ${PROJECT_IS_TOP_LEVEL})
+set(GRACKLE_IS_TOP_LEVEL ON)
+if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  set(GRACKLE_IS_TOP_LEVEL OFF)
+endif()
 
-if (PROJECT_IS_TOP_LEVEL AND ("${CMAKE_EXPORT_COMPILE_COMMANDS}" STREQUAL ""))
+if (GRACKLE_IS_TOP_LEVEL AND ("${CMAKE_EXPORT_COMPILE_COMMANDS}" STREQUAL ""))
   # aside: replacing the string-comparison with a check for whether
   #        CMAKE_EXPORT_COMPILE_COMMANDS exists doesn't seem work properly
   set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -95,6 +97,9 @@ option(GRACKLE_USE_DOUBLE "compile the code with double precision" ON)
 option(GRACKLE_DEFINE_INSTALL_RULES
   "enable Grackle's installation rules" ${GRACKLE_IS_TOP_LEVEL})
 option(GRACKLE_BUILD_TESTS "build Grackle tests driven by CTest" OFF)
+
+# the name of the following option may change!
+option(GRACKLE_BUILD_BENCHMARKS "build Grackle benchmarks" OFF)
 
 if (GRACKLE_BUILD_TESTS)
   set(_GRACKLE_EXAMPLES_DEFAULT ON)
@@ -182,6 +187,15 @@ add_subdirectory(src/clib)
 # declare build-recipies for examples
 if (GRACKLE_EXAMPLES)
   add_subdirectory(src/example)
+endif()
+
+# declare test/benchmark harness machinery
+if (GRACKLE_BUILD_TESTS OR GRACKLE_BUILD_BENCHMARKS)
+  add_subdirectory(tests/grtestutils)
+endif()
+
+if (GRACKLE_BUILD_BENCHMARKS)
+  add_subdirectory(bench)
 endif()
 
 # Tests
