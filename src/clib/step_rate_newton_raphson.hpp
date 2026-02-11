@@ -15,8 +15,10 @@
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
 #include "index_helper.h"
+#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "internal_units.h"
+#include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
 #include "utils-field.hpp"
@@ -212,7 +214,11 @@ inline void step_rate_newton_raphson(
   // forward the buffers passed into this routine as arguments rather than
   // allocating separate buffers
   t_deriv::MainScratchBuf main_scratch_buf =
-    t_deriv::new_MainScratchBuf(my_rates->gr_N[1]);
+    t_deriv::new_MainScratchBuf(
+        grackle::impl::GrainMetalInjectPathways_get_n_log10Tdust_vals(
+            my_rates->opaque_storage->inject_pathway_props
+        )
+    );
 
   // collect args that are forwarded to the time-derivative calculation and are
   // effectively frozen between various calls
