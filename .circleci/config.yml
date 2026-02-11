@@ -203,7 +203,7 @@ commands:
       cache-tag:
         description: "A unique tag to append to the cache name"
         type: string
-        default: "1"
+        default: "2"
     steps:
       - run:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
