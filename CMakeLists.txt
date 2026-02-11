@@ -19,7 +19,10 @@ endif()
 
 # Preamble
 # --------
-cmake_minimum_required(VERSION 3.16)
+# we currently set the minimum required version CMake version to the version
+# that can be downloaded with apt for the oldest Ubuntu LTS release that
+# still receives General Support
+cmake_minimum_required(VERSION 3.22)
 cmake_policy(SET CMP0077 NEW)
 cmake_policy(SET CMP0082 NEW)
 
@@ -35,12 +38,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # determine whether we are building a stand-alone program, or if grackle has
 # been embedded within another project
-set(GRACKLE_IS_TOP_LEVEL ON)
-if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  set(GRACKLE_IS_TOP_LEVEL OFF)
-endif()
+# -> todo gradually replace GRACKLE_IS_TOP_LEVEL with PROJECT_IS_TOP_LEVEL
+set(GRACKLE_IS_TOP_LEVEL ${PROJECT_IS_TOP_LEVEL})
 
-if (GRACKLE_IS_TOP_LEVEL AND ("${CMAKE_EXPORT_COMPILE_COMMANDS}" STREQUAL ""))
+if (PROJECT_IS_TOP_LEVEL AND ("${CMAKE_EXPORT_COMPILE_COMMANDS}" STREQUAL ""))
   # aside: replacing the string-comparison with a check for whether
   #        CMAKE_EXPORT_COMPILE_COMMANDS exists doesn't seem work properly
   set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -49,7 +50,7 @@ endif()
 # it's really important that the following is called at the directory-level
 # BEFORE we declare any targets (and after we make sure GRACKLE_IS_TOP_LEVEL
 # and CMAKE_EXPORT_COMPILE_COMMANDS are both defined)
-include(PrepareClangTidy)
+include(LinterHandling)
 convenience_prepare_clang_tidy()
 
 
