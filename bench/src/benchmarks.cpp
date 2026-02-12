@@ -91,11 +91,7 @@ BENCHMARK(BM_solve_chemistry)
     ->Name("solve_chemistry")
     ->Arg(1)
     ->Arg(8)
-    ->Arg(64)
-    ->Arg(256)
-    ->Arg(512)
-    ->Arg(1024)
-    ->Arg(2048)
-    ->Arg(4096);
+    ->Arg(512);
+
 // Run the benchmark
 BENCHMARK_MAIN();
