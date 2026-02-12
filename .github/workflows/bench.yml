@@ -66,6 +66,7 @@ jobs:
           ./build_ci-linux/bench/grackle-benchmarks \
               --benchmark_perf_counters=CYCLES,INSTRUCTIONS \
               --benchmark_counters_tabular=true \
+              --benchmark_time_unit=us \
               2>&1 | tee benchmark_output.txt
 
       - name: Prepare Artifact Directory
