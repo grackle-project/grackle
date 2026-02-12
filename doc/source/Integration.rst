@@ -213,7 +213,7 @@ Here is a sample snippet showing how this works
 
 .. code-block:: cmake
 
-   cmake_minimum_required(VERSION 3.16)
+   cmake_minimum_required(VERSION 3.22)
    project(GrackleExample LANGUAGES C Fortran)
 
    find_package(Grackle 3.3.1 REQUIRED)
@@ -261,7 +261,7 @@ For simplicity, we assume Grackle is a required dependency:
 
    .. code-block:: cmake
 
-      cmake_minimum_required(VERSION 3.16)
+      cmake_minimum_required(VERSION 3.22)
       project(GrackleExample LANGUAGES C Fortran)
 
       set(GRACKLE_SUBMODULE_PATH path/to/grackle/submodule)
@@ -282,7 +282,7 @@ For simplicity, we assume Grackle is a required dependency:
 
    .. code-block:: cmake
 
-      cmake_minimum_required(VERSION 3.16)
+      cmake_minimum_required(VERSION 3.22)
       project(GrackleExample LANGUAGES C Fortran)
 
       include(FetchContent)

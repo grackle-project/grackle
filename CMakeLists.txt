@@ -19,7 +19,10 @@ endif()
 
 # Preamble
 # --------
-cmake_minimum_required(VERSION 3.16)
+# we currently set the minimum required version CMake version to the version
+# that can be downloaded with apt for the oldest Ubuntu LTS release that
+# still receives General Support
+cmake_minimum_required(VERSION 3.22)
 cmake_policy(SET CMP0077 NEW)
 cmake_policy(SET CMP0082 NEW)
 
@@ -49,7 +52,7 @@ endif()
 # it's really important that the following is called at the directory-level
 # BEFORE we declare any targets (and after we make sure GRACKLE_IS_TOP_LEVEL
 # and CMAKE_EXPORT_COMPILE_COMMANDS are both defined)
-include(PrepareClangTidy)
+include(LinterHandling)
 convenience_prepare_clang_tidy()
 
 
@@ -94,6 +97,9 @@ option(GRACKLE_USE_DOUBLE "compile the code with double precision" ON)
 option(GRACKLE_DEFINE_INSTALL_RULES
   "enable Grackle's installation rules" ${GRACKLE_IS_TOP_LEVEL})
 option(GRACKLE_BUILD_TESTS "build Grackle tests driven by CTest" OFF)
+
+# the name of the following option may change!
+option(GRACKLE_BUILD_BENCHMARKS "build Grackle benchmarks" OFF)
 
 if (GRACKLE_BUILD_TESTS)
   set(_GRACKLE_EXAMPLES_DEFAULT ON)
@@ -181,6 +187,15 @@ add_subdirectory(src/clib)
 # declare build-recipies for examples
 if (GRACKLE_EXAMPLES)
   add_subdirectory(src/example)
+endif()
+
+# declare test/benchmark harness machinery
+if (GRACKLE_BUILD_TESTS OR GRACKLE_BUILD_BENCHMARKS)
+  add_subdirectory(tests/grtestutils)
+endif()
+
+if (GRACKLE_BUILD_BENCHMARKS)
+  add_subdirectory(bench)
 endif()
 
 # Tests

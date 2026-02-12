@@ -1,0 +1,88 @@
+# This is part 1 of a 2-part workflow-sequence:
+# - purpose: running benchmarks and leaving a summary comment on the PR
+#
+# - this workflow:
+#   - is triggered when a pull request is opened or reopened or when the head
+#     branch of the pull request is updated
+#   - compiles the benchmarks, runs the benchmarks, uses the results to
+#     constructs the comment's, and uploads an artifact with the comment's
+#     contents
+#
+# - part 2 is triggered when this workflow concludes. That workflow downloads
+#   the artifact containing the comment and actually posts the comments
+#
+# - This needed to be a 2-part sequence for security reasons. For context:
+#   - a workflow with the capability to make a comment on a PR requires
+#     write-access to the repository
+#   - if we ran automatically ran the benchmarks for PRs made by arbitrary
+#     forks in a workflow with write-access, a malicious actor could inject
+#     arbitrary code that could theoretically modify the repository (before we,
+#     the maintainers, could intervene)
+
+name: Run Bench
+
+on:
+  schedule:
+    #        ┌───────────── minute (0 - 59)
+    #        │  ┌───────────── hour (0 - 23)
+    #        │  │ ┌───────────── day of the month (1 - 31)
+    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+    #        │  │ │ │ │
+    - cron: "17 0 * * MON"
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  run_bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # fetch the full git history to let us run all our tests
+          fetch-depth: 0
+          # fetch the submodules to let us run the tests
+          submodules: true
+
+      - name: Download dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+              libhdf5-serial-dev gfortran ninja-build cmake libpfm4-dev
+
+      - name: Configure and Build
+        run: |
+          cmake --preset ci-linux \
+            -DGRACKLE_BUILD_BENCHMARKS=ON \
+            -DBENCHMARK_ENABLE_LIBPFM=ON \
+            -DGRACKLE_BUILD_TESTS=OFF
+          cmake --build build_ci-linux
+
+      # run the benchmark and write the result
+      - name: Run the benchmark
+        run: |
+          ./build_ci-linux/bench/grackle-benchmarks \
+              --benchmark_perf_counters=CYCLES,INSTRUCTIONS \
+              --benchmark_counters_tabular=true \
+              --benchmark_time_unit=us \
+              2>&1 | tee benchmark_output.txt
+
+      - name: Prepare Artifact Directory
+        run: |
+          mkdir -p ./bench-artifact
+
+          echo ${{ github.event.number }} > ./bench-artifact/pr-number
+
+          echo "Benchmark Summary:" >> ./bench-artifact/comment-contents.md
+          echo "```" >> ./bench-artifact/comment-contents.md
+          cat ./benchmark_output.txt >> ./bench-artifact/comment-contents.md
+          echo "```" >> ./bench-artifact/comment-contents.md
+          cat ./bench-artifact/comment-contents.md
+          
+      - uses: actions/upload-artifact@v6
+        with:
+          name: bench-artifact
+          path: bench-artifact/
+
