@@ -10,23 +10,25 @@
 #include "grtestutils/preset.hpp"
 #include "grtestutils/status.hpp"
 
+enum struct FieldIC { UNIFORM };
+
+struct ArgPack {
+  FieldIC field_ic;  // <- this is mostly just a placeholder
+  grtest::ParamConf param_conf;
+};
+
 // define the benchmark
-static void BM_solve_chemistry(benchmark::State& state) {
+static void BM_solve_chemistry(benchmark::State& state,
+                               const ArgPack arg_pack) {
   int64_t n_contiguous_cells = state.range(0);
   if (n_contiguous_cells > std::numeric_limits<int>::max()) {
     state.SkipWithError("number of cells along contiguous axis is too big");
     return;  // Early return is allowed when SkipWithError() has been used.
   }
 
-  // Perform setup here
-  // setup the context for a grackle solver with metal_cooling
-  grtest::ParamConf conf(grtest::ChemPreset::primchem0,
-                         grtest::InitialUnitPreset::simple_z0,
-                         grtest::make_ParamPair_vec({
-                             {"dust_chemistry", 0},
-                         }));
+  // setup the context for a grackle solver
   std::pair<grtest::GrackleCtxPack, grtest::Status> ctx_rslt =
-      grtest::GrackleCtxPack::create(conf);
+      grtest::GrackleCtxPack::create(arg_pack.param_conf);
   if (ctx_rslt.second.is_err()) {
     state.SkipWithError("Error while creating grtest::GrackleCtxPack: " +
                         ctx_rslt.second.to_string());
@@ -44,6 +46,10 @@ static void BM_solve_chemistry(benchmark::State& state) {
   if (layout_rslt.second.is_err()) {
     state.SkipWithError("Error while creating grtest::GridLayout: " +
                         ctx_rslt.second.to_string());
+    return;  // Early return is allowed when SkipWithError() has been used.
+  }
+  if (arg_pack.field_ic != FieldIC::UNIFORM) {
+    state.SkipWithError("recieved unexpected field_ic argument");
     return;  // Early return is allowed when SkipWithError() has been used.
   }
   std::pair<grtest::FieldContainer, grtest::Status> tmp =
@@ -86,11 +92,41 @@ static void BM_solve_chemistry(benchmark::State& state) {
   }
 }
 
+static ArgPack make_uniform_arg_pack(grtest::ChemPreset chem_preset) {
+  return {FieldIC::UNIFORM,
+          grtest::ParamConf(chem_preset, grtest::InitialUnitPreset::simple_z0,
+                            grtest::make_ParamPair_vec({
+                                {"dust_chemistry", 0},
+                            }))};
+}
+
 // Register the function as a benchmark
-BENCHMARK(BM_solve_chemistry)
-    ->Name("solve_chemistry")
+static const ArgPack uniform_pc0_pack =
+    make_uniform_arg_pack(grtest::ChemPreset::primchem0);
+BENCHMARK_CAPTURE(BM_solve_chemistry, UniformPC0, uniform_pc0_pack)
     ->Arg(1)
-    ->Arg(8)
+    ->Arg(64)
+    ->Arg(512);
+
+static const ArgPack uniform_pc1_pack =
+    make_uniform_arg_pack(grtest::ChemPreset::primchem1);
+BENCHMARK_CAPTURE(BM_solve_chemistry, UniformPC1, uniform_pc1_pack)
+    ->Arg(1)
+    ->Arg(64)
+    ->Arg(512);
+
+static const ArgPack uniform_pc2_pack =
+    make_uniform_arg_pack(grtest::ChemPreset::primchem2);
+BENCHMARK_CAPTURE(BM_solve_chemistry, UniformPC2, uniform_pc2_pack)
+    ->Arg(1)
+    ->Arg(64)
+    ->Arg(512);
+
+static const ArgPack uniform_pc3_pack =
+    make_uniform_arg_pack(grtest::ChemPreset::primchem3);
+BENCHMARK_CAPTURE(BM_solve_chemistry, UniformPC3, uniform_pc3_pack)
+    ->Arg(1)
+    ->Arg(64)
     ->Arg(512);
 
 // Run the benchmark
