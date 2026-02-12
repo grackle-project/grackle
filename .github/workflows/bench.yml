@@ -1,4 +1,25 @@
-name: Bench
+# This is part 1 of a 2-part workflow-sequence:
+# - purpose: running benchmarks and leaving a summary comment on the PR
+#
+# - this workflow:
+#   - is triggered when a pull request is opened or reopened or when the head
+#     branch of the pull request is updated
+#   - compiles the benchmarks, runs the benchmarks, uses the results to
+#     constructs the comment's, and uploads an artifact with the comment's
+#     contents
+#
+# - part 2 is triggered when this workflow concludes. That workflow downloads
+#   the artifact containing the comment and actually posts the comments
+#
+# - This needed to be a 2-part sequence for security reasons. For context:
+#   - a workflow with the capability to make a comment on a PR requires
+#     write-access to the repository
+#   - if we ran automatically ran the benchmarks for PRs made by arbitrary
+#     forks in a workflow with write-access, a malicious actor could inject
+#     arbitrary code that could theoretically modify the repository (before we,
+#     the maintainers, could intervene)
+
+name: Run Bench
 
 on:
   schedule:
@@ -13,11 +34,9 @@ on:
     branches:
       - main
   pull_request:
-  workflow_dispatch:
 
 jobs:
   run_bench:
-    name: Make SDist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -41,30 +60,28 @@ jobs:
             -DGRACKLE_BUILD_TESTS=OFF
           cmake --build build_ci-linux
 
+      # run the benchmark and write the result
       - name: Run the benchmark
         run: |
-          echo "Benchmark Summary:" >> bench_summary.md
-          echo "```" >> bench_summary.md
-          # run the benchmark and append output to the file
           ./build_ci-linux/bench/grackle-benchmarks \
               --benchmark_perf_counters=CYCLES,INSTRUCTIONS \
               --benchmark_counters_tabular=true \
-              >> bench_summary.md 2>&1
-          echo "```" >> bench_summary.md
+              2>&1 | tee benchmark_output.txt
 
-      - name: Find Comment
-        uses: peter-evans/find-comment@v4
-        id: fc
+      - name: Prepare Artifact Directory
+        run: |
+          mkdir -p ./bench-artifact
+
+          echo ${{ github.event.number }} > ./bench-artifact/pr-number
+
+          echo "Benchmark Summary:" >> ./bench-artifact/comment-contents.md
+          echo "```" >> ./bench-artifact/comment-contents.md
+          cat ./benchmark_output.txt >> ./bench-artifact/comment-contents.md
+          echo "```" >> ./bench-artifact/comment-contents.md
+          cat ./bench-artifact/comment-contents.md
+          
+      - uses: actions/upload-artifact@v6
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: Build output
-  
-      - name: Create or update comment
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: 'bench_summary.md'
-          edit-mode: replace
+          name: bench-artifact
+          path: bench-artifact/
 
