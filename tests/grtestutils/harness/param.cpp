@@ -11,8 +11,9 @@
 //===----------------------------------------------------------------------===//
 #include "status_reporting.h"
 
-#include "param.hpp"
-#include "GrackleCtxPack.hpp"  // param_detail::StrAllocTracker
+#include "./param.hpp"
+#include "./grackle_ctx_pack.hpp"  // param_detail::StrAllocTracker
+
 #include <cstring>             // std::strlen
 #include <ostream>             // std::ostream
 #include <type_traits>         // std::false_type, std::is_same_v, std::decay_t

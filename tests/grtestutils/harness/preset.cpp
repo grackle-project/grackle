@@ -12,7 +12,7 @@
 
 #include "./param.hpp"
 #include "./preset.hpp"
-#include "./utils.hpp"
+#include "../utils.hpp"
 
 #include "grackle.h"
 #include "status_reporting.h"  // GR_INTERNAL_UNREACHABLE_ERROR
