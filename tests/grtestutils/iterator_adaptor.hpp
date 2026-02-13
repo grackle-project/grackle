@@ -16,7 +16,8 @@
 #include <string>
 
 #include "grackle.h"
-#include "GrackleCtxPack.hpp"
+
+#include "./harness/grackle_ctx_pack.hpp"
 
 namespace grtest {
 

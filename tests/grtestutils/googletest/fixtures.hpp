@@ -18,9 +18,9 @@
 // because we include gtest.h here, we should NOT include this file in any
 // grtest source files (in other words, this should be a header-only file)
 
-#include "../GrackleCtxPack.hpp"
-#include "../preset.hpp"
-#include "../status.hpp"
+#include "../harness/grackle_ctx_pack.hpp"
+#include "../harness/preset.hpp"
+#include "../harness/status.hpp"
 
 #include <utility>  // std::move
 

@@ -10,7 +10,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "./GrackleCtxPack.hpp"
+#include "./grackle_ctx_pack.hpp"
 #include "./preset.hpp"
 
 namespace grtest {
