@@ -3,25 +3,20 @@
 #ifndef GRTEST_UTILS_HPP
 #define GRTEST_UTILS_HPP
 
-#include <random>
 #include <grackle.h>
+
+#include <random>
+#include <optional>
+#include <string>
+#include <type_traits>  // std::is_floating_point_v
 
 namespace grtest {
 
-/// this function records the desired standard datafile within the
-/// chemistry_data struct. It deals with the minutia of making sure that
+/// this function returns the desired standard datafile. It deals with the minutia of making sure that
 /// grackle can find the standardized data-file
 ///
-/// @returns true if successful or false if unsuccessful
-///
-/// @note
-/// For the sake of forward compatability (we will probably change the
-/// implementation if we merge PRs 235, 237, and 246) you should:
-/// - only pass string literals (or the addresses of string-literals) as the
-///   this function's datafile arg
-/// - AND never deallocate my_chemistry.datafile after calling this function
-///   (there won't be a memory leak)
-bool set_standard_datafile(chemistry_data& my_chemistry, const char* datafile);
+/// @returns An empty optional if unsuccessful
+std::optional<std::string> get_standard_datafile(const char* datafile);
 
 }
 
@@ -59,5 +54,59 @@ inline double uniform_dist_transform(std::minstd_rand &generator) {
 }
 
 } // namespace grtest::random
+
+
+namespace grtest {
+
+/// equivalent of %g (the value should be fully specified)
+/// 
+/// The current implementation is extremely crude!
+std::string to_pretty_string(double val);
+
+inline std::string to_pretty_string(float val) {
+  // this is crude!
+  return to_pretty_string(static_cast<double>(val));
+}
+
+/// formats a std::vector as a string
+///
+/// @note
+/// This is highly inefficient, partially because it consists of code written
+/// from before we adopted googletest
+template <typename T>
+std::string ptr_to_string(const T* ptr, std::size_t len) {
+  static_assert(std::is_floating_point_v<T>);
+
+  std::string out = "{";
+
+  std::size_t pause_start;
+  std::size_t pause_stop;
+
+  if (len > 30){
+    pause_start = 3;
+    pause_stop = len - 3;
+  } else {
+    pause_start = len *2;
+    pause_stop = pause_start;
+  }
+
+  for (std::size_t i = 0; i < len; i++) {
+    if ((i > pause_start) && (i < pause_stop)) { continue; }
+
+    if (i == pause_stop) {
+      out += ", ... ";
+    } else if (i != 0) {
+      out += ", ";
+    }
+
+    const int BUF_SIZE = 30;
+    char buf[BUF_SIZE];
+    snprintf(buf, BUF_SIZE, "%g", ptr[i]);
+    out += buf;
+  }
+  return out + "}";
+}
+
+}  // namespace grtest
 
 #endif /* GRTEST_UTILS_HPP */
