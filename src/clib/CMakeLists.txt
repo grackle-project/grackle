@@ -97,6 +97,7 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
+  calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
   calculate_cooling_time.cpp
   calculate_dust_temperature.cpp
   calculate_gamma.cpp
@@ -147,7 +148,6 @@ add_library(Grackle_Grackle
   # Fortran Source Files
   calc_all_tdust_gasgr_1d_g.F
   calc_tdust_1d_g.F
-  calc_temp1d_cloudy_g.F
   interpolators_g.F
   calc_grain_size_increment_1d.F
   gaussj_g.F
