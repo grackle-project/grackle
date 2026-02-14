@@ -126,7 +126,7 @@ void grackle::impl::calc_temp1d_cloudy_g(
   for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
     if (itmask[i] != MASK_FALSE) {
       munew = 1.;
-      bool skip_mmw_update = false;
+      bool skip_mmw_update = true;
       for (ti = 1; ti <= (ti_max); ti++) {
         muold = munew;
 
@@ -138,7 +138,7 @@ void grackle::impl::calc_temp1d_cloudy_g(
 
         log10tem[i] = logtem[i] * inv_log10;
 
-        // Call interpolation functions to get heating/cooling
+        // Call interpolation functions to get mmw
 
         // Interpolate over temperature.
         if (cloudy_table.grid_rank == 1) {
@@ -187,12 +187,12 @@ void grackle::impl::calc_temp1d_cloudy_g(
           }
 
           mmw[i] = munew;
-          skip_mmw_update = true;
+          skip_mmw_update = false;
           break;
         }
       }
 
-      if (!skip_mmw_update) {
+      if (skip_mmw_update) {
         mmw[i] = munew;
         printf("Mean molecular weight not converged! %e %e %e\n", munew, muold,
                std::fabs((munew / muold) - 1.));
