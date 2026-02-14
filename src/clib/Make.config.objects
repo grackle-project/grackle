@@ -26,6 +26,7 @@ OBJS_CONFIG_LIB = \
         cool1d_multi_g.lo \
         cool_multi_time_g.lo \
         dust/calc_all_tdust_gasgr_1d_g.lo \
+        dust/calc_grain_size_increment_species_1d.lo \
         dust/grain_species_info.lo \
         dynamic_api.lo \
         grackle_units.lo \

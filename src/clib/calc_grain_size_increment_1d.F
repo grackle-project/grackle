@@ -181,6 +181,7 @@
             coef2 = coef2 / coef3
 
             call solve_cubic_equation(coef2, coef1, coef0, drsp(i))
+!            drsp(i) = 0.d0
 
             drsp(i) = max(drsp(i), 0.d0)
 
