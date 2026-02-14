@@ -121,25 +121,6 @@ void FORTRAN_NAME(calc_gr_balance_g)(
   int* is, int* ie
 );
 
-void FORTRAN_NAME(cool1d_cloudy_g)(
-  gr_float* d_data_ptr, double* rhoH, double* metallicity, int* in, int* jn,
-  int* kn, int* is, int* ie, int* j, int* k, double* logtem, double* edot,
-  double* comp2, double* dom, double* zr, int* icmbTfloor, int* iClHeat,
-  int* iZscale, long long* clGridRank, long long* clGridDim, double* clPar1,
-  double* clPar2, double* clPar3, long long* clDataSize, double* clCooling,
-  double* clHeating, gr_mask_type* itmask
-);
-
-void FORTRAN_NAME(cool1d_cloudy_old_tables_g)(
-  gr_float* d_data_ptr, gr_float* de_data_ptr, double* rhoH,
-  double* metallicity, int* in, int* jn, int* kn, int* is, int* ie, int* j,
-  int* k, double* logtem, double* edot, double* comp2, int* ispecies,
-  double* dom, double* zr, int* icmbTfloor, int* iClHeat, double* clEleFra,
-  long long* clGridRank, long long* clGridDim, double* clPar1, double* clPar2,
-  double* clPar3, double* clPar4, double* clPar5, long long* clDataSize,
-  double* clCooling, double* clHeating, gr_mask_type* itmask
-);
-
 void FORTRAN_NAME(gaussj_g)(
   int* n, double* a_data_ptr, double* b, int* ierr
 );
@@ -199,73 +180,6 @@ void FORTRAN_NAME(interpolate_5d_g)(
   double* dgridPar4, const double* gridPar5, double* dgridPar5,
   long long* dataSize, const double* dataField, double* value
 );
-
-void FORTRAN_NAME(ceiling_species_g)(
-  gr_float* d_data_ptr, gr_float* de_data_ptr, gr_float* HI_data_ptr,
-  gr_float* HII_data_ptr, gr_float* HeI_data_ptr, gr_float* HeII_data_ptr,
-  gr_float* HeIII_data_ptr, gr_float* HM_data_ptr, gr_float* H2I_data_ptr,
-  gr_float* H2II_data_ptr, gr_float* DI_data_ptr, gr_float* DII_data_ptr,
-  gr_float* HDI_data_ptr, gr_float* metal_data_ptr, gr_float* dust_data_ptr,
-  int* is, int* ie, int* js, int* je, int* ks, int* ke, int* in, int* jn,
-  int* kn, int* ispecies, int* imetal, int* idustfield, gr_float* DM_data_ptr,
-  gr_float* HDII_data_ptr, gr_float* HeHII_data_ptr, int* imabund, int* imchem,
-  int* idspecies, int* immulti, int* igrgr, int* idsub, gr_float* CI_data_ptr,
-  gr_float* CII_data_ptr, gr_float* CO_data_ptr, gr_float* CO2_data_ptr,
-  gr_float* OI_data_ptr, gr_float* OH_data_ptr, gr_float* H2O_data_ptr,
-  gr_float* O2_data_ptr, gr_float* SiI_data_ptr, gr_float* SiOI_data_ptr,
-  gr_float* SiO2I_data_ptr, gr_float* CH_data_ptr, gr_float* CH2_data_ptr,
-  gr_float* COII_data_ptr, gr_float* OII_data_ptr, gr_float* OHII_data_ptr,
-  gr_float* H2OII_data_ptr, gr_float* H3OII_data_ptr, gr_float* O2II_data_ptr,
-  gr_float* Mg_data_ptr, gr_float* Al_data_ptr, gr_float* S_data_ptr,
-  gr_float* Fe_data_ptr, gr_float* SiM_data_ptr, gr_float* FeM_data_ptr,
-  gr_float* Mg2SiO4_data_ptr, gr_float* MgSiO3_data_ptr,
-  gr_float* Fe3O4_data_ptr, gr_float* AC_data_ptr, gr_float* SiO2D_data_ptr,
-  gr_float* MgO_data_ptr, gr_float* FeS_data_ptr, gr_float* Al2O3_data_ptr,
-  gr_float* reforg_data_ptr, gr_float* volorg_data_ptr,
-  gr_float* H2Oice_data_ptr, gr_float* metal_loc_data_ptr,
-  gr_float* metal_C13_data_ptr, gr_float* metal_C20_data_ptr,
-  gr_float* metal_C25_data_ptr, gr_float* metal_C30_data_ptr,
-  gr_float* metal_F13_data_ptr, gr_float* metal_F15_data_ptr,
-  gr_float* metal_F50_data_ptr, gr_float* metal_F80_data_ptr,
-  gr_float* metal_P170_data_ptr, gr_float* metal_P200_data_ptr,
-  gr_float* metal_Y19_data_ptr
-);
-
-void FORTRAN_NAME(make_consistent_g)(
-  gr_float* de_data_ptr, gr_float* HI_data_ptr, gr_float* HII_data_ptr,
-  gr_float* HeI_data_ptr, gr_float* HeII_data_ptr, gr_float* HeIII_data_ptr,
-  gr_float* HM_data_ptr, gr_float* H2I_data_ptr, gr_float* H2II_data_ptr,
-  gr_float* DI_data_ptr, gr_float* DII_data_ptr, gr_float* HDI_data_ptr,
-  gr_float* metal_data_ptr, gr_float* dust_data_ptr, gr_float* d_data_ptr,
-  int* is, int* ie, int* js, int* je, int* ks, int* ke, int* in, int* jn,
-  int* kn, int* ispecies, int* imetal, double* fh, double* dtoh,
-  int* idustfield, int* imchem, int* igrgr, double* dom, gr_float* DM_data_ptr,
-  gr_float* HDII_data_ptr, gr_float* HeHII_data_ptr, gr_float* CI_data_ptr,
-  gr_float* CII_data_ptr, gr_float* CO_data_ptr, gr_float* CO2_data_ptr,
-  gr_float* OI_data_ptr, gr_float* OH_data_ptr, gr_float* H2O_data_ptr,
-  gr_float* O2_data_ptr, gr_float* SiI_data_ptr, gr_float* SiOI_data_ptr,
-  gr_float* SiO2I_data_ptr, gr_float* CH_data_ptr, gr_float* CH2_data_ptr,
-  gr_float* COII_data_ptr, gr_float* OII_data_ptr, gr_float* OHII_data_ptr,
-  gr_float* H2OII_data_ptr, gr_float* H3OII_data_ptr, gr_float* O2II_data_ptr,
-  gr_float* Mg_data_ptr, gr_float* Al_data_ptr, gr_float* S_data_ptr,
-  gr_float* Fe_data_ptr, gr_float* SiM_data_ptr, gr_float* FeM_data_ptr,
-  gr_float* Mg2SiO4_data_ptr, gr_float* MgSiO3_data_ptr,
-  gr_float* Fe3O4_data_ptr, gr_float* AC_data_ptr, gr_float* SiO2D_data_ptr,
-  gr_float* MgO_data_ptr, gr_float* FeS_data_ptr, gr_float* Al2O3_data_ptr,
-  gr_float* reforg_data_ptr, gr_float* volorg_data_ptr,
-  gr_float* H2Oice_data_ptr, int* immulti, int* imabund, int* idspecies,
-  int* itdmulti, int* idsub, gr_float* metal_loc_data_ptr,
-  gr_float* metal_C13_data_ptr, gr_float* metal_C20_data_ptr,
-  gr_float* metal_C25_data_ptr, gr_float* metal_C30_data_ptr,
-  gr_float* metal_F13_data_ptr, gr_float* metal_F15_data_ptr,
-  gr_float* metal_F50_data_ptr, gr_float* metal_F80_data_ptr,
-  gr_float* metal_P170_data_ptr, gr_float* metal_P200_data_ptr,
-  gr_float* metal_Y19_data_ptr, int* SN0_N, double* SN0_XC, double* SN0_XO,
-  double* SN0_XMg, double* SN0_XAl, double* SN0_XSi, double* SN0_XS,
-  double* SN0_XFe, double* SN0_fC, double* SN0_fO, double* SN0_fMg,
-  double* SN0_fAl, double* SN0_fSi, double* SN0_fS, double* SN0_fFe
-);
-
 
 #ifdef __cplusplus
 }  // extern "C"

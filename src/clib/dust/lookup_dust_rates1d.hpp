@@ -190,9 +190,10 @@ inline void lookup_dust_rates1d(
     GRIMPL_REQUIRE(my_chemistry->metal_chemistry == 1, "sanity-check!");
 
     // Compute grain size increment
-    f_wrap::calc_grain_size_increment_1d(dom, idx_range, itmask_metal,
-                                         my_chemistry, my_rates, my_fields,
-                                         internal_dust_prop_scratch_buf);
+    f_wrap::calc_grain_size_increment_1d(
+        dom, idx_range, itmask_metal, my_chemistry,
+        my_rates->opaque_storage->inject_pathway_props, my_fields,
+        internal_dust_prop_scratch_buf);
 
     grackle::impl::View<const gr_float***> d(
         my_fields->density, my_fields->grid_dimension[0],

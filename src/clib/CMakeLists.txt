@@ -1,5 +1,5 @@
-# generate grackle_float.h AND auto_general.c
-# ===========================================
+# generate grackle_float.h AND auto_general.cpp
+# =============================================
 
 # perform a check to try to help out with the scenario where the classic build
 # system in an older Grackle revisions placed auto-generated files in locations
@@ -33,7 +33,7 @@ endif()
 configure_file(../include/grackle_float.h.in
   ${GRACKLE_GENERATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
 
-# next, declare recipe for generating auto_general.c:
+# next, declare recipe for generating auto_general.cpp:
 
 # fetch necessary version information via query-version.py script
 # -> GIT_BRANCH and GIT_REVISION hold sensible vals when git isn't installed
@@ -74,7 +74,7 @@ string(REPLACE "\n" "\\n" SHOW_CONFIG_STR "
    BUILD_TYPE                          : ${CMAKE_BUILD_TYPE}
 ")
 
-configure_file(auto_general.c.in auto_general.c @ONLY)
+configure_file(auto_general.cpp.in auto_general.cpp @ONLY)
 
 # Declare the main target
 # =======================
@@ -85,16 +85,14 @@ add_library(Grackle_Grackle
   dynamic_api.c
   grackle_units.c
   index_helper.c
-  initialize_cloudy_data.c initialize_cloudy_data.h
-  initialize_UVbackground_data.c  initialize_UVbackground_data.h
   rate_functions.c
   status_reporting.c status_reporting.h
   utils.c
 
-  # auto-generated C source files
-  ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
+  # auto-generated C++ source files
+  ${CMAKE_CURRENT_BINARY_DIR}/auto_general.cpp
   # here is the companion header file (not generated)
-  auto_general.h
+  auto_general.hpp
 
   # C++ Source (and Private Header Files)
   calc_tdust_3d.cpp calc_tdust_3d.h
@@ -107,6 +105,8 @@ add_library(Grackle_Grackle
   calculate_temperature.cpp
   ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
+  cool1d_cloudy_g.cpp cool1d_cloudy_g.hpp
+  cool1d_cloudy_old_tables_g.cpp cool1d_cloudy_old_tables_g.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
@@ -114,9 +114,14 @@ add_library(Grackle_Grackle
   dust/lookup_dust_rates1d.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
-  initialize_dust_yields.cpp initialize_dust_yields.hpp
+  initialize_cloudy_data.cpp initialize_cloudy_data.hpp
   initialize_rates.cpp initialize_rates.hpp
+  initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp
+  inject_model/grain_metal_inject_pathways.hpp
+  inject_model/load_data.cpp inject_model/load_data.hpp
+  inject_model/raw_data.cpp inject_model/raw_data.hpp
   internal_types.cpp internal_types.hpp
+  interp_table_utils.hpp
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
@@ -125,9 +130,11 @@ add_library(Grackle_Grackle
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
   set_default_chemistry_parameters.cpp
-  solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
+  solve_rate_cool.cpp solve_rate_cool.hpp
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
+  support/FrozenKeyIdxBiMap.hpp
+  support/h5io.cpp support/h5io.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
@@ -141,10 +148,7 @@ add_library(Grackle_Grackle
   # Fortran Source Files
   calc_all_tdust_gasgr_1d_g.F
   calc_tdust_1d_g.F
-  cool1d_cloudy_g.F
-  cool1d_cloudy_old_tables_g.F
   interpolators_g.F
-  solve_rate_cool_g.F
   calc_grain_size_increment_1d.F
   gaussj_g.F
 
@@ -176,7 +180,6 @@ add_library(Grackle_Grackle
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
   index_helper.h
-  interp_table_utils.h
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
   utils.h

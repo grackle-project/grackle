@@ -14,7 +14,7 @@
 #include <cstdio>
 #include "grackle.h"
 #include "internal_units.h"
-#include "solve_rate_cool_g-cpp.h"
+#include "solve_rate_cool.hpp"
 #include "update_UVbackground_rates.hpp"
 #include "utils.h"
 
@@ -82,13 +82,13 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
 
   /* Call the routine to solve cooling equations. */
 
-  int ierr = solve_rate_cool_g(
+  int ierr = grackle::impl::solve_rate_cool(
     metal_field_present, dt_value, internalu,
     my_chemistry, my_rates, my_fields, &my_uvb_rates
   );
 
   if (ierr != GR_SUCCESS) {
-    std::fprintf(stderr, "Error in solve_rate_cool_g.\n");
+    std::fprintf(stderr, "Error in solve_rate_cool.\n");
   }
 
   return ierr;
