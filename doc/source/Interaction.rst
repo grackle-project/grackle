@@ -28,9 +28,9 @@ of calling all of grackle's functions.
 
 * :code-example:`c_local_example.c` - C example using only :ref:`local_functions`
 
-* :code-example:`cxx_example.C` - C++ example
+* :code-example:`cxx_example.cpp` - C++ example
 
-* :code-example:`cxx_omp_example.C` - C++ example using OpenMP
+* :code-example:`cxx_omp_example.cpp` - C++ example using OpenMP
 
 * :code-example:`fortran_example.F` - Fortran example
 
@@ -420,7 +420,7 @@ When compiling Grackle
 * with the :ref:`CMake build system <cmake_build>`, you should configure the build by assigning the ``GRACKLE_USE_OPENMP`` cmake-variable a value of ``ON`` (more information about modifying settings in this system are provided :ref:`here <how_to_configure>`)
 
 For an example of how to compile your code with OpenMP, see the
-:code-example:`cxx_omp_example.C` code example (:ref:`examples`).  Once your code has
+:code-example:`cxx_omp_example.cpp` code example (:ref:`examples`).  Once your code has
 been compiled with OpenMP enabled, the number of threads used can be controlled
 by setting the :c:data:`omp_nthreads` parameter, stored in the ``grackle_data``
 struct.
