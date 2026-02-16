@@ -30,7 +30,7 @@ void grackle::impl::dust_growth(
     const gr_mask_type* itmask,
     double* dt_value,
     double* t_gas,
-    bool dryrun)
+    double* growth_dM)
 {
     grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
@@ -41,15 +41,18 @@ void grackle::impl::dust_growth(
     grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    
+
     double dens_proper = internalu.urho * std::pow(internalu.a_value,3);
     double tau_ref = my_chemistry->dust_growth_tauref * 1e9 * sec_per_year/internalu.tbase1;
 
 
     // --- MAIN LOOP ---
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        // Initialize to zero
+        growth_dM[i] = 0.0;
+
         if (itmask[i] != MASK_FALSE) {
-        
+
             double rho_gas      = d(i,idx_range.j,idx_range.k);
             double rho_dust = dust(i,idx_range.j,idx_range.k);
             double rho_metal= metal(i,idx_range.j,idx_range.k);
@@ -72,52 +75,15 @@ void grackle::impl::dust_growth(
             frac_metal_available = rho_metal / (rho_dust + rho_metal);
             }
             frac_metal_available = std::clamp(frac_metal_available, 0.0, 1.0);
-            double growth = frac_metal_available * (rho_dust / tau_accr) * dt;
-            double dM = std::min(growth, rho_metal);
+            double growth_rate = frac_metal_available * (rho_dust / tau_accr);
+            double dM = std::min(growth_rate, rho_metal/dt);
 
+            // Store the calculated mass change in the output array
+            growth_dM[i] = dM;
 
-            double dM_tau_accr = dM;
-
-
-            // recalculate metallicity
-            dM = std::max(-1*rho_dust, dM);
-            dM = std::min(0.9*rho_metal, dM);
-            double dM_conserv = 0.0;
-            long double change = rho_gas;
-            long double dM_change = (long double)dM;
-            if (rho_dust >= 0.0) {
-                rho_dust = rho_dust + dM;
-                rho_metal = rho_metal - dM;
-            } else {
-                dM_conserv = rho_dust;
-                rho_dust = rho_dust - dM_conserv;
-                rho_metal = rho_metal + dM_conserv;
-            }
             // fprintf(stderr,
-            // "after dM calc dust=%e gas=%e metal=%e change=%0.18Le\n",
-            // rho_dust,
-            // rho_gas,
-            // rho_metal,
-            // (change - dM_change)/change);
-            rho_gas = rho_gas + (rho_metal - metal(i,idx_range.j,idx_range.k));
-            
-            // fprintf(stderr,
-            //         "internal: frac=%e growth=%e dM=%e grainsize=%e gas=%e dust=%e metal=%e\n",
-            //         frac_metal_available, growth, dM, my_chemistry->dust_grainsize, rho_gas, rho_dust, rho_metal);
-            if (rho_dust < 0) {
-                std::exit(21);
-            }
-            // double total_density_final = rho_metal + rho_dust;
-            // if (std::abs(total_density_final - total_density_init) > 1e-8){
-            //     std::exit(21);
-            // }
-            if (dryrun == false) {
-                dust(i,idx_range.j,idx_range.k) = (gr_float)rho_dust;
-                metal(i,idx_range.j,idx_range.k) = (gr_float)rho_metal;
-                d(i,idx_range.j,idx_range.k) = (gr_float)rho_gas;
-
-
-            }
+            //         "internal: frac=%.10e growth_rate=%e gas=%.15e dust=%.15e metal=%.15e\n",
+            //          frac_metal_available, dM, rho_gas, rho_dust, rho_metal);
         }
 
     }
@@ -134,6 +100,97 @@ void grackle::impl::dust_destruction(
     const gr_mask_type* itmask,
     double* dt_value,
     double* t_gas,
+    double* destruction_dM)
+{
+    grackle::impl::View<gr_float***> d(
+      my_fields->density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> dust(
+      my_fields->dust_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> metal(
+      my_fields->metal_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    bool use_sne = (my_chemistry->use_sne_field > 0);
+    grackle::impl::View<gr_float***> sne(
+        use_sne ? my_fields->sne_rate : my_fields->density,
+        my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+    double dens_proper = internalu.urho * std::pow(internalu.a_value,3);
+
+    double Ms100 = 6800.0 * my_chemistry->sne_coeff
+                 * (100.0 / my_chemistry->sne_shockspeed)
+                 * (100.0 / my_chemistry->sne_shockspeed)
+                 * SolarMass / (internalu.urho * std::pow(internalu.uxyz,3));
+
+    // --- MAIN LOOP ---
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        // Initialize to zero
+        destruction_dM[i] = 0.0;
+
+        if (itmask[i] != MASK_FALSE) {
+
+            double rho_gas   = d(i,idx_range.j,idx_range.k);
+            double rho_dust  = dust(i,idx_range.j,idx_range.k);
+            double rho_metal = metal(i,idx_range.j,idx_range.k);
+            double sne_this = use_sne ? sne(i,idx_range.j,idx_range.k) : 0.0;
+            double temp      = t_gas[i];
+            double dt = dt_value[i];
+            double tau_dest = 0;
+
+            double dM = 0;
+            double dM_shock = 0.0;
+
+            if (use_sne) {
+                // destruction by SN shocks
+                if (sne_this <= 0) {
+                    tau_dest = 1e20;
+                    // dM_shock = 0.0;
+                } else {
+                    tau_dest = rho_gas/(Ms100*sne_this*my_chemistry->dust_destruction_eff) * dt;
+                    dM_shock = std::min(rho_dust/tau_dest, rho_dust/dt);
+                }
+            }
+
+            // destruction by thermal sputtering
+            double tau_sput = 1.7e8 * sec_per_year / internalu.tbase1
+                            * (my_chemistry->dust_grainsize/0.1)
+                            * (1.0e-27/(dens_proper * rho_gas))
+                            * (std::pow((2.0e6/temp),2.5)+1.0);
+
+            if (dM_shock >= rho_dust/dt) {
+                if (dM_shock > rho_dust/dt) {
+                    std::cout << "WARNING: dM_shock > M_dust SNe shock destruction, " << sne_this << ", " << tau_dest << std::endl;
+                }
+            } else {
+                dM_shock = dM_shock + rho_dust / tau_sput *3.0;
+                dM_shock = std::min(dM_shock, rho_dust/dt);
+            }
+            //dM = - rho_dust * dM_shock;
+            dM = -dM_shock;
+            if (std::isnan(dM)) {
+                std::cout << "dM calculated as NaN, "<< dM << std::endl;
+            }
+
+            // Store the calculated mass change in the output array
+            destruction_dM[i] = dM;
+            // fprintf(stderr,
+            //         "internal: tau_dest=%.10e tau_dest=%.10e dM_rate=%e gas=%.15e dust=%.15e metal=%.15e\n",
+            //          tau_dest, tau_sput, dM, rho_gas, rho_dust, rho_metal);
+        }
+    }
+}
+
+void grackle::impl::dust_update(
+    chemistry_data* my_chemistry,
+    grackle_field_data* my_fields,
+    InternalGrUnits internalu,
+    IndexRange idx_range,
+    const gr_mask_type* itmask,
+    double* dt_value,
+    double* growth_dM,
+    double* destruction_dM,
     bool dryrun)
 {
     grackle::impl::View<gr_float***> d(
@@ -145,84 +202,48 @@ void grackle::impl::dust_destruction(
     grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> sne(
-        my_fields->SNe_ThisTimeStep, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-    double dens_proper = internalu.urho * std::pow(internalu.a_value,3);
-
-    double Ms100 = 6800.0 * my_chemistry->sne_coeff
-                 * (100.0 / my_chemistry->sne_shockspeed)
-                 * (100.0 / my_chemistry->sne_shockspeed)
-                 * SolarMass / (internalu.urho * std::pow(internalu.uxyz,3));
-
-    // --- MAIN LOOP ---
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
 
             double rho_gas   = d(i,idx_range.j,idx_range.k);
             double rho_dust  = dust(i,idx_range.j,idx_range.k);
             double rho_metal = metal(i,idx_range.j,idx_range.k);
-            double sne_this = sne(i,idx_range.j,idx_range.k);
-            double temp      = t_gas[i];
             double dt = dt_value[i];
-            double tau_dest = 0;
 
-            double total_density_init = rho_metal + rho_dust;
-            double dM = 0;
+            // Get the total mass change (growth + destruction)
 
-            // destruction by SN shocks
-            if (sne_this <= 0) {
-                tau_dest = 1e20;
-            } else {
-                tau_dest = rho_gas/(Ms100*sne_this*my_chemistry->dust_destruction_eff) * dt;
-            }
+            double dM_total = growth_dM[i] + destruction_dM[i];
+            dM_total = dM_total * dt;
+            // Apply constraints to dM
+            dM_total = std::max(-1*rho_dust, dM_total);
+            dM_total = std::min(0.9*rho_metal, dM_total);
 
-            // destruction by thermal sputtering
-            double tau_sput = 1.7e8 * sec_per_year / internalu.tbase1
-                            * (my_chemistry->dust_grainsize/0.1) 
-                            * (1.0e-27/(dens_proper * rho_gas)) 
-                            * (std::pow((2.0e6/temp),2.5)+1.0);
-
-            double dM_shock = 0.0;
-            if (sne_this <= 0) {
-                dM_shock = 0.0;
-            } else {
-                dM_shock = std::min(rho_dust/tau_dest*dt, rho_dust);
-            }
-            if (dM_shock >= rho_dust) {
-                if (dM_shock > rho_dust) {
-                    std::cout << "WARNING: dM_shock > M_dust SNe shock destruction, " << sne_this << ", " << tau_dest << std::endl;
-                }
-            } else {
-                dM_shock = dM_shock + rho_dust / tau_sput *3.0*dt;
-                dM_shock = std::min(dM_shock, rho_dust);
-            }
-            dM = dM - rho_dust * dM_shock;
-            if (std::isnan(dM)) {
-                std::cout << "dM calculated as NaN, "<< dM << std::endl;
-            }
-            // recalculate metallicity
-            dM = std::max(-1*rho_dust, dM);
-            dM = std::min(0.9*rho_metal, dM);
+            // Apply conservation logic (from original code)
             double dM_conserv = 0.0;
             if (rho_dust >= 0.0) {
-                rho_dust = rho_dust + dM;
-                rho_metal = rho_metal - dM;
+                rho_dust = rho_dust + dM_total;
+                rho_metal = rho_metal - dM_total;
             } else {
                 dM_conserv = rho_dust;
                 rho_dust = rho_dust - dM_conserv;
                 rho_metal = rho_metal + dM_conserv;
             }
-            rho_gas = rho_gas + (rho_metal - metal(i,idx_range.j,idx_range.k));
+
+            // Adjust gas density to conserve total mass
+            rho_gas = rho_gas + (rho_metal - metal(i,idx_range.j,idx_range.k)); // Should be changed to gas_density staying constant (make_consistent.cpp)
+
+            // Safety checks
             if (rho_dust < 0) {
-                std::exit(21);
-            }
-            double total_density_final = rho_metal + rho_dust;
-            if (std::abs(total_density_final - total_density_init) > 1e-8){
+                fprintf(stderr, "ERROR: Negative dust density at cell %d: rho_dust=%e\n", i, rho_dust);
                 std::exit(21);
             }
 
+            fprintf(stderr,
+                    "internal: dt=%e growth_dM=%.10e destruction_dM=%.10e dM_rate=%.15e gas=%.15e dust=%.15e metal=%.15e\n",
+                     dt, growth_dM[i], destruction_dM[i], dM_total, rho_gas, rho_dust, rho_metal);
+
+            // Update the fields
             if (dryrun == false) {
                 dust(i,idx_range.j,idx_range.k) = (gr_float)rho_dust;
                 metal(i,idx_range.j,idx_range.k) = (gr_float)rho_metal;
@@ -230,27 +251,5 @@ void grackle::impl::dust_destruction(
             }
         }
     }
-}
-
-void grackle::impl::dust_update(
-    chemistry_data* my_chemistry,
-    grackle_field_data* my_fields,
-    InternalGrUnits internalu,
-    IndexRange idx_range,
-    const gr_mask_type* itmask,
-    double growth_rate,
-    double* dt)
-{
-    grackle::impl::View<gr_float***> d(
-      my_fields->density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> dust(
-      my_fields->dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> metal(
-      my_fields->metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-    // recalculate metallicity
 
 }

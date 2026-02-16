@@ -11,7 +11,8 @@
 
 namespace grackle::impl {
 
-// Calculates and applies dust growth (accretion) onto grain surfaces.
+// Calculates dust growth rates (accretion) onto grain surfaces.
+// Stores the mass change dM for each cell in growth_dM array.
 void dust_growth(
     chemistry_data* my_chemistry,
     grackle_field_data* my_fields,
@@ -20,10 +21,11 @@ void dust_growth(
     const gr_mask_type* itmask,
     double* dt_value,
     double* t_gas,
-    bool dryrun
+    double* growth_dM  // output: mass change rate for each cell
 );
 
-// Calculates and applies dust destruction from SNe shocks and thermal sputtering.
+// Calculates dust destruction rates from SNe shocks and thermal sputtering.
+// Stores the mass change dM for each cell in destruction_dM array.
 void dust_destruction(
     chemistry_data* my_chemistry,
     grackle_field_data* my_fields,
@@ -32,18 +34,20 @@ void dust_destruction(
     const gr_mask_type* itmask,
     double* dt_value,
     double* t_gas,
-    bool dryrun
+    double* destruction_dM  // output: mass change rate for each cell
 );
 
-// Update the density field.
+// Update the density fields using calculated mass changes.
 void dust_update(
     chemistry_data* my_chemistry,
     grackle_field_data* my_fields,
     InternalGrUnits internalu,
     IndexRange idx_range,
     const gr_mask_type* itmask,
-    double growth_rate,
-    double*dt_value
+    double* dt_value,
+    double* growth_dM,      // input: mass change from growth
+    double* destruction_dM, // input: mass change from destruction
+    bool dryrun
 );
 
 }

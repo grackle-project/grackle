@@ -270,7 +270,9 @@ void make_consistent(
 
       if ((imetal) == 1) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          metalfree[i] = d(i, j, k) - metal(i, j, k);
+          metalfree[i] = d(i, j, k) - metal(i, j, k) - dust(i, j, k);
+          // if (my_chemistry->dust_species > 0)
+          //   metalfree[i] -= dust(i, j, k);
         }
       } else {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
@@ -532,6 +534,13 @@ void make_consistent(
                                   (d(i, j, k) * dom < 1.e8)) ||
                                  ((metal(i, j, k) > 1.e-9 * d(i, j, k)) &&
                                   (d(i, j, k) * dom < 1.e6))))) {
+          // if (((imetal == 0) && (d(i, j, k) * dom < 1.e8)) ||
+          //     ((imetal == 1) && (((metal(i, j, k) <= 1.e-9 * d(i, j, k)) &&
+          //                         (my_chemistry->dust_species == 0 || dust(i, j, k) <= 1.e-9 * d(i, j, k)) &&
+          //                         (d(i, j, k) * dom < 1.e8)) ||
+          //                        (((metal(i, j, k) > 1.e-9 * d(i, j, k)) ||
+          //                          (my_chemistry->dust_species > 0 && dust(i, j, k) > 1.e-9 * d(i, j, k))) &&
+          //                         (d(i, j, k) * dom < 1.e6))))) {
             totalOg = 16. / 28. * CO(i, j, k) + 32. / 44. * CO2(i, j, k) +
                       OI(i, j, k) + 16. / 17. * OH(i, j, k) +
                       16. / 18. * H2O(i, j, k) + O2(i, j, k) +

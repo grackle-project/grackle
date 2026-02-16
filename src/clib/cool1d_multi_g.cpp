@@ -1128,7 +1128,7 @@ void grackle::impl::cool1d_multi_g(
         if (itmask[i] != MASK_FALSE) {
           // it may be faster to remove this branching
           dust2gas[i] = dust(i, idx_range.j, idx_range.k) /
-                        d(i, idx_range.j, idx_range.k);
+                        (d(i, idx_range.j, idx_range.k));
         }
       }
     } else {

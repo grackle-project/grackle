@@ -740,6 +740,10 @@ int solve_rate_cool(
     std::vector<double> mmw(my_fields->grid_dimension[0]);
     std::vector<double> edot(my_fields->grid_dimension[0]);
 
+    // Arrays to store dust growth and destruction mass changes
+    std::vector<double> growth_dM(my_fields->grid_dimension[0]);
+    std::vector<double> destruction_dM(my_fields->grid_dimension[0]);
+
     // iteration masks
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
@@ -926,8 +930,20 @@ int solve_rate_cool(
 
         }
 
+        // Calculate dust growth rates and store in growth_dM array
         grackle::impl::dust_growth(
-          my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(), tgas.data(), false);
+          my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
+          tgas.data(), growth_dM.data());
+
+        // Calculate dust destruction rates and store in destruction_dM array
+        grackle::impl::dust_destruction(
+          my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+          dtit.data(), tgas.data(), destruction_dM.data());
+
+        // Apply the calculated rates to update density fields
+        grackle::impl::dust_update(
+          my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
+          growth_dM.data(), destruction_dM.data(), false);
 
         // Add the timestep to the elapsed time for each cell and find
         //  minimum elapsed time step in this row

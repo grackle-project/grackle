@@ -332,7 +332,10 @@ ENTRY(omp_nthreads, INT, 0)
 * 2: Gauss-Seidel-only
 * 3: Newton-Raphson-only
 */
-ENTRY(solver_method, INT, 3)
+ENTRY(solver_method, INT, 2)
+
+/* Flag to use snetimestep */
+ENTRY(use_sne_field, INT, 0)
 
 /* Li et al 2019 dust model parameters*/
 ENTRY(dust_destruction_eff, DOUBLE, 3.0e-1)

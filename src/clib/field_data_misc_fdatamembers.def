@@ -99,4 +99,4 @@ ENTRY(vol_org_dust_temperature)
 ENTRY(H2O_ice_dust_temperature)
 
  // dust model parameter
- ENTRY(SNe_ThisTimeStep)
+ ENTRY(sne_rate)
