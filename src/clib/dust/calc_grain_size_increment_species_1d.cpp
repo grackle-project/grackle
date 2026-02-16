@@ -51,12 +51,11 @@ void grackle::impl::calc_grain_size_increment_species_1d(
   int i;
   double coef0, coef1, coef2, coef3;
   double dsp_inject_sum;
-  double dsp0, SN_sgsp, SN_kpsp;
+  double SN_sgsp, SN_kpsp;
   std::vector<double> SN_dsp0(SN0_N);
   std::vector<double> SN_nsp0(SN0_N);
   std::vector<double> drsp(in);
   const double pi_local_var = pi_fortran_val;
-  const double mh_local_var = mh_grflt;
   int iTd, iTd0;
  
   for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
