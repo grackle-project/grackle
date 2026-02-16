@@ -109,36 +109,4 @@
 #define ev2erg_grflt   GRFLOAT_C(1.60217653e-12)
 #define sigma_sb_grflt GRFLOAT_C(5.670373e-5)
 
-/************************************************/
-
-/* dust constants (taken from dust_const.def) */
-
-/************************************************/
-
-/* TODO: After we finish transcribe calc_grain_size_increment_1d to C++, we
- *       should remove these constants and instead use the values stored by
- *       `GrainSpeciesInfoEntry::bulk_density_cgs`
- *  -> to be clear, the values within GrainSpeciesInfoEntry::bulk_density_cgs
- *     are hardcoded based on the values currently held by these constants.
- */
-
-// these constants are give the intrinsic density of an individual grain for
-// each grain species in units of g/cm^3.
-// - Equation A1 of Chiaki & Wise 2019 represents these quantities using the
-//   zeta_i variable. Equation 2 of Chiaki+15 denotes the variable as s_i
-
-#define sSiM      2.34118e0
-#define sFeM      7.95995e0
-#define sMg2SiO4  3.22133e0
-#define sMgSiO3   3.20185e0
-#define sFe3O4    5.25096e0
-#define sAC       2.27949e0
-#define sSiO2D    2.66235e0
-#define sMgO      3.58157e0
-#define sFeS      4.87265e0
-#define sAl2O3    4.01610e0
-#define sreforg   1.5e0
-#define svolorg   1.0e0
-#define sH2Oice   0.92e0
-
 #endif
