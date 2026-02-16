@@ -170,6 +170,11 @@
 
             coef0 = dsp_inject_sum - dsp(i,j,k)
 
+            if(coef3 .eq. 0.d0 .or. coef3 .ne. coef3) then
+               if(i .ne. 1 .or. j .ne. 1 .or. k .ne. 1) then
+                  write(*,*) "Warning: coef3 is zero or NaN for i=", i, "j=", j, "k=", k, "coef3=", coef3
+               endif
+            endif
 !  Let's actually solve for the δr(t), the root of the cubic equation
 !  - before we do that, we divide both sides of the equation by the
 !    value of coef3. This ensures that the rescaled value of coef3 is
@@ -181,7 +186,9 @@
             coef2 = coef2 / coef3
 
             call solve_cubic_equation(coef2, coef1, coef0, drsp(i))
-!            drsp(i) = 0.d0
+            if(i .eq. 1 .and. j .eq. 1 .and. k .eq. 1) then
+               drsp(i) = 0.d0
+            endif
 
             drsp(i) = max(drsp(i), 0.d0)
 
