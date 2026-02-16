@@ -207,7 +207,8 @@ void calc_tdust_3d(
           //       endif
 
           if (my_chemistry->use_dust_density_field > 0)  {
-            dust2gas[i] = dust(i,j,k) / d(i,j,k);
+            dust2gas[i] = dust(i,j,k) / (d(i,j,k));
+            // dust2gas[i] = dust(i,j,k) / (d(i,j,k) - dust(i,j,k));
           } else {
             dust2gas[i] = my_chemistry->local_dust_to_gas_ratio * metallicity[i];
           }

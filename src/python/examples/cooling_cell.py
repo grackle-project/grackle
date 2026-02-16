@@ -66,7 +66,7 @@ def main(args=None):
         in_testing_framework = True
 
     else:  # Just run the script as is.
-        metallicity = 10**-3 # Solar
+        metallicity =1  # Solar
         redshift = 0.
         # dictionary to store extra information in output dataset
         extra_attrs = {}
@@ -87,7 +87,7 @@ def main(args=None):
             my_chemistry,
 
             with_radiative_cooling=1,
-            primordial_chemistry=1,
+            primordial_chemistry=2,
             dust_chemistry = 1,
             metal_cooling=1,
             UVbackground=0,
@@ -112,38 +112,38 @@ def main(args=None):
             cie_cooling=1,
             h2_optical_depth_approximation=1,
             ih2co=1,
-            ipiht=1,
+            ipiht=1
 
-            HydrogenFractionByMass=0.76,
-            DeuteriumToHydrogenRatio=6.8e-05,
-            SolarMetalFractionByMass=0.01295,
-            local_dust_to_gas_ratio=0.009387,
-            NumberOfTemperatureBins=600,
-            CaseBRecombination=1,
-            TemperatureStart=1.0,
-            TemperatureEnd=1.0e9,
-            NumberOfDustTemperatureBins=250,
-            DustTemperatureStart=1.0,
-            DustTemperatureEnd=1500.0,
-            Compton_xray_heating=0,
-            LWbackground_sawtooth_suppression=0,
-            LWbackground_intensity=0,
-            UVbackground_redshift_on=-99999,
-            UVbackground_redshift_off=-99999,
-            UVbackground_redshift_fullon=-99999,
-            UVbackground_redshift_drop=-99999,
-            cloudy_electron_fraction_factor=0.00915396,
-            use_radiative_transfer=1,
-            radiative_transfer_coupled_rate_solver=0,
-            radiative_transfer_intermediate_step=0,
-            radiative_transfer_hydrogen_only=0,
-            self_shielding_method=0,
-            H2_custom_shielding=0,
-            H2_self_shielding=0,
-            radiative_transfer_H2II_diss=1,
-            radiative_transfer_HDI_dissociation=1,
-            radiative_transfer_metal_ionization=1,
-            radiative_transfer_metal_dissociation=1
+            # HydrogenFractionByMass=0.76,
+            # DeuteriumToHydrogenRatio=6.8e-05,
+            # SolarMetalFractionByMass=0.01295,
+            # # local_dust_to_gas_ratio=0.009387,
+            # NumberOfTemperatureBins=600,
+            # CaseBRecombination=1,
+            # TemperatureStart=1.0,
+            # TemperatureEnd=1.0e9,
+            # NumberOfDustTemperatureBins=250,
+            # DustTemperatureStart=1.0,
+            # DustTemperatureEnd=1500.0,
+            # Compton_xray_heating=0,
+            # LWbackground_sawtooth_suppression=0,
+            # LWbackground_intensity=0,
+            # UVbackground_redshift_on=-99999,
+            # UVbackground_redshift_off=-99999,
+            # UVbackground_redshift_fullon=-99999,
+            # UVbackground_redshift_drop=-99999,
+            # cloudy_electron_fraction_factor=0.00915396,
+            # use_radiative_transfer=1,
+            # radiative_transfer_coupled_rate_solver=0,
+            # radiative_transfer_intermediate_step=0,
+            # radiative_transfer_hydrogen_only=0,
+            # self_shielding_method=0,
+            # H2_custom_shielding=0,
+            # H2_self_shielding=0,
+            # radiative_transfer_H2II_diss=1,
+            # radiative_transfer_HDI_dissociation=1,
+            # radiative_transfer_metal_ionization=1,
+            # radiative_transfer_metal_dissociation=1
 
         )
 
@@ -151,7 +151,7 @@ def main(args=None):
         in_testing_framework = False
 
     density = 0.1 * mass_hydrogen_cgs # g /cm^3
-    temperature = 15000 # K
+    temperature = 5e4 # K
     final_time = 100. # Myr
 
     # Set units
@@ -170,6 +170,7 @@ def main(args=None):
         density=density,
         temperature=temperature,
         metal_mass_fraction=metal_mass_fraction,
+        dust_to_gas_ratio=metal_mass_fraction, # 1:1 metal to dust
         state="ionized",
         converge=True)
 

@@ -301,6 +301,8 @@ def _required_extra_fields(my_chemistry):
         my_fields.append("H2_custom_shielding_factor")
     if my_chemistry.use_isrf_field == 1:
         my_fields.append("isrf_habing")
+    if my_chemistry.use_sne_field == 1:
+        my_fields.append("sne_rate")
     return my_fields
 
 def _required_calculated_fields(my_chemistry):

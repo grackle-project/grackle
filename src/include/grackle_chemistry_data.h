@@ -312,6 +312,9 @@ typedef struct
    */
   int solver_method;
 
+  /* Flag to use snetimestep */
+  int use_sne_field;
+
   /* flag and parameters for Li+ 2019 dust growth and destruction */
   double dust_destruction_eff;
   double sne_coeff;
