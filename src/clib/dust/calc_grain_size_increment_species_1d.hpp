@@ -36,27 +36,36 @@ namespace grackle::impl {
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] density_data Pointer to the density field data
 /// @param[in] nSN Number of selected injection pathways
-/// @param[in] grain_species_density Pointer to the density field data for the current grain species
-/// @param[in] SN_metal_data Pointer to the field data for the metal densities for the current injection pathway
-/// @param[in] SN_fsp Pointer to the array of values for the initial fraction of the injected mass density of a given grain species
-/// @param[in] SN_r0sp_data Pointer to the table of values for the initial size distribution of a given grain species (1st, 2nd, and 3rd order moments )
-/// @param[in] ssp The bulk density of the grain species (density of a single grain in units of g/cm^3)
-/// @param[in] sgsp Pointer to the array geometric cross-section per unit gas mass of each grain species
-/// @param[in,out] alsp_data Pointer to the table of values related to opacity for the current grain species
-/// @param[in] gr_N Bi-dimensional array of the number of tabulated values for opacity-related quantities for each grain species
-/// @param[in] gr_Size Total data size deriving from tabulated values for opacity-related quantities
+/// @param[in] grain_species_density Pointer to the density field data for the
+/// current grain species
+/// @param[in] SN_metal_data Pointer to the field data for the metal densities
+/// for the current injection pathway
+/// @param[in] SN_fsp Pointer to the array of values for the initial fraction of
+/// the injected mass density of a given grain species
+/// @param[in] SN_r0sp_data Pointer to the table of values for the initial size
+/// distribution of a given grain species (1st, 2nd, and 3rd order moments )
+/// @param[in] ssp The bulk density of the grain species (density of a single
+/// grain in units of g/cm^3)
+/// @param[in] sgsp Pointer to the array geometric cross-section per unit gas
+/// mass of each grain species
+/// @param[in,out] alsp_data Pointer to the table of values related to opacity
+/// for the current grain species
+/// @param[in] gr_N Bi-dimensional array of the number of tabulated values for
+/// opacity-related quantities for each grain species
+/// @param[in] gr_Size Total data size deriving from tabulated values for
+/// opacity-related quantities
 /// @param[in] SN_kp0sp_data Tables of values for opacity calculations
 ///
 /// @par History
-/// modified: February, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
+/// modified: February, 2026 by Christopher Bignamini & Matthew Abruzzo; C++
+/// port
 void calc_grain_size_increment_species_1d(
-  int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
-  IndexRange idx_range, gr_float* density_data, int nSN,
-  const gr_float* grain_species_density, gr_float* SN_metal_data, double* SN_fsp,
-  double* SN_r0sp_data, double ssp, double* sgsp, double* alsp_data,
-  int* gr_N, int gr_Size, double* SN_kp0sp_data
-);
+    int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
+    IndexRange idx_range, gr_float* density_data, int nSN,
+    const gr_float* grain_species_density, gr_float* SN_metal_data,
+    double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
+    double* alsp_data, int* gr_N, int gr_Size, double* SN_kp0sp_data);
 
-}
+}  // namespace grackle::impl
 
 #endif /* CALC_GRAIN_SIZE_INCREMENT_SPECIES_1D_HPP */
