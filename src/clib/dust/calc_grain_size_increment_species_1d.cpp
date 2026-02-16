@@ -23,14 +23,11 @@
 #include "calc_grain_size_increment_species_1d.hpp"
 
 void grackle::impl::calc_grain_size_increment_species_1d(
-  int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
-  IndexRange idx_range, gr_float* density_data, int nSN,
-  const gr_float* dsp_data_, gr_float* SN_metal_data, double* SN_fsp,
-  double* SN_r0sp_data, double ssp, double* sgsp, double* alsp_data,
-  int* gr_N, int gr_Size, double* SN_kp0sp_data
-)
-{
-
+    int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
+    IndexRange idx_range, gr_float* density_data, int nSN,
+    const gr_float* dsp_data_, gr_float* SN_metal_data, double* SN_fsp,
+    double* SN_r0sp_data, double ssp, double* sgsp, double* alsp_data,
+    int* gr_N, int gr_Size, double* SN_kp0sp_data) {
   // input
   int iSN;
 
@@ -58,21 +55,20 @@ void grackle::impl::calc_grain_size_increment_species_1d(
   const double pi_local_var = pi_fortran_val;
   const double mh_local_var = mh_grflt;
   int iTd, iTd0;
- 
-  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
-    if ( itmask[i] != MASK_FALSE )  {
 
+  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    if (itmask[i] != MASK_FALSE) {
       // Step 1: compute the total mass density of the current grain species
       //         that was injected (by summing the amounts injected by each
       //         injection pathway)
-      for (iSN = 0; iSN<nSN; iSN++) {
-        if(SN_fsp[iSN] > 0.e0)  {
+      for (iSN = 0; iSN < nSN; iSN++) {
+        if (SN_fsp[iSN] > 0.e0) {
           SN_dsp0[iSN] = SN_fsp[iSN] * SN_metal(i, iSN);
         }
       }
 
       // Step 2: Compute the size increment for the grain species
-      
+
       // Let's go into detail:
       // - todo: maybe we move most of this description into the docstring
       //   and possibly move some of it into the narrative documentation
@@ -109,19 +105,18 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       //     is exactly what happens when grains undergo growth).
       // - Thus, when we model growth, φ(r,t) = φ(r - δr(t), t_inj) where
       //   we call δr(t) the "size increment"
-      
+
       // Anybody reading this might notice that several limitations to this
       // model. This is discussed in detail in GH Issue 444 (the description
       // should be made part of the narrative docs
 
-      if(igrgr == 0)  {
+      if (igrgr == 0) {
         // the model is constructed such that δr(t) = 0 if we aren't
         // modelling grain growth
 
         drsp[i] = 0.e0;
 
       } else {
-
         // here we calculate the current grain size increment, δr(t), using
         // conservation of grain number (i.e. grains are only created via
         // injection pathways)
@@ -157,23 +152,24 @@ void grackle::impl::calc_grain_size_increment_species_1d(
         coef3 = 0.e0;
 
         // Loop over each injection pathway
-        for (iSN = 0; iSN<nSN; iSN++) {
-          if(SN_fsp[iSN] > 0.e0)  {
+        for (iSN = 0; iSN < nSN; iSN++) {
+          if (SN_fsp[iSN] > 0.e0) {
             // Calculate 4πζnⱼ/3 = ρⱼ/<r³>ⱼ
             // -> recall: that ζ is the mass density of a single grain of the
             //    current grain species (i.e. it's a constant)
-            // -> TODO: its very confusing that we store the result within SN_nsp0
+            // -> TODO: its very confusing that we store the result within
+            // SN_nsp0
             //    since that variable is later reused to directly hold nⱼ
-            SN_nsp0[iSN] = SN_dsp0[iSN] / SN_r0sp(2,iSN);
+            SN_nsp0[iSN] = SN_dsp0[iSN] / SN_r0sp(2, iSN);
 
             dsp_inject_sum = dsp_inject_sum + SN_dsp0[iSN];
-            coef1 = coef1 + 3.e0 * SN_nsp0[iSN] * SN_r0sp(1,iSN);
-            coef2 = coef2 + 3.e0 * SN_nsp0[iSN] * SN_r0sp(0,iSN);
-            coef3 = coef3 +        SN_nsp0[iSN];
+            coef1 = coef1 + 3.e0 * SN_nsp0[iSN] * SN_r0sp(1, iSN);
+            coef2 = coef2 + 3.e0 * SN_nsp0[iSN] * SN_r0sp(0, iSN);
+            coef3 = coef3 + SN_nsp0[iSN];
           }
         }
 
-        coef0 = dsp_inject_sum - dsp(i,idx_range.j,idx_range.k);
+        coef0 = dsp_inject_sum - dsp(i, idx_range.j, idx_range.k);
 
         // Let's actually solve for the δr(t), the root of the cubic equation
         // - before we do that, we divide both sides of the equation by the
@@ -186,22 +182,21 @@ void grackle::impl::calc_grain_size_increment_species_1d(
         coef2 = coef2 / coef3;
 
         FORTRAN_NAME(solve_cubic_equation)(&coef2, &coef1, &coef0, &drsp[i]);
-        // TODO: to be removed after fixing the numerical issue with i=0 and idx_range.j=idx_range.k=0
-        if(i == 0 && idx_range.j == 0 && idx_range.k == 0)  {
+        // TODO: to be removed after fixing the numerical issue with i=0 and
+        // idx_range.j=idx_range.k=0
+        if (i == 0 && idx_range.j == 0 && idx_range.k == 0) {
           drsp[i] = 0.e0;
         }
-        
+
         drsp[i] = std::fmax(drsp[i], 0.e0);
-
       }
-
 
       // Step 3: calculate number density (code_density / g)
 
-      for (iSN = 0; iSN<nSN; iSN++) {
-        if(SN_fsp[iSN] > 0.e0)  {
-          SN_nsp0[iSN] = SN_dsp0[iSN]
-           / (4.e0*pi_local_var/3.e0 * ssp * SN_r0sp(2,iSN));
+      for (iSN = 0; iSN < nSN; iSN++) {
+        if (SN_fsp[iSN] > 0.e0) {
+          SN_nsp0[iSN] = SN_dsp0[iSN] /
+                         (4.e0 * pi_local_var / 3.e0 * ssp * SN_r0sp(2, iSN));
         } else {
           SN_nsp0[iSN] = 0.e0;
         }
@@ -210,20 +205,18 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       // Step 4: calculate geometrical cross-section per unit gas mass
       // -> units of cm^2/g
       sgsp[i] = 0.e0;
-      for (iSN = 0; iSN<nSN; iSN++) {
-        if( SN_fsp[iSN] > 0.e0)  {
+      for (iSN = 0; iSN < nSN; iSN++) {
+        if (SN_fsp[iSN] > 0.e0) {
           SN_sgsp = pi_local_var *
-             (        SN_r0sp(1,iSN)
-             + 2.e0 * SN_r0sp(0,iSN) * drsp[i]
-             +                         std::pow(drsp[i],2)
-             );
+                    (SN_r0sp(1, iSN) + 2.e0 * SN_r0sp(0, iSN) * drsp[i] +
+                     std::pow(drsp[i], 2));
         } else {
           SN_sgsp = 0.e0;
         }
         sgsp[i] = sgsp[i] + SN_nsp0[iSN] * SN_sgsp;
       }
-      sgsp[i] = sgsp[i] / d(i,idx_range.j,idx_range.k);
-    
+      sgsp[i] = sgsp[i] / d(i, idx_range.j, idx_range.k);
+
       // Step 5: calculate optical opacity related quantities
       // -> we are effectively constructing a 1d table of values, at various
       //    possible grain temperature for each injection pathway (in other
@@ -232,26 +225,23 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       //    mass)
       // -> I'm pretty confident that the units are independent of code units
       //    (I think the units are cm^2/g)
-      for (iTd = 0; iTd<(gr_N [ 1 ]); iTd++) {
-        iTd0 = iTd*gr_N[0];
-        alsp(iTd,i) = 0.e0;
-        for (iSN = 0; iSN<nSN; iSN++) {
-          if( SN_fsp[iSN] > 0.e0)  {
-            SN_kpsp = 4.e0*pi_local_var/3.e0 * ssp *
-               (        SN_kp0sp(iTd0+3,iSN)
-               + 3.e0 * SN_kp0sp(iTd0+2,iSN) * drsp[i]
-               + 3.e0 * SN_kp0sp(iTd0+1,iSN) * std::pow(drsp[i],2)
-               +        SN_kp0sp(iTd0+0,iSN) * std::pow(drsp[i],3)
-               );
+      for (iTd = 0; iTd < (gr_N[1]); iTd++) {
+        iTd0 = iTd * gr_N[0];
+        alsp(iTd, i) = 0.e0;
+        for (iSN = 0; iSN < nSN; iSN++) {
+          if (SN_fsp[iSN] > 0.e0) {
+            SN_kpsp = 4.e0 * pi_local_var / 3.e0 * ssp *
+                      (SN_kp0sp(iTd0 + 3, iSN) +
+                       3.e0 * SN_kp0sp(iTd0 + 2, iSN) * drsp[i] +
+                       3.e0 * SN_kp0sp(iTd0 + 1, iSN) * std::pow(drsp[i], 2) +
+                       SN_kp0sp(iTd0 + 0, iSN) * std::pow(drsp[i], 3));
           } else {
             SN_kpsp = 0.e0;
           }
-          alsp(iTd,i) = alsp(iTd,i) + SN_nsp0[iSN] * SN_kpsp;
+          alsp(iTd, i) = alsp(iTd, i) + SN_nsp0[iSN] * SN_kpsp;
         }
-        alsp(iTd,i) = alsp(iTd,i) / d(i,idx_range.j,idx_range.k);
+        alsp(iTd, i) = alsp(iTd, i) / d(i, idx_range.j, idx_range.k);
       }
-
-
     }
   }
 
