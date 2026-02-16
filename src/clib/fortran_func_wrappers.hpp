@@ -42,25 +42,6 @@
 // namespace name when they call these routines
 namespace grackle::impl::fortran_wrapper {
 
-// inline void calc_grain_size_increment_species_1d_cpp(
-//   const int* igrgr, const gr_mask_type* itmask, const int* SN0_N, int* in, int* jn, int* kn,
-//   int* is, int* ie, int* j, int* k, double* dom, gr_float* d_data_ptr, int* nSN,
-//   const gr_float* dsp_data_ptr, gr_float* SN_metal_data_ptr, double* SN_fsp,
-//   double* SN_r0sp_data_ptr, double* ssp, double* sgsp, double* alsp_data_ptr,
-//   const int* gr_N, const int* gr_Size, const double* gr_dT, const double* gr_Td,
-//   double* SN_kp0sp_data_ptr
-// )
-// {
-//   FORTRAN_NAME(calc_grain_size_increment_species_1d)(
-//     igrgr, itmask, SN0_N, in, jn, kn,
-//     is, ie, j, k, dom, d_data_ptr, nSN,
-//     dsp_data_ptr, SN_metal_data_ptr, SN_fsp,
-//     SN_r0sp_data_ptr, ssp, sgsp, alsp_data_ptr,
-//     gr_N, gr_Size, gr_dT, gr_Td,
-//     SN_kp0sp_data_ptr
-//   );
-// }
-
 inline void calc_temp1d_cloudy_g(
   double* rhoH, IndexRange idx_range, double* tgas, double* mmw, double dom,
   double zr, int imetal, cloudy_data cloudy_primordial, gr_mask_type* itmask,
