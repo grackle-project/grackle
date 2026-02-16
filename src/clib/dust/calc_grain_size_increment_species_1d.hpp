@@ -63,7 +63,7 @@ void calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
     IndexRange idx_range, gr_float* density_data, int nSN,
     const gr_float* grain_species_density, gr_float* SN_metal_data,
-    double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
+    const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
     double* alsp_data, int* gr_N, int gr_Size, double* SN_kp0sp_data);
 
 }  // namespace grackle::impl
