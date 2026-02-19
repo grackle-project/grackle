@@ -37,16 +37,18 @@ static std::string vec_to_string(const std::vector<double>& vec) {
   std::size_t pause_start;
   std::size_t pause_stop;
 
-  if (len > 30){
+  if (len > 30) {
     pause_start = 3;
     pause_stop = len - 3;
   } else {
-    pause_start = len *2;
+    pause_start = len * 2;
     pause_stop = pause_start;
   }
 
   for (std::size_t i = 0; i < len; i++) {
-    if ((i > pause_start) && (i < pause_stop)) { continue; }
+    if ((i > pause_start) && (i < pause_stop)) {
+      continue;
+    }
 
     if (i == pause_stop) {
       out += ", ... ";
@@ -62,9 +64,10 @@ static std::string vec_to_string(const std::vector<double>& vec) {
   return out + "}";
 }
 
-testing::AssertionResult check_allclose(
-    const std::vector<double>& actual, const std::vector<double>& desired,
-    double rtol, double atol, std::string err_msg) {
+testing::AssertionResult check_allclose(const std::vector<double>& actual,
+                                        const std::vector<double>& desired,
+                                        double rtol, double atol,
+                                        std::string err_msg) {
   if (actual.size() != desired.size()) {
     return testing::AssertionFailure()
            << "the compared arrays have different lengths";
@@ -98,7 +101,7 @@ testing::AssertionResult check_allclose(
           max_absDiff_ind = i;
         }
 
-        if ( cur_absDiff > (max_relDiff * fabs(desired[i])) ) {
+        if (cur_absDiff > (max_relDiff * fabs(desired[i]))) {
           max_relDiff = cur_absDiff / fabs(desired[i]);
           max_relDiff_ind = i;
         }
@@ -106,26 +109,28 @@ testing::AssertionResult check_allclose(
     }
   }
 
-  if (num_mismatches == 0) { return testing::AssertionSuccess(); }
+  if (num_mismatches == 0) {
+    return testing::AssertionSuccess();
+  }
 
   std::string actual_vec_str = vec_to_string(actual);
   std::string ref_vec_str = vec_to_string(desired);
 
   return testing::AssertionFailure()
-    << "\narrays are unequal for the tolerance: "
-       << "rtol = " << pretty_format_(rtol) << ", "
-       << "atol = " << pretty_format_(atol) << '\n'
-    << err_msg << '\n' // custom error message
-    << "Mismatched elements: " << num_mismatches << " / " << actual.size()
-       << '\n'
-    << "Max absolute difference: " << pretty_format_(max_absDiff) << ", "
-       << "ind = " << max_absDiff_ind << ", "
-       << "actual = " << pretty_format_(actual[max_absDiff_ind]) << ", "
-       << "reference = " << pretty_format_(desired[max_absDiff_ind]) << '\n'
-    << "Max relative difference: " << pretty_format_(max_relDiff) << ", "
-       << "ind = " << max_absDiff_ind << ", "
-       << "actual = " << pretty_format_(actual[max_relDiff_ind]) << ", "
-       << "desired = " << pretty_format_(desired[max_relDiff_ind]) << '\n'
-    << "actual:  " << actual_vec_str << '\n'
-    << "desired: " << ref_vec_str << '\n';
+         << "\narrays are unequal for the tolerance: "
+         << "rtol = " << pretty_format_(rtol) << ", "
+         << "atol = " << pretty_format_(atol) << '\n'
+         << err_msg << '\n'  // custom error message
+         << "Mismatched elements: " << num_mismatches << " / " << actual.size()
+         << '\n'
+         << "Max absolute difference: " << pretty_format_(max_absDiff) << ", "
+         << "ind = " << max_absDiff_ind << ", "
+         << "actual = " << pretty_format_(actual[max_absDiff_ind]) << ", "
+         << "reference = " << pretty_format_(desired[max_absDiff_ind]) << '\n'
+         << "Max relative difference: " << pretty_format_(max_relDiff) << ", "
+         << "ind = " << max_absDiff_ind << ", "
+         << "actual = " << pretty_format_(actual[max_relDiff_ind]) << ", "
+         << "desired = " << pretty_format_(desired[max_relDiff_ind]) << '\n'
+         << "actual:  " << actual_vec_str << '\n'
+         << "desired: " << ref_vec_str << '\n';
 }
