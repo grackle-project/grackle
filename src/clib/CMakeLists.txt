@@ -97,6 +97,7 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
+  calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
   calculate_cooling_time.cpp
   calculate_dust_temperature.cpp
   calculate_gamma.cpp
@@ -104,6 +105,8 @@ add_library(Grackle_Grackle
   calculate_temperature.cpp
   ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
+  cool1d_cloudy_g.cpp cool1d_cloudy_g.hpp
+  cool1d_cloudy_old_tables_g.cpp cool1d_cloudy_old_tables_g.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
@@ -112,9 +115,11 @@ add_library(Grackle_Grackle
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_cloudy_data.cpp initialize_cloudy_data.hpp
-  initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
   initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp
+  inject_model/grain_metal_inject_pathways.hpp
+  inject_model/load_data.cpp inject_model/load_data.hpp
+  inject_model/raw_data.cpp inject_model/raw_data.hpp
   internal_types.cpp internal_types.hpp
   interp_table_utils.hpp
   lookup_cool_rates1d.hpp
@@ -128,6 +133,7 @@ add_library(Grackle_Grackle
   solve_rate_cool.cpp solve_rate_cool.hpp
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
+  support/FrozenKeyIdxBiMap.hpp
   support/h5io.cpp support/h5io.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
@@ -142,9 +148,6 @@ add_library(Grackle_Grackle
   # Fortran Source Files
   calc_all_tdust_gasgr_1d_g.F
   calc_tdust_1d_g.F
-  calc_temp1d_cloudy_g.F
-  cool1d_cloudy_g.F
-  cool1d_cloudy_old_tables_g.F
   interpolators_g.F
   calc_grain_size_increment_1d.F
   gaussj_g.F
