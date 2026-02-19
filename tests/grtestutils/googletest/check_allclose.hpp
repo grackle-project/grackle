@@ -6,50 +6,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-/// equivalent of %g (this is extremely crude!)
-std::string pretty_format_(double val) {
-  char buf[30];
-  snprintf(buf, 30, "%g", val);
-  return std::string(buf);
-}
-
-/// formats a std::vector as a string
-///
-/// @note
-/// This is highly inefficient, partially because it consists of code written
-/// from before we adopted googletest
-inline std::string vec_to_string(const std::vector<double>& vec) {
-  std::string out = "{";
-
-  std::size_t len = vec.size();
-
-  std::size_t pause_start;
-  std::size_t pause_stop;
-
-  if (len > 30){
-    pause_start = 3;
-    pause_stop = len - 3;
-  } else {
-    pause_start = len *2;
-    pause_stop = pause_start;
-  }
-
-  for (std::size_t i = 0; i < len; i++) {
-    if ((i > pause_start) && (i < pause_stop)) { continue; }
-
-    if (i == pause_stop) {
-      out += ", ... ";
-    } else if (i != 0) {
-      out += ", ";
-    }
-
-    const int BUF_SIZE = 30;
-    char buf[BUF_SIZE];
-    snprintf(buf, BUF_SIZE, "%g", vec[i]);
-    out += buf;
-  }
-  return out + "}";
-}
+#include "grtestutils/utils.hpp"
 
 /// this compares 2 std::vectors
 ///
@@ -107,24 +64,28 @@ inline testing::AssertionResult check_allclose(
 
   if (num_mismatches == 0) { return testing::AssertionSuccess(); }
 
-  std::string actual_vec_str = vec_to_string(actual);
-  std::string ref_vec_str = vec_to_string(desired);
+  std::string actual_vec_str = grtest::ptr_to_string(actual.data(),
+                                                     actual.size());
+  std::string ref_vec_str = grtest::ptr_to_string(desired.data(),
+                                                  desired.size());
+
+  using grtest::to_pretty_string;
 
   return testing::AssertionFailure()
     << "\narrays are unequal for the tolerance: "
-       << "rtol = " << pretty_format_(rtol) << ", "
-       << "atol = " << pretty_format_(atol) << '\n'
+       << "rtol = " << to_pretty_string(rtol) << ", "
+       << "atol = " << to_pretty_string(atol) << '\n'
     << err_msg << '\n' // custom error message
     << "Mismatched elements: " << num_mismatches << " / " << actual.size()
        << '\n'
-    << "Max absolute difference: " << pretty_format_(max_absDiff) << ", "
+    << "Max absolute difference: " << to_pretty_string(max_absDiff) << ", "
        << "ind = " << max_absDiff_ind << ", "
-       << "actual = " << pretty_format_(actual[max_absDiff_ind]) << ", "
-       << "reference = " << pretty_format_(desired[max_absDiff_ind]) << '\n'
-    << "Max relative difference: " << pretty_format_(max_relDiff) << ", "
+       << "actual = " << to_pretty_string(actual[max_absDiff_ind]) << ", "
+       << "reference = " << to_pretty_string(desired[max_absDiff_ind]) << '\n'
+    << "Max relative difference: " << to_pretty_string(max_relDiff) << ", "
        << "ind = " << max_absDiff_ind << ", "
-       << "actual = " << pretty_format_(actual[max_relDiff_ind]) << ", "
-       << "desired = " << pretty_format_(desired[max_relDiff_ind]) << '\n'
+       << "actual = " << to_pretty_string(actual[max_relDiff_ind]) << ", "
+       << "desired = " << to_pretty_string(desired[max_relDiff_ind]) << '\n'
     << "actual:  " << actual_vec_str << '\n'
     << "desired: " << ref_vec_str << '\n';
 }
