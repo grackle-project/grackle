@@ -119,6 +119,7 @@ add_library(grtestutils_core
   cmd.hpp cmd.cpp
   utils.hpp utils.cpp
   os.hpp os.cpp
+  view.cpp view.hpp
 )
 
 target_link_libraries(grtestutils_core
