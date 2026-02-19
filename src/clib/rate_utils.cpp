@@ -18,27 +18,6 @@
 #include "LUT.hpp"             // CollisionalRxnLUT
 #include "opaque_storage.hpp"  // gr_opaque_storage
 
-// In comparison to the dynamic API for accessing elements of chemistry_data,
-// we have explicitly opted NOT to make use of offsetof to access arbitrary
-// values within a struct.
-// -> while `offsetof` may lead to somewhat simpler code, the validity of using
-//    it with pointer-arithmetic to access members of structs is murky at best.
-//    - Things become murky when you consider that the C standard models an
-//      abstract machine and doesn't place the strongest (or clearest)
-//      constraints on a compiler when you start arbitrarily messing with
-//      memory
-//    - C's object model (and maybe also pointer provenance) is relevant
-// -> An extended discussion can be found in this stackoverflow answer and in
-//    the comments about the answer (https://stackoverflow.com/a/69936600).
-//    - the most compelling point is that it would be useless for the standard
-//      to define the `offsetof` if these semantics didn't work
-// -> In any case, I'm much more skeptical that valid C++ code can make use of
-//    offsetof in this fashion (the object model is stricter and C++ provides a
-//    other machinery to accomplish similar things). Since we want to support
-//    compilation with a C++ compiler, this is the most important point
-//    offsetof in this fashion
-//
-
 // we have reserved the right to change this value at any time
 enum { UNDEFINED_RATE_ID_ = 0 };
 
