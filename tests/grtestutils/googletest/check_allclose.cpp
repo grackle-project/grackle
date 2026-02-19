@@ -66,8 +66,7 @@ static std::string vec_to_string(const std::vector<double>& vec) {
 
 testing::AssertionResult check_allclose(const std::vector<double>& actual,
                                         const std::vector<double>& desired,
-                                        double rtol, double atol,
-                                        std::string err_msg) {
+                                        double rtol, double atol) {
   if (actual.size() != desired.size()) {
     return testing::AssertionFailure()
            << "the compared arrays have different lengths";
@@ -120,7 +119,6 @@ testing::AssertionResult check_allclose(const std::vector<double>& actual,
          << "\narrays are unequal for the tolerance: "
          << "rtol = " << pretty_format_(rtol) << ", "
          << "atol = " << pretty_format_(atol) << '\n'
-         << err_msg << '\n'  // custom error message
          << "Mismatched elements: " << num_mismatches << " / " << actual.size()
          << '\n'
          << "Max absolute difference: " << pretty_format_(max_absDiff) << ", "

@@ -24,7 +24,6 @@
 /// code written from before we adopted googletest
 testing::AssertionResult check_allclose(const std::vector<double>& actual,
                                         const std::vector<double>& desired,
-                                        double rtol = 0.0, double atol = 0.0,
-                                        std::string err_msg = "");
+                                        double rtol = 0.0, double atol = 0.0);
 
 #endif  // GRTESTUTILS_GOOGLETEST_CHECK_ALLCLOSE_HPP
