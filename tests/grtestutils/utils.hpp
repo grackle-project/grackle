@@ -3,25 +3,19 @@
 #ifndef GRTEST_UTILS_HPP
 #define GRTEST_UTILS_HPP
 
-#include <random>
 #include <grackle.h>
+
+#include <random>
+#include <optional>
+#include <string>
 
 namespace grtest {
 
-/// this function records the desired standard datafile within the
-/// chemistry_data struct. It deals with the minutia of making sure that
+/// this function returns the desired standard datafile. It deals with the minutia of making sure that
 /// grackle can find the standardized data-file
 ///
-/// @returns true if successful or false if unsuccessful
-///
-/// @note
-/// For the sake of forward compatability (we will probably change the
-/// implementation if we merge PRs 235, 237, and 246) you should:
-/// - only pass string literals (or the addresses of string-literals) as the
-///   this function's datafile arg
-/// - AND never deallocate my_chemistry.datafile after calling this function
-///   (there won't be a memory leak)
-bool set_standard_datafile(chemistry_data& my_chemistry, const char* datafile);
+/// @returns An empty optional if unsuccessful
+std::optional<std::string> get_standard_datafile(const char* datafile);
 
 }
 

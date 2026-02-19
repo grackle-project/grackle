@@ -22,12 +22,11 @@ static const char* const standard_data_files[N_STANDARD_DATAFILES] = {
   stringify(GR_DATADIR) "/cloudy_metals_2008_3D.h5"
 };
 
-bool grtest::set_standard_datafile(
-  chemistry_data& my_chemistry, const char* datafile
-) {
+/// returns the string-literal for the standard data file
+static const char* standard_datafile_literal_(const char* datafile) {
 
-  if (datafile==NULL) {
-    return false; // we should probably abort the program with an error
+  if (datafile==nullptr) {
+    return nullptr;
   }
 
   // we get the number of characters in the prefix-path
@@ -38,9 +37,16 @@ bool grtest::set_standard_datafile(
 
   for (int i = 0; i < N_STANDARD_DATAFILES; i++){
     if (std::strcmp(datafile, standard_data_files[i]+prefix_len) == 0) {
-      my_chemistry.grackle_data_file = standard_data_files[i];
-      return true;
+      return standard_data_files[i];
     }
   }
-  return false;
+  return nullptr;
+}
+
+std::optional<std::string> grtest::get_standard_datafile(const char* datafile) {
+  const char* tmp = standard_datafile_literal_(datafile);
+  if (tmp==nullptr) {
+    return std::nullopt;
+  }
+  return std::optional<std::string>(tmp);
 }
