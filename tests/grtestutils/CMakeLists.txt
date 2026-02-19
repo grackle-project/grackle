@@ -155,10 +155,14 @@ if (TARGET GTest::gtest)
   #   header-only.
   # - The CMake target exists to comunicate build-requirements for dependents
   #   to make use of the header files within the ./googletest subdirectory
-  add_library(grtestutils_googletest INTERFACE)
+  add_library(grtestutils_googletest
+    # reminder: only includes files inside of the googletest subdirectory
+  
+    googletest/check_allclose.cpp googletest/check_allclose.hpp
+  )
 
   target_link_libraries(grtestutils_googletest
-    INTERFACE grtestutils_core GTest::gtest
+    PUBLIC grtestutils_core GTest::gtest
   )
 
   # 2. testdeps: bundles dependencies used by tests
