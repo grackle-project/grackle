@@ -81,7 +81,7 @@ Building the Core Grackle Library From Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Grackle requires a C99 compiler, a Fortran compiler, and HDF5 (1.6 or newer).
-On most platforms, compilation with the CMake build system (3.16 or newer) is as simple as:
+On most platforms, compilation with the CMake build system (3.22 or newer) is as simple as:
 
 .. code-block:: shell-session
 
