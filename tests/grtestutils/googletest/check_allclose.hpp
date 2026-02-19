@@ -1,5 +1,16 @@
-#ifndef UTEST_HELPERS_HPP
-#define UTEST_HELPERS_HPP
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares assertions for comparing arrays
+///
+//===----------------------------------------------------------------------===//
+#ifndef GRTESTUTILS_GOOGLETEST_CHECK_ALLCLOSE_HPP
+#define GRTESTUTILS_GOOGLETEST_CHECK_ALLCLOSE_HPP
 
 #include <cstdio>
 #include <string>
@@ -129,4 +140,4 @@ inline testing::AssertionResult check_allclose(
     << "desired: " << ref_vec_str << '\n';
 }
 
-#endif /* UTEST_HELPERS */
+#endif  // GRTESTUTILS_GOOGLETEST_CHECK_ALLCLOSE_HPP
