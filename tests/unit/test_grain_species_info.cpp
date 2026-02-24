@@ -251,7 +251,7 @@ TEST_P(GrainSpeciesInfoTest, SpeciesLUTCompare) {
 // check that the grackle::impl::max_ingredients_per_grain_species constant
 // indeed holds the maximum number of ingredients that a grain species can
 // have.
-TEST_P(GrainSpeciesInfoTest, MaxIngredientsPerGrainSpecies) {
+TEST_P(GrainSpeciesInfoTest, MaxIngredients) {
   // go through and compute the number of ingredients for each species
   int n_grain_species = grain_species_info_->n_species;
   int max_ingredient_count = 0;
