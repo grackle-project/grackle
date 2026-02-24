@@ -229,19 +229,27 @@ _indirectly_calculated_fields.update(
      for field in _dust_temperatures[max(_dust_temperatures.keys())]}
 )
 
-_metal_yield_densities = \
-  ["local_ISM_metal_density",
-   "ccsn13_metal_density",
-   "ccsn20_metal_density",
-   "ccsn25_metal_density",
-   "ccsn30_metal_density",
-   "fsn13_metal_density",
-   "fsn15_metal_density",
-   "fsn50_metal_density",
-   "fsn80_metal_density",
-   "pisn170_metal_density",
-   "pisn200_metal_density",
-   "y19_metal_density"]
+def _ordered_inject_pathway_yield_densities(my_chemistry):
+    """
+    Returns the names of metal yield density field names for each injection
+    pathway in the appropriate order
+    """
+    # rate_map is safe as long as the instance doesn't outlive my_chemistry
+    rate_map = my_chemistry._unsafe_get_rate_map()
+    inject_path_names = rate_map.get("inject_model_names", [])
+
+    # perform a few sanity checks:
+    # - these checks should really be handled while initializing chemistry_data,
+    #   (by the core Grackle library) but we are preserving the checks for now
+    if my_chemistry.metal_chemistry > 0:
+        if (my_chemistry.multi_metals != 0) and (my_chemistry.multi_metals != 1):
+            raise ValueError("multi_metals must be either 0 or 1.")
+        elif len(inject_path_names) == 0:
+            raise AssertionError(
+                "Something is very wrong. There should be at least one injection "
+                "pathway yield field why metal_chemistry > 0"
+            )
+    return [f"{name}_metal_density" for name in inject_path_names]
 
 _base_radiation_transfer_fields = \
   ["RT_heating_rate",
@@ -259,12 +267,9 @@ def _required_density_fields(my_chemistry):
     if my_chemistry.dust_chemistry == 1:
         my_fields.append("dust_density")
     if my_chemistry.metal_chemistry > 0:
-        my_fields.extend(_dust_metal_densities[my_chemistry.dust_species] +
-                         _dust_densities[my_chemistry.dust_species])
-        if my_chemistry.multi_metals == 0:
-            my_fields.append(_metal_yield_densities[my_chemistry.metal_abundances])
-        else:
-            my_fields.extend(_metal_yield_densities)
+        my_fields.extend(_dust_metal_densities[my_chemistry.dust_species])
+        my_fields.extend(_dust_densities[my_chemistry.dust_species])
+        my_fields.extend(_ordered_inject_pathway_yield_densities(my_chemistry))
     return my_fields
 
 def _required_radiation_transfer_fields(my_chemistry):
@@ -338,6 +343,8 @@ _field_units = {
 class FluidContainer(dict):
     def __init__(self, chemistry_data, n_vals, dtype="float64",
                  itype="int64"):
+        if not chemistry_data._is_initialized():
+            raise ValueError("chemistry_data must be initialized")
         super(FluidContainer, self).__init__()
         self.dtype = dtype
         self.chemistry_data = chemistry_data
@@ -370,6 +377,11 @@ class FluidContainer(dict):
     @property
     def density_fields(self):
         return _required_density_fields(self.chemistry_data)
+
+    @property
+    def inject_pathway_density_yield_fields(self):
+        # the order of returned fields is significant
+        return _ordered_inject_pathway_yield_densities(self.chemistry_data)
 
     @property
     def input_fields(self):
