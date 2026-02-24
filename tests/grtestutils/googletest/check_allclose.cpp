@@ -13,7 +13,7 @@
 #include "./check_allclose.hpp"
 #include "../view.hpp"
 
-#include <cstdio>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <gtest/gtest.h>
