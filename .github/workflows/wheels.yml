@@ -34,7 +34,7 @@ jobs:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # fetch the full git history to let us run all our tests
           fetch-depth: 0
@@ -42,7 +42,7 @@ jobs:
           submodules: true
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
 
@@ -65,7 +65,7 @@ jobs:
           python -m pip list
           pytest
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: cibw-sdist
           path: dist/*.tar.gz
@@ -86,7 +86,7 @@ jobs:
         ]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # fetch the full git history to let us run all our tests
           fetch-depth: 0
@@ -108,11 +108,11 @@ jobs:
 
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.1.4
+        uses: pypa/cibuildwheel@v3.3.0
         with:
           output-dir: dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./dist/*.whl
@@ -130,7 +130,7 @@ jobs:
     # upload to PyPI on every tag starting with 'grackle-'
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/grackle-')
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v7
         with:
           pattern: cibw-*
           path: dist

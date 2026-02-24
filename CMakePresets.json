@@ -51,7 +51,7 @@
           "cacheVariables" : {
             "CMAKE_COMPILE_WARNING_AS_ERROR": "ON",
             "CMAKE_C_FLAGS": "-Wall -Wpedantic -Wextra -Wno-error=unused-variable -Wno-error=newline-eof -Wno-unused-parameter",
-            "CMAKE_CXX_FLAGS": "-Wall -Wpedantic -Wno-c++17-attribute-extensions -Wno-unused-parameter"
+            "CMAKE_CXX_FLAGS": "-Wall -Wpedantic -Wno-c++17-attribute-extensions -Wno-unused-parameter -Wno-error=self-assign"
           }
       },
       {

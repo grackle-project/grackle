@@ -1,5 +1,9 @@
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
+add_executable(testFrozenKeyIdxBiMap support/test_unit_FrozenKeyIdxBiMap.cpp)
+target_link_libraries(testFrozenKeyIdxBiMap testdeps)
+gtest_discover_tests(testFrozenKeyIdxBiMap)
+
 add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
 target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
@@ -22,11 +26,12 @@ add_executable(runVisitorTests test_visitor.cpp)
 target_link_libraries(runVisitorTests testdeps)
 gtest_discover_tests(runVisitorTests)
 
-# one might argue that the following is more of an integration or end-to-end
-# test than a unit-test
-add_executable(runGhostZoneTests test_ghost_zone.cpp)
-target_link_libraries(runGhostZoneTests testdeps)
-gtest_discover_tests(runGhostZoneTests)
+# tests of the API functions
+# -> one might argue that these are better classified as integration or
+#    end-to-end tests than as unit-test
+add_executable(runApiTests test_ghost_zone.cpp test_api_ratequery.cpp)
+target_link_libraries(runApiTests testdeps)
+gtest_discover_tests(runApiTests)
 
 # this target tests that the members of the chemistry_data struct can be
 # accessed through the "dynamic api." The test cases in this target are

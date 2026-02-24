@@ -187,7 +187,9 @@ commands:
                   echo "Answers already exist; skipping."
                 fi
               else
-                py.test --answer-dir=${ANSWER_DIR}
+                # we pass -vv, so that each test gets its own line of output
+                # (this can be helpful if we encounter a segfault)
+                py.test -vv --answer-dir=${ANSWER_DIR}
               fi
             fi
 
@@ -197,7 +199,7 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-nccv6"
+        default: "gold-standard-nccv7"
       cache-tag:
         description: "A unique tag to append to the cache name"
         type: string

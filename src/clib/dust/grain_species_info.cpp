@@ -15,6 +15,7 @@
 
 #include "LUT.hpp"
 #include "grain_species_info.hpp"
+#include "../support/FrozenKeyIdxBiMap.hpp"
 
 // The following logic effectively does 2 (related things):
 // 1. it serves as a human-readable registry of all known grain species and
@@ -51,9 +52,8 @@ namespace {  // stuff inside an anonymous namespace is local to this file
 /// - the ingredient list in the returned instance is **NOT** terminated by
 ///   the sentinel
 grackle::impl::GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
-    int species_idx, int onlygrainsp_idx, const char* name,
-    bool h2dust_uses_carbonaceous_table, double sublimation_temperature,
-    double bulk_density_cgs,
+    int species_idx, bool h2dust_uses_carbonaceous_table,
+    double sublimation_temperature, double bulk_density_cgs,
     const grackle::impl::GrainGrowthIngredient* growth_ingredients) {
   using grackle::impl::GrainGrowthIngredient;
 
@@ -71,13 +71,12 @@ grackle::impl::GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
     // allocate and initialize the pointer
     out_ingredient_ptr =
         new grackle::impl::GrainGrowthIngredient[n_ingredients];
-    std::memcpy(out_ingredient_ptr, growth_ingredients,
-                (std::size_t)n_ingredients);
+    for (int i = 0; i < n_ingredients; i++) {
+      out_ingredient_ptr[i] = growth_ingredients[i];
+    }
   }
 
   return grackle::impl::GrainSpeciesInfoEntry{species_idx,
-                                              onlygrainsp_idx,
-                                              name,
                                               h2dust_uses_carbonaceous_table,
                                               sublimation_temperature,
                                               bulk_density_cgs,
@@ -85,18 +84,23 @@ grackle::impl::GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
                                               out_ingredient_ptr};
 }
 
+// ugh, I don't like this...
+grackle::impl::GrainSpeciesInfo mk_invalid_GrainSpeciesInfo() {
+  return {-1, nullptr, grackle::impl::mk_invalid_FrozenKeyIdxBiMap()};
+}
+
 }  // anonymous namespace
 
 grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
     int dust_species_parameter) {
-  GrainSpeciesInfo out{-1, nullptr};  // indicates an error
-  out.n_species = get_n_grain_species(dust_species_parameter);
-
-  if (out.n_species <= 0) {
-    return out;
+  int n_species = get_n_grain_species(dust_species_parameter);
+  if (n_species <= 0) {
+    return mk_invalid_GrainSpeciesInfo();
   }
 
-  out.species_info = new GrainSpeciesInfoEntry[out.n_species];
+  // names is allocated with the max number of known grain species
+  const char* names[OnlyGrainSpLUT::NUM_ENTRIES];
+  GrainSpeciesInfoEntry* species_info = new GrainSpeciesInfoEntry[n_species];
 
   // At the time of writing:
   // - we **only** use h2rate_carbonaceous_coef_table for the AC_dust
@@ -126,10 +130,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         {1, SpLUT::SiOI, 44.},
         {2, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[0] = mk_gsp_info_entry_helper_(
+    names[0] = "MgSiO3_dust";
+    species_info[0] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::MgSiO3_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::MgSiO3_dust,
-        /* name = */ "MgSiO3_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1222.0,
         /* bulk_density_cgs = */ 3.20185,
@@ -140,10 +143,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         // {coef, species_idx, particle mass}
         {1, SpLUT::CI, 12.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[1] = mk_gsp_info_entry_helper_(
+    names[1] = "AC_dust";
+    species_info[1] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::AC_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::AC_dust,
-        /* name = */ "AC_dust",
         /* h2dust_uses_carbonaceous_table = */ true,
         /* sublimation_temperature = */ 1800.0,
         /* bulk_density_cgs = */ 2.27949,
@@ -156,10 +158,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         // {coef, species_idx, particle mass}
         {1, SpLUT::SiI, 28.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[2] = mk_gsp_info_entry_helper_(
+    names[2] = "SiM_dust";
+    species_info[2] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::SiM_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::SiM_dust,
-        /* name = */ "SiM_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
         /* bulk_density_cgs = */ 2.34118,
@@ -170,10 +171,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         // {coef, species_idx, particle mass}
         {1, SpLUT::Fe, 56.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[3] = mk_gsp_info_entry_helper_(
+    names[3] = "FeM_dust";
+    species_info[3] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::FeM_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::FeM_dust,
-        /* name = */ "FeM_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
         /* bulk_density_cgs = */ 7.95995,
@@ -186,10 +186,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         {1, SpLUT::SiOI, 44.},
         {3, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[4] = mk_gsp_info_entry_helper_(
+    names[4] = "Mg2SiO4_dust";
+    species_info[4] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::Mg2SiO4_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::Mg2SiO4_dust,
-        /* name = */ "Mg2SiO4_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1277.0,
         /* bulk_density_cgs = */ 3.22133,
@@ -201,10 +200,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         {3, SpLUT::Fe, 56.},
         {4, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[5] = mk_gsp_info_entry_helper_(
+    names[5] = "Fe3O4_dust";
+    species_info[5] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::Fe3O4_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::Fe3O4_dust,
-        /* name = */ "Fe3O4_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
         /* bulk_density_cgs = */ 5.25096,
@@ -215,10 +213,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         // {coef, species_idx, particle mass}
         {1, SpLUT::SiO2I, 60.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[6] = mk_gsp_info_entry_helper_(
+    names[6] = "SiO2_dust";
+    species_info[6] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::SiO2_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::SiO2_dust,
-        /* name = */ "SiO2_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
         /* bulk_density_cgs = */ 2.66235,
@@ -230,10 +227,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         {1, SpLUT::Mg, 24.},
         {1, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[7] = mk_gsp_info_entry_helper_(
+    names[7] = "MgO_dust";
+    species_info[7] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::MgO_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::MgO_dust,
-        /* name = */ "MgO_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
         /* bulk_density_cgs = */ 3.58157,
@@ -245,10 +241,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         {1, SpLUT::Fe, 56.},
         {1, SpLUT::S, 32.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[8] = mk_gsp_info_entry_helper_(
+    names[8] = "FeS_dust";
+    species_info[8] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::FeS_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::FeS_dust,
-        /* name = */ "FeS_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 680.0,
         /* bulk_density_cgs = */ 4.87265,
@@ -260,10 +255,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         {2, SpLUT::Al, 27.},
         {3, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[9] = mk_gsp_info_entry_helper_(
+    names[9] = "Al2O3_dust";
+    species_info[9] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::Al2O3_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::Al2O3_dust,
-        /* name = */ "Al2O3_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
         /* bulk_density_cgs = */ 4.01610,
@@ -277,10 +271,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
 
     // nominal growth rxn: "0.5CO + 0.5CH2 + 1.2N -> ref_org_dust"
     // nuclide ratios: C:H:O:N = 1:1:0.5:1.2
-    out.species_info[10] = mk_gsp_info_entry_helper_(
+    names[10] = "ref_org_dust";
+    species_info[10] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::ref_org_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::ref_org_dust,
-        /* name = */ "ref_org_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 575.0,
         /* bulk_density_cgs = */ 1.5,
@@ -288,27 +281,34 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
 
     // nominal growth rxn: "CO + 2H2I -> vol_org_dust"
     // effective formula: CH3OH
-    out.species_info[11] = mk_gsp_info_entry_helper_(
+    names[11] = "vol_org_dust";
+    species_info[11] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::vol_org_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::vol_org_dust,
-        /* name = */ "vol_org_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 375.0,
         /* bulk_density_cgs = */ 1.0,
         /* growth_ingredients = */ nullptr);
 
     // nominal growth rxn: "H2O -> H2O_ice_dust"
-    out.species_info[12] = mk_gsp_info_entry_helper_(
+    names[12] = "H2O_ice_dust";
+    species_info[12] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::H2O_ice_dust,
-        /* onlygrainsp_idx = */ OnlyGrainSpLUT::H2O_ice_dust,
-        /* name = */ "H2O_ice_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 153.0,
         /* bulk_density_cgs = */ 0.92,
         /* growth_ingredients = */ nullptr);
   }
 
-  return out;
+  GrainSpeciesInfo out{
+      n_species, species_info,
+      new_FrozenKeyIdxBiMap(names, n_species, BiMapMode::COPIES_KEYDATA)};
+
+  if (FrozenKeyIdxBiMap_is_ok(&out.name_map)) {
+    return out;
+  } else {
+    drop_GrainSpeciesInfo(&out);
+    return mk_invalid_GrainSpeciesInfo();
+  }
 }
 
 #undef GRIMPL_INGREDIENT_LIST_SENTINEL
