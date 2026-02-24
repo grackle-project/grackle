@@ -78,21 +78,4 @@ testing::AssertionResult check_allclose(const double* actual,
 
 #undef COMPARE_
 
-/// this compares 2 std::vectors
-///
-/// This draws a lot of inspiration from numpy.testing.assert_allclose
-///
-/// Parts of this are fairly inefficient, partially because it is adapted from
-/// code written from before we adopted googletest
-inline testing::AssertionResult check_allclose(
-    const std::vector<double>& actual, const std::vector<double>& desired,
-    double rtol = 0.0, double atol = 0.0) {
-  if (actual.size() != desired.size()) {
-    return testing::AssertionFailure()
-           << "the compared arrays have different lengths";
-  }
-  grtest::IdxMapping<grtest::DataLayout::LEFT> idx_mapping(actual.size());
-  return check_allclose(actual.data(), desired.data(), idx_mapping, rtol, atol);
-}
-
 #endif  // GRTESTUTILS_GOOGLETEST_CHECK_ALLCLOSE_HPP

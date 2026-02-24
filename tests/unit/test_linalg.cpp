@@ -3,7 +3,7 @@
 
 #include "fortran_func_wrappers.hpp"
 #include "grtestutils/googletest/check_allclose.hpp"
-
+#include "grtestutils/view.hpp"
 
 /// Records the paramters for a linear algebra test-case
 struct LinAlgCase {
@@ -63,7 +63,10 @@ TEST_P(LinAlgTestSolve, CheckSuccessfulSolve) {
   ASSERT_EQ(rslt, 0) << "expected a return-code of 0, which indicates "
                      << "that the linear equations were successfully solved";
 
-  EXPECT_TRUE(check_allclose(/* actual: */ vec, my_case.solution_vector,
+  grtest::IdxMapping<grtest::DataLayout::LEFT> idx_mapping(vec.size());
+  EXPECT_TRUE(check_allclose(/* actual: */ vec.data(),
+                             /* desired: */ my_case.solution_vector.data(),
+                             /* idx_mapping: */ idx_mapping,
                              /* rtol: */1e-15, /* atol: */ 0.0));
 }
 
