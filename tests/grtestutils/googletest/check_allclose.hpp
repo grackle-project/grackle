@@ -19,12 +19,9 @@
 #include "../view.hpp"
 #include "./check_allclose_detail.hpp"
 
-#define COMPARE_(cmp_fn, actual, desired, selection_mask, idx_mapping)         \
+#define COMPARE_(cmp_fn, ptr_pair, selection_mask, idx_mapping)                \
   ::grtest::arraycmp_detail::compare_(::grtest::arraycmp_detail::CmpPack{      \
-      {cmp_fn},                                                                \
-      {::grtest::arraycmp_detail::PtrPair{actual, desired}},                   \
-      selection_mask,                                                          \
-      {idx_mapping}})
+      {cmp_fn}, {ptr_pair}, selection_mask, {idx_mapping}})
 
 /// Returns whether 2 pointers are exactly equal
 ///
@@ -35,7 +32,8 @@ testing::AssertionResult check_array_equal(
     grtest::IdxMapping<Layout> idx_mapping,
     const bool* selection_mask = nullptr) {
   grtest::arraycmp_detail::FltIsEqual cmp_fn;
-  return COMPARE_(cmp_fn, actual, desired, selection_mask, idx_mapping);
+  grtest::arraycmp_detail::PtrPair<float> ptr_pair{actual, desired};
+  return COMPARE_(cmp_fn, ptr_pair, selection_mask, idx_mapping);
 }
 
 /// Returns whether 2 pointers are exactly equal
@@ -47,7 +45,8 @@ testing::AssertionResult check_array_equal(
     grtest::IdxMapping<Layout> idx_mapping,
     const bool* selection_mask = nullptr) {
   grtest::arraycmp_detail::FltIsEqual cmp_fn;
-  return COMPARE_(cmp_fn, actual, desired, selection_mask, idx_mapping);
+  grtest::arraycmp_detail::PtrPair<double> ptr_pair{actual, desired};
+  return COMPARE_(cmp_fn, ptr_pair, selection_mask, idx_mapping);
 }
 
 /// compares 2 pointers
@@ -60,7 +59,8 @@ testing::AssertionResult check_allclose(const float* actual,
                                         double rtol, double atol = 0.0,
                                         const bool* selection_mask = nullptr) {
   grtest::arraycmp_detail::FltIsClose cmp_fn(rtol, atol);
-  return COMPARE_(cmp_fn, actual, desired, selection_mask, idx_mapping);
+  grtest::arraycmp_detail::PtrPair<float> ptr_pair{actual, desired};
+  return COMPARE_(cmp_fn, ptr_pair, selection_mask, idx_mapping);
 }
 
 /// compares 2 pointers
@@ -73,7 +73,8 @@ testing::AssertionResult check_allclose(const double* actual,
                                         double rtol, double atol = 0.0,
                                         const bool* selection_mask = nullptr) {
   grtest::arraycmp_detail::FltIsClose cmp_fn(rtol, atol);
-  return COMPARE_(cmp_fn, actual, desired, selection_mask, idx_mapping);
+  grtest::arraycmp_detail::PtrPair<double> ptr_pair{actual, desired};
+  return COMPARE_(cmp_fn, ptr_pair, selection_mask, idx_mapping);
 }
 
 #undef COMPARE_

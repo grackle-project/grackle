@@ -25,8 +25,8 @@
 namespace grtest::arraycmp_detail {
 
 template <bool EqualNan, typename T>
-[[gnu::always_inline]] bool isclose_(T actual, T desired, double rtol,
-                                     double atol) {
+[[gnu::always_inline]] inline bool isclose_(T actual, T desired, double rtol,
+                                            double atol) {
   static_assert(std::is_floating_point_v<T>);
 
   T abs_diff = std::fabs(actual - desired);

@@ -263,8 +263,8 @@ testing::AssertionResult compare_(CmpPack pack) {
   // -> (see the docstring in the header file for a little more context)
 
   // load either (f32_actual, f32_desired) OR (f64_actual, f64_desired)
-  const float *f32_actual, *f32_desired;
-  const double *f64_actual, *f64_desired;
+  const float *f32_actual = nullptr, *f32_desired = nullptr;
+  const double *f64_actual = nullptr, *f64_desired = nullptr;
   bool use_f32 =
       std::holds_alternative<PtrPair<float>>(pack.actual_desired_pair);
   if (use_f32) {
