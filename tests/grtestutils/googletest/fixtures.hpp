@@ -46,8 +46,10 @@ protected:
     pack = GrackleCtxPack::create(FullConfPreset{chem_preset, unit_preset},
                                   &status);
     if (!pack.is_initialized()) {
-      if (status == InitStatus::datafile_notfound) {
-        GTEST_SKIP() << "something went wrong with finding the data file";
+      if (status == InitStatus::standard_datafile_notfound) {
+        GTEST_SKIP()
+            << "something went before initialization while searching for a "
+            << "standard datafile";
       } else {
         FAIL() << "Error in initialize_chemistry_data.";
       }
@@ -78,8 +80,10 @@ protected:
     grtest::InitStatus status;
     pack = GrackleCtxPack::create(GetParam(), &status);
     if (!pack.is_initialized()) {
-      if (status == InitStatus::datafile_notfound) {
-        GTEST_SKIP() << "something went wrong with finding the data file";
+      if (status == InitStatus::standard_datafile_notfound) {
+        GTEST_SKIP()
+            << "something went before initialization while searching for a "
+            << "standard datafile";
       } else {
         FAIL() << "Error in initialize_chemistry_data.";
       }
