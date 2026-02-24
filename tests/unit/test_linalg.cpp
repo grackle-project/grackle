@@ -4,6 +4,7 @@
 
 #include "fortran_func_wrappers.hpp"
 #include "grtestutils/googletest/check_allclose.hpp"
+#include "grtestutils/view.hpp"
 
 
 /// Records the paramters for a linear algebra test-case
@@ -27,7 +28,9 @@ struct LinAlgCase {
 
   // teach googletest how to print a string representation
   friend void PrintTo(const LinAlgCase& my_case, std::ostream* os) {
-    *os << "{SolutionVec=" << vec_to_string(my_case.solution_vector) << '}';
+    std::string tmp = grtest::ptr_to_string(my_case.solution_vector.data(),
+                                            my_case.solution_vector.size());
+    *os << "{SolutionVec=" << tmp << '}';
   }
 
 };
