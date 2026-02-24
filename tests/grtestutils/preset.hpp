@@ -23,7 +23,7 @@ namespace grtest {
 enum class InitStatus {
   success,
   generic_fail,
-  datafile_notfound,
+  standard_datafile_notfound,
 };
 
 /// represents different presets for initializing chemistry_data
