@@ -6,24 +6,24 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares the function to initialize the dust yields
+/// Declares the function for loading injection pathway data
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef INITIALIZE_DUST_YIELDS_HPP
-#define INITIALIZE_DUST_YIELDS_HPP
+#ifndef INJECT_MODEL_LOAD_DATA_HPP
+#define INJECT_MODEL_LOAD_DATA_HPP
 
 #include "grackle.h"
 
 namespace grackle::impl {
 
-int initialize_dust_yields(chemistry_data* my_chemistry,
-                           chemistry_data_storage* my_rates,
-                           code_units* my_units);
-
-int free_dust_yields(chemistry_data* my_chemistry,
-                     chemistry_data_storage* my_rates);
+/// loads the model data for the various injection pathways and update
+/// @p my_rates, accordingly
+///
+/// @returns GR_SUCCESS if successful
+int load_inject_path_data(const chemistry_data* my_chemistry,
+                          chemistry_data_storage* my_rates);
 
 }  // namespace grackle::impl
 
-#endif /* INITIALIZE_DUST_YIELDS_HPP */
+#endif /* INJECT_MODEL_LOAD_DATA_HPP */
