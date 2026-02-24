@@ -6,12 +6,10 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// @brief Defines field-scaling functions (to account for cosmology)
+/// Declares (and in several cases also defines) field-scaling functions to
+/// account for cosmology
 ///
 //===----------------------------------------------------------------------===//
-
-// This file was initially generated automatically during conversion of the
-// scale_fields_table_g function from FORTRAN to C++
 
 #ifndef SCALE_FIELDS_HPP
 #define SCALE_FIELDS_HPP
@@ -179,8 +177,8 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
 /// @param[inout] my_fields holds the fields that will be updated in-place
 /// @param[in] n_inj_path_ptrs The number of pointers tracked by
 ///     `my_fields->inject_pathway_metal_density`
-void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
-                    grackle_field_data* my_fields, int n_inj_path_ptrs);
+void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
+                  grackle_field_data* my_fields, int n_inj_path_ptrs);
 
 }  // namespace grackle::impl
 
