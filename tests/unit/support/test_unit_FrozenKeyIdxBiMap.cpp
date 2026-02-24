@@ -16,17 +16,34 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include "status_reporting.h"
 #include "support/FrozenKeyIdxBiMap.hpp"
 #include "grackle.h"
 
+namespace grackle::impl {
+
+// teach GoogleTest how to print grackle::impl::BiMapMode for shorter test names
+void PrintTo(const BiMapMode& mode, std::ostream* os) {
+  switch (mode) {
+    case BiMapMode::COPIES_KEYDATA:
+      *os << "BiMapMode::COPIES_KEYDATA";
+      return;
+    case BiMapMode::REFS_KEYDATA:
+      *os << "BiMapMode::REFS_KEYDATA";
+      return;
+  }
+  GR_INTERNAL_ERROR("should not be reachable");
+}
+
 // teach GoogleTest how to print grackle::impl::bimap::AccessRslt for more
 // informative errors (otherwise it just shows the memory's raw byte values)
-namespace grackle::impl::bimap {
+namespace bimap {
 void PrintTo(const AccessRslt& ar, std::ostream* os) {
   std::string tmp = (ar.has_value) ? std::to_string(ar.value) : "<garbage>";
   *os << "{has_value=" << ar.has_value << ", value=" << tmp << '}';
 }
-}  // namespace grackle::impl::bimap
+}  // namespace bimap
+}  // namespace grackle::impl
 
 std::string prep_descr(std::string descr, bool negation) {
   return ((negation) ? "isn't " : "is ") + descr;
@@ -223,15 +240,7 @@ INSTANTIATE_TEST_SUITE_P(
     ,  // <- leaving Instantiation name empty
     FrozenKeyIdxBiMapConstructorSuite,
     testing::Values(grackle::impl::BiMapMode::REFS_KEYDATA,
-                    grackle::impl::BiMapMode::COPIES_KEYDATA),
-    [](const testing::TestParamInfo<
-        FrozenKeyIdxBiMapConstructorSuite::ParamType>& info) {
-      if (info.param == grackle::impl::BiMapMode::REFS_KEYDATA) {
-        return std::string("BIMAP_REFS_KEYDATA");
-      } else {
-        return std::string("BIMAP_COPIES_KEYDATA");
-      }
-    });
+                    grackle::impl::BiMapMode::COPIES_KEYDATA));
 
 /// helper function to initialize a map from a vector
 grackle::impl::FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(
@@ -366,12 +375,4 @@ INSTANTIATE_TEST_SUITE_P(
     ,  // <- leaving Instantiation name empty
     FrozenKeyIdxBiMapGeneralSuite,
     testing::Values(grackle::impl::BiMapMode::REFS_KEYDATA,
-                    grackle::impl::BiMapMode::COPIES_KEYDATA),
-    [](const testing::TestParamInfo<FrozenKeyIdxBiMapGeneralSuite::ParamType>&
-           info) {
-      if (info.param == grackle::impl::BiMapMode::REFS_KEYDATA) {
-        return std::string("BIMAP_REFS_KEYDATA");
-      } else {
-        return std::string("BIMAP_COPIES_KEYDATA");
-      }
-    });
+                    grackle::impl::BiMapMode::COPIES_KEYDATA));
