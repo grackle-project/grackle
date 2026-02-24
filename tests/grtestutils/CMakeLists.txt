@@ -12,11 +12,8 @@ target_link_libraries(_grackle_internals INTERFACE Grackle::Grackle)
 target_compile_definitions(_grackle_internals
   # currently required for functions declared by fortran_func_wrappers.hpp
   INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>"
-  # suppresses warnings about C internal headers using our deprecated public
-  # headers (the files should include grackle.h instead). We're currently
-  # holding off on properly fixing this to minimize conflicts with pending PRs
-  # on the newchem-cpp branch
-  INTERFACE GRIMPL_PUBLIC_INCLUDE=1
+  # TODO: see what we can do to stop defining the following
+  INTERFACE GRIMPL_COMPILING_CORE_LIB=1
 )
 
 # this makes it possible to write an include-directive of a header from
@@ -31,8 +28,8 @@ target_include_directories(_grackle_internals
   INTERFACE ${PROJECT_SOURCE_DIR}/src/clib
 )
 
-# grtestutils: testing utility library
-# ====================================
+# 1. grtestutils: testing utility library
+# =======================================
 # - this is an internal library that defines reusable testing utilities
 # - Frankly, I don't love the name. Originally I called it grtest, but I'm a
 #   a little concerned that may look a little too much like gtest (i.e. the
@@ -41,13 +38,27 @@ target_include_directories(_grackle_internals
 # Code Organization
 # -----------------
 # This code in this directory is organized in a slightly peculiar manner
-# - code in the main directory should not depend upon googletest
-# - the googletest subdirectory is intended to define custom googletest
-#   assertions and fixtures. This subdirectory should **ONLY** include
-#   headers (so that, at most, this internal library has a transitive
-#   dependence on googletest)
+#
+# Code inside and outside of the ./googletest subdirectory are compiled as
+# separate (but related) libraries:
+# We compile 2 libraries:
+# 1. `grtestutils_core`
+#    - includes all code outside of ./googletest subdirectory
+#    - provides functionality useful in several contexts (see RATIONALE)
+# 2. `grtestutils_googletest`
+#    - **ONLY** includes code inside of ./googletest subdirectory
+#    - defines custom googletest assertions and fixtures
+#
+# Key difference:
+# - `grtestutils_core` must not include ANY dependence on the googletest library
+# - `grtestutils_googletest` includes the only code within this directory that
+#   depends on googletest
+# - as a consequence `grtestutils_googletest` depends upon `grtestutils_core`,
+#   but `grtestutils_core` MUST be not depend upon `grtestutils_googletest`
 #
 # RATIONALE:
+# There are multiple scenarios where we want to write C++ code using Grackle
+# that isn't part of the core Grackle library:
 # - over time, the idea has been floated to introducing C++ logic to
 #   accelerate certain calculations provided by the python wrapper:
 #   - PR #343 proposed creating a C++ accelerated harness for performing
@@ -58,57 +69,74 @@ target_include_directories(_grackle_internals
 #     it would be faster as a C++ function).
 #   - Relatedly, it would also be useful to be able to directly compute
 #     temperature or chemical equilibrium
-# - in each case this functionality would also be extremely useful for the
-#   googletest framework or for writing simple C++-only benchmarking programs
-#   - this is extremely useful if you want to use tools like valgrind or
+# - writing test-scenarios using Grackle for (i) unit tests, (ii) system tests,
+#   & (iii) benchmarks (PR #506 provides a WIP implementation of the latter).
+#   Writing them in C++ rather than with python bindings:
+#   - is extremely useful if you want to use tools like valgrind or
 #     compiler sanitizers. While it's generally possible to use these tools in
 #     a python extension module, it may require compiling CPython itself from
 #     source. Moreover it can be extremely slow (these tools introduce to
 #     basic C/C++ operations and that overhead will be apply to the Python
 #     interpretter)
-#   - this is important if we want to test grackle when compiled with various
+#   - is important if we want to test Grackle when compiled with various
 #     backends. Historically, the python bindings have never been able to use
 #     Grackle with the OpenMP backend. While we can and will address this,
 #     there will additional challenges as we introduce GPU acceleration
-# - this library is intended as a location where that kind of hypothetical
-#   functionality can be introduced. The organization strategy ensures that
-#   it will be straightforward to provide this hypothetical functionality to
-#   the python bindings (and any C++ testing code) without making the python
-#   bindings link against googletest.
+#   - makes it much easier to profile test cases (to diagnose why code is slow)
+#   - provides more specific benefits:
+#     - unit tests aren't very tractable with python. To test an internal
+#       module with python bindings, you would need to expose each relevant
+#       function/struct in a header (while making it clear it isn't part of the
+#       public API), declare the function/struct for cython, and write a python
+#       wrapper. This is a lot of extra friction to make changes
+#     - system tests:
+#       - certain classes of tests are easier to write with C++ (e.g. setting
+#         metal_density to a nullptr, varying ghost zones). While such tests
+#         are possible in python, they would making and maintaining a bunch of
+#         extra changes to the python bindings that are only used for testing
+#       - investigating certain classes of bugs is easier with C++ tests because
+#         it's easier to attach gdb/lldb & introduce breakpoints
+#       - (less importantly) C++ systems tests are a lot faster
+#     - for benchmarks: using C++ (rather than python bindings), facillitates
+#       more robust measurements (avoiding the python interpretter's overhead).
+#       At this time, PR #506 provides a WIP benchmark implementation
+#
+# This library is intended as a location where common functionality used in
+# various scenarios can be introduced. The organization strategy ensures that
+# it will be straightforward to provide this hypothetical functionality to
+# the python bindings, the benchmarks and any C++ testing code without making
+# the bindings or benchmarks link against googletest.
 
-add_library(grtestutils
-  # files outside of the googletest subdirectory
-  # -> these shouldn't include headers from the googletest subdirectory
+# 1a. grtestutils_core
+# --------------------
+add_library(grtestutils_core
+  # reminder:
+  # - only includes files outside of the googletest subdirectory
+  # - these shouldn't reference any headers from the googletest subdirectory
   cmd.hpp cmd.cpp
-  utils.hpp utils.cpp
+  iterator_adaptor.hpp
   os.hpp os.cpp
-
-  # files in the googletest subdirectory (reminder: should just be headers!)
-  googletest/check_allclose.hpp
+  preset.hpp preset.cpp
+  ratequery.hpp
+  utils.hpp utils.cpp
+  view.cpp view.hpp
 )
 
-target_link_libraries(grtestutils
+target_link_libraries(grtestutils_core
   PRIVATE _grackle_internals
   PUBLIC Grackle::Grackle
-  # to express the transitive dependency on googletest (it's transitive since
-  # its only referenced by header files), we should theoretically write
-  #   INTERFACE GTest::GTest
-  # we choose not to do this since all test code pulls in this dependency by
-  # explicitly listing `testdeps` as a dependency (defined below)
 )
 
-target_compile_features(grtestutils PUBLIC cxx_std_17)
+target_compile_features(grtestutils_core PUBLIC cxx_std_17)
 
-# configure the grtestutils target so that when a file outside of this
-# directory includes a header from within this directory, the include
-# directive looks something like:
-#    #include "grtestutils/<name>.hpp"
-# OR
-#    #include "grtestutils/googletest/<name>.hpp
-target_include_directories(grtestutils INTERFACE ${PROJECT_SOURCE_DIR}/tests)
+# when a file outside of this directory includes a header from within this
+# library, the include directive looks something like:
+#    #include "grtestutils/<path/to/name>.hpp"
+target_include_directories(grtestutils_core
+  INTERFACE ${PROJECT_SOURCE_DIR}/tests)
 
 # these compile-definitions act as short-term hacks
-target_compile_definitions(grtestutils
+target_compile_definitions(grtestutils_core
   # this hack helps us get the path to the directory holding data files (we can
   # remove it once we introduce automatic file management in PR 235, PR 237,
   # and PR 246)
@@ -120,19 +148,40 @@ target_compile_definitions(grtestutils
   PRIVATE "$<$<PLATFORM_ID:Linux,Darwin>:PLATFORM_GENERIC_UNIX>"
 )
 
+# now declare targets that depend upon googletest
+if (TARGET GTest::gtest)
+  # 1b. grtestutils_googletest
+  # --------------------------
+  # - right now this is an interface library (i.e. nothing is compiled) that is
+  #   header-only.
+  # - The CMake target exists to comunicate build-requirements for dependents
+  #   to make use of the header files within the ./googletest subdirectory
+  add_library(grtestutils_googletest
+    # reminder: only includes files inside of the googletest subdirectory
+  
+    googletest/assertions.hpp
+    googletest/check_allclose.cpp googletest/check_allclose.hpp
+    googletest/fixtures.hpp
+    googletest/matchers.hpp
+  )
 
-# 2. testdeps: bundles dependencies used by tests
-# ===============================================
-# - this is an interface library (i.e. nothing is compiled) that ONLY exists
-#   to aggregate dependencies, include directories and compile definitions
-# - all tests should depend on this target
+  target_link_libraries(grtestutils_googletest
+    PUBLIC grtestutils_core GTest::gtest
+  )
 
-add_library(testdeps INTERFACE)
-target_link_libraries(testdeps
-  INTERFACE Grackle::Grackle grtestutils _grackle_internals
-            GTest::gtest_main GTest::gmock
-)
-# indicates that all consumers are written in C++17 or newer
-target_compile_features(testdeps INTERFACE cxx_std_17)
+  # 2. testdeps: bundles dependencies used by tests
+  # ===============================================
+  # - this is an interface library (i.e. nothing is compiled) that ONLY exists
+  #   to aggregate dependencies, include directories and compile definitions
+  # - all tests should depend on this target
+  
+  add_library(testdeps INTERFACE)
+  target_link_libraries(testdeps
+    INTERFACE Grackle::Grackle grtestutils_googletest _grackle_internals
+              GTest::gtest_main GTest::gmock
+  )
+  # indicates that all consumers are written in C++17 or newer
+  target_compile_features(testdeps INTERFACE cxx_std_17)
+endif()
 
 

@@ -18,10 +18,12 @@
 
 #include "calc_tdust_3d.h"
 #include "dust_props.hpp"
+#include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
 #include "fortran_func_wrappers.hpp"
 #include "grackle.h"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
+#include "inject_model/misc.hpp"
 #include "internal_types.hpp"
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
@@ -60,7 +62,9 @@ void calc_tdust_3d_g(
   // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
-    grackle::impl::scale_fields_dust(my_chemistry, my_fields, imetal, factor);
+    grackle::impl::scale_fields_dust(
+        my_chemistry, my_fields, imetal, factor,
+        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   OMP_PRAGMA("omp parallel")
@@ -164,8 +168,9 @@ void calc_tdust_3d_g(
 
       if ( (my_chemistry->use_dust_density_field > 0)  &&  (my_chemistry->dust_species > 0) )  {
 
-        f_wrap::calc_grain_size_increment_1d (
+        grackle::impl::calc_grain_size_increment_1d (
           dom, idx_range, itmask_metal.data(), my_chemistry,
+          my_rates->opaque_storage->grain_species_info,
           my_rates->opaque_storage->inject_pathway_props,
           my_fields, internal_dust_prop_buf
         );
@@ -303,7 +308,9 @@ void calc_tdust_3d_g(
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)std::pow(internalu.a_value,3);
-    grackle::impl::scale_fields_dust(my_chemistry, my_fields, imetal, factor);
+    grackle::impl::scale_fields_dust(
+        my_chemistry, my_fields, imetal, factor,
+        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   return;
