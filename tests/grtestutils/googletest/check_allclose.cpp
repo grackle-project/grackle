@@ -34,12 +34,12 @@ testing::AssertionResult check_allclose(const std::vector<double>& actual,
   bool has_nan_mismatch = false;
 
   for (std::size_t i = 0; i < actual.size(); i++) {
-    double cur_absDiff = fabs(actual[i] - desired[i]);
+    double cur_absDiff = std::fabs(actual[i] - desired[i]);
 
-    bool isnan_actual = isnan(actual[i]);
-    bool isnan_desired = isnan(desired[i]);
+    bool isnan_actual = std::isnan(actual[i]);
+    bool isnan_desired = std::isnan(desired[i]);
 
-    if ((cur_absDiff > (atol + rtol * fabs(desired[i]))) ||
+    if ((cur_absDiff > (atol + rtol * std::fabs(desired[i]))) ||
         (isnan_actual != isnan_desired)) {
       num_mismatches++;
       if (isnan_actual != isnan_desired) {
@@ -54,8 +54,8 @@ testing::AssertionResult check_allclose(const std::vector<double>& actual,
           max_absDiff_ind = i;
         }
 
-        if (cur_absDiff > (max_relDiff * fabs(desired[i]))) {
-          max_relDiff = cur_absDiff / fabs(desired[i]);
+        if (cur_absDiff > (max_relDiff * std::fabs(desired[i]))) {
+          max_relDiff = cur_absDiff / std::fabs(desired[i]);
           max_relDiff_ind = i;
         }
       }
