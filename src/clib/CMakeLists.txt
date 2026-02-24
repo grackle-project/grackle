@@ -125,8 +125,8 @@ add_library(Grackle_Grackle
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
+  ratequery.cpp ratequery.hpp
   rate_timestep_g.cpp rate_timestep_g.hpp
-  rate_utils.cpp
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
   set_default_chemistry_parameters.cpp
@@ -135,6 +135,7 @@ add_library(Grackle_Grackle
   step_rate_newton_raphson.hpp
   support/FrozenKeyIdxBiMap.hpp
   support/h5io.cpp support/h5io.hpp
+  support/SimpleVec.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
