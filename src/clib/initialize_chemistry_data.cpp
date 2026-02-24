@@ -18,14 +18,14 @@
 #include <math.h>
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "auto_general.h"
-#include "interp_table_utils.h" // free_interp_grid_
+#include "auto_general.hpp"
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
-#include "initialize_cloudy_data.h"
-#include "initialize_dust_yields.hpp"  // free_dust_yields
+#include "initialize_cloudy_data.hpp"
 #include "initialize_rates.hpp"
-#include "initialize_UVbackground_data.h"
+#include "initialize_UVbackground_data.hpp"
+#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
+#include "interp_table_utils.hpp" // free_interp_grid_
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 
@@ -49,23 +49,6 @@ static void show_version(FILE *fp)
   fprintf (fp, "\n");
 }
 
-/// initialize an empty #gr_interp_grid_props
-static void init_empty_interp_grid_props_(gr_interp_grid_props* props) {
-  props->rank = 0;
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
-    props->dimension[i] = 0;
-    props->parameters[i] = nullptr;
-    props->parameter_spacing[i] = 0.0;
-  }
-  props->data_size = 0;
-}
-
-/// Initialize an empty #gr_interp_grid
-static void initialize_empty_interp_grid_(gr_interp_grid* grid)
-{
-  init_empty_interp_grid_props_(&(grid->props));
-  grid->data=NULL;
-}
 
 /**
  * Initializes an empty #chemistry_data_storage struct with zeros and NULLs.
@@ -152,77 +135,18 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
 
   my_rates->cieY06 = NULL;
 
-  initialize_empty_interp_grid_(&my_rates->LH2);
-  initialize_empty_interp_grid_(&my_rates->LHD);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LHD);
 
-  initialize_empty_interp_grid_(&my_rates->LCI);
-  initialize_empty_interp_grid_(&my_rates->LCII);
-  initialize_empty_interp_grid_(&my_rates->LOI);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCI);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCII);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOI);
 
-  initialize_empty_interp_grid_(&my_rates->LCO);
-  initialize_empty_interp_grid_(&my_rates->LOH);
-  initialize_empty_interp_grid_(&my_rates->LH2O);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCO);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOH);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2O);
 
-  initialize_empty_interp_grid_(&my_rates->alphap);
-
-  my_rates->gr_N = NULL;
-  my_rates->gr_Size = 0;
-  my_rates->gr_dT = 0.;
-  my_rates->gr_Td = NULL;
-  my_rates->SN0_N = 0;
-  my_rates->SN0_XC = NULL;
-  my_rates->SN0_XO = NULL;
-  my_rates->SN0_XMg = NULL;
-  my_rates->SN0_XAl = NULL;
-  my_rates->SN0_XSi = NULL;
-  my_rates->SN0_XS = NULL;
-  my_rates->SN0_XFe = NULL;
-  my_rates->SN0_fC = NULL;
-  my_rates->SN0_fO = NULL;
-  my_rates->SN0_fMg = NULL;
-  my_rates->SN0_fAl = NULL;
-  my_rates->SN0_fSi = NULL;
-  my_rates->SN0_fS = NULL;
-  my_rates->SN0_fFe = NULL;
-  my_rates->SN0_fSiM = NULL;
-  my_rates->SN0_fFeM = NULL;
-  my_rates->SN0_fMg2SiO4 = NULL;
-  my_rates->SN0_fMgSiO3 = NULL;
-  my_rates->SN0_fFe3O4 = NULL;
-  my_rates->SN0_fAC = NULL;
-  my_rates->SN0_fSiO2D = NULL;
-  my_rates->SN0_fMgO = NULL;
-  my_rates->SN0_fFeS = NULL;
-  my_rates->SN0_fAl2O3 = NULL;
-  my_rates->SN0_freforg = NULL;
-  my_rates->SN0_fvolorg = NULL;
-  my_rates->SN0_fH2Oice = NULL;
-  my_rates->SN0_r0SiM = NULL;
-  my_rates->SN0_r0FeM = NULL;
-  my_rates->SN0_r0Mg2SiO4 = NULL;
-  my_rates->SN0_r0MgSiO3 = NULL;
-  my_rates->SN0_r0Fe3O4 = NULL;
-  my_rates->SN0_r0AC = NULL;
-  my_rates->SN0_r0SiO2D = NULL;
-  my_rates->SN0_r0MgO = NULL;
-  my_rates->SN0_r0FeS = NULL;
-  my_rates->SN0_r0Al2O3 = NULL;
-  my_rates->SN0_r0reforg = NULL;
-  my_rates->SN0_r0volorg = NULL;
-  my_rates->SN0_r0H2Oice = NULL;
-  my_rates->SN0_kpSiM = NULL;
-  my_rates->SN0_kpFeM = NULL;
-  my_rates->SN0_kpMg2SiO4 = NULL;
-  my_rates->SN0_kpMgSiO3 = NULL;
-  my_rates->SN0_kpFe3O4 = NULL;
-  my_rates->SN0_kpAC = NULL;
-  my_rates->SN0_kpSiO2D = NULL;
-  my_rates->SN0_kpMgO = NULL;
-  my_rates->SN0_kpFeS = NULL;
-  my_rates->SN0_kpAl2O3 = NULL;
-  my_rates->SN0_kpreforg = NULL;
-  my_rates->SN0_kpvolorg = NULL;
-  my_rates->SN0_kpH2Oice = NULL;
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->alphap);
 
   my_rates->cloudy_data_new = -1;
 
@@ -400,9 +324,10 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   my_rates->opaque_storage->kcol_rate_tables = nullptr;
   my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
   my_rates->opaque_storage->n_kcol_rate_indices = 0;
-  init_empty_interp_grid_props_(
+  grackle::impl::init_empty_interp_grid_props_(
     &my_rates->opaque_storage->h2dust_grain_interp_props);
   my_rates->opaque_storage->grain_species_info = nullptr;
+  my_rates->opaque_storage->inject_pathway_props = nullptr;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -430,25 +355,25 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   /* Primordial tables. */
   read_data = my_chemistry->primordial_chemistry == 0;
-  if (initialize_cloudy_data(my_chemistry, my_rates,
-                             &my_rates->cloudy_primordial,
-                             "Primordial", my_units, read_data) == GR_FAIL) {
+  if (grackle::impl::initialize_cloudy_data(
+        my_chemistry, my_rates, &my_rates->cloudy_primordial,
+        "Primordial", my_units, read_data) != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
     return GR_FAIL;
   }
 
   /* Metal tables. */
   read_data = my_chemistry->metal_cooling == TRUE;
-  if (initialize_cloudy_data(my_chemistry, my_rates,
-                             &my_rates->cloudy_metal,
-                             "Metals", my_units, read_data) == GR_FAIL) {
+  if (grackle::impl::initialize_cloudy_data(
+        my_chemistry, my_rates, &my_rates->cloudy_metal,
+        "Metals", my_units, read_data) != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
     return GR_FAIL;
   }
 
   /* Initialize UV Background data. */
-  initialize_empty_UVBtable_struct(&(my_rates->UVbackground_table));
-  if (initialize_UVbackground_data(my_chemistry, my_rates) == GR_FAIL) {
+  if (grackle::impl::initialize_UVbackground_data(my_chemistry, my_rates)
+      != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");
     return GR_FAIL;
   }
@@ -574,15 +499,13 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->gas_grain);
     GRACKLE_FREE(my_rates->gas_grain2);
 
-    free_interp_grid_(&my_rates->LH2);
-    free_interp_grid_(&my_rates->LHD);
+    grackle::impl::free_interp_grid_(&my_rates->LH2);
+    grackle::impl::free_interp_grid_(&my_rates->LHD);
 
     // we deal with freeing other interp grids inside of
     // free_misc_species_cool_rates
 
-    free_interp_grid_(&my_rates->alphap);
-
-    GRACKLE_FREE(my_rates->gr_N);
+    grackle::impl::free_interp_grid_(&my_rates->alphap);
 
     GRACKLE_FREE(my_rates->k13dd);
     GRACKLE_FREE(my_rates->h2dust);
@@ -594,40 +517,15 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->grain_growth_rate);
   }
 
-  free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
-  free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
-
-  GRACKLE_FREE(my_rates->UVbackground_table.z);
-  GRACKLE_FREE(my_rates->UVbackground_table.k24);
-  GRACKLE_FREE(my_rates->UVbackground_table.k25);
-  GRACKLE_FREE(my_rates->UVbackground_table.k26);
-
-  if (my_chemistry->primordial_chemistry > 1) {
-    GRACKLE_FREE(my_rates->UVbackground_table.k27);
-    GRACKLE_FREE(my_rates->UVbackground_table.k28);
-    GRACKLE_FREE(my_rates->UVbackground_table.k29);
-    GRACKLE_FREE(my_rates->UVbackground_table.k30);
-    GRACKLE_FREE(my_rates->UVbackground_table.k31);
-  }
-
-  GRACKLE_FREE(my_rates->UVbackground_table.piHI);
-  GRACKLE_FREE(my_rates->UVbackground_table.piHeII);
-  GRACKLE_FREE(my_rates->UVbackground_table.piHeI);
-
-  if (my_chemistry->self_shielding_method > 0){
-    GRACKLE_FREE(my_rates->UVbackground_table.crsHI);
-    GRACKLE_FREE(my_rates->UVbackground_table.crsHeII);
-    GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
-  }
+  grackle::impl::free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry,
+                                  /* primordial = */ 1);
+  grackle::impl::free_cloudy_data(&my_rates->cloudy_metal, my_chemistry,
+                                  /* primordial */ 0);
+  grackle::impl::free_UVBtable(&my_rates->UVbackground_table);
 
   if (grackle::impl::free_misc_species_cool_rates(my_chemistry, my_rates) != GR_SUCCESS) {
     fprintf(stderr, "Error in free_metal_chemistry_rates.\n");
     return GR_FAIL;
-  }
-
-  if (grackle::impl::free_dust_yields(my_chemistry, my_rates) == FAIL) {
-    fprintf(stderr, "Error in local_free_dust_yields.\n");
-    return FAIL;
   }
 
   // start freeing memory associated with opaque storage
@@ -647,7 +545,9 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
 
   // delete contents of h2dust_grain_interp_props (automatically handles the
   // case where we didn't allocate anything)
-  free_interp_grid_props_(&my_rates->opaque_storage->h2dust_grain_interp_props);
+  grackle::impl::free_interp_grid_props_(
+      &my_rates->opaque_storage->h2dust_grain_interp_props,
+      /* use_delete = */ false);
   // since h2dust_grain_interp_props isn't a pointer, there is nothing more to
   // allocate right here
 
@@ -655,8 +555,16 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     // delete contents of grain_species_info
     grackle::impl::drop_GrainSpeciesInfo(
       my_rates->opaque_storage->grain_species_info);
-    // delete kcol_rate_tables, itself
+    // delete grain_species_info, itself
     delete my_rates->opaque_storage->grain_species_info;
+  }
+
+  if (my_rates->opaque_storage->inject_pathway_props != nullptr) {
+    // delete contents of inject_pathway_props
+    grackle::impl::drop_GrainMetalInjectPathways(
+      my_rates->opaque_storage->inject_pathway_props);
+    // delete inject_pathway_props, itself
+    delete my_rates->opaque_storage->inject_pathway_props;
   }
 
   delete my_rates->opaque_storage;
