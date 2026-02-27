@@ -112,6 +112,7 @@ add_library(Grackle_Grackle
   dust_props.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp
+  dust/multi_grain_species/calc_grain_size_increment_1d.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_cloudy_data.cpp initialize_cloudy_data.hpp
@@ -184,7 +185,6 @@ add_library(Grackle_Grackle
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
   utils.h
-  dust_const.def
 
   # Fortran public headers
   ../include/grackle.def
