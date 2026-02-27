@@ -1,4 +1,4 @@
-#include "grtest_os.hpp"
+#include "os.hpp"
 
 // the following 2 headers are the c versions of the headers (rather than the
 // C++ versions) since it seems more likely that posix-specific functions are
