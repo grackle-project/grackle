@@ -117,8 +117,10 @@ add_library(grtestutils_core
   # - only includes files outside of the googletest subdirectory
   # - these shouldn't reference any headers from the googletest subdirectory
   cmd.hpp cmd.cpp
-  utils.hpp utils.cpp
+  iterator_adaptor.hpp
   os.hpp os.cpp
+  preset.hpp preset.cpp
+  utils.hpp utils.cpp
   view.cpp view.hpp
 )
 
@@ -160,6 +162,7 @@ if (TARGET GTest::gtest)
     # reminder: only includes files inside of the googletest subdirectory
   
     googletest/check_allclose.cpp googletest/check_allclose.hpp
+    googletest/fixtures.hpp
   )
 
   target_link_libraries(grtestutils_googletest
