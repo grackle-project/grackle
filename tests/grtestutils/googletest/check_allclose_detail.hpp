@@ -24,6 +24,14 @@
 
 namespace grtest::arraycmp_detail {
 
+/// the goal is to avoid short-circuiting
+template <typename T>
+[[gnu::always_inline]] inline bool both_nan_(T actual, T desired) {
+  bool actual_isnan = std::isnan(actual);
+  bool desired_isnan = std::isnan(desired);
+  return actual_isnan & desired_isnan;  // use & to avoid &&'s short-circuiting
+}
+
 template <bool EqualNan, typename T>
 [[gnu::always_inline]] inline bool isclose_(T actual, T desired, double rtol,
                                             double atol) {
@@ -34,9 +42,7 @@ template <bool EqualNan, typename T>
   bool isclose = abs_diff <= atol + rtol * std::fabs(desired);
 
   if constexpr (EqualNan) {
-    bool actual_isnan = std::isnan(actual);
-    bool desired_isnan = std::isnan(desired);
-    return (actual_isnan && desired_isnan) || isclose;
+    return both_nan_(actual, desired) || isclose;
   } else {
     return isclose;
   }
@@ -88,12 +94,12 @@ public:
 struct FltIsEqual {
   /// determines whether arguments are exactly equal
   bool operator()(float actual, float desired) const noexcept {
-    return (actual == desired) || std::isnan(actual) == std::isnan(desired);
+    return (actual == desired) || both_nan_(actual, desired);
   }
 
   /// determines whether arguments are exactly equal
   bool operator()(double actual, double desired) const noexcept {
-    return (actual == desired) || std::isnan(actual) == std::isnan(desired);
+    return (actual == desired) || both_nan_(actual, desired);
   }
 
   /// describe relationship between values for which this functor returns false
