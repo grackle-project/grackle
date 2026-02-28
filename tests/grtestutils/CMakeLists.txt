@@ -161,6 +161,7 @@ if (TARGET GTest::gtest)
   add_library(grtestutils_googletest
     # reminder: only includes files inside of the googletest subdirectory
   
+    googletest/assertions.hpp
     googletest/check_allclose.cpp googletest/check_allclose.hpp
     googletest/fixtures.hpp
   )

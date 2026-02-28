@@ -28,6 +28,7 @@
 #include "interp_table_utils.hpp" // free_interp_grid_
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
+#include "ratequery.hpp"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -328,6 +329,7 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     &my_rates->opaque_storage->h2dust_grain_interp_props);
   my_rates->opaque_storage->grain_species_info = nullptr;
   my_rates->opaque_storage->inject_pathway_props = nullptr;
+  my_rates->opaque_storage->registry = nullptr;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -380,6 +382,11 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   /* store a copy of the initial units */
   my_rates->initial_units = *my_units;
+
+  // initialize the registry
+  my_rates->opaque_storage->registry = new grackle::impl::ratequery::Registry(
+    grackle::impl::ratequery::new_Registry(*my_chemistry)
+  );
 
   if (grackle_verbose) {
     time_t timer;
@@ -583,6 +590,15 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
       my_rates->opaque_storage->inject_pathway_props);
     // delete inject_pathway_props, itself
     delete my_rates->opaque_storage->inject_pathway_props;
+  }
+
+  if (my_rates->opaque_storage->registry != nullptr) {
+    // delete contents of registry
+    grackle::impl::ratequery::drop_Registry(
+      my_rates->opaque_storage->registry
+    );
+    // delete registry, itself
+    delete my_rates->opaque_storage->registry;
   }
 
   delete my_rates->opaque_storage;
