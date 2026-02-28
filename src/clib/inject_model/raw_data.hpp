@@ -36,6 +36,9 @@ static constexpr int N_Opacity_Coef = 4;
 /// and injection pathway. For each Tdust, there are N_Opacity_Coef coefficients
 static constexpr int N_Tdust_Opacity_Table = 35;
 
+/// the number of hard-coded injection pathways
+static constexpr int N_Injection_Pathways = 12;
+
 struct MetalNuclideYieldProps;
 struct GrainSpeciesYieldProps;
 

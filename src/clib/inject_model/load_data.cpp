@@ -23,7 +23,7 @@
 namespace {  // stuff inside an anonymous namespace is local to this file
 
 /// names of all injection pathways known to grackle listed in the order
-/// in other parts of the codebase
+/// consistent with the logic for implementing InjectPathFieldPack
 ///
 /// @see SetupCallbackCtx::inj_path_names - The entity that is initialized with
 ///   the values in this variable. Its docstring provides more details.
@@ -31,6 +31,12 @@ constexpr const char* const known_inj_path_names[] = {
     "local_ISM", "ccsn13", "ccsn20", "ccsn25",  "ccsn30",  "fsn13",
     "fsn15",     "fsn50",  "fsn80",  "pisn170", "pisn200", "y19",
 };
+
+static_assert(sizeof(known_inj_path_names) ==
+                  (sizeof(char*) *
+                   grackle::impl::inj_model_input::N_Injection_Pathways),
+              "inconsistency b/t number of entries in known_inj_path_names and "
+              "grackle::impl::inj_model_input::N_Injection_Pathways");
 
 /// a crude map-like function
 bool lookup_metal_yield_ptrs(
