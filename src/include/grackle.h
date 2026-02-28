@@ -198,11 +198,7 @@ int gr_initialize_field_data(grackle_field_data *my_fields);
 /// >    - we should probably update all of the function signatures so that a
 /// >      pointer to chemistry_data_storage* is passed as an argument to each
 /// >      of the functions.
-/// > 2. Should we prevent direct access to the underlying data pointers?
-/// >    Instead we would provide getter and setters. We discuss this further
-/// >    down below (in the relevant function's API). This is important for
-/// >    different backends.
-/// > 3. We should generally consider whether the API is consistent enough with
+/// > 2. We should generally consider whether the API is consistent enough with
 /// >    APIs for accessing other data structures.
 /// >    - currently the dynamic parameter API is grackle's only other
 /// >      data-access API, but we could imagine creating an API for the fields
@@ -231,54 +227,109 @@ typedef long long grunstable_rateid_type;
 /// > [!note]
 /// > While this is unstable, not all rates may be known yet (but, the number
 /// > rates are all accessible).
-grunstable_rateid_type grunstable_ratequery_id(const char* name);
+grunstable_rateid_type grunstable_ratequery_id(
+    const chemistry_data_storage* my_rates, const char* name);
 
-/// Access the pointer associated with the rateid from myrates
+/// Copy data associated with the @p rate_id in @p my_rates into buf
 ///
-/// The behavior is **NOT** currently defined if the `my_rates` struct isn't
-/// configured to use the specified rate.
+/// The behavior is currently undefined if:
+/// - the @p my_rates argument is a NULL pointer
+/// - the @p my_rates argument isn't configured to use the specified rate
+/// - the @p buf argument is NULL
+/// - the @p buf isn't large enough to store the copied rates
 ///
-/// @return The pointer to the accessed data (whether the rate data corresponds
-///    to an array or scalar). If an invalid `rate_id` is specified, this
-///    returns NULL.
+/// @param[in] my_rates The object from which data is retrieved
+/// @param[in] rate_id The id of the rate for which the data is retrieved
+/// @param[out] buf The buffer that the function writes to
+///
+/// @return Returns GR_SUCCESS if successful. If an invalid @p rate_id is
+///    specified, this returns a different value
 ///
 /// > [!note]
-/// > Before stablizing, we should consider whether we actually want this
-/// > function. It may be better to replace it with a getter (that copies the
-/// > rate data to the supplied buffer) and a setter (that copies the provided
-/// > data out of the provided buffer). This may be appealing for a number of
-/// > reasons:
-/// > 1. When we add GPU support, the rate data may live permanently on the GPU
-/// >    (or some data may live on the GPU while other data lives on the CPU).
-/// >    With dedicated setters/getters, we could always require that the
-/// >    provided buffer data is on the CPU.
-/// > 2. We have the option to conditionally disable the setter. For example,
-/// >    if we choose to support custom rates, I assume we will want to specify
-/// >    all custom choices as part of initialization (for simplicity) and then
-/// >    we may want to deprecate/remove the setter. (One could also imagine,
-/// >    disabling the setter when using GPUs).
-/// > 3. It eliminates a certain class of memory-lifetime bugs (People could
-/// >    try use the pointer returned by the incarnation of this function after
-/// >    destroying Grackle. This problem can't happen with the proposed
-/// >    getter/setter)
-double* grunstable_ratequery_get_ptr(
-  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id
+/// > Before stablizing, we should consider whether we want to add an argument
+/// > that specifies the supplied size of `buf` (and provide well-defined
+/// > behavior when `buf` is too small
+int grunstable_ratequery_get_f64(
+  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
+  double* buf
 );
+
+
+/// Overwrite the data associated with @p rate_id in @p my_rates with the
+/// values provided by @p buf
+///
+/// The behavior is currently undefined if:
+/// - the @p my_rates argument is a NULL pointer
+/// - the @p my_rates argument isn't configured to use the specified rate
+/// - the @p buf argument is NULL
+/// - the @p buf isn't large enough to store the copied rates
+///
+/// @param[out] my_rates The object from which data is retrieved
+/// @param[in] rate_id The id of the rate for which the data is retrieved
+/// @param[in] buf The buffer that the function writes to
+///
+/// @return Returns GR_SUCCESS if successful. If an invalid @p rate_id is
+///    specified, this returns a different value
+///
+/// > [!note]
+/// > Before stablizing, we should consider whether we want to add an argument
+/// > that specifies the supplied size of `buf` (and provide well-defined
+/// > behavior when `buf` is too small
+int grunstable_ratequery_set_f64(
+  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
+  const double* buf
+);
+
+/// Describe Rate-Query Property Types
+///
+/// > [!note]
+/// > It may make more sense to use macros if we want to support these from
+/// > Fortran
+///
+/// > [!important]
+/// > Users should obviously avoid hardcoding values in their codebase.
+enum grunstable_ratequery_prop_kind {
+  GRUNSTABLE_QPROP_NDIM = 1,
+  GRUNSTABLE_QPROP_SHAPE = 2,
+  GRUNSTABLE_QPROP_MAXITEMSIZE = 3,
+};
+
+/// Query a property of the specified rate
+///
+/// @param[in]  my_rates The object being queried
+/// @param[in]  rate_id The id of the rate for which the property is queried
+/// @param[in]  prop_kind The proprty to query
+/// @param[out] ptr The pointer where the property is recorded
+///
+/// @returns GR_SUCCESS if successful. Otherwise, a different value is returned.
+///
+/// The behavior is undefined when @p my_rates is a `nullptr`, @p ptr is a
+/// nullptr or @p ptr doesn't have enough space to store the queried property
+int grunstable_ratequery_prop(const chemistry_data_storage* my_rates,
+                              grunstable_rateid_type rate_id,
+                              enum grunstable_ratequery_prop_kind prop_kind,
+                              long long* ptr);
 
 /// Query the name (and optionally the rate_id) of the ith registered rate
 ///
 /// > [!warning]
 /// > The order of parameters may change between different versions of Grackle
 ///
-/// @param[in]  i the index of the access rate
+/// @param[in]  my_rates The object being queried
+/// @param[in]  i the index of the accessed rate
 /// @param[out] out_rate_id A pointer to store the rate of the queried rate_id.
 ///    The behavior is **NOT** currently well defined when there are `i` or
 ///    fewer registered rates.
 /// @result Pointer to the string-literal specifying the rate's name. This is
 ///    `NULL`, if there are `i` or fewer registered rates.
 const char* grunstable_ith_rate(
-  unsigned long long i, grunstable_rateid_type* out_rate_id
+  const chemistry_data_storage* my_rates, unsigned long long i,
+  grunstable_rateid_type* out_rate_id
 );
+
+/// Query the number of rates accessible through the ratequery API
+unsigned long long grunstable_ratequery_nrates(
+    const chemistry_data_storage* my_rates);
 
 /** @}*/ // end of group
 
