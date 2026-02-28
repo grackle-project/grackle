@@ -16,7 +16,8 @@
 #include <string>
 
 #include "grackle.h"
-#include "preset.hpp"
+
+#include "./harness/grackle_ctx_pack.hpp"
 
 namespace grtest {
 /// the standard value-type that an IteratorAdaptor instantiation refers to

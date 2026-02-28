@@ -119,9 +119,13 @@ add_library(grtestutils_core
   cmd.hpp cmd.cpp
   iterator_adaptor.hpp
   os.hpp os.cpp
-  preset.hpp preset.cpp
   utils.hpp utils.cpp
   view.cpp view.hpp
+
+  harness/grackle_ctx_pack.cpp harness/grackle_ctx_pack.hpp
+  harness/param.cpp harness/param.hpp
+  harness/preset.cpp harness/preset.hpp
+  harness/status.cpp harness/status.hpp
 )
 
 target_link_libraries(grtestutils_core
