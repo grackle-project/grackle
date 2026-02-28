@@ -16,6 +16,7 @@
 
 #include "./grackle_ctx_pack.hpp"
 #include "./status.hpp"
+#include "../view.hpp"
 #include "status_reporting.h"
 
 #include <functional>  // std::less
@@ -36,45 +37,14 @@ struct CorePack;
 
 /// Represents Grid Properties
 ///
-/// This type is probably a little over-engineered
+/// This type maps multi-dimensional indices to a 1D pointer offset, specifies
+/// the rank of the grid, and the extents of the grid (see the docstring of
+/// @ref IdxMapping for more detail). It also specifies the region of valid
+/// values.
 ///
-/// Broader Context
-/// ===============
-/// To best describe this type, it's insightful to draw comparisons with C++
-/// conventions.
-///
-/// Background
-/// ----------
-/// For some background, C++23 introduced `std::mdspan` to describe
-/// multi-dimensional views. A `std::mdspan` is parameterized by
-/// - the data's extents (aka the shape)
-/// - the data's layout, which dictates how a multidimensional index is mapped
-///   to a 1D pointer offset
-///
-/// For views of contiguous data there are 2 obvious layouts:
-/// 1. layout-right: where the stride is `1` along the rightmost extent.
-///    - for extents `{a,b,c}`, an optimal nested for-loop will iterates from
-//       `0` up to `a` in the outermost loop and from `0` up to `c`
-///      in the innermost loop
-///    - this is the "natural layout" for a multidimensional c-style array
-///      `arr[a][b][c]`
-/// 2. layout-left: where the stride is `1` along the leftmost extent
-///    - for extents `{a,b,c}`, an optimal nested for-loop will iterates from
-//       `0` up to `c` in the outermost loop and from `0` up to `a`
-///      in the innermost loop
-///    - this is the "natural layout" for a multidimensional fortran array ()
-///      `arr[a][b][c]`
-///
-/// > Aside: More sophisticated layouts are possible when strides along each
-/// > axis aren't directly tied to extents (this comes up when making subviews).
-///
-/// About this type
-/// ---------------
-/// This type specifies array extents for a layout-left mapping. It also
-/// specifies the region of valid values. For context, arrays of
-/// fluid-quantities in mesh-based hydro codes have an outer layer "ghost zones"
-/// (Computer Scientists sometimes call this a "halo") that may not contain
-/// valid values when calling Grackle.
+/// For some additional context, arrays of fluid-quantities in mesh-based hydro
+/// codes have an outer layer of "ghost zones" (Computer Scientists sometimes
+/// call this a "halo") that may not contain valid values when calling Grackle.
 ///
 /// > Aside: We only describe the concept of "ghost zones" because we want to
 /// > to support tests for validating that ghost zones aren't modified.
@@ -82,10 +52,8 @@ struct CorePack;
 class GridLayout {
   friend field_detail::CorePack;
 
-  /// the number of dimensions
-  int rank_;
-  /// number of elements along an axis
-  int dim_[3];
+  /// describes extents, rank, and the index mapping
+  IdxMapping<DataLayout::LEFT> idx_mapping_;
 
   /// the first active-zone index along an axis
   int start_[3];
@@ -109,26 +77,24 @@ class GridLayout {
                                                const int* start,
                                                const int* stop) {
     GridLayout out;
-    out.rank_ = rank;
-    if ((rank < 1) || (rank > 3)) {
-      return {out, error::Adhoc("rank is invalid")};
-    } else if (dim == nullptr) {
-      return {out, error::Adhoc("dim is a nullptr")};
+
+    std::pair<IdxMapping<DataLayout::LEFT>, Status> idx_mapping_rslt =
+        IdxMapping<DataLayout::LEFT>::try_create(rank, dim);
+    if (idx_mapping_rslt.second.is_err()) {
+      return {out, idx_mapping_rslt.second};
     }
+    out.idx_mapping_ = idx_mapping_rslt.first;
 
     for (int i = 0; i < 3; i++) {
-      out.dim_[i] = (i < rank) ? dim[i] : 1;
       out.start_[i] = (start != nullptr && i < rank) ? start[i] : 0;
-      out.stop_[i] = (stop != nullptr && i < rank) ? stop[i] : out.dim_[i];
+      out.stop_[i] = (stop != nullptr && i < rank) ? stop[i] : 1;
       out.end_[i] = out.stop_[i] - 1;
 
-      if (out.dim_[i] < 1) {
-        return {out, error::Adhoc("dim must hold positive vals")};
-      } else if (out.start_[i] < 0) {
+      if (out.start_[i] < 0) {
         return {out, error::Adhoc("start must hold non-negative vals")};
       } else if (out.stop_[i] <= out.start_[i]) {
         return {out, error::Adhoc("stop must exceed start")};
-      } else if (out.stop_[i] > out.dim_[i]) {
+      } else if (i < rank && out.stop_[i] > dim[i]) {
         return {out, error::Adhoc("stop must not exceed dim")};
       }
     }
@@ -189,11 +155,15 @@ public:
     return tmp.first;
   }
 
-  int rank() const noexcept { return rank_; }
-  const int* dim() const noexcept { return dim_; }
+  int rank() const noexcept { return idx_mapping_.rank(); }
+  const int* dim() const noexcept { return idx_mapping_.extents(); }
   const int* start() const noexcept { return start_; }
   const int* stop() const noexcept { return stop_; }
   const int* end() const noexcept { return end_; }
+
+  const IdxMapping<DataLayout::LEFT>& idx_mapping() const noexcept {
+    return idx_mapping_;
+  }
 
   friend bool operator==(const GridLayout& lhs, const GridLayout& rhs) noexcept;
   friend bool operator!=(const GridLayout& lhs,
@@ -202,11 +172,15 @@ public:
   }
 
   int n_elements(bool exclude_inactive = false) const noexcept {
-    int total = 1;
-    for (int i = 0; i < rank_; i++) {
-      total *= (exclude_inactive) ? stop_[i] - start_[i] : dim_[i];
+    if (exclude_inactive) {
+      int total = 1;
+      int rank = this->rank();
+      for (int i = 0; i < rank; i++) {
+        total *= stop_[i] - start_[i];
+      }
+      return total;
     }
-    return total;
+    return idx_mapping_.n_elements();
   }
 
   // teach googletest how to print this type

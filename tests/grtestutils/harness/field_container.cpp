@@ -17,6 +17,7 @@
 #include "../utils.hpp"
 
 #include "grackle.h"
+#include "preset.hpp"
 #include "status_reporting.h"
 
 #include <cstring>  // std::memcmp, std::memcpy
@@ -27,23 +28,23 @@
 namespace grtest {
 
 bool operator==(const GridLayout& lhs, const GridLayout& rhs) noexcept {
-  bool rank = lhs.rank_ == rhs.rank_;
+  bool idx_mapping = lhs.idx_mapping_ == rhs.idx_mapping_;
   bool start = std::memcmp(lhs.start_, rhs.start_, 3 * sizeof(int)) == 0;
   bool stop = std::memcmp(lhs.stop_, rhs.stop_, 3 * sizeof(int)) == 0;
-  bool dim = std::memcmp(lhs.dim_, rhs.dim_, 3 * sizeof(int)) == 0;
-  return rank && start && stop && dim;
+  return idx_mapping && start && stop;
 }
 
 void PrintTo(const GridLayout& layout, std::ostream* os) {
+  const int rank = layout.rank();
   auto write_arr_ = [&](const int* vals) -> void {
-    for (int i = 0; i < layout.rank_; i++) {
+    for (int i = 0; i < rank; i++) {
       *os << ((i == 0) ? "{" : ", ");
       *os << vals[i];
     }
     *os << '}';
   };
-  *os << "GridLayout{ dim: ";
-  write_arr_(layout.dim_);
+  *os << "GridLayout{";
+  PrintTo(layout.idx_mapping_, os);
   *os << ", start: ";
   write_arr_(layout.start_);
   *os << ", stop: ";
@@ -106,7 +107,7 @@ std::pair<CorePack, Status> CorePack::setup_1d(MapType&& premade_map,
   }
 
   // setup grid properties
-  pack.my_fields->grid_dimension = pack.layout->dim_;
+  pack.my_fields->grid_dimension = pack.layout->idx_mapping_.unsafe_extents();
   pack.my_fields->grid_start = pack.layout->start_;
   pack.my_fields->grid_end = pack.layout->end_;
 

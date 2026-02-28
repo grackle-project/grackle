@@ -18,7 +18,6 @@
 
 #include <cassert>
 #include <cstddef>  // std::size_t
-#include <optional>
 #include <ostream>
 #include <string>
 #include <utility>  // std::pair
@@ -92,6 +91,11 @@ struct IdxMapping {
 
   /// max rank value
   static constexpr int MAX_RANK = 3;
+
+  // make it possible for GridLayout to use the default constructor
+  // (this is useful when GridLayout's factor method reports a failure of
+  // some kind)
+  friend class GridLayout;
 
 private:
   // attributes:
@@ -169,6 +173,15 @@ public:
 
   /// access the extents pointer (the length is given by @ref rank)
   const int* extents() const noexcept { return extents_; }
+
+  /// provides access to the underlying extents pointer
+  ///
+  /// @warning
+  /// This is unsafe because the user can mutate entries in the returned
+  /// pointer. If that happens, then undefined behavior may emerge
+  ///
+  /// This **ONLY** exists so that @ref grackle_field_data can wrap this type
+  int* unsafe_extents() noexcept { return extents_; }
 
   /// construct an equivalent 3d IdxMapping
   IdxMapping<Layout> to_3d_mapping() const noexcept {
@@ -264,6 +277,21 @@ public:
       default:
         GR_INTERNAL_ERROR("should be unreachable");
     }
+  }
+
+  /// overload the equality operator
+  friend bool operator==(const IdxMapping<Layout>& lhs,
+                         const IdxMapping<Layout>& rhs) noexcept {
+    // (this could be a little more efficient)
+    if (lhs.rank_ != rhs.rank_) {
+      return false;
+    }
+    for (int i = 0; i < lhs.rank_; i++) {
+      if (lhs.extents_[i] != rhs.extents_[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // teach googletest how to print this type
