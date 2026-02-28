@@ -23,6 +23,8 @@
 #include <string>
 #include <utility>  // std::pair
 
+#include "./harness/status.hpp"
+
 #include "status_reporting.h"
 
 namespace grtest {
@@ -102,21 +104,31 @@ private:
   // -> this explicitly set each extent_ to a value of 0
   IdxMapping() : rank_(0), extents_{} {}
 
-  // the object returned by the create_ factory method:
-  // - `out.second == nullptr` indicates the method succeeded
-  // - otherwise, `out.second` is a string-literal specifying an error message
-  using InnerMappingMsgPair_ = std::pair<IdxMapping<Layout>, const char*>;
+  /// factory method that aborts with an error message upon failure
+  static IdxMapping<Layout> create_or_abort_(int rank, const int* extents) {
+    std::pair<IdxMapping<Layout>, Status> pair =
+        IdxMapping<Layout>::try_create(rank, extents);
+    if (pair.second.is_err()) {
+      std::string tmp = pair.second.to_string();
+      GR_INTERNAL_ERROR("%s", tmp.c_str());
+    }
+    return pair.first;
+  }
 
-  static InnerMappingMsgPair_ create_(int rank, const int* extents) noexcept {
+public:
+  /// factory method that tries to create an instance
+  static std::pair<IdxMapping<Layout>, Status> try_create(
+      int rank, const int* extents) noexcept {
     // arg checking
     if ((rank < 1) || (rank > MAX_RANK)) {
-      return {IdxMapping<Layout>(), "rank is invalid"};
+      return {IdxMapping<Layout>(), error::Adhoc("rank is invalid")};
     } else if (extents == nullptr) {
-      return {IdxMapping<Layout>(), "extents is a nullptr"};
+      return {IdxMapping<Layout>(), error::Adhoc("extents is a nullptr")};
     }
     for (int i = 0; i < rank; i++) {
       if (extents[i] < 1) {
-        return {IdxMapping<Layout>(), "extents must hold positive vals"};
+        return {IdxMapping<Layout>(),
+                error::Adhoc("extents must hold positive vals")};
       }
     }
 
@@ -126,26 +138,7 @@ private:
     for (int i = 0; i < rank; i++) {
       mapping.extents_[i] = extents[i];
     }
-    return {mapping, nullptr};
-  }
-
-  /// factory method that aborts with an error message upon failure
-  static IdxMapping<Layout> create_or_abort_(int rank, const int* extents) {
-    InnerMappingMsgPair_ pair = IdxMapping<Layout>::create_(rank, extents);
-    if (pair.second != nullptr) {
-      GR_INTERNAL_ERROR("%s", pair.second);
-    }
-    return pair.first;
-  }
-
-public:
-  /// factory method that returns an empty optional upon failure
-  static std::optional<IdxMapping<Layout>> try_create(int rank,
-                                                      const int* extents) {
-    InnerMappingMsgPair_ pair = IdxMapping<Layout>::create_(rank, extents);
-    return (pair.second == nullptr)
-               ? std::optional<IdxMapping<Layout>>{pair.first}
-               : std::optional<IdxMapping<Layout>>{};
+    return {mapping, OkStatus()};
   }
 
   explicit IdxMapping(int extent0) {

@@ -12,8 +12,6 @@
 #ifndef GRTESTUTILS_GOOGLETEST_CHECK_ALLCLOSE_HPP
 #define GRTESTUTILS_GOOGLETEST_CHECK_ALLCLOSE_HPP
 
-#include <vector>
-
 #include <gtest/gtest.h>
 
 #include "../view.hpp"
