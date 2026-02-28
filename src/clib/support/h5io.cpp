@@ -817,11 +817,12 @@ grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
 
   // now, we will perform a check validating that dataset doesn't have
   // unexpected attributes (i.e. we want to avoid the situation where the
-  // creator expects new attributes to introduce some behavior that Grackle
-  // doesn't know about)
+  // creator of a datafile expects new attributes to introduce some behavior
+  // that the current Grackle version doesn't know about)
   int num_attrs = get_num_attrs(dset_id, dset_name);
   if (num_attrs == -2) {
-    num_attrs = total_accessed_attrs_count;
+    // we are using a version of hdf5 that is too old to efficiently query
+    // the number of attributes... So, we just bypass the validation check
   } else if (num_attrs == -1) {
     H5Dclose(dset_id);
     drop_GridTableProps(&out);

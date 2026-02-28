@@ -19,6 +19,7 @@
 #include "internal_units.h"
 #include "initialize_cloudy_data.hpp"
 #include "support/h5io.hpp"
+#include "status_reporting.h"
 
 #define SMALL_LOG_VALUE (-99.0)
 #define MAX_PARAMETER_NAME_LENGTH (512)
@@ -106,6 +107,8 @@ int grackle::impl::initialize_cloudy_data(
     my_rates->cloudy_data_new = 0;
     if (grackle_verbose)
       std::fprintf(stdout, "Loading old-style Cloudy tables.\n");
+  } else {
+    my_rates->cloudy_data_new = 1;
   }
 
   // Determine the name of the dataset
@@ -126,9 +129,17 @@ int grackle::impl::initialize_cloudy_data(
   // TODO: it would be really nice if we explicitly validated that each
   //       grid_props.axes[i] held the expected values
   my_cloudy->grid_rank = static_cast<long long>(grid_props.table_shape.ndim);
-  for (int i = 0; i < grid_props.table_shape.ndim; i++) {
+  for (long long i = 0LL; i < my_cloudy->grid_rank; i++) {
     my_cloudy->grid_dimension[i]
       = static_cast<long long>(grid_props.table_shape.shape[i]);
+    
+    if (my_cloudy->grid_dimension[i] <= 0) {
+      // the caller is responsible for calling free_cloudy_data
+      // -> this will cleanup all partial initialization
+      h5io::drop_GridTableProps(&grid_props);
+      H5Fclose(file_id);
+      return GrPrintAndReturnErr("Encountered a non-positive grid dimension");
+    }
 
     bool is_temperature =
       std::strcmp("Temperature", grid_props.axes[i].name) == 0;
@@ -232,7 +243,9 @@ int grackle::impl::free_cloudy_data(cloudy_data *my_cloudy,
                                     chemistry_data *my_chemistry,
                                     int primordial) {
 
-  for(int i = 0; i < my_cloudy->grid_rank; i++) {
+  // this is designed to ensure we properly clean up from partially
+  // initialized my_cloudy instances
+  for(int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
     if (my_cloudy->grid_parameters[i] != nullptr) {
       delete[] my_cloudy->grid_parameters[i];
       my_cloudy->grid_parameters[i] = nullptr;
