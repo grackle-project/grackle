@@ -1,9 +1,10 @@
 #include <vector>
+#include <ostream>
 #include <gtest/gtest.h>
 
 #include "fortran_func_wrappers.hpp"
 #include "grtestutils/googletest/check_allclose.hpp"
-
+#include "grtestutils/view.hpp"
 
 /// Records the paramters for a linear algebra test-case
 struct LinAlgCase {
@@ -23,6 +24,13 @@ struct LinAlgCase {
     : n(n), matrix_rowmajor(matrix_rowmajor), rhs_vector(rhs_vector),
       solution_vector(solution_vector)
   { }
+
+  // teach googletest how to print a string representation
+  friend void PrintTo(const LinAlgCase& my_case, std::ostream* os) {
+    std::string tmp = grtest::ptr_to_string(my_case.solution_vector.data(),
+                                            my_case.solution_vector.size());
+    *os << "{SolutionVec=" << tmp << '}';
+  }
 
 };
 
@@ -44,14 +52,14 @@ static std::vector<double> transpose_matrix(
   return out;
 }
 
-class LinAlgTestSolve : public testing::TestWithParam<LinAlgCase> {
+class LinAlgSolve : public testing::TestWithParam<LinAlgCase> {
   // You can implement all the usual fixture class members here.
   // To access the test parameter, call GetParam() from class
   // TestWithParam<T>.
 };
 
 // Solve a basic linear algebra equation.
-TEST_P(LinAlgTestSolve, CheckSuccessfulSolve) {
+TEST_P(LinAlgSolve, Check) {
   LinAlgCase my_case = GetParam();
   std::vector<double> matrix_colmajor = transpose_matrix(
     my_case.n, my_case.n, my_case.matrix_rowmajor
@@ -63,13 +71,16 @@ TEST_P(LinAlgTestSolve, CheckSuccessfulSolve) {
   ASSERT_EQ(rslt, 0) << "expected a return-code of 0, which indicates "
                      << "that the linear equations were successfully solved";
 
-  EXPECT_TRUE(check_allclose(/* actual: */ vec, my_case.solution_vector,
+  grtest::IdxMapping<grtest::DataLayout::LEFT> idx_mapping(vec.size());
+  EXPECT_TRUE(check_allclose(/* actual: */ vec.data(),
+                             /* desired: */ my_case.solution_vector.data(),
+                             /* idx_mapping: */ idx_mapping,
                              /* rtol: */1e-15, /* atol: */ 0.0));
 }
 
 INSTANTIATE_TEST_SUITE_P(
-  LinAlgScenarios,
-  LinAlgTestSolve,
+  /* 1st arg intentionally left blank */,
+  LinAlgSolve,
   testing::Values(
     LinAlgCase(
       2,
@@ -99,7 +110,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 
-TEST(LinAlgTestSolveSingular, SillyScenario) {
+TEST(LinAlgSolveSingular, SillyScenario) {
   int n = 4;
   std::vector<double> matrix_rowmajor{ 1.0, 0.0, 0.0, 0.0,
                                        0.0, 0.0, 0.0, 0.0,
@@ -117,7 +128,7 @@ TEST(LinAlgTestSolveSingular, SillyScenario) {
                      << "the matrix is singular";
 }
 
-TEST(LinAlgTestSolveSingular, AltScenario) {
+TEST(LinAlgSolveSingular, AltScenario) {
   // we are picking a matrix without so many zeros (it is singular since the
   // determinant is 0)
   int n = 2;
