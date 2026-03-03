@@ -334,6 +334,12 @@ ENTRY(omp_nthreads, INT, 0)
 */
 ENTRY(solver_method, INT, 2)
 
+/* dust model selection
+* 0: default (runs calc_grain_size_increment_1d as usual)
+* 1: harrison dust model
+*/
+ENTRY(dust_model, INT, 0)
+
 /* Flag to use snetimestep */
 ENTRY(use_sne_field, INT, 0)
 
