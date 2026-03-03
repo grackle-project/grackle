@@ -226,7 +226,7 @@ void grackle::impl::dust_update(
             }
 
             // Adjust gas density to conserve total mass
-            rho_gas = rho_gas + (rho_metal - metal(i,idx_range.j,idx_range.k)); // Should be changed to gas_density staying constant (make_consistent.cpp)
+            rho_gas = rho_gas + (rho_metal - metal(i,idx_range.j,idx_range.k));
 
             // Safety checks
             if (rho_dust < 0) {
@@ -234,9 +234,9 @@ void grackle::impl::dust_update(
                 std::exit(21);
             }
 
-            fprintf(stderr,
-                    "internal: dt=%e growth_dM=%.10e destruction_dM=%.10e dM_rate=%.15e gas=%.15e dust=%.15e metal=%.15e consv.=%.15e\n",
-                     dt, growth_dM[i], destruction_dM[i], dM_total, rho_gas, rho_dust, rho_metal, rho_dust+rho_metal);
+            // fprintf(stderr,
+            //         "internal: dt=%e growth_dM=%.10e destruction_dM=%.10e dM_rate=%.15e gas=%.15e dust=%.15e metal=%.15e consv.=%.15e\n",
+            //          dt, growth_dM[i], destruction_dM[i], dM_total, rho_gas, rho_dust, rho_metal, rho_dust+rho_metal);
 
             // Update the fields
             if (dryrun == false) {
