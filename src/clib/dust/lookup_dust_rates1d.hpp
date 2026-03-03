@@ -192,9 +192,10 @@ inline void lookup_dust_rates1d(
 
     // Compute grain size increment
     if (my_chemistry->dust_model == 0) {
-      f_wrap::calc_grain_size_increment_1d(dom, idx_range, itmask_metal,
-                                           my_chemistry, my_rates->opaque_storage->grain_species_info, my_rates->opaque_storage->inject_pathway_props, 
-                                           my_fields, internal_dust_prop_scratch_buf);
+      calc_grain_size_increment_1d(dom, idx_range, itmask_metal, my_chemistry,
+                                 my_rates->opaque_storage->grain_species_info,
+                                 my_rates->opaque_storage->inject_pathway_props,
+                                 my_fields, internal_dust_prop_scratch_buf);
     }
 
     grackle::impl::View<const gr_float***> d(
