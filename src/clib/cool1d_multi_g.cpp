@@ -1104,12 +1104,13 @@ void grackle::impl::cool1d_multi_g(
     }
   }
   // Compute grain size increment
-  // if ((my_chemistry->use_dust_density_field > 0) &&
-  //     (my_chemistry->dust_species > 0)) {
-  //   grackle::impl::fortran_wrapper::calc_grain_size_increment_1d(
-  //       dom, idx_range, itmask_metal, my_chemistry, my_rates, my_fields,
-  //       internal_dust_prop_buf);
-  // }
+  if ((my_chemistry->use_dust_density_field > 0) &&
+      (my_chemistry->dust_species > 0) &&
+      (my_chemistry->dust_model == 0)) {
+    grackle::impl::fortran_wrapper::calc_grain_size_increment_1d(
+        dom, idx_range, itmask_metal, my_chemistry, my_rates, my_fields,
+        internal_dust_prop_buf);
+  }
 
   // Calculate dust to gas ratio AND interstellar radiation field
   // -> an earlier version of this logic would store values @ indices

@@ -312,6 +312,12 @@ typedef struct
    */
   int solver_method;
 
+  /* dust model selection
+   * 0: default (runs calc_grain_size_increment_1d as usual)
+   * 1: harrison dust model
+   */
+  int dust_model;
+
   /* Flag to use snetimestep */
   int use_sne_field;
 

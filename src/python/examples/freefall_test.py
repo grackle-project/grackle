@@ -150,7 +150,7 @@ def main(args=None):
             radiative_transfer_HDI_dissociation=1,
             radiative_transfer_metal_ionization=1,
             radiative_transfer_metal_dissociation=1,
-            use_sne_field=1,
+            use_sne_field=0,
 
             use_multiple_dust_temperatures=0
         )
@@ -186,8 +186,8 @@ def main(args=None):
             dust_to_gas_ratio=dust_to_gas_ratio,
             state="ionized",
             converge=False)
-        sne_rate = 1
-        fc["sne_rate"][:] = sne_rate
+        # sne_rate = 1
+        # fc["sne_rate"][:] = sne_rate
 
         # let the gas cool at constant density from the starting temperature
         # down to a lower temperature to get the species fractions in a
