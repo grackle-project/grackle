@@ -162,17 +162,14 @@ void calc_tdust_3d_g(
       }
 
       // Compute grain size increment
-
       if ( (my_chemistry->use_dust_density_field > 0)  &&  (my_chemistry->dust_species > 0)
            &&  (my_chemistry->dust_model == 0) )  {
-
         grackle::impl::calc_grain_size_increment_1d (
           dom, idx_range, itmask_metal.data(), my_chemistry,
           my_rates->opaque_storage->grain_species_info,
           my_rates->opaque_storage->inject_pathway_props,
           my_fields, internal_dust_prop_buf
         );
-
       }
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
