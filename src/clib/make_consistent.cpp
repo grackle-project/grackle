@@ -270,9 +270,7 @@ void make_consistent(
 
       if ((imetal) == 1) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          metalfree[i] = d(i, j, k) - metal(i, j, k) - dust(i, j, k);
-          // if (my_chemistry->dust_species > 0)
-          //   metalfree[i] -= dust(i, j, k);
+          metalfree[i] = d(i, j, k) - metal(i, j, k);
         }
       } else {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
