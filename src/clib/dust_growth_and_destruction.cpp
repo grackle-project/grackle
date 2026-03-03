@@ -153,19 +153,21 @@ void grackle::impl::dust_destruction(
                 }
             }
 
-            // destruction by thermal sputtering
-            double tau_sput = 1.7e8 * sec_per_year / internalu.tbase1
-                            * (my_chemistry->dust_grainsize/0.1)
-                            * (1.0e-27/(dens_proper * rho_gas))
-                            * (std::pow((2.0e6/temp),2.5)+1.0);
+            if (temp >= std::pow(10,5)) {
+                // destruction by thermal sputtering
+                double tau_sput = 1.7e8 * sec_per_year / internalu.tbase1
+                                * (my_chemistry->dust_grainsize/0.1)
+                                * (1.0e-27/(dens_proper * rho_gas))
+                                * (std::pow((2.0e6/temp),2.5)+1.0);
 
-            if (dM_shock >= rho_dust/dt) {
-                if (dM_shock > rho_dust/dt) {
-                    std::cout << "WARNING: dM_shock > M_dust SNe shock destruction, " << sne_this << ", " << tau_dest << std::endl;
+                if (dM_shock >= rho_dust/dt) {
+                    if (dM_shock > rho_dust/dt) {
+                        std::cout << "WARNING: dM_shock > M_dust SNe shock destruction, " << sne_this << ", " << tau_dest << std::endl;
+                    }
+                } else {
+                    dM_shock = dM_shock + rho_dust / tau_sput *3.0;
+                    dM_shock = std::min(dM_shock, rho_dust/dt);
                 }
-            } else {
-                dM_shock = dM_shock + rho_dust / tau_sput *3.0;
-                dM_shock = std::min(dM_shock, rho_dust/dt);
             }
             //dM = - rho_dust * dM_shock;
             dM = -dM_shock;
@@ -240,8 +242,8 @@ void grackle::impl::dust_update(
             }
 
             fprintf(stderr,
-                    "internal: dt=%e growth_dM=%.10e destruction_dM=%.10e dM_rate=%.15e gas=%.15e dust=%.15e metal=%.15e\n",
-                     dt, growth_dM[i], destruction_dM[i], dM_total, rho_gas, rho_dust, rho_metal);
+                    "internal: dt=%e growth_dM=%.10e destruction_dM=%.10e dM_rate=%.15e gas=%.15e dust=%.15e metal=%.15e consv.=%.15e\n",
+                     dt, growth_dM[i], destruction_dM[i], dM_total, rho_gas, rho_dust, rho_metal, rho_dust+rho_metal);
 
             // Update the fields
             if (dryrun == false) {
