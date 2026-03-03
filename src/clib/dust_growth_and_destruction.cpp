@@ -80,10 +80,6 @@ void grackle::impl::dust_growth(
 
             // Store the calculated mass change in the output array
             growth_dM[i] = dM;
-
-            // fprintf(stderr,
-            //         "internal: frac=%.10e growth_rate=%e gas=%.15e dust=%.15e metal=%.15e\n",
-            //          frac_metal_available, dM, rho_gas, rho_dust, rho_metal);
         }
 
     }
@@ -177,9 +173,6 @@ void grackle::impl::dust_destruction(
 
             // Store the calculated mass change in the output array
             destruction_dM[i] = dM;
-            // fprintf(stderr,
-            //         "internal: tau_dest=%.10e tau_dest=%.10e dM_rate=%e gas=%.15e dust=%.15e metal=%.15e\n",
-            //          tau_dest, tau_sput, dM, rho_gas, rho_dust, rho_metal);
         }
     }
 }
