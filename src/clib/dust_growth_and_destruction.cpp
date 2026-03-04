@@ -53,7 +53,6 @@ void grackle::impl::dust_growth(
 
         if (itmask[i] != MASK_FALSE) {
 
-            double rho_gas      = d(i,idx_range.j,idx_range.k);
             double rho_dust = dust(i,idx_range.j,idx_range.k);
             double rho_metal= metal(i,idx_range.j,idx_range.k);
             double temp     = t_gas[i];
@@ -129,7 +128,6 @@ void grackle::impl::dust_destruction(
 
             double rho_gas   = d(i,idx_range.j,idx_range.k);
             double rho_dust  = dust(i,idx_range.j,idx_range.k);
-            double rho_metal = metal(i,idx_range.j,idx_range.k);
             double sne_this = use_sne ? sne(i,idx_range.j,idx_range.k) : 0.0;
             double temp      = t_gas[i];
             double dt = dt_value[i];
