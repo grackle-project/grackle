@@ -84,10 +84,15 @@ class GridLayout {
       return {out, idx_mapping_rslt.second};
     }
     out.idx_mapping_ = idx_mapping_rslt.first;
+    const int* extents = out.idx_mapping_.extents();
 
     for (int i = 0; i < 3; i++) {
       out.start_[i] = (start != nullptr && i < rank) ? start[i] : 0;
-      out.stop_[i] = (stop != nullptr && i < rank) ? stop[i] : 1;
+      if (i < rank) {
+        out.stop_[i] = (stop != nullptr) ? stop[i] : extents[i];
+      } else {
+        out.stop_[i] = 1;
+      }
       out.end_[i] = out.stop_[i] - 1;
 
       if (out.start_[i] < 0) {
