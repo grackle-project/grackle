@@ -332,7 +332,7 @@ ENTRY(omp_nthreads, INT, 0)
 * 2: Gauss-Seidel-only
 * 3: Newton-Raphson-only
 */
-ENTRY(solver_method, INT, 2)
+ENTRY(solver_method, INT, 1)
 
 /* dust model selection
 * 0: default (runs calc_grain_size_increment_1d as usual)
