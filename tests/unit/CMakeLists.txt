@@ -1,3 +1,6 @@
+# declare unit and integration tests
+# ==================================
+
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
 add_executable(testFrozenKeyIdxBiMap support/test_unit_FrozenKeyIdxBiMap.cpp)
@@ -20,17 +23,18 @@ add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting testdeps)
 gtest_discover_tests(runStatusReporting)
 
-# one might argue that the following is more of an integration or end-to-end
-# test than a unit-test
+# these may be slightly more of an integration test than a unit test
 add_executable(runVisitorTests test_visitor.cpp)
 target_link_libraries(runVisitorTests testdeps)
 gtest_discover_tests(runVisitorTests)
 
 # tests of the API functions
 # -> one might argue that these are better classified as integration or
-#    end-to-end tests than as unit-test
+#    system tests tests than as unit-test.
+# -> the line is a little blurry because these are the most minimal tests of
+#    the API
 add_executable(runApiTests
-  test_ghost_zone.cpp test_api_ratequery.cpp test_dynamic_chem_param_api.cpp)
+  test_api_ratequery.cpp test_dynamic_chem_param_api.cpp)
 target_link_libraries(runApiTests testdeps)
 gtest_discover_tests(runApiTests)
 
