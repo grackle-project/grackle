@@ -1,12 +1,10 @@
 version: 2.1
 
 commands:
-  set-env:
-    description: "Set environment variables."
+  setup-system-for-pytest:
+    description: "Set up the system for pytest."
     steps:
-      - run:
-          name: "Set environment variables."
-          command: |
+      - run: |
             echo "backend : Agg" > $HOME/matplotlibrc
             echo 'export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH' >> $BASH_ENV
             echo 'export YT_DATA_DIR=$HOME/yt_test' >> $BASH_ENV
@@ -17,12 +15,6 @@ commands:
               git fetch --tags https://github.com/$CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME
             fi
 
-  install-dependencies:
-    description: "Install dependencies."
-    steps:
-      - run:
-          name: "Install dependencies."
-          command: |
             git submodule update --init --remote
             sudo apt update
             sudo apt install -y libhdf5-serial-dev gfortran ninja-build cmake
@@ -260,8 +252,7 @@ jobs:
 
     steps:
       - checkout
-      - set-env
-      - install-dependencies
+      - setup-system-for-pytest
       - download-test-data
       - store-gracklepy-suite-gold-standard-answers
 
