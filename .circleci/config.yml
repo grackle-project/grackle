@@ -27,8 +27,7 @@ commands:
             sudo apt update
             sudo apt install -y libhdf5-serial-dev gfortran ninja-build cmake
             # libtool-bin is a requirement of the classic build-system
-            # castxml is a requirement of the gracklepy test-suite
-            sudo apt install -y libtool-bin castxml
+            sudo apt install -y libtool-bin
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
