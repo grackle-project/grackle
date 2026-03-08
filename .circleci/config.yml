@@ -17,24 +17,15 @@ commands:
               git fetch --tags https://github.com/$CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME
             fi
 
-  install-cmake-dependencies:
-    description: "Install minimal dependencies needed for a CMake build"
+  install-dependencies:
+    description: "Install dependencies."
     steps:
       - run:
-          name: "Install minimal dependencies needed for a CMake build"
+          name: "Install dependencies."
           command: |
             git submodule update --init --remote
             sudo apt update
             sudo apt install -y libhdf5-serial-dev gfortran ninja-build cmake
-
-  install-dependencies:
-    description: "Install dependencies."
-    steps:
-      - install-cmake-dependencies
-      - run:
-          name: "Install all other dependencies."
-          command: |
-            source $BASH_ENV
             # libtool-bin is a requirement of the classic build-system
             # castxml is a requirement of the gracklepy test-suite
             sudo apt install -y libtool-bin castxml
