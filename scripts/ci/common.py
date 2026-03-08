@@ -100,6 +100,25 @@ class LinuxDistroInfo(NamedTuple):
         return cls(id=id, version_id=data.get("VERSION_ID"), codename=codename)
 
 
+def export_env_var_assignment(assignment_line: str):
+    # if assignment_line specifies VAR="FUN", then this function ensures that
+    # subsequent CI steps will define VAR="RUN"
+    if "CIRCLECI" in os.environ:
+        fname_env_variable = "BASH_ENV"
+    elif "GITHUB_ACTIONS" in os.environ:
+        fname_env_variable = "GITHUB_ENV"
+    else:
+        for name, value in os.environ.items():
+            print(f"{name}={value}")
+        raise RuntimeError("unexpected CI provider")
+
+    assert "\n" not in assignment_line, "sanity check"
+    logger.info(f"append to ${fname_env_variable}: `{assignment_line.rstrip()}`")
+    with open(os.environ[fname_env_variable], "a") as f:
+        f.write(assignment_line)
+        f.write("\n")
+
+
 def _fmt_env_args(
     include_outer_env: bool = True,
     env: Optional[Mapping[str, str]] = None,

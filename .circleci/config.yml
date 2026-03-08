@@ -316,17 +316,20 @@ jobs:
 
     steps:
       - checkout
-      # we pin cmake to an arbitrarily new version
+      # we pinned cmake to an arbitrarily new version
       - run: |
-          sudo ./scripts/ci/install_dependencies.py --color \
+          git submodule update --init --remote
+          ./scripts/ci/install_dependencies.py --color \
               --preset corelib-tests --preset static-analysis \
-              --software cmake=4.2 --software clang-tidy=20
+              --software cmake=4.2 --software clang-tidy=20 \
+              --manual-install-dir ~/local_deps
 
       - run:
           name: "Build libgrackle and all of the core library's tests"
           command: |
             cmake --preset ci-linux
             cmake --build build_ci-linux
+
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
           command: ctest --test-dir build_ci-linux --output-on-failure

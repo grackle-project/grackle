@@ -13,7 +13,6 @@ Longer term, the goals are to:
 """
 
 # for portability, we restrict ourselves to built-in modules provided with python 3.6
-
 import argparse
 import functools
 import itertools
@@ -21,6 +20,7 @@ import json
 import os
 import platform
 import re
+import sys
 import tempfile
 from typing import (
     Dict,
@@ -37,7 +37,14 @@ from typing import (
 )
 
 from fetch_test_data import download_file
-from common import LinuxDistroInfo, ScriptError, configure_logger, exec_cmd, logger
+from common import (
+    LinuxDistroInfo,
+    ScriptError,
+    configure_logger,
+    exec_cmd,
+    logger,
+    export_env_var_assignment,
+)
 
 
 class Conf(NamedTuple):
@@ -45,13 +52,14 @@ class Conf(NamedTuple):
     dry_run: bool
     os_str: str
     distro_info: Optional[LinuxDistroInfo]
+    mutate_path: bool = True
 
     @classmethod
     def from_args(cls, args: argparse.Namespace):
         os_str = platform.system().lower()
         distro_info = LinuxDistroInfo.infer_from_system() if os_str == "linux" else None
         return Conf(
-            manual_install_dir=args.manual_install_dir,
+            manual_install_dir=os.path.expanduser(args.manual_install_dir),
             dry_run=args.dry_run,
             os_str=os_str,
             distro_info=distro_info,
@@ -65,25 +73,19 @@ class Conf(NamedTuple):
 
 class SymlinkSpec(NamedTuple):
     src: str
-    dst: str
+    dst_basename: str
 
 
-class CodeSourceAPT(NamedTuple):
-    """Encapsulates information for installing a package via APT"""
+class APTPackage(NamedTuple):
+    name: str
 
-    pkg_name: str
-    # the following attributes are usually just used with non-default APT repositories
+
+class CodeSource(NamedTuple):
+    """Represents the source for a piece of software"""
+
+    source: Union[APTPackage, Callable[[], None]]
     setup_fn: Optional[Callable[[Conf], None]] = None
     symlinks: Optional[List[SymlinkSpec]] = None
-
-
-# The source of each piece of software is associated with either
-#   1. an APT package OR
-#   2. a simple callable function that manually performs the installation itself
-# Given a version string (or `None`) a source factory returns one of the above 2 choices
-SimpleCallable = Callable[[Conf], Optional[List[SymlinkSpec]]]
-SoftwareSource = Union[CodeSourceAPT, SimpleCallable]
-SourceFactory = Callable[[Optional[str]], SoftwareSource]
 
 
 def _search_cksum_file(fp: IO[str], target_fname: str) -> Optional[str]:
@@ -98,83 +100,82 @@ def _search_cksum_file(fp: IO[str], target_fname: str) -> Optional[str]:
             return cksum
 
 
-def install_cmake(target_version: str, conf: Conf) -> List[SymlinkSpec]:
-    """Download an install a target cmake version"""
-    # It's also easy to build from source, but this is faster
-
-    # extract the prefix of target_version that holds major and minor version numbers
-    m = re.match(r"^(\d+\.\d+).*", target_version)
+def _extract_major_minor(version: str) -> Tuple[int, int]:
+    m = re.match(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)(?:[^0-9].*)?$", version)
     if m is None:
-        raise ScriptError(f"{target_version} is an invalid CMake version")
-    major_minor_version = m.group(1)
-    major, minor = [int(e) for e in major_minor_version.split(".")]
-    if (major, minor) < (3, 20):
-        raise RuntimeError(f"the url pattern isn't handled for {major_minor_version}")
+        raise ScriptError(f"{version} doesn't have a major and minor version")
+    return tuple(int(e) for e in m.groups())
 
-    # set up some basic properties
-    prefix = "https://cmake.org/files"
-    url_dir = f"{prefix}/v{major_minor_version}"
-    outdir = os.path.join(conf.manual_install_dir, f"cmake-{major_minor_version}")
 
-    # if the caller specified "major.minor", let's infer "major.minor.patch"
-    if major_minor_version == target_version:
-        # we are missing a patch version, infer the latest version
-        logger.info(f"inferring newest CMake patch associated with {target_version}")
-        with tempfile.TemporaryFile() as fp:
-            download_file(url=f"{url_dir}/cmake-latest-files-v1.json", dst=fp)
-            fp.seek(0)
-            target_version = json.load(fp)["version"]["string"]
-
-    logger.info(f"prepare to download CMake version: {target_version}")
-
-    # determine the name of the file that will be downloaded
-    if conf.os_str == "darwin":
-        desired = f"cmake-{target_version}-macos-universal.dmg"
-    else:
-        arch = platform.machine()
-        arch = "x86_64"
-        desired = f"cmake-{target_version}-{conf.os_str}-{arch}.tar.gz"
-
-    # determine the sha256 checksum
-    # -> this lets us check for errors in the download
+def _download_and_install_precompiled(
+    url_prefix: str, cksum_fname: str, desired_fname: str, outdir: str, cksum_kind: str
+):
+    # determine the checksum (to let us check for errors in the download)
     # -> this doesn't really add much security (if someone compromises the
     #    precompiled binary, they probably also compromised the cksum file)
-    logger.info(f"fetching the checksum for {desired}")
+    logger.info(f"fetching the checksum for {desired_fname}")
     with tempfile.TemporaryFile() as fp:
-        download_file(url=f"{url_dir}/cmake-{target_version}-SHA-256.txt", dst=fp)
+        download_file(url=f"{url_prefix}/{cksum_fname}", dst=fp)
         fp.seek(0)
-        cksum = _search_cksum_file(fp, target_fname=desired)
+        cksum = _search_cksum_file(fp, target_fname=desired_fname)
     if cksum is None:
-        raise RuntimeError(f"could not find the checksum for {desired}")
+        raise RuntimeError(f"could not find the checksum for {desired_fname}")
     elif ":" not in cksum:
-        cksum = "sha256:" + cksum
+        cksum = f"{cksum_kind}:{cksum}"
 
     # download the full file
-    logger.info(f"downloading {desired}")
+    logger.info(f"downloading {desired_fname}")
     with tempfile.NamedTemporaryFile() as fp:
         tmp_path = fp.name
-        download_file(url=f"{url_dir}/{desired}", dst=tmp_path, cksum=cksum)
+        download_file(url=f"{url_prefix}/{desired_fname}", dst=tmp_path, cksum=cksum)
         logger.info("unpacking the contents")
-        if not conf.dry_run:
-            if not os.path.isdir(outdir):
-                os.mkdir(outdir)
-            exec_cmd("tar", "-x", "-C", outdir, "-f", tmp_path)
-
-    installed_bin = os.path.join(outdir, "cmake")
-
-    return [
-        SymlinkSpec(installed_bin, f"/usr/bin/cmake-{target_version}"),
-        SymlinkSpec(installed_bin, f"/usr/bin/cmake-{major_minor_version}"),
-        # this last choice is VERY hacky
-        # -> we probably want to something clever with paths instead
-        SymlinkSpec(installed_bin, "/usr/bin/cmake"),
-    ]
+        exec_cmd("tar", "-x", "--strip-components", "1", "-C", outdir, "-f", tmp_path)
 
 
-def get_cmake_source(version: Optional[str]) -> Union[CodeSourceAPT, SimpleCallable]:
+def get_cmake_source(conf: Conf, version: Optional[str]) -> CodeSource:
     if version is None:
-        return CodeSourceAPT("cmake")
-    return functools.partial(install_cmake, version)
+        return CodeSource(source=APTPackage("cmake"))
+    else:
+        # in this case, we try to download a precompiled binary
+        # (building from source is also very easy, but will be slower)
+        try:
+            major, minor = _extract_major_minor(version)
+        except ScriptError:
+            raise ScriptError(f"{version} isn't a valid version for CMake") from None
+        url_prefix = f"https://cmake.org/files/v{major}.{minor}"
+
+        if (major, minor) < (3, 20):
+            raise RuntimeError(f"CMake url pattern isn't handled for {major}.{minor}")
+        elif f"{major}.{minor}" == version:
+            logger.info(f"inferring full CMake version from {version}")
+            with tempfile.TemporaryFile() as fp:
+                download_file(url=f"{url_prefix}/cmake-latest-files-v1.json", dst=fp)
+                fp.seek(0)
+                version = json.load(fp)["version"]["string"]
+
+        outdir = os.path.join(conf.manual_install_dir, f"cmake-{version}")
+
+        def install_cmake():
+            cksum_fname = f"cmake-{version}-SHA-256.txt"
+            if conf.os_str == "darwin":
+                desired = f"cmake-{version}-macos-universal.dmg"
+            else:
+                desired = f"cmake-{version}-{conf.os_str}-{platform.machine()}.tar.gz"
+            if not conf.dry_run:
+                if not os.path.isdir(outdir):
+                    os.mkdir(outdir)
+                _download_and_install_precompiled(
+                    url_prefix, cksum_fname, desired, outdir, cksum_kind="sha256"
+                )
+
+        installed_bin = os.path.join(outdir, "bin", "cmake")
+        return CodeSource(
+            source=install_cmake,
+            symlinks=[
+                SymlinkSpec(src=installed_bin, dst_basename=f"cmake-{version}"),
+                SymlinkSpec(src=installed_bin, dst_basename="cmake"),
+            ],
+        )
 
 
 def setup_llvm_repository(conf: Conf, llvm_version: int):
@@ -183,7 +184,7 @@ def setup_llvm_repository(conf: Conf, llvm_version: int):
 
     _descr = "to register LLVM's official apt repository"
     if conf.distro_info is None:
-        raise ScriptError("linux distribution info must be known")
+        raise ScriptError(f"{_descr}: linux distribution info must be known")
     elif conf.distro_info.id not in ["ubuntu", "debian"]:
         raise ScriptError(f"{_descr}: only possible on debian/ubuntu")
     elif conf.distro_info.codename is None:
@@ -192,8 +193,11 @@ def setup_llvm_repository(conf: Conf, llvm_version: int):
     logger.info("Fetch and register key for authenticating LLVM's APT repository")
     gpg_dst = "/etc/apt/trusted.gpg.d/apt.llvm.org.asc"
     gpg_src_url = "https://apt.llvm.org/llvm-snapshot.gpg.key"
-    if not conf.dry_run:
-        download_file(gpg_src_url, dst=gpg_dst)
+    with tempfile.NamedTemporaryFile() as fp:
+        tmp_path = fp.name
+        download_file(gpg_src_url, dst=tmp_path)
+        exec_cmd("sudo", "cp", tmp_path, gpg_dst, dry_run=conf.dry_run)
+        exec_cmd("sudo", "chmod", "a+r", gpg_dst, dry_run=conf.dry_run)
 
     # Part 2: record the actual source of the package
     # -> the formula for determining the uri and suite-name is fairly
@@ -212,15 +216,17 @@ def setup_llvm_repository(conf: Conf, llvm_version: int):
     exec_cmd("sudo", *cmd, dry_run=conf.dry_run)
 
 
-def get_clang_tidy_source(version: Optional[str]) -> CodeSourceAPT:
+def get_clang_tidy_source(conf: Conf, version: Optional[str]) -> CodeSource:
     if version is None:
         raise ScriptError("you must associate clang-tidy with a version")
-    # the choice to make this symlink is VERY hacky
-    tmp = SymlinkSpec(src=f"/usr/bin/clang-tidy-{version}", dst="/usr/bin/clang-tidy")
-    return CodeSourceAPT(
-        pkg_name=f"clang-tidy-{version}",
-        setup_fn=functools.partial(setup_llvm_repository, llvm_version=version),
-        symlinks=[tmp],
+    return CodeSource(
+        source=APTPackage(f"clang-tidy-{version}"),
+        setup_fn=functools.partial(
+            setup_llvm_repository, llvm_version=version, conf=conf
+        ),
+        symlinks=[
+            SymlinkSpec(src=f"/usr/bin/clang-tidy-{version}", dst_basename="clang-tidy")
+        ],
     )
 
 
@@ -230,13 +236,13 @@ class SimpleSourceFactory(NamedTuple):
     name: str
     apt_pkg_name: str
 
-    def __call__(self, version: Optional[str]) -> CodeSourceAPT:
+    def __call__(self, conf: Conf, version: Optional[str]) -> CodeSource:
         if version is not None:
             raise ScriptError(f"{self.name!s} cannot be specified with a version")
-        return CodeSourceAPT(pkg_name=self.apt_pkg_name)
+        return CodeSource(source=APTPackage(name=self.apt_pkg_name))
 
 
-_SOFTWARE: Dict[str, SourceFactory] = {
+_SOFTWARE: Dict[str, Callable[[Conf, str], CodeSource]] = {
     "castxml": SimpleSourceFactory(name="castxml", apt_pkg_name="castxml"),
     "clang-tidy": get_clang_tidy_source,
     "cmake": get_cmake_source,
@@ -262,7 +268,7 @@ _PRESETS["all-presets"] = (list(_PRESETS), [])
 
 
 def software_from_presets(presets: Iterable[str]) -> Iterable[str]:
-    preset_set = set(presets)  # <- avoid mutating args.preset
+    preset_set = set(presets)  # <- avoid mutating presets
     while preset_set:
         preset_l, software_l = _PRESETS[preset_set.pop()]
         preset_set.update(preset_l)
@@ -278,10 +284,30 @@ def _get_name_version(software_str: str) -> Tuple[str, Optional[str]]:
     raise ScriptError(f"{software_str!r} is an invalid string for specifying software")
 
 
-def apt_install(conf: Conf, names: Collection[str]):
+def _apt_install(conf: Conf, names: Collection[str]):
     assert len(names) > 0, "sanity check failed"
     exec_cmd("sudo", "apt-get", "update", dry_run=conf.dry_run)
     exec_cmd("sudo", "apt-get", "install", "-y", *sorted(names), dry_run=conf.dry_run)
+
+
+def _handle_symlinks(conf: Conf, symlink_sets: List[Tuple[str, List[SymlinkSpec]]]):
+    bin_dir = os.path.abspath(os.path.join(conf.manual_install_dir, "bin"))
+    logger.info(f"  ensure BINDIR={bin_dir} exists")
+    if not conf.dry_run:
+        os.makedirs(bin_dir, exist_ok=True)
+        export_env_var_assignment(f"export PATH={bin_dir}:$PATH")
+    for descr, symlink_spec_set in symlink_sets:
+        for spec in symlink_spec_set:
+            msg = f"  for {descr}: SRC={spec.src}, DST=$BINDIR/{spec.dst_basename}"
+            logger.info(msg)
+            if conf.dry_run:
+                continue
+            elif not os.path.isfile(spec.src):
+                raise RuntimeError(
+                    f"can't make a symlink to {spec.src}, (it doesn't seem to exist)"
+                )
+            else:
+                os.symlink(spec.src, os.path.join(bin_dir, spec.dst_basename))
 
 
 def install_software(software_str_itr: Iterable[str], conf: Conf):
@@ -290,6 +316,16 @@ def install_software(software_str_itr: Iterable[str], conf: Conf):
 
     logger.info(f"Sys Info: {conf.sys_info_str()}")
 
+    if not conf.dry_run:
+        try:
+            os.mkdir(conf.manual_install_dir)
+        except FileExistsError:
+            pass  # <- this case is ok!
+        except OSError:
+            raise ScriptError(
+                f"{conf.manual_install_dir} doesn't exist & can't easily be created"
+            ) from None
+
     # fill all_software with name : (version, software_name) entries
     all_software = {}
     for software_str in software_str_itr:
@@ -297,49 +333,43 @@ def install_software(software_str_itr: Iterable[str], conf: Conf):
         if name not in _SOFTWARE:
             raise ScriptError(f"{software_str} doesn't specify known software")
         old_v, _ = all_software.get(name, (None, None))
-        if old_v is not None:
+        if (old_v is not None) and (new_v is None):
+            continue
+        elif (old_v is not None) and (old_v != new_v):
             logger.warning(f"override {name!r} version: use {new_v} instead of {old_v}")
         all_software[name] = (new_v, software_str)
 
     # infer the required steps
-    cmd_list: List[Tuple[str, str, SimpleCallable]] = []
+    cmd_list: List[Tuple[str, str, Callable[[], None]]] = []
     apt_packages: Set[str] = set()
     symlink_sets: List[Tuple[str, List[SymlinkSpec]]] = []
 
     for name, (version, software_str) in all_software.items():
-        src = _SOFTWARE[name](version=version)
-        if callable(src):
-            cmd_list.append(("manual step", software_str, src))
+        src = _SOFTWARE[name](conf=conf, version=version)
+        if src.setup_fn is not None:
+            cmd_list.append(("setup step", software_str, src.setup_fn))
+        if callable(src.source):
+            cmd_list.append(("manual step", software_str, src.source))
         else:
-            assert isinstance(src, CodeSourceAPT)
-            apt_packages.add(src.pkg_name)
-            if src.setup_fn is not None:
-                cmd_list.append(("setup step", software_str, src.setup_fn))
-            if src.symlinks is not None:
-                symlink_sets.append((software_str, src.symlinks))
+            assert isinstance(src.source, APTPackage), "sanity check"
+            apt_packages.add(src.source.name)
+        if src.symlinks is not None:
+            symlink_sets.append((software_str, src.symlinks))
 
     if len(apt_packages) > 0:
-        fn = functools.partial(apt_install, names=apt_packages)
-        cmd_list.append(("apt invocations", None, fn))
+        fn = functools.partial(_apt_install, conf=conf, names=apt_packages)
+        cmd_list.append(("invoke APT", None, fn))
 
-    n_steps = len(cmd_list) + 1  # add 1 for symlinks
+    if len(symlink_sets) > 0:
+        fn = functools.partial(_handle_symlinks, conf=conf, symlink_sets=symlink_sets)
+        cmd_list.append(("Handle Symlinks (And Paths)", None, fn))
 
-    # actually do the installation
+    # execute the commands
+    n_steps = len(cmd_list)
     for i, (descr, target, cmd) in enumerate(cmd_list, start=1):
         msg = f"{descr} for {target}" if target is not None else descr
         logger.info(f"Dependency Install {i}/{n_steps}: {msg}")
-        extra_symlinks = cmd(conf)
-        if extra_symlinks:
-            assert target is not None, "sanity check"
-            symlink_sets.append((target, extra_symlinks))
-
-    logger.info(f"Dependency Install {n_steps}/{n_steps}: Make Symlinks (if needed)")
-    for descr, symlink_set in symlink_sets:
-        for symlink_spec in symlink_set:
-            msg = f"  for {descr}: SRC={symlink_spec.src}, DST={symlink_spec.dst}"
-            logger.info(msg)
-            if not conf.dry_run:
-                os.symlink(symlink_spec.src, symlink_spec.dst)
+        cmd()
 
 
 def main(args: argparse.Namespace):
@@ -392,4 +422,4 @@ parser.add_argument(
 )
 
 if __name__ == "__main__":
-    main(parser.parse_args())
+    sys.exit(main(parser.parse_args()))
