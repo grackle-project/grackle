@@ -287,7 +287,9 @@ def _get_name_version(software_str: str) -> Tuple[str, Optional[str]]:
 def _apt_install(conf: Conf, names: Collection[str]):
     assert len(names) > 0, "sanity check failed"
     exec_cmd("sudo", "apt-get", "update", dry_run=conf.dry_run)
-    exec_cmd("sudo", "apt-get", "install", "-y", *sorted(names), dry_run=conf.dry_run)
+    _cmd = ["sudo", "apt-get", "install", "-y", "--no-install-recommends"]
+    _cmd.extend(sorted(names))
+    exec_cmd(*_cmd, dry_run=conf.dry_run)
 
 
 def _handle_symlinks(conf: Conf, symlink_sets: List[Tuple[str, List[SymlinkSpec]]]):

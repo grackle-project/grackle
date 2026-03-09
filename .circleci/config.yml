@@ -4,7 +4,9 @@ commands:
   setup-system-for-pytest:
     description: "Set up the system for pytest."
     steps:
-      - run: |
+      - run:
+          name: "Setup System"
+          command: |
             echo "backend : Agg" > $HOME/matplotlibrc
             echo 'export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH' >> $BASH_ENV
             echo 'export YT_DATA_DIR=$HOME/yt_test' >> $BASH_ENV
