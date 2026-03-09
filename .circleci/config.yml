@@ -16,10 +16,9 @@ commands:
             fi
 
             git submodule update --init --remote
-            sudo apt update
-            sudo apt install -y libhdf5-serial-dev gfortran ninja-build cmake
-            # libtool-bin is a requirement of the classic build-system
-            sudo apt install -y libtool-bin
+            ./scripts/ci/install_dependencies.py --color \
+              --preset classic-build --preset cmake-build
+
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
