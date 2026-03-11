@@ -147,7 +147,7 @@ if (BUILD_SHARED_LIBS)
   # install-rule to make a symlink called libgrackle.so to support compilation
   # with `-lgrackle`. (This is consistent with the classic build-system)
   install(CODE "
-    set(_prefix \"${CMAKE_INSTALL_PREFIX}\")
+    set(_prefix \"\${CMAKE_INSTALL_PREFIX}\")
     if(DEFINED ENV{DESTDIR})
       message(WARNING
         \"linking to libgrackle.so (during install) is untested with DESTDIR\")
@@ -298,7 +298,7 @@ else()
   # if shared library was previously installed, install grackle-conventional.pc
   # as grackle.pc. Otherwise, install grackle-static.pc as grackle.pc
   install(CODE "
-    set(_prefix \"${CMAKE_INSTALL_PREFIX}\")
+    set(_prefix \"\${CMAKE_INSTALL_PREFIX}\")
     if(DEFINED ENV{DESTDIR})
       message(WARNING
         \"linking to libgrackle.so (during install) is untested with DESTDIR\")
