@@ -192,8 +192,11 @@ set(_TOOLCHAIN_LINK_LIBS ${Fortran_implicit_libs})
 # to the standard library's math functions
 # -> here we determine based on whether our custom toolchain::m target
 #    is a dummy placeholder or not whether to add this target
-get_target_property(toolchain_m_prop toolchain::m IMPORTED_LIBNAME)
-if(${toolchain_m_prop})
+#
+# NOTE: when we start using C++ in the core grackle library, we can drop this logic
+# and just rely upon `get_implicit_link_reqs(CXX ...)`, since the C++ runtime
+# library is ALWAYS linked to the math functions
+if (UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   list(APPEND _TOOLCHAIN_LINK_LIBS m) # explicit c requirement (but may
                                       # be a duplicate)
 endif()

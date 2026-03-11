@@ -269,11 +269,27 @@ target_include_directories(Grackle_Grackle
 )
 
 target_link_libraries(Grackle_Grackle
-  PRIVATE toolchain::m
-          GRACKLE_HDF5_C
+  PRIVATE GRACKLE_HDF5_C
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_Fortran>
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_C>
 )
+
+# explicitly link against the math functions of the C standard library
+# (i.e. the -lm flag). This is commonly needed on unix-like platforms
+# -> The -lm flag does not get used on MacOS. CMake is smart enough to
+#    to intercept and remove the flag when invoking the linker on MacOS
+# -> Historically, passing the flag on MacOS caused issues with exporting
+#    the linker flags. I'm 99% sure, that this isn't a problem after we
+#    tweaked our implementation, but I don't want to test it.
+#
+# NOTE: when we start using C++ in the core grackle library, we can remove
+# everything related to the toolchain::m variable (since the C++ runtime
+# library is ALWAYS linked to the math functions)
+add_library(toolchain::m INTERFACE IMPORTED)
+if (UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  target_link_libraries(Grackle_Grackle PRIVATE m)
+endif()
+
 
 # add the necessary compiler-specific Fortran flags to ensure proper handling
 # of our specific Fortran-dialect and that name mangling is performed as
