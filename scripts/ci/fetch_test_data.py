@@ -39,7 +39,7 @@ def _retrieve_url(url, dst, *, silent=False, chunksize=_CHUNKSIZE):
     """Download the datafile from url to dst."""
     req = urllib.request.Request(url)
     with contextlib.ExitStack() as stack:
-        out_file = stack.enter_context(open(dst, "wb"))
+        out_f = dst if hasattr(dst, "write") else stack.enter_context(open(dst, "wb"))
         response = stack.enter_context(urllib.request.urlopen(req))
         total_bytes = int(response.headers.get("Content-Length", -1))
         update_progress = _download_status_updater(total_bytes, silent=silent)
@@ -53,7 +53,7 @@ def _retrieve_url(url, dst, *, silent=False, chunksize=_CHUNKSIZE):
             if not block:
                 break
             downloaded_bytes += len(block)
-            out_file.write(block)
+            out_f.write(block)
 
 
 # duplicates logic in PR #235
@@ -78,7 +78,7 @@ def calc_checksum(fname, *, alg_name, chunksize=_CHUNKSIZE):
 def download_file(url, *, dst=None, dst_dir=None, silent=None, cksum=None):
     """download the file from url to dst"""
 
-    basename = os.path.basename(url if dst is None else dst)
+    basename = os.path.basename(url if dst is None or hasattr(dst, "write") else dst)
     if (dst is not None) and (dst_dir is not None):
         raise ValueError("dst and dst_dir can't both be specified")
     elif dst is None:
