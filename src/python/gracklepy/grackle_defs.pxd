@@ -303,9 +303,15 @@ cdef extern from "grackle.h":
         const c_chemistry_data_storage* my_rates,
         const char* name)
 
-    double* grunstable_ratequery_get_ptr(
+    int grunstable_ratequery_get_f64(
         c_chemistry_data_storage* my_rates,
-        grunstable_rateid_type rate_id)
+        grunstable_rateid_type rate_id,
+        double* buf)
+
+    int grunstable_ratequery_set_f64(
+        c_chemistry_data_storage* my_rates,
+        grunstable_rateid_type rate_id,
+        const double* buf)
 
     cdef enum grunstable_ratequery_prop_kind:
         GRUNSTABLE_QPROP_NDIM
