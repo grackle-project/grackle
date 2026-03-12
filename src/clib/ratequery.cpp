@@ -41,68 +41,13 @@
 //
 
 namespace grackle::impl::ratequery {
-
 // we have reserved the right to change this value at any time
 enum { UNDEFINED_RATE_ID_ = 0 };
 
-// introduce some basic machinery to help us implement dynamic lookup of rates
-
-static Entry new_Entry_standard_kcol_(chemistry_data_storage* my_rates,
-                                      const char* name, int index) {
-  if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
-      (my_rates->opaque_storage->kcol_rate_tables == nullptr)) {
-    return new_Entry(nullptr, name);
-  } else {
-    return new_Entry(my_rates->opaque_storage->kcol_rate_tables->data[index],
-                     name);
-  }
-}
-
-#define MKENTRY_(PTR, NAME, FAMILY)                                            \
-  new_Entry(((PTR) == nullptr) ? nullptr : (PTR)->NAME, #NAME, FAMILY)
-#define MKENTRY_SCALAR_(PTR, NAME)                                             \
-  new_Entry(((PTR) == nullptr) ? nullptr : &((PTR)->NAME), #NAME)
-#define MKENTRY_STANDARD_KCOL_(PTR, NAME, INDEX)                               \
-  new_Entry_standard_kcol_(PTR, #NAME, INDEX)
-
-// Create machinery to lookup Standard-Form Collisional Reaction Rates
-// -------------------------------------------------------------------
-// see the next section for other macros
-
-// this fn leverages the following properties of the CollisionalRxnLUT enum:
-// - each entry of collisional_rxn_rate_members.def has a corresponding
-//   enumeration-constant
-// - the very first enumeration constant has a value of 0 (since a value wasn't
-//   explicitly specified)
-// - the value of each other enumeration constants is 1 larger than the value
-//   of the previous value (if a value isn't explicitly specified)
-// - CollisionalRxnLUT::NUM_ENTRIES specifies the number of other enumeration
-//   constants (excluding CollisionalRxnLUT::NUM_ENTRIES) in the enum
-static Entry get_CollisionalRxn_Entry(chemistry_data_storage* my_rates, int i) {
-  switch (i) {
-#define ENTRY(NAME)                                                            \
-  case CollisionalRxnLUT::NAME: {                                              \
-    return MKENTRY_STANDARD_KCOL_(my_rates, NAME, CollisionalRxnLUT::NAME);    \
-  }
-#include "collisional_rxn_rate_members.def"
-#undef ENTRY
-    default: {
-      return mk_invalid_Entry();
-    }
-  }
-}
-
-static Entry get_k13dd_Entry(chemistry_data_storage* my_rates, int i) {
-  if (i == 0) {
-    double* ptr = (my_rates == nullptr) ? nullptr : my_rates->k13dd;
-    return new_Entry(ptr, "k13dd");
-  } else {
-    return mk_invalid_Entry();
-  }
-}
-
 // Create machinery to lookup Other Miscellaneous Rates
 // ----------------------------------------------------
+// -> ideally this should get relocated to a more sensible location (but not
+//    sure where that is...
 
 enum MiscRxnRateKind_ {
   MiscRxn_k24,
@@ -118,68 +63,134 @@ enum MiscRxnRateKind_ {
 };
 
 static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
+  if (my_rates == nullptr) {  // <- shouldn't come up
+    return mk_invalid_Entry();
+  }
   switch (i) {
     // Radiative rates for 6-species (for external field):
     case MiscRxn_k24:
-      return MKENTRY_SCALAR_(my_rates, k24);
+      return new_Entry(&my_rates->k24, "k24");
     case MiscRxn_k25:
-      return MKENTRY_SCALAR_(my_rates, k25);
+      return new_Entry(&my_rates->k25, "k25");
     case MiscRxn_k26:
-      return MKENTRY_SCALAR_(my_rates, k26);
-    // Radiative rates for 9-species
+      return new_Entry(&my_rates->k26, "k26");
+      // Radiative rates for 9-species
     case MiscRxn_k27:
-      return MKENTRY_SCALAR_(my_rates, k27);
+      return new_Entry(&my_rates->k27, "k27");
     case MiscRxn_k28:
-      return MKENTRY_SCALAR_(my_rates, k28);
+      return new_Entry(&my_rates->k28, "k28");
     case MiscRxn_k29:
-      return MKENTRY_SCALAR_(my_rates, k29);
+      return new_Entry(&my_rates->k29, "k29");
     case MiscRxn_k30:
-      return MKENTRY_SCALAR_(my_rates, k30);
+      return new_Entry(&my_rates->k30, "k30");
     case MiscRxn_k31:
-      return MKENTRY_SCALAR_(my_rates, k31);
+      return new_Entry(&my_rates->k31, "k31");
     default: {
       return mk_invalid_Entry();
     }
   }
 }
+}  // namespace grackle::impl::ratequery
+
+int grackle::impl::ratequery::RegBuilder_misc_recipies(
+    RegBuilder* ptr, const chemistry_data* my_chemistry) {
+  if (my_chemistry->primordial_chemistry != 0) {
+    return RegBuilder_recipe_scalar(ptr, MiscRxn_NRATES, &get_MiscRxn_Entry);
+  }
+  return GR_SUCCESS;
+}
+
+namespace grackle::impl::ratequery {
+
+/// resets the instance to the initial (empty) state.
+///
+/// the skip_dealloc argument will only be true when the data is transferred
+/// to a Registry
+static void RegBuilder_reset_to_empty(RegBuilder* ptr, bool skip_dealloc) {
+  if ((ptr->capacity > 0) && !skip_dealloc) {
+    delete[] ptr->sets;
+  }
+  (*ptr) = new_RegBuilder();
+}
+
+static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
+                              int n_entries, EntryProps common_props) {
+  if (recipe_fn == nullptr) {
+    return GrPrintAndReturnErr("recipe_fn is a nullptr");
+  } else if (n_entries <= 0) {
+    return GrPrintAndReturnErr("n_entries is not positive");
+  } else if (!EntryProps_is_valid(common_props)) {
+    return GrPrintAndReturnErr("common_props isn't valid");
+  }
+
+  if (ptr->capacity == 0) {
+    ptr->capacity = 5;
+    ptr->sets = new EntrySet[ptr->capacity];
+  } else if (ptr->len == ptr->capacity) {
+    // consider making this resizable in the future...
+    return GrPrintAndReturnErr("out of capacity");
+  }
+
+  ptr->sets[ptr->len++] = EntrySet{n_entries, recipe_fn, common_props};
+  return GR_SUCCESS;
+}
 
 }  // namespace grackle::impl::ratequery
 
-grackle::impl::ratequery::Registry grackle::impl::ratequery::new_Registry(
-    const chemistry_data& my_chemistry) {
-  if (my_chemistry.primordial_chemistry == 0) {
-    return Registry{0, nullptr};
+void grackle::impl::ratequery::drop_RegBuilder(RegBuilder* ptr) {
+  RegBuilder_reset_to_empty(ptr, false);
+}
+
+namespace grackle::impl::ratequery {}  // namespace grackle::impl::ratequery
+
+int grackle::impl::ratequery::RegBuilder_recipe_scalar(
+    RegBuilder* ptr, int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
+  EntryProps common_props = mk_invalid_EntryProps();
+  common_props.ndim = 0;
+  return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
+}
+
+int grackle::impl::ratequery::RegBuilder_recipe_1d(
+    RegBuilder* ptr, int n_entries, fetch_Entry_recipe_fn* recipe_fn,
+    int common_len) {
+  EntryProps common_props = mk_invalid_EntryProps();
+  common_props.ndim = 1;
+  common_props.shape[0] = common_len;
+  return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
+}
+
+/// build a new Registry.
+///
+/// In the process, the current Registry is consumed; it's effectively reset to
+/// the state immediately after it was initialized. (This lets us avoid
+/// reallocating lots of memory)
+grackle::impl::ratequery::Registry
+grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
+  int n_sets = ptr->len;
+  if (n_sets == 0) {
+    drop_RegBuilder(ptr);
+    return Registry{0, n_sets, nullptr, nullptr};
+  } else {
+    // set up id_offsets and determine the total number of entries
+    int* id_offsets = new int[n_sets];
+    int tot_entry_count = 0;
+    for (int i = 0; i < n_sets; i++) {
+      id_offsets[i] = tot_entry_count;
+      tot_entry_count += ptr->sets[i].len;
+    }
+    Registry out{tot_entry_count, n_sets, id_offsets, ptr->sets};
+    // reset to ptr to initial state (but don't deallocate since the ptr was
+    // transferred to out
+    RegBuilder_reset_to_empty(ptr, true);
+    return out;
   }
-  EntryProps props_LogTLinInterp = mk_invalid_EntryProps();
-  props_LogTLinInterp.ndim = 1;
-  props_LogTLinInterp.shape[0] = my_chemistry.NumberOfTemperatureBins;
-
-  // maybe k13dd should be considered multi-dimensional?
-  EntryProps props_k13dd = mk_invalid_EntryProps();
-  props_k13dd.ndim = 1;
-  props_k13dd.shape[0] = my_chemistry.NumberOfTemperatureBins * 14;
-
-  EntryProps props_scalar = mk_invalid_EntryProps();
-  props_scalar.ndim = 0;
-
-  const RecipeEntrySet standard_sets[] = {
-      {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_Entry,
-       props_LogTLinInterp},
-      {1999, 1, &get_k13dd_Entry, props_k13dd},
-      {2000, MiscRxn_NRATES, &get_MiscRxn_Entry, props_scalar}};
-
-  int len = static_cast<int>(sizeof(standard_sets) / sizeof(RecipeEntrySet));
-  RecipeEntrySet* sets = new RecipeEntrySet[len];
-  for (int i = 0; i < len; i++) {
-    sets[i] = standard_sets[i];
-  }
-
-  return Registry{len, sets};
 }
 
 void grackle::impl::ratequery::drop_Registry(
     grackle::impl::ratequery::Registry* ptr) {
   if (ptr->sets != nullptr) {
+    delete[] ptr->id_offsets;
+    ptr->id_offsets = nullptr;
     delete[] ptr->sets;
     ptr->sets = nullptr;
   }
@@ -204,33 +215,26 @@ static const Registry* get_registry(const chemistry_data_storage* my_rates) {
 }
 
 /// internal function to search for the rate description i
-///
-/// We interpret i as rate_id, when use_rate_id is true. Otherwise, we just
-/// look for the ith rate description (we introduce an artificial distinction
-/// between the 2 cases because we want to reserve the right to be able to
-/// change the relationship if it becomes convenient in the future)
 static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
-                                   long long i, bool use_rate_id) {
+                                   long long i) {
   const Registry* registry = get_registry(my_rates);
 
-  if (registry == nullptr) {
+  if (registry == nullptr || i >= registry->n_entries) {
     return invalid_rslt_();
   }
 
-  int total_len = 0;  // <- we increment this as we go through the rates
+  for (int set_idx = 0; set_idx < registry->n_sets; set_idx++) {
+    const struct EntrySet cur_set = registry->sets[set_idx];
+    int cur_id_offset = registry->id_offsets[set_idx];
 
-  for (int set_idx = 0; set_idx < registry->len; set_idx++) {
-    const struct RecipeEntrySet cur_set = registry->sets[set_idx];
-
-    const long long tmp = (use_rate_id) ? i - cur_set.id_offset : i - total_len;
+    const long long tmp = i - static_cast<long long>(cur_id_offset);
     if ((tmp >= 0) && (tmp < cur_set.len)) {
       ratequery_rslt_ out;
-      out.rate_id = tmp + cur_set.id_offset;
-      out.entry = cur_set.fn(my_rates, tmp);
+      out.rate_id = i;
+      out.entry = cur_set.recipe_fn(my_rates, tmp);
       out.entry.props = cur_set.common_props;
       return out;
     }
-    total_len += cur_set.len;
   }
   return invalid_rslt_();
 }
@@ -280,12 +284,15 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
     return rate_q::UNDEFINED_RATE_ID_;
   }
 
-  for (int set_idx = 0; set_idx < registry->len; set_idx++) {
-    const rate_q::RecipeEntrySet set = registry->sets[set_idx];
-    for (int i = 0; i < set.len; i++) {
-      rate_q::Entry entry = set.fn(nullptr, i);
+  for (int set_idx = 0; set_idx < registry->n_sets; set_idx++) {
+    const rate_q::EntrySet set = registry->sets[set_idx];
+    int set_len = set.len;
+    for (int i = 0; i < set_len; i++) {
+      // short-term hack! (it's bad practice to "cast away the const")
+      rate_q::Entry entry =
+          set.recipe_fn(const_cast<chemistry_data_storage*>(my_rates), i);
       if (std::strcmp(name, entry.name) == 0) {
-        return set.id_offset + i;
+        return registry->id_offsets[set_idx] + i;
       }
     }
   }
@@ -296,7 +303,7 @@ extern "C" int grunstable_ratequery_get_f64(chemistry_data_storage* my_rates,
                                             grunstable_rateid_type rate_id,
                                             double* buf) {
   namespace rate_q = grackle::impl::ratequery;
-  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id, true).entry;
+  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id).entry;
 
   if (entry.data == nullptr) {  // in this case, the query failed
     return GR_FAIL;
@@ -313,7 +320,7 @@ extern "C" int grunstable_ratequery_set_f64(chemistry_data_storage* my_rates,
                                             grunstable_rateid_type rate_id,
                                             const double* buf) {
   namespace rate_q = grackle::impl::ratequery;
-  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id, true).entry;
+  rate_q::Entry entry = rate_q::query_Entry(my_rates, rate_id).entry;
   if (entry.data == nullptr) {  // in this case, the query failed
     return GR_FAIL;
   }
@@ -333,7 +340,7 @@ extern "C" int grunstable_ratequery_prop(
   // short-term hack! (it's bad practice to "cast away the const")
   rate_q::Entry entry =
       rate_q::query_Entry(const_cast<chemistry_data_storage*>(my_rates),
-                          rate_id, true)
+                          rate_id)
           .entry;
 
   const rate_q::EntryProps& props = entry.props;
@@ -369,7 +376,7 @@ extern "C" const char* grunstable_ith_rate(
   const long long sanitized_i = (i < LLONG_MAX) ? (long long)i : -1;
   // short-term hack! (it's bad practice to "cast away the const")
   rate_q::ratequery_rslt_ tmp = rate_q::query_Entry(
-      const_cast<chemistry_data_storage*>(my_rates), sanitized_i, false);
+      const_cast<chemistry_data_storage*>(my_rates), sanitized_i);
   if (out_rate_id != nullptr) {
     *out_rate_id = tmp.rate_id;
   }
@@ -380,10 +387,5 @@ extern "C" unsigned long long grunstable_ratequery_nrates(
     const chemistry_data_storage* my_rates) {
   namespace rate_q = grackle::impl::ratequery;
   const rate_q::Registry* registry = my_rates->opaque_storage->registry;
-
-  unsigned long long out = 0;
-  for (int i = 0; i < registry->len; i++) {
-    out += static_cast<unsigned long long>(registry->sets[i].len);
-  }
-  return out;
+  return registry->n_entries;
 }
