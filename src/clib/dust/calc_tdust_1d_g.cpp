@@ -42,7 +42,6 @@ void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
   grackle::impl::View<gr_float**> logalsp(logalsp_ptr, gr_N, in);
   int Td_Size;
   int Td_N;
-  double logkgr;
 
   // Parameters
 

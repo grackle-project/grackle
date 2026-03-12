@@ -76,10 +76,9 @@ void grackle::impl::calc_all_tdust_gasgr_1d_g(
   double dlog10Tdust = 0.0;
   double* log10Tdust_vals = nullptr;
 
-  // NOTE: gr_N and gr_Size are historical names
-  // -> they are pretty uninformative and should be changed!
+  // NOTE: gr_N is a historical names
+  // -> it is pretty uninformative and should be changed!
   int gr_N[2] = {0, 0};
-  int gr_Size = 0;
   if (inject_pathway_props != nullptr) {
     dlog10Tdust =
         inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0];
@@ -90,7 +89,6 @@ void grackle::impl::calc_all_tdust_gasgr_1d_g(
     gr_N[1] = static_cast<int>(
         inject_pathway_props->log10Tdust_interp_props.dimension[0]);
   };
-  gr_Size = gr_N[0] * gr_N[1];
 
   // Calculate heating from interstellar radiation field
   //  -> this is ONLY used when `itmask_metal .eq. MASK_TRUE`
