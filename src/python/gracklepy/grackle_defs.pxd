@@ -203,6 +203,7 @@ cdef extern from "grackle.h":
       gr_float *ref_org_dust_temperature;
       gr_float *vol_org_dust_temperature;
       gr_float *H2O_ice_dust_temperature;
+      gr_float *sne_rate;
 
     ctypedef struct c_grackle_version "grackle_version":
       const char* version;

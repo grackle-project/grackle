@@ -29,6 +29,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
+#include "dust_growth_and_destruction.hpp"
 
 void grackle::impl::cool1d_multi_g(
     int imetal, int iter, double* edot, double* tgas, double* mmw, double* p2d,
@@ -1102,10 +1103,9 @@ void grackle::impl::cool1d_multi_g(
       itmask_metal[i] = MASK_FALSE;
     }
   }
-
   // Compute grain size increment
   if ((my_chemistry->use_dust_density_field > 0) &&
-      (my_chemistry->dust_species > 0)) {
+      (my_chemistry->dust_species > 0) && (my_chemistry->dust_model == 0)) {
     grackle::impl::calc_grain_size_increment_1d(
         dom, idx_range, itmask_metal, my_chemistry,
         my_rates->opaque_storage->grain_species_info,
@@ -1130,7 +1130,7 @@ void grackle::impl::cool1d_multi_g(
         if (itmask[i] != MASK_FALSE) {
           // it may be faster to remove this branching
           dust2gas[i] = dust(i, idx_range.j, idx_range.k) /
-                        d(i, idx_range.j, idx_range.k);
+                        (d(i, idx_range.j, idx_range.k));
         }
       }
     } else {

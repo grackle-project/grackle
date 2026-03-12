@@ -333,3 +333,20 @@ ENTRY(omp_nthreads, INT, 0)
 * 3: Newton-Raphson-only
 */
 ENTRY(solver_method, INT, 1)
+
+/* dust model selection
+* 0: default (runs calc_grain_size_increment_1d as usual)
+* 1: harrison dust model
+*/
+ENTRY(dust_model, INT, 0)
+
+/* Flag to use snetimestep */
+ENTRY(use_sne_field, INT, 0)
+
+/* Li et al 2019 dust model parameters*/
+ENTRY(dust_destruction_eff, DOUBLE, 3.0e-1)
+ENTRY(sne_coeff, DOUBLE, 1.0)
+ENTRY(sne_shockspeed, DOUBLE, 1.0e2)
+ENTRY(dust_grainsize, DOUBLE, 1.0e-1)
+ENTRY(dust_growth_densref, DOUBLE, 2.3e-22)
+ENTRY(dust_growth_tauref, DOUBLE, 0.004)
