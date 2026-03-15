@@ -25,7 +25,7 @@ ENV username=gr-user
 USER $username
 WORKDIR /home/$username
 
-COPY --chown=$username --exclude=tests/install-tests/ --exclude=build*/ --exclude=gold-standards-*/ --exclude=*/__pycache__/ ./ ./grackle
+COPY --chown=$username --exclude=tests/install-tests/ --exclude=build*/ --exclude=gold-standards-*/ --exclude=*/__pycache__/ --exclude=src/example/GRACKLE_INFO ./ ./grackle
 
 # this probably isn't necessary, but let's be safe
 RUN rm -rf ./grackle/build \

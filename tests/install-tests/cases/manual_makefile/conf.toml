@@ -8,9 +8,17 @@ src_file = "c_example.c"
 # the path to the example binary relative to the sample project directory
 output_binary = "./example_app"
 
-# enumerate each of the test cases
-[[test]]
+# enumerate each of the test cases:
+[test.simple]
+# in this case, just a shared library is installed
 image = "shared_install"
+cmds = ["make"]
+# whether LD_LIBRARY_PATH must be modified
+override_LD_LIBRARY_PATH = true
+
+[test.SharedAndStatic]
+# in this case, shared and static Grackle libraries are both installed
+image = "shared_static_install"
 cmds = ["make"]
 # whether LD_LIBRARY_PATH must be modified
 override_LD_LIBRARY_PATH = true

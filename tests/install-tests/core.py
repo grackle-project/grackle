@@ -1,24 +1,28 @@
 """
-Define the core testing logic
+Define the core logic for running install tests
 """
 
 # to maximize portability, only use built-in modules present in python 3.6.1 and newer
 from collections import ChainMap
 from enum import Enum
 import fnmatch
-import functools
+from functools import partial
 import os
 import re
 import shlex
 import sys
 from typing import (
+    Any,
     Callable,
+    Container,
     Dict,
     Iterator,
+    List,
     Mapping,
     NamedTuple,
     Optional,
     Tuple,
+    Type,
     Union,
 )
 
@@ -104,52 +108,157 @@ class TestItem(NamedTuple):
 
 
 # we are going to be fairly pedantic about toml parsing
-# define 2 functions to check the data types specified in the toml file
-def _is_table_arr(v) -> bool:
-    # does v correspond to a TOML array of tables?
-    # -> TOML doesn't support an empty array of tables
-    # -> if 1 array entry is a table then all array entries are tables
-    return isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict)
+
+_CheckTypeArg = Union[Type, Tuple[Type, ...], Callable[[Any], bool]]
 
 
-def _is_str_arr(v) -> bool:
-    return isinstance(v, list) and all(isinstance(elem, str) for elem in v)
+def _check_type(v: Any, classinfo: _CheckTypeArg) -> bool:
+    if isinstance(classinfo, (type, tuple)):
+        return isinstance(v, classinfo)
+    return classinfo(v)
 
+
+class TomlValReq(NamedTuple):
+    """
+    Specifies requirements for a toml value
+
+    Checks are applied after the values are coerced to python values.
+    """
+
+    # this is either an argument for isinstance or a callable specifying whether
+    # the value has the appropriate type
+    classinfo: _CheckTypeArg
+
+    # describes the required toml type
+    type_descr: str
+
+    # when specified, the value is required to be one of these values
+    choices: Optional[Container] = None
+
+    # when True, the associated parameter is allowed as an array
+    # -> this is intended as a quick-and-dirty mechanism for parameterizing
+    #    several related tests
+    # -> as soon as we have 2 or more parameters where we want to allow
+    #    parameterization (if it ever happens), I **REALLY** think we want to
+    #    transition to a system similar to github actions, where we introduce
+    #    a matrix subtable
+    #    https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations
+    allow_as_arr: bool = False
+
+
+def _is_single_type_toml_arr(v: Any, kind: _CheckTypeArg, allow_empty: bool) -> bool:
+    """Check if ``v`` corresponds to a toml array of a single type"""
+    if not isinstance(v, list):
+        return False
+    elif len(v) == 0:
+        return allow_empty
+    return all(_check_type(elem, kind) for elem in v)
+
+
+_is_str_arr = partial(_is_single_type_toml_arr, kind=str, allow_empty=True)
 
 # lists the requirements for all allowed keys in one of the TOML test tables
-# (and optionally specify a coercion function)
-_REQS = {
-    "image": ((str, DockerImage), DockerImage, "a string"),
-    "cmds": (_is_str_arr, tuple, "an array of strings"),
-    "src_file": (str, None, "a string"),
-    "output_binary": (str, None, "a string"),
-    "override_LD_LIBRARY_PATH": (bool, None, "a boolean"),
+_REQS: Dict[str, TomlValReq] = {
+    # the name of the image that we want to use
+    "image": TomlValReq(
+        classinfo=str,
+        type_descr="string",
+        choices=set(member.layer_name() for member in DockerImage),
+        allow_as_arr=True,
+    ),
+    # the list of commands that we want to use
+    # -> if we tweak the vendored toml parser to support toml 1.1, I think it
+    #    would be better if expected an array of (inline) tables (where we could
+    #    override environment variables) or a array of mixed strings and tables
+    "cmds": TomlValReq(_is_str_arr, "array of strings"),
+    # the file from GRACKLE_ROOT/src/example to copy into the sample project
+    # source directory
+    "src_file": TomlValReq(str, "string"),
+    # the relative path to the output binary (from the root of the sample project
+    # source directory)
+    "output_binary": TomlValReq(str, "string"),
+    # specify whether we need to override_LD_LIBRARY_PATH in order to execute the
+    # output binary
+    "override_LD_LIBRARY_PATH": TomlValReq(bool, "boolean"),
 }
 
 
-def _coerce_toml_table(table: Mapping, err_prefix=""):
-    out = {}
-    for key, value in table.items():
-        try:
-            classinfo, coerce_fn, descr = _REQS[key]
-        except KeyError:
-            raise ValueError(f"{err_prefix}unexpected key: {key}") from None
+def _process_toml_table(
+    table: Mapping, is_common_table: bool, err_prefix=""
+) -> Tuple[Dict[str, Any], Optional[Tuple[str, List[Any]]]]:
+    """
+    Process a (already parsed) toml table
 
-        if isinstance(classinfo, (tuple, type)):
-            has_right_type = isinstance(value, classinfo)
+    Parameters
+    ----------
+    table
+        The already parsed toml table
+    is_common_table
+        Pass ``True`` if ``table`` corresponds to the toml file's `common`
+        table. Otherwise, pass ``False``.
+    err_prefix
+        An optional string to prepend to error messages
+
+    Returns
+    -------
+    sanitized: dict
+        A sanitized dict where values are guaranteed to satisfy all
+        requirements. This excludes any parametrized values
+    parametrization: tuple or None
+        If table included a parametrized value, this is a pair. The first
+        element is the parameter name. The second is list of values.
+    """
+
+    def _mk_err(msg):
+        return ValueError(err_prefix + msg)
+
+    parametrization = None
+    sanitized = {}
+
+    for key, val in table.items():
+        try:
+            req = _REQS[key]
+        except KeyError:
+            raise _mk_err(f"unexpected parameter: {key}") from None
+
+        if _check_type(val, req.classinfo):
+            if (req.choices is not None) and (val not in req.choices):
+                raise _mk_err(f"{key} must hold a value in {list(req.choices)!r}")
+            sanitized[key] = val
+        elif not req.allow_as_arr:
+            raise _mk_err(f"{key} must have type: {req.type_descr}")
         else:
-            has_right_type = classinfo(value)
-        if not has_right_type:
-            raise ValueError(f"{err_prefix}{key} must be {descr}")
-        out[key] = value if coerce_fn is None else coerce_fn(value)
-    return out
+            type_is_ok = _is_single_type_toml_arr(val, req.classinfo, allow_empty=True)
+            if type_is_ok and is_common_table:
+                # there is a reason that this MUST be enforced
+                raise _mk_err(f"common.{key} is forbidden from being an array")
+            elif type_is_ok and len(val) == 0:
+                raise _mk_err(f"`{key}` must not be an empty array")
+
+            valid = (req.choices is None) or all(elem in req.choices for elem in val)
+            if not valid:
+                raise _mk_err(
+                    f"when {key} is an array, each array element must be a value from "
+                    f"{list(req.choices)!r}"
+                )
+            elif len(set(val)) != len(val):
+                raise _mk_err(f"when {key} is an array, array element can repeat")
+            elif parametrization is not None:
+                # if this ever comes to pass, we probably want to rethink how things
+                # work. I outline an alternative plan in the docstring comment of
+                # TomlValReq's allow_as_arr attribute
+                raise NotImplementedError(
+                    "can't handle the case when 2 parameters are parametrized"
+                )
+            parametrization = (key, val)
+    return sanitized, parametrization
 
 
 def test_cases_from_conf(path: str) -> Iterator[Tuple[str, TestItem]]:
     """Constructs TestItem from the specified configuration toml file"""
 
     # before we actually parse the config file, let's build a list of all other
-    # files in the the config file
+    # files in the directory that holds the config file
     # -> we assume that these are parts of the sample source directory
     # -> we store the paths to these files so that they're relative to GRACKLE_ROOT
     abs_conf_dir_path = os.path.dirname(os.path.abspath(path))
@@ -164,7 +273,7 @@ def test_cases_from_conf(path: str) -> Iterator[Tuple[str, TestItem]]:
             else:
                 common_src_files.append(os.path.join(_rel_conf_dir_path, entry.name))
 
-    with open(path, "r") as f:
+    with open(path, "rb") as f:
         raw = tomllib.load(f)
 
     err_prefix = f"Toml File Error {path}: "
@@ -173,32 +282,56 @@ def test_cases_from_conf(path: str) -> Iterator[Tuple[str, TestItem]]:
     common_table = raw.get("common", {})
     if not isinstance(common_table, dict):
         raise ValueError(f'{err_prefix}"common" key must provide a table, if specified')
-    common_table = _coerce_toml_table(common_table, err_prefix=err_prefix)
+    common_table, _dummy = _process_toml_table(
+        common_table, is_common_table=True, err_prefix=err_prefix
+    )
+    assert _dummy is None, "sanity check!"
 
-    try:
-        test_arr = raw["test"]
-    except KeyError:
-        raise ValueError(f'{err_prefix} "test" key is missing') from None
-    if not _is_table_arr(test_arr):
-        raise ValueError(
-            f'{err_prefix}"test" key must correspond to an array of tables'
-        )
+    test_tables = raw.get("test", {})
+    if not isinstance(test_tables, dict):
+        raise ValueError(f'{err_prefix}"test" is an invalid toml key')
+    elif len(test_tables) == 0:
+        raise ValueError(f"{err_prefix}no test tables defined")
 
     name_prefix = os.path.basename(abs_conf_dir_path)
-    for table in test_arr:
-        table = _coerce_toml_table(table, err_prefix=err_prefix)
-        full_table = ChainMap(table, common_table, TestItem._field_defaults)
-        if "src_file" not in full_table:
-            raise ValueError(f'{err_prefix}"src_file" wasn\'t specified')
-
-        kwargs = {k: v for k, v in full_table.items() if k != "src_file"}
-        kwargs["src_files"] = tuple(
-            [os.path.join("src", "example", full_table["src_file"])] + common_src_files
+    for table_name, raw_table in test_tables.items():
+        if not isinstance(raw_table, dict):
+            raise ValueError(f"{err_prefix}test.{table_name} is not a table")
+        sanitized, parametrization = _process_toml_table(
+            raw_table, is_common_table=False, err_prefix=err_prefix
         )
-        test_item = TestItem(**kwargs)
+        base_name = f"{name_prefix}.{table_name}"
+        base_conf = ChainMap(sanitized, common_table, TestItem._field_defaults)
+        if parametrization is None:
+            name_conf_pairs = [(base_name, base_conf)]
+        else:
+            p_name, p_vals = parametrization
+            if p_name in common_table:
+                # we're intentionally being a little strict here (we can relax later)
+                raise ValueError(
+                    f"since test.{table_name}.{p_name} is parametrized, it's an error "
+                    f"to specify common.{p_name}"
+                )
+            name_conf_pairs = (
+                (f"{base_name}/{v}", base_conf.new_child({p_name: v})) for v in p_vals
+            )
 
-        test_name = f"{name_prefix}.{test_item.image._value_}"
-        yield (test_name, test_item)
+        for test_name, test_conf in name_conf_pairs:
+            for key in ["image", "src_file", "cmds"]:
+                if key not in test_conf:
+                    raise ValueError(
+                        f'{err_prefix}"{key}" is missing from the specification of the '
+                        f'"{test_name}" test'
+                    )
+            src_file_path = os.path.join("src", "example", test_conf["src_file"])
+
+            kwargs = {k: v for k, v in test_conf.items() if k != "src_file"}
+            kwargs["src_files"] = tuple([src_file_path] + common_src_files)
+            kwargs["image"] = DockerImage(kwargs["image"])
+            kwargs["cmds"] = tuple(kwargs["cmds"])
+            test_item = TestItem(**kwargs)
+
+            yield (test_name, test_item)
 
 
 class TestResult(NamedTuple):
@@ -324,9 +457,7 @@ def run_test(
     In practice, this approach isn't optimal. We can *DEFINITELY* do better
     than this, but this is a simple enough way to start...
     """
-    _cmd = functools.partial(
-        _exec_container_cmd, container=container, print_info=print_info
-    )
+    _cmd = partial(_exec_container_cmd, container=container, print_info=print_info)
 
     # define the path to the root project (within the container)
     sample_proj_root = "./sample-project"
