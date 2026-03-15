@@ -102,6 +102,6 @@ RUN mkdir -p $LOCAL_LIB \
 #    order of operations is unimportant
 FROM static_install AS static_shared_install
 RUN cd ./grackle \
-    && cmake -Bbuild-static -GNinja -DBUILD_SHARED_LIBS=OFF \
-    && cmake --build build-static \
-    && cmake --install ./build-static --prefix ${LOCAL_LIB}
+    && cmake -Bbuild-shared -GNinja -DBUILD_SHARED_LIBS=ON \
+    && cmake --build build-shared \
+    && cmake --install ./build-shared --prefix ${LOCAL_LIB}
