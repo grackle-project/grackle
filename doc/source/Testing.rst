@@ -1,21 +1,22 @@
 .. _testing:
 
-Running the Tests
-=================
+Testing Grackle
+===============
 
-Grackle contains a number of unit and answer tests to verify that
-everything is working properly.
+Grackle development employs a wide variety of tests and testing tools.
+The tests are primarily organized into the following categories:
 
-The tests are primarily organized into 2 test suites:
+- :ref:`core-library test suite <corelib-suite>`: includes a mix of unit tests and "compilation tests" (defined below) that work directly with the core grackle library.
+  These tests are driven via the ``ctest`` program (shipped as a part of ``CMake``)
 
-1. the :ref:`core-library test suite <corelib-suite>`, which performs tests on the Core library
-2. the :ref:`gracklepy test suite <gracklepy-suite>`, which performs tests on the gracklepy bindings
+- :ref:`gracklepy test suite <gracklepy-suite>`: includes a mix of unit tests and "answer tests" (defined below) that use the gracklepy bindings.
+  These tests are driven via the ``pytest`` program.
 
-Our continuous integration system is also set up to ensure that all Python code conforms to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`__
+- :ref:`formatting, linting, and other static checks <static_checks>`: includes a bunch of static checks, such as (formatting and linting).
+  Our continuous integration system is set up to these checks.
+  :ref:`The linked page <static_checks>` also provides instructions for running the tests locally.
 
-Historically, the gracklepy test suite included **all tests**.
-More recently, the core-library test suite was introduced to make it easier to run unit tests on functionality that isn't directly exposed through gracklepy and to run tests involving compilation.
-At this point, the gracklepy test suite includes a mix of unit tests and "answer tests" (we describe "answer tests" more down below). 
+The rest of this page provides instructions for running the :ref:`core-library tests <corelib-suite>` and :ref:`gracklepy tests <gracklepy-suite>`.
 
 .. _corelib-suite:
 
