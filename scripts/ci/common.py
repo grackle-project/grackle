@@ -9,7 +9,17 @@ import os
 import re
 import subprocess
 import sys
-from typing import Container, Dict, IO, Iterator, Mapping, NamedTuple, Optional, Union
+from typing import (
+    Container,
+    Dict,
+    IO,
+    Iterator,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Union,
+)
 
 if sys.version_info < (3, 6, 1):  # 3.6.0 doesn't support all NamedTuple features
     raise RuntimeError("python 3.6.1 or newer is required")
@@ -122,20 +132,43 @@ def export_env_var_assignment(assignment_line: str):
 def _fmt_env_args(
     include_outer_env: bool = True,
     env: Optional[Mapping[str, str]] = None,
+    *,
+    inherit_string: str = "<inherit>",
 ) -> str:
     """
     Format a string representation conveying env variables as concisely as possible
     """
     # this assumes that the env-overwrites are short
+    if env == {}:
+        env = None
     kv_pairs = [] if env is None else (f"{k}={v}" for k, v in env.items())
     if include_outer_env and env is None:
-        return "<inherit>"
+        return inherit_string
     elif include_outer_env:
-        return f"<inherit>.update({'; '.join(kv_pairs)})"
+        return f"{inherit_string}.update({'; '.join(kv_pairs)})"
     elif env is None:
         return "<no-env-vars>"
     else:
         return f"{{{'; '.join(kv_pairs)}}}"
+
+
+def make_cmd_summary_str(
+    args: Sequence[str],
+    include_outer_env: bool = True,
+    env: Optional[Mapping[str, str]] = None,
+    cwd: Optional[str] = None,
+    *,
+    inherit_string: str = "<inherit>",
+) -> str:
+    _msg = " ".join(args)
+    _meta_list = []
+    if cwd is not None:
+        _meta_list.append(f"exec_dir: {cwd}")
+    _env_str = _fmt_env_args(
+        include_outer_env=include_outer_env, env=env, inherit_string=inherit_string
+    )
+    _meta_list.append(f"ENV: {_env_str}")
+    return f"{_msg}; ({'; '.join(_meta_list)})"
 
 
 def _get_subprocess_run_env_kwarg(
@@ -217,13 +250,10 @@ def exec_cmd(
         raise TypeError(f"args[0], {args[0]!r}, isn't a str")
 
     if log:
-        _msg = " ".join(args)
-        _meta_list = []
-        if cwd is not None:
-            _meta_list.append(f"exec_dir: {cwd}")
-        _env_str = _fmt_env_args(include_outer_env=include_outer_env, env=env)
-        _meta_list.append(f"ENV: {_env_str}")
-        logger.info(f"$ {_msg}; ({'; '.join(_meta_list)})")
+        _msg = make_cmd_summary_str(
+            args=args, include_outer_env=include_outer_env, env=env, cwd=cwd
+        )
+        logger.info(f"$ {_msg}")
 
     if dry_run:
         return
