@@ -1,0 +1,60 @@
+[common]
+# specify options common to all tests
+# -> these options can be overridden on a case-by-case basis
+
+# the file from GRACKLE_ROOT/src/example to copy
+src_file = "c_example.c"
+
+# the path to the example binary relative to the sample project directory
+output_binary = "build/example_app"
+
+# specify whether LD_LIBRARY_PATH must be modified
+override_LD_LIBRARY_PATH = false
+
+# enumerate each of the test cases
+#
+# depending on how many install tests we create, we may want to consider an
+# approach that lets us more easily parameterize tests
+[[test]]
+image = "shared_build"
+cmds = [
+  "Grackle_DIR='/home/gr-user/grackle/build' cmake -Bbuild",
+  "cmake --build build"
+]
+
+[[test]]
+image = "shared_install"
+cmds = [
+  "Grackle_DIR='/home/gr-user/local' cmake -Bbuild",
+  "cmake --build build"
+]
+override_LD_LIBRARY_PATH = false
+
+
+[[test]]
+image = "static_build"
+cmds = [
+  "Grackle_DIR='/home/gr-user/grackle/build' cmake -Bbuild",
+  "cmake --build build"
+]
+
+[[test]]
+image = "static_install"
+cmds = [
+  "Grackle_DIR='/home/gr-user/local' cmake -Bbuild",
+  "cmake --build build"
+]
+
+[[test]]
+image = "shared_static_install"
+cmds = [
+  "Grackle_DIR='/home/gr-user/local' cmake -Bbuild",
+  "cmake --build build"
+]
+
+[[test]]
+image = "static_shared_install"
+cmds = [
+  "Grackle_DIR='/home/gr-user/local' cmake -Bbuild",
+  "cmake --build build"
+]

@@ -1,0 +1,16 @@
+[common]
+# specify options common to all tests
+# -> these options can be overridden on a case-by-case basis
+
+# the file from GRACKLE_ROOT/src/example to copy
+src_file = "c_example.c"
+
+# the path to the example binary relative to the sample project directory
+output_binary = "./example_app"
+
+# enumerate each of the test cases
+[[test]]
+image = "shared_install"
+cmds = ["make"]
+# whether LD_LIBRARY_PATH must be modified
+override_LD_LIBRARY_PATH = true
