@@ -186,22 +186,14 @@ else()
 endif()
 
 get_implicit_link_reqs(Fortran Fortran_implicit_libs Fortran_implicit_linkdirs)
-set(_TOOLCHAIN_LINK_LIBS ${Fortran_implicit_libs})
+set(_TOOLCHAIN_LINK_LIBS "${Fortran_implicit_libs}")
+get_implicit_link_reqs(CXX CXX_implicit_libs CXX_implicit_linkdirs)
+list(APPEND _TOOLCHAIN_LINK_LIBS ${CXX_implicit_libs})
 
-# on most unix-like platforms (but not macOS), we need to explicitly link to
-# to the standard library's math functions
-# -> here we determine based on whether our custom toolchain::m target
-#    is a dummy placeholder or not whether to add this target
-#
-# NOTE: when we start using C++ in the core grackle library, we can drop this logic
-# and just rely upon `get_implicit_link_reqs(CXX ...)`, since the C++ runtime
-# library is ALWAYS linked to the math functions
-if (UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  list(APPEND _TOOLCHAIN_LINK_LIBS m) # explicit c requirement (but may
-                                      # be a duplicate)
-endif()
 
-list(REMOVE_DUPLICATES _TOOLCHAIN_LINK_LIBS)
+# we previously did this, but I don't think this is a great idea until after we stop
+# worying about implicit fortran link dependencies
+#list(REMOVE_DUPLICATES _TOOLCHAIN_LINK_LIBS)
 
 
 # Define the grackle.pc file
@@ -263,6 +255,7 @@ string(REPLACE
 
 
 set(_STATIC_EXTRA_LINK_DIRS ${Fortran_implicit_linkdirs})
+list(APPEND _STATIC_EXTRA_LINK_DIRS ${CXX_implicit_linkdirs})
 list(TRANSFORM _STATIC_EXTRA_LINK_DIRS PREPEND "-L")
 string(REPLACE
   ";" " " _STATIC_EXTRA_LINK_DIRS "${_STATIC_EXTRA_LINK_DIRS}")
