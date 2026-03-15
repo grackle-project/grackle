@@ -1,0 +1,58 @@
+[common]
+# this table is used to specify options common to all tests
+# -> these options can be overridden on a case-by-case basis
+
+# specify whether LD_LIBRARY_PATH must be modified to include the search path
+# for the Grackle library
+# (see the explanation in find_package/conf.toml for explanation about current value)
+override_LD_LIBRARY_PATH = false
+
+# the file from GRACKLE_ROOT/src/example to copy
+src_file = "c_example.c"
+
+# the path to the example binary relative to the sample project directory
+# that will be produced by executing the supplied commands
+# (if the commands succeed)
+output_binary = "build/example_app"
+
+
+# enumerate each of the test cases
+# ================================
+
+[test.LinkStaticBuildDir]
+image = "static_build"
+
+# we expect this to fail since no shared lib is available
+expect_cmd_fail=true
+
+# list the commands to construct output_binary
+cmds = ["Grackle_DIR='/home/gr-user/grackle/build' cmake -Bbuild"]
+
+[test.LinkStaticInstallDir]
+image = "static_build"
+
+# we expect this to fail since no shared lib is available
+expect_cmd_fail=true
+
+# list the commands to construct output_binary
+cmds = ["Grackle_DIR='/home/gr-user/grackle/build' cmake -Bbuild"]
+
+[test.LinkSharedBuildDir]
+image = "shared_build"
+# list the commands to construct output_binary
+cmds = [
+  "Grackle_DIR='/home/gr-user/grackle/build' cmake -Bbuild",
+  "cmake --build build"
+]
+
+
+[test.LinkSharedInstall]
+# this test case is parametrized by each image arguments
+image = ["shared_install", "shared_static_install", "static_shared_install"]
+
+# list the commands to construct output_binary
+cmds = [
+  "Grackle_DIR='/home/gr-user/local' cmake -Bbuild",
+  "cmake --build build"
+]
+
