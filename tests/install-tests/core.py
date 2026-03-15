@@ -177,6 +177,9 @@ _REQS: Dict[str, TomlValReq] = {
     # the relative path to the output binary (from the root of the sample project
     # source directory)
     "output_binary": TomlValReq(str, "string"),
+    # indicates whether we expect the final command to fail. When this is True,
+    # output_binary can be omitted
+    "expect_cmd_fail": TomlValReq(bool, "boolean"),
     # specify whether we need to override_LD_LIBRARY_PATH in order to execute the
     # output binary
     "override_LD_LIBRARY_PATH": TomlValReq(bool, "boolean"),
@@ -325,10 +328,22 @@ def test_cases_from_conf(path: str) -> Iterator[Tuple[str, TestItem]]:
                     )
             src_file_path = os.path.join("src", "example", test_conf["src_file"])
 
-            kwargs = {k: v for k, v in test_conf.items() if k != "src_file"}
+            kwargs = {
+                k: v
+                for k, v in test_conf.items()
+                if k not in ["expect_cmd_fail", "src_file"]
+            }
             kwargs["src_files"] = tuple([src_file_path] + common_src_files)
             kwargs["image"] = DockerImage(kwargs["image"])
             kwargs["cmds"] = tuple(kwargs["cmds"])
+            if test_conf.get("expect_cmd_fail", False):
+                kwargs["output_binary"] = None
+            elif "output_binary" not in kwargs:
+                raise ValueError(
+                    f'{err_prefix}"{test_name}" test is missing output_binary '
+                    "parameter (this is only allowed if expect_cmd_fail=true)"
+                )
+
             test_item = TestItem(**kwargs)
 
             yield (test_name, test_item)
@@ -426,6 +441,8 @@ def _exec_container_cmd(
     rslt = container.call(*args, log=False, capture_output=False, **call_kwargs)
     if expect_success and rslt.returncode != 0:
         return TestResult.Fail(_msg)
+    elif (not expect_success) and rslt.returncode == 0:
+        return TestResult.Fail(_msg, issue="expected failure, but got returncode of 0")
     return TestResult.Success()
 
 
@@ -486,7 +503,7 @@ def run_test(
     print_info("Execute Build Commands:", flush=True)
     for i, cmd in enumerate(test_item.cmds):
         is_last_build_cmd = len(test_item.cmds) - 1 == i
-        expect_success = is_last_build_cmd and test_item.expect_success
+        expect_success = (not is_last_build_cmd) or test_item.expect_success
 
         args = shlex.split(cmd)
 

@@ -73,7 +73,10 @@ def main(args: argparse.Namespace):
         return 0
 
     # determine the docker layers that we need
-    images = set(case.image for case in test_cases.values())
+    if args.skip_image_creation:
+        images = []
+    else:
+        images = set(case.image for case in test_cases.values())
     n_tasks = len(images) + len(test_cases)
 
     task_itr = itertools.chain(images, test_cases.items())
@@ -187,6 +190,9 @@ _FILTER_HELP = """\
 filters test names using the approach of googletest. For more detail, see
 https://google.github.io/googletest/advanced.html#running-a-subset-of-the-tests"""
 parser.add_argument("--filter-tests", action="store", help=_FILTER_HELP)
+
+# TODO: figure out weirdness with creating docker images so we can remove this
+parser.add_argument("--skip-image-creation", action="store_true")
 
 parser.add_argument(
     "-v",
