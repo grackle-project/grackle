@@ -159,6 +159,15 @@ void calc_tdust_3d(
         }
       }
 
+      // // Set itmask to false for dust-poor cells
+      // if (my_chemistry->use_dust_density_field > 0) {
+      //   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      //     if (dust(i,j,k) < 1.e-9 * d(i,j,k))  {
+      //       itmask_metal[i] = MASK_FALSE;
+      //     }
+      //   }
+      // }
+
       // Compute grain size increment
       if ( (my_chemistry->use_dust_density_field > 0)  &&  (my_chemistry->dust_species > 0)
            &&  (my_chemistry->dust_model == 0) )  {

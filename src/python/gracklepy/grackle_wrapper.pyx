@@ -765,6 +765,7 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.H2O_ice_dust_temperature = get_field(fc, "H2O_ice_dust_temperature")
 
     my_fields.sne_rate = get_field(fc, "sne_rate")
+    my_fields.tau_dest = get_field(fc, "tau_dest")
 
     return my_fields
 

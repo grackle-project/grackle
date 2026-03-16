@@ -343,6 +343,9 @@ ENTRY(dust_model, INT, 0)
 /* Flag to use snetimestep */
 ENTRY(use_sne_field, INT, 0)
 
+/* Flag to use user-provided dust destruction timescale */
+ENTRY(use_tau_dest_field, INT, 0)
+
 /* Li et al 2019 dust model parameters*/
 ENTRY(dust_destruction_eff, DOUBLE, 3.0e-1)
 ENTRY(sne_coeff, DOUBLE, 1.0)

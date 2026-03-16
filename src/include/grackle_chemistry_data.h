@@ -321,6 +321,9 @@ typedef struct
   /* Flag to use snetimestep */
   int use_sne_field;
 
+  /* Flag to use user-provided dust destruction timescale field */
+  int use_tau_dest_field;
+
   /* flag and parameters for Li+ 2019 dust growth and destruction */
   double dust_destruction_eff;
   double sne_coeff;

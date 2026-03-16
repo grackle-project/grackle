@@ -303,6 +303,8 @@ def _required_extra_fields(my_chemistry):
         my_fields.append("isrf_habing")
     if my_chemistry.use_sne_field == 1:
         my_fields.append("sne_rate")
+    if my_chemistry.use_tau_dest_field == 1:
+        my_fields.append("tau_dest")
     return my_fields
 
 def _required_calculated_fields(my_chemistry):

@@ -100,6 +100,11 @@ void grackle::impl::dust_destruction(
       use_sne ? my_fields->sne_rate : my_fields->density,
       my_fields->grid_dimension[0], my_fields->grid_dimension[1],
       my_fields->grid_dimension[2]);
+  bool use_tau_dest = (my_chemistry->use_tau_dest_field > 0);
+  grackle::impl::View<gr_float***> tau_dest_field(
+      use_tau_dest ? my_fields->tau_dest : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
 
   double dens_proper = internalu.urho * std::pow(internalu.a_value, 3);
 
@@ -124,7 +129,14 @@ void grackle::impl::dust_destruction(
       double dM = 0;
       double dM_shock = 0.0;
 
-      if (use_sne) {
+      if (use_tau_dest) {
+        // user-provided destruction timescale
+        tau_dest = tau_dest_field(i, idx_range.j, idx_range.k);
+        if (tau_dest <= 0) {
+          tau_dest = 1e20;
+        }
+        dM_shock = std::min(rho_dust / tau_dest, rho_dust / dt);
+      } else if (use_sne) {
         // destruction by SN shocks
         if (sne_this <= 0) {
           tau_dest = 1e20;
@@ -219,11 +231,9 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
         std::exit(21);
       }
 
-      // fprintf(stderr,
-      //         "internal: dt=%e growth_dM=%.10e destruction_dM=%.10e
-      //         dM_rate=%.15e gas=%.15e dust=%.15e metal=%.15e consv.=%.15e\n",
-      //          dt, growth_dM[i], destruction_dM[i], dM_total, rho_gas,
-      //          rho_dust, rho_metal, rho_dust+rho_metal);
+      fprintf(stderr,
+              "internal: dt=%e growth_dM=%.10e destruction_dM=%.10e dM_rate=%.15e gas=%.15e dust=%.15e metal=%.15e consv.=%.15e\n", 
+              dt, growth_dM[i], destruction_dM[i], dM_total, rho_gas, rho_dust, rho_metal, rho_dust+rho_metal);
 
       // Update the fields
       if (!dryrun) {

@@ -205,6 +205,9 @@ typedef struct
 
   // use_snetimestep = 1
   gr_float *sne_rate;
+
+  // use_tau_dest_field = 1
+  gr_float *tau_dest;
 } grackle_field_data;
 
 
