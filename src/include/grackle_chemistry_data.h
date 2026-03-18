@@ -332,6 +332,11 @@ typedef struct
   double dust_growth_densref;
   double dust_growth_tauref;
 
+  /* parameters for dust creation*/
+  double dust_condensation_eff;
+  double sne_metal_yield;
+
+
 } chemistry_data;
 
 /*****************************

@@ -728,9 +728,10 @@ int solve_rate_cool(
     std::vector<double> mmw(my_fields->grid_dimension[0]);
     std::vector<double> edot(my_fields->grid_dimension[0]);
 
-    // Arrays to store dust growth and destruction mass changes
+    // Arrays to store dust growth, destruction, and creation mass changes
     std::vector<double> growth_dM(my_fields->grid_dimension[0]);
     std::vector<double> destruction_dM(my_fields->grid_dimension[0]);
+    std::vector<double> creation_dM(my_fields->grid_dimension[0]);
 
     // iteration masks
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
@@ -921,6 +922,11 @@ int solve_rate_cool(
             my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
             tgas.data(), growth_dM.data());
 
+          // Calculate dust creation rates from stellar feedback
+          grackle::impl::dust_creation(
+            my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+            dtit.data(), creation_dM.data());
+
           // Calculate dust destruction rates and store in destruction_dM array
           grackle::impl::dust_destruction(
             my_chemistry, my_fields, internalu, idx_range, itmask.data(),
@@ -929,7 +935,7 @@ int solve_rate_cool(
           // Apply the calculated rates to update density fields
           grackle::impl::dust_update(
             my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
-            growth_dM.data(), destruction_dM.data(), false);
+            growth_dM.data(), destruction_dM.data(), creation_dM.data(), false);
         }
 
         // Add the timestep to the elapsed time for each cell and find

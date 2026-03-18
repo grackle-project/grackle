@@ -353,3 +353,7 @@ ENTRY(sne_shockspeed, DOUBLE, 1.0e2)
 ENTRY(dust_grainsize, DOUBLE, 1.0e-1)
 ENTRY(dust_growth_densref, DOUBLE, 2.3e-22)
 ENTRY(dust_growth_tauref, DOUBLE, 0.004)
+
+/* Dust creation by stellar feedback parameters */
+ENTRY(dust_condensation_eff, DOUBLE, 1.5e-1)
+ENTRY(sne_metal_yield, DOUBLE, 3.0)

@@ -80,6 +80,48 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
 }
 
 // ==========================================
+// DUST CREATION (STELLAR FEEDBACK)
+// ==========================================
+void grackle::impl::dust_creation(chemistry_data* my_chemistry,
+                                  grackle_field_data* my_fields,
+                                  InternalGrUnits internalu, IndexRange idx_range,
+                                  const gr_mask_type* itmask,
+                                  const double* dt_value,
+                                  double* creation_dM) {
+  bool use_sne = (my_chemistry->use_sne_field > 0);
+  if (!use_sne) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      creation_dM[i] = 0.0;
+    }
+    return;
+  }
+
+  grackle::impl::View<gr_float***> sne(
+      my_fields->sne_rate, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  // Metal yield per SN in code mass units
+  double M_yield_code = my_chemistry->sne_metal_yield * SolarMass /
+                        (internalu.urho * std::pow(internalu.uxyz, 3));
+
+  double f_cond = my_chemistry->dust_condensation_eff;
+
+  // --- MAIN LOOP ---
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    creation_dM[i] = 0.0;
+
+    if (itmask[i] != MASK_FALSE) {
+      double sne_this = sne(i, idx_range.j, idx_range.k);
+
+      if (sne_this > 0.0) {
+        // dM/dt = f_cond * M_metal_per_SN * sne_rate
+        creation_dM[i] = f_cond * M_yield_code * sne_this;
+      }
+    }
+  }
+}
+
+// ==========================================
 // 2. DUST DESTRUCTION (SNe + SPUTTERING)
 // ==========================================
 void grackle::impl::dust_destruction(
@@ -183,7 +225,8 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
                                 InternalGrUnits internalu, IndexRange idx_range,
                                 const gr_mask_type* itmask,
                                 const double* dt_value, const double* growth_dM,
-                                const double* destruction_dM, bool dryrun) {
+                                const double* destruction_dM,
+                                const double* creation_dM, bool dryrun) {
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -201,26 +244,27 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
       double rho_metal = metal(i, idx_range.j, idx_range.k);
       double dt = dt_value[i];
 
-      // Get the total mass change (growth + destruction)
+      // Get the mass change from growth + destruction (exchanges dust <-> metal)
+      double dM_exchange = (growth_dM[i] + destruction_dM[i]) * dt;
+      // Apply constraints to exchange term
+      dM_exchange = std::max(-1 * rho_dust, dM_exchange);
+      dM_exchange = std::min(0.9 * rho_metal, dM_exchange);
 
-      double dM_total = growth_dM[i] + destruction_dM[i];
-      dM_total = dM_total * dt;
-      // Apply constraints to dM
-      dM_total = std::max(-1 * rho_dust, dM_total);
-      dM_total = std::min(0.9 * rho_metal, dM_total);
+      // Get the mass change from stellar creation (externally injected)
+      double dM_create = creation_dM[i] * dt;
 
       // Apply conservation logic (from original code)
       double dM_conserv = 0.0;
       if (rho_dust >= 0.0) {
-        rho_dust = rho_dust + dM_total;
-        rho_metal = rho_metal - dM_total;
+        rho_dust = rho_dust + dM_exchange + dM_create;
+        rho_metal = rho_metal - dM_exchange;
       } else {
         dM_conserv = rho_dust;
         rho_dust = rho_dust - dM_conserv;
         rho_metal = rho_metal + dM_conserv;
       }
 
-      // Adjust gas density to conserve total mass
+      // Adjust gas density to conserve total mass (only for exchange, not creation)
       rho_gas = rho_gas + (rho_metal - metal(i, idx_range.j, idx_range.k));
 
       // Safety checks
@@ -232,8 +276,8 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
       }
 
       fprintf(stderr,
-              "internal: dt=%e growth_dM=%.10e destruction_dM=%.10e dM_rate=%.15e gas=%.15e dust=%.15e metal=%.15e consv.=%.15e\n", 
-              dt, growth_dM[i], destruction_dM[i], dM_total, rho_gas, rho_dust, rho_metal, rho_dust+rho_metal);
+              "internal: dt=%e growth_dM=%.10e destruction_dM=%.10e creation_dM=%.10e dM_exch=%.15e dM_crea=%.15e gas=%.15e dust=%.15e metal=%.15e consv.=%.15e\n",
+              dt, growth_dM[i], destruction_dM[i], creation_dM[i], dM_exchange, dM_create, rho_gas, rho_dust, rho_metal, rho_dust+rho_metal);
 
       // Update the fields
       if (!dryrun) {
