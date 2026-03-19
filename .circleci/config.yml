@@ -357,7 +357,7 @@ jobs:
       # I believe that the following command makes docker available in the
       # environment where we are executing commands
       # -> this is only needed since the job's executor is a Docker container
-      - setup_remote_docker
+      - setup_remote_docker:
           docker_layer_caching: true
 
       - run: tests/install-tests/installtest.py
