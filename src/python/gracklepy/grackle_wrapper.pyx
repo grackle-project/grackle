@@ -12,11 +12,13 @@
 ########################################################################
 
 import copy
+import sys
 from gracklepy.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
 
 from libc.limits cimport INT_MAX
+from libc.stdlib cimport malloc, free
 from .grackle_defs cimport *
 import numpy as np
 
@@ -915,6 +917,164 @@ def _portable_reshape(arr: np.ndarray, shape: tuple[int, ...]) -> np.ndarray:
         return arr.reshape(shape, order="C", copy=False)
 
 
+class RatequeryFailException(Exception):
+    pass
+
+cdef long long rateq_raw_nonshape_prop(
+    c_chemistry_data_storage *ptr,
+    grunstable_rateid_type rate_id,
+    grunstable_ratequery_prop_kind prop_kind,
+) except*:
+    """
+    queries a non-shape property & raises RatequeryFailException on failure
+
+    This **ONLY** exists to simplify the implementation of rateq_get_prop
+    """
+    cdef long long buf
+    cdef int ret = grunstable_ratequery_prop(ptr, rate_id, prop_kind, &buf)
+    if ret != GR_SUCCESS:
+        raise RatequeryFailException()
+    return buf
+
+cdef object rateq_get_prop(
+    c_chemistry_data_storage *ptr,
+    grunstable_rateid_type rate_id,
+    grunstable_ratequery_prop_kind prop_kind,
+) except*:
+    """
+    query the property and coerce the result to the appropriate python type
+
+    Notes
+    -----
+    If performance becomes a concern, we should stop using
+    RatequeryFailException.
+    """
+    cdef long long buf[7]
+    cdef int ret_code
+    if prop_kind == GRUNSTABLE_QPROP_SHAPE:
+        ndim = rateq_get_prop(ptr, rate_id, prop_kind=GRUNSTABLE_QPROP_NDIM)
+        if ndim > 7:
+            raise RuntimeError(
+                f"rate_id {rate_id} has a questionable number of dims: {ndim}"
+            )
+        elif ndim == 0:
+            return ()
+        else:
+            ret_code = grunstable_ratequery_prop(
+                ptr, rate_id, GRUNSTABLE_QPROP_SHAPE, &buf[0]
+            )
+            if ret_code != GR_SUCCESS:
+                raise RuntimeError(
+                    f"shape query fail after ndim query success, for {rate_id=}"
+                )
+            return tuple(int(buf[i]) for i in range(ndim))
+    elif (prop_kind == GRUNSTABLE_QPROP_NDIM or
+          prop_kind == GRUNSTABLE_QPROP_MAXITEMSIZE):
+        buf[0] = rateq_raw_nonshape_prop(ptr, rate_id, prop_kind)
+        #if sizeof(Py_ssize_t) > sizeof(long long):
+        #    if 
+        return int(buf[0])
+    elif prop_kind == GRUNSTABLE_QPROP_WRITABLE:
+        buf[0] = rateq_raw_nonshape_prop(ptr, rate_id, prop_kind)
+        return bool(buf[0])
+    elif prop_kind == GRUNSTABLE_QPROP_DTYPE:
+        buf[0] = rateq_raw_nonshape_prop(ptr, rate_id, prop_kind)
+        if buf[0] == GRUNSTABLE_TYPE_F64:
+            return float
+        elif buf[0] == GRUNSTABLE_TYPE_STR:
+            return str
+        else:
+            # did we forget to update this function after adding a dtype?
+            raise RuntimeError(f"{rate_id=} has an unknown dtype")
+    else:
+        # did we forget to update this function after adding a new prop_kind?
+        raise ValueError(f"recieved an unknown prop_kind: {prop_kind}")
+
+cdef list rateq_load_string(
+    c_chemistry_data_storage *ptr,
+    grunstable_rateid_type rate_id,
+    Py_ssize_t n_items,
+    object key
+):
+    """
+    Load the single string or list of strings associated with rate_id
+
+    Notes
+    -----
+    strings are very much a special case (compared to say floating point
+    values or integer values)
+    """
+    # reminder: when Cython casts python's built-in (arbitrary precision) int type to a
+    #     C type will check for overflows during the cast
+    #     https://cython.readthedocs.io/en/3.0.x/src/quickstart/cythonize.html
+
+    # query max number of bytes per string (includes space for trailing '\0')
+    cdef Py_ssize_t bytes_per_string
+    try:
+        bytes_per_string= <Py_ssize_t>(
+            rateq_get_prop(ptr, rate_id, GRUNSTABLE_QPROP_MAXITEMSIZE)
+        )
+    except OverflowError:
+        raise RuntimeError(f"bytes per string is suspiciously big ({key=})") from None
+
+    # let's confirm that the allocation size doesn't exceed the max value of Py_ssize_t
+    # -> technically, the max allocation size shouldn't exceed SIZE_MAX from C's
+    #    <stdint.h> header (i.e. the max value of size_t)
+    # -> for simplicity, we require that it doesn't exceed the max value of Py_ssize_t
+    #    (by definition, the max value represented by Py_ssize_t uses 1 less bit of
+    #    storage than SIZE_MAX)
+    cdef Py_ssize_t max_alloc_size = sys.maxsize  # sys.maxsize is max val of Py_ssize_t
+    if (max_alloc_size / bytes_per_string) < n_items:
+        raise RuntimeError(f"{key=} requires too much memory to load")
+
+    # allocate memory
+    cdef char* str_storage = <char*> malloc(bytes_per_string * n_items)
+    cdef char** str_array = <char* const*> malloc(sizeof(char*) * n_items)
+    cdef Py_ssize_t i
+    cdef list out = []
+    try:
+        for i in range(n_items):
+            str_array[i] = &str_storage[i*bytes_per_string]
+
+        if (grunstable_ratequery_get_str(ptr, rate_id, <char* const *>str_array)
+            != GR_SUCCESS):
+            raise RuntimeError(f"Error retrieving data for the \"{key}\" key")
+
+        for i in range(n_items):
+            out.append((<bytes>str_array[i]).decode("ASCII"))
+    finally:
+        free(str_array)
+        free(str_storage)
+
+    return out
+
+
+cdef object rateq_load_f64(
+    c_chemistry_data_storage *ptr,
+    grunstable_rateid_type rate_id,
+    Py_ssize_t n_items,
+    object key
+):
+    """
+    Returns a 1D numpy array of loaded 64-bit floats
+
+    Notes
+    -----
+    If we add more types (other than strings), it would be easier to use cython's
+    fused-type functionality to generalize this function
+    """
+    out = np.empty(shape=(n_items,), dtype=np.float64)
+    cdef double[:] memview = out
+    if grunstable_ratequery_get_f64(ptr, rate_id, &memview[0]) != GR_SUCCESS:
+        raise RuntimeError(f"Error retrieving data for the \"{key}\" key")
+
+    # we set the WRITABLE flag to False so that people don't mistakenly believe
+    # that by modifying the array in place that they are updating Grackle's
+    # internal buffers
+    out.setflags(write=False)
+    return out
+
+
 cdef class _rate_mapping_access:
     # This class is used internally by the chemistry_data extension class to
     # wrap its chemistry_data_storage ptr and provide access to the stored
@@ -975,32 +1135,19 @@ cdef class _rate_mapping_access:
             out[rate_name.decode('UTF-8')] = int(rate_id)
             i+=1
 
-    def _try_get_shape(self, rate_id: int) -> tuple[int, ...]:
+    def _try_get_shape_type_pair(
+        self, rate_id: int
+    ) -> tuple[tuple[int, ...], type[float] | type[str]]:
         """
         try to query the shape associated with rate_id
         """
-        cdef long long buf[7]
-        cdef int ret = grunstable_ratequery_prop(
-            self._ptr, rate_id, GRUNSTABLE_QPROP_NDIM, &buf[0]
-        )
-        if ret != GR_SUCCESS:
+        cdef grunstable_rateid_type casted_id = <grunstable_rateid_type>(rate_id)
+        try:
+            shape = rateq_get_prop(self._ptr, casted_id, GRUNSTABLE_QPROP_SHAPE)
+            dtype = rateq_get_prop(self._ptr, casted_id, GRUNSTABLE_QPROP_DTYPE)
+            return (shape, dtype)
+        except RatequeryFailException:
             return None
-        ndim = int(buf[0])
-        if ndim == 0:
-            return ()
-        elif ndim >7:
-            tmp = int(ndim)
-            raise RuntimeError(
-                f"rate_id {rate_id} has a questionable number of dims: {tmp}"
-            )
-
-        ret = grunstable_ratequery_prop(
-            self._ptr, rate_id, GRUNSTABLE_QPROP_SHAPE, &buf[0]
-        )
-        if ret != GR_SUCCESS:
-            raise RuntimeError(
-                "the query for shape failed after query for ndim succeeded")
-        return tuple(int(buf[i]) for i in range(ndim))
 
     def _get_rate(self, key: str):
         """
@@ -1014,35 +1161,31 @@ cdef class _rate_mapping_access:
 
         Returns
         -------
-        np.ndarray or float
+        np.ndarray or float or list of strings or string
             The retrieved value
         """
 
         # lookup the rate_id and shape of the rates
         rate_id = self._name_rateid_map[key]
-        shape = self._try_get_shape(rate_id)
+        shape, dtype = self._try_get_shape_type_pair(rate_id)
 
-        # allocate the memory that grackle will write data to
+        ndim = len(shape)
         nelements = 1 if shape == () else np.prod(shape)
-        out = np.empty(shape=(nelements,), dtype=np.float64)
 
-        # create a memoryview of out (so we can access the underlying pointer)
-        cdef double[:] memview = out
+        if dtype == str:
+            if ndim > 1:
+                raise RuntimeError("multi-dimensional arrays of strings aren't alowed")
+            out = rateq_load_string(self._ptr, rate_id, nelements, key)
+        elif dtype == float:
+            out = rateq_load_f64(self._ptr, rate_id, nelements, key)
+        else:
+            raise RuntimeError(f"no support (yet?) for rates of {dtype} values")
 
-        if grunstable_ratequery_get_f64(self._ptr, rate_id, &memview[0]) != GR_SUCCESS:
-            raise RuntimeError(
-                "Something went wrong while retrieving the data associated with the "
-                f"\"{key}\" key"
-            )
+        # declare a few memoryview types
         if shape == ():
-            return float(out[0])
-
-        if shape != out.shape:
-            out = _portable_reshape(out, shape=shape)
-        # we set the WRITABLE flag to False so that people don't mistakenly believe
-        # that by modifying the array in place that they are updating Grackle's
-        # internal buffers
-        out.setflags(write=False)
+            return dtype(out[0])
+        elif ndim != 1:
+            return _portable_reshape(out, shape=shape)
         return out
 
     def _set_rate(self, key, val):
@@ -1059,7 +1202,15 @@ cdef class _rate_mapping_access:
         """
         # lookup the rate_id and shape of the rates
         rate_id = self._name_rateid_map[key]
-        shape = self._try_get_shape(rate_id)
+        shape, dtype = self._try_get_shape_type_pair(rate_id)
+
+        if dtype == str:
+            raise ValueError(
+                f"Grackle doesn't support assignment to keys (like \"{key}\") that are"
+                "associated with string values"
+            )
+        elif dtype != float:
+            raise RuntimeError(f"no support (yet?) for rates of {dtype} values")
 
         # validate that val meets expectations and then coerce to `buf` a 1D numpy
         # array that we can feed to the C function
@@ -1084,10 +1235,15 @@ cdef class _rate_mapping_access:
         cdef const double[:] memview = buf
 
         if grunstable_ratequery_set_f64(self._ptr, rate_id, &memview[0]) != GR_SUCCESS:
-            raise RuntimeError(
-                "Something went wrong while writing data associated with the "
-                f"\"{key}\" key"
-            )
+            writable = rateq_get_prop(self._ptr, rate_id, GRUNSTABLE_QPROP_WRITABLE)
+            if writable:
+                raise RuntimeError(
+                    f"Error writing to data associated with the \"{key}\" key"
+                )
+            else:
+                raise ValueError(
+                    f"the values associated with the \"{key}\" key can't be overwritten"
+                )
 
     def get(self, key, default=None, /):
         """
@@ -1096,7 +1252,7 @@ cdef class _rate_mapping_access:
         """
         try:
             return self._get_rate(key)
-        except:
+        except KeyError:
             return default
 
     def __getitem__(self, key): return self._get_rate(key)
