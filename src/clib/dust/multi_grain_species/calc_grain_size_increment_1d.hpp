@@ -111,6 +111,13 @@ inline void calc_grain_size_increment_1d(
   // to be filled with the indices of selected injection pathways
   int selected_inj_path_idx_l[max_num_pathways];
 
+  // loop avoids false-positives from clang-analyzer-core.uninitialized.Assign
+  // -> and if there is an error, it should trigger a segmentation fault (or
+  //    at least trigger a memory sanitizer error)
+  for (int i = 0; i < max_num_pathways; i++) {
+    selected_inj_path_idx_l[i] = 32767;
+  }
+
   // to be updated with the number of selected injection pathways
   int n_selected_inj_paths = 0;
 
