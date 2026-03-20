@@ -106,6 +106,7 @@ src/python/.cache/*
 src/python/pygrackle.egg-info/*
 src/python/pygrackle/*.c
 src/python/tests/test_answers
+.pytest_cache/
 
 # Used by lots of tools (e.g. pyenv, uv)
 .python-version
@@ -119,6 +120,10 @@ uv.lock
 
 # IDE stuff
 .idea/
+.vscode/
+
+# created by the clangd language server
+.cache/
 
 # Environments
 .env
