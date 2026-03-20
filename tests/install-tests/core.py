@@ -74,7 +74,7 @@ class DockerImage(Enum):
         return self._value_
 
     def tag_name(self):
-        return f"grackle_install_test_{self._value_}"
+        return f"gr_installtest_{self._value_}"
 
     def __repr__(self):
         return f"<{self.__class__.__name__}.{self._value_}>"
