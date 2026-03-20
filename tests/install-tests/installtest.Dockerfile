@@ -1,3 +1,6 @@
+# this file describes the "formulae" for building docker images that are used
+# within an installtest test-case
+
 # currently, it's important to invoke docker from the root directory in order to copy
 # over the source directory
 FROM ubuntu:24.04 AS baseline
@@ -25,7 +28,7 @@ ENV username=gr-user
 USER $username
 WORKDIR /home/$username
 
-COPY --chown=$username --exclude=tests/install-tests/ --exclude=build*/ --exclude=gold-standards-*/ --exclude=*/__pycache__/ --exclude=src/example/GRACKLE_INFO ./ ./grackle
+COPY --chown=$username ./ ./grackle
 
 # this probably isn't necessary, but let's be safe
 RUN rm -rf ./grackle/build \

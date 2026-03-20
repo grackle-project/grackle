@@ -45,7 +45,7 @@ def _mk_docker_image(
         "docker",
         "build",
         "--progress=plain",
-        "--file=tests/install-tests/Dockerfile",
+        "--file=tests/install-tests/installtest.Dockerfile",
         f"--tag={image.tag_name()}",
         f"--target={image.layer_name()}",
         ".",
