@@ -19,12 +19,13 @@ void dust_growth(chemistry_data* my_chemistry, grackle_field_data* my_fields,
                  double* growth_dM  // output: mass change rate for each cell
 );
 
-// Calculates dust creation rates from stellar feedback (SNe condensation).
-// Stores the mass creation rate for each cell in creation_dM array.
+// Calculates stellar feedback injection rates (Dwek 1998 framework).
+// Each SN injects m_Z metals: fraction delta -> dust, (1-delta) -> gas metals.
 void dust_creation(chemistry_data* my_chemistry, grackle_field_data* my_fields,
                    InternalGrUnits internalu, IndexRange idx_range,
                    const gr_mask_type* itmask, const double* dt_value,
-                   double* creation_dM  // output: mass creation rate for each cell
+                   double* creation_dust_dM,   // output: dust creation rate
+                   double* creation_metal_dM   // output: gas-phase metal injection rate
 );
 
 // Calculates dust destruction rates from SNe shocks and thermal sputtering.
@@ -41,9 +42,10 @@ void dust_update(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range, const gr_mask_type* itmask,
     const double* dt_value,
-    const double* growth_dM,       // input: mass change from growth
-    const double* destruction_dM,  // input: mass change from destruction
-    const double* creation_dM,     // input: mass change from stellar creation
+    const double* growth_dM,         // input: mass change from growth
+    const double* destruction_dM,    // input: mass change from destruction
+    const double* creation_dust_dM,  // input: dust created by stellar feedback
+    const double* creation_metal_dM, // input: gas-phase metals from stellar feedback
     bool dryrun);
 
 }  // namespace grackle::impl
