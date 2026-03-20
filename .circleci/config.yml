@@ -416,7 +416,7 @@ workflows:
            name: "Core library test suite"
 
        - installtest:
-           name: "Test linking against various configurations of core library"
+           name: "Installtest"
 
        - docs-build:
            name: "Docs build"
