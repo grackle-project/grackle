@@ -26,7 +26,7 @@ namespace grackle::impl {
 ///
 ///  TODO: this docstring should EXPLICITLY document how the action of this
 ///  function changes based on whether we are using the single-field
-///  dust model or the multi-species dust model.  
+///  dust model or the multi-species dust model.
 ///  In the classic single single-field model, the returned opacities
 ///  have units of cm^2/g and they are measured "per unit grain mass"
 ///  In the multi-species dust model, I THINK that the returned
@@ -51,9 +51,10 @@ namespace grackle::impl {
 /// @par History
 /// written by: Britton Smith, September, 2011
 /// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void calc_kappa_gr_g(double* tdust, double* kgr, gr_mask_type* itmask, int in, IndexRange idx_range,
-                     double* t_subl, int* gr_N, int* gr_Size, double* gr_dT, double* gr_Td,
+void calc_kappa_gr_g(double* tdust, double* kgr, gr_mask_type* itmask, int in,
+                     IndexRange idx_range, double* t_subl, int* gr_N,
+                     int* gr_Size, double* gr_dT, double* gr_Td,
                      gr_float* logalsp_data_, int idspecies);
 
-}
+}  // namespace grackle::impl
 #endif /* CALC_KAPPA_GR_G_HPP */
