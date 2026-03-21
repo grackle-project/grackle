@@ -36,7 +36,7 @@ namespace grackle::impl {
 /// @param[in]  gasgr Array of gas-grain heat transfer rates
 /// @param[in]  gamma_isrfa Heating from interstellar radiation field
 /// @param[in]  isrf Interstellar radiation field strength in Habing units
-/// @param[in]  itmask  Itaration mask
+/// @param[in]  itmask Iteration mask
 /// @param[in]  trad CMB ratiation temperature
 /// @param[in]  in Length of the 1D slice
 /// @param[in]  gr_N Number of temperature points in the grain opacity table
@@ -51,7 +51,7 @@ namespace grackle::impl {
 ///
 /// @par History
 /// written by: Britton Smith, 2011
-/// modified: January, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
+/// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
 void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
                      const double* gamma_isrfa, const double* isrf,
                      const gr_mask_type* itmask, double trad, int in, int gr_N,
