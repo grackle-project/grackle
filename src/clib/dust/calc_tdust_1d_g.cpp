@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <vector>
 
+#include "dust/calc_kappa_gr_g.hpp"
 #include "grackle.h"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
@@ -150,16 +151,11 @@ void grackle::impl::calc_tdust_1d_g(
     }
 
     // Calculate grain opacities
+    grackle::impl::calc_kappa_gr_g(tdustnow.data(), kgr, nm_itmask.data(), in, idx_range, &t_subl,
+                                   &Td_N, &Td_Size, gr_dT, gr_Td, logalsp.data(), *idspecies);
 
-    FORTRAN_NAME(calc_kappa_gr_g)(tdustnow.data(), kgr, nm_itmask.data(), &in,
-                                  &idx_range.i_start, &idx_range.i_end, &t_subl,
-                                  &Td_N, &Td_Size, gr_dT, gr_Td, logalsp.data(),
-                                  idspecies);
-
-    FORTRAN_NAME(calc_kappa_gr_g)(tdplus.data(), kgrplus.data(),
-                                  nm_itmask.data(), &in, &idx_range.i_start,
-                                  &idx_range.i_end, &t_subl, &Td_N, &Td_Size,
-                                  gr_dT, gr_Td, logalsp.data(), idspecies);
+    grackle::impl::calc_kappa_gr_g(tdplus.data(), kgrplus.data(), nm_itmask.data(), in, idx_range, &t_subl,
+                                   &Td_N, &Td_Size, gr_dT, gr_Td, logalsp.data(), *idspecies);
 
     // Calculate heating/cooling balance
 
@@ -240,10 +236,8 @@ void grackle::impl::calc_tdust_1d_g(
         }
       }
 
-      FORTRAN_NAME(calc_kappa_gr_g)(bi_t_mid.data(), kgr, bi_itmask.data(), &in,
-                                    &idx_range.i_start, &idx_range.i_end,
-                                    &t_subl, &Td_N, &Td_Size, gr_dT, gr_Td,
-                                    logalsp.data(), idspecies);
+      grackle::impl::calc_kappa_gr_g(bi_t_mid.data(), kgr, bi_itmask.data(), in, idx_range, &t_subl,
+                                     &Td_N, &Td_Size, gr_dT, gr_Td, logalsp.data(), *idspecies);
 
       FORTRAN_NAME(calc_gr_balance_g)(bi_t_mid.data(), tgas, kgr, &trad4, gasgr,
                                       gamma_isrf.data(), nh, bi_itmask.data(),
