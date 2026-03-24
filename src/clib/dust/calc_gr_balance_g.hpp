@@ -21,7 +21,7 @@
 #include "index_helper.h"
 
 namespace grackle::impl {
-  
+
 ///  Calculate grain heating/cooling balance
 ///
 ///  TODO: this docstring should EXPLICITLY document how the action of this
@@ -49,12 +49,10 @@ namespace grackle::impl {
 /// @par History
 /// written by: Britton Smith, 2019
 /// modified: January, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void calc_gr_balance_g(
-  double* tdust, double* tgas, double* kgr, double trad4, double* gasgr,
-  double* gamma_isrf, double* nh, gr_mask_type* itmask, double* sol,
-  IndexRange idx_range
-);
+void calc_gr_balance_g(double* tdust, double* tgas, double* kgr, double trad4,
+                       double* gasgr, double* gamma_isrf, double* nh,
+                       gr_mask_type* itmask, double* sol, IndexRange idx_range);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
 #endif /* CALC_GR_BALANCE_G_HPP */

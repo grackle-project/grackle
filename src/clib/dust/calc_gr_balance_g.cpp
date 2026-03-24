@@ -23,12 +23,11 @@
 
 #include "calc_gr_balance_g.hpp"
 
-void grackle::impl::calc_gr_balance_g(
-  double* tdust, double* tgas, double* kgr, double trad4, double* gasgr,
-  double* gamma_isrf, double* nh, gr_mask_type* itmask, double* sol, 
-  IndexRange idx_range
-)
-{
+void grackle::impl::calc_gr_balance_g(double* tdust, double* tgas, double* kgr,
+                                      double trad4, double* gasgr,
+                                      double* gamma_isrf, double* nh,
+                                      gr_mask_type* itmask, double* sol,
+                                      IndexRange idx_range) {
   // Parameters
 
   const double radf = 4. * sigma_sb_grflt;
@@ -38,19 +37,15 @@ void grackle::impl::calc_gr_balance_g(
   int i;
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if ( itmask[i] != MASK_FALSE )  {
-
-      sol[i] = gamma_isrf[i] + radf * kgr[i] *
-           (trad4 - std::pow(tdust[i],4)) +
-           (gasgr[i] * nh[i] *
-           (tgas[i] - tdust[i]));
+    if (itmask[i] != MASK_FALSE) {
+      sol[i] = gamma_isrf[i] + radf * kgr[i] * (trad4 - std::pow(tdust[i], 4)) +
+               (gasgr[i] * nh[i] * (tgas[i] - tdust[i]));
       // Historically, the following comment was present here:
       //     emission/absorption rate per unit grain mass [erg/s/g]
       //     for Z = Zsun (default)
       // This comment is **ONLY** correct when the function used as
       // part of the single-field dust model. See the docstring for
       // more details.
-
     }
   }
 
