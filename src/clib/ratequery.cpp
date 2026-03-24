@@ -565,7 +565,8 @@ extern "C" int grunstable_ratequery_get_str(chemistry_data_storage* my_rates,
   const char* const* src = entry.data.const_str();
   long long n_items = rate_q::get_n_items(entry.props);
   for (long long i = 0; i < n_items; i++) {
-    std::strcpy(buf[i], src[i]);
+    std::size_t nbytes = std::strlen(src[i]) + 1;
+    std::memcpy(buf[i], src[i], nbytes);
   }
   return GR_SUCCESS;
 }
