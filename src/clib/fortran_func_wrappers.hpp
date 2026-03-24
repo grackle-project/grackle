@@ -42,6 +42,20 @@
 // namespace name when they call these routines
 namespace grackle::impl::fortran_wrapper {
 
+// TODO: to be removed when transcription is done
+inline void calc_gr_balance_g(
+  double* tdust, double* tgas, double* kgr, double* trad4, double* gasgr,
+  double* gamma_isrf, double* nh, gr_mask_type* itmask, double* sol, int* in,
+  int* is, int* ie
+) {
+
+  FORTRAN_NAME(calc_gr_balance_g)(
+    tdust, tgas, kgr, trad4, gasgr, gamma_isrf, nh, itmask, sol, in, is, ie
+  );
+
+}
+
+
 /// Performs Gauss-Jordan elimination to solve the specified system of linear
 /// equations and inverts the coefficient matrix.
 ///
