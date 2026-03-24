@@ -132,6 +132,7 @@
       return
       end
 
+! TODO: to be removed when transcription is done
 !=======================================================================
 !////////////////////  SUBROUTINE CALC_GR_BALANCE  \\\\\\\\\\\\\\\\\\\\\
 
