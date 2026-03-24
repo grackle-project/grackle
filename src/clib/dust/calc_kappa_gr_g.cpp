@@ -79,8 +79,8 @@ void grackle::impl::calc_kappa_gr_g(double* tdust, double* kgr,
         }
         log10tdust = std::log10(tdust[i]);
 
-        logkgr = grackle::impl::fortran_wrapper::interpolate_1d_g(log10tdust, &gr_N_i64, gr_Td,
-          *gr_dT, gr_N_i64, logalsp1.data());
+        logkgr = grackle::impl::fortran_wrapper::interpolate_1d_g(
+            log10tdust, &gr_N_i64, gr_Td, *gr_dT, gr_N_i64, logalsp1.data());
 
         kgr[i] = std::pow(10., logkgr);
       }
