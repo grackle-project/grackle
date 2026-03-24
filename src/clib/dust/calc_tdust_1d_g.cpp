@@ -19,6 +19,7 @@
 #include "grackle.h"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
+#include "phys_constants.h"
 #include "utils-cpp.hpp"
 
 #include "calc_tdust_1d_g.hpp"
@@ -45,11 +46,11 @@ void grackle::impl::calc_tdust_1d_g(
 
   // grain sublimation temperature
   double t_subl = 1.5e3;  // TODO: should be const
-  const double radf = 4.;
+  const double radf = 4. * sigma_sb_grflt;
 
   // grain opacity from Omukai (2000, equation 17) normalized by
   // the local dust-to-gas ratio, which in this work is 0.934e-2.
-  const double kgr1 = 4.0e-4;
+  const double kgr1 = 4.0e-4 / 0.00934;
 
   std::vector<double> gamma_isrf(in);
   const double tol = 1.e-5;
