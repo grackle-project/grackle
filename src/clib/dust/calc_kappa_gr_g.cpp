@@ -26,7 +26,7 @@ void grackle::impl::calc_kappa_gr_g(double* tdust, double* kgr,
                                     const gr_mask_type* itmask, int in,
                                     IndexRange idx_range, const double* t_subl,
                                     int* gr_N, const int* gr_Size,
-                                    double* gr_dT, double* gr_Td,
+                                    const double* gr_dT, double* gr_Td,
                                     gr_float* logalsp_data_, int idspecies) {
   // Parameters
 
