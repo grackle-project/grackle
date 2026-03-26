@@ -49,9 +49,9 @@ namespace grackle::impl {
 /// @par History
 /// written by: Britton Smith, 2019
 /// modified: January, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void calc_gr_balance_g(double* tdust, double* tgas, double* kgr, double trad4,
-                       double* gasgr, double* gamma_isrf, double* nh,
-                       gr_mask_type* itmask, double* sol, IndexRange idx_range);
+void calc_gr_balance_g(double* tdust, const double* tgas, const double* kgr, double trad4,
+                       const double* gasgr, const double* gamma_isrf, const double* nh,
+                       const gr_mask_type* itmask, double* sol, IndexRange idx_range);
 
 }  // namespace grackle::impl
 
