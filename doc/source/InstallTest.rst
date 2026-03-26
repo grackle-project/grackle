@@ -16,9 +16,47 @@ The test harness performs four phases:
 Motivation
 ----------
 
-.. todo::
+We (the developers) provide a lot of instruction (e.g. see :doc:`here <Integration>`) and convenience-machinery (e.g. CMakge Package Config Files and pkg-config files) to try to make it as easy as possible to use Grackle in external codes.
+In our experience, it is easy to break these instructions or the convenience machinery if it isn't regularly tested.
 
-   ADD ME
+The reader may understandably wonder "why don't other open-source software library projects have such a big emphasis on these sorts of tests?"
+There are a few reasons:
+
+1. There is often an assumption that the only people that will be building a software library are developers who are already well-versed in building/linking/consuming software libraries.
+   - When popular libraries (think of hdf5, fftw3, libpng, zlib, xzutils) are used in projects written less experienced developers, the projects are typically made available by package managers [packagers]_ or may distribute header-only libraries (only works if all consumers are written in C++) 
+   - This obviously isn't a great assumption for users of astrophysical simulation codes that may depend on Grackle (thus, we make an effort to provide lots of instruction).
+
+2. We attempted to make Grackle easy to use as a static library in pure C programs.
+   It turns out that this is at the root of a lot of complexity:
+   - complications arise because Grackle itself has external dependencies
+     - it explicitly depends on hdf5.
+     - it also has implicit dependencies a regular C compiler (or linker) won't know about out of the box:
+       - Most obviously, this is the C++ standard library (historically, it was the Fortran standard library).
+       - When compiled with OpenMP, Grackle has an additional implicit dependency on the library.
+   - The fact that we also took steps to make it easy to install both shared and static copies of Grackle to a single directly adds additional complexity.
+   - Moreover, we added slightly more complexity by making it possible for external CMake projects more easily select between the use of shared/static libraries
+
+   .. note::
+
+      To be clear, the only real alternative was to act like static libraries don't exist outside of embedded Grackle builds (within external CMake projects).
+
+3. Grackle doesn't have a stable ABI and we attempt to remain somewhat backwards compatible with choices made by the classice build-system.
+   In practice, this translates to creating a ``libgrackle.so`` (or ``libgrackle.dylib`` file on MacOS) symlink during installation that links to a somewhat atypically named shared library during the install step.
+   While the logic for doing this is simple, it should be tested.
+
+
+Why not run these tests as part of the core test suite?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+At a surface level, the steps of a single test-case makes it sound like these tests could be part of the core-library test suite.
+In fact, the core-lib tests already involve a set of "compile-tests" that closely resemble the structure of some tests.
+Moreover, other open source projects might try to test this sort of thing by constructing a ctest test-case that explicitly calls ``ctest`` executable with the ``--build-and-test`` option (an example can be found `here <https://github.com/fmtlib/fmt/blob/dc05bee30755bb993add7ed90845d87c2315f9c6/test/CMakeLists.txt#L166>`__).
+There are 2 limitation to this approach:
+1. it **only** tests the direct product of a build (if you build Grackle as a shared library, you only test builds against a shared library)
+2. tests commonly try to link against the target that's in the build-directory (when in practice people may want to link against Grackle after it has been fully installed).\ [link-test]_
+
+These limitations aren't usually as much of a concern in external project because (as noted above) there is usually far less emphasis on making the project easy to install/link against, for less experienced developers.
+
 
 Running the tests
 -----------------
@@ -110,7 +148,7 @@ Why use Docker?
 +++++++++++++++
 
 
-.. todo::
+.. note::
 
    ADD ME
 
@@ -122,19 +160,26 @@ How the tests work
 In practice, step 1 consists of creating a docker image, while steps 2-4 are executed in a docker container based on the image.
 The use of docker is intended to take adva
 
-.. todo::
+.. note::
 
    ADD ME
 
 Adding a new test case
 ----------------------
 
-.. todo::
+.. note::
 
    ADD ME
 
 
 .. rubric:: Footnotes
+
+.. [packagers] In particularly popular projects that are very wildly used by less experienced developers , a group of non-developers known as packagers (e.g. Debian or Homebrew packagers) take charge of distributing pre-compiled copies of the software.
+
+.. [link-test] It *is* possible to temporarily overwrite the install-directory to try to temporarily install Grackle to that directory (by invoking ``cmake --install --prefix ``<DEST>``) and then test linking against the contents of that directory.
+   However there are 2 wrinkles to that approach.
+   First, not all install-tests will work very well in this case (think about install-tests that try to link a test-program against Grackle without using CMake or pkg-config).
+   Second (and more importantly), different CMake logic is executed when the install destination is specified at initial configuration vs using the temporary overwrite logic (we have in fact had bugs pertaining to this logic).
 
 .. [ctest-integration] To integrate with CTest, we would need to make sure that we properly label each installtest test case and possibly disable them when a simple ``ctest`` command is invoked since these tests take a lot longer than the other kinds of tests (this is doable, but would take a little effort).
    We would also need to properly record each test case's dependency on the task of building a docker image (again, very doable).
