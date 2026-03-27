@@ -17,7 +17,7 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('./_ext'))
 
 sys.path.insert(0, os.path.abspath('../../scripts'))
 
@@ -31,7 +31,8 @@ from query_version import query_version
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.extlinks',
-              'sphinx_tabs.tabs']
+              'sphinx_tabs.tabs',
+              'embed_cli_output']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
