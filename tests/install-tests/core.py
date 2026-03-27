@@ -11,6 +11,7 @@ import os
 import re
 import shlex
 import sys
+import textwrap
 from typing import (
     Any,
     Callable,
@@ -44,6 +45,9 @@ ScriptError = common.ScriptError
 logger = common.logger
 make_cmd_summary_str = common.make_cmd_summary_str
 
+DOCKERFILE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "installtest.Dockerfile"
+)
 
 # constants that need to remain synchronized with Dockerfile
 #
@@ -132,6 +136,8 @@ class TomlValReq(NamedTuple):
     # describes the required toml type
     type_descr: str
 
+    description: str
+
     # when specified, the value is required to be one of these values
     choices: Optional[Container] = None
 
@@ -158,31 +164,75 @@ def _is_single_type_toml_arr(v: Any, kind: _CheckTypeArg, allow_empty: bool) -> 
 _is_str_arr = partial(_is_single_type_toml_arr, kind=str, allow_empty=True)
 
 # lists the requirements for all allowed keys in one of the TOML test tables
-_REQS: Dict[str, TomlValReq] = {
-    # the name of the image that we want to use
+_TOML_PARAM_REQS: Dict[str, TomlValReq] = {
     "image": TomlValReq(
         classinfo=str,
         type_descr="string",
         choices=set(member.layer_name() for member in DockerImage),
         allow_as_arr=True,
+        description=textwrap.dedent(
+            """\
+            Specifies the names of the images that is used to initialize the container
+            in which the test is run. Essentially, you can think of the image as a
+            cached set of startup steps.
+
+            When this is specified as an array of strings, the test case is effectively
+            parametrized with respect to each image."""
+        ),
     ),
-    # the list of commands that we want to use
+    # for the following parameter:
     # -> if we tweak the vendored toml parser to support toml 1.1, I think it
     #    would be better if expected an array of (inline) tables (where we could
     #    override environment variables) or a array of mixed strings and tables
-    "cmds": TomlValReq(_is_str_arr, "array of strings"),
-    # the file from GRACKLE_ROOT/src/example to copy into the sample project
-    # source directory
-    "src_file": TomlValReq(str, "string"),
-    # the relative path to the output binary (from the root of the sample project
-    # source directory)
-    "output_binary": TomlValReq(str, "string"),
-    # indicates whether we expect the final command to fail. When this is True,
-    # output_binary can be omitted
-    "expect_cmd_fail": TomlValReq(bool, "boolean"),
-    # specify whether we need to override_LD_LIBRARY_PATH in order to execute the
-    # output binary
-    "override_LD_LIBRARY_PATH": TomlValReq(bool, "boolean"),
+    "cmds": TomlValReq(
+        classinfo=_is_str_arr,
+        type_descr="array of strings",
+        description=textwrap.dedent(
+            """\
+            Each entry of the array specifies a separate command that is executed in a
+            sequence. Each command is executed in a separate subshell."""
+        ),
+    ),
+    #
+    "src_file": TomlValReq(
+        classinfo=str,
+        type_descr="string",
+        description=textwrap.dedent(
+            """\
+            the file from GRACKLE_ROOT/src/example to copy into the sample project's
+            source directory."""
+        ),
+    ),
+    "output_binary": TomlValReq(
+        classinfo=str,
+        type_descr="string",
+        description=textwrap.dedent(
+            """\
+            The relative path to the output binary that we expect to be created from
+            the specified commands. This path is relative to the root of the sample
+            project's source directory."""
+        ),
+    ),
+    "expect_cmd_fail": TomlValReq(
+        classinfo=bool,
+        type_descr="boolean",
+        description=textwrap.dedent(
+            """\
+            Indicates whether we expect the final command to fail. Omitting this
+            parameter is equivalent to setting it to ``false``. When ``true``, the
+            output_binary parameter can be omitted"""
+        ),
+    ),
+    "override_LD_LIBRARY_PATH": TomlValReq(
+        classinfo=bool,
+        type_descr="boolean",
+        description=textwrap.dedent(
+            """\
+            Specify whether the ``LD_LIBRARY_PATH`` environment variable needs to be
+            overriden in order to execute the output binary. Omitting this parameter
+            is equivalent to setting it to ``false``"""
+        ),
+    ),
 }
 
 
@@ -220,7 +270,7 @@ def _process_toml_table(
 
     for key, val in table.items():
         try:
-            req = _REQS[key]
+            req = _TOML_PARAM_REQS[key]
         except KeyError:
             raise _mk_err(f"unexpected parameter: {key}") from None
 

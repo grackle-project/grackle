@@ -1,8 +1,17 @@
-# this file describes the "formulae" for building docker images that are used
-# within an installtest test-case
+# we refer to the various "layers" in this file as "image-targets"
+# - each image-target exists to be used to create a container for running an
+#   installtest test-case.
+# - we encode a basic summary in comments just before the declaration of each
+#   "image-target". Such a description is enclosed between a line that says
+#   `# DESCRIPTION-START` and a line that says `# DESCRIPTION-END`
 
 # currently, it's important to invoke docker from the root directory in order to copy
 # over the source directory
+
+# DESCRIPTION-START
+# A basic image where the Grackle source directory has been copied and dependencies have
+# been installed. No builds have been configured yet
+# DESCRIPTION-END
 FROM ubuntu:24.04 AS baseline
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -44,14 +53,20 @@ RUN sudo apt-get -y install pkg-config
 # this will only get used when we do installations (otherwise it's meaningless)
 ENV LOCAL_LIB=/home/$username/local
 
-# build the shared library
+# DESCRIPTION-START
+# The shared library form of Grackle is built and can be found in its build directory,
+# ~/grackle/build
+# DESCRIPTION-END
 FROM baseline AS shared_build
 RUN cd ./grackle \
     && cmake -Bbuild -GNinja -DBUILD_SHARED_LIBS=ON \
     && cmake --build build
 
 
-# install the shared library
+# DESCRIPTION-START
+# The shared library form of Grackle has been installed (and the build directory was
+# cleaned up)
+# DESCRIPTION-END
 FROM shared_build AS shared_install
 RUN mkdir -p $LOCAL_LIB \
     && cd ./grackle \
@@ -59,9 +74,13 @@ RUN mkdir -p $LOCAL_LIB \
     && rm -r build
 
 
-# build and install the static lib after the shared lib
-# -> important: this exists so we can explicitly confirm that the
-#    order of operations is unimportant
+# DESCRIPTION-START
+# Both the shared and shared library forms of Grackle have been built and installed
+# (the shared library was installed first).
+#
+# Part of the reason this exists is so that we can explicitly confirm that the
+# order of operations is unimportant
+# DESCRIPTION-END
 FROM shared_install AS shared_static_install
 RUN cd ./grackle \
     && cmake -Bbuild-static -GNinja -DBUILD_SHARED_LIBS=OFF \
@@ -70,22 +89,36 @@ RUN cd ./grackle \
     && rm -r ./build-static
 
 
-# build the static lib
+# DESCRIPTION-START
+# The static library form of Grackle is built and can be found in its build directory,
+# ~/grackle/build
+# DESCRIPTION-END
 FROM baseline AS static_build
 RUN cd ./grackle \
     && cmake -Bbuild -GNinja -DBUILD_SHARED_LIBS=OFF \
     && cmake --build build
 
 
-# install the static lib
+# DESCRIPTION-START
+# The static library form of Grackle has been installed (and the build directory was
+# cleaned up).
+# DESCRIPTION-END
 FROM static_build AS static_install
 RUN mkdir -p $LOCAL_LIB \
     && cd ./grackle \
     && cmake --install ./build --prefix ${LOCAL_LIB} \
     && rm -r build
 
-# install the static lib variant b
-# (specify installation prefix at configure time)
+# DESCRIPTION-START
+# The static library form of Grackle has been installed (and the build directory was
+# cleaned up). In contrast to all other image-targets that install Grackle, this
+# image-target sets the installation directory when the build is initially configured by
+# setting the standard ``CMAKE_INSTALL_PREFIX`` cmake variable.
+#
+# For added context, all of the other image-targets specify the desired installation
+# direction when executing the ``cmake`` program by passing the path through via the
+# ``--prefix`` flag.
+# DESCRIPTION-END
 FROM baseline AS static_install_conftimeprefix
 RUN mkdir -p $LOCAL_LIB \
     && cd ./grackle \
@@ -100,9 +133,13 @@ RUN mkdir -p $LOCAL_LIB \
 #    configure-time (whereas --prefix overwrites the paths)
 # -> this is a task for another time....
 
-# build and install the shared lib after the static lib
-# -> important: this exists so we can explicitly confirm that the
-#    order of operations is unimportant
+# DESCRIPTION-START
+# Both the shared and shared library forms of Grackle have been built and installed
+# (the static library was installed first).
+#
+# Part of the reason this exists is so that we can explicitly confirm that the
+# order of operations is unimportant
+# DESCRIPTION-END
 FROM static_install AS static_shared_install
 RUN cd ./grackle \
     && cmake -Bbuild-shared -GNinja -DBUILD_SHARED_LIBS=ON \

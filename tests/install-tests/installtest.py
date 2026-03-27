@@ -15,15 +15,27 @@ import os
 import subprocess
 import sys
 import tempfile
+import textwrap
 import traceback
-from typing import Callable
+from typing import Any, Callable
 
-from core import DockerImage, TestNameFilter, TestResult, collect_tests, run_test
-from docker import DockerContainer, GRACKLE_ROOT, import_standalone_module
+from core import (
+    DockerImage,
+    TestNameFilter,
+    TestResult,
+    collect_tests,
+    run_test,
+    DOCKERFILE_PATH,
+    _TOML_PARAM_REQS,
+)
+from docker import (
+    DockerContainer,
+    GRACKLE_ROOT,
+    import_standalone_module,
+    extract_target_info,
+)
 
 if sys.version_info < (3, 7):
-    # at the moment, I think the only thing we use from 3.7 (that's not in 3.6.1) is
-    # contextmanager.nullcontext
     raise RuntimeError("python 3.7 or newer is required")
 
 
@@ -61,8 +73,8 @@ def _mk_docker_image(
     return TestResult.Success()
 
 
-def main(args: argparse.Namespace):
-    configure_logger(color=True)
+def _exec_main(args: argparse.Namespace):
+    """The main function for "exec-mode", which actually drives the tests."""
     test_cases = collect_tests(
         scan_dir=args.scan_dir, test_filter=TestNameFilter(args.filter_tests)
     )
@@ -171,28 +183,129 @@ def main(args: argparse.Namespace):
     return 1
 
 
+def _setup_exec_subcommand(subparsers: Any):
+    """Configure the exec subcommand"""
+    p = subparsers.add_parser("exec", help="collect & execute the full set of tests")
+    p.set_defaults(fn=_exec_main)
+    p.add_argument("--list-tests", action="store_true", help="list all test names")
+    p.add_argument(
+        "--scan-dir",
+        action="store",
+        default=os.path.join(GRACKLE_ROOT, "tests", "install-tests", "cases"),
+        help="directory to scan for tests",
+    )
+    _filter_help = (
+        "filters test names using the approach of googletest. For more detail, see "
+        "https://google.github.io/googletest/advanced.html#running-a-subset-of-the-tests"
+    )
+    p.add_argument("--filter-tests", action="store", help=_filter_help)
+
+    # TODO: figure out weirdness with creating docker images so we can remove this
+    #   -> when we first build docker images, we get the expected caching of build
+    #      stages that are common to all of the images
+    #   -> on subsequent rebuilds, some expensive steps are not cached unless we
+    #      delete all of the images first
+    parser.add_argument(
+        "--skip-image-creation",
+        action="store_true",
+        help=(
+            "tells the executor to assume that all docker images were previously created "
+            "and are up to date"
+        ),
+    )
+
+
+def _entrydoc_main(args: argparse.Namespace):
+    """The main function for "entrydoc-mode", which determines the"""
+
+    packs = []  # <- we'll fill this up
+    if args.kind == "param":
+        for name, toml_val_req in _TOML_PARAM_REQS.items():
+            extra = {"type_descr": toml_val_req.type_descr}
+            if toml_val_req.choices is not None:
+                extra["choices"] = ", ".join(
+                    f'"{e}"' for e in sorted(toml_val_req.choices)
+                )
+
+            packs.append(
+                {"name": name, "descr": toml_val_req.description, "extra": extra}
+            )
+
+    elif args.kind == "image-target":
+        raw_info = extract_target_info(path=DOCKERFILE_PATH)
+
+        # let's confirm that the DockerImage enum is exhaustive
+        names_from_enum = set(e.layer_name() for e in DockerImage.__members__.values())
+        diff = names_from_enum.symmetric_difference(raw_info.keys())
+        if len(diff) != 0:
+            raise RuntimeError(
+                "The docker layer names in the DockerLayer Enum are:\n"
+                f"  {', '.join(sorted(names_from_enum))}\n"
+                "The docker layer names from parsing the docker file are:\n"
+                f"  {', '.join(sorted(raw_info))}\n"
+                "The following layer names are in set but not the other:\n"
+                f"  {', '.join(sorted(diff))}"
+            )
+        for enumeration in DockerImage.__members__.values():
+            layer_name = enumeration.layer_name()
+            info = raw_info[layer_name]
+
+            descr = textwrap.dedent("\n".join(info.description))
+            extra = {
+                "image-name": enumeration.tag_name(),
+                # we only record dependency if it's another layer that we build
+                "dependency": info.dependency if info.dependency in raw_info else "N/A",
+            }
+            packs.append(
+                {"name": enumeration.layer_name(), "descr": descr, "extra": extra}
+            )
+    else:
+        raise RuntimeError(f"unexpected kind argument: {args.kind!r}")
+
+    for i, pack in enumerate(sorted(packs, key=lambda p: p["name"])):
+        if i != 0:
+            print("\n\n", end="")
+        directive_body_indent = "   "
+        pack_lines = [f".. object:: {pack['name']}", ""]
+        for fieldname, value in pack["extra"].items():
+            value = value.strip()
+            assert "\n" not in fieldname
+            assert "\n" not in value
+            pack_lines.append(f"{directive_body_indent}:{fieldname}: {value.strip()}")
+        pack_lines.append("")
+        pack_lines.append(textwrap.indent(pack["descr"], directive_body_indent))
+        print(*pack_lines, sep="\n")
+
+
+def _entrydoc_subcommand(subparsers: Any):
+    """Configure the entrydoc subcommand"""
+    p = subparsers.add_parser(
+        "entrydoc",
+        help="generate rst reference documentation for each entry of the specified kind",
+    )
+    p.set_defaults(fn=_entrydoc_main)
+    p.add_argument(
+        "kind",
+        choices=["param", "image-target"],
+        help="the kind of entries to document",
+    )
+
+
+def main(args: argparse.Namespace):
+    configure_logger(color=True)
+    fn = args.fn
+    return fn(args)
+
+
 parser = argparse.ArgumentParser(
     description="drive one or more test cases",
     # prior to 3.8, setting allow_abbrev=False messed up interpretation of -vv
     allow_abbrev=sys.version_info < (3, 8),
 )
 
-parser.add_argument(
-    "--scan-dir",
-    action="store",
-    default=os.path.join(GRACKLE_ROOT, "tests", "install-tests", "cases"),
-    help="directory to scan for tests",
-)
-
-parser.add_argument("--list-tests", action="store_true", help="list all test names")
-
-_FILTER_HELP = """\
-filters test names using the approach of googletest. For more detail, see
-https://google.github.io/googletest/advanced.html#running-a-subset-of-the-tests"""
-parser.add_argument("--filter-tests", action="store", help=_FILTER_HELP)
-
-# TODO: figure out weirdness with creating docker images so we can remove this
-parser.add_argument("--skip-image-creation", action="store_true")
+subparsers = parser.add_subparsers()
+_setup_exec_subcommand(subparsers)
+_entrydoc_subcommand(subparsers)
 
 parser.add_argument(
     "-v",

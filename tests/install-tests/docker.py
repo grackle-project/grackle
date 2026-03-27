@@ -8,11 +8,12 @@ import importlib.util
 import io
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
+from typing import Dict, IO, Iterator, List, Mapping, NamedTuple, Optional, Tuple
 import uuid
-from typing import Dict, IO, Mapping, Optional
 
 
 # handle a few extra imports
@@ -308,3 +309,92 @@ class DockerContainer:
             log=self.debug_log,
             silent=True,
         )
+
+
+# define logic for extracting useful information from a dockerfile
+# ================================================================
+
+
+def _mk_lineno_line_itr(f: IO[str]) -> Iterator[Tuple[int, str]]:
+    _LINE_HAS_CONTINUATION = re.compile(r"^[^#]*" + re.escape("\\") + "$")
+    pair = None
+    for lineno, line in enumerate(f, start=1):
+        line = line[:-1]  # <- strip off trailing newline
+        if pair:
+            pair = (pair[0], f"{pair[1].rstrip()} {line.lstrip()}")
+        else:
+            pair = (lineno, line)
+        if _LINE_HAS_CONTINUATION.match(line) is None:
+            yield pair
+            pair = None
+    if pair is not None:
+        yield pair
+
+
+class _DockerTargetInfo(NamedTuple):
+    dependency: Optional[str]
+    description: List[str]
+
+
+def extract_target_info(path: os.PathLike) -> Dict[str, _DockerTargetInfo]:
+    """
+    Extracts some useful info from a dockerfile
+
+    We expect the FROM statement preceeding each build-target to be preceeded by a
+    build-target of the form
+    ::
+      # DESCRIPTION-START
+      # <...>
+      # DESCRIPTION-END
+    """
+    _start = "DESCRIPTION-START"
+    _end = "DESCRIPTION-END"
+    _DESCR_START_PATTERN = re.compile(rf"^#\s*{_start}\s*$")
+    _DESCR_END_PATTERN = re.compile(rf"^#\s*{_end}\s*$")
+    _FROM_PATTERN = re.compile(r"^\s*FROM\s+(?:--platform.*\s+)?(.+)\s+AS\s+(.+)\s*$")
+
+    lineno, line = None, None
+
+    def _err(msg):
+        nonlocal lineno, line
+        msg = f"on line {lineno} of {path}\n  error:{msg}\n  line:{line!r}"
+        return RuntimeError(msg)
+
+    out = {}
+    with open(path, "r") as f:
+        itr = _mk_lineno_line_itr(f)
+
+        for lineno, line in itr:
+            if _FROM_PATTERN.match(line):
+                raise _err("a FROM-line should follow a description line")
+            elif _DESCR_END_PATTERN.match(line):
+                raise _err("a {_end!r}-line MUST follow a {_start!r}-line")
+            elif _DESCR_START_PATTERN.match(line):
+                cur_descr = []
+                while True:
+                    lineno, line = next(itr, (None, ""))
+                    if _DESCR_END_PATTERN.match(line):
+                        break
+                    elif line.startswith("#"):
+                        cur_descr.append(line[1:].rstrip())
+                    elif lineno is None:
+                        raise RuntimeError("reached EOF while parsing a description")
+                    else:
+                        raise _err(
+                            f"lines after {_start!r}-line must start with '#' until "
+                            f"the associated {_end!r}-line is encountered"
+                        )
+
+                lineno, line = next(itr, (None, ""))
+                if lineno is None:
+                    raise RuntimeError(
+                        "reached EOF after description. Expect FROM-line"
+                    )
+
+                m = _FROM_PATTERN.match(line)
+                if m is None:
+                    raise _err("a FROM-line is expected after a {_end!r}-line")
+                out[m.group(2)] = _DockerTargetInfo(
+                    dependency=m.group(1), description=cur_descr
+                )
+    return out

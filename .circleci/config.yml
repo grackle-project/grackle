@@ -360,7 +360,7 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
 
-      - run: tests/install-tests/installtest.py
+      - run: tests/install-tests/installtest.py exec
 
   docs-build:
     parameters:
