@@ -29,10 +29,8 @@ namespace grackle::impl {
 ///
 /// @par History
 /// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
-int solve_cubic_equation_cpp(
-  double a, double b, double c, double& root
-);
+int solve_cubic_equation_cpp(double a, double b, double c, double& root);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
 #endif /* SOLVE_CUBIC_EQUATION_HPP */
