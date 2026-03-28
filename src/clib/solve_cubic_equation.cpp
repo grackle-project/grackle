@@ -25,7 +25,6 @@ int grackle::impl::solve_cubic_equation_cpp(double a, double b, double c,
   double q, r, m;
   double th;
   double s, t;
-  const double pi_local_var = pi_fortran_val;
 
   q = (a * a - 3.e0 * b) / 9.e0;
   r = (2.e0 * a * a * a - 9.e0 * a * b + 27.e0 * c) / 54.e0;
@@ -36,9 +35,9 @@ int grackle::impl::solve_cubic_equation_cpp(double a, double b, double c,
     th = acos(r / std::sqrt(q * q * q));
     root1 = -(2.e0 * std::sqrt(q) * std::cos(th / 3.e0)) - a / 3.e0;
     root2 =
-        -(2.e0 * std::sqrt(q) * std::cos((th + 2.e0 * pi) / 3.e0)) - a / 3.e0;
+      -(2.e0 * std::sqrt(q) * std::cos((th + 2.e0 * pi_fortran_val) / 3.e0)) - a / 3.e0;
     root3 =
-        -(2.e0 * std::sqrt(q) * std::cos((th - 2.e0 * pi) / 3.e0)) - a / 3.e0;
+      -(2.e0 * std::sqrt(q) * std::cos((th - 2.e0 * pi_fortran_val) / 3.e0)) - a / 3.e0;
     fprintf(stderr, "three real roots %g %g %g\n", root1, root2, root3);
     return 1;
   } else {  // one real root
