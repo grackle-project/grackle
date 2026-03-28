@@ -112,6 +112,13 @@ inline void calc_grain_size_increment_1d(
   // to be filled with the indices of selected injection pathways
   int selected_inj_path_idx_l[max_num_pathways];
 
+  // loop avoids false-positives from clang-analyzer-core.uninitialized.Assign
+  // -> and if there is an error, it should trigger a segmentation fault (or
+  //    at least trigger a memory sanitizer error)
+  for (int i = 0; i < max_num_pathways; i++) {
+    selected_inj_path_idx_l[i] = 32767;
+  }
+
   // to be updated with the number of selected injection pathways
   int n_selected_inj_paths = 0;
 
@@ -133,11 +140,8 @@ inline void calc_grain_size_increment_1d(
     InjectPathFieldPack inject_path_metal_densities =
         setup_InjectPathFieldPack(my_chemistry, my_fields);
 
-    int start = inject_path_metal_densities.start_idx;
-    int stop = inject_path_metal_densities.stop_idx;
-
     // make arrays
-    for (int count = start; count < stop; count++) {
+    for (int count = 0; count < n_pathways; count++) {
       // when my_chemistry->multi_metals == 0, inj_path_metal_dens wraps
       // the same pointer as `metal`
 

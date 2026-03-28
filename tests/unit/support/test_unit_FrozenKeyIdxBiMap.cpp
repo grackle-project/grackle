@@ -16,17 +16,34 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include "status_reporting.h"
 #include "support/FrozenKeyIdxBiMap.hpp"
 #include "grackle.h"
 
+namespace grackle::impl {
+
+// teach GoogleTest how to print grackle::impl::BiMapMode for shorter test names
+void PrintTo(const BiMapMode& mode, std::ostream* os) {
+  switch (mode) {
+    case BiMapMode::COPIES_KEYDATA:
+      *os << "BiMapMode::COPIES_KEYDATA";
+      return;
+    case BiMapMode::REFS_KEYDATA:
+      *os << "BiMapMode::REFS_KEYDATA";
+      return;
+  }
+  GR_INTERNAL_ERROR("should not be reachable");
+}
+
 // teach GoogleTest how to print grackle::impl::bimap::AccessRslt for more
 // informative errors (otherwise it just shows the memory's raw byte values)
-namespace grackle::impl::bimap {
+namespace bimap {
 void PrintTo(const AccessRslt& ar, std::ostream* os) {
   std::string tmp = (ar.has_value) ? std::to_string(ar.value) : "<garbage>";
   *os << "{has_value=" << ar.has_value << ", value=" << tmp << '}';
 }
-}  // namespace grackle::impl::bimap
+}  // namespace bimap
+}  // namespace grackle::impl
 
 std::string prep_descr(std::string descr, bool negation) {
   return ((negation) ? "isn't " : "is ") + descr;
@@ -160,14 +177,13 @@ TEST(FrozenKeyIdxBiMap, EmptyClone) {
   }
 }
 
-class FrozenKeyIdxBiMapConstructorSuite
-    : public testing::TestWithParam<grackle::impl::BiMapMode> {
+class BiMapCreate : public testing::TestWithParam<grackle::impl::BiMapMode> {
   // You can implement all the usual fixture class members here.
   // To access the test parameter, call GetParam() from class
   // TestWithParam<T>.
 };
 
-TEST_P(FrozenKeyIdxBiMapConstructorSuite, Simple) {
+TEST_P(BiMapCreate, Simple) {
   const char* keys[] = {"denisty", "internal_energy"};
 
   grackle::impl::FrozenKeyIdxBiMap tmp =
@@ -177,7 +193,7 @@ TEST_P(FrozenKeyIdxBiMapConstructorSuite, Simple) {
   grackle::impl::drop_FrozenKeyIdxBiMap(&tmp);
 }
 
-TEST_P(FrozenKeyIdxBiMapConstructorSuite, LongKey) {
+TEST_P(BiMapCreate, LongKey) {
   const char* first_key = "density";
   std::string long_key(grackle::impl::bimap_detail::KEYLEN_MAX, 'A');
   const char* keys[2] = {first_key, long_key.data()};
@@ -189,7 +205,7 @@ TEST_P(FrozenKeyIdxBiMapConstructorSuite, LongKey) {
   grackle::impl::drop_FrozenKeyIdxBiMap(&tmp);
 }
 
-TEST_P(FrozenKeyIdxBiMapConstructorSuite, TooLongKey) {
+TEST_P(BiMapCreate, TooLongKey) {
   const char* first_key = "density";
   std::string long_key(grackle::impl::bimap_detail::KEYLEN_MAX + 1, 'A');
   const char* keys[2] = {first_key, long_key.data()};
@@ -199,20 +215,20 @@ TEST_P(FrozenKeyIdxBiMapConstructorSuite, TooLongKey) {
   ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
 
-TEST_P(FrozenKeyIdxBiMapConstructorSuite, 0LenKey) {
+TEST_P(BiMapCreate, 0LenKey) {
   const char* keys[2] = {"density", ""};
   grackle::impl::FrozenKeyIdxBiMap tmp =
       grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
   ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
 
-TEST_P(FrozenKeyIdxBiMapConstructorSuite, NullptrWithPosCount) {
+TEST_P(BiMapCreate, NullptrWithPosCount) {
   grackle::impl::FrozenKeyIdxBiMap tmp =
       grackle::impl::new_FrozenKeyIdxBiMap(nullptr, 1, GetParam());
   ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
 
-TEST_P(FrozenKeyIdxBiMapConstructorSuite, NotNull0KeyCount) {
+TEST_P(BiMapCreate, NotNull0KeyCount) {
   const char* keys[] = {"denisty", "internal_energy"};
   grackle::impl::FrozenKeyIdxBiMap tmp =
       grackle::impl::new_FrozenKeyIdxBiMap(keys, 0, GetParam());
@@ -221,17 +237,9 @@ TEST_P(FrozenKeyIdxBiMapConstructorSuite, NotNull0KeyCount) {
 
 INSTANTIATE_TEST_SUITE_P(
     ,  // <- leaving Instantiation name empty
-    FrozenKeyIdxBiMapConstructorSuite,
+    BiMapCreate,
     testing::Values(grackle::impl::BiMapMode::REFS_KEYDATA,
-                    grackle::impl::BiMapMode::COPIES_KEYDATA),
-    [](const testing::TestParamInfo<
-        FrozenKeyIdxBiMapConstructorSuite::ParamType>& info) {
-      if (info.param == grackle::impl::BiMapMode::REFS_KEYDATA) {
-        return std::string("BIMAP_REFS_KEYDATA");
-      } else {
-        return std::string("BIMAP_COPIES_KEYDATA");
-      }
-    });
+                    grackle::impl::BiMapMode::COPIES_KEYDATA));
 
 /// helper function to initialize a map from a vector
 grackle::impl::FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(
@@ -247,8 +255,7 @@ grackle::impl::FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(
   return new_FrozenKeyIdxBiMap(key_ptr_l.data(), key_count, mode);
 }
 
-class FrozenKeyIdxBiMapGeneralSuite
-    : public testing::TestWithParam<grackle::impl::BiMapMode> {
+class BiMapGeneral : public testing::TestWithParam<grackle::impl::BiMapMode> {
 protected:
   std::vector<std::string> ordered_keys;
   grackle::impl::FrozenKeyIdxBiMap* bimap_p = nullptr;
@@ -286,7 +293,7 @@ protected:
   }
 };
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyContainedKey) {
+TEST_P(BiMapGeneral, FindContainedKey) {
   EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "density"),
               AccessRsltHolds(1));
   EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "internal_energy"),
@@ -295,12 +302,15 @@ TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyContainedKey) {
               AccessRsltHolds(2));
 }
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyAbsentKey) {
+TEST_P(BiMapGeneral, FindAbsentKey) {
   EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "notAKey"),
               EmptyAccessRslt());
 }
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyAbsentIrregularKeys) {
+TEST_P(BiMapGeneral, FindForbiddenKeys) {
+  // let's veryify that trying to find forbidden keys works properly
+  // -> the fact that they are forbidden means that they are always absent
+
   EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, ""),
               EmptyAccessRslt());
 
@@ -309,11 +319,11 @@ TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyAbsentIrregularKeys) {
               EmptyAccessRslt());
 }
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdxInvalidIdx) {
+TEST_P(BiMapGeneral, KeyFromIdxInvalidIdx) {
   EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_inverse_find(bimap_p, 3), nullptr);
 }
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdxValidIdx) {
+TEST_P(BiMapGeneral, KeyFromIdxValidIdx) {
   EXPECT_EQ(
       std::string(grackle::impl::FrozenKeyIdxBiMap_inverse_find(bimap_p, 2)),
       std::string("metal_density"));
@@ -332,7 +342,7 @@ TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdxValidIdx) {
   }
 }
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, Clone) {
+TEST_P(BiMapGeneral, Clone) {
   grackle::impl::FrozenKeyIdxBiMap clone =
       grackle::impl::FrozenKeyIdxBiMap_clone(bimap_p);
   ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&clone));
@@ -364,14 +374,6 @@ TEST_P(FrozenKeyIdxBiMapGeneralSuite, Clone) {
 
 INSTANTIATE_TEST_SUITE_P(
     ,  // <- leaving Instantiation name empty
-    FrozenKeyIdxBiMapGeneralSuite,
+    BiMapGeneral,
     testing::Values(grackle::impl::BiMapMode::REFS_KEYDATA,
-                    grackle::impl::BiMapMode::COPIES_KEYDATA),
-    [](const testing::TestParamInfo<FrozenKeyIdxBiMapGeneralSuite::ParamType>&
-           info) {
-      if (info.param == grackle::impl::BiMapMode::REFS_KEYDATA) {
-        return std::string("BIMAP_REFS_KEYDATA");
-      } else {
-        return std::string("BIMAP_COPIES_KEYDATA");
-      }
-    });
+                    grackle::impl::BiMapMode::COPIES_KEYDATA));

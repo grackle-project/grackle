@@ -82,7 +82,6 @@ configure_file(auto_general.cpp.in auto_general.cpp @ONLY)
 add_library(Grackle_Grackle
 
   # C source files
-  dynamic_api.c
   grackle_units.c
   index_helper.c
   rate_functions.c
@@ -97,6 +96,7 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
+  calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
   calculate_cooling_time.cpp
   calculate_dust_temperature.cpp
   calculate_gamma.cpp
@@ -114,6 +114,7 @@ add_library(Grackle_Grackle
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp
   dust/multi_grain_species/calc_grain_size_increment_1d.hpp
+  dynamic_api.cpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_cloudy_data.cpp initialize_cloudy_data.hpp
@@ -128,8 +129,8 @@ add_library(Grackle_Grackle
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
+  ratequery.cpp ratequery.hpp
   rate_timestep_g.cpp rate_timestep_g.hpp
-  rate_utils.cpp
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
   set_default_chemistry_parameters.cpp
@@ -138,6 +139,7 @@ add_library(Grackle_Grackle
   step_rate_newton_raphson.hpp
   support/FrozenKeyIdxBiMap.hpp
   support/h5io.cpp support/h5io.hpp
+  support/SimpleVec.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
@@ -150,7 +152,6 @@ add_library(Grackle_Grackle
 
   # Fortran Source Files
   calc_tdust_1d_g.F
-  calc_temp1d_cloudy_g.F
   interpolators_g.F
   calc_grain_size_increment_1d.F
   gaussj_g.F

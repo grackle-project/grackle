@@ -17,6 +17,7 @@
 #include <vector>
 #include <iostream>
 
+#include "calc_temp1d_cloudy_g.hpp"
 #include "cool1d_cloudy_g.hpp"
 #include "cool1d_cloudy_old_tables_g.hpp"
 #include "cool1d_multi_g.hpp"
@@ -299,10 +300,9 @@ void grackle::impl::cool1d_multi_g(
       }
     }
 
-    grackle::impl::fortran_wrapper::calc_temp1d_cloudy_g(
-        rhoH, idx_range, tgas, mmw, dom, zr, imetal,
-        my_rates->cloudy_primordial, itmask, my_chemistry, my_fields,
-        internalu);
+    grackle::impl::calc_temp1d_cloudy_g(
+        rhoH, tgas, mmw, dom, zr, imetal, itmask, my_chemistry,
+        my_rates->cloudy_primordial, my_fields, internalu, idx_range);
 
   } else {
     // Compute mean molecular weight (and temperature) directly
@@ -966,7 +966,6 @@ void grackle::impl::cool1d_multi_g(
         if (itmask[i] != MASK_FALSE) {
           // Only calculate if H2I(i) is a substantial fraction
           if (d(i, idx_range.j, idx_range.k) * dom > 1e10) {
-            ciefudge = 1.;
             tau = std::pow(((d(i, idx_range.j, idx_range.k) / 2e16) * dom),
                            2.8);  // 2e16 is in units of cm^-3
             tau = std::fmax(tau, 1.e-5);
