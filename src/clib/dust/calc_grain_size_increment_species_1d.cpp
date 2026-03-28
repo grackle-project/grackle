@@ -18,6 +18,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
+#include "solve_cubic_equation.hpp"
 #include "utils-cpp.hpp"
 
 #include "calc_grain_size_increment_species_1d.hpp"
@@ -180,7 +181,9 @@ void grackle::impl::calc_grain_size_increment_species_1d(
         coef1 = coef1 / coef3;
         coef2 = coef2 / coef3;
 
-        FORTRAN_NAME(solve_cubic_equation)(&coef2, &coef1, &coef0, &drsp[i]);
+        if(grackle::impl::solve_cubic_equation_cpp(coef2, coef1, coef0, drsp[i])) {
+          GRIMPL_ERROR("Failed to solve cubic equation for grain size increment");
+        }
         // TODO: to be removed after fixing the numerical issue with i=0 and
         // idx_range.j=idx_range.k=0
         if (i == 0 && idx_range.j == 0 && idx_range.k == 0) {
