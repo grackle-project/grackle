@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares the solve_cubic_equation function
+/// Implements the solve_cubic_equation function
 ///
 //===----------------------------------------------------------------------===//
 
@@ -24,9 +24,6 @@ int grackle::impl::solve_cubic_equation_cpp(
 )
 {
   double root1, root2, root3;
-
-  // Locals
-
   double q, r, m;
   double th;
   double s, t;
@@ -36,17 +33,17 @@ int grackle::impl::solve_cubic_equation_cpp(
   r = (2.e0*a*a*a - 9.e0*a*b + 27.e0*c)/54.e0;
   m = r*r - q*q*q;
     
-  if (m < 0.e0)  //! three real roots 
+  if (m < 0.e0) // three real roots
   {
     th = acos(r/std::sqrt(q*q*q) );
     root1 = -(2.e0*std::sqrt(q)*std::cos(th/3.e0))-a/3.e0;
     root2 = -(2.e0*std::sqrt(q)*std::cos((th+2.e0*pi)/3.e0))-a/3.e0;
     root3 = -(2.e0*std::sqrt(q)*std::cos((th-2.e0*pi)/3.e0))-a/3.e0;
-    printf("three real roots %g %g %g\n", root1, root2, root3);
-    return 1;  //! indicate error condition
+    fprintf(stderr, "three real roots %g %g %g\n", root1, root2, root3);
+    return 1;
   } 
   else 
-  {  //! one real root
+  { // one real root
     if(r > 0.e0)  {
       s = -std::pow((r+std::sqrt(m)),(1.e0/3.e0));
     } else {
