@@ -23,6 +23,7 @@
 #include "grackle.h"
 #include "dust_props.hpp"
 #include "dust/grain_species_info.hpp"
+#include "dust/calc_grain_size_increment_species_1d.hpp"
 #include "fortran_func_decls.h"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -111,6 +112,13 @@ inline void calc_grain_size_increment_1d(
   // to be filled with the indices of selected injection pathways
   int selected_inj_path_idx_l[max_num_pathways];
 
+  // loop avoids false-positives from clang-analyzer-core.uninitialized.Assign
+  // -> and if there is an error, it should trigger a segmentation fault (or
+  //    at least trigger a memory sanitizer error)
+  for (int i = 0; i < max_num_pathways; i++) {
+    selected_inj_path_idx_l[i] = 32767;
+  }
+
   // to be updated with the number of selected injection pathways
   int n_selected_inj_paths = 0;
 
@@ -132,11 +140,8 @@ inline void calc_grain_size_increment_1d(
     InjectPathFieldPack inject_path_metal_densities =
         setup_InjectPathFieldPack(my_chemistry, my_fields);
 
-    int start = inject_path_metal_densities.start_idx;
-    int stop = inject_path_metal_densities.stop_idx;
-
     // make arrays
-    for (int count = start; count < stop; count++) {
+    for (int count = 0; count < n_pathways; count++) {
       // when my_chemistry->multi_metals == 0, inj_path_metal_dens wraps
       // the same pointer as `metal`
 
@@ -211,18 +216,30 @@ inline void calc_grain_size_increment_1d(
     const gr_float* grsp_density =
         field_data_adaptor.get_ptr_dynamic(cur_grsp_info.species_idx);
 
-    FORTRAN_NAME(calc_grain_size_increment_species_1d)(
-        &my_chemistry->grain_growth, itmask, &inject_pathway_props->n_pathways,
-        &my_fields->grid_dimension[0], &my_fields->grid_dimension[1],
-        &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end,
-        &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
-        &n_selected_inj_paths, grsp_density,
+    // FORTRAN_NAME(calc_grain_size_increment_species_1d)(
+    //     &my_chemistry->grain_growth, itmask,
+    //     &inject_pathway_props->n_pathways, &my_fields->grid_dimension[0],
+    //     &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
+    //     &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
+    //     &dom, my_fields->density, &n_selected_inj_paths, grsp_density,
+    //     repacked_inj_path_metal_densities.data(), repacked_yields.data(),
+    //     repacked_size_moments.data(), &bulk_density,
+    //     internal_dust_prop_buf.grain_sigma_per_gas_mass.data[grsp_i],
+    //     internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i], gr_N,
+    //     &gr_Size,
+    //     &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0],
+    //     inject_pathway_props->log10Tdust_interp_props.parameters[0],
+    //     repacked_opac_table.data());
+
+    grackle::impl::calc_grain_size_increment_species_1d(
+        my_chemistry->grain_growth, itmask, inject_pathway_props->n_pathways,
+        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+        my_fields->grid_dimension[2], idx_range, my_fields->density,
+        n_selected_inj_paths, grsp_density,
         repacked_inj_path_metal_densities.data(), repacked_yields.data(),
-        repacked_size_moments.data(), &bulk_density,
+        repacked_size_moments.data(), bulk_density,
         internal_dust_prop_buf.grain_sigma_per_gas_mass.data[grsp_i],
-        internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i], gr_N, &gr_Size,
-        &inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0],
-        inject_pathway_props->log10Tdust_interp_props.parameters[0],
+        internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i], gr_N, gr_Size,
         repacked_opac_table.data());
   }
 

@@ -212,6 +212,7 @@ cdef extern from "grackle.h":
 
     # defined in "grackle.h"
     # ----------------------
+    cdef int GR_SUCCESS
     cdef int GRACKLE_FAIL_VALUE "GR_FAIL"
     cdef int GR_SPECIFY_INITIAL_A_VALUE
 
@@ -298,12 +299,44 @@ cdef extern from "grackle.h":
     # the unstable API
     ctypedef long long grunstable_rateid_type
 
-    grunstable_rateid_type grunstable_ratequery_id(const char* name)
+    grunstable_rateid_type grunstable_ratequery_id(
+        const c_chemistry_data_storage* my_rates,
+        const char* name)
 
-    double* grunstable_ratequery_get_ptr(
+    int grunstable_ratequery_get_f64(
         c_chemistry_data_storage* my_rates,
-        grunstable_rateid_type rate_id)
+        grunstable_rateid_type rate_id,
+        double* buf)
+
+    int grunstable_ratequery_set_f64(
+        c_chemistry_data_storage* my_rates,
+        grunstable_rateid_type rate_id,
+        const double* buf)
+
+    int grunstable_ratequery_get_str(
+        c_chemistry_data_storage* my_rates,
+        grunstable_rateid_type rate_id,
+        char* const * buf
+    );
+
+    cdef enum grunstable_types:
+        GRUNSTABLE_TYPE_F64
+        GRUNSTABLE_TYPE_STR
+
+    cdef enum grunstable_ratequery_prop_kind:
+        GRUNSTABLE_QPROP_NDIM
+        GRUNSTABLE_QPROP_SHAPE
+        GRUNSTABLE_QPROP_MAXITEMSIZE
+        GRUNSTABLE_QPROP_WRITABLE
+        GRUNSTABLE_QPROP_DTYPE
+
+    int grunstable_ratequery_prop(
+        const c_chemistry_data_storage* my_rates,
+        grunstable_rateid_type rate_id,
+        grunstable_ratequery_prop_kind prop_kind,
+        long long* ptr)
 
     const char* grunstable_ith_rate(
+        const c_chemistry_data_storage* my_rates,
         unsigned long long i,
         grunstable_rateid_type* out_rate_id)
