@@ -19,6 +19,7 @@
 namespace grackle::impl {
 
 ///  Find the real root of a cubic equation of the form
+///   x^3 + a x^2 + b x + c = 0
 ///
 /// @param[in]  a coefficient of the quadratic term
 /// @param[in]  b coefficient of the linear term
@@ -27,7 +28,7 @@ namespace grackle::impl {
 /// @return     0 on success, 1 if there are three real roots
 ///
 /// @par History
-/// modified: January, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
+/// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
 int solve_cubic_equation_cpp(
   double a, double b, double c, double& root
 );
