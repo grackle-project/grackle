@@ -120,6 +120,7 @@ add_library(grtestutils_core
   iterator_adaptor.hpp
   os.hpp os.cpp
   preset.hpp preset.cpp
+  ratequery.hpp
   utils.hpp utils.cpp
   view.cpp view.hpp
 )
@@ -164,6 +165,7 @@ if (TARGET GTest::gtest)
     googletest/assertions.hpp
     googletest/check_allclose.cpp googletest/check_allclose.hpp
     googletest/fixtures.hpp
+    googletest/matchers.hpp
   )
 
   target_link_libraries(grtestutils_googletest
