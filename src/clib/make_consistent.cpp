@@ -19,7 +19,7 @@
 #include "grackle.h"
 #include "fortran_func_decls.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
-#include "inject_model/inject_path_field_pack.hpp"
+#include "inject_model/misc.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
@@ -217,20 +217,19 @@ void make_consistent(
       SN_metal_arr[inj_model_input::N_Injection_Pathways];
 
   int n_pathways = 0;
-
   // construct view of each specified injection pathway metal density field
   if (my_chemistry->metal_chemistry > 0) {
     // note: when (my_chemistry->multi_metals == 0) a view within
     //       SN_metal_arr will wrap my_fields->metal_density. In other words,
     //       that view will be an alias of the `metal` view. This is ok because
     //       my_fields->metal_density is **NOT** mutated by this function.
-    InjectPathFieldPack p = setup_InjectPathFieldPack(my_chemistry, my_fields);
-
     n_pathways = inject_pathway_props->n_pathways;
+    const gr_float* const* inject_pathway_metal_densities =
+        get_inject_pathway_metal_density(my_chemistry, my_fields);
 
     for (int iSN = 0; iSN < n_pathways; iSN++) {
       SN_metal_arr[iSN] = grackle::impl::View<const gr_float***>(
-          p.fields[iSN], my_fields->grid_dimension[0],
+          inject_pathway_metal_densities[iSN], my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     }
   }

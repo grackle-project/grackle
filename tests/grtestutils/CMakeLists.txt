@@ -12,11 +12,8 @@ target_link_libraries(_grackle_internals INTERFACE Grackle::Grackle)
 target_compile_definitions(_grackle_internals
   # currently required for functions declared by fortran_func_wrappers.hpp
   INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>"
-  # suppresses warnings about C internal headers using our deprecated public
-  # headers (the files should include grackle.h instead). We're currently
-  # holding off on properly fixing this to minimize conflicts with pending PRs
-  # on the newchem-cpp branch
-  INTERFACE GRIMPL_PUBLIC_INCLUDE=1
+  # TODO: see what we can do to stop defining the following
+  INTERFACE GRIMPL_COMPILING_CORE_LIB=1
 )
 
 # this makes it possible to write an include-directive of a header from

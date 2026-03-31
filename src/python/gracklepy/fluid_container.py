@@ -339,6 +339,14 @@ _field_units = {
     "z_velocity": ("velocity_units", "cm/s"),
 }
 
+def _shape_arg_has_integer_type(arg) -> bool:
+    # checks if arg has a type that `np.zeros` would both accept for the shape
+    # argument and be interpretted as a scalar integer
+    # -> note: np.zeros raises TypeError for values of `True` or `3.`
+    if isinstance(arg, int):
+        return True
+    tmp = np.asarray(arg)
+    return tmp.ndim == 0 and np.issubdtype(tmp.dtype, np.integer)
 
 class FluidContainer(dict):
     def __init__(self, chemistry_data, n_vals, dtype="float64",
@@ -348,10 +356,26 @@ class FluidContainer(dict):
         super(FluidContainer, self).__init__()
         self.dtype = dtype
         self.chemistry_data = chemistry_data
-        self.n_vals = n_vals
+        if not _shape_arg_has_integer_type(n_vals):
+            raise TypeError(f"expected n_vals to be an integer, got {n_vals!r}")
+        elif n_vals <= 0:
+            raise ValueError("a non-positive n_vals is not allowed")
+        else:
+            self.n_vals = int(n_vals)
 
-        for field in self.input_fields + \
-          _required_calculated_fields(self.chemistry_data):
+        # first, allocate any injection pathway density fields so we can efficiently
+        # iterate over the fields' pointers in the order expected by the Grackle solver
+        # -> this works properly even when there are 0 injection pathways
+        inj_pathway_density_fields = self.inject_pathway_density_yield_fields
+        _shape = (len(inj_pathway_density_fields), self.n_vals)
+        self._inj_path_density_arrays = np.zeros(shape=_shape, dtype=self.dtype)
+        for i, field in enumerate(inj_pathway_density_fields):
+            self[field] = self._inj_path_density_arrays[i, :]
+
+        # allocate all other fields
+        for field in self.input_fields + _required_calculated_fields(chemistry_data):
+            if field in self:
+                continue
             self._setup_fluid(field)
 
     def __getitem__(self, key):

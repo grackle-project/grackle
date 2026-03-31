@@ -23,6 +23,7 @@
 #include "grackle.h"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
+#include "inject_model/misc.hpp"
 #include "internal_types.hpp"
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
@@ -61,7 +62,9 @@ void calc_tdust_3d_g(
   // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
-    grackle::impl::scale_fields_dust(my_chemistry, my_fields, imetal, factor);
+    grackle::impl::scale_fields_dust(
+        my_chemistry, my_fields, imetal, factor,
+        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   OMP_PRAGMA("omp parallel")
@@ -305,7 +308,9 @@ void calc_tdust_3d_g(
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)std::pow(internalu.a_value,3);
-    grackle::impl::scale_fields_dust(my_chemistry, my_fields, imetal, factor);
+    grackle::impl::scale_fields_dust(
+        my_chemistry, my_fields, imetal, factor,
+        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   return;
