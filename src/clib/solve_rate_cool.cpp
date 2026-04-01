@@ -923,10 +923,10 @@ int solve_rate_cool(
             my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
             tgas.data(), growth_dM.data());
 
-          // Calculate dust creation rates from stellar feedback
-          grackle::impl::dust_creation(
-            my_chemistry, my_fields, internalu, idx_range, itmask.data(),
-            dtit.data(), creation_dust_dM.data(), creation_metal_dM.data());
+          // // Calculate dust creation rates from stellar feedback
+          // grackle::impl::dust_creation(
+          //   my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+          //   dtit.data(), creation_dust_dM.data(), creation_metal_dM.data());
 
           // Calculate dust destruction rates and store in destruction_dM array
           grackle::impl::dust_destruction(

@@ -17,6 +17,15 @@ const double huge_value = 1.0e+20;
 
 const double t_ref = 20;
 
+// Gate thresholds for dust evolution: skip cells where both dust and metals
+// are negligible fractions of the baryon density.  The metal threshold matches
+// the 1e-9 ratio used in make_consistent (make_consistent.cpp ~line 530) to
+// distinguish metal-poor from metal-rich cells.  The dust threshold uses the
+// same ratio for consistency — below 1 ppb of baryon density, any dust
+// evolution would just integrate numerical noise.
+const double dust_gate_threshold = 1.0e-9;
+const double metal_gate_threshold = 1.0e-9;
+
 }  // namespace
 
 // ==========================================
@@ -50,6 +59,13 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
     if (itmask[i] != MASK_FALSE) {
       double rho_dust = dust(i, idx_range.j, idx_range.k);
       double rho_metal = metal(i, idx_range.j, idx_range.k);
+      double rho_d = d(i, idx_range.j, idx_range.k);
+
+      // No metals to accrete onto grains — skip growth
+      if (rho_metal < metal_gate_threshold * rho_d) {
+        continue;
+      }
+
       double temp = t_gas[i];
       double dt = dt_value[i];
 
@@ -179,6 +195,12 @@ void grackle::impl::dust_destruction(
     if (itmask[i] != MASK_FALSE) {
       double rho_gas = d(i, idx_range.j, idx_range.k);
       double rho_dust = dust(i, idx_range.j, idx_range.k);
+
+      // No dust to destroy — skip destruction
+      if (rho_dust < dust_gate_threshold * rho_gas) {
+        continue;
+      }
+
       double sne_this = use_sne ? sne(i, idx_range.j, idx_range.k) : 0.0;
       double temp = t_gas[i];
       double dt = dt_value[i];
@@ -303,13 +325,13 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
         std::exit(21);
       }
 
-      fprintf(stderr,
-              "internal: dt=%e growth=%.10e destruct=%.10e "
-              "cre_dust=%.10e cre_metal=%.10e "
-              "gas=%.15e dust=%.15e metal=%.15e\n",
-              dt, growth_dM[i], destruction_dM[i],
-              creation_dust_dM[i], creation_metal_dM[i],
-              rho_gas, rho_dust, rho_metal);
+      // fprintf(stderr,
+      //         "internal: dt=%e growth=%.10e destruct=%.10e "
+      //         "cre_dust=%.10e cre_metal=%.10e "
+      //         "gas=%.15e dust=%.15e metal=%.15e\n",
+      //         dt, growth_dM[i], destruction_dM[i],
+      //         creation_dust_dM[i], creation_metal_dM[i],
+      //         rho_gas, rho_dust, rho_metal);
 
       // Update the fields
       if (!dryrun) {
