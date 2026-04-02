@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the lookup_cool_rates1d_g function.
+/// Implements the lookup_cool_rates1d function.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -16,11 +16,9 @@
 #ifndef LOOKUP_COOL_RATES1D_HPP
 #define LOOKUP_COOL_RATES1D_HPP
 
-#include <vector>
-
 #include "grackle.h"
 #include "dust_props.hpp"
-#include "dust/grain_species_info.hpp"
+#include "dust/lookup_dust_rates1d.hpp"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "internal_types.hpp"
@@ -176,7 +174,7 @@ inline void interpolate_kcol_rate_tables_(
 /// @param[out] kcol_buf A struct containing the buffers that are filled by
 ///    this function
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] tgas specifies the gas temperatures for the `idx_range`
+/// @param[in] tgas1d specifies the gas temperatures for the `idx_range`
 /// @param[in] itmask Specifies the `idx_range`'s iteration-mask for this
 ///    calculation
 /// @param[in] my_chemistry holds a number of configuration parameters
@@ -704,41 +702,73 @@ inline void apply_misc_shield_factors(
   }
 }
 
-/// This routine uses the temperature to look up the chemical rates which are
-/// tabulated in a log table as a function of temperature.
+/// This routine uses the gas temperature to calculate rate at each location
+/// in the specified index range.
+///
+/// In more detail, this function does a lot (probably too much):
+/// - it computes collisional reaction rates
+/// - shielding-adjusted photo-rates (related to the UV background)
+/// - a few heating/cooling rates
+/// - dust-related rates (details depend on the dust model)
+/// - logTlininterp_buf is considered an output too (at the time of writing, it
+///   is used for some subsequent calculations)
+///
+/// > [!note]
+/// > A case could be made to handle the dust-related rates in a separate
+/// > function
+///
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] anydust Whether to model any dust
+/// @param[in] tgas1d specifies the gas temperatures for the @p idx_range
+/// @param[in] mmw specifies the mean molecular weight for the @p idx_range
+/// @param[in] tdust Precomputed dust temperatures at each location in the
+///     index range. This **ONLY** holds meaningful values when using variants
+///     of the classic 1-field dust-model or using variant of the
+///     multi-grain-species model where all grains are configured to share a
+///     single temperature.
+/// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
+///     index range. In other words, this holds the dust mass per unit gas mass
+///     (only used in certain configuration)
+/// @param[out] h2dust Buffer that gets filled with the rate for forming
+///     molecular hydrogen on dust grains. (This is filled whenever @p anydust
+///     holds `MASK_TRUE`.
+/// @param[in] dom a standard quantity used throughout the codebase
+/// @param[in] dx_cgs The width of a cell in comoving cm (I think). Used in
+///     certain self-shielding calculations.
+/// @param[in] c_ljeans Coefficient used for computing the Jeans length
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] itmask_metal Specifies the iteration-mask of the @p idx_range for
+///     performing metal and dust calculations.
+/// @param[in] dt See the warning at the end of the docstring
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] my_rates Holds assorted rate data and other internal
+///     configuration info.
+/// @param[in] my_fields Specifies the field data.
+/// @param[in] my_uvb_rates Holds precomputed photorates that depend on the UV
+///     background. These rates do not include the effects of self-shielding.
+/// @param[in] internalu Specifies Grackle's internal unit-system
+/// @param[out] grain_growth_rates output buffers that are used to hold the
+///     net grain growth rates at each @p idx_range (only used in certain
+///     configurations)
+/// @param[in] grain_temperatures individual grain species temperatures. This
+///     is only used in certain configurations (i.e. when we aren't using the
+///     tdust argument)
+/// @param[out] logTlininterp_buf Buffers that are filled with values for each
+///     location in @p idx_range with valuea that are used to linearly
+///     interpolate tables with respect to the natural log of @p tgas1d
+/// @param[out] kcol_buf Buffers filled with the collisional reaction rates for
+///     each location in @p idx_range
+/// @param[out] kshield_buf Buffers filled with shielding-adjusted photo
+///     reaction rates for @p idx_range
+/// @param[out] chemheatrates_buf Buffers that are filled with interpolated
+///     values that are used to compute heating from certain chemical reactions.
+/// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
+///     temporary grain species properties (only used in certain configurations)
 ///
 /// > [!important]
-/// > TODO: The role of the `dt` argument **MUST** be clarified! It is passed
-/// > different values in different areas of the codebase!!!!
-/// > - `solve_rate_cool_g` passes in the value of the total timestep that the
-/// >   chemistry is evolved. This is the traditional meaning of `dt`
-/// > - the time derivative calculation within `step_rate_newton_raphson`
-/// >   passes the timestep of the current subcycle (effectively the whole
-/// >   function is only being called for a single element idx_range)
-/// >
-/// > Internally, this arg only appears to be used to determine dust grain
-/// > destruction rate.
-/// > - the dust destruction rate is 0 for all temperatures below some
-/// >   threshold (the threshold depends on the grain species)
-/// > - above the threshold, the destruction rate is essentially the current
-/// >   grain density divided by the value of the `dt` argument
-/// >
-/// > If you think about it:
-/// > - I'd argue that setting `dt` to the whole timestep that we are evolving
-/// >   the zone over is blatantly wrong. It violates the principle that you
-/// >   should get consistent results whether you invoke grackle 100 separate
-/// >   times or just 1 time. (The amount of dust heating would change)
-/// > - setting `dt` to the current subcycle timestep makes a lot more sense
-/// >   (and is the only logical choice)
-/// >   - It is roughly equivalent to saying that dust is immediately destroyed
-/// >     once the gas reaches a threshold temperature.
-/// >   - the model is overly simplistic since dust grains can survive for
-/// >     quite in ionized gas (see for example
-/// >     https://ui.adsabs.harvard.edu/abs/2024ApJ...974...81R/abstract)
-/// >
-/// > If we stick with this instantaneous destruction model, then all
-/// > dust-grain related heating and cooling should probably assume that the
-/// > dust-grain density is already 0.
+/// > TODO: The role of the `dt` argument **MUST** be clarified! See the
+/// > docstring of @ref grackle::impl::lookup_dust_rates1d for more details
 inline void lookup_cool_rates1d(
     IndexRange idx_range, gr_mask_type anydust, const double* tgas1d,
     const double* mmw, const double* tdust, const double* dust2gas,
@@ -754,9 +784,6 @@ inline void lookup_cool_rates1d(
     grackle::impl::PhotoRxnRateCollection kshield_buf,
     grackle::impl::ChemHeatingRates chemheatrates_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
   // Construct views of fields referenced in several parts of this function.
 
   // Linearly Interpolate the Collisional Rxn Rates
@@ -806,674 +833,13 @@ inline void lookup_cool_rates1d(
                                   itmask, logTlininterp_buf);
   }
 
-  // Compute grain size increment
-
-  if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
-    f_wrap::calc_grain_size_increment_1d(dom, idx_range, itmask_metal,
-                                         my_chemistry, my_rates, my_fields,
-                                         internal_dust_prop_scratch_buf);
-  }
-
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
-    // these are some legacy variables that referene allocations now tracked
-    // within internal_dust_prop_scratch_buf.
-    //
-    // TODO: directly access members of internal_dust_prop_scratch_buf (and get
-    // rid of these temporary variables)
-    double* sgSiM = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                        .data[OnlyGrainSpLUT::SiM_dust];
-    double* sgFeM = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                        .data[OnlyGrainSpLUT::FeM_dust];
-    double* sgMg2SiO4 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                            .data[OnlyGrainSpLUT::Mg2SiO4_dust];
-    double* sgMgSiO3 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                           .data[OnlyGrainSpLUT::MgSiO3_dust];
-    double* sgFe3O4 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                          .data[OnlyGrainSpLUT::Fe3O4_dust];
-    double* sgAC = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                       .data[OnlyGrainSpLUT::AC_dust];
-    double* sgSiO2D = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                          .data[OnlyGrainSpLUT::SiO2_dust];
-    double* sgMgO = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                        .data[OnlyGrainSpLUT::MgO_dust];
-    double* sgFeS = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                        .data[OnlyGrainSpLUT::FeS_dust];
-    double* sgAl2O3 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                          .data[OnlyGrainSpLUT::Al2O3_dust];
-    double* sgreforg = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                           .data[OnlyGrainSpLUT::ref_org_dust];
-    double* sgvolorg = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                           .data[OnlyGrainSpLUT::vol_org_dust];
-    double* sgH2Oice = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                           .data[OnlyGrainSpLUT::H2O_ice_dust];
-
-    const double logTdust_start = std::log(my_chemistry->DustTemperatureStart);
-    const double logTdust_end = std::log(my_chemistry->DustTemperatureEnd);
-    const double dlogTdust =
-        (std::log(my_chemistry->DustTemperatureEnd) -
-         std::log(my_chemistry->DustTemperatureStart)) /
-        (double)(my_chemistry->NumberOfDustTemperatureBins - 1);
-
-    // we should probably enforce the following at initialization!
-    GRIMPL_REQUIRE(my_chemistry->dust_species >= 0, "sanity-check!");
-
-    if (my_chemistry->dust_species == 0) {
-      // in this branch, we are just tracking a single generic dust field
-
-      // construct a view the h2dust interpolation table
-      grackle::impl::View<double**> h2dusta(
-          my_rates->h2dust, my_chemistry->NumberOfTemperatureBins,
-          my_chemistry->NumberOfDustTemperatureBins);
-
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask_metal[i] != MASK_FALSE) {
-          // Assume dust melts at Tdust > DustTemperatureEnd, in the context of
-          // computing the H2 formation rate
-          //
-          // important: at the time of writing, whem using a generic dust
-          // density field (my_chemistry->use_dust_density_field > 0), I'm
-          // 99% sure that we don't mutate that density field. This contrasts
-          // with Grackle's behavior when tracking dust species fields.
-
-          if (tdust[i] > my_chemistry->DustTemperatureEnd) {
-            h2dust[i] = tiny8;
-          } else {
-            // Get log dust temperature
-
-            double logTdust = grackle::impl::clamp(
-                std::log(tdust[i]), logTdust_start, logTdust_end);
-
-            // Find index into table and precompute interpolation values
-
-            long long d_indixe = grackle::impl::clamp(
-                (long long)((logTdust - logTdust_start) / dlogTdust) + 1LL, 1LL,
-                (long long)(my_chemistry->NumberOfDustTemperatureBins) - 1LL);
-            double d_t1 = (logTdust_start + (d_indixe - 1) * dlogTdust);
-            double d_t2 = (logTdust_start + d_indixe * dlogTdust);
-            double d_tdef = (logTdust - d_t1) / (d_t2 - d_t1);
-
-            // Get rate from 2D interpolation
-
-            double dusti1 =
-                h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe - 1) +
-                (h2dusta(logTlininterp_buf.indixe[i], d_indixe - 1) -
-                 h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe - 1)) *
-                    logTlininterp_buf.tdef[i];
-            double dusti2 =
-                h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe) +
-                (h2dusta(logTlininterp_buf.indixe[i], d_indixe) -
-                 h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe)) *
-                    logTlininterp_buf.tdef[i];
-            h2dust[i] = dusti1 + (dusti2 - dusti1) * d_tdef;
-
-            // Multiply by dust to gas ratio
-
-            h2dust[i] = h2dust[i] * dust2gas[i];
-          }
-        }
-      }
-
-    } else {  // my_chemistry->dust_species > 0
-
-      // before we do anything else, let's construct views of some species
-      // density fields (we only need it for part of the calculation, but there
-      // is enough boilerplate here that breaks everything up, a lot!)
-
-      // The Fortran version of this function implicitly assumed that the
-      // following condition was satisfied when my_chemistry->dust_species > 0
-      // (we are just making it more explicit)
-      GRIMPL_REQUIRE(my_chemistry->metal_chemistry == 1, "sanity-check!");
-
-      grackle::impl::View<const gr_float***> d(
-          my_fields->density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-      // load views of some metal species and molecular species
-      grackle::impl::View<gr_float***> CI(
-          my_fields->CI_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> H2O(
-          my_fields->H2O_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> SiI(
-          my_fields->SiI_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> SiOI(
-          my_fields->SiOI_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> SiO2I(
-          my_fields->SiO2I_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> Mg(
-          my_fields->Mg_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> Al(
-          my_fields->Al_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> S(
-          my_fields->S_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> Fe(
-          my_fields->Fe_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-      // construct some views of dust grain densities (only load in species
-      // that are explicitly enabled by my_chemistry->dust_species)
-      grackle::impl::View<gr_float***> MgSiO3, AC, SiM, FeM, Mg2SiO4, Fe3O4,
-          SiO2D, MgO, FeS, Al2O3, reforg, volorg, H2Oice;
-
-      if (my_chemistry->dust_species > 0) {
-        MgSiO3 = grackle::impl::View<gr_float***>(
-            my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        AC = grackle::impl::View<gr_float***>(
-            my_fields->AC_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-
-      if (my_chemistry->dust_species > 1) {
-        SiM = grackle::impl::View<gr_float***>(
-            my_fields->SiM_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        FeM = grackle::impl::View<gr_float***>(
-            my_fields->FeM_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        Mg2SiO4 = grackle::impl::View<gr_float***>(
-            my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        Fe3O4 = grackle::impl::View<gr_float***>(
-            my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        SiO2D = grackle::impl::View<gr_float***>(
-            my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        MgO = grackle::impl::View<gr_float***>(
-            my_fields->MgO_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        FeS = grackle::impl::View<gr_float***>(
-            my_fields->FeS_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        Al2O3 = grackle::impl::View<gr_float***>(
-            my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-      if (my_chemistry->dust_species > 2) {
-        reforg = grackle::impl::View<gr_float***>(
-            my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        volorg = grackle::impl::View<gr_float***>(
-            my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        H2Oice = grackle::impl::View<gr_float***>(
-            my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-
-      // Look-up rate for H2 formation on dust
-      // -------------------------------------
-      // in this branch, we are effectively computing:
-      //   h2dust[i]
-      //     = ∑ₛ coef_fnₛ(Tgas[i], Tdustₛ[i]) * grain_sigma_per_gas_massₛ[i]
-      // where, the "s" subscript corresponds to a dust species.
-      //
-      // In practice, `coef_fnₛ` is implemented through 2D interpolation
-      // of tabulated values
-
-      // load properties of the interpolation table
-      gr_interp_grid_props& interp_props =
-          my_rates->opaque_storage->h2dust_grain_interp_props;
-
-      // load the tables that we are interpolating over
-      //
-      // TODO: remove these local variables
-      // - strictly speaking, these local variables are **NOT** necessary even
-      //   now. They just exist for expositionary purposes
-      // - we should only delete these local variables **AFTER** the struct
-      //   members holding the values have better names
-      const double* h2rate_silicate_coef_table = my_rates->h2dustS;
-      const double* h2rate_carbonaceous_coef_table = my_rates->h2dustC;
-
-      // At the time of writing:
-      // - we **only** use h2rate_carbonaceous_coef_table for the AC_dust
-      //   species (amorphous carbon grains)
-      // - we use h2rate_silicate_coef_table for **ALL** other grain species
-      //   (including species that are obviously NOT silicates)
-      //
-      // It is not obvious at all why this is the case...
-      //
-      // TODO: we should add documentation clearly addressing each of the
-      // following questions and replace this todo-item with a reference to the
-      // part of the documentation that discusses this! The documentation
-      // should make sure to address:
-      // - if this choice physically motivated or a common convention? (or if
-      //   it was a quick & dirty choice because Gen didn't know what to do)
-      // - do we have a sense for how "wrong" the choice is? (e.g. will it
-      //   generally overpredict/underpredict?)
-      // - why don't we use the generic my_rates->h2dusta rate as a generic
-      //   fallback for non-silicate grains instead of using h2dustS? I realize
-      //   that h2dusta has very different units...
-
-      // now its time to actually perform the calculation
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask_metal[i] != MASK_FALSE) {
-          // don't forget, we are only executing this logic if we already know
-          // that my_chemistry->dust_species > 0
-          if (my_chemistry->use_multiple_dust_temperatures == 0) {
-            // in this branch, all grains share a single dust temperature
-
-            double logTdust = std::log(tdust[i]);
-            double h2dust_silicate_coef = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                interp_props.parameters[0], dlogTdust,
-                interp_props.parameters[1], dlogtem, interp_props.data_size,
-                h2rate_silicate_coef_table);
-
-            double h2AC = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                interp_props.parameters[0], dlogTdust,
-                interp_props.parameters[1], dlogtem, interp_props.data_size,
-                h2rate_carbonaceous_coef_table);
-
-            h2dust[i] = h2dust_silicate_coef * sgMgSiO3[i] + h2AC * sgAC[i];
-            if (my_chemistry->dust_species > 1) {
-              h2dust[i] = h2dust[i] + h2dust_silicate_coef * sgSiM[i] +
-                          h2dust_silicate_coef * sgFeM[i] +
-                          h2dust_silicate_coef * sgMg2SiO4[i] +
-                          h2dust_silicate_coef * sgFe3O4[i] +
-                          h2dust_silicate_coef * sgSiO2D[i] +
-                          h2dust_silicate_coef * sgMgO[i] +
-                          h2dust_silicate_coef * sgFeS[i] +
-                          h2dust_silicate_coef * sgAl2O3[i];
-            }
-            if (my_chemistry->dust_species > 2) {
-              h2dust[i] = h2dust[i] + h2dust_silicate_coef * sgreforg[i] +
-                          h2dust_silicate_coef * sgvolorg[i] +
-                          h2dust_silicate_coef * sgH2Oice[i];
-            }
-
-          } else {
-            double logTdust = std::log(
-                grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i]);
-            double h2MgSiO3 = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                interp_props.parameters[0], dlogTdust,
-                interp_props.parameters[1], dlogtem, interp_props.data_size,
-                h2rate_silicate_coef_table);
-
-            logTdust =
-                std::log(grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i]);
-            double h2AC = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                interp_props.parameters[0], dlogTdust,
-                interp_props.parameters[1], dlogtem, interp_props.data_size,
-                h2rate_carbonaceous_coef_table);
-
-            h2dust[i] = h2MgSiO3 * sgMgSiO3[i] + h2AC * sgAC[i];
-
-            if (my_chemistry->dust_species > 1) {
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i]);
-              double h2SiM = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i]);
-              double h2FeM = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i]);
-              double h2Mg2SiO4 = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i]);
-              double h2Fe3O4 = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i]);
-              double h2SiO2D = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i]);
-              double h2MgO = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i]);
-              double h2FeS = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i]);
-              double h2Al2O3 = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              h2dust[i] = h2dust[i] + h2SiM * sgSiM[i] + h2FeM * sgFeM[i] +
-                          h2Mg2SiO4 * sgMg2SiO4[i] + h2Fe3O4 * sgFe3O4[i] +
-                          h2SiO2D * sgSiO2D[i] + h2MgO * sgMgO[i] +
-                          h2FeS * sgFeS[i] + h2Al2O3 * sgAl2O3[i];
-            }
-
-            if (my_chemistry->dust_species > 2) {
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i]);
-              double h2reforg = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i]);
-              double h2volorg = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              logTdust = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i]);
-              double h2H2Oice = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                  interp_props.parameters[0], dlogTdust,
-                  interp_props.parameters[1], dlogtem, interp_props.data_size,
-                  h2rate_silicate_coef_table);
-
-              h2dust[i] = h2dust[i] + h2reforg * sgreforg[i] +
-                          h2volorg * sgvolorg[i] + h2H2Oice * sgH2Oice[i];
-            }
-          }
-        }
-      }
-
-      // Compute net grain growth rates
-      // ------------------------------
-
-      long long nratec_single_elem_arr[1] = {
-          (long long)(my_chemistry->NumberOfTemperatureBins)};
-
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask_metal[i] != MASK_FALSE) {
-          if (my_chemistry->grain_growth == 1) {
-            double kd;
-            if (my_chemistry->dust_species > 0) {
-              kd = f_wrap::interpolate_1d_g(
-                  logTlininterp_buf.logtem[i], nratec_single_elem_arr,
-                  interp_props.parameters[1], dlogtem,
-                  nratec_single_elem_arr[0], my_rates->grain_growth_rate);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                  kd * sgMgSiO3[i] * d(i, idx_range.j, idx_range.k) *
-                  grackle::impl::fmin(
-                      Mg(i, idx_range.j, idx_range.k) / std::pow(24., 1.5),
-                      SiOI(i, idx_range.j, idx_range.k) / std::pow(44., 1.5),
-                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
-                          2.);
-              // !             if ( idsub .eq. 1 )
-              // !   &            kdMgSiO3  (i) = kdMgSiO3  (i) * ( 1.d0 -
-              // !   &           sqrt(tMgSiO3 (i) / tgas1d(i))
-              // !   &         * exp(-min(37.2400d4/tgas1d(i) -
-              // 104.872d0, 5.d1)) / ( !   &           (     Mg
-              // (i,j,k)*dom/24._DKIND * kboltz*tgas1d(i)) !   &         * (
-              // SiOI(i,j,k)*dom/44._DKIND * kboltz*tgas1d(i)) !   &         *
-              // (2.d0*H2O (i,j,k)*dom/18._DKIND * kboltz*tgas1d(i)) !   & /
-              // (1.d0*H2I (i,j,k)*dom/ 2._DKIND * kboltz*tgas1d(i)) !   & ) )
-              // !             Formulation from Nozawa et al. (2003, 2012)
-
-              grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] =
-                  kd * sgAC[i] * d(i, idx_range.j, idx_range.k) *
-                  CI(i, idx_range.j, idx_range.k) / std::pow(12., 1.5);
-            }
-
-            if (my_chemistry->dust_species > 1) {
-              grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] =
-                  kd * sgSiM[i] * d(i, idx_range.j, idx_range.k) *
-                  SiI(i, idx_range.j, idx_range.k) / std::pow(28., 1.5);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] =
-                  kd * sgFeM[i] * d(i, idx_range.j, idx_range.k) *
-                  Fe(i, idx_range.j, idx_range.k) / std::pow(56., 1.5);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
-                  kd * sgMg2SiO4[i] * d(i, idx_range.j, idx_range.k) *
-                  grackle::impl::fmin(
-                      Mg(i, idx_range.j, idx_range.k) / std::pow(24., 1.5) / 2.,
-                      SiOI(i, idx_range.j, idx_range.k) / std::pow(44., 1.5),
-                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
-                          3.);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] =
-                  kd * sgFe3O4[i] * d(i, idx_range.j, idx_range.k) *
-                  std::fmin(
-                      Fe(i, idx_range.j, idx_range.k) / std::pow(56., 1.5) / 3.,
-                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
-                          4.);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] =
-                  kd * sgSiO2D[i] * d(i, idx_range.j, idx_range.k) *
-                  SiO2I(i, idx_range.j, idx_range.k) / std::pow(60., 1.5);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] =
-                  kd * sgMgO[i] * d(i, idx_range.j, idx_range.k) *
-                  std::fmin(
-                      Mg(i, idx_range.j, idx_range.k) / std::pow(24., 1.5),
-                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5));
-
-              grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] =
-                  kd * sgFeS[i] * d(i, idx_range.j, idx_range.k) *
-                  std::fmin(
-                      S(i, idx_range.j, idx_range.k) / std::pow(32., 1.5),
-                      Fe(i, idx_range.j, idx_range.k) / std::pow(56., 1.5));
-
-              grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] =
-                  kd * sgAl2O3[i] * d(i, idx_range.j, idx_range.k) *
-                  std::fmin(
-                      Al(i, idx_range.j, idx_range.k) / std::pow(27., 1.5) / 2.,
-                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
-                          3.);
-            }
-
-            // We do not consider the growth of refractory organics, volatile
-            // organics, and water ice because their sublimation temperatures
-            // are low (100-600 K). They sublimate before the growth occurs.
-            if (my_chemistry->dust_species > 2) {
-              grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] = 0.e0;
-            }
-          }
-
-          if (my_chemistry->dust_sublimation == 1) {
-            if (my_chemistry->dust_species > 0) {
-              grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] = 0.e0;
-            }
-            if (my_chemistry->dust_species > 1) {
-              grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] = 0.e0;
-            }
-            if (my_chemistry->dust_species > 2) {
-              grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] = 0.e0;
-            }
-
-            if (my_chemistry->use_multiple_dust_temperatures == 0) {
-              if (my_chemistry->dust_species > 0) {
-                if (tdust[i] > 1222.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                      (tiny8 - MgSiO3(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (tdust[i] > 1800.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] =
-                      (tiny8 - AC(i, idx_range.j, idx_range.k)) / dt;
-                }
-              }
-
-              if (my_chemistry->dust_species > 1) {
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] =
-                      (tiny8 - SiM(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] =
-                      (tiny8 - FeM(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (tdust[i] > 1277.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
-                      (tiny8 - Mg2SiO4(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] =
-                      (tiny8 - Fe3O4(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] =
-                      (tiny8 - SiO2D(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] =
-                      (tiny8 - MgO(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (tdust[i] > 680.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] =
-                      (tiny8 - FeS(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] =
-                      (tiny8 - Al2O3(i, idx_range.j, idx_range.k)) / dt;
-                }
-              }
-
-              if (my_chemistry->dust_species > 2) {
-                if (tdust[i] > 575.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] =
-                      (tiny8 - reforg(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (tdust[i] > 375.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] =
-                      (tiny8 - volorg(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (tdust[i] > 153.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] =
-                      (tiny8 - H2Oice(i, idx_range.j, idx_range.k)) / dt;
-                }
-              }
-
-            } else {
-              if (my_chemistry->dust_species > 0) {
-                if (grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i] >
-                    1222.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                      (tiny8 - MgSiO3(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i] >
-                    1800.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] =
-                      (tiny8 - AC(i, idx_range.j, idx_range.k)) / dt;
-                }
-              }
-
-              if (my_chemistry->dust_species > 1) {
-                if (grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] =
-                      (tiny8 - SiM(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] =
-                      (tiny8 - FeM(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] >
-                    1277.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
-                      (tiny8 - Mg2SiO4(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] =
-                      (tiny8 - Fe3O4(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] =
-                      (tiny8 - SiO2D(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] =
-                      (tiny8 - MgO(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i] >
-                    680.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] =
-                      (tiny8 - FeS(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] =
-                      (tiny8 - Al2O3(i, idx_range.j, idx_range.k)) / dt;
-                }
-              }
-
-              if (my_chemistry->dust_species > 2) {
-                if (grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i] >
-                    575.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] =
-                      (tiny8 - reforg(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i] >
-                    375.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] =
-                      (tiny8 - volorg(i, idx_range.j, idx_range.k)) / dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i] >
-                    153.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] =
-                      (tiny8 - H2Oice(i, idx_range.j, idx_range.k)) / dt;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    lookup_dust_rates1d(idx_range, dlogtem, tdust, dust2gas, h2dust, dom,
+                        itmask_metal, dt, my_chemistry, my_rates, my_fields,
+                        grain_growth_rates, grain_temperatures,
+                        logTlininterp_buf, internal_dust_prop_scratch_buf);
   }
 
   // Deal with the photo reaction rates

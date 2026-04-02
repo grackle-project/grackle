@@ -71,8 +71,9 @@ grackle::impl::GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
     // allocate and initialize the pointer
     out_ingredient_ptr =
         new grackle::impl::GrainGrowthIngredient[n_ingredients];
-    std::memcpy(out_ingredient_ptr, growth_ingredients,
-                (std::size_t)n_ingredients);
+    for (int i = 0; i < n_ingredients; i++) {
+      out_ingredient_ptr[i] = growth_ingredients[i];
+    }
   }
 
   return grackle::impl::GrainSpeciesInfoEntry{species_idx,

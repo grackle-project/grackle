@@ -14,15 +14,9 @@
 #include <cstdio>
 #include "grackle.h"
 #include "internal_units.h"
-#include "solve_rate_cool_g-cpp.h"
+#include "solve_rate_cool.hpp"
+#include "update_UVbackground_rates.hpp"
 #include "utils.h"
-
-/* function prototypes */
-
-extern "C" int update_UVbackground_rates(chemistry_data *my_chemistry,
-                                         chemistry_data_storage *my_rates,
-                                         photo_rate_storage *my_uvb_rates,
-                                         code_units *my_units);
 
 extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
                                      chemistry_data_storage *my_rates,
@@ -47,8 +41,8 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
     my_uvb_rates.comp_xray = my_uvb_rates.temp_xray = 0.;
 
   if (my_chemistry->UVbackground == 1) {
-    if (update_UVbackground_rates(my_chemistry, my_rates,
-                                  &my_uvb_rates, my_units) != GR_SUCCESS) {
+    if (grackle::impl::update_UVbackground_rates(
+          my_chemistry, my_rates, &my_uvb_rates, my_units) != GR_SUCCESS) {
       std::fprintf(stderr, "Error in update_UVbackground_rates.\n");
       return GR_FAIL;
     }
@@ -88,13 +82,13 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
 
   /* Call the routine to solve cooling equations. */
 
-  int ierr = solve_rate_cool_g(
+  int ierr = grackle::impl::solve_rate_cool(
     metal_field_present, dt_value, internalu,
     my_chemistry, my_rates, my_fields, &my_uvb_rates
   );
 
   if (ierr != GR_SUCCESS) {
-    std::fprintf(stderr, "Error in solve_rate_cool_g.\n");
+    std::fprintf(stderr, "Error in solve_rate_cool.\n");
   }
 
   return ierr;
