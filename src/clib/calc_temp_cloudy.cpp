@@ -20,14 +20,13 @@
 #include "fortran_func_decls.h"
 #include "index_helper.h"
 #include "scale_fields.hpp"
+#include "support/config.hpp"
 #include "utils-cpp.hpp"
 
 #include "calc_temp_cloudy.hpp"
 #include "calc_temp1d_cloudy_g.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+namespace GRIMPL_NAMESPACE_DECL {
 
 void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
                       chemistry_data* my_chemistry,
@@ -128,6 +127,4 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
   return;
 }
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace GRIMPL_NAMESPACE_DECL
