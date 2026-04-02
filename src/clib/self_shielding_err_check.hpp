@@ -16,7 +16,9 @@
 #include <cstdio>  // std::fprintf, stderr
 #include "grackle.h"
 
-namespace grackle::impl {
+#include "support/config.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Perform an error check related to self-shielding. If the check fails, the
 /// function returns FAIL and prints an error message to stderr
@@ -50,6 +52,6 @@ inline int self_shielding_err_check(const chemistry_data* my_chemistry,
   return GR_SUCCESS;
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // SELF_SHIELDING_ERR_CHECK_HPP
