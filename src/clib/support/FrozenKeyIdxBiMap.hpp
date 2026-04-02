@@ -382,7 +382,8 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
     GrPrintErrMsg("keys must not be a nullptr");
     return mk_invalid_FrozenKeyIdxBiMap();
   } else if (key_count < 1 || static_cast<int64_t>(key_count) > max_len) {
-    GrPrintErrMsg("key_count must be positive & can't exceed %lld", max_len);
+    GrPrintErrMsg("key_count must be positive & can't exceed %lld",
+                  static_cast<long long int>(max_len));
     return mk_invalid_FrozenKeyIdxBiMap();
   }
 
