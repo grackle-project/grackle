@@ -18,7 +18,6 @@
 #include "grackle.h"
 #include "utils-cpp.hpp"  // GRIMPL_FORCE_INLINE
 #include "status_reporting.h"
-#include "support/SimpleVec.hpp"
 
 namespace grackle::impl::ratequery {
 
@@ -267,7 +266,7 @@ struct EntrySet {
   /// managed by this instance.
   ///
   /// @important
-  /// this **must** be a nullptr if operating in Recipe-mode
+  /// this **must** be empty if operating in Recipe-mode
   std::vector<Entry> embedded_list;
 
   /// a function pointer that can be used to access entries through a recipe
@@ -312,12 +311,15 @@ Entry EntrySet_access(const EntrySet* entry_set,
 struct Registry {
   /// number of entries
   int n_entries;
-  /// number of contained EntrySets
-  int n_sets;
   /// stores the minimum rate_id for each EntrySet
   int* id_offsets;
   /// stores sets of entries
-  EntrySet* sets;
+  std::vector<EntrySet> sets;
+
+  // forbid copy-construction & copy assignment (if we want these, then we
+  // should make EntrySet a full-blown class with a destructor)
+  Registry(const Registry&) = delete;
+  Registry& operator=(const Registry&) = delete;
 };
 
 /// deallocate the contents of a registry
@@ -354,20 +356,25 @@ void drop_Registry(Registry* ptr);
 /// of this function (i.e. they should only use the associated methods)
 struct RegBuilder {
   /// a growable array that records recipies for accessing sets of entries
-  SimpleVec<EntrySet>* recipe_sets;
+  std::vector<EntrySet> recipe_sets;
   /// a growable array of owned Entry instances
   ///
   /// The basic premise is that these Entry instances **ONLY** exist for the
   /// purpose of supporting queries. Cleaning up each instance involves extra
   /// effort. When a Registry instance is constructed, this pointer will be
   /// transferred to an EntrySet.
-  SimpleVec<Entry>* owned_entries;
+  std::vector<Entry> owned_entries;
+
+  // forbid copy-construction & copy assignment (if we want these, then we
+  // should make EntrySet & Entry full-blown classes with destructors)
+  RegBuilder(const RegBuilder&) = delete;
+  RegBuilder& operator=(const RegBuilder&) = delete;
 };
 
 /// initialize a new instance
 inline RegBuilder new_RegBuilder() {
-  // by default SimpleVec<T> is automatically initialized
-  return {new SimpleVec<EntrySet>, new SimpleVec<Entry>};
+  // by default it is automatically initialized
+  return RegBuilder{};
 }
 
 /// deallocates all storage within a RegBuilder instance

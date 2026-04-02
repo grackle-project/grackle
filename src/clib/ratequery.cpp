@@ -220,7 +220,7 @@ static int RegBuilder_take_data_(RegBuilder* ptr, const char* raw_name,
   tmp.data = owned_data;
   tmp.name = name;
   tmp.props = props;
-  SimpleVec_push_back(ptr->owned_entries, tmp);
+  ptr->owned_entries.push_back(tmp);
   return GR_SUCCESS;
 }
 
@@ -234,8 +234,7 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
-  SimpleVec_push_back(
-      ptr->recipe_sets,
+  ptr->recipe_sets.push_back(
       EntrySet{n_entries, std::vector<Entry>(), recipe_fn, common_props});
 
   return GR_SUCCESS;
@@ -244,20 +243,15 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
 }  // namespace grackle::impl::ratequery
 
 void grackle::impl::ratequery::drop_RegBuilder(RegBuilder* ptr) {
-  if (ptr->recipe_sets != nullptr) {
-    drop_SimpleVec(ptr->recipe_sets);
-    delete ptr->recipe_sets;
-    ptr->recipe_sets = nullptr;
+  // this first block is only done for consistency with other drop_ functions
+  // (unnecessary since no entry of recipe-sets holds any pointers to be freed)
+  if (!ptr->recipe_sets.empty()) {
+    ptr->recipe_sets.clear();
   }
-  if (ptr->owned_entries != nullptr) {
-    int n_entries = SimpleVec_len(ptr->owned_entries);
-    if (n_entries > 0) {
-      Entry* entry_l = SimpleVec_extract_ptr_and_make_empty(ptr->owned_entries);
-      drop_owned_Entry_list_contents(entry_l, n_entries);
-    }
-    drop_SimpleVec(ptr->owned_entries);
-    delete ptr->owned_entries;
-    ptr->owned_entries = nullptr;
+  // this next block is very necessary!
+  if (!ptr->owned_entries.empty()) {
+    drop_owned_Entry_list_contents(ptr->owned_entries.data(), ptr->owned_entries.size());
+    ptr->owned_entries.clear();  // <- make repeated calls of this fn safer
   }
 }
 
@@ -317,49 +311,40 @@ int grackle::impl::ratequery::RegBuilder_copied_f64_arr1d(
 grackle::impl::ratequery::Registry
 grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
   // try to construct an EntrySet that contains all owned entries
-  if (SimpleVec_len(ptr->owned_entries) > 0) {
-    int len = SimpleVec_len(ptr->owned_entries);
-    Entry* tmp_ptr = SimpleVec_extract_ptr_and_make_empty(ptr->owned_entries);
-    std::vector<Entry> vec;
-    for (int i = 0; i < len; i++) {
-      vec.push_back(tmp_ptr[i]);
-    }
-    delete[] tmp_ptr;
+  if (!ptr->owned_entries.empty()) {
+    int len = ptr->owned_entries.size();
     EntrySet tmp{/* len = */ len,
-                 /* embedded_list = */ std::move(vec),
+                 /* embedded_list = */ std::move(ptr->owned_entries),
                  /* recipe_fn = */ nullptr,
                  /* common_recipe_props = */ mk_invalid_EntryProps()};
-    SimpleVec_push_back(ptr->recipe_sets, tmp);
+    ptr->recipe_sets.push_back(tmp);
   }
 
   // now actually set up the registry
-  int n_sets = SimpleVec_len(ptr->recipe_sets);
-  if (n_sets == 0) {
-    drop_SimpleVec(ptr->recipe_sets);
-    return Registry{0, n_sets, nullptr, nullptr};
+  if (ptr->recipe_sets.empty()) {
+    return Registry{0, nullptr, std::vector<EntrySet>()};
   } else {
-    EntrySet* sets = SimpleVec_extract_ptr_and_make_empty(ptr->recipe_sets);
+    int n_sets = ptr->recipe_sets.size();
     // set up id_offsets and determine the total number of entries
     int* id_offsets = new int[n_sets];
     int tot_entry_count = 0;
     for (int i = 0; i < n_sets; i++) {
       id_offsets[i] = tot_entry_count;
-      tot_entry_count += sets[i].len;
+      tot_entry_count += EntrySet_size(&ptr->recipe_sets[i]);
     }
-    Registry out{tot_entry_count, n_sets, id_offsets, sets};
-    return out;
+    return Registry{tot_entry_count, id_offsets, std::move(ptr->recipe_sets)};
   }
 }
 
 void grackle::impl::ratequery::drop_Registry(Registry* ptr) {
-  if (ptr->sets != nullptr) {
+  if (!ptr->sets.empty()) {
     delete[] ptr->id_offsets;
     ptr->id_offsets = nullptr;
-    for (int i = 0; i < ptr->n_sets; i++) {
+    std::size_t n_sets = ptr->sets.size();
+    for (std::size_t i = 0; i < n_sets; i++) {
       drop_EntrySet(&ptr->sets[i]);
     }
-    delete[] ptr->sets;
-    ptr->sets = nullptr;
+    ptr->sets.clear();  // <- make it safer to call drop_Registry more than once
   }
 }
 
@@ -372,6 +357,13 @@ struct ratequery_rslt_ {
 
 static ratequery_rslt_ invalid_rslt_() {
   return {UNDEFINED_RATE_ID_, mk_invalid_Entry()};
+}
+
+static Registry* get_registry(chemistry_data_storage* my_rates) {
+  if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr)) {
+    return nullptr;
+  }
+  return my_rates->opaque_storage->registry;
 }
 
 static const Registry* get_registry(const chemistry_data_storage* my_rates) {
@@ -389,13 +381,14 @@ static const Registry* get_registry(const chemistry_data_storage* my_rates) {
 /// should be done at the public API level.
 static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
                                    long long i) {
-  const Registry* registry = get_registry(my_rates);
+  Registry* registry = get_registry(my_rates);
 
   if (registry == nullptr || i >= registry->n_entries) {
     return invalid_rslt_();
   }
 
-  for (int set_idx = 0; set_idx < registry->n_sets; set_idx++) {
+  std::size_t n_sets = registry->sets.size();
+  for (std::size_t set_idx = 0; set_idx < n_sets; set_idx++) {
     EntrySet* cur_set = &registry->sets[set_idx];
     int tmp = i - registry->id_offsets[set_idx];
     if ((tmp >= 0) && (tmp < EntrySet_size(cur_set))) {
@@ -450,8 +443,9 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
     return rate_q::UNDEFINED_RATE_ID_;
   }
 
-  for (int set_idx = 0; set_idx < registry->n_sets; set_idx++) {
-    rate_q::EntrySet* set = &registry->sets[set_idx];
+  std::size_t n_sets = registry->sets.size();
+  for (std::size_t set_idx = 0; set_idx < n_sets; set_idx++) {
+    const rate_q::EntrySet* set = &registry->sets[set_idx];
     int set_len = EntrySet_size(set);
     for (int i = 0; i < set_len; i++) {
       rate_q::Entry entry = rate_q::EntrySet_access(
