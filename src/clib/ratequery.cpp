@@ -18,6 +18,7 @@
 #include "opaque_storage.hpp"  // gr_opaque_storage
 #include "ratequery.hpp"
 #include "status_reporting.h"
+#include "support/config.hpp"
 
 #include <algorithm>
 
@@ -42,7 +43,7 @@
 //    offsetof in this fashion
 //
 
-namespace grackle::impl::ratequery {
+namespace GRIMPL_NAMESPACE_DECL::ratequery {
 // we have reserved the right to change this value at any time
 enum {
   UNDEFINED_RATE_ID_ = std::numeric_limits<grunstable_rateid_type>::max()
@@ -94,17 +95,14 @@ static Entry get_MiscRxn_Entry(chemistry_data_storage* my_rates, int i) {
     }
   }
 }
-}  // namespace grackle::impl::ratequery
 
-int grackle::impl::ratequery::RegBuilder_misc_recipies(
-    RegBuilder* ptr, const chemistry_data* my_chemistry) {
+int RegBuilder_misc_recipies(RegBuilder* ptr,
+                             const chemistry_data* my_chemistry) {
   if (my_chemistry->primordial_chemistry != 0) {
     return RegBuilder_recipe_scalar(ptr, MiscRxn_NRATES, &get_MiscRxn_Entry);
   }
   return GR_SUCCESS;
 }
-
-namespace grackle::impl::ratequery {
 
 /// calls delete or delete[] on the specified pointer (depending on the value
 /// of is_scalar).
@@ -240,9 +238,7 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
   return GR_SUCCESS;
 }
 
-}  // namespace grackle::impl::ratequery
-
-void grackle::impl::ratequery::drop_RegBuilder(RegBuilder* ptr) {
+void drop_RegBuilder(RegBuilder* ptr) {
   // this first block is only done for consistency with other drop_ functions
   // (unnecessary since no entry of recipe-sets holds any pointers to be freed)
   if (!ptr->recipe_sets.empty()) {
@@ -250,29 +246,29 @@ void grackle::impl::ratequery::drop_RegBuilder(RegBuilder* ptr) {
   }
   // this next block is very necessary!
   if (!ptr->owned_entries.empty()) {
-    drop_owned_Entry_list_contents(ptr->owned_entries.data(), ptr->owned_entries.size());
+    drop_owned_Entry_list_contents(ptr->owned_entries.data(),
+                                   ptr->owned_entries.size());
     ptr->owned_entries.clear();  // <- make repeated calls of this fn safer
   }
 }
 
-int grackle::impl::ratequery::RegBuilder_recipe_scalar(
-    RegBuilder* ptr, int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
+int RegBuilder_recipe_scalar(RegBuilder* ptr, int n_entries,
+                             fetch_Entry_recipe_fn* recipe_fn) {
   EntryProps common_props = mk_invalid_EntryProps();
   common_props.ndim = 0;
   return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
 }
 
-int grackle::impl::ratequery::RegBuilder_recipe_1d(
-    RegBuilder* ptr, int n_entries, fetch_Entry_recipe_fn* recipe_fn,
-    int common_len) {
+int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
+                         fetch_Entry_recipe_fn* recipe_fn, int common_len) {
   EntryProps common_props = mk_invalid_EntryProps();
   common_props.ndim = 1;
   common_props.shape[0] = common_len;
   return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
 }
 
-int grackle::impl::ratequery::RegBuilder_copied_str_arr1d(
-    RegBuilder* ptr, const char* name, const char* const* str_arr1d, int len) {
+int RegBuilder_copied_str_arr1d(RegBuilder* ptr, const char* name,
+                                const char* const* str_arr1d, int len) {
   if (len <= 0) {
     return GrPrintAndReturnErr("len must be positive");
   }
@@ -289,8 +285,8 @@ int grackle::impl::ratequery::RegBuilder_copied_str_arr1d(
   return RegBuilder_take_data_(ptr, name, data, props);
 }
 
-int grackle::impl::ratequery::RegBuilder_copied_f64_arr1d(
-    RegBuilder* ptr, const char* name, const double* f64_arr1d, int len) {
+int RegBuilder_copied_f64_arr1d(RegBuilder* ptr, const char* name,
+                                const double* f64_arr1d, int len) {
   if (len <= 0) {
     return GrPrintAndReturnErr("len must be positive");
   }
@@ -308,8 +304,7 @@ int grackle::impl::ratequery::RegBuilder_copied_f64_arr1d(
 /// In the process, the current Registry is consumed; it's effectively reset to
 /// the state immediately after it was initialized. (This lets us avoid
 /// reallocating lots of memory)
-grackle::impl::ratequery::Registry
-grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
+Registry RegBuilder_consume_and_build(RegBuilder* ptr) {
   // try to construct an EntrySet that contains all owned entries
   if (!ptr->owned_entries.empty()) {
     int len = ptr->owned_entries.size();
@@ -336,7 +331,7 @@ grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
   }
 }
 
-void grackle::impl::ratequery::drop_Registry(Registry* ptr) {
+void drop_Registry(Registry* ptr) {
   if (!ptr->sets.empty()) {
     delete[] ptr->id_offsets;
     ptr->id_offsets = nullptr;
@@ -347,8 +342,6 @@ void grackle::impl::ratequery::drop_Registry(Registry* ptr) {
     ptr->sets.clear();  // <- make it safer to call drop_Registry more than once
   }
 }
-
-namespace grackle::impl::ratequery {
 
 struct ratequery_rslt_ {
   grunstable_rateid_type rate_id;
@@ -429,7 +422,7 @@ static long long get_n_items(EntryProps props) {
   return n_items;
 }
 
-}  // namespace grackle::impl::ratequery
+}  // namespace GRIMPL_NAMESPACE_DECL::ratequery
 
 // here we implement the public API
 // --------------------------------

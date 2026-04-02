@@ -18,8 +18,9 @@
 #include "grackle.h"
 #include "utils-cpp.hpp"  // GRIMPL_FORCE_INLINE
 #include "status_reporting.h"
+#include "support/config.hpp"
 
-namespace grackle::impl::ratequery {
+namespace GRIMPL_NAMESPACE_DECL::ratequery {
 
 /// @defgroup Dynamic Rate Query Machinery
 ///
@@ -463,6 +464,6 @@ Registry RegBuilder_consume_and_build(RegBuilder* ptr);
 
 /** @}*/  // end of group
 
-}  // namespace grackle::impl::ratequery
+}  // namespace GRIMPL_NAMESPACE_DECL::ratequery
 
 #endif  // RATEQUERY_HPP
