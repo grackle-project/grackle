@@ -13,8 +13,6 @@ The test harness performs four phases:
 3. the test harness tries to execute a sequence of test-case specific shell commands to build a sample program.
 4. the harness tries to execute the test program.
 
-
-
 Motivation
 ----------
 
@@ -112,7 +110,11 @@ Running the tests is quite simple:
    On MacOS, you can use docker-desktop.
    An explanation for why we use ``docker`` is provided :ref:`below <installtest-why-docker>`.
 
-2. Simply execute the :source:`tests/install-tests/installtest.py` script.
+2. Simply execute the ``exec`` subcommand of :source:`tests/install-tests/installtest.py` script:
+
+   .. code-block:: shell-session
+
+      python3 <path/to/installtest.py> exec
 
 .. note::
 
@@ -173,11 +175,11 @@ We provide several more detailed reasons:
 
    * Using pytest sacrifices the ability to easily integrate the install-tests with CTest (this may not a big deal, but I'm a little hesitant to lock us into this choice, right now).
 
-  * Refactoring the creation of docker images to use the fixture system would take some effort (it's definitely doable).
+   * Refactoring the creation of docker images to use the fixture system would take some effort (it's definitely doable).
 
-  * For non-experts, pytest's control flow is fairly tricky to follow.
+   * For non-experts, pytest's control flow is fairly tricky to follow.
 
-  * Least importantly, as the installtest.py's first external python dependency, using it would require us to give some thought about specifying python dependencies (not a big deal)
+   * Least importantly, as the installtest.py's first external python dependency, using it would require us to give some thought about specifying python dependencies (not a big deal)
 
 
 .. _installtest-why-toml:
@@ -234,7 +236,7 @@ We use docker for several reasons:
 
      - Overriding the ``LD_LIBRARY_PATH`` variable.
 
-  - relatedly, it makes handling of dependencies a lot easier (we can simply install a C++ compiler or hdf5 ourselves rather than play games with a developer's setup).
+  * relatedly, it makes handling of dependencies a lot easier (we can simply install a C++ compiler or hdf5 ourselves rather than play games with a developer's setup).
 
 2. It facillitates "caching" in 2 (related) ways.
    Since lots of tests are run after performing a common set of steps (e.g. installing to a local install-directory), we can build an image that stores the result of these steps, and then reuse these steps in multiple tests.
@@ -256,34 +258,13 @@ Like the GitHub Actions runner (or the CircleCI runner), it sets up prestine tes
 In practice, step 1 consists of creating a docker image, while steps 2-4 are executed in a docker container based on the image.
 The use of docker is intended to take adva
 
-:name: ``cmds``
-:type: array of strings
-:limitation: Can't be specified in the ``common`` table
-:description: Each entry of the array specifies a command that is executed in the test program.
 
-:name: ``image``
-:type: string or array of strings
-:limitation: None
-:description: Specifies the names of the images that is used to run the test cases.
+TOML Parameters
+---------------
 
-:name: ``src_file``
-:type: string
-:limitation: None
-:description: Specifies the name of the file (if any) from GRACKLE_ROOT/src/example to copy into the sample project source directory.
+.. embed-cli-output:: ../../tests/install-tests/installtest.py
+   :args: entrydoc param
 
-:name: ``output-binary``
-:type: string
-:limitation: None
-:description: path to the example binary (relative to the sample project directory) that will be produced by executing the commands associated with the test case
-
-
-
-Adding a new test case
-----------------------
-
-.. note::
-
-   ADD ME
 
 
 .. rubric:: Footnotes
