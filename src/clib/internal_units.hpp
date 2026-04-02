@@ -1,8 +1,13 @@
-// See LICENSE file for license and copyright information
-
-/// @file internal_units.h
-/// @brief Declares/Implements the InternalGrUnits struct
-
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares/Implements the `InternalGrUnits` struct
+///
 /// This file creates the InternalGrUnits type.
 /// - it is fully C-compatible, but behaves in a loosely object-oriented way
 ///   (i.e. it has associated functions that act a little like methods)
@@ -22,6 +27,8 @@
 ///   some slightly weird versions of some physical constants
 ///
 /// **AFTER WE COMPLETE TRANSCRIPTION**, we should simplify this logic
+//===----------------------------------------------------------------------===//
+
 #ifndef INTERNAL_UNITS_HPP
 #define INTERNAL_UNITS_HPP
 

@@ -14,7 +14,7 @@
 #include <cstdio>
 #include "dust/calc_tdust_3d.hpp"
 #include "grackle.h"
-#include "internal_units.h"
+#include "internal_units.hpp"
 
 extern "C" int local_calculate_dust_temperature(
     chemistry_data *my_chemistry, chemistry_data_storage *my_rates,

@@ -14,7 +14,7 @@
 #include <cstdio>
 #include "grackle.h"
 #include "cool_multi_time.hpp"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "self_shielding_err_check.hpp"
 #include "update_UVbackground_rates.hpp"
 

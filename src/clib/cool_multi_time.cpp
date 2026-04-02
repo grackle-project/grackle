@@ -20,7 +20,7 @@
 #include "grackle.h"
 #include "index_helper.h"
 #include "inject_model/misc.hpp"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "internal_types.hpp"
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"

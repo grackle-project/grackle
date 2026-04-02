@@ -13,7 +13,7 @@
 
 #include <cstdio>
 #include "grackle.h"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "self_shielding_err_check.hpp"
 #include "solve_rate_cool.hpp"
 #include "update_UVbackground_rates.hpp"
