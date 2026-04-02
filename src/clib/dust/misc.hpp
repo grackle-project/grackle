@@ -21,8 +21,9 @@
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "dust_props.hpp"
+#include "support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Calculate various dust related properties
 ///
@@ -151,6 +152,6 @@ inline void dust_related_props(
         internal_dust_prop_buf, grain_kappa);
   }
 }
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // GRACKLE_DUST_MISC_HPP

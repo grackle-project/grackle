@@ -17,6 +17,7 @@
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "status_reporting.h"
+#include "support/config.hpp"
 
 #include <cmath>
 
@@ -24,7 +25,7 @@
 /// heating/cooling from dust-chemistry
 ///
 /// @todo Come up with a better name?
-namespace grackle::impl::dust_gas_edot {
+namespace GRIMPL_NAMESPACE_DECL::dust_gas_edot {
 
 /// update edot, in place, with contributions from photo-electric heating by
 /// UV-irradiated dust
@@ -288,6 +289,6 @@ void update_edot_dust_cooling_rate(
   }
 }
 
-}  // namespace grackle::impl::dust_gas_edot
+}  // namespace GRIMPL_NAMESPACE_DECL::dust_gas_edot
 
 #endif  // DUST_GAS_HEAT_COOL_HPP
