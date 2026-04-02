@@ -51,7 +51,7 @@ TEST(FNV1a, foobarString) {
 
 TEST(FNV1a, MaxSizeString) {
   constexpr int MaxKeyLen = 6;  // <- exactly matches the key's length
-  grackle::impl::HashRsltPack expected{true, 6, 0xbf9cf968ULL};
+  grackle::impl::HashRsltPack expected{true, MaxKeyLen, 0xbf9cf968ULL};
   ASSERT_EQ(grackle::impl::fnv1a_hash("foobar"), expected);
 }
 

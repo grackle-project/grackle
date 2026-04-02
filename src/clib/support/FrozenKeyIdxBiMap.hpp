@@ -437,11 +437,15 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
 }
 
 inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
+  if (!FrozenKeyIdxBiMap_is_ok(ptr)) {
+    return mk_invalid_FrozenKeyIdxBiMap();
+  }
+
   FrozenKeyIdxBiMap out =
       bimap_detail::alloc(ptr->length, ptr->capacity, ptr->mode);
   out.max_probe = ptr->max_probe;
 
-  if (ptr->length == 0 || !FrozenKeyIdxBiMap_is_ok(ptr)) {
+  if (ptr->length == 0) {
     return out;
   }
 
