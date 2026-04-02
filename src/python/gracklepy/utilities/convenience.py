@@ -16,7 +16,6 @@ import sys
 
 from gracklepy.fluid_container import \
     _element_masses, \
-    _metal_yield_densities, \
     FluidContainer
 
 from gracklepy.utilities.atomic import solar_abundance
@@ -42,6 +41,32 @@ def check_convergence(fc1, fc2, fields=None, tol=0.01):
         sys.stderr.write("max change - %5s: %.10e." % (max_field, max_val))
         return False
     return True
+
+def _setup_inj_pathway_fields(state_vals: dict[str, float],
+                              inj_pathway_yield_field_names: list[str]):
+    """
+    Helper function that updates state_vals to hold entries corresponding
+    to the field(s) that specify the metals yielded by each injection pathway
+    """
+    n_pathways = len(inj_pathway_yield_field_names)
+    if n_pathways == 0:
+        return # nothing to be done
+    elif n_pathways == 1:
+        # put all the metal into the single yield we are following
+        primary_pathway_yield_field = inj_pathway_yield_field_names[0]
+    else:
+        # we are following all possible metal yields, but for now
+        # just put everything in the local ISM field.
+        primary_pathway_yield_field = "local_ISM_metal_density"
+        if primary_pathway_yield_field not in inj_pathway_yield_field_names:
+            # at the time of writing, this shouldn't happen. But it will become
+            # possible in the near future.
+            raise RuntimeError(
+                "We don't yet support the case where we have multiple injection "
+                f"pathways but not the '{primary_pathway_yield_field}' field"
+            )
+    state_vals[primary_pathway_yield_field] = state_vals["metal_density"]
+
 
 def setup_fluid_container(my_chemistry,
                           density=mass_hydrogen_cgs,
@@ -142,17 +167,7 @@ def setup_fluid_container(my_chemistry,
         "dust_density": dust_to_gas_ratio * fc_density
     }
 
-    if my_chemistry.metal_chemistry > 0:
-        if my_chemistry.multi_metals == 0:
-            # put all the metal into the single yield we are following
-            my_metal = _metal_yield_densities[my_chemistry.metal_abundances]
-        elif my_chemistry.multi_metals == 1:
-            # we are following all possible metal yields, but for now
-            # just put everything in the local ISM field.
-            my_metal = _metal_yield_densities[0]
-        else:
-            raise ValueError("multi_metals must be either 0 or 1.")
-        state_vals[my_metal] = state_vals["metal_density"]
+    _setup_inj_pathway_fields(state_vals, fc.inject_pathway_density_yield_fields)
 
     if state == "neutral":
         state_vals["HI_density"] = H_total * fc_density

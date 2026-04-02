@@ -12,7 +12,7 @@
 ************************************************************************/
 
 // this should go before the header-guard
-#ifndef GRIMPL_PUBLIC_INCLUDE
+#if !defined(GRIMPL_PUBLIC_INCLUDE) && !defined(GRIMPL_COMPILING_CORE_LIB)
   #include "grackle_misc.h"
   GRIMPL_COMPTIME_WARNING(
     "You are using a deprecated header file; include the public \"grackle.h\" "

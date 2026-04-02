@@ -416,6 +416,17 @@ unsigned long long grunstable_ratequery_nrates(
 } /* extern "C" */
 #endif /* __cplusplus */
 
+#if !defined(GRIMPL_COMPILING_CORE_LIB)
+// avoid leaking these macros used for defining implementation details out of
+// the core library
+// -> while this not essential, it's considered a good practice to do this
+//    (people can't use the macros if they aren't defined)
+// -> note: these definitions will leak if external codes include deprecated
+//    (but that's probably ok)
+
+#undef GRACKLE_CLOUDY_TABLE_MAX_DIMENSION
+#undef GRIMPL_MAX_INJ_PATHWAYS
+#endif
 
 // this is important for letting us diagnose improper use of private headrs
 #if GRIMPL_PUBLIC_INCLUDE == 0

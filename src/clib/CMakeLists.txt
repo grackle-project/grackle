@@ -121,8 +121,8 @@ add_library(Grackle_Grackle
   initialize_rates.cpp initialize_rates.hpp
   initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp
   inject_model/grain_metal_inject_pathways.hpp
-  inject_model/inject_path_field_pack.hpp
   inject_model/load_data.cpp inject_model/load_data.hpp
+  inject_model/misc.hpp
   inject_model/raw_data.cpp inject_model/raw_data.hpp
   internal_types.cpp internal_types.hpp
   interp_table_utils.hpp
@@ -145,6 +145,7 @@ add_library(Grackle_Grackle
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
+  support/config.hpp
   visitor/common.hpp
   visitor/copy.hpp
   visitor/memory.hpp
@@ -305,7 +306,16 @@ if ("${CMAKE_SYSTEM_NAME}" MATCHES "^(Linux)|(Darwin)$")
   target_compile_definitions(Grackle_Grackle PRIVATE "LINUX")
 endif()
 
-# define macro to suppress warnings about C files using our deprecated public
-# headers (the files should include grackle.h instead). We're currently holding
-# off on this to minimize conflicts with the newchem-cpp branch
-target_compile_definitions(Grackle_Grackle PRIVATE GRIMPL_PUBLIC_INCLUDE=1)
+# define macro to slightly customize behavior in header files since we're compiling
+# the grackle library
+# - suppresses warnings about C files using our deprecated public headers (the files
+#   should include grackle.h instead). We're gradually making this transition. It will
+#   probably be complete once we're finished transcribing all Fortran
+# - indicate to the headers that they shouldn't undef certain macros
+#
+# In reality, a "cleaner" approach than this may be to have
+# - all files in the core library include a wrapper-header-file that wraps the public
+#   headers and have that wrapper-file define this macro instead
+# - this is appealing since there's one less custom argument that needs to be passed
+#   to the compiler
+target_compile_definitions(Grackle_Grackle PRIVATE GRIMPL_COMPILING_CORE_LIB=1)
