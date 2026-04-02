@@ -575,7 +575,8 @@ extern "C" int grunstable_ratequery_get_str(chemistry_data_storage* my_rates,
     //      it's the same as the value returned by `grunstable_ratequery_prop`.
     //    - if we accept an argument, then we are diverging from the interface
     //      for `grunstable_ratequery_get_f64`
-    std::strcpy(buf[i], src[i]);  // NOLINT(clang-analyzer-security.insecureAPI.strcpy)
+    // NOLINTNEXTLINE(clang-analyzer-security.insecureAPI.strcpy)
+    std::strcpy(buf[i], src[i]);
   }
   return GR_SUCCESS;
 }
