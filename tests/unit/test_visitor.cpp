@@ -37,13 +37,20 @@ void visit_member(MyDummyStruct* obj, UnaryFn fn){
     GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, MyDummyStruct, obj, fn)}
 
 TEST(VisitorTest, Simple) {
+  // as currently written, there isn't an easy way to avoid memory leaks if the
+  // test fails
+  // NOLINTBEGIN(clang-analyzer-unix.Malloc)
   grackle::impl::visitor::VisitorCtx ctx{2u};
 
   MyDummyStruct tmp{nullptr, nullptr};
 
   visit_member(&tmp, grackle::impl::visitor::AllocateMembers{ctx});
-  ASSERT_NE(tmp.attr1, nullptr);
-  ASSERT_NE(tmp.attr2, nullptr);
+  EXPECT_NE(tmp.attr1, nullptr);
+  EXPECT_NE(tmp.attr2, nullptr);
+  if ((tmp.attr1 == nullptr) || (tmp.attr1 == nullptr)) {
+    visit_member(&tmp, grackle::impl::visitor::FreeMembers{});
+    return;
+  }
 
   tmp.attr1[0] = 1.0;
   tmp.attr1[1] = 2.0;
@@ -54,13 +61,14 @@ TEST(VisitorTest, Simple) {
   visit_member(&tmp2, grackle::impl::visitor::AllocateMembers{ctx});
   visit_member_pair(tmp, tmp2, grackle::impl::visitor::CopyMembers{ctx});
 
-  ASSERT_EQ(tmp2.attr1[0], 1.0);
-  ASSERT_EQ(tmp2.attr1[1], 2.0);
-  ASSERT_EQ(tmp2.attr2[0], -2);
-  ASSERT_EQ(tmp2.attr2[1], -1);
+  EXPECT_EQ(tmp2.attr1[0], 1.0);
+  EXPECT_EQ(tmp2.attr1[1], 2.0);
+  EXPECT_EQ(tmp2.attr2[0], -2);
+  EXPECT_EQ(tmp2.attr2[1], -1);
 
   visit_member(&tmp, grackle::impl::visitor::FreeMembers{});
   visit_member(&tmp2, grackle::impl::visitor::FreeMembers{});
+  // NOLINTEND(clang-analyzer-unix.Malloc)
 }
 
 struct MyNestedStruct {
@@ -89,14 +97,22 @@ void visit_member(MyNestedStruct* obj, UnaryFn fn){
     GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, MyNestedStruct, obj, fn)}
 
 TEST(VisitorTest, Nested) {
+  // as currently written, there isn't an easy way to avoid memory leaks if the
+  // test fails
+  // NOLINTBEGIN(clang-analyzer-unix.Malloc)
   grackle::impl::visitor::VisitorCtx ctx{2u};
 
   MyNestedStruct tmp{nullptr, {nullptr, nullptr}};
 
   visit_member(&tmp, grackle::impl::visitor::AllocateMembers{ctx});
-  ASSERT_NE(tmp.attr0, nullptr);
-  ASSERT_NE(tmp.dummy.attr1, nullptr);
-  ASSERT_NE(tmp.dummy.attr2, nullptr);
+  EXPECT_NE(tmp.attr0, nullptr);
+  EXPECT_NE(tmp.dummy.attr1, nullptr);
+  EXPECT_NE(tmp.dummy.attr2, nullptr);
+  if ((tmp.attr0 == nullptr) || (tmp.dummy.attr1 == nullptr) ||
+      (tmp.dummy.attr2 == nullptr)) {
+    visit_member(&tmp, grackle::impl::visitor::FreeMembers{});
+    return;
+  }
 
   tmp.attr0[0] = 100;
   tmp.attr0[1] = -100;
@@ -122,4 +138,5 @@ TEST(VisitorTest, Nested) {
 
   visit_member(&tmp, grackle::impl::visitor::FreeMembers{});
   visit_member(&tmp2, grackle::impl::visitor::FreeMembers{});
+  // NOLINTEND(clang-analyzer-unix.Malloc)
 }

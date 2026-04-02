@@ -87,7 +87,7 @@ struct InternalDustPropBuf {
   /// - the fact that this holds a 1d table of values for each zone for each
   ///   species seems extremely inefficient!
   /// - If we really do need to construct the full table, then (if possible)
-  ///   we restructuring the algorithm so that:
+  ///   we should restructure the algorithm so that:
   ///   - we can reuse the buffer for different species
   ///   - we can also reuse the buffer for different zones (this would probably
   ///     involve reorganizing the tables of data for each metal-source in

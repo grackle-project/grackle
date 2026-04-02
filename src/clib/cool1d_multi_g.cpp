@@ -17,11 +17,17 @@
 #include <vector>
 #include <iostream>
 
+#include "calc_temp1d_cloudy_g.hpp"
+#include "cool1d_cloudy_g.hpp"
+#include "cool1d_cloudy_old_tables_g.hpp"
 #include "cool1d_multi_g.hpp"
 #include "grackle.h"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "dust_props.hpp"
+#include "dust/calc_all_tdust_gasgr_1d_g.hpp"
+#include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
@@ -184,8 +190,10 @@ void grackle::impl::cool1d_multi_g(
   // buffers of intermediate quantities used within dust-routines (for
   // calculating quantites related to heating/cooling)
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
-      grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
-                                             my_rates->gr_N[1]);
+      grackle::impl::new_InternalDustPropBuf(
+          my_fields->grid_dimension[0],
+          GrainMetalInjectPathways_get_n_log10Tdust_vals(
+              my_rates->opaque_storage->inject_pathway_props));
   // opacity coefficients for each dust grain (the product of opacity
   // coefficient & gas mass density is the linear absortpion coefficient)
   grackle::impl::GrainSpeciesCollection grain_kappa =
@@ -292,10 +300,9 @@ void grackle::impl::cool1d_multi_g(
       }
     }
 
-    grackle::impl::fortran_wrapper::calc_temp1d_cloudy_g(
-        rhoH, idx_range, tgas, mmw, dom, zr, imetal,
-        my_rates->cloudy_primordial, itmask, my_chemistry, my_fields,
-        internalu);
+    grackle::impl::calc_temp1d_cloudy_g(
+        rhoH, tgas, mmw, dom, zr, imetal, itmask, my_chemistry,
+        my_rates->cloudy_primordial, my_fields, internalu, idx_range);
 
   } else {
     // Compute mean molecular weight (and temperature) directly
@@ -959,7 +966,6 @@ void grackle::impl::cool1d_multi_g(
         if (itmask[i] != MASK_FALSE) {
           // Only calculate if H2I(i) is a substantial fraction
           if (d(i, idx_range.j, idx_range.k) * dom > 1e10) {
-            ciefudge = 1.;
             tau = std::pow(((d(i, idx_range.j, idx_range.k) / 2e16) * dom),
                            2.8);  // 2e16 is in units of cm^-3
             tau = std::fmax(tau, 1.e-5);
@@ -1101,8 +1107,10 @@ void grackle::impl::cool1d_multi_g(
   // Compute grain size increment
   if ((my_chemistry->use_dust_density_field > 0) &&
       (my_chemistry->dust_species > 0)) {
-    grackle::impl::fortran_wrapper::calc_grain_size_increment_1d(
-        dom, idx_range, itmask_metal, my_chemistry, my_rates, my_fields,
+    grackle::impl::calc_grain_size_increment_1d(
+        dom, idx_range, itmask_metal, my_chemistry,
+        my_rates->opaque_storage->grain_species_info,
+        my_rates->opaque_storage->inject_pathway_props, my_fields,
         internal_dust_prop_buf);
   }
 
@@ -1148,12 +1156,12 @@ void grackle::impl::cool1d_multi_g(
   // compute dust temperature and cooling due to dust
   if (anydust != MASK_FALSE) {
     // TODO: trad -> comp2
-    grackle::impl::fortran_wrapper::calc_all_tdust_gasgr_1d_g(
+    grackle::impl::calc_all_tdust_gasgr_1d_g(
         comp2, tgas, tdust, metallicity, dust2gas, cool1dmulti_buf.mynh,
         cool1dmulti_buf.gasgr_tdust, itmask_metal, coolunit, gasgr.data(),
         myisrf.data(), kappa_tot.data(), my_chemistry, my_rates, my_fields,
-        idx_range, grain_temperatures, gas_grainsp_heatrate, grain_kappa,
-        logTlininterp_buf, internal_dust_prop_buf);
+        idx_range, grain_temperatures, gas_grainsp_heatrate, logTlininterp_buf,
+        internal_dust_prop_buf, grain_kappa);
   }
 
   // Calculate dust cooling rate
@@ -1485,20 +1493,10 @@ void grackle::impl::cool1d_multi_g(
   if (my_chemistry->primordial_chemistry == 0) {
     iZscale = 0;
     mycmbTfloor = 0;
-    FORTRAN_NAME(cool1d_cloudy_g)(
-        d.data(), rhoH, metallicity, &my_fields->grid_dimension[0],
-        &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
-        &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-        logTlininterp_buf.logtem, edot, &comp2, &dom, &zr, &mycmbTfloor,
-        &my_chemistry->UVbackground, &iZscale,
-        &my_rates->cloudy_primordial.grid_rank,
-        my_rates->cloudy_primordial.grid_dimension,
-        my_rates->cloudy_primordial.grid_parameters[0],
-        my_rates->cloudy_primordial.grid_parameters[1],
-        my_rates->cloudy_primordial.grid_parameters[2],
-        &my_rates->cloudy_primordial.data_size,
-        my_rates->cloudy_primordial.cooling_data,
-        my_rates->cloudy_primordial.heating_data, itmask);
+    grackle::impl::cool1d_cloudy_g(rhoH, metallicity, logTlininterp_buf.logtem,
+                                   edot, comp2, dom, zr, mycmbTfloor,
+                                   my_chemistry->UVbackground, iZscale, itmask,
+                                   my_rates->cloudy_primordial, idx_range);
 
     // Calculate electron density from mean molecular weight
 
@@ -1658,40 +1656,16 @@ void grackle::impl::cool1d_multi_g(
 
     if (my_rates->cloudy_data_new == 1) {
       iZscale = 1;
-      FORTRAN_NAME(cool1d_cloudy_g)(
-          d.data(), rhoH, metallicity, &my_fields->grid_dimension[0],
-          &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
-          &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-          logTlininterp_buf.logtem, edot, &comp2, &dom, &zr,
-          &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground,
-          &iZscale, &my_rates->cloudy_metal.grid_rank,
-          my_rates->cloudy_metal.grid_dimension,
-          my_rates->cloudy_metal.grid_parameters[0],
-          my_rates->cloudy_metal.grid_parameters[1],
-          my_rates->cloudy_metal.grid_parameters[2],
-          &my_rates->cloudy_metal.data_size,
-          my_rates->cloudy_metal.cooling_data,
-          my_rates->cloudy_metal.heating_data, itmask_tab.data());
+      grackle::impl::cool1d_cloudy_g(
+          rhoH, metallicity, logTlininterp_buf.logtem, edot, comp2, dom, zr,
+          my_chemistry->cmb_temperature_floor, my_chemistry->UVbackground,
+          iZscale, itmask_tab.data(), my_rates->cloudy_metal, idx_range);
 
     } else {
-      FORTRAN_NAME(cool1d_cloudy_old_tables_g)(
-          d.data(), de.data(), rhoH, metallicity, &my_fields->grid_dimension[0],
-          &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
-          &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-          logTlininterp_buf.logtem, edot, &comp2,
-          &my_chemistry->primordial_chemistry, &dom, &zr,
-          &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground,
-          &my_chemistry->cloudy_electron_fraction_factor,
-          &my_rates->cloudy_metal.grid_rank,
-          my_rates->cloudy_metal.grid_dimension,
-          my_rates->cloudy_metal.grid_parameters[0],
-          my_rates->cloudy_metal.grid_parameters[1],
-          my_rates->cloudy_metal.grid_parameters[2],
-          my_rates->cloudy_metal.grid_parameters[3],
-          my_rates->cloudy_metal.grid_parameters[4],
-          &my_rates->cloudy_metal.data_size,
-          my_rates->cloudy_metal.cooling_data,
-          my_rates->cloudy_metal.heating_data, itmask_tab.data());
+      grackle::impl::cool1d_cloudy_old_tables_g(
+          rhoH, metallicity, logTlininterp_buf.logtem, edot, comp2, dom, zr,
+          itmask_tab.data(), my_chemistry, my_rates->cloudy_metal,
+          my_fields->density, my_fields->e_density, my_fields, idx_range);
     }
 
     if (my_chemistry->metal_chemistry == 1) {
