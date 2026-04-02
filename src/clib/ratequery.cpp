@@ -122,8 +122,9 @@ static void careful_delete_(T* ptr, bool is_scalar) {
 /// within an Entry are deleted)
 ///
 /// Importantly, this does **NOT** call delete[] on entry_list
-static void drop_owned_Entry_list_contents(Entry* entry_list, int n_entries) {
-  for (int entry_idx = 0; entry_idx < n_entries; entry_idx++) {
+static void drop_owned_Entry_list_contents(Entry* entry_list,
+                                           std::size_t n_entries) {
+  for (std::size_t entry_idx = 0; entry_idx < n_entries; entry_idx++) {
     Entry* cur_entry = &entry_list[entry_idx];
 
     // invariant: each Entry within an embedded-list should be valid and
@@ -169,28 +170,31 @@ static void drop_owned_Entry_list_contents(Entry* entry_list, int n_entries) {
 
 Entry EntrySet_access(const EntrySet* entry_set,
                       chemistry_data_storage* my_rates, int i) {
-  if (i > entry_set->len) {
-    return mk_invalid_Entry();
-  } else if (entry_set->embedded_list == nullptr) {  // in recipe-mode
+  if (entry_set->embedded_list.empty()) {  // in recipe-mode
+    if ((i < 0) || (i >= entry_set->len)) {
+      return mk_invalid_Entry();
+    }
     Entry out = (entry_set->recipe_fn)(my_rates, i);
     out.props = entry_set->common_recipe_props;
     return out;
   } else {  // in embedded-list mode
+    if ((i < 0) ||
+        (static_cast<std::size_t>(i) >= entry_set->embedded_list.size())) {
+      return mk_invalid_Entry();
+    }
     return entry_set->embedded_list[i];
   }
 }
 
 void drop_EntrySet(EntrySet* ptr) {
-  if (ptr->embedded_list == nullptr) {
+  if (ptr->embedded_list.empty()) {
     // nothing to deallocate in recipe-mode
   } else {
     // in embedded-list-mode, we need to deallocate each Entry in the list
     // and the deallocate the actual list-pointer
-    drop_owned_Entry_list_contents(ptr->embedded_list, ptr->len);
-
-    // deallocate the memory associated with embedded_list
-    delete[] ptr->embedded_list;
-    ptr->embedded_list = nullptr;
+    drop_owned_Entry_list_contents(ptr->embedded_list.data(),
+                                   ptr->embedded_list.size());
+    ptr->embedded_list.clear();  // <- makes repeated calls to drop safer
   }
 }
 
@@ -230,8 +234,9 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
-  SimpleVec_push_back(ptr->recipe_sets,
-                      EntrySet{n_entries, nullptr, recipe_fn, common_props});
+  SimpleVec_push_back(
+      ptr->recipe_sets,
+      EntrySet{n_entries, std::vector<Entry>(), recipe_fn, common_props});
 
   return GR_SUCCESS;
 }
@@ -313,9 +318,15 @@ grackle::impl::ratequery::Registry
 grackle::impl::ratequery::RegBuilder_consume_and_build(RegBuilder* ptr) {
   // try to construct an EntrySet that contains all owned entries
   if (SimpleVec_len(ptr->owned_entries) > 0) {
-    EntrySet tmp{/* len = */ SimpleVec_len(ptr->owned_entries),
-                 /* embedded_list = */
-                 SimpleVec_extract_ptr_and_make_empty(ptr->owned_entries),
+    int len = SimpleVec_len(ptr->owned_entries);
+    Entry* tmp_ptr = SimpleVec_extract_ptr_and_make_empty(ptr->owned_entries);
+    std::vector<Entry> vec;
+    for (int i = 0; i < len; i++) {
+      vec.push_back(tmp_ptr[i]);
+    }
+    delete[] tmp_ptr;
+    EntrySet tmp{/* len = */ len,
+                 /* embedded_list = */ std::move(vec),
                  /* recipe_fn = */ nullptr,
                  /* common_recipe_props = */ mk_invalid_EntryProps()};
     SimpleVec_push_back(ptr->recipe_sets, tmp);
@@ -387,7 +398,7 @@ static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
   for (int set_idx = 0; set_idx < registry->n_sets; set_idx++) {
     EntrySet* cur_set = &registry->sets[set_idx];
     int tmp = i - registry->id_offsets[set_idx];
-    if ((tmp >= 0) && (tmp < cur_set->len)) {
+    if ((tmp >= 0) && (tmp < EntrySet_size(cur_set))) {
       return ratequery_rslt_{i, EntrySet_access(cur_set, my_rates, tmp)};
     }
   }
@@ -441,10 +452,13 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
 
   for (int set_idx = 0; set_idx < registry->n_sets; set_idx++) {
     rate_q::EntrySet* set = &registry->sets[set_idx];
-    int set_len = set->len;
+    int set_len = EntrySet_size(set);
     for (int i = 0; i < set_len; i++) {
       rate_q::Entry entry = rate_q::EntrySet_access(
           set, const_cast<chemistry_data_storage*>(my_rates), i);
+      // todo: figure out how to give enough compiler hints so we can remove
+      //       this nullptr-check
+      GR_INTERNAL_REQUIRE(entry.name != nullptr, "sanity check!");
       if (std::strcmp(name, entry.name) == 0) {
         return registry->id_offsets[set_idx] + i;
       }

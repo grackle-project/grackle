@@ -12,6 +12,9 @@
 #ifndef RATEQUERY_HPP
 #define RATEQUERY_HPP
 
+#include <cstddef>
+#include <vector>
+
 #include "grackle.h"
 #include "utils-cpp.hpp"  // GRIMPL_FORCE_INLINE
 #include "status_reporting.h"
@@ -265,7 +268,7 @@ struct EntrySet {
   ///
   /// @important
   /// this **must** be a nullptr if operating in Recipe-mode
-  Entry* embedded_list;
+  std::vector<Entry> embedded_list;
 
   /// a function pointer that can be used to access entries through a recipe
   fetch_Entry_recipe_fn* recipe_fn;
@@ -282,6 +285,15 @@ struct EntrySet {
 
 /// deallocate the contents of an EntrySet
 void drop_EntrySet(EntrySet* ptr);
+
+/// get the number of @ref Entry in the @ref EntrySet
+inline int EntrySet_size(const EntrySet* ptr) {
+  if (ptr->embedded_list.empty()) {
+    return ptr->len;
+  } else {
+    return static_cast<int>(ptr->embedded_list.size());
+  }
+}
 
 /// look up an Entry in an EntrySet
 ///
