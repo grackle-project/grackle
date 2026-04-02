@@ -16,10 +16,11 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "config.hpp"
 #include "status_reporting.h"
 #include "FrozenKeyIdxBiMap_detail.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 // the following doxygen comment block logically groups every all parts of
 // the (internal) API for Grackle's (internal) FrozenKeyIdxBiMap. It's useful
@@ -471,6 +472,6 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
   return out;
 };
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // SUPPORT_FROZENKEYIDXBIMAP_HPP

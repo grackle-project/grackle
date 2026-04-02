@@ -19,9 +19,10 @@
 #include <limits>
 #include "status_reporting.h"
 
+#include "config.hpp"
 #include "fnv1a_hash.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// This namespace holds a generic constants and typedefs
 namespace bimap_detail {
@@ -195,5 +196,5 @@ inline SearchRslt search(const Row* rows, const char* key, int capacity,
 }
 
 }  // namespace bimap_StrU16_detail
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 #endif  // SUPPORT_FROZENKEYIDXBIMAP_DETAIL_HPP
