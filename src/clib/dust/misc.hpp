@@ -14,10 +14,12 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"  // gr_mask_type
-#include "fortran_func_wrappers.hpp"
+#include "dust/calc_all_tdust_gasgr_1d_g.hpp"
+#include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
 #include "index_helper.h"  // IndexHelper
 #include "utils-cpp.hpp"   // View
 #include "internal_types.hpp"
+#include "internal_units.h"
 #include "dust_props.hpp"
 
 namespace grackle::impl {
@@ -83,8 +85,10 @@ inline void dust_related_props(
   // Compute grain size increment
   if ((my_chemistry->use_dust_density_field > 0) &&
       (my_chemistry->dust_species > 0)) {
-    grackle::impl::fortran_wrapper::calc_grain_size_increment_1d(
-        dom, idx_range, itmask_metal, my_chemistry, my_rates, my_fields,
+    grackle::impl::calc_grain_size_increment_1d(
+        dom, idx_range, itmask_metal, my_chemistry,
+        my_rates->opaque_storage->grain_species_info,
+        my_rates->opaque_storage->inject_pathway_props, my_fields,
         internal_dust_prop_buf);
   }
 
@@ -140,11 +144,11 @@ inline void dust_related_props(
 
   // compute dust temperature and cooling due to dust
   if (anydust != MASK_FALSE) {
-    grackle::impl::fortran_wrapper::calc_all_tdust_gasgr_1d_g(
+    grackle::impl::calc_all_tdust_gasgr_1d_g(
         trad, tgas, tdust, metallicity, dust2gas, nH, gasgr_tdust, itmask_metal,
         coolunit, gasgr, myisrf, kappa_tot, my_chemistry, my_rates, my_fields,
-        idx_range, grain_temperatures, gas_grainsp_heatrate, grain_kappa,
-        logTlininterp_buf, internal_dust_prop_buf);
+        idx_range, grain_temperatures, gas_grainsp_heatrate, logTlininterp_buf,
+        internal_dust_prop_buf, grain_kappa);
   }
 }
 }  // namespace grackle::impl
