@@ -18,23 +18,22 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
-#include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
 
-#include "calc_temp_cloudy_g.h"
+#include "calc_temp_cloudy.hpp"
 #include "calc_temp1d_cloudy_g.hpp"
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
-                        chemistry_data* my_chemistry,
-                        cloudy_data cloudy_primordial,
-                        grackle_field_data* my_fields,
-                        InternalGrUnits internalu) {
+void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
+                      chemistry_data* my_chemistry,
+                      cloudy_data cloudy_primordial,
+                      grackle_field_data* my_fields,
+                      InternalGrUnits internalu) {
   // Calc quantities using values specified by internalu
   const double dom = internalu_calc_dom_(internalu);
   const double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;
