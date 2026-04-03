@@ -38,9 +38,9 @@ void cool_multi_time(
   // Convert densities from comoving to 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    grackle::impl::scale_fields(
+    scale_fields(
         imetal, factor, my_chemistry, my_fields,
-        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
+        get_n_inject_pathway_density_ptrs(my_rates));
   }
 
 
@@ -49,19 +49,19 @@ void cool_multi_time(
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
 
-    grackle::impl::View<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-    grackle::impl::GrainSpeciesCollection grain_temperatures =
-      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+    GrainSpeciesCollection grain_temperatures =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
-      grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+    LogTLinInterpScratchBuf logTlininterp_buf =
+      new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
 
-    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf =
-      grackle::impl::new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
+    Cool1DMultiScratchBuf cool1dmulti_buf =
+      new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
  
-    grackle::impl::CoolHeatScratchBuf coolingheating_buf =
-      grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
+    CoolHeatScratchBuf coolingheating_buf =
+      new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
 
     // the following variables aren't embedded because they are structs or are
     // used in a number of different internal routines. Sorting these into
@@ -120,19 +120,19 @@ void cool_multi_time(
     }
 
     // cleanup temporaries
-    grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
-    grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
-    grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
-    grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
+    drop_GrainSpeciesCollection(&grain_temperatures);
+    drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
+    impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
 
   }  // OMP_PRAGMA("omp parallel")
 
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    grackle::impl::scale_fields(
+    scale_fields(
         imetal, factor, my_chemistry, my_fields,
-        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
+        get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   return;
