@@ -9,8 +9,8 @@
 /// Declares/Implements the `InternalGrUnits` struct
 ///
 /// This file creates the InternalGrUnits type.
-/// - it is fully C-compatible, but behaves in a loosely object-oriented way
-///   (i.e. it has associated functions that act a little like methods)
+/// - it is written in C-like manner, but behaves in a loosely object-oriented
+///   way (i.e. it has associated functions that act a little like methods)
 /// - the impetus for creating the constructs in this file is to aide with
 ///   transcription from Fortran to C++
 /// - you should think of this type (and its associated methods) as a mechansim
