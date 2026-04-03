@@ -79,7 +79,7 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
   }
 
   /* Solve cooling equations. */
-  cool_multi_time(
+  GRIMPL_NS::cool_multi_time(
     cooling_time, metal_field_present, internalu, my_chemistry, my_rates,
     my_fields, my_uvb_rates
   );

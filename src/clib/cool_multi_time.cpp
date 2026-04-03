@@ -13,13 +13,11 @@
 // This file was initially generated automatically during conversion of the
 // cool_multi_time_g function from FORTRAN to C++
 
-#include <cstdio>
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
 #include "cool_multi_time.hpp"
 #include "grackle.h"
-#include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
 #include "inject_model/misc.hpp"
 #include "internal_units.h"
@@ -27,9 +25,7 @@
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+namespace GRIMPL_NAMESPACE_DECL {
 
 void cool_multi_time(
   gr_float* cooltime_data_, int imetal, InternalGrUnits internalu,
@@ -142,6 +138,4 @@ void cool_multi_time(
   return;
 }
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace GRIMPL_NAMESPACE_DECL

@@ -16,14 +16,11 @@
 #ifndef COOL_MULTI_TIME_HPP
 #define COOL_MULTI_TIME_HPP
 
-#include "grackle.h"             // gr_float
-#include "fortran_func_decls.h"  // gr_mask_int
+#include "grackle.h"  // gr_float
 #include "internal_units.h"
+#include "support/config.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-// the following function can be called from C or C++
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Solve the energy cooling equations
 ///
@@ -33,20 +30,11 @@ extern "C" {
 /// * modified2: October, 1996 by GB; moved to AMR
 /// * modified3: February, 2003 by Robert Harkness; iteration mask
 /// * modified4: December, 2024 by Matthew Abruzzo; ported to C++
-///
-/// @todo
-/// Once the file where this routine called is adjusted to be compiled with a
-/// C++ compiler, modify this function (prototype & implementation) such that:
-/// - it's not enclosed by a `extern "C"` block
-/// - it's defined within a `grackle::impl` namespace
 void cool_multi_time(gr_float* cooltime_data_, int imetal,
                      InternalGrUnits internalu, chemistry_data* my_chemistry,
                      chemistry_data_storage* my_rates,
                      grackle_field_data* my_fields,
                      photo_rate_storage my_uvb_rates);
-
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* COOL_MULTI_TIME_HPP */
