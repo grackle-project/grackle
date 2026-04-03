@@ -32,7 +32,7 @@
 #ifndef INTERNAL_UNITS_HPP
 #define INTERNAL_UNITS_HPP
 
-#include <math.h>
+#include <cmath>
 
 #include "grackle.h"
 #include "grackle_macros.h"
@@ -43,8 +43,6 @@ namespace GRIMPL_NAMESPACE_DECL {
 
 /// this represents all of the different choices for the hydrogen mass that
 /// have been used in different parts of the codebase.
-///
-/// Tradtionally
 ///
 /// @todo
 /// This is meant to be a stopgap solution to help us consolidate all similar
@@ -245,7 +243,7 @@ static inline double internalu_get_chunit_(InternalGrUnits internalu){
 /// calculates a standard quantity used throughout the codebase
 static inline double internalu_calc_dom_(InternalGrUnits internalu) {
   const double mh_local_var = internalu_get_mh_(internalu);
-  return internalu.urho*(pow(internalu.a_value,3))/mh_local_var;
+  return internalu.urho*(std::pow(internalu.a_value,3))/mh_local_var;
 }
 
 /// calculates coefficients used for computing the Jeans' length
@@ -315,7 +313,7 @@ static inline double internalu_calc_coef_ljeans_(InternalGrUnits internalu,
 static inline double internalu_calc_kunit_(InternalGrUnits internalu) {
   double uaye = internalu.a_units;
   double mh_local_var = internalu_get_mh_(internalu);
-  return (pow(uaye, 3) * mh_local_var) / (internalu.dbase1 * internalu.tbase1);
+  return (std::pow(uaye, 3) * mh_local_var) / (internalu.dbase1 * internalu.tbase1);
 }
 
 // unused and untested:
@@ -369,7 +367,7 @@ static inline InternalGrUnits new_internalu_helper_(
     co_length_units = my_units->length_units *
       my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
-      POW(my_units->a_value * my_units->a_units, 3);
+      std::pow(my_units->a_value * my_units->a_units, 3);
   }
 
   // Part 2: initialize output units and copy some stuff from frontend units
@@ -395,14 +393,14 @@ static inline InternalGrUnits new_internalu_helper_(
   // unnecessary round-trip)
   internalu.tbase1   = my_units->time_units;
   internalu.xbase1   = internalu.uxyz/(my_units->a_value*my_units->a_units);    // uxyz is [x]*a      = [x]*[a]*a'
-  internalu.dbase1   = internalu.urho*pow((my_units->a_value*my_units->a_units),3); // urho is [dens]/a^3 = [dens]/([a]*a')^3 '
+  internalu.dbase1   = internalu.urho*std::pow((my_units->a_value*my_units->a_units),3); // urho is [dens]/a^3 = [dens]/([a]*a')^3 '
 
   // lastly, compute coolunit (make sure we use the correct version of mh)
   internalu.mh_choice_ = mh_choice;
   const double mh_local_var = internalu_get_mh_(internalu);
   internalu.coolunit = (
-    pow(my_units->a_units,5) * pow(internalu.xbase1,2) * pow(mh_local_var,2)
-  ) / (pow(internalu.tbase1,3) * internalu.dbase1);
+    std::pow(my_units->a_units,5) * std::pow(internalu.xbase1,2) * std::pow(mh_local_var,2)
+  ) / (std::pow(internalu.tbase1,3) * internalu.dbase1);
 
   return internalu;
 }
