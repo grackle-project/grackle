@@ -83,6 +83,23 @@ void grackle::impl::cool1d_multi_g(
   grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  // When dust_model1_track_elements=1, metal_density excludes C and O.
+  // We need Views for these fields to reconstruct total metallicity
+  // for the Cloudy cooling table lookup.
+  bool track_elements_cool = (my_chemistry->dust_model1_track_elements > 0 &&
+                              my_fields->metal_density_carbon != nullptr &&
+                              my_fields->metal_density_oxygen != nullptr);
+  grackle::impl::View<gr_float***> metal_C_cool(
+      track_elements_cool ? my_fields->metal_density_carbon : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_O_cool(
+      track_elements_cool ? my_fields->metal_density_oxygen : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust(
+      my_fields->dust_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> Vheat(
       my_fields->volumetric_heating_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -337,7 +354,12 @@ void grackle::impl::cool1d_multi_g(
     if (imetal == 1) {
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
-          mmw[i] = mmw[i] + metal(i, idx_range.j, idx_range.k) / mu_metal;
+          double total_metal_mmw = metal(i, idx_range.j, idx_range.k);
+          if (track_elements_cool) {
+            total_metal_mmw += metal_C_cool(i, idx_range.j, idx_range.k)
+                            +  metal_O_cool(i, idx_range.j, idx_range.k);
+          }
+          mmw[i] = mmw[i] + total_metal_mmw / mu_metal;
         }
       }
     }
@@ -428,7 +450,14 @@ void grackle::impl::cool1d_multi_g(
   if (imetal == 1) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        metallicity[i] = metal(i, idx_range.j, idx_range.k) /
+        double total_metal_i = metal(i, idx_range.j, idx_range.k);
+        // When tracking elements, metal_density excludes C and O —
+        // add them back for the Cloudy cooling table lookup
+        if (track_elements_cool) {
+          total_metal_i += metal_C_cool(i, idx_range.j, idx_range.k)
+                        +  metal_O_cool(i, idx_range.j, idx_range.k);
+        }
+        metallicity[i] = total_metal_i /
                          d(i, idx_range.j, idx_range.k) /
                          my_chemistry->SolarMetalFractionByMass;
       }
@@ -1431,9 +1460,14 @@ void grackle::impl::cool1d_multi_g(
             1 -
             mmw[i] * (3.0 * my_chemistry->HydrogenFractionByMass + 1.0) / 4.0;
         if (imetal == 1) {
+          double total_metal_myde = metal(i, idx_range.j, idx_range.k);
+          if (track_elements_cool) {
+            total_metal_myde += metal_C_cool(i, idx_range.j, idx_range.k)
+                             +  metal_O_cool(i, idx_range.j, idx_range.k);
+          }
           cool1dmulti_buf.myde[i] =
               cool1dmulti_buf.myde[i] -
-              mmw[i] * metal(i, idx_range.j, idx_range.k) /
+              mmw[i] * total_metal_myde /
                   (d(i, idx_range.j, idx_range.k) * mu_metal);
         }
         cool1dmulti_buf.myde[i] =

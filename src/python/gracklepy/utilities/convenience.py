@@ -219,9 +219,11 @@ def setup_fluid_container(my_chemistry,
     fc["z_velocity"][:] = 0.0
 
     fc_last = fc.copy()
-    # disable cooling to iterate to equilibrium
+    # disable cooling and element tracking to iterate to equilibrium
     val = fc.chemistry_data.with_radiative_cooling
     fc.chemistry_data.with_radiative_cooling = 0
+    val_track = fc.chemistry_data.dust_model1_track_elements
+    fc.chemistry_data.dust_model1_track_elements = 0
 
     my_time = 0.0
     i = 0
@@ -247,8 +249,27 @@ def setup_fluid_container(my_chemistry,
         i += 1
 
     fc.chemistry_data.with_radiative_cooling = val
+    fc.chemistry_data.dust_model1_track_elements = val_track
     if i >= max_iterations:
         raise RuntimeError(
             f"ERROR: solver did not converge in {max_iterations} iterations.")
+
+    # Element-resolved C/O initialisation for dust_model=1.
+    # Deferred until after convergence so that tracking and non-tracking
+    # runs converge from identical bulk fields.
+    if my_chemistry.dust_model1_track_elements == 1:
+        M_total = fc["metal_density"] + fc["dust_density"]
+        f_C_total = my_chemistry.dust_model1_C_total_fraction
+        f_C_gas   = my_chemistry.dust_model1_C_gas_fraction
+        f_O_total = my_chemistry.dust_model1_O_total_fraction
+        f_O_gas   = my_chemistry.dust_model1_O_gas_fraction
+
+        fc["metal_density_carbon"][:] = f_C_gas * M_total
+        fc["metal_density_oxygen"][:] = f_O_gas * M_total
+        fc["metal_density"][:] = (fc["metal_density"]
+                                  - fc["metal_density_carbon"]
+                                  - fc["metal_density_oxygen"])
+        fc["dust_density_carbon"][:] = (f_C_total - f_C_gas) * M_total
+        fc["dust_density_oxygen"][:] = (f_O_total - f_O_gas) * M_total
 
     return fc

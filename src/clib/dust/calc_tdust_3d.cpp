@@ -76,6 +76,17 @@ void calc_tdust_3d(
     View<gr_float***> dust_temp(dust_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     View<gr_float***> isrf_habing(my_fields->isrf_habing, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    bool track_elements_tdust = (my_chemistry->dust_model1_track_elements > 0 &&
+                                 my_fields->metal_density_carbon != nullptr &&
+                                 my_fields->metal_density_oxygen != nullptr);
+    View<gr_float***> metal_C_tdust(
+        track_elements_tdust ? my_fields->metal_density_carbon : my_fields->density,
+        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+        my_fields->grid_dimension[2]);
+    View<gr_float***> metal_O_tdust(
+        track_elements_tdust ? my_fields->metal_density_oxygen : my_fields->density,
+        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+        my_fields->grid_dimension[2]);
     View<gr_float***> dust(my_fields->dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     View<gr_float***> SiM_temp(my_fields->SiM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -153,7 +164,11 @@ void calc_tdust_3d(
       // Set itmask to false for metal-poor cells
       if (imetal == 1) {
         for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          if (metal(i,j,k) < 1.e-9 * d(i,j,k))  {
+          double total_metal_mask = metal(i,j,k);
+          if (track_elements_tdust) {
+            total_metal_mask += metal_C_tdust(i,j,k) + metal_O_tdust(i,j,k);
+          }
+          if (total_metal_mask < 1.e-9 * d(i,j,k))  {
             itmask_metal[i] = MASK_FALSE;
           }
         }
@@ -184,7 +199,11 @@ void calc_tdust_3d(
           // Calculate metallicity
 
           if (imetal == 1)  {
-            metallicity[i] = metal(i,j,k) / d(i,j,k) / my_chemistry->SolarMetalFractionByMass;
+            double total_metal_i = metal(i,j,k);
+            if (track_elements_tdust) {
+              total_metal_i += metal_C_tdust(i,j,k) + metal_O_tdust(i,j,k);
+            }
+            metallicity[i] = total_metal_i / d(i,j,k) / my_chemistry->SolarMetalFractionByMass;
           }
 
           // Calculate dust to gas ratio

@@ -266,6 +266,13 @@ def _required_density_fields(my_chemistry):
         my_fields.append("metal_density")
     if my_chemistry.dust_chemistry == 1:
         my_fields.append("dust_density")
+    if my_chemistry.dust_model1_track_elements == 1:
+        my_fields.extend([
+            "metal_density_carbon",
+            "metal_density_oxygen",
+            "dust_density_carbon",
+            "dust_density_oxygen",
+        ])
     if my_chemistry.metal_chemistry > 0:
         my_fields.extend(_dust_metal_densities[my_chemistry.dust_species])
         my_fields.extend(_dust_densities[my_chemistry.dust_species])

@@ -59,6 +59,24 @@ void make_consistent(
       const_cast<const gr_float*>(my_fields->metal_density),
       my_fields->grid_dimension[0], my_fields->grid_dimension[1],
       my_fields->grid_dimension[2]);
+
+  bool track_elements_mc =
+      (my_chemistry->dust_model1_track_elements > 0 &&
+       my_fields->metal_density_carbon != nullptr &&
+       my_fields->metal_density_oxygen != nullptr);
+  grackle::impl::View<const gr_float***> metal_C_mc(
+      const_cast<const gr_float*>(
+          track_elements_mc ? my_fields->metal_density_carbon
+                            : my_fields->density),
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> metal_O_mc(
+      const_cast<const gr_float*>(
+          track_elements_mc ? my_fields->metal_density_oxygen
+                            : my_fields->density),
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+
   grackle::impl::View<gr_float***> HM(
       my_fields->HM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -266,6 +284,9 @@ void make_consistent(
       if ((imetal) == 1) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metalfree[i] = d(i, j, k) - metal(i, j, k);
+          if (track_elements_mc) {
+            metalfree[i] -= metal_C_mc(i, j, k) + metal_O_mc(i, j, k);
+          }
         }
       } else {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {

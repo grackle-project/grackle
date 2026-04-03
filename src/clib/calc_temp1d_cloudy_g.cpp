@@ -36,6 +36,22 @@ void grackle::impl::calc_temp1d_cloudy_g(
   grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  bool track_elements_1d =
+      (my_chemistry->dust_model1_track_elements > 0 &&
+       my_fields->metal_density_carbon != nullptr &&
+       my_fields->metal_density_oxygen != nullptr);
+  grackle::impl::View<gr_float***> metal_C_1d(
+      track_elements_1d ? my_fields->metal_density_carbon
+                        : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_O_1d(
+      track_elements_1d ? my_fields->metal_density_oxygen
+                        : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+
   grackle::impl::View<gr_float***> e(
       my_fields->internal_energy, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -178,11 +194,16 @@ void grackle::impl::calc_temp1d_cloudy_g(
           // Add metal species to mean molecular weight
 
           if (imetal == 1) {
+            double total_metal_1d = metal(i, idx_range.j, idx_range.k);
+            if (track_elements_1d) {
+              total_metal_1d += metal_C_1d(i, idx_range.j, idx_range.k)
+                             +  metal_O_1d(i, idx_range.j, idx_range.k);
+            }
             munew = d(i, idx_range.j, idx_range.k) /
                     ((d(i, idx_range.j, idx_range.k) -
-                      metal(i, idx_range.j, idx_range.k)) /
+                      total_metal_1d) /
                          munew +
-                     metal(i, idx_range.j, idx_range.k) / mu_metal);
+                     total_metal_1d / mu_metal);
             tgas[i] = tgas[i] * munew / muold;
           }
 

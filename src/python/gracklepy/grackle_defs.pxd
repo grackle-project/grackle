@@ -109,7 +109,11 @@ cdef extern from "grackle.h":
       gr_float *y_velocity;
       gr_float *z_velocity;
       gr_float *metal_density;
+      gr_float *metal_density_carbon;
+      gr_float *metal_density_oxygen;
       gr_float *dust_density;
+      gr_float *dust_density_carbon;
+      gr_float *dust_density_oxygen;
       gr_float *e_density;
       gr_float *HI_density;
       gr_float *HII_density;

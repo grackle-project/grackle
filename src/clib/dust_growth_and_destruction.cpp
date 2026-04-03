@@ -47,6 +47,18 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
+  bool track_elements = (my_chemistry->dust_model1_track_elements > 0 &&
+                         my_fields->metal_density_carbon != nullptr &&
+                         my_fields->metal_density_oxygen != nullptr);
+  grackle::impl::View<gr_float***> metal_C(
+      track_elements ? my_fields->metal_density_carbon : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_O(
+      track_elements ? my_fields->metal_density_oxygen : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+
   double dens_proper = internalu.urho * std::pow(internalu.a_value, 3);
   double tau_ref =
       my_chemistry->dust_growth_tauref * 1e9 * sec_per_year / internalu.tbase1;
@@ -59,6 +71,12 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
     if (itmask[i] != MASK_FALSE) {
       double rho_dust = dust(i, idx_range.j, idx_range.k);
       double rho_metal = metal(i, idx_range.j, idx_range.k);
+      // When tracking elements, rho_metal must include C and O for
+      // correct accretion timescale and metal availability
+      if (track_elements) {
+        rho_metal += metal_C(i, idx_range.j, idx_range.k)
+                  +  metal_O(i, idx_range.j, idx_range.k);
+      }
       double rho_d = d(i, idx_range.j, idx_range.k);
 
       // No metals to accrete onto grains — skip growth
@@ -277,45 +295,192 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
+  // --- Element-resolved tracking setup ---
+  bool track_elements = (my_chemistry->dust_model1_track_elements > 0 &&
+                         my_fields->metal_density_carbon != nullptr &&
+                         my_fields->metal_density_oxygen != nullptr &&
+                         my_fields->dust_density_carbon != nullptr &&
+                         my_fields->dust_density_oxygen != nullptr);
+
+  grackle::impl::View<gr_float***> metal_C(
+      track_elements ? my_fields->metal_density_carbon : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_O(
+      track_elements ? my_fields->metal_density_oxygen : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_C(
+      track_elements ? my_fields->dust_density_carbon : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_O(
+      track_elements ? my_fields->dust_density_oxygen : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       double rho_gas = d(i, idx_range.j, idx_range.k);
       double rho_dust = dust(i, idx_range.j, idx_range.k);
-      double rho_metal = metal(i, idx_range.j, idx_range.k);
+      double rho_metal_other = metal(i, idx_range.j, idx_range.k);
       double dt = dt_value[i];
 
+      // Load element-resolved fields (zero when not tracking)
+      double rho_metal_C = 0.0, rho_metal_O = 0.0;
+      double rho_dust_C = 0.0, rho_dust_O = 0.0;
+      if (track_elements) {
+        rho_metal_C = metal_C(i, idx_range.j, idx_range.k);
+        rho_metal_O = metal_O(i, idx_range.j, idx_range.k);
+        rho_dust_C  = dust_C(i, idx_range.j, idx_range.k);
+        rho_dust_O  = dust_O(i, idx_range.j, idx_range.k);
+      }
+
+      // Total gas-phase metals (needed for clamping and gas density update)
+      double rho_metal_total = rho_metal_other + rho_metal_C + rho_metal_O;
+      double f_C     = (rho_metal_total > 0) ? rho_metal_C     / rho_metal_total : 0.0;
+      double f_O     = (rho_metal_total > 0) ? rho_metal_O     / rho_metal_total : 0.0;
+      double f_other = (rho_metal_total > 0) ? rho_metal_other / rho_metal_total : 0.0;
+      double f_dust_C     = (rho_dust > 0) ? rho_dust_C / rho_dust : 0.0;
+      double f_dust_O     = (rho_dust > 0) ? rho_dust_O / rho_dust : 0.0;
+      double f_dust_other = (rho_dust > 0) ? 1.0 - (rho_dust_C + rho_dust_O) / rho_dust : 0.0;
+
       // --- Growth + destruction: exchanges mass between dust <-> metal ---
+      // dM_exchange > 0 means net growth (metal -> dust)
+      // dM_exchange < 0 means net destruction (dust -> metal)
       double dM_exchange = (growth_dM[i] + destruction_dM[i]) * dt;
       dM_exchange = std::max(-1.0 * rho_dust, dM_exchange);
-      dM_exchange = std::min(0.9 * rho_metal, dM_exchange);
+      dM_exchange = std::min(0.9 * rho_metal_total, dM_exchange);
 
       // --- Stellar feedback injection (Dwek 1998 framework) ---
-      // SN ejecta inject total metal mass m_Z * R_SN * dt:
-      //   delta * m_Z -> dust     (separate from gas density)
-      //   (1-delta) * m_Z -> gas-phase metals (subset of gas density)
       double dM_create_dust = creation_dust_dM[i] * dt;
       double dM_create_metal = creation_metal_dM[i] * dt;
 
-      // Apply conservation logic (from original code)
+      // Apply conservation logic
       double dM_conserv = 0.0;
       if (rho_dust >= 0.0) {
-        rho_dust = rho_dust + dM_exchange + dM_create_dust;
-        rho_metal = rho_metal - dM_exchange + dM_create_metal;
+        if (track_elements) {
+        // --- GROWTH partitioning (Aoyama et al. 2017 proportional approach):
+        // deplete gas-phase C, O, other metals proportionally to their
+
+        // Compute intended subtractions from original dM_exchange
+          double dM_C     = ((dM_exchange > 0) ? f_C : f_dust_C) * dM_exchange;
+          double dM_O     = ((dM_exchange > 0) ? f_O : f_dust_O)     * dM_exchange;
+          double dM_other = ((dM_exchange > 0) ? f_other : f_dust_other) * dM_exchange;
+
+          // Cap each independently
+          if (dM_C > ((dM_exchange > 0) ? rho_metal_C : -rho_dust_C)) {
+              dM_C = (dM_exchange > 0) ? rho_metal_C : dM_C;
+              rho_metal_C -= (dM_exchange > 0) ? rho_metal_C : dM_C;
+          } else {
+              rho_metal_C -= (dM_exchange > 0) ? dM_C : -rho_dust_C;
+              dM_C = (dM_exchange > 0) ? dM_C : -rho_dust_C;
+          }
+
+          if (dM_O > ((dM_exchange > 0) ? rho_metal_O : -rho_dust_O)) {
+              dM_O = (dM_exchange > 0) ? rho_metal_O : dM_O;
+              rho_metal_O -= (dM_exchange > 0) ? rho_metal_O : dM_O;
+          } else {
+              rho_metal_O -= (dM_exchange > 0) ? dM_O : -rho_dust_O;
+              dM_O = (dM_exchange > 0) ? dM_O : -rho_dust_O;
+          }
+          
+          if (dM_other > ((dM_exchange > 0) ? rho_metal_other : -(rho_dust - rho_dust_C - rho_dust_O))) {
+              dM_other = (dM_exchange > 0) ? rho_metal_other : dM_other;
+              rho_metal_other -= (dM_exchange > 0) ? rho_metal_other : dM_other;
+          } else {
+              rho_metal_other -= (dM_exchange > 0) ? dM_other : -(rho_dust - rho_dust_C - rho_dust_O);
+              dM_other = (dM_exchange > 0) ? dM_other : -(rho_dust - rho_dust_C - rho_dust_O);
+          }
+
+          // Dust receives exactly what was actually taken
+          rho_dust_C     += dM_C;
+          rho_dust_O     += dM_O;
+          dM_exchange = dM_C + dM_O + dM_other;
+          rho_dust = rho_dust + dM_exchange + dM_create_dust;
+          rho_metal_C += dM_create_metal * f_C;
+          rho_metal_O += dM_create_metal * f_O;
+          rho_metal_other += dM_create_metal * f_other;
+
+        } else {
+          // Backward-compatible: all exchange with bulk metal_density
+          rho_metal_other = rho_metal_other - dM_exchange + dM_create_metal;
+          rho_dust = rho_dust + dM_exchange + dM_create_dust;
+
+        }
       } else {
-        dM_conserv = rho_dust;
-        rho_dust = rho_dust - dM_conserv;
-        rho_metal = rho_metal + dM_conserv;
+        dM_conserv = -rho_dust;
+        rho_dust = 0.0;
+
+        if (track_elements) {
+          bool converged = false;
+          if (dM_conserv > rho_metal_total) {
+            // Not enough dust species to cover
+            converged = false;
+            fprintf(stderr,
+                    "[DustConservation] WARNING: dust species deficit — "
+                    "need %.6e but only %.6e available "
+                    "(C=%.6e, O=%.6e). Capping transfer.\n",
+                    dM_conserv, rho_metal_total,
+                    rho_dust_C, rho_dust_O);
+            std::exit(22);
+          } else {
+            if (rho_metal_C >= f_C * dM_conserv && rho_metal_O >= f_O * dM_conserv && rho_metal_other >= f_other * dM_conserv) {
+              rho_metal_C -= f_C*dM_conserv;
+              rho_metal_O -= f_O*dM_conserv;
+              rho_metal_other -= f_other*dM_conserv;
+            } else {
+              bool active[3] = {true, true, true};
+              double f_back[3] = {f_C, f_O, f_other};
+              double* rho_metal_arr[3] = { &rho_metal_C, &rho_metal_O, &rho_metal_other };
+              double dM_back[3]    = {f_C*dM_conserv,f_O*dM_conserv,f_other*dM_conserv};
+              while (!converged) {
+                converged = true;
+                double shortfall = 0.0;
+                double f_sum = 0.0;
+
+                for (int j = 0; j < 3; j++) {
+                  if (*rho_metal_arr[j] < dM_back[j]) {
+                      shortfall += dM_back[j] - *rho_metal_arr[j];
+                      dM_back[j] = *rho_metal_arr[j];
+                      active[j] = false;
+                  }
+                }
+
+                if (shortfall > 0.0) {
+                  for (int j = 0; j < 3; j++) {
+                    f_sum += active[j]*f_back[j];
+                  }
+                  if (f_sum > 0.0) {
+                    converged = false;
+                      for (int j = 0; j < 3; j++) {
+                        if (active[j]) {
+                          dM_back[j] += (f_back[j]/f_sum)*shortfall;
+                        }
+                      }
+                  }
+                }
+              }
+              rho_metal_C -= dM_back[0];
+              rho_metal_O -= dM_back[1];
+              rho_metal_other -= dM_back[2];
+            }
+          }
+        } else {
+            rho_metal_other -= dM_conserv;
+        }
       }
 
       // Gas density update:
-      // density includes metal_density as a subset, but NOT dust_density.
-      // Exchange: metal<->dust moves mass in/out of gas, so density
-      //   changes by the same amount as metal (-dM_exchange).
-      // Stellar injection: only (1-delta)*m_Z enters gas (as metals).
-      //   The delta*m_Z portion goes directly to dust (outside gas).
-      // Both effects are captured by tracking how metal changed:
-      double old_metal = metal(i, idx_range.j, idx_range.k);
-      rho_gas = rho_gas + (rho_metal - old_metal);
+      // density includes all metal fields as a subset, but NOT dust_density.
+      // Track how total gas-phase metals changed to update gas density.
+      double old_metal_total = metal(i, idx_range.j, idx_range.k);
+      if (track_elements) {
+        old_metal_total += metal_C(i, idx_range.j, idx_range.k)
+                        +  metal_O(i, idx_range.j, idx_range.k);
+      }
+      double new_metal_total = rho_metal_other + rho_metal_C + rho_metal_O;
+      rho_gas = rho_gas + (new_metal_total - old_metal_total);
 
       // Safety checks
       if (rho_dust < 0) {
@@ -325,19 +490,36 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
         std::exit(21);
       }
 
-      // fprintf(stderr,
-      //         "internal: dt=%e growth=%.10e destruct=%.10e "
-      //         "cre_dust=%.10e cre_metal=%.10e "
-      //         "gas=%.15e dust=%.15e metal=%.15e\n",
-      //         dt, growth_dM[i], destruction_dM[i],
-      //         creation_dust_dM[i], creation_metal_dM[i],
-      //         rho_gas, rho_dust, rho_metal);
+      // Clamp element fields to prevent negative values from round-off
+      if (track_elements) {
+        rho_metal_C = std::max(0.0, rho_metal_C);
+        rho_metal_O = std::max(0.0, rho_metal_O);
+        rho_dust_C  = std::max(0.0, rho_dust_C);
+        rho_dust_O  = std::max(0.0, rho_dust_O);
+        // Ensure dust sub-components don't exceed total dust
+        rho_dust_C = std::min(rho_dust_C, rho_dust);
+        rho_dust_O = std::min(rho_dust_O, rho_dust - rho_dust_C);
+      }
+
+      fprintf(stderr,
+              "internal: dt=%e growth=%.10e destruct=%.10e "
+              "cre_dust=%.10e cre_metal=%.10e "
+              "gas=%.15e dust=%.15e metal=%.15e\n",
+              dt, growth_dM[i], destruction_dM[i],
+              creation_dust_dM[i], creation_metal_dM[i],
+              rho_gas, rho_dust, rho_metal_other + rho_metal_C + rho_metal_O);
 
       // Update the fields
       if (!dryrun) {
         dust(i, idx_range.j, idx_range.k) = (gr_float)rho_dust;
-        metal(i, idx_range.j, idx_range.k) = (gr_float)rho_metal;
+        metal(i, idx_range.j, idx_range.k) = (gr_float)rho_metal_other;
         d(i, idx_range.j, idx_range.k) = (gr_float)rho_gas;
+        if (track_elements) {
+          metal_C(i, idx_range.j, idx_range.k) = (gr_float)rho_metal_C;
+          metal_O(i, idx_range.j, idx_range.k) = (gr_float)rho_metal_O;
+          dust_C(i, idx_range.j, idx_range.k)  = (gr_float)rho_dust_C;
+          dust_O(i, idx_range.j, idx_range.k)  = (gr_float)rho_dust_O;
+        }
       }
     }
   }

@@ -72,8 +72,16 @@ typedef struct
   // metal_cooling = 1
   gr_float *metal_density;
 
+  // dust_model1_track_elements = 1
+  gr_float *metal_density_carbon;   // gas-phase C (all ionisation states)
+  gr_float *metal_density_oxygen;   // gas-phase O (all ionisation states)
+
   // use_dust_density_field = 1
   gr_float *dust_density;
+
+  // dust_model1_track_elements = 1
+  gr_float *dust_density_carbon;    // C mass locked in dust grains
+  gr_float *dust_density_oxygen;    // O mass locked in dust grains
 
   // primordial_chemistry = 1
   gr_float *e_density;
