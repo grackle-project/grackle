@@ -26,7 +26,7 @@ OBJS_CONFIG_LIB = \
         cool1d_cloudy_g.lo \
         cool1d_cloudy_old_tables_g.lo \
         cool1d_multi_g.lo \
-        cool_multi_time_g.lo \
+        cool_multi_time.lo \
         dust/calc_all_tdust_gasgr_1d_g.lo \
         dust/calc_tdust_1d_g.lo \
         dust/grain_species_info.lo \

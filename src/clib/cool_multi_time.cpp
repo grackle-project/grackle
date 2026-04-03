@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the cool_multi_time_g function
+/// Implements the cool_multi_time function
 ///
 //===----------------------------------------------------------------------===//
 
@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
-#include "cool_multi_time_g.h"
+#include "cool_multi_time.hpp"
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
@@ -31,7 +31,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-void cool_multi_time_g(
+void cool_multi_time(
   gr_float* cooltime_data_, int imetal, InternalGrUnits internalu,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates

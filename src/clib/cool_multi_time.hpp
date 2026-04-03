@@ -6,15 +6,15 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares the cool_multi_time_g function
+/// Declares the cool_multi_time function
 ///
 //===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // cool_multi_time_g function from FORTRAN to C++
 
-#ifndef COOL_MULTI_TIME_G_H
-#define COOL_MULTI_TIME_G_H
+#ifndef COOL_MULTI_TIME_HPP
+#define COOL_MULTI_TIME_HPP
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
@@ -39,14 +39,14 @@ extern "C" {
 /// C++ compiler, modify this function (prototype & implementation) such that:
 /// - it's not enclosed by a `extern "C"` block
 /// - it's defined within a `grackle::impl` namespace
-void cool_multi_time_g(gr_float* cooltime_data_, int imetal,
-                       InternalGrUnits internalu, chemistry_data* my_chemistry,
-                       chemistry_data_storage* my_rates,
-                       grackle_field_data* my_fields,
-                       photo_rate_storage my_uvb_rates);
+void cool_multi_time(gr_float* cooltime_data_, int imetal,
+                     InternalGrUnits internalu, chemistry_data* my_chemistry,
+                     chemistry_data_storage* my_rates,
+                     grackle_field_data* my_fields,
+                     photo_rate_storage my_uvb_rates);
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif /* __cplusplus */
 
-#endif /* COOL_MULTI_TIME_G_H */
+#endif /* COOL_MULTI_TIME_HPP */
