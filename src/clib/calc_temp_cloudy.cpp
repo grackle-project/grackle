@@ -50,7 +50,7 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
 
   if (internalu.extfields_in_comoving == 1) {
     double factor = std::pow(internalu.a_value, -3);
-    grackle::impl::scale_fields_table(my_fields, factor);
+    scale_fields_table(my_fields, factor);
   }
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
@@ -59,19 +59,19 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
 
-    grackle::impl::View<gr_float***> d(
-        my_fields->density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                        my_fields->grid_dimension[1],
+                        my_fields->grid_dimension[2]);
 
-    grackle::impl::View<gr_float***> metal;
+    View<gr_float***> metal;
 
     if (imetal == 1) {
-      metal = grackle::impl::View<gr_float***>(
+      metal = View<gr_float***>(
           my_fields->metal_density, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     }
 
-    grackle::impl::View<gr_float***> temperature(
+    View<gr_float***> temperature(
         temperature_data_, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -106,9 +106,9 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
       }
 
       // Calculate temperature and mean molecular weight
-      grackle::impl::calc_temp1d_cloudy_g(
-          rhoH.data(), tgas.data(), mmw.data(), dom, zr, imetal, itmask.data(),
-          my_chemistry, cloudy_primordial, my_fields, internalu, idx_range);
+      calc_temp1d_cloudy_g(rhoH.data(), tgas.data(), mmw.data(), dom, zr,
+                           imetal, itmask.data(), my_chemistry,
+                           cloudy_primordial, my_fields, internalu, idx_range);
 
       // Record the computed temperature values in the output array
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
@@ -121,7 +121,7 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
 
   if (internalu.extfields_in_comoving == 1) {
     double factor = std::pow(internalu.a_value, 3);
-    grackle::impl::scale_fields_table(my_fields, factor);
+    scale_fields_table(my_fields, factor);
   }
 
   return;
