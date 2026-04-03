@@ -203,7 +203,7 @@ typedef struct InternalGrUnits{
 } InternalGrUnits;
 
 /// Return the version of hydrogen mass constant used by the internal units
-static inline double internalu_get_mh_(InternalGrUnits internalu) {
+inline double internalu_get_mh_(InternalGrUnits internalu) {
   // purely for the sake of consistency, this value of the hydrogen mass is
   // initialized as a floating point literal (with the same precision as
   // gr_float and then it is casted to a double)
@@ -219,7 +219,7 @@ static inline double internalu_get_mh_(InternalGrUnits internalu) {
 ///
 /// The velocity unit is defined in our comoving unit system such that it's the
 /// same in the proper & comoving frames. In other words, it's independent of a
-static inline double internalu_get_uvel_(InternalGrUnits internalu) {
+inline double internalu_get_uvel_(InternalGrUnits internalu) {
   return (internalu.uxyz/internalu.a_value) / internalu.tbase1;
 }
 
@@ -227,7 +227,7 @@ static inline double internalu_get_uvel_(InternalGrUnits internalu) {
 ///
 /// This quantity is used internally to help calculate the amount of heating
 /// performed contributed by certain chemical reactions.
-static inline double internalu_get_chunit_(InternalGrUnits internalu){
+inline double internalu_get_chunit_(InternalGrUnits internalu){
   double mh_local_var = internalu_get_mh_(internalu);
   double uvel = internalu_get_uvel_(internalu);
 
@@ -241,7 +241,7 @@ static inline double internalu_get_chunit_(InternalGrUnits internalu){
 }
 
 /// calculates a standard quantity used throughout the codebase
-static inline double internalu_calc_dom_(InternalGrUnits internalu) {
+inline double internalu_calc_dom_(InternalGrUnits internalu) {
   const double mh_local_var = internalu_get_mh_(internalu);
   return internalu.urho*(std::pow(internalu.a_value,3))/mh_local_var;
 }
@@ -250,7 +250,7 @@ static inline double internalu_calc_dom_(InternalGrUnits internalu) {
 ///
 /// The main benefit of factoring this out is that we can be sure that we are
 /// using a consistent choices in the versions of constants
-static inline double internalu_calc_coef_ljeans_(InternalGrUnits internalu,
+inline double internalu_calc_coef_ljeans_(InternalGrUnits internalu,
                                                  double gamma) {
   const double mh_local_var = internalu_get_mh_(internalu);
   return sqrt((gamma * pi_fortran_val * kboltz_grflt) /
@@ -310,14 +310,14 @@ static inline double internalu_calc_coef_ljeans_(InternalGrUnits internalu,
 /// **Reminder:** the number densities in these equations are normalized with
 /// [dens] which is not a constant (it has a factor a^3), so the number
 /// densities must be converted from comoving to proper.
-static inline double internalu_calc_kunit_(InternalGrUnits internalu) {
+inline double internalu_calc_kunit_(InternalGrUnits internalu) {
   double uaye = internalu.a_units;
   double mh_local_var = internalu_get_mh_(internalu);
   return (std::pow(uaye, 3) * mh_local_var) / (internalu.dbase1 * internalu.tbase1);
 }
 
 // unused and untested:
-//static inline double internalu_calc_kunit_3bdy_(InternalGrUnits internalu) {
+//inline double internalu_calc_kunit_3bdy_(InternalGrUnits internalu) {
 //  double uaye = internalu.a_units;
 //  double mh_local_var = internalu_get_mh_(internalu);
 //  double kunit = internalu_calc_kunit_(internalu);
@@ -330,7 +330,7 @@ static inline double internalu_calc_kunit_(InternalGrUnits internalu) {
 /// @note
 /// You should call new_internalu_ or new_internalu_legacy_C_convention_
 /// instead of calling this function directly
-static inline InternalGrUnits new_internalu_helper_(
+inline InternalGrUnits new_internalu_helper_(
   const code_units* frontend_units,
   enum InternalU_MassH_Choice mh_choice
 ) {
@@ -408,7 +408,7 @@ static inline InternalGrUnits new_internalu_helper_(
 /// Construct an instance of InternalGrUnits from the frontend_units
 ///
 /// This is primarily used in routines transcribed from Fortran
-static inline InternalGrUnits new_internalu_(
+inline InternalGrUnits new_internalu_(
   const code_units* frontend_units
 ) {
   return new_internalu_helper_(frontend_units, InternalU_MassH_Choice::GRFLOAT);
@@ -422,7 +422,7 @@ static inline InternalGrUnits new_internalu_(
 /// @note
 /// The eventual goal is to eliminate the distinction between this and the
 /// other 2 versions of `new_internalu_`.
-static inline InternalGrUnits new_internalu_legacy_C_(
+inline InternalGrUnits new_internalu_legacy_C_(
   const code_units* frontend_units
 ) {
   return new_internalu_helper_(frontend_units, InternalU_MassH_Choice::DOUBLE);
@@ -435,7 +435,7 @@ static inline InternalGrUnits new_internalu_legacy_C_(
 /// @note
 /// The eventual goal is to eliminate the distinction between this and the
 /// other 2 versions of `new_internalu_`.
-static inline InternalGrUnits new_internalu_legacy_init_cloudy_data_(
+inline InternalGrUnits new_internalu_legacy_init_cloudy_data_(
   const code_units* frontend_units
 ) {
   return new_internalu_helper_(frontend_units, InternalU_MassH_Choice::ABBREVIATED);
