@@ -29,9 +29,7 @@
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+namespace GRIMPL_NAMESPACE_DECL {
 
 void calc_tdust_3d(
   gr_float* gas_temp_data_, gr_float* dust_temp_data_, int imetal,
@@ -315,6 +313,4 @@ void calc_tdust_3d(
   return;
 }
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace GRIMPL_NAMESPACE_DECL

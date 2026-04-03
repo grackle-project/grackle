@@ -18,11 +18,9 @@
 
 #include "grackle.h"  // gr_float
 #include "internal_units.h"
+#include "support/config.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-// the following function can be called from C or C++
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Calculate dust heat balance to get the dust temperature.
 ///
@@ -33,8 +31,6 @@ void calc_tdust_3d(gr_float* gas_temp_data_, gr_float* dust_temp_data_,
                    chemistry_data_storage* my_rates,
                    grackle_field_data* my_fields, InternalGrUnits internalu);
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* DUST_CALC_TDUST_3D_HPP */
