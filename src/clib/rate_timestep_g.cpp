@@ -68,6 +68,20 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
   grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  bool track_elements_rt =
+      (my_chemistry->dust_model1_track_elements > 0 &&
+       my_fields->metal_density_carbon != nullptr &&
+       my_fields->metal_density_oxygen != nullptr);
+  grackle::impl::View<gr_float***> metal_C_rt(
+      track_elements_rt ? my_fields->metal_density_carbon
+                        : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_O_rt(
+      track_elements_rt ? my_fields->metal_density_oxygen
+                        : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
 
   // Radiative Transfer Fields
   grackle::impl::View<gr_float***> kphHI(
@@ -241,7 +255,12 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
         // Add H2 formation on dust grains
 
         if (anydust != MASK_FALSE) {
-          if (metal(i, idx_range.j, idx_range.k) >
+          double total_metal_rt = metal(i, idx_range.j, idx_range.k);
+          if (track_elements_rt) {
+            total_metal_rt += metal_C_rt(i, idx_range.j, idx_range.k)
+                           +  metal_O_rt(i, idx_range.j, idx_range.k);
+          }
+          if (total_metal_rt >
               1.e-9 * d(i, idx_range.j, idx_range.k)) {
             HIdot[i] = HIdot[i] - 2. * h2dust[i] * rhoH[i] *
                                       HI(i, idx_range.j, idx_range.k);
@@ -350,7 +369,12 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
         // !          endif
 
         if (anydust != MASK_FALSE) {
-          if (metal(i, idx_range.j, idx_range.k) >
+          double total_metal_rt2 = metal(i, idx_range.j, idx_range.k);
+          if (track_elements_rt) {
+            total_metal_rt2 += metal_C_rt(i, idx_range.j, idx_range.k)
+                            +  metal_O_rt(i, idx_range.j, idx_range.k);
+          }
+          if (total_metal_rt2 >
               1.e-9 * d(i, idx_range.j, idx_range.k)) {
             H2delta[i] = H2delta[i] + h2dust[i] *
                                           HI(i, idx_range.j, idx_range.k) *

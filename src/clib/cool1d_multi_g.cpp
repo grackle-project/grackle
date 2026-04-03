@@ -298,9 +298,13 @@ void grackle::impl::cool1d_multi_g(
     if (imetal == 1) {
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
+          double total_metal_rhoH = metal(i, idx_range.j, idx_range.k);
+          if (track_elements_cool) {
+            total_metal_rhoH += metal_C_cool(i, idx_range.j, idx_range.k)
+                             +  metal_O_cool(i, idx_range.j, idx_range.k);
+          }
           rhoH[i] = my_chemistry->HydrogenFractionByMass *
-                    (d(i, idx_range.j, idx_range.k) -
-                     metal(i, idx_range.j, idx_range.k));
+                    (d(i, idx_range.j, idx_range.k) - total_metal_rhoH);
         }
       }
     } else {

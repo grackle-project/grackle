@@ -53,31 +53,64 @@ inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
       }
     }
   }
+  if (my_fields->metal_density_carbon != nullptr) {
+    grackle::impl::View<gr_float***> metal_C(
+        my_fields->metal_density_carbon, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+          metal_C(i, j, k) = metal_C(i, j, k) * factor;
+        }
+      }
+    }
+  }
+  if (my_fields->metal_density_oxygen != nullptr) {
+    grackle::impl::View<gr_float***> metal_O(
+        my_fields->metal_density_oxygen, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+          metal_O(i, j, k) = metal_O(i, j, k) * factor;
+        }
+      }
+    }
+  }
 }
 
-/// A helper function for scaling the injection pathway metal density fields
-///
-/// @param[inout] my_fields holds the fields that will be updated in-place
-/// @param[in] factor The factor that is multiplied by the fields
-/// @param[in] n_inj_path_ptrs The number of pointers tracked by
-///     `my_fields->inject_pathway_metal_density`
-void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
-                                        gr_float factor, int n_inj_path_ptrs);
-
 /// Scales fields related to computing dust temperature
-///
-/// @param[in] my_chemistry holds a number of configuration parameters
-/// @param[inout] my_fields holds the fields that will be updated in-place
-/// @param[in] imetal Specifies whether the metal_density was specified
-/// @param[in] factor The factor that is multiplied by the fields
-/// @param[in] n_inj_path_ptrs The number of pointers tracked by
-///     `my_fields->inject_pathway_metal_density`
+
 inline void scale_fields_dust(chemistry_data* my_chemistry,
                               grackle_field_data* my_fields, int imetal,
                               gr_float factor, int n_inj_path_ptrs) {
   grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  bool track_elements_sfd =
+      (my_chemistry->dust_model1_track_elements > 0 &&
+       my_fields->metal_density_carbon != nullptr &&
+       my_fields->metal_density_oxygen != nullptr);
+  grackle::impl::View<gr_float***> metal_C_sfd(
+      track_elements_sfd ? my_fields->metal_density_carbon
+                         : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_O_sfd(
+      track_elements_sfd ? my_fields->metal_density_oxygen
+                         : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_C_sfd(
+      track_elements_sfd ? my_fields->dust_density_carbon
+                         : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_O_sfd(
+      track_elements_sfd ? my_fields->dust_density_oxygen
+                         : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -133,11 +166,33 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
     if (imetal == 1) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         metal(i, j, k) = metal(i, j, k) * factor;
+        if (track_elements_sfd) {
+          metal_C_sfd(i, j, k) = metal_C_sfd(i, j, k) * factor;
+          metal_O_sfd(i, j, k) = metal_O_sfd(i, j, k) * factor;
+        }
+        // if (my_chemistry->multi_metals > 0) {
+        //   metal_loc(i, j, k) = metal_loc(i, j, k) * factor;
+        //   metal_C13(i, j, k) = metal_C13(i, j, k) * factor;
+        //   metal_C20(i, j, k) = metal_C20(i, j, k) * factor;
+        //   metal_C25(i, j, k) = metal_C25(i, j, k) * factor;
+        //   metal_C30(i, j, k) = metal_C30(i, j, k) * factor;
+        //   metal_F13(i, j, k) = metal_F13(i, j, k) * factor;
+        //   metal_F15(i, j, k) = metal_F15(i, j, k) * factor;
+        //   metal_F50(i, j, k) = metal_F50(i, j, k) * factor;
+        //   metal_F80(i, j, k) = metal_F80(i, j, k) * factor;
+        //   metal_P170(i, j, k) = metal_P170(i, j, k) * factor;
+        //   metal_P200(i, j, k) = metal_P200(i, j, k) * factor;
+        //   metal_Y19(i, j, k) = metal_Y19(i, j, k) * factor;
+        // }
       }
     }
     if (my_chemistry->use_dust_density_field == 1) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         dust(i, j, k) = dust(i, j, k) * factor;
+        if (track_elements_sfd) {
+          dust_C_sfd(i, j, k) = dust_C_sfd(i, j, k) * factor;
+          dust_O_sfd(i, j, k) = dust_O_sfd(i, j, k) * factor;
+        }
         if ((my_chemistry->grain_growth == 1) ||
             (my_chemistry->dust_sublimation == 1)) {
           // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
