@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "dust/calc_all_tdust_gasgr_1d_g.hpp"
-#include "calc_tdust_3d.h"
+#include "calc_tdust_3d.hpp"
 #include "dust_props.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
 #include "fortran_func_wrappers.hpp"
@@ -33,7 +33,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-void calc_tdust_3d_g(
+void calc_tdust_3d(
   gr_float* gas_temp_data_, gr_float* dust_temp_data_, int imetal,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, InternalGrUnits internalu

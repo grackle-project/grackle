@@ -100,7 +100,6 @@ add_library(Grackle_Grackle
   api/calculate_temperature.cpp
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
-  calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy.cpp calc_temp_cloudy.hpp
   calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
   ceiling_species.hpp
@@ -112,6 +111,7 @@ add_library(Grackle_Grackle
   dust_props.hpp
   dust/calc_all_tdust_gasgr_1d_g.cpp dust/calc_all_tdust_gasgr_1d_g.hpp
   dust/calc_tdust_1d_g.cpp dust/calc_tdust_1d_g.hpp
+  dust/calc_tdust_3d.cpp dust/calc_tdust_3d.hpp
   dust/gas_heat_cool.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp
