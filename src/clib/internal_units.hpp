@@ -52,21 +52,21 @@ extern "C" {
 /// This is meant to be a stopgap solution to help us consolidate all similar
 /// code. Once we finish transcription, we'll "rip the band-aid off" and use
 /// a consistent constant throughout the codebase.
-enum InternalU_MassH_Choice {
+enum class InternalU_MassH_Choice {
   /// - A value of 1 indicates that we'll use `mh_grflt` (the constant is
   ///   expressed as a value of type gr_float -- this is consistent with what
   ///   Grackle's Fortran routines have historically done).
   /// Denotes that we'll use `mh` which is always expressed as a double. Prior
   /// to transcription, nearly all of Grackle's C functions used this constant
-  InternalU_MassH_DOUBLE = 1,
+  DOUBLE = 1,
   /// Denotes that we'll use `mh_grflt`, which is always expressed a value of
   /// type gr_float. Prior to transcription, all of Grackle's Fortran's
   /// functions used this constant
-  InternalU_MassH_GRFLOAT = 2,
+  GRFLOAT = 2,
   /// Denotes that we'll use 1.67e-24, which is always expressed as double
   /// literal. Prior to transcription, this was used while initializing cloudy
   /// cooling tables.
-  InternalU_MassH_ABBREVIATED = 3
+  ABBREVIATED = 3
 };
 
 /// Encapsulates Grackle’s Internal Unit System. 
@@ -212,9 +212,9 @@ static inline double internalu_get_mh_(InternalGrUnits internalu) {
   // initialized as a floating point literal (with the same precision as
   // gr_float and then it is casted to a double)
   switch (internalu.mh_choice_) {
-    case InternalU_MassH_DOUBLE: return mh;
-    case InternalU_MassH_GRFLOAT: return (double)(mh_grflt);
-    case InternalU_MassH_ABBREVIATED: return 1.67e-24;
+    case InternalU_MassH_Choice::DOUBLE: return mh;
+    case InternalU_MassH_Choice::GRFLOAT: return (double)(mh_grflt);
+    case InternalU_MassH_Choice::ABBREVIATED: return 1.67e-24;
   }
   return NAN; // should be unreachable
 }
@@ -415,7 +415,7 @@ static inline InternalGrUnits new_internalu_helper_(
 static inline InternalGrUnits new_internalu_(
   const code_units* frontend_units
 ) {
-  return new_internalu_helper_(frontend_units, InternalU_MassH_GRFLOAT);
+  return new_internalu_helper_(frontend_units, InternalU_MassH_Choice::GRFLOAT);
 }
 
 /// Construct an instance of InternalGrUnits from the frontend_units, while
@@ -429,7 +429,7 @@ static inline InternalGrUnits new_internalu_(
 static inline InternalGrUnits new_internalu_legacy_C_(
   const code_units* frontend_units
 ) {
-  return new_internalu_helper_(frontend_units, InternalU_MassH_DOUBLE);
+  return new_internalu_helper_(frontend_units, InternalU_MassH_Choice::DOUBLE);
 }
 
 /// Construct an instance of InternalGrUnits from the frontend_units, while
@@ -442,7 +442,7 @@ static inline InternalGrUnits new_internalu_legacy_C_(
 static inline InternalGrUnits new_internalu_legacy_init_cloudy_data_(
   const code_units* frontend_units
 ) {
-  return new_internalu_helper_(frontend_units, InternalU_MassH_ABBREVIATED);
+  return new_internalu_helper_(frontend_units, InternalU_MassH_Choice::ABBREVIATED);
 }
 
 
