@@ -72,7 +72,7 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
   if (my_fields->metal_density == NULL)
     metal_field_present = FALSE;
 
-  InternalGrUnits internalu = new_internalu_(my_units);
+  GRIMPL_NS::InternalGrUnits internalu = GRIMPL_NS::new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
   if (grackle::impl::self_shielding_err_check(my_chemistry, my_fields,

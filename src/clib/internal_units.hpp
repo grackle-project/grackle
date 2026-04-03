@@ -32,16 +32,14 @@
 #ifndef INTERNAL_UNITS_HPP
 #define INTERNAL_UNITS_HPP
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-
 #include <math.h>
 
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "phys_constants.h"
+#include "support/config.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// this represents all of the different choices for the hydrogen mass that
 /// have been used in different parts of the codebase.
@@ -445,9 +443,6 @@ static inline InternalGrUnits new_internalu_legacy_init_cloudy_data_(
   return new_internalu_helper_(frontend_units, InternalU_MassH_Choice::ABBREVIATED);
 }
 
-
-#ifdef __cplusplus
-} // extern "C"
-#endif /* __cplusplus */
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* INTERNAL_UNITS_HPP */

@@ -28,7 +28,7 @@ extern "C" int local_calculate_dust_temperature(
   if (my_chemistry->dust_chemistry < 1 && my_chemistry->h2_on_dust < 1)
     return GR_SUCCESS;
 
-  InternalGrUnits internalu = new_internalu_(my_units);
+  GRIMPL_NS::InternalGrUnits internalu = GRIMPL_NS::new_internalu_(my_units);
 
   /* Check for a metal field. */
 
