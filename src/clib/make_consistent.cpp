@@ -76,6 +76,18 @@ void make_consistent(
                             : my_fields->density),
       my_fields->grid_dimension[0], my_fields->grid_dimension[1],
       my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> dust_C_mc(
+      const_cast<const gr_float*>(
+          track_elements_mc ? my_fields->dust_density_carbon
+                            : my_fields->density),
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> dust_O_mc(
+      const_cast<const gr_float*>(
+          track_elements_mc ? my_fields->dust_density_oxygen
+                            : my_fields->density),
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
 
   grackle::impl::View<gr_float***> HM(
       my_fields->HM_density, my_fields->grid_dimension[0],
@@ -388,6 +400,18 @@ void make_consistent(
             Sg[i] = Sg[i] + onlygas_metal_yields.S[iSN] * cur_val;
             Feg[i] = Feg[i] + onlygas_metal_yields.Fe[iSN] * cur_val;
           }
+
+          // When dust_model1_track_elements is active, metal_density_carbon
+          // and metal_density_oxygen directly track the gas-phase C and O
+          // mass (updated by dust_growth/dust_destruction each subcycle).
+          // Use these as the conservation targets instead of the yield-based
+          // values, which don't account for dust locking up C and O.
+          if (track_elements_mc) {
+            Cg[i] = metal_C_mc(i, j, k);
+            Og[i] = metal_O_mc(i, j, k);
+            Ct[i] = metal_C_mc(i, j, k) + dust_C_mc(i, j, k);
+            Ot[i] = metal_O_mc(i, j, k) + dust_O_mc(i, j, k);
+          }
         }
 
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
@@ -547,7 +571,11 @@ void make_consistent(
           if (track_elements_mc) {
             total_metal_mc += metal_C_mc(i, j, k) + metal_O_mc(i, j, k);
           }
-          if (((imetal == 0) && (d(i, j, k) * dom < 1.e8)) ||
+          // When track_elements is active, Cg/Og come from the tracked
+          // fields (always valid), so bypass the density cutoff that
+          // exists for the yield-based computation.
+          if (track_elements_mc ||
+              ((imetal == 0) && (d(i, j, k) * dom < 1.e8)) ||
               ((imetal == 1) && (((total_metal_mc <= 1.e-9 * d(i, j, k)) &&
                                   (d(i, j, k) * dom < 1.e8)) ||
                                  ((total_metal_mc > 1.e-9 * d(i, j, k)) &&
