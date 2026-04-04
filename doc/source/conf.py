@@ -264,6 +264,10 @@ _GITHUB_BASE = 'https://github.com/grackle-project/grackle'
 _SRC_BASE = f'{_GITHUB_BASE}/tree/main'
 extlinks = {
     'source': (_SRC_BASE + '/%s', '%s'),
+    # even though the url template is currently the same for a source file and
+    # a repository-dir, its worth maintaining a distinction just in case
+    # something changes in the future
+    'repository-dir': (_SRC_BASE + '/%s', '%s'),
     'code-example' : (_SRC_BASE + '/src/example/%s', '%s'),
     'gh-issue' : (_GITHUB_BASE + '/issues/%s', 'gh-issue#%s'),
     'gh-pr' : (_GITHUB_BASE + '/pull/%s', 'gh-pr#%s')
