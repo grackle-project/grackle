@@ -126,6 +126,52 @@ Running the tests is quite simple:
 
 All of these steps are completed within a ``docker container``.
 
+.. _how-installtest-works:
+
+How installtest.py works
+------------------------
+
+At a high-level, you can think of :source:`tests/install-tests/installtest.py`, as a highly simplified version of a program for running CI logic that can be executed locally.
+Like the GitHub Actions runner (or the CircleCI runner), it sets up prestine testing environments, infers commands to run from config files (we explain why TOML over YAML :ref:`here <installtest-why-toml>`), and reports failed commands.
+
+In more detail, when you actually execute :source:`tests/install-tests/installtest.py` (in ``exec`` mode), there are 2 concrete phases: (i) task collection and (ii) task execution.
+
+Task Collection
++++++++++++++++
+
+Immediately after you start :source:`tests/install-tests/installtest.py`, the program starts scanning the ``scan-dir`` (by default, this is the :repository-dir:`tests/install-tests/cases` directory).
+The program looks for all subdirectories in the ``scan-dir``, and it determines the suite of test cases associated with each subdirectory by reading the contained ``conf.toml`` file.
+
+We will discuss exactly how tests are defined :ref:`later <installtest-defining-tests>`.
+For now, it's important to understand that each test-case is run in a docker container.
+Each docker image 
+
+
+
+
+
+
+When you invoke
+
+In practice, step 1 consists of creating a docker image, while steps 2-4 are executed in a docker container based on the image.
+The use of docker is intended to take adva
+
+.. _installtest-docker-images:
+
+Docker Images
+-------------
+
+As we've noted in multiple other places, each individual install-test is run inside of a Docker Container.
+We provide further justification for this choice :ref:`here <
+
+.. _installtest-defining-tests:
+
+Defining Tests
+--------------
+
+.. embed-cli-output:: ../../tests/install-tests/installtest.py
+   :args: entrydoc param
+
 
 Design Rationale
 ----------------
@@ -244,26 +290,13 @@ We use docker for several reasons:
 
 3. Finally, by using Docker, it becomes easy to run the tests on macOS (via Docker Desktop).
 
+By using docker in these tests, we may also eventually see some benefits when it's time to start adding GPU support (we'll probably want to perform test builds in docker containers with CUDA/HIP when developing on platforms without supported GPUs).
 
-By using docker in these tests, we may eventually see some benefits when it's time to start adding GPU support (we'll probably want to perform test builds in docker containers with CUDA/HIP when developing on platforms without supported GPUs).
+Finally it's worth discussing a hypothetical concern: there may be drawbacks to tying these tests to a single external tool.
+We aren't very worried because
 
-.. _how-installtest-works:
-
-How installtest.py works
-------------------------
-
-At a high-level, you can think of :source:`tests/install-tests/installtest.py`, as a highly simplified version of a program for running CI logic that can be executed locally.
-Like the GitHub Actions runner (or the CircleCI runner), it sets up prestine testing environments, infers commands to run from config files (we explain why TOML over YAML :ref:`here <installtest-why-toml>`), and reports failed commands.
-
-In practice, step 1 consists of creating a docker image, while steps 2-4 are executed in a docker container based on the image.
-The use of docker is intended to take adva
-
-
-TOML Parameters
----------------
-
-.. embed-cli-output:: ../../tests/install-tests/installtest.py
-   :args: entrydoc param
+- If this ever does become an actual problem, we can always add support for using ``podman``, which was designed with the same interface as docker.
+- In fact, the `cibuildwheel <https://cibuildwheel.pypa.io/en/stable/>`_ project demonstrated that it's pretty straight-forward to support both tools (the internal logic of installtest.py actually reuses some logic from cibuildwheel).
 
 
 
