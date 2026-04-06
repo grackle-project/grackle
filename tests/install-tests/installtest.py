@@ -26,7 +26,8 @@ from core import (
     collect_tests,
     run_test,
     DOCKERFILE_PATH,
-    _TOML_PARAM_REQS,
+    _SHARED_TAB_REQS,
+    _TEST_TAB_REQS,
 )
 from docker import (
     DockerContainer,
@@ -42,6 +43,7 @@ if sys.version_info < (3, 7):
 common = import_standalone_module(
     dir_path=os.path.join(GRACKLE_ROOT, "scripts", "ci"), module_name="common"
 )
+ansii_colorize = common.ansii_colorize
 configure_logger = common.configure_logger
 exec_cmd = common.exec_cmd
 logger = common.logger
@@ -91,9 +93,15 @@ def _exec_main(args: argparse.Namespace):
         images = set(case.image for case in test_cases.values())
     n_tasks = len(images) + len(test_cases)
 
-    task_itr = itertools.chain(images, test_cases.items())
+    task_list = list(itertools.chain(images, test_cases.items()))
 
     print(f"Executing {n_tasks} tasks (including image construction)")
+
+    _PASSED_STRING = "Passed"
+    _FAILED_STRING = "Failed"
+    if args.color:
+        _PASSED_STRING = ansii_colorize(_PASSED_STRING, color="green")
+        _FAILED_STRING = ansii_colorize(_FAILED_STRING, color="red")
 
     # Make some preparations for redirection within tasks. Within a task, we use
     # - ``print_info`` to output information (e.g. useful metadata, describe a
@@ -125,7 +133,7 @@ def _exec_main(args: argparse.Namespace):
 
     fail_count = 0
     with tmp_buf_cm as tmp_buf:
-        for task_num, task in enumerate(task_itr, start=1):
+        for task_num, task in enumerate(task_list, start=1):
             if isinstance(task, DockerImage):
                 task_name = f"make_docker_image.{task.tag_name()}"
                 fn = functools.partial(_mk_docker_image, image=task)
@@ -151,11 +159,11 @@ def _exec_main(args: argparse.Namespace):
                 t0 = datetime.now()
                 rslt = fn(container=container, print_info=print_info)
                 elapsed = datetime.now() - t0
+            pretty_elapsed = f"{elapsed.total_seconds():7.2f} sec"
             if rslt.is_success():
-                print("SUCCESS", flush=True)
-                print("elapsed:", elapsed)
+                print(f"{_PASSED_STRING} {pretty_elapsed}", flush=True)
                 continue
-            print("FAILURE")
+            print(f"{_FAILED_STRING} {pretty_elapsed}")
             print("-> showing the test commands and output", flush=True)
             tmp_buf.seek(0)
             for line in tmp_buf:
@@ -176,7 +184,7 @@ def _exec_main(args: argparse.Namespace):
 
     print(80 * "=")
     print("SUMMARY:")
-    print(f"{fail_count} failures")
+    print(f"{fail_count} failures (of {len(task_list)} tasks)")
 
     if fail_count == 0:
         return 0
@@ -205,7 +213,7 @@ def _setup_exec_subcommand(subparsers: Any):
     #      stages that are common to all of the images
     #   -> on subsequent rebuilds, some expensive steps are not cached unless we
     #      delete all of the images first
-    parser.add_argument(
+    p.add_argument(
         "--skip-image-creation",
         action="store_true",
         help=(
@@ -220,16 +228,16 @@ def _entrydoc_main(args: argparse.Namespace):
 
     packs = []  # <- we'll fill this up
     if args.kind == "param":
-        for name, toml_val_req in _TOML_PARAM_REQS.items():
-            extra = {"type_descr": toml_val_req.type_descr}
-            if toml_val_req.choices is not None:
-                extra["choices"] = ", ".join(
-                    f'"{e}"' for e in sorted(toml_val_req.choices)
-                )
-
-            packs.append(
-                {"name": name, "descr": toml_val_req.description, "extra": extra}
-            )
+        for i, req_pack in enumerate([_SHARED_TAB_REQS, _TEST_TAB_REQS]):
+            for name, req in req_pack.items():
+                if i == 0:
+                    name = f"shared.{name}"
+                else:
+                    name = f"test.<case-name>.{name}"
+                extra = {"type_descr": req.type_descr, "required": str(req.required)}
+                if req.choices is not None:
+                    extra["choices"] = ", ".join(f'"{e}"' for e in sorted(req.choices))
+                packs.append({"name": name, "descr": req.description, "extra": extra})
 
     elif args.kind == "image-target":
         raw_info = extract_target_info(path=DOCKERFILE_PATH)
@@ -292,7 +300,7 @@ def _entrydoc_subcommand(subparsers: Any):
 
 
 def main(args: argparse.Namespace):
-    configure_logger(color=True)
+    configure_logger(color=args.color)
     fn = args.fn
     return fn(args)
 
@@ -303,10 +311,11 @@ parser = argparse.ArgumentParser(
     allow_abbrev=sys.version_info < (3, 8),
 )
 
-subparsers = parser.add_subparsers()
+subparsers = parser.add_subparsers(required=True)
 _setup_exec_subcommand(subparsers)
 _entrydoc_subcommand(subparsers)
 
+parser.add_argument("--color", action="store_true", help="use color")
 parser.add_argument(
     "-v",
     action="count",

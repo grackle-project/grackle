@@ -1,6 +1,5 @@
-[common]
+[shared]
 # specify options common to all tests
-# -> these options can be overridden on a case-by-case basis
 
 # the file from GRACKLE_ROOT/src/example to copy
 src_file = "c_example.c"
@@ -10,26 +9,23 @@ output_binary = "example_app"
 
 
 # enumerate each of the test cases
-[test.static]
-image = ["static_install", "static_install_conftimeprefix"]
+[test.simple]
+# in this case, we have installed just a shared lib or just a static lib
+parametrize = [
+  {image = "shared_install", uses_shared = true},
+  {image = "static_install", uses_shared = false},
+  {image = "static_install_conftimeprefix", uses_shared = false},
+]
+image.use-param = "image"
 cmds = ["PKG_CONFIG_PATH=/home/gr-user/local/lib/pkgconfig make"]
-# specify whether LD_LIBRARY_PATH must be modified
-override_LD_LIBRARY_PATH = false
-
-[test.shared]
-image = "shared_install"
-cmds = ["PKG_CONFIG_PATH=/home/gr-user/local/lib/pkgconfig make"]
-# specify whether LD_LIBRARY_PATH must be modified
-override_LD_LIBRARY_PATH = true
+# specify whether LD_LIBRARY_PATH must be modified (to run the executable)
+override_LD_LIBRARY_PATH.use-param = "uses_shared"
 
 [test.SelectSharedLib]
+
 # in this case both the shared and static libraries were both installed in the
-# local installation directory.
-# -> the call to find_package in CMakeLists.txt does NOT communicate a
-#    preference for using the shared or static lib
-# -> thus, a weak preference is inferred from the value of the
-#    BUILD_SHARED_LIBS cmake variable
-# -> since BUILD_SHARED_LIBS isn't explicitly defined, we prefer static
+# local installation directory. pkg-config always prefers linking against the shared
+# library
 
 # the only difference between the images is the order of installing the shared
 # and static variants
@@ -44,7 +40,9 @@ override_LD_LIBRARY_PATH = true
 #     - the meta installation files (i.e. the CMake Package Configuration file
 #       and the pkg-config file) being messed up. Doing a direct comparison
 #       would be FAR more robust
-image = ["shared_static_install", "static_shared_install"]
+
+parametrize = [{image = "shared_static_install"}, {image = "static_shared_install"}]
+image.use-param = "image"
 cmds = ["PKG_CONFIG_PATH=/home/gr-user/local/lib/pkgconfig make"]
 # specify whether LD_LIBRARY_PATH must be modified
 override_LD_LIBRARY_PATH = true

@@ -1,6 +1,36 @@
-[common]
+[shared]
 # this table is used to specify options common to all tests
-# -> these options can be overridden on a case-by-case basis
+
+# the file from GRACKLE_ROOT/src/example to copy
+src_file = "c_example.c"
+
+# the path to the example binary relative to the sample project directory
+# that will be produced by executing the supplied commands
+output_binary = "build/example_app"
+
+# enumerate each of the test cases
+# ================================
+
+[test.simple]
+parametrize = [
+  # first, use a copy of Grackle from its build-directory
+  {image="shared_build", Grackle_DIR="/home/gr-user/grackle/build"},
+  {image="static_build", Grackle_DIR="/home/gr-user/grackle/build"},
+
+  # next, use a copy of Grackle that was installed in the local installation directory
+  {image="shared_install", Grackle_DIR="/home/gr-user/local"},
+  {image="static_install", Grackle_DIR="/home/gr-user/local"},
+  {image="static_install_conftimeprefix", Grackle_DIR="/home/gr-user/local"},
+]
+
+# the docker image to use to run the test
+image.use-param = "image"
+
+# list the commands to construct output_binary
+cmds = [
+  "Grackle_DIR='{Grackle_DIR}' cmake -Bbuild",
+  "cmake --build build"
+]
 
 # specify whether LD_LIBRARY_PATH must be modified to include the search path
 # for the Grackle library
@@ -37,44 +67,12 @@
 # meson and maybe bazel)
 override_LD_LIBRARY_PATH = false
 
-# the file from GRACKLE_ROOT/src/example to copy
-src_file = "c_example.c"
-
-# the path to the example binary relative to the sample project directory
-# that will be produced by executing the supplied commands
-output_binary = "build/example_app"
-
-# enumerate each of the test cases
-# ================================
-
-[test.linkAgainstGrackleBuildDir]
-# this test case is parametrized by both image arguments
-image = ["shared_build", "static_build"]
-
-# list the commands to construct output_binary
-cmds = [
-  "Grackle_DIR='/home/gr-user/grackle/build' cmake -Bbuild",
-  "cmake --build build"
-]
-
-[test.UseLocalGrInstall]
-# this test case is parametrized by each image arguments
-image = ["shared_install", "static_install", "static_install_conftimeprefix"]
-
-# list the commands to construct output_binary
-cmds = [
-  "Grackle_DIR='/home/gr-user/local' cmake -Bbuild",
-  "cmake --build build"
-]
-
 [test.SelectStaticLib]
-# in this case both the shared and static libraries were both installed in the
-# local installation directory.
-# -> the call to find_package in CMakeLists.txt does NOT communicate a
-#    preference for using the shared or static lib
-# -> thus, a weak preference is inferred from the value of the
-#    BUILD_SHARED_LIBS cmake variable
-# -> since BUILD_SHARED_LIBS isn't explicitly defined, we prefer static
+# in this case, the shared/static libraries were both installed in the
+# local installation directory. Since the call to `find_package` in the sample
+# project's CMakeLists.txt does NOT communicate a preference,
+# - a weak preference is inferred from the `BUILD_SHARED_LIBS` cmake variable
+# - when `BUILD_SHARED_LIBS` isn't explicitly defined, we prefer static
 
 # the only difference between the images is the order of installing the shared
 # and static variants
@@ -89,31 +87,29 @@ cmds = [
 #     - the meta installation files (i.e. the CMake Package Configuration file
 #       and the pkg-config file) being messed up. Doing a direct comparison
 #       would be FAR more robust
-image = ["shared_static_install", "static_shared_install"]
+parametrize = [{image = "shared_static_install"}, {image = "static_shared_install"}]
 
-# list the commands to construct output_binary
+image.use-param = "image"
 cmds = [
   "Grackle_DIR='/home/gr-user/local' cmake -Bbuild",
   "cmake --build build"
 ]
-
+override_LD_LIBRARY_PATH = false
 
 [test.SelectSharedLib]
-# in this case both the shared and static libraries were both installed in the
-# local installation directory.
-# -> the call to find_package in CMakeLists.txt does NOT communicate a
-#    preference for using the shared or static lib
-# -> thus, a weak preference is inferred from the value of the
-#    BUILD_SHARED_LIBS cmake variable
-# -> since BUILD_SHARED_LIBS isn't explicitly defined, we prefer static
+# in this case, the shared/static libraries were both installed in the
+# local installation directory. Since the call to `find_package` in the sample
+# project's CMakeLists.txt does NOT communicate a preference,
+# - a weak preference is inferred from the `BUILD_SHARED_LIBS` cmake variable
+# - when `BUILD_SHARED_LIBS` isn't explicitly defined, we prefer static
 
 # the only difference between the images is the order of installing the shared
 # and static variants
-image = ["shared_static_install", "static_shared_install"]
+parametrize = [{image = "shared_static_install"}, {image = "static_shared_install"}]
 
-# list the commands to construct output_binary
+image.use-param = "image"
 cmds = [
   "Grackle_DIR='/home/gr-user/local' cmake -Bbuild -DBUILD_SHARED_LIBS=ON",
   "cmake --build build"
 ]
-
+override_LD_LIBRARY_PATH = false

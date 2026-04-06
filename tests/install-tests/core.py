@@ -2,40 +2,20 @@
 Define the core logic for running install tests
 """
 
-# to maximize portability, only use built-in modules present in python 3.6.1 and newer
-from collections import ChainMap
+# to maximize portability, only use built-in modules present in python 3.7 or newer
 from enum import Enum
 import fnmatch
 from functools import partial
 import os
 import re
 import shlex
-import sys
 import textwrap
-from typing import (
-    Any,
-    Callable,
-    Container,
-    Dict,
-    Iterator,
-    List,
-    Mapping,
-    NamedTuple,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-)
+from types import MappingProxyType
+from typing import Callable, Dict, Iterator, NamedTuple, Optional, Tuple, Union
 
+# import local logic
+import conf_reader
 from docker import DockerContainer, GRACKLE_ROOT, import_standalone_module
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    try:
-        import tomli as tomllib
-    except ImportError:
-        import vendored_tomli as tomllib
 
 
 common = import_standalone_module(
@@ -111,291 +91,196 @@ class TestItem(NamedTuple):
         return self.output_binary is not None
 
 
-# we are going to be fairly pedantic about toml parsing
-
-_CheckTypeArg = Union[Type, Tuple[Type, ...], Callable[[Any], bool]]
-
-
-def _check_type(v: Any, classinfo: _CheckTypeArg) -> bool:
-    if isinstance(classinfo, (type, tuple)):
-        return isinstance(v, classinfo)
-    return classinfo(v)
+def _build_req_mapping(
+    *reqs: conf_reader.TOMLValReq,
+) -> MappingProxyType[str, conf_reader.TOMLValReq]:
+    out = {req.name: req for req in reqs}
+    assert len(out) == len(reqs)
+    return MappingProxyType(out)
 
 
-class TomlValReq(NamedTuple):
-    """
-    Specifies requirements for a toml value
+_SHARED_TAB_REQS = _build_req_mapping(
+    conf_reader.TOMLValReq(
+        name="src_file",
+        classinfo=str,
+        type_descr="string",
+        description=textwrap.dedent(
+            """\
+           the file from GRACKLE_ROOT/src/example to copy into the sample
+           project's source directory."""
+        ),
+    ),
+    conf_reader.TOMLValReq(
+        name="output_binary",
+        classinfo=str,
+        type_descr="string",
+        required=False,
+        description=textwrap.dedent(
+            """\
+           The relative path to the output binary that we expect to be created
+           from the specified commands. This path is relative to the root of
+           the sample project's source directory."""
+        ),
+    ),
+)
 
-    Checks are applied after the values are coerced to python values.
-    """
-
-    # this is either an argument for isinstance or a callable specifying whether
-    # the value has the appropriate type
-    classinfo: _CheckTypeArg
-
-    # describes the required toml type
-    type_descr: str
-
-    description: str
-
-    # when specified, the value is required to be one of these values
-    choices: Optional[Container] = None
-
-    # when True, the associated parameter is allowed as an array
-    # -> this is intended as a quick-and-dirty mechanism for parameterizing
-    #    several related tests
-    # -> as soon as we have 2 or more parameters where we want to allow
-    #    parameterization (if it ever happens), I **REALLY** think we want to
-    #    transition to a system similar to github actions, where we introduce
-    #    a matrix subtable
-    #    https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations
-    allow_as_arr: bool = False
-
-
-def _is_single_type_toml_arr(v: Any, kind: _CheckTypeArg, allow_empty: bool) -> bool:
-    """Check if ``v`` corresponds to a toml array of a single type"""
-    if not isinstance(v, list):
-        return False
-    elif len(v) == 0:
-        return allow_empty
-    return all(_check_type(elem, kind) for elem in v)
-
-
-_is_str_arr = partial(_is_single_type_toml_arr, kind=str, allow_empty=True)
-
-# lists the requirements for all allowed keys in one of the TOML test tables
-_TOML_PARAM_REQS: Dict[str, TomlValReq] = {
-    "image": TomlValReq(
+_TEST_TAB_REQS = _build_req_mapping(
+    conf_reader.PARAMETRIZED_TOML_REQ,
+    conf_reader.TOMLValReq(
+        name="image",
         classinfo=str,
         type_descr="string",
         choices=set(member.layer_name() for member in DockerImage),
-        allow_as_arr=True,
         description=textwrap.dedent(
             """\
-            Specifies the names of the images that is used to initialize the container
-            in which the test is run. Essentially, you can think of the image as a
-            cached set of startup steps.
-
-            When this is specified as an array of strings, the test case is effectively
-            parametrized with respect to each image."""
+            Specifies the names of the images that is used to initialize the
+            container in which the test is run. Essentially, you can think of
+            the image as a cached set of setup steps."""
         ),
     ),
-    # for the following parameter:
-    # -> if we tweak the vendored toml parser to support toml 1.1, I think it
-    #    would be better if expected an array of (inline) tables (where we could
-    #    override environment variables) or a array of mixed strings and tables
-    "cmds": TomlValReq(
-        classinfo=_is_str_arr,
+    conf_reader.TOMLValReq(
+        name="cmds",
+        classinfo=partial(
+            conf_reader._is_single_type_toml_arr, kind=str, allow_empty=True
+        ),
         type_descr="array of strings",
         description=textwrap.dedent(
             """\
-            Each entry of the array specifies a separate command that is executed in a
-            sequence. Each command is executed in a separate subshell."""
+            Each entry of the array specifies a separate command that is
+            executed in a sequence.
+
+            Each command is executed in a separate subshell. Practically, this
+            means that modifying an environment variable in one command won't
+            affect the value during subsequent commands
+
+            .. note::
+
+               In the future, it may be worth allowing array to contain a mixture
+               of strings and inline tables. The could make it easier for us to
+               handle environment variables. We illustrated the difference below:
+
+               .. code-block:: toml
+
+                  # current approach
+                  cmds = [
+                    "Grackle_DIR='/home/gr-user/local' cmake -Bbuild",
+                    "cmake --build build"
+                  ]
+                  # alternative approach approach
+                  cmds = [
+                    {cmd = "cmake -Bbuild", env.Grackle_DIR="/home/gr-user/local"},
+                    "cmake --build build"
+                  ]
+
+               We probably don't want to do this unless we support TOML 1.1 (since TOML
+               1.0 requires inline-tables to be fully defined on a single line)."""
         ),
     ),
-    #
-    "src_file": TomlValReq(
-        classinfo=str,
-        type_descr="string",
-        description=textwrap.dedent(
-            """\
-            the file from GRACKLE_ROOT/src/example to copy into the sample project's
-            source directory."""
-        ),
-    ),
-    "output_binary": TomlValReq(
-        classinfo=str,
-        type_descr="string",
-        description=textwrap.dedent(
-            """\
-            The relative path to the output binary that we expect to be created from
-            the specified commands. This path is relative to the root of the sample
-            project's source directory."""
-        ),
-    ),
-    "expect_cmd_fail": TomlValReq(
+    conf_reader.TOMLValReq(
+        name="expect_cmd_fail",
         classinfo=bool,
         type_descr="boolean",
+        required=False,
         description=textwrap.dedent(
             """\
-            Indicates whether we expect the final command to fail. Omitting this
-            parameter is equivalent to setting it to ``false``. When ``true``, the
-            output_binary parameter can be omitted"""
+            Indicates whether we expect the final command to fail. Omitting
+            this parameter is equivalent to setting it to ``false``. When
+            ``true``, the output_binary parameter can be omitted"""
         ),
     ),
-    "override_LD_LIBRARY_PATH": TomlValReq(
+    conf_reader.TOMLValReq(
+        name="override_LD_LIBRARY_PATH",
         classinfo=bool,
         type_descr="boolean",
+        required=False,
         description=textwrap.dedent(
             """\
-            Specify whether the ``LD_LIBRARY_PATH`` environment variable needs to be
-            overriden in order to execute the output binary. Omitting this parameter
-            is equivalent to setting it to ``false``"""
+            Specify whether the ``LD_LIBRARY_PATH`` environment variable needs
+            to be overriden in order to execute the output binary. Omitting
+            this parameter is equivalent to setting it to ``false``
+
+            When performing building a test program manually (e.g. with a
+            Makefiles), this is typically required. This generally isn't needed
+            when a test program with CMake unless it's both linked against a
+            shared library AND the program is installed (if executing the test
+            program from the build-directory, this isn't needed)."""
         ),
     ),
-}
+)
 
 
-def _process_toml_table(
-    table: Mapping, is_common_table: bool, err_prefix=""
-) -> Tuple[Dict[str, Any], Optional[Tuple[str, List[Any]]]]:
-    """
-    Process a (already parsed) toml table
-
-    Parameters
-    ----------
-    table
-        The already parsed toml table
-    is_common_table
-        Pass ``True`` if ``table`` corresponds to the toml file's `common`
-        table. Otherwise, pass ``False``.
-    err_prefix
-        An optional string to prepend to error messages
-
-    Returns
-    -------
-    sanitized: dict
-        A sanitized dict where values are guaranteed to satisfy all
-        requirements. This excludes any parametrized values
-    parametrization: tuple or None
-        If table included a parametrized value, this is a pair. The first
-        element is the parameter name. The second is list of values.
-    """
-
-    def _mk_err(msg):
-        return ValueError(err_prefix + msg)
-
-    parametrization = None
-    sanitized = {}
-
-    for key, val in table.items():
-        try:
-            req = _TOML_PARAM_REQS[key]
-        except KeyError:
-            raise _mk_err(f"unexpected parameter: {key}") from None
-
-        if _check_type(val, req.classinfo):
-            if (req.choices is not None) and (val not in req.choices):
-                raise _mk_err(f"{key} must hold a value in {list(req.choices)!r}")
-            sanitized[key] = val
-        elif not req.allow_as_arr:
-            raise _mk_err(f"{key} must have type: {req.type_descr}")
-        else:
-            type_is_ok = _is_single_type_toml_arr(val, req.classinfo, allow_empty=True)
-            if type_is_ok and is_common_table:
-                # there is a reason that this MUST be enforced
-                raise _mk_err(f"common.{key} is forbidden from being an array")
-            elif type_is_ok and len(val) == 0:
-                raise _mk_err(f"`{key}` must not be an empty array")
-
-            valid = (req.choices is None) or all(elem in req.choices for elem in val)
-            if not valid:
-                raise _mk_err(
-                    f"when {key} is an array, each array element must be a value from "
-                    f"{list(req.choices)!r}"
-                )
-            elif len(set(val)) != len(val):
-                raise _mk_err(f"when {key} is an array, array element can repeat")
-            elif parametrization is not None:
-                # if this ever comes to pass, we probably want to rethink how things
-                # work. I outline an alternative plan in the docstring comment of
-                # TomlValReq's allow_as_arr attribute
-                raise NotImplementedError(
-                    "can't handle the case when 2 parameters are parametrized"
-                )
-            parametrization = (key, val)
-    return sanitized, parametrization
-
-
-def test_cases_from_conf(path: str) -> Iterator[Tuple[str, TestItem]]:
+def test_cases_from_conf(file_path: os.PathLike) -> Iterator[Tuple[str, TestItem]]:
     """Constructs TestItem from the specified configuration toml file"""
 
     # before we actually parse the config file, let's build a list of all other
     # files in the directory that holds the config file
     # -> we assume that these are parts of the sample source directory
     # -> we store the paths to these files so that they're relative to GRACKLE_ROOT
-    abs_conf_dir_path = os.path.dirname(os.path.abspath(path))
+    abs_conf_dir_path = os.path.dirname(os.path.abspath(file_path))
     _rel_conf_dir_path = os.path.relpath(abs_conf_dir_path, start=GRACKLE_ROOT)
     common_src_files = []
     with os.scandir(abs_conf_dir_path) as it:
         for entry in it:
             if entry.is_dir(follow_symlinks=True):
-                raise ValueError(f"dir holding {path} can't also hold subdirectories")
-            elif os.path.samefile(entry.path, path):
+                raise ValueError(f"dir holding {file_path} can't hold subdirectories")
+            elif os.path.samefile(entry.path, file_path):
                 continue  # <- we won't need to copy the conf file itself
             else:
                 common_src_files.append(os.path.join(_rel_conf_dir_path, entry.name))
+    # later on, we will use conf_dirname as the prefix for each test name
+    conf_dirname = str(os.path.basename(abs_conf_dir_path))
 
-    with open(path, "rb") as f:
-        raw = tomllib.load(f)
+    reader = conf_reader.ConfReader(file_path)
 
-    err_prefix = f"Toml File Error {path}: "
-
-    # read top-level entities and do error-checks
-    common_table = raw.get("common", {})
-    if not isinstance(common_table, dict):
-        raise ValueError(f'{err_prefix}"common" key must provide a table, if specified')
-    common_table, _dummy = _process_toml_table(
-        common_table, is_common_table=True, err_prefix=err_prefix
-    )
-    assert _dummy is None, "sanity check!"
-
-    test_tables = raw.get("test", {})
-    if not isinstance(test_tables, dict):
-        raise ValueError(f'{err_prefix}"test" is an invalid toml key')
-    elif len(test_tables) == 0:
-        raise ValueError(f"{err_prefix}no test tables defined")
-
-    name_prefix = os.path.basename(abs_conf_dir_path)
-    for table_name, raw_table in test_tables.items():
-        if not isinstance(raw_table, dict):
-            raise ValueError(f"{err_prefix}test.{table_name} is not a table")
-        sanitized, parametrization = _process_toml_table(
-            raw_table, is_common_table=False, err_prefix=err_prefix
+    if len(reader.toml_doc) > 2:
+        extra = list(filter(lambda k: k != "shared" and k != "test", reader.toml_doc))
+        raise conf_reader.ConfReadError(
+            f"unexpected table(s): {', '.join(extra)}", reader
         )
-        base_name = f"{name_prefix}.{table_name}"
-        base_conf = ChainMap(sanitized, common_table, TestItem._field_defaults)
-        if parametrization is None:
-            name_conf_pairs = [(base_name, base_conf)]
-        else:
-            p_name, p_vals = parametrization
-            if p_name in common_table:
-                # we're intentionally being a little strict here (we can relax later)
-                raise ValueError(
-                    f"since test.{table_name}.{p_name} is parametrized, it's an error "
-                    f"to specify common.{p_name}"
-                )
-            name_conf_pairs = (
-                (f"{base_name}/{v}", base_conf.new_child({p_name: v})) for v in p_vals
+
+    # read the shared table
+    shared_table, _ = reader.process_table(path="shared", reqs=_SHARED_TAB_REQS)
+    src_file_path = os.path.join("src", "example", shared_table["src_file"])
+    src_files = tuple([src_file_path] + common_src_files)
+
+    test_table_paths = [("test", name) for name in reader["test"].keys()]
+    for table_path in test_table_paths:
+        # read the test table
+        test_table, parametrization = reader.process_table(table_path, _TEST_TAB_REQS)
+
+        # construct each variation
+        n_variations = 1 if parametrization is None else len(parametrization)
+        for i in range(n_variations):
+            if parametrization is None:
+                test_name = f"{conf_dirname}.{table_path[-1]}"
+                _table = test_table
+            else:
+                test_name = f"{conf_dirname}.{table_path[-1]}/{i}"
+                _table = {}
+                for k, v in test_table.items():
+                    if isinstance(v, conf_reader.ParametrizedProxy):
+                        _table[k] = v.substitute(reader, parametrization[i])
+                    else:
+                        _table[k] = v
+
+            image = DockerImage(_table["image"])
+
+            if _table.get("expect_cmd_fail", False):
+                output_binary = None
+            elif "output_binary" not in shared_table:
+                msg = "when True (or not specified), shared.output_binary is required"
+                full_path = table_path + ("expect_cmd_fail",)
+                raise conf_reader.ConfReadError(msg, reader, path=full_path)
+            else:
+                output_binary = shared_table["output_binary"]
+
+            test_item = TestItem(
+                image=image,
+                src_files=src_files,
+                cmds=_table["cmds"],
+                output_binary=output_binary,
+                override_LD_LIBRARY_PATH=_table["override_LD_LIBRARY_PATH"],
             )
-
-        for test_name, test_conf in name_conf_pairs:
-            for key in ["image", "src_file", "cmds"]:
-                if key not in test_conf:
-                    raise ValueError(
-                        f'{err_prefix}"{key}" is missing from the specification of the '
-                        f'"{test_name}" test'
-                    )
-            src_file_path = os.path.join("src", "example", test_conf["src_file"])
-
-            kwargs = {
-                k: v
-                for k, v in test_conf.items()
-                if k not in ["expect_cmd_fail", "src_file"]
-            }
-            kwargs["src_files"] = tuple([src_file_path] + common_src_files)
-            kwargs["image"] = DockerImage(kwargs["image"])
-            kwargs["cmds"] = tuple(kwargs["cmds"])
-            if test_conf.get("expect_cmd_fail", False):
-                kwargs["output_binary"] = None
-            elif "output_binary" not in kwargs:
-                raise ValueError(
-                    f'{err_prefix}"{test_name}" test is missing output_binary '
-                    "parameter (this is only allowed if expect_cmd_fail=true)"
-                )
-
-            test_item = TestItem(**kwargs)
-
             yield (test_name, test_item)
 
 

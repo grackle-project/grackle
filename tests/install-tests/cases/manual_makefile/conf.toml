@@ -1,6 +1,5 @@
-[common]
+[shared]
 # specify options common to all tests
-# -> these options can be overridden on a case-by-case basis
 
 # the file from GRACKLE_ROOT/src/example to copy
 src_file = "c_example.c"

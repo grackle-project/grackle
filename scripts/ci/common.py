@@ -27,6 +27,15 @@ if sys.version_info < (3, 6, 1):  # 3.6.0 doesn't support all NamedTuple feature
 logger = logging.getLogger("ci-setup")
 logger.setLevel(logging.DEBUG)
 
+_C_CODES = {"red": 31, "green": 32, "yellow": 33, "blue": 34, "magenta": 35, "cyan": 36}
+
+
+def ansii_colorize(snippet: str, color: str):
+    code = _C_CODES.get(color.lower())
+    if code is None:
+        raise ValueError(f"unknown color: {color}. Pick from {', '.join(_C_CODES)}")
+    return f"\x1b[{code};10m{snippet}\x1b[0m"
+
 
 def configure_logger(color: bool = False):
     """
@@ -36,13 +45,11 @@ def configure_logger(color: bool = False):
     """
     global logger
 
-    color_start = ""
-    color_stop = ""
+    LHS = "%(name)s"
     if color:
-        color_start = "\x1b[36;20m"
-        color_stop = "\x1b[0m"
+        LHS = ansii_colorize(LHS, color="cyan")
 
-    fmt = f"{color_start}%(name)s{color_stop} > %(message)s"
+    fmt = f"{LHS} > %(message)s"
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(logging.Formatter(fmt))
