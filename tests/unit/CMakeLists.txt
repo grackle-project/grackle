@@ -1,6 +1,7 @@
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
-add_executable(testFrozenKeyIdxBiMap support/test_unit_FrozenKeyIdxBiMap.cpp)
+add_executable(testFrozenKeyIdxBiMap
+  support/test_unit_hash.cpp support/test_unit_FrozenKeyIdxBiMap.cpp)
 target_link_libraries(testFrozenKeyIdxBiMap testdeps)
 gtest_discover_tests(testFrozenKeyIdxBiMap)
 
