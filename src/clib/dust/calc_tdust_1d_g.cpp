@@ -136,8 +136,8 @@ void grackle::impl::calc_tdust_1d_g(
         nm_itmask[i] = MASK_FALSE;
         nm_done = nm_done + 1;
       } else {
-        tdustnow[i] =
-            std::fmax(floored_trad, std::pow((gamma_isrf[i] / radf / kgr1), 0.17));
+        tdustnow[i] = std::fmax(floored_trad,
+                                std::pow((gamma_isrf[i] / radf / kgr1), 0.17));
         pert[i] = pert_i;
       }
 
@@ -161,33 +161,34 @@ void grackle::impl::calc_tdust_1d_g(
 
     // Calculate grain opacities
 
-    FORTRAN_NAME(calc_kappa_gr_g)(tdustnow.data(), kgr, nm_itmask.data(), &buf_len,
-                                  &idx_range.i_start, &idx_range.i_end, &t_subl,
-                                  &Td_N, &Td_Size, gr_dT, gr_Td, logalsp.data(),
-                                  idspecies);
-
-    FORTRAN_NAME(calc_kappa_gr_g)(tdplus.data(), kgrplus.data(),
-                                  nm_itmask.data(), &buf_len, &idx_range.i_start,
+    FORTRAN_NAME(calc_kappa_gr_g)(tdustnow.data(), kgr, nm_itmask.data(),
+                                  &buf_len, &idx_range.i_start,
                                   &idx_range.i_end, &t_subl, &Td_N, &Td_Size,
                                   gr_dT, gr_Td, logalsp.data(), idspecies);
 
+    FORTRAN_NAME(calc_kappa_gr_g)(
+        tdplus.data(), kgrplus.data(), nm_itmask.data(), &buf_len,
+        &idx_range.i_start, &idx_range.i_end, &t_subl, &Td_N, &Td_Size, gr_dT,
+        gr_Td, logalsp.data(), idspecies);
+
     // Calculate heating/cooling balance
 
-    FORTRAN_NAME(calc_gr_balance_g)(tdustnow.data(), tgas, kgr, &floored_trad4, gasgr,
-                                    gamma_isrf.data(), nh, nm_itmask.data(),
-                                    sol.data(), &buf_len, &idx_range.i_start,
-                                    &idx_range.i_end);
-
-    FORTRAN_NAME(calc_gr_balance_g)(tdplus.data(), tgas, kgrplus.data(), &floored_trad4,
+    FORTRAN_NAME(calc_gr_balance_g)(tdustnow.data(), tgas, kgr, &floored_trad4,
                                     gasgr, gamma_isrf.data(), nh,
-                                    nm_itmask.data(), solplus.data(), &buf_len,
+                                    nm_itmask.data(), sol.data(), &buf_len,
                                     &idx_range.i_start, &idx_range.i_end);
+
+    FORTRAN_NAME(calc_gr_balance_g)(
+        tdplus.data(), tgas, kgrplus.data(), &floored_trad4, gasgr,
+        gamma_isrf.data(), nh, nm_itmask.data(), solplus.data(), &buf_len,
+        &idx_range.i_start, &idx_range.i_end);
 
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (nm_itmask[i] != MASK_FALSE) {
         // Check if the solution has converged (if not prepare the next guess)
 
-        // todo: convert slope to a local variable (there's no reason for it to be a vector)
+        // todo: convert slope to a local variable (there's no reason for it to
+        // be a vector)
         slope[i] = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
 
         tdustold[i] = tdustnow[i];
@@ -251,15 +252,15 @@ void grackle::impl::calc_tdust_1d_g(
         }
       }
 
-      FORTRAN_NAME(calc_kappa_gr_g)(bi_t_mid.data(), kgr, bi_itmask.data(), &buf_len,
-                                    &idx_range.i_start, &idx_range.i_end,
-                                    &t_subl, &Td_N, &Td_Size, gr_dT, gr_Td,
-                                    logalsp.data(), idspecies);
+      FORTRAN_NAME(calc_kappa_gr_g)(bi_t_mid.data(), kgr, bi_itmask.data(),
+                                    &buf_len, &idx_range.i_start,
+                                    &idx_range.i_end, &t_subl, &Td_N, &Td_Size,
+                                    gr_dT, gr_Td, logalsp.data(), idspecies);
 
-      FORTRAN_NAME(calc_gr_balance_g)(bi_t_mid.data(), tgas, kgr, &floored_trad4, gasgr,
-                                      gamma_isrf.data(), nh, bi_itmask.data(),
-                                      sol.data(), &buf_len, &idx_range.i_start,
-                                      &idx_range.i_end);
+      FORTRAN_NAME(calc_gr_balance_g)(
+          bi_t_mid.data(), tgas, kgr, &floored_trad4, gasgr, gamma_isrf.data(),
+          nh, bi_itmask.data(), sol.data(), &buf_len, &idx_range.i_start,
+          &idx_range.i_end);
 
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (bi_itmask[i] != MASK_FALSE) {

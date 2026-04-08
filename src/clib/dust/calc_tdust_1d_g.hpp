@@ -54,9 +54,10 @@ namespace grackle::impl {
 /// modified: January, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
 void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
                      const double* gamma_isrfa, const double* isrf,
-                     const gr_mask_type* itmask, double trad, int buf_len, int gr_N,
-                     double* gr_dT, double* gr_Td, gr_float* alsp_data_,
-                     double* kgr, int* idspecies, IndexRange idx_range);
+                     const gr_mask_type* itmask, double trad, int buf_len,
+                     int gr_N, double* gr_dT, double* gr_Td,
+                     gr_float* alsp_data_, double* kgr, int* idspecies,
+                     IndexRange idx_range);
 
 }  // namespace grackle::impl
 #endif /* CALC_TDUST_1D_G_HPP */
