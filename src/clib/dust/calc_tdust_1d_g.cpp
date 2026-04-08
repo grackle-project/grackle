@@ -27,7 +27,7 @@
 void grackle::impl::calc_tdust_1d_g(
     double* tdust, double* tgas, double* nh, double* gasgr,
     const double* gamma_isrfa, const double* isrf, const gr_mask_type* itmask,
-    double trad, int in, int gr_N, double* gr_dT, double* gr_Td,
+    double trad, int buf_len, int gr_N, double* gr_dT, double* gr_Td,
     gr_float* alsp_data_, double* kgr, int* idspecies, IndexRange idx_range) {
   // opacity table of a grain species
   //
@@ -35,10 +35,10 @@ void grackle::impl::calc_tdust_1d_g(
   // non-null. The View invariant disallows non-null data with a zero leading
   // extent, so pass nullptr for the zero-length case.
   gr_float* alsp_ptr = (gr_N > 0) ? alsp_data_ : nullptr;
-  grackle::impl::View<gr_float**> alsp(alsp_ptr, gr_N, in);
-  std::vector<gr_float> logalsp_data_(gr_N * in);
+  grackle::impl::View<gr_float**> alsp(alsp_ptr, gr_N, buf_len);
+  std::vector<gr_float> logalsp_data_(gr_N * buf_len);
   gr_float* logalsp_ptr = (gr_N > 0) ? logalsp_data_.data() : nullptr;
-  grackle::impl::View<gr_float**> logalsp(logalsp_ptr, gr_N, in);
+  grackle::impl::View<gr_float**> logalsp(logalsp_ptr, gr_N, buf_len);
   int Td_Size;
   int Td_N;
 
@@ -52,7 +52,7 @@ void grackle::impl::calc_tdust_1d_g(
   // the local dust-to-gas ratio, which in this work is 0.934e-2.
   const double kgr1 = 4.0e-4 / 0.00934;
 
-  std::vector<double> gamma_isrf(in);
+  std::vector<double> gamma_isrf(buf_len);
   const double tol = 1.e-5;
   const double bi_tol = 1.e-3;
   const double minpert = 1.e-10;
@@ -63,29 +63,37 @@ void grackle::impl::calc_tdust_1d_g(
 
   int i, iter, c_done, c_total, nm_done;
 
-  double pert_i, trad4;
+  double pert_i, floored_trad, floored_trad4;
 
   // Slice Locals
 
-  std::vector<double> kgrplus(in);
-  std::vector<double> sol(in);
-  std::vector<double> solplus(in);
-  std::vector<double> slope(in);
-  std::vector<double> tdplus(in);
-  std::vector<double> tdustnow(in);
-  std::vector<double> tdustold(in);
-  std::vector<double> pert(in);
-  std::vector<double> bi_t_mid(in);
-  std::vector<double> bi_t_high(in);
-  std::vector<gr_mask_type> nm_itmask(in);
-  std::vector<gr_mask_type> bi_itmask(in);
+  std::vector<double> kgrplus(buf_len);
+  std::vector<double> sol(buf_len);
+  std::vector<double> solplus(buf_len);
+  std::vector<double> slope(buf_len);
+  // holds dust temperature guess from the last root-finding iteration
+  std::vector<double> tdustold(buf_len);
+  // holds dust temperature guess for the current root-finding iteration
+  std::vector<double> tdustnow(buf_len);
+  // holds a value offset from the current dust temperature (tdustnow)
+  // it is used to get a finite difference estimate for the derivative
+  std::vector<double> tdplus(buf_len);
+  // relative finite difference step size
+  std::vector<double> pert(buf_len);
+  std::vector<double> bi_t_mid(buf_len);
+  std::vector<double> bi_t_high(buf_len);
+  // iteration mask specifies where we use newton's method with finite
+  // differences (aka the secant method)
+  std::vector<gr_mask_type> nm_itmask(buf_len);
+  // iteration mask specifies where we use bisection
+  std::vector<gr_mask_type> bi_itmask(buf_len);
 
   pert_i = 1.e-3;
 
-  trad = std::fmax(
+  floored_trad = std::fmax(
       1.,
       trad);  // TODO: do we really want to write in a passed by copy input par?
-  trad4 = std::pow(trad, 4);
+  floored_trad4 = std::pow(floored_trad, 4);
 
   // \sum rho_SN kappa_SN / \sum rho_SN ndust_SN
 
@@ -103,7 +111,7 @@ void grackle::impl::calc_tdust_1d_g(
 
   c_done = 0;
   nm_done = 0;
-  c_total = idx_range.i_end - idx_range.i_start + 1;
+  c_total = idx_range.i_stop - idx_range.i_start;
 
   // Set local iteration mask and initial guess
 
@@ -117,8 +125,8 @@ void grackle::impl::calc_tdust_1d_g(
     nm_itmask[i] = itmask[i];
     bi_itmask[i] = itmask[i];
     if (nm_itmask[i] != MASK_FALSE) {
-      if (trad >= tgas[i]) {
-        tdustnow[i] = trad;
+      if (floored_trad >= tgas[i]) {
+        tdustnow[i] = floored_trad;
         nm_itmask[i] = MASK_FALSE;
         bi_itmask[i] = MASK_FALSE;
         c_done = c_done + 1;
@@ -129,7 +137,7 @@ void grackle::impl::calc_tdust_1d_g(
         nm_done = nm_done + 1;
       } else {
         tdustnow[i] =
-            std::fmax(trad, std::pow((gamma_isrf[i] / radf / kgr1), 0.17));
+            std::fmax(floored_trad, std::pow((gamma_isrf[i] / radf / kgr1), 0.17));
         pert[i] = pert_i;
       }
 
@@ -139,7 +147,8 @@ void grackle::impl::calc_tdust_1d_g(
     }
   }
 
-  // Iterate to convergence with Newton's method
+  // Iterate to convergence with secant method
+  // (aka Newton's method with finite differences)
 
   for (iter = 1; iter <= (itmax); iter++) {
     // Loop over slice
@@ -152,32 +161,33 @@ void grackle::impl::calc_tdust_1d_g(
 
     // Calculate grain opacities
 
-    FORTRAN_NAME(calc_kappa_gr_g)(tdustnow.data(), kgr, nm_itmask.data(), &in,
+    FORTRAN_NAME(calc_kappa_gr_g)(tdustnow.data(), kgr, nm_itmask.data(), &buf_len,
                                   &idx_range.i_start, &idx_range.i_end, &t_subl,
                                   &Td_N, &Td_Size, gr_dT, gr_Td, logalsp.data(),
                                   idspecies);
 
     FORTRAN_NAME(calc_kappa_gr_g)(tdplus.data(), kgrplus.data(),
-                                  nm_itmask.data(), &in, &idx_range.i_start,
+                                  nm_itmask.data(), &buf_len, &idx_range.i_start,
                                   &idx_range.i_end, &t_subl, &Td_N, &Td_Size,
                                   gr_dT, gr_Td, logalsp.data(), idspecies);
 
     // Calculate heating/cooling balance
 
-    FORTRAN_NAME(calc_gr_balance_g)(tdustnow.data(), tgas, kgr, &trad4, gasgr,
+    FORTRAN_NAME(calc_gr_balance_g)(tdustnow.data(), tgas, kgr, &floored_trad4, gasgr,
                                     gamma_isrf.data(), nh, nm_itmask.data(),
-                                    sol.data(), &in, &idx_range.i_start,
+                                    sol.data(), &buf_len, &idx_range.i_start,
                                     &idx_range.i_end);
 
-    FORTRAN_NAME(calc_gr_balance_g)(tdplus.data(), tgas, kgrplus.data(), &trad4,
+    FORTRAN_NAME(calc_gr_balance_g)(tdplus.data(), tgas, kgrplus.data(), &floored_trad4,
                                     gasgr, gamma_isrf.data(), nh,
-                                    nm_itmask.data(), solplus.data(), &in,
+                                    nm_itmask.data(), solplus.data(), &buf_len,
                                     &idx_range.i_start, &idx_range.i_end);
 
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (nm_itmask[i] != MASK_FALSE) {
-        // Use Newton's method to solve for Tdust
+        // Check if the solution has converged (if not prepare the next guess)
 
+        // todo: convert slope to a local variable (there's no reason for it to be a vector)
         slope[i] = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
 
         tdustold[i] = tdustnow[i];
@@ -190,7 +200,7 @@ void grackle::impl::calc_tdust_1d_g(
             minpert);
 
         // If negative solution calculated, give up and wait for bisection step.
-        if (tdustnow[i] < trad) {
+        if (tdustnow[i] < floored_trad) {
           nm_itmask[i] = MASK_FALSE;
           nm_done = nm_done + 1;
           // Check for convergence of solution
@@ -225,7 +235,7 @@ void grackle::impl::calc_tdust_1d_g(
   if (c_done < c_total) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (bi_itmask[i] != MASK_FALSE) {
-        tdustnow[i] = trad;
+        tdustnow[i] = floored_trad;
         // bi_t_high(i) = tgas(i)
         bi_t_high[i] = 3e3;
       }
@@ -241,14 +251,14 @@ void grackle::impl::calc_tdust_1d_g(
         }
       }
 
-      FORTRAN_NAME(calc_kappa_gr_g)(bi_t_mid.data(), kgr, bi_itmask.data(), &in,
+      FORTRAN_NAME(calc_kappa_gr_g)(bi_t_mid.data(), kgr, bi_itmask.data(), &buf_len,
                                     &idx_range.i_start, &idx_range.i_end,
                                     &t_subl, &Td_N, &Td_Size, gr_dT, gr_Td,
                                     logalsp.data(), idspecies);
 
-      FORTRAN_NAME(calc_gr_balance_g)(bi_t_mid.data(), tgas, kgr, &trad4, gasgr,
+      FORTRAN_NAME(calc_gr_balance_g)(bi_t_mid.data(), tgas, kgr, &floored_trad4, gasgr,
                                       gamma_isrf.data(), nh, bi_itmask.data(),
-                                      sol.data(), &in, &idx_range.i_start,
+                                      sol.data(), &buf_len, &idx_range.i_start,
                                       &idx_range.i_end);
 
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -303,7 +313,7 @@ void grackle::impl::calc_tdust_1d_g(
           eprintf(
               "CALC_TDUST_1D_G Newton method -  T_dust < 0: i =  %d j =  %d k "
               "=  %d nh =  %g t_gas =  %g t_rad =  %g t_dust =  %g\n",
-              i, idx_range.jp1, idx_range.kp1, nh[i], tgas[i], trad,
+              i, idx_range.jp1, idx_range.kp1, nh[i], tgas[i], floored_trad,
               tdustnow[i]);
         }
         // ERROR_MESSAGE
