@@ -185,8 +185,6 @@ void grackle::impl::calc_tdust_1d_g(
       if (nm_itmask[i] != MASK_FALSE) {
         // Check if the solution has converged (if not prepare the next guess)
 
-        // todo: convert slope to a local variable (there's no reason for it to
-        // be a vector)
         auto slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
 
         tdustold[i] = tdustnow[i];
