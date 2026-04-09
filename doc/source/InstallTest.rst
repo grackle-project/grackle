@@ -144,17 +144,32 @@ The program looks for all subdirectories in the ``scan-dir``, and it determines 
 
 We will discuss exactly how tests are defined :ref:`later <installtest-defining-tests>`.
 For now, it's important to understand that each test-case is run in a docker container.
-Each docker image 
+During collection, we record the names of each required docker image.
+
+After the scanning the entirety of the ``scan-dir``, a task list is constructed that consists of building each required docker image and running each test.
 
 
+Test Execution
+++++++++++++++
 
+After all tasks are collected, :source:`tests/install-tests/installtest.py` starts executing each task one-by-one.
 
+When it comes time to execute a test, the program:
 
+1. Creates a new docker container from a previously built docker image.
+   The container is configured such that there is a user named ``gr-user``.
+   All of the available images hold the Grackle repository (its a subdirectory of the home-directory, named **grackle**).
 
-When you invoke
+2. Copies of relevant files to create a source directory for a sample project (the sample project is a subdirectory of the home-directory named **sample-project**).
 
-In practice, step 1 consists of creating a docker image, while steps 2-4 are executed in a docker container based on the image.
-The use of docker is intended to take adva
+3. The program executes each specified build command for the test.
+   Effectively, it instructs the shell within the container to execute each command, one-by-one.
+   If any command should fail, the test is ended.
+   This early exit is normally a failure, unless a test explicity expects a command to fail.
+
+4. The program checks that the sample program has successfully been built and can be executed.
+
+Once the test ends, the program cleans up: it deletes the container created for running the test.
 
 .. _installtest-docker-images:
 
@@ -162,12 +177,35 @@ Docker Images
 -------------
 
 As we've noted in multiple other places, each individual install-test is run inside of a Docker Container.
-We provide further justification for this choice :ref:`here <
+We provide further justification for this choice :ref:`here <installtest-why-docker>`.
+
+We identify each image by the name of the build step within :source:`tests/install-tests/installtest.Dockerfile` that the image is built from.
+We list each image down below:
+
+
+.. embed-cli-output:: ../../tests/install-tests/installtest.py
+   :args: entrydoc image-target
 
 .. _installtest-defining-tests:
 
 Defining Tests
 --------------
+
+Test cases are defined from TOML files.
+
+The :repository-dir:`tests/install-tests/cases/manual_makefile` directory shows a fairly straight-forward example of a test.
+Let's consider the configuration file from that directory:
+
+.. literalinclude:: ../../tests/install-tests/cases/manual_makefile/conf.toml
+   :language: toml
+
+The ``[shared]`` table defines basic setup performed in all test cases enumerated by this file.
+Each test-case is enumerated in a subtable of the ``test`` table (while ``[test]`` never appears in this file, it is implicitly defined because of the appearance of ``[test.<NAME>]``).
+In this file, there are 2 tests, specified in the ``[test.simple]`` table and the ``test.SharedAndStatic`` table.
+The testing program will refer to these tests as ``manual_makefile.simple`` and ``manual_makefile.SharedAndStatic``.
+
+We go into detail about all available parameters down below:
+
 
 .. embed-cli-output:: ../../tests/install-tests/installtest.py
    :args: entrydoc param
@@ -192,7 +230,7 @@ While designing the test harness, we had the following (somewhat related) guidin
 - these tests should be portable and easy to run
   * practically, this means that the runner should use the system provided python installation
 
-  * currently, we the tests just require the installation of docker (while that's a bit of a hurdle, it's :ref:`somewhat unavoidable <installtest-why-docker>`)
+  * currently, the tests just require the installation of docker (while that's a bit of a hurdle, it's :ref:`somewhat unavoidable <installtest-why-docker>`)
 
   * while I'm not opposed to using external python packages in the test harness, we would probably want to retain a separate pyproject.toml file (or at least a REQUIREMENTS.txt file) for the harness.
 
