@@ -1375,7 +1375,6 @@ double cieco_rate(double T, double units, chemistry_data *my_chemistry)
     return cierate * (mh/2.0) / units;
 }
 
-//Calculation of gas_grain.
 double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
 {
   double grain_coef;
@@ -1409,7 +1408,6 @@ double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
   }
 }
 
-//Calculation of gas_grain2.
 double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Variables.
@@ -1421,7 +1419,6 @@ double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 
-//Calculation of regr.
 double regr_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //(Equation 9, Wolfire et al., 1995)
@@ -1437,11 +1434,10 @@ double comp_rate(double units, chemistry_data *my_chemistry)
     return 5.65e-36 / units;
 }
 
-//Calculation of gammah.
 double gammah_rate(double units, chemistry_data *my_chemistry)
 {
-    //Default is 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3).
     if (my_chemistry->photoelectric_heating <= 1) {
+       // Default: 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3)
         return my_chemistry->photoelectric_heating_rate / units;
     } else { //photoelectric_heating set to 2 or 3
         //User to specify G_0, epsilon set to 0.05 or calculated directly.
