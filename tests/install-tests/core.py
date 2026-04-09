@@ -11,7 +11,7 @@ import re
 import shlex
 import textwrap
 from types import MappingProxyType
-from typing import Callable, Dict, Iterator, NamedTuple, Optional, Tuple, Union
+from typing import Callable, Dict, Iterator, Mapping, NamedTuple, Optional, Tuple, Union
 
 # import local logic
 import conf_reader
@@ -93,7 +93,7 @@ class TestItem(NamedTuple):
 
 def _build_req_mapping(
     *reqs: conf_reader.TOMLValReq,
-) -> MappingProxyType[str, conf_reader.TOMLValReq]:
+) -> Mapping[str, conf_reader.TOMLValReq]:
     out = {req.name: req for req in reqs}
     assert len(out) == len(reqs)
     return MappingProxyType(out)
