@@ -53,6 +53,5 @@ OBJS_CONFIG_LIB = \
         ratequery.lo \
         gaussj_g.lo \
         support/h5io.lo \
-        utils.lo \
         utils-cpp.lo \
         internal_types.lo
