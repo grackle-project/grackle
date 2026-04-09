@@ -75,7 +75,7 @@ class EmbedCLIOutput(SphinxDirective):
             force_literal_block = False
         else:
             msg = f"there was a problem executing ``{' '.join(cmd)}``"
-            self.document.reporter.warning(msg, line=self.lineno)
+            self.state.document.reporter.warning(msg, line=self.lineno)
             content = f"<{msg}>"
             force_literal_block = True
         content = content.strip()
