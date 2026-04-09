@@ -164,7 +164,7 @@ The defined parametrized variables can be used to define other parameters (these
    .. code-block:: toml
    
       image = "{image}"
-      cmds = [cmake -Bbuild {extra_conf_arg}", "cmake --build build"]
+      cmds = ["cmake -Bbuild {extra_conf_arg}", "cmake --build build"]
 
    Reminder: ``{{`` escapes ``{`` and ``}`` escapes ``}``.""",
 )
