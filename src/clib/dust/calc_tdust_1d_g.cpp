@@ -70,7 +70,7 @@ void grackle::impl::calc_tdust_1d_g(
   std::vector<double> kgrplus(buf_len);
   std::vector<double> sol(buf_len);
   std::vector<double> solplus(buf_len);
-  std::vector<double> slope(buf_len);
+  double slope;
   // holds dust temperature guess from the last root-finding iteration
   std::vector<double> tdustold(buf_len);
   // holds dust temperature guess for the current root-finding iteration
@@ -83,7 +83,7 @@ void grackle::impl::calc_tdust_1d_g(
   std::vector<double> bi_t_mid(buf_len);
   std::vector<double> bi_t_high(buf_len);
   // iteration mask specifies where we use newton's method with finite
-  // differences (aka the secant method)
+  // differences
   std::vector<gr_mask_type> nm_itmask(buf_len);
   // iteration mask specifies where we use bisection
   std::vector<gr_mask_type> bi_itmask(buf_len);
@@ -147,8 +147,7 @@ void grackle::impl::calc_tdust_1d_g(
     }
   }
 
-  // Iterate to convergence with secant method
-  // (aka Newton's method with finite differences)
+  // Iterate to convergence with Newton's method
 
   for (iter = 1; iter <= (itmax); iter++) {
     // Loop over slice
@@ -189,11 +188,11 @@ void grackle::impl::calc_tdust_1d_g(
 
         // todo: convert slope to a local variable (there's no reason for it to
         // be a vector)
-        slope[i] = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
+        slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
 
         tdustold[i] = tdustnow[i];
-        // tdustnow(i) = tdustnow(i) - (sol(i) / slope(i))
-        tdustnow[i] = std::fmin(tdustnow[i] - (sol[i] / slope[i]), 3e3);
+        // tdustnow(i) = tdustnow(i) - (sol(i) / slope)
+        tdustnow[i] = std::fmin(tdustnow[i] - (sol[i] / slope), 3e3);
 
         pert[i] = std::fmax(
             std::fmin(pert[i], (0.5 * std::fabs(tdustnow[i] - tdustold[i]) /
