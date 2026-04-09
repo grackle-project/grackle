@@ -12,6 +12,11 @@ The tests are primarily organized into the following categories:
 - :ref:`gracklepy test suite <gracklepy-suite>`: includes a mix of unit tests and "answer tests" (defined below) that use the gracklepy bindings.
   These tests are driven via the ``pytest`` program.
 
+- :ref:`installtest <installtest>`: includes a groups of tests that ensures that sample test projects can properly consume Grackle (from Grackle's build directory, from an install, etc.) in various formats.
+  These effectively test our build-system and our integration guide.
+  These tests are driven via the :source:`tests/install-tests/installtest.py` program.
+  :ref:`The linked page <installtest>` provides details about these tests work (:ref:`this particular section <installtest-execution>` provides instructions for launching the tests).
+
 - :ref:`formatting, linting, and other static checks <static_checks>`: includes a bunch of static checks, such as (formatting and linting).
   Our continuous integration system is set up to these checks.
   :ref:`The linked page <static_checks>` also provides instructions for running the tests locally.

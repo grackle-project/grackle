@@ -1,16 +1,20 @@
-.. _install-tests:
+.. _installtest:
 
 installtest.py
 ==============
 
 Our install-tests primarily serve as a check on the build-system and on our documentation.
-They are driven by the :source:`tests/install-tests/installtest.py` test harness.
+They are driven by the :source:`tests/install-tests/installtest.py` test program.
 
 At a high-level, a single test-case is quite simple.
 The test harness performs four phases:
+
 1. set up a scenario where Grackle has been appropriately set up for the test case (e.g. maybe Grackle has been installed as a shared library)
+
 2. set up a sample project (this might involve copying a **Makefile** or **CmakeLists.txt** file).
+
 3. the test harness tries to execute a sequence of test-case specific shell commands to build a sample program.
+
 4. the harness tries to execute the test program.
 
 Motivation
@@ -23,43 +27,54 @@ In our experience, it is easy to break these instructions or the convenience mac
 Why don't other open-source projects place emphasis on these tests?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+The reader may understandably wonder "why don't other open-source software projects have such a big emphasis on these sorts of tests?"
 
-The reader may understandably wonder "why don't other open-source software library projects have such a big emphasis on these sorts of tests?"
-To start, Grackle is a library, not an executable (the sorts of things we're testing generally aren't an issue for executables).
+To start, it doesn't make sense to compare Grackle with projects that primarily ship executables (e.g. ``git``).
+It simply doesn't make sense to consider linking against an executable.
 
-But, let's compare Grackle against other open-source libraries.
-There are several reasons for our emphasis:
+Let's turn our attention to other projects that ship libraries.
+Compared to such projects, we still place far more emphasis on these kinds of tests.
+This is for several reasons:
 
-1. Developers of other open-source software libraries often place much less focus on making their projects easy-to-install.
+1. Developers of other open-source software libraries typically don't expect non-experts to compile their projects.
 
    .. COMMENT
       We touch on this point (i.e. why we care more about describing the installation process and making it as easy as possible) more than other projects in :ref:`cmake_buildsystem_design_rationale`.
       If we feel compelled to touch on this point again, I really think we should relocate this explanation, and just link to it.
 
-   * They commonly assume that the only people that will be building a software library are developers who are already well-versed in building/linking/consuming software libraries.
+   * Developers commonly assume that the primary people that compile their software library are already well-versed in the practice of building/linking/consuming software libraries.
+     These people are typically other contributors to the project or developers of a downstream application that consumes the library.
+     Particularly popular libraries (think of hdf5, fftw3, libpng, zlib, xzutils) may also be compiled by package maintainers in order to make the software available through package managers (e.g. apt/dpkg, yum/rpm, brew).
 
-   * When popular libraries (think of hdf5, fftw3, libpng, zlib, xzutils) are used in projects written less experienced developers, the projects are typically made available by package managers (e.g. apt/dpkg, yum/rpm, brew).
-     Essentially, package maintainers (rather than the project developers) take responsibility for distributing the program.
-     At this time, no packager has expressed any interest in doing this for us.\ [#packagers]_
+   * Under this system, the package maintainers make it possible for less experienced users to get libraries without needing to compile the library without compiling it themselves.
+     At this time, no maintainer has expressed any interest in packaging Grackle for us.\ [#packagers]_
 
-   * When a project does want to make a project easy to distribute, they common way to try to circumvent issues by distributing libraries as a header-only library or as a single source and header library (the idea is that downstream projects directly embed the dependency in their source code code repository).
-     Setting aside the issues this might cause for getting improvements/bug fixes contributed back to the main repository, this isn't very viable for us.
-     First, it only works for downstream projects written in the same standard of C++ as Grackle or newer (at present, C++ 17 or newer).
-     Second, it won't really work be viable as we start introducing GPU support.
-     The need for data files introduces additional complexity.
+   * In contrast, we assume that users of downstream codes probably need to manually install Grackle themselves, and they lack a lot of experience pertaining to the process of compiling/linking software.
+     In fact, Grackle could be the very piece of software an undergrad physics/astronomy major or first-year grad student could compile.
+     Thus, we make an effort to provide lots of instruction.
 
-   * Another alternative is for a project to try to directly distribute pre-compiled copies of the library.
-     This isn't a viable strategy since Grackle depends on HDF5, which historically hasn't been ABI-stable between versions.
-     We can revisit this in the future, since starting with 2.0, it sounds like HDF5 developers have started ABI stability very seriously -- we need to wait for these releases to be widely used.\ [#h5-abi]_
-     With that said, this isn't won't really work very well when we start to add support for different GPU backends since the GPU runtime libraries aren't necessarily ABI stable (plus we would need to distribute a separate version for each backend).
+2. When a developer **does** want to make a project easy to distribute, they commonly distribute their project either:
 
-   In contrast, we assume that users of downstream codes probably need to manually install Grackle themselves, and they lack a lot of experience pertaining to the process of compiling/linking software.
-   In fact, Grackle could be the very piece of code an undergrad physics/astronomy major or first-year grad student could compile.
-   Thus, we make an effort to provide lots of instruction.
+   1. as a header-only library OR
 
+   2. as a single source and header library
 
-2. We attempted to make Grackle easy to use as a static library in pure C programs.
-   It turns out that this is at the root of a lot of complexity:
+   Both cases allow a library's source code to embedded within the repository of a downstream application.\ [#headeronly-lib]_
+   The issues checked by each installtest aren't very relevant for libraries consumed in one of these ways.
+   Unfortunately this strategy has several shortcomings:
+
+   * There is a strong temptation for downstream developers to fix the bugs and make improvements to the copy of the code vendored in downstream application's code repository (without contributing them back upstream).
+
+   * This strategy only works for downstream application written in a compatible version of the of the language that was used to write the library.
+     In other words, if we distributed Grackle in this way, it would only be beneficial to simulation codes written in the same version of C++ or newer (at the time of writing, Grackle is written in C++ 17).
+
+   * This strategy doesn't work very well when the library has external dependencies because the dependencies need to be properly communicated with the build system of the downstream application.
+     While this challenge is surmountable with hdf5 or openmp, it won't really work be viable as we start introducing GPU support.
+
+   * Additionally, Grackle's need for data files introduces additional complexity.
+
+3. We attempted to make Grackle easy to use as a static library in pure C programs.
+   It turns out that this choice produced a lot of complexity:
 
    * complications arise because Grackle itself has external dependencies
 
@@ -77,9 +92,9 @@ There are several reasons for our emphasis:
 
    .. note::
 
-      To be clear, the only real alternative alternative to this choice of supporting Grackle as a static libraries is tell people that they are on their own outside of embedded Grackle builds (within external CMake projects).
+      To be clear, the only real alternative to this choice of supporting Grackle as a static libraries is tell people that they are on their own outside of embedded Grackle builds (within external CMake projects).
 
-3. Grackle doesn't have a stable ABI and we attempt to remain somewhat backwards compatible with choices made by the classic build-system.
+4. Grackle doesn't have a stable ABI and we attempt to remain somewhat backwards compatible with choices made by the classic build-system.
    In practice, this translates to creating a ``libgrackle.so`` (or ``libgrackle.dylib`` file on MacOS) symlink during installation that links to a somewhat atypically named shared library during the install step (the source shared library is named to communicate libgrackle ABI incompatability).
    While the logic for doing this is simple, it needs testing (it has held bugs before).
 
@@ -88,18 +103,22 @@ Why not run these tests as part of the core test suite?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 At a surface level, the steps of a single test-case makes it sound like these tests could be part of the core-library test suite.
-In fact, the core-lib tests already involve a set of "compile-tests" that closely resemble the structure of some tests.
+In fact, the core-lib tests already involve a set of "compile-tests" that closely resemble the structure of some installtest test-cases.
 Moreover, other open source projects might try to test this sort of thing by constructing a ctest test-case that explicitly calls the ``ctest`` executable with the ``--build-and-test`` option (an example can be found `here <https://github.com/fmtlib/fmt/blob/dc05bee30755bb993add7ed90845d87c2315f9c6/test/CMakeLists.txt#L166>`__).
 
-There are 2 limitation to this approach:
+There are several limitation to trying to move the tests core-lib test suites.
 
-1. it **only** tests the direct product of a build (if you build Grackle as a shared library, you only test builds against a shared library)
+1. The core-lib test suite **only** tests the direct product of a build (if you build Grackle as a shared library, you only test builds against a shared library).
+   If we moved these tests into the core-lib test suite, then a single invokation of the core-lib suite would would only be able to run a subset of the cases covered by the existing installetest test cases.
+   To run a different subset, you would need to completely recompile Grackle before launching relaunching the core-lib suite.
 
-2. CMake/CTest is designed for tests to occur when targets are found in the build-directly.
-   In practice, most people link against Grackle after it has been fully installed.\ [#link-test]_
+2. CMake/CTest is designed to drive tests involving build-artifacts that are located in the build-directory.
+   Because most people link against Grackle after it has been fully installed, some of the installtest test cases involve consuming Grackle after it has been fully installed.
+   There wouldn't be a good way to make the core-lib test suite directly run these tests.\ [#link-test]_
 
 These limitations aren't usually as much of a concern in external project because (as noted above) there is usually far less emphasis on making the project easy to install/link against, for less experienced developers.
 
+.. _installtest-execution:
 
 Running the tests
 -----------------
@@ -220,50 +239,53 @@ Big Picture Ideas
 
 While designing the test harness, we had the following (somewhat related) guiding principles:
 
-- the tests should not require gracklepy to be installed
+- The tests should not require ``gracklepy`` to be installed.
 
   * Ideologically, these tests pertain to the core library and have nothing to do with ``gracklepy``
 
   * Practically, there's value to being able to run the tests without installing ``gracklepy``.
     Specifically, these tests explicitly check for the exact kinds of issues that would break builds of ``gracklepy``.
 
-- these tests should be portable and easy to run
-  * practically, this means that the runner should use the system provided python installation
+  * In the future, we may want to add an installtest checking the various approaches for installing ``gracklepy``.
+
+- These tests should be portable and easy to run:
+
+  * In practice, this means that the runner should use the system provided python installation.
 
   * currently, the tests just require the installation of docker (while that's a bit of a hurdle, it's :ref:`somewhat unavoidable <installtest-why-docker>`)
 
   * while I'm not opposed to using external python packages in the test harness, we would probably want to retain a separate pyproject.toml file (or at least a REQUIREMENTS.txt file) for the harness.
 
-- retain the capacity to easily integrate these tests with CTest
+- Retain the capacity to easily integrate these tests with CTest
 
-  * if the tests were "integrated," then CTest could be used execute individual or all of the tests.
+  * if the tests were "integrated," then CTest could be used execute individual test-cases or all of the tests.
     This could make the process of launching tests related to the core library more convenient.
 
   * for added clarity, all of our googletest unit tests are integrated with CTest (for that precise reason, the test harness's CLI takes cues from googletest's interface).
 
   * at present, we have not performed this integration, but we still want to retain the capacity to do it in the future.\ [#ctest-integration]_
 
-Why don't we use pytest?
-++++++++++++++++++++++++
+Why don't we use ``pytest``?
+++++++++++++++++++++++++++++
 
 The short answer is: "it wouldn't really help us."
 
 We provide several more detailed reasons:
 
-1. pytest isn't really designed for these kinds of tests; it's primarily designed to test python code.
+1. ``pytest`` isn't really designed for these kinds of tests; it's primarily designed to test python code.
 
-2. Since pytest is extendible, we could definitely extend it to make it work for this purpose.
-   In practice, we would have to write much of the code we already have (using pytest might realistically save us 100-200 lines of codes).
+2. Since ``pytest`` is highly extensible, we could definitely extend it to perform these tests.
+   In practice, we would have to write much of the code we already have (using ``pytest`` might realistically save us 100-200 lines of codes).
 
-3. Using pytest comes with a few drawbacks:
+3. Using ``pytest`` comes with a few drawbacks:
 
-   * Using pytest sacrifices the ability to easily integrate the install-tests with CTest (this may not a big deal, but I'm a little hesitant to lock us into this choice, right now).
+   * Using ``pytest`` sacrifices the ability to easily integrate each installtest with CTest (this may not a big deal, but I'm a little hesitant to lock us into this choice, right now).
 
    * Refactoring the creation of docker images to use the fixture system would take some effort (it's definitely doable).
 
-   * For non-experts, pytest's control flow is fairly tricky to follow.
+   * For non-experts, ``pytest``'s control flow is fairly tricky to follow.
 
-   * Least importantly, as the installtest.py's first external python dependency, using it would require us to give some thought about specifying python dependencies (not a big deal)
+   * Least importantly, adopting ``pytest`` would require us to determine how to track installtest.py's external dependencies (since ``pytest`` would be installtest.py's very first external dependnecy).
 
 
 .. _installtest-why-toml:
@@ -272,7 +294,7 @@ Why we use TOML files for configuring tests
 +++++++++++++++++++++++++++++++++++++++++++
 
 To start, we decided not to define each test in pure python because it's convenient to define the tests in the same directory as the build-configuration files that are used in the tests.
-While we could put a conf.py file in each directory, importing the logic gets a little tricky...
+While we could put a conf.py file in each directory, it's not obvious how to make python load multiple files named conf.py (but I'm confident that it's possible).
 
 This leaves us with picking from a configuration file format.
 The primary contenders are INI, JSON, TOML, and YAML.
@@ -283,6 +305,7 @@ The validity of syntax in an INI depends on the parser, while a common standard 
 
 **Why not JSON?**
 We decided against JSON in order to be able to embed explanatory comments.
+For context, the JSON specification does not support comments.
 
 **Why TOML over YAML?**
 TOML is preferable to YAML for a few reasons:
@@ -331,9 +354,10 @@ We use docker for several reasons:
 By using docker in these tests, we may also eventually see some benefits when it's time to start adding GPU support (we'll probably want to perform test builds in docker containers with CUDA/HIP when developing on platforms without supported GPUs).
 
 Finally it's worth discussing a hypothetical concern: there may be drawbacks to tying these tests to a single external tool.
-We aren't very worried because
+We aren't very worried because:
 
 - If this ever does become an actual problem, we can always add support for using ``podman``, which was designed with the same interface as docker.
+
 - In fact, the `cibuildwheel <https://cibuildwheel.pypa.io/en/stable/>`_ project demonstrated that it's pretty straight-forward to support both tools (the internal logic of installtest.py actually reuses some logic from cibuildwheel).
 
 
@@ -345,7 +369,8 @@ We aren't very worried because
    None of these scenarios is likely.
    In any case, there may be some friction to doing this since Grackle isn't currently ABI-stable.
 
-.. [#h5-abi] If we reach a point where we are confident that most people are using versions of hdf5 that are 2.0 (or are compatible with version 2.0), we could compile and distribute a shared-lib version of Grackle that was linked against version 2.0 (i.e. the earliest version) and it *should* work on any downstream system (barring naming errors).
+.. [#headeronly-lib] Header-only libraries don't necessarily need to be embedded in the source directory of downstream applications.
+   But many of the discussed drawbacks are still relevant.
 
 .. [#link-test] It *is* possible to temporarily overwrite the install-directory to try to temporarily install Grackle to that directory (by invoking ``cmake --install --prefix ``<DEST>``) and then test linking against the contents of that directory.
    However there are 2 wrinkles to that approach.
