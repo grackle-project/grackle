@@ -70,7 +70,6 @@ void grackle::impl::calc_tdust_1d_g(
   std::vector<double> kgrplus(buf_len);
   std::vector<double> sol(buf_len);
   std::vector<double> solplus(buf_len);
-  double slope;
   // holds dust temperature guess from the last root-finding iteration
   std::vector<double> tdustold(buf_len);
   // holds dust temperature guess for the current root-finding iteration
@@ -188,7 +187,7 @@ void grackle::impl::calc_tdust_1d_g(
 
         // todo: convert slope to a local variable (there's no reason for it to
         // be a vector)
-        slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
+        auto slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
 
         tdustold[i] = tdustnow[i];
         // tdustnow(i) = tdustnow(i) - (sol(i) / slope)
