@@ -200,7 +200,7 @@ class ParametrizedProxy(NamedTuple):
         """Returns the corresponding value after substituting parametrized vals"""
         # make sure this method functions in a manner consistent with the description
         # provided PARAMETRIZED_TOML_REQ.description
-        obj = copy.deepcopy(reader[*self.primary_path])
+        obj = copy.deepcopy(reader[self.primary_path])
         is_scalar = () in self.sub_path_map
         if is_scalar:
             obj = [obj]
@@ -267,7 +267,7 @@ def check_parametrized(
     def _rel_children_path_list():
         nonlocal container_stack
         rel_path = container_stack.pop()
-        _container = reader[*(path + rel_path)]
+        _container = reader[path + rel_path]
         if isinstance(_container, list):
             return [rel_path + (i,) for i in range(len(_container))]
         else:
@@ -281,7 +281,7 @@ def check_parametrized(
 
         for rel_path in rel_children_paths:
             abs_path = path + rel_path
-            _tmp = reader[*abs_path]
+            _tmp = reader[abs_path]
 
             if _is_template_string(_tmp, reader, path=abs_path):
                 sub_path_map[rel_path] = None
@@ -289,7 +289,7 @@ def check_parametrized(
                 _abs_path = path + rel_path + ("use-param",)
                 if len(_tmp) > 1:
                     raise ConfReadError("can't have siblings", reader, path=_abs_path)
-                sub_path_map[rel_path] = reader[*_abs_path]
+                sub_path_map[rel_path] = reader[_abs_path]
             elif isinstance(_tmp, (dict, list)):
                 container_stack.append(rel_path)
     if len(sub_path_map) != 0:
@@ -313,7 +313,7 @@ class ConfReader:
         return f"ConfReader({self.file_path!r})"
 
     def __getitem__(self, *keys):
-        if len(keys) == 1 and isinstance(keys[0], tuple):
+        if len(keys) == 1 and isinstance(keys[0], (tuple, list)):
             keys = keys[0]
         return reduce(operator.getitem, keys, self.toml_doc)
 
