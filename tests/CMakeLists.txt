@@ -1,3 +1,4 @@
+add_subdirectory(grtestutils)
 add_subdirectory(unit)
 
 # down below, we add tests for various code-examples
