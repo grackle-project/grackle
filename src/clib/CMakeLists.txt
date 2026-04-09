@@ -86,7 +86,6 @@ add_library(Grackle_Grackle
   index_helper.c
   rate_functions.c
   status_reporting.c status_reporting.h
-  utils.c
 
   # auto-generated C++ source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.cpp
@@ -134,6 +133,7 @@ add_library(Grackle_Grackle
   rate_timestep_g.cpp rate_timestep_g.hpp
   solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
+  self_shielding_err_check.hpp
   set_default_chemistry_parameters.cpp
   solve_rate_cool.cpp solve_rate_cool.hpp
   step_rate_gauss_seidel.hpp
@@ -190,7 +190,6 @@ add_library(Grackle_Grackle
   index_helper.h
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
-  utils.h
 
   # Fortran public headers
   ../include/grackle.def
