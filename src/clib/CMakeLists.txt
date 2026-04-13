@@ -86,7 +86,6 @@ add_library(Grackle_Grackle
   index_helper.c
   rate_functions.c
   status_reporting.c status_reporting.h
-  utils.c
 
   # auto-generated C++ source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.cpp
@@ -94,14 +93,16 @@ add_library(Grackle_Grackle
   auto_general.hpp
 
   # C++ Source (and Private Header Files)
+  api/calculate_cooling_time.cpp
+  api/calculate_dust_temperature.cpp
+  api/calculate_gamma.cpp
+  api/calculate_pressure.cpp
+  api/calculate_temperature.cpp
+  api/set_default_chemistry_parameters.cpp
+  api/solve_chemistry.cpp
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
   calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
-  calculate_cooling_time.cpp
-  calculate_dust_temperature.cpp
-  calculate_gamma.cpp
-  calculate_pressure.cpp
-  calculate_temperature.cpp
   ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_cloudy_g.cpp cool1d_cloudy_g.hpp
@@ -111,9 +112,11 @@ add_library(Grackle_Grackle
   dust_props.hpp
   dust/calc_all_tdust_gasgr_1d_g.cpp dust/calc_all_tdust_gasgr_1d_g.hpp
   dust/calc_tdust_1d_g.cpp dust/calc_tdust_1d_g.hpp
+  dust/gas_heat_cool.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp
   dust/multi_grain_species/calc_grain_size_increment_1d.hpp
+  dust/misc.hpp
   dynamic_api.cpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
@@ -131,9 +134,8 @@ add_library(Grackle_Grackle
   opaque_storage.hpp
   ratequery.cpp ratequery.hpp
   rate_timestep_g.cpp rate_timestep_g.hpp
-  solve_chemistry.cpp
   scale_fields.cpp scale_fields.hpp
-  set_default_chemistry_parameters.cpp
+  self_shielding_err_check.hpp
   solve_rate_cool.cpp solve_rate_cool.hpp
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
@@ -189,7 +191,6 @@ add_library(Grackle_Grackle
   index_helper.h
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
-  utils.h
 
   # Fortran public headers
   ../include/grackle.def
