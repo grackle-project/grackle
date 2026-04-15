@@ -920,7 +920,7 @@ int solve_rate_cool(
           // itmask_nr)
           grackle::impl::step_rate_newton_raphson(
             imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
-            dtit.data(), p2d.data(), tgas.data(), tdust.data(),
+            dtit.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
             spsolvbuf.h2dust, edot.data(), anydust, spsolvbuf.itmask_nr,
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
