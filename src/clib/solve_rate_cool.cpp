@@ -17,9 +17,7 @@
 #include <cstdlib> // std::malloc, std::free
 #include <cstring> // std::memcpy
 #include <vector>
-#include <iostream>
 #include "grackle.h"
-#include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"

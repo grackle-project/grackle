@@ -16,9 +16,8 @@
 #ifndef GRACKLE_SOLVE_RATE_COOL_HPP
 #define GRACKLE_SOLVE_RATE_COOL_HPP
 
-#include "grackle.h"             // gr_float
-#include "fortran_func_decls.h"  // gr_mask_int
-#include "internal_units.hpp"    // InternalGrUnits
+#include "grackle.h"           // gr_float
+#include "internal_units.hpp"  // InternalGrUnits
 #include "support/config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
