@@ -29,6 +29,7 @@
 #include "make_consistent.hpp"
 #include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
+#include "support/config.hpp"
 #include "utils-cpp.hpp"
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
@@ -38,6 +39,8 @@
 #include "cool1d_multi_g.hpp"
 #include "scale_fields.hpp"
 #include "solve_rate_cool.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// overrides the subcycle timestep (for each index in the index-range that is
 /// selected by the given itmask) with the maximum allowed heating/cooling
@@ -501,8 +504,6 @@ static inline void coupled_rt_modify_itmask_(
 }
 
 // -------------------------------------------------------------
-
-namespace grackle::impl {
 
 /// Aggregates buffers used as scratch space in rate-related calculations
 ///
@@ -1024,4 +1025,4 @@ int solve_rate_cool(
   return ierr;
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
