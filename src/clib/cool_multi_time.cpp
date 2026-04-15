@@ -69,7 +69,6 @@ void cool_multi_time(
     // additional structs (or leaving them free-standing) will become more
     // obvious as we transcribe more routines.
 
-    std::vector<double> p2d(my_fields->grid_dimension[0]);
     std::vector<double> tgas(my_fields->grid_dimension[0]);
     std::vector<double> mmw(my_fields->grid_dimension[0]);
     std::vector<double> tdust(my_fields->grid_dimension[0]);
