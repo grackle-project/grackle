@@ -264,8 +264,9 @@ void grackle::impl::cool1d_multi_g(
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
-      p2d[i] = (my_chemistry->Gamma - 1.) * d(i, idx_range.j, idx_range.k) *
-               e(i, idx_range.j, idx_range.k);
+      p2d[i] =
+          calc_pressure(my_chemistry->Gamma, d(i, idx_range.j, idx_range.k),
+                        e(i, idx_range.j, idx_range.k));
     }
   }
 
