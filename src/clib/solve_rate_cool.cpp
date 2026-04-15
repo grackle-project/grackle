@@ -803,6 +803,10 @@ int solve_rate_cool(
         for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           if (itmask[i] != MASK_FALSE)  {
             dtit[i] = huge8;
+            // todo: get rid of this buffer, we only use it in 2 spots at the
+            //       top level of this integrator
+            p2d[i] = calc_pressure(my_chemistry->Gamma, d(i, j, k), e(i, j, k));
+
           }
         }
 
