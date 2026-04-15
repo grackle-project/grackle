@@ -814,7 +814,7 @@ int solve_rate_cool(
         cool1d_multi_g(
           imetal, iter,
           edot.data(),
-          tgas.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+          tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry,
           my_rates, my_fields,

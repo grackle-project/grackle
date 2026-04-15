@@ -111,7 +111,7 @@ void cool_multi_time(
 
       cool1d_multi_g(
         imetal, dummy_iter_arg, edot.data(), tgas.data(),
-        mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+        mmw.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
         my_chemistry, my_rates, my_fields, my_uvb_rates, internalu, idx_range,
         grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
