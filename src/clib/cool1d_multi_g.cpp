@@ -260,16 +260,6 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  // Compute Pressure
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      p2d[i] =
-          calc_pressure(my_chemistry->Gamma, d(i, idx_range.j, idx_range.k),
-                        e(i, idx_range.j, idx_range.k));
-    }
-  }
-
   // Compute Temperature
 
   // If no chemistry, use a tabulated mean molecular weight
@@ -344,7 +334,10 @@ void grackle::impl::cool1d_multi_g(
 
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        tgas[i] = std::fmax(p2d[i] * internalu.utem / mmw[i],
+        double fixed_adiabat_pressure =
+            calc_pressure(my_chemistry->Gamma, d(i, idx_range.j, idx_range.k),
+                          e(i, idx_range.j, idx_range.k));
+        tgas[i] = std::fmax(fixed_adiabat_pressure * internalu.utem / mmw[i],
                             my_chemistry->TemperatureStart);
         mmw[i] = d(i, idx_range.j, idx_range.k) / mmw[i];
       }
@@ -658,6 +651,13 @@ void grackle::impl::cool1d_multi_g(
         Lpri[i] = edot[i];
 
         if (edot[i] != edot[i]) {
+          // purely for historical consistency, we print the approximate
+          // pressure, where gamma isn't corrected for H2
+          // -> frankly, we could probably just skip pressure (but that's a
+          //    topic for another time
+          double fixed_adiabat_pressure = (my_chemistry->Gamma - 1.) *
+                                          d(i, idx_range.j, idx_range.k) *
+                                          e(i, idx_range.j, idx_range.k);
           OMP_PRAGMA_CRITICAL {
             eprintf("NaN in edot[1]:  %d %d %d %g %g %g %g %g %g %g %g %g %g\n",
                     i, idx_range.j, idx_range.k, edot[i],
@@ -667,7 +667,8 @@ void grackle::impl::cool1d_multi_g(
                     HeII(i, idx_range.j, idx_range.k),
                     HeIII(i, idx_range.j, idx_range.k),
                     de(i, idx_range.j, idx_range.k),
-                    d(i, idx_range.j, idx_range.k), tgas[i], p2d[i]);
+                    d(i, idx_range.j, idx_range.k), tgas[i],
+                    fixed_adiabat_pressure);
           }
         }
       }
@@ -1433,6 +1434,13 @@ void grackle::impl::cool1d_multi_g(
                                 dom;
 
         if (edot[i] != edot[i]) {
+          // purely for historical consistency, we print the approximate
+          // pressure, where gamma isn't corrected for H2
+          // -> frankly, we could probably just skip pressure (but that's a
+          //    topic for another time
+          double fixed_adiabat_pressure = (my_chemistry->Gamma - 1.) *
+                                          d(i, idx_range.j, idx_range.k) *
+                                          e(i, idx_range.j, idx_range.k);
           OMP_PRAGMA_CRITICAL {
             eprintf(
                 "NaN in edot[2]:  %d %d %d %g %g %g %g %g %g %g %g %g %g %g "
@@ -1441,8 +1449,8 @@ void grackle::impl::cool1d_multi_g(
                 photogamma(i, idx_range.j, idx_range.k),
                 HI(i, idx_range.j, idx_range.k),
                 de(i, idx_range.j, idx_range.k), d(i, idx_range.j, idx_range.k),
-                e(i, idx_range.j, idx_range.k), p2d[i], tgas[i], dom,
-                internalu.urho, internalu.a_value, mh_local_var);
+                e(i, idx_range.j, idx_range.k), fixed_adiabat_pressure, tgas[i],
+                dom, internalu.urho, internalu.a_value, mh_local_var);
           }
         }
       }
