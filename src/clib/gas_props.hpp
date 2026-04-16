@@ -154,8 +154,6 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
   // and iterate to convergence.
 
   if (my_chemistry->primordial_chemistry == 0) {
-    // fh is H mass fraction in metal-free gas.
-
     if (imetal == 1) {
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
