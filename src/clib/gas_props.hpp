@@ -15,7 +15,6 @@
 #include "calc_temp1d_cloudy_g.hpp"
 #include "grackle.h"
 #include "index_helper.h"
-#include "internal_types.hpp"
 #include "internal_units.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"
