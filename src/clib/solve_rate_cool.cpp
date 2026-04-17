@@ -215,10 +215,8 @@ static void setup_chem_scheme_masks_(
 /// @param k13, k22 1D arrays specifying the previously looked up, local values
 ///    of the k13 and k22 rates.
 /// @param local_rho specifies the local (total) mass density
+/// @param local_specific_eint specifies the local specific internal energy
 /// @param tgas 1D array specifying the temperature
-/// @param p2d 1D array specifying the pressures values. This is computed from
-///    the user-specified nominal adiabatic index value (i.e. no attempts
-///    are made to correct for presence of H2)
 /// @param edot 1D array specifying the time derivative of the internal energy
 ///    density
 /// @param i Specifies the index of the relevant zone in the 1D array. (**BE
@@ -235,8 +233,8 @@ static double calc_Heq_div_dHeqdt_(
   const double* k13,
   const double* k22,
   double local_rho,
+  double local_specific_eint,
   const double* tgas,
-  const double* p2d,
   const double* edot,
   int i
 ) {
@@ -255,10 +253,10 @@ static double calc_Heq_div_dHeqdt_(
   // - We have de/dt.
   // - We need dT/de.
   //
-  // T = (g-1)*p2d*utem/N; tgas == (g-1)(p2d*utem/N)
+  // T = (g-1)*p*utem/N; tgas == (g-1)(p*utem/N)
   // dH_eq / dt = (dH_eq/dT) * (dT/de) * (de/dt)
   // dH_eq / dT (see above; we can calculate the derivative here)
-  // dT / de = utem * (gamma - 1._DKIND) / N == tgas / p2d
+  // dT / de = utem * (gamma - 1._DKIND) / N == tgas / p
   // de / dt = edot
   // Now we use our estimate of dT/de to get the estimated
   // difference in the equilibrium
@@ -283,8 +281,9 @@ static double calc_Heq_div_dHeqdt_(
     std::sqrt(8.*eqk131*eqk221*
               my_chemistry->HydrogenFractionByMass*local_rho+std::pow(eqk131,2.)));
 
+  double p = calc_pressure(my_chemistry->Gamma, local_rho, local_specific_eint);
   double dheq = (std::fabs(heq2-heq1)/(std::exp(eqt2) - std::exp(eqt1)))
-    * (tgas[i]/p2d[i]) * edot[i];
+    * (tgas[i]/p) * edot[i];
   double heq = (-1. / (4.*k22[i])) * (k13[i]-
     std::sqrt(8.*k13[i]*k22[i]*
               my_chemistry->HydrogenFractionByMass*local_rho+std::pow(k13[i],2.)));
@@ -435,7 +434,7 @@ static void set_subcycle_dt_from_chemistry_scheme_(
           my_chemistry, my_rates, dlogtem, logTlininterp_buf,
           kcr_buf.data[CollisionalRxnLUT::k13],
           kcr_buf.data[CollisionalRxnLUT::k22],
-          d(i,j,k), tgas, p2d, edot, i
+          d(i,j,k), e(i,j,k), tgas, edot, i
         );
 
         dtit[i] = std::fmin(dtit[i], 0.1*Heq_div_dHeqdt);
