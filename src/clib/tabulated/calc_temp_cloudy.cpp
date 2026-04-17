@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <vector>
 
+#include "gas_props.hpp"
 #include "grackle.h"
 #include "../fortran_func_decls.h"
 #include "../index_helper.h"
@@ -24,7 +25,6 @@
 #include "../utils-cpp.hpp"
 
 #include "calc_temp_cloudy.hpp"
-#include "calc_temp1d_cloudy.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -33,10 +33,6 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
                       cloudy_data cloudy_primordial,
                       grackle_field_data* my_fields,
                       InternalGrUnits internalu) {
-  // Calc quantities using values specified by internalu
-  const double dom = internalu_calc_dom_(internalu);
-  const double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;
-
   // this assertion is a hint to clang-analyzer about the relationship between
   // `imetal` and whether `metal_density` is a nullptr
   // -> for context, `scale_fields_table` is inlined into this function. Rather
@@ -90,25 +86,15 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
       // construct an index-range corresponding to "i-slice"
       const IndexRange idx_range = make_idx_range_(t, &idx_helper);
 
-      // Initialize iteration mask to true for all cells and compute the mass
-      // density of Hydrogen
-      const double f_H = my_chemistry->HydrogenFractionByMass;
+      // Initialize iteration mask to true for all cells
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask[i] = MASK_TRUE;
-
-        if (imetal == 1) {
-          gr_float metal_free_density = (d(i, idx_range.j, idx_range.k) -
-                                         metal(i, idx_range.j, idx_range.k));
-          rhoH[i] = f_H * metal_free_density;
-        } else {
-          rhoH[i] = f_H * d(i, idx_range.j, idx_range.k);
-        }
       }
 
-      // Calculate temperature and mean molecular weight
-      calc_temp1d_cloudy(rhoH.data(), tgas.data(), mmw.data(), dom, zr, imetal,
-                         itmask.data(), my_chemistry, cloudy_primordial,
-                         my_fields, internalu, idx_range);
+      // calculate the basic gas properties (tgas, mmw, rhoH)
+      basic_gas_props(tgas.data(), mmw.data(), rhoH.data(), imetal,
+                      itmask.data(), my_chemistry, &cloudy_primordial,
+                      my_fields, internalu, idx_range);
 
       // Record the computed temperature values in the output array
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
