@@ -202,7 +202,9 @@ static void setup_chem_scheme_masks_(
 /// Computes the timescale given by `ndens_Heq / (d ndens_Heq / d t)`
 ///
 /// This is used to help compute the subcycle timestep when using a primordial
-/// chemistry solver
+/// chemistry solver. For context, `ndens_Heq` refers to the equilibrium
+/// Hydrogen neutral Hydrogen number density.
+///
 ///
 /// @param my_chemistry holds a number of configuration parameters
 /// @param my_rates holds assorted rate data. In this function, this is being
@@ -222,9 +224,59 @@ static void setup_chem_scheme_masks_(
 /// @param i Specifies the index of the relevant zone in the 1D array. (**BE
 ///    AWARE:** this is a 0-based index)
 ///
-/// @note
-/// The `static` annotation indicates that this function is only visible to the
-/// current translation unit
+/// Calculating `dT/dt`
+/// ===================
+/// Our calculation of `(d/dt)ndens_Heq` makes use of `(d/dt)T`, where `T` is
+/// the gas temperature. It is worth briefly elaborating on this calculation.
+/// Temperature is given by `T = const * (ɣ - 1) * μ * ε / ρ`, where
+/// - `const` is `mH/kboltz`
+/// - `ɣ` is the adiabatic index
+/// - `μ` is the mean molecular weight
+/// - `ε` is the internal energy density (NOT specific internal energy)
+/// - `ρ` is the mass density
+///
+/// From here the time derivative is:
+/// @code{.unparsed}
+/// (dT/dt) = (const * μ * ε / ρ) * (dɣ/dt)
+///      + (const * (ɣ - 1) * ε / ρ) * (dμ/dt)
+///      + (const * (ɣ - 1) * μ / ρ) * (dε/dt)
+///      - (const * (ɣ - 1) * μ * ε / ρ²) * (dρ/dt)
+/// @endcode
+///
+/// In the context of this this calculation,
+/// - we assume `dɣ/dt = 0`. In more detail, `ɣ` actually varies with `T` and
+///   the relative abundance of molecular Hydrogen (compared to all other
+///   monatomic species)
+/// - we assume `dμ/dt = 0`. In more detail, `μ` depends on the species
+///   abundances.
+/// - the value of `dε/dt` is directly provided by the \p edot argument
+/// - we assume `dρ/dt = 0`. If this stops being strictly true in the future
+///   (e.g. if we allow mass transfer between gas and dust), it's probably an
+///   ok assumption for this calculation
+///
+/// These assumptions yield `(dT/dt) = (const * (ɣ - 1) * μ / ρ) * (dε/dt)`.
+/// This is equivalent to:
+/// - `(dT/dt) = (T / ε) * (dε/dt)` OR
+/// - `(dT/dt) = (∂T/∂ε) * (dε/dt)`
+///
+/// Historical Quirk
+/// ================
+/// For historical consistency, we currently approximate `(∂T/∂ε)` as `(∂T/∂p)`
+/// or `(∂T/∂ε)_approx = (∂T/∂p) = T/p`. `p` is the thermal pressure computed
+/// from `p = ε * (ɣ - 1)`. Thus, `(∂T/∂ε)_approx = (∂T/∂ε) / (ɣ - 1)`. Again,
+/// for historical consistency, we set `ɣ` to \ref my_chemistry::Gamma (which
+/// doesn't reflect additional degrees of freedom of molecular Hydrogen).
+///
+/// For the standard value of \ref my_chemistry::Gamma, `5/3`, this function
+/// effectively overestimates `(∂T/∂ε)`, and consequently the value of
+/// `(d/dt) ndens_Heq`, by a factor of 1.5. This reduces the size of the
+/// returned timestep by a factor of 1.5.
+///
+/// @todo
+/// We should really refactor the implementation to properly compute `(∂T/∂ε)`.
+/// If we decide that we want to continue to artifically shrink the timestep (I
+/// suspect that we do), then we should do that explicitly. This will break the
+/// gold standard.
 static double calc_Heq_div_dHeqdt_(
   const chemistry_data* my_chemistry,
   const chemistry_data_storage* my_rates,
@@ -250,16 +302,9 @@ static double calc_Heq_div_dHeqdt_(
   // Heq = (-1._DKIND / (4*k22)) * (k13 - sqrt(8 k13 k22 rho + k13^2))
   // We want to know dH_eq/dt.
   // - We can trivially get dH_eq/dT.
-  // - We have de/dt.
-  // - We need dT/de.
+  // - thus, dH_eq/dt = (dH_eq/dT) * (dT/dt)
   //
-  // T = (g-1)*p*utem/N; tgas == (g-1)(p*utem/N)
-  // dH_eq / dt = (dH_eq/dT) * (dT/de) * (de/dt)
-  // dH_eq / dT (see above; we can calculate the derivative here)
-  // dT / de = utem * (gamma - 1._DKIND) / N == tgas / p
-  // de / dt = edot
-  // Now we use our estimate of dT/de to get the estimated
-  // difference in the equilibrium
+  // The docstring provides details for computing dT/dt
   double eqt2 = std::fmin(std::log(tgas[i]) + 0.1*dlogtem, logTlininterp_buf.t2[i]);
   double eqtdef = (eqt2 - logTlininterp_buf.t1[i])/(logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
   double eqk222 = k22_table[logTlininterp_buf.indixe[i]-1] +
@@ -281,6 +326,10 @@ static double calc_Heq_div_dHeqdt_(
     std::sqrt(8.*eqk131*eqk221*
               my_chemistry->HydrogenFractionByMass*local_rho+std::pow(eqk131,2.)));
 
+  // as noted in the docstring: `(tgas[i]/p)` is an approximation for (dT/dε).
+  // It's almost always an over-estimate.
+  //
+  // see the docstring's todo-note for notes on refactoring
   double p = calc_pressure(my_chemistry->Gamma, local_rho, local_specific_eint);
   double dheq = (std::fabs(heq2-heq1)/(std::exp(eqt2) - std::exp(eqt1)))
     * (tgas[i]/p) * edot[i];
