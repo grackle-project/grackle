@@ -21,7 +21,6 @@ OBJS_CONFIG_LIB = \
         api/set_default_chemistry_parameters.lo \
         api/solve_chemistry.lo \
         tabulated/calc_temp1d_cloudy_g.lo \
-        tabulated/calc_temp_cloudy.lo \
         collisional_rate_props.lo \
         tabulated/cool1d_cloudy.lo \
         tabulated/cool1d_cloudy_old_tables.lo \
