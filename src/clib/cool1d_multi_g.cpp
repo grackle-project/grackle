@@ -257,11 +257,6 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  // calculate the basic gas properties (tgas, mmw, rhoH)
-  basic_gas_props(tgas, mmw, rhoH, imetal, itmask, my_chemistry,
-                  &my_rates->cloudy_primordial, my_fields, internalu,
-                  idx_range);
-
   // Skip if below the temperature floor
 
   if (my_chemistry->use_temperature_floor == 1) {

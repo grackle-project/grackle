@@ -33,10 +33,8 @@ namespace grackle::impl {
 /// @param[in] iter The current iteration (the first iteration is `1`)
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range
-/// @param[out] tgas 1D array to hold the computed gas temperatures in the
-///     @p idx_range
-/// @param[out] mmw 1D array to hold the computed mean molecular weight
-///     in the @p idx_range
+/// @param[in] tgas 1D array of gas temperatures for the @p idx_range
+/// @param[in] mmw 1D array of mean molecular weights for the @p idx_range
 /// @param[out] tdust 1D array to hold the computed dust temperatures at
 ///     each location in the @p index range. This **ONLY** used when using
 ///     variants of the classic 1-field dust-model or using the variant of the
@@ -47,8 +45,7 @@ namespace grackle::impl {
 /// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
 ///     location in the index range. In other words, this holds the dust mass
 ///     per unit gas mass (only used in certain configuration)
-/// @param[out] rhoH 1D array to hold the computed Hydrogen mass density
-///     for the @p idx_range
+/// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
 /// @param[out] itmask_metal

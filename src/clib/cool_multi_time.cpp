@@ -106,6 +106,12 @@ void cool_multi_time(
         itmask[i] = MASK_TRUE;
       }
 
+      // calculate the basic gas properties (tgas, mmw, rhoH)
+      GRIMPL_NS::basic_gas_props(tgas.data(), mmw.data(), rhoH.data(), imetal,
+                                 itmask.data(), my_chemistry,
+                                 &my_rates->cloudy_primordial, my_fields,
+                                 internalu, idx_range);
+
       // Compute the cooling rate
       int dummy_iter_arg=1;
 

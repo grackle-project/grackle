@@ -9,7 +9,7 @@
 #include "cool1d_multi_g.hpp"
 #include "chemistry_solver_funcs.hpp"
 #include "dust_props.hpp"
-#include "fortran_func_wrappers.hpp"
+#include "gas_props.hpp"
 #include "grackle.h"
 #include "grackle_macros.h" // GRACKLE_FREE
 #include "index_helper.h"
@@ -470,10 +470,16 @@ void derivatives(
   copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rhosp, 1);
   pack.fields.internal_energy = &eint[0];
 
-  // Compute the cooling rate, tgas, tdust, and metallicity for this row
-
   if (pack.local_edot_handling == 1) {
 
+    // calculate the basic gas properties (tgas, mmw, rhoH)
+    basic_gas_props(pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
+                    pack.other_scratch_buf.rhoH, pack.fwd_args.imetal,
+                    pack.other_scratch_buf.itmask, my_chemistry,
+                    &my_rates->cloudy_primordial, &pack.fields, internalu,
+                    pack.idx_range_1_element);
+
+    // compute cooling rate, tdust, and metallicity for this row
     cool1d_multi_g(
       pack.fwd_args.imetal, pack.fwd_args.iter,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
