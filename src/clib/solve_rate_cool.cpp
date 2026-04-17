@@ -318,9 +318,6 @@ static double calc_Heq_div_dHeqdt_(
 /// @param[in] ddom specifies precomputed product of mass density and the
 ///    `dom` quantity for each location in `idx_range`
 /// @param[in] tgas specifies the gas temperatures for the `idx_range`
-/// @param[in] p2d specifies the pressures for the `idx_range`. This is
-///    computed user-specified nominal adiabatic index value (i.e. no attempts
-///    are made to correct for presence of H2)
 /// @param[in] edot specifies the time derivative of the internal energy
 ///    density for the `idx_range`.
 /// @param[in] my_chemistry holds a number of configuration parameters
@@ -345,7 +342,7 @@ static void set_subcycle_dt_from_chemistry_scheme_(
   const gr_mask_type* itmask_gs, const gr_mask_type* itmask_nr,
   const int* imp_eng, double* dedot, double* HIdot,
   const double* dedot_prev, const double* HIdot_prev,
-  const double* ddom, const double* tgas, const double* p2d, const double* edot,
+  const double* ddom, const double* tgas, const double* edot,
   const chemistry_data* my_chemistry, const chemistry_data_storage* my_rates,
   double dlogtem,
   const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
@@ -894,7 +891,7 @@ int solve_rate_cool(
             spsolvbuf.itmask_nr, spsolvbuf.imp_eng,
             spsolvbuf.dedot, spsolvbuf.HIdot,
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev,
-            spsolvbuf.ddom, tgas.data(), p2d.data(), edot.data(),
+            spsolvbuf.ddom, tgas.data(), edot.data(),
             my_chemistry, my_rates, dlogtem, logTlininterp_buf, my_fields,
             spsolvbuf.kcr_buf
           );
