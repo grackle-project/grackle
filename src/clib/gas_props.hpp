@@ -127,14 +127,12 @@ inline double self_consistent_Tgas(double tgas0, double nH2, double n_other,
 /// @param[in] my_fields Specifies the field data.
 /// @param[in] internalu Specifies Grackle's internal unit-system
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] zr Current redshift
 inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
                             const gr_mask_type* itmask,
                             chemistry_data* my_chemistry,
                             cloudy_data* primordial_cloudy_data,
                             grackle_field_data* my_fields,
-                            InternalGrUnits internalu, IndexRange idx_range,
-                            double zr) {
+                            InternalGrUnits internalu, IndexRange idx_range) {
   // construct 3d views
   View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                             my_fields->grid_dimension[1],
@@ -148,6 +146,7 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
 
   // get the appropriate constant
   const double dom = internalu_calc_dom_(internalu);
+  const double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;
 
   // If no chemistry, use a tabulated mean molecular weight
   // and iterate to convergence.
