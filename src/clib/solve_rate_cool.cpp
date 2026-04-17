@@ -56,25 +56,39 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in]     itmask Specifies the `idx_range`'s iteration-mask for this
 ///    calculation
 /// @param[in]     tgas specifies the gas temperatures for the `idx_range`
-/// @param[in]     p2d specifies the pressures for the `idx_range`. This is
-///    computed user-specified nominal adiabatic index value (i.e. no attempts
-///    are made to correct for presence of H2)
 /// @param[in,out] edot specifies the time derivative of internal energy
 ///    density for each location in `idx_range`. This may be overwritten to
 ///    enforce the floor.
+/// @param[in] my_chemistry holds a number of configuration parameters
+/// @param[in] my_fields specifies the field data
 static void enforce_max_heatcool_subcycle_dt_(
   double* dtit, IndexRange idx_range, double dt, const double* ttot,
-  const gr_mask_type* itmask, const double* tgas, const double* p2d,
-  double* edot, const chemistry_data* my_chemistry
+  const gr_mask_type* itmask, const double* tgas, double* edot,
+  const chemistry_data* my_chemistry, const grackle_field_data* my_fields
 ) {
+
+  View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                            my_fields->grid_dimension[1],
+                            my_fields->grid_dimension[2]);
+  View<const gr_float***> specific_eint(my_fields->internal_energy,
+                                        my_fields->grid_dimension[0],
+                                        my_fields->grid_dimension[1],
+                                        my_fields->grid_dimension[2]);
+
+  const int j = idx_range.j;
+  const int k = idx_range.k;
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
 
     if (itmask[i] != MASK_FALSE) {
-      // Set energy per unit volume of this cell based in the pressure
-      // (the gamma used here is the right one even for H2 since p2d
-      //  is calculated with this gamma).
-      double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.), tiny8);
+      // Calculate energy per unit volume
+      // 
+      // TODO: start using following snippet (and update gold-standard)
+      // double energy = std::fmax(double{d(i, j, k) * specific_eint(i, j, k)},
+      //                           tiny8);
+      double p = calc_pressure(
+        my_chemistry->Gamma, d(i, j, k), specific_eint(i, j, k));
+      double energy = std::fmax(p/(my_chemistry->Gamma-1.), tiny8);
 
       // If the temperature is at the bottom of the temperature look-up
       // table and edot < 0, then shut off the cooling.
@@ -896,7 +910,7 @@ int solve_rate_cool(
         // -> zones that will use Newton-Raphson scheme are ignored
         enforce_max_heatcool_subcycle_dt_(
           dtit.data(), idx_range, dt, ttot.data(), energy_itmask, tgas.data(),
-          p2d.data(), edot.data(), my_chemistry
+          edot.data(), my_chemistry, my_fields
         );
 
         // Update total and gas energy
