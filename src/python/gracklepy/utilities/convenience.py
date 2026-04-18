@@ -12,16 +12,27 @@
 ########################################################################
 
 import numpy as np
+import re
+import roman
 import sys
 
 from gracklepy.fluid_container import \
     _element_masses, \
     FluidContainer
 
-from gracklepy.utilities.atomic import solar_abundance
+from gracklepy.utilities.atomic import \
+    approximate_atomic_mass, \
+    atomic_number, \
+    solar_abundance
 from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
+
+solar_mass_abundance = {element: solar_abundance[element] *
+                        approximate_atomic_mass[element]
+                        for element in solar_abundance
+                        if element not in ("H", "He", "D")}
+solar_metal_mass = sum(solar_mass_abundance.values())
 
 def check_convergence(fc1, fc2, fields=None, tol=0.01):
     "Check for fields to be different by less than tol."
@@ -41,6 +52,57 @@ def check_convergence(fc1, fc2, fields=None, tol=0.01):
         sys.stderr.write("max change - %5s: %.10e." % (max_field, max_val))
         return False
     return True
+
+def _get_appropriate_ion_field(fc, element, state):
+    """
+    Return the most ionized atomic species available for an element.
+    """
+
+    # this is entirely for deuterium, which we are ignoring
+    if element not in atomic_number:
+        return None
+
+    if state == "neutral":
+        order = range(atomic_number[element] + 2)
+    elif state == "ionized":
+        order = range(atomic_number[element] + 1, 0, -1)
+    else:
+        raise ValueError("State must be either neutral or ionized.")
+
+    for i in order:
+        fname = f"{element}{roman.toRoman(i)}_density"
+        if fname in fc.density_fields:
+            return fname
+
+    # If we are tracking a field to represent the entire element, return that.
+    fname = f"{element}_density"
+    if fname in fc.density_fields:
+        return fname
+
+    raise ValueError(f"Element {element} not in fluid container")
+
+def _setup_ion_fields(fc, state_vals, element_densities, state):
+    """
+    Initialize density fields for the ions that will the dominant
+    species for either a neutral or ionized state.
+    """
+
+    state_vals["e_density"] = 0
+    for el in element_densities:
+        fname = _get_appropriate_ion_field(fc, el, state)
+        state_vals[fname] = element_densities[el]
+
+        # add to electron density
+        if state == "ionized":
+            reg = re.search(f"{el}(\w+)_density", fname)
+            # skip density fields representing the whole element
+            if reg is None:
+                continue
+
+            ion = reg.groups()[0]
+            charge = roman.fromRoman(ion) - 1
+            state_vals["e_density"] += element_densities[el] * charge / \
+              approximate_atomic_mass[el]
 
 def _setup_inj_pathway_fields(state_vals: dict[str, float],
                               inj_pathway_yield_field_names: list[str]):
@@ -143,23 +205,13 @@ def setup_fluid_container(my_chemistry,
         if not isinstance(temperature, np.ndarray):
             temperature = np.array([temperature])
         n_points = temperature.size
-
     fc = FluidContainer(my_chemistry, n_points)
     fh = my_chemistry.HydrogenFractionByMass
     d2h = my_chemistry.DeuteriumToHydrogenRatio
 
-    metal_free = 1 - metal_mass_fraction
-    H_total = fh * metal_free
-    He_total = (1 - fh) * metal_free
-    # someday, maybe we'll include D in the total
-    D_total = H_total * d2h
-
-    metal_species = ["C", "O", "Mg", "Al", "Si", "S", "Fe"]
-    metal_totals = {el: metal_mass_fraction * solar_abundance[el]
-                    for el in metal_species}
-
     fc_density = density / my_chemistry.density_units
     tiny_density = tiny_number * fc_density
+    metal_free = 1 - metal_mass_fraction
 
     state_vals = {
         "density": fc_density,
@@ -167,44 +219,23 @@ def setup_fluid_container(my_chemistry,
         "dust_density": dust_to_gas_ratio * fc_density
     }
 
+    element_densities = {
+        "H": fh * metal_free,
+        "He": (1 - fh) * metal_free,
+    }
+    # someday, maybe we'll include D in the total
+    element_densities["D"] = element_densities["H"] * d2h
+    for el in element_densities:
+        element_densities[el] *= state_vals["density"]
+
+    metal_elements = ["C", "O", "Mg", "Al", "Si", "S", "Fe"]
+    metal_densities = {el: state_vals["metal_density"] *
+                           solar_mass_abundance[el] / solar_metal_mass
+                       for el in metal_elements}
+    element_densities.update(metal_densities)
+
     _setup_inj_pathway_fields(state_vals, fc.inject_pathway_density_yield_fields)
-
-    if state == "neutral":
-        state_vals["HI_density"] = H_total * fc_density
-        state_vals["HeI_density"] = He_total * fc_density
-        state_vals["DI_density"] = D_total * fc_density
-        for el in metal_totals:
-            my_ion = f"{el}I_density"
-            if my_ion in fc.density_fields:
-                state_vals[my_ion] = metal_totals[el]
-    elif state == "ionized":
-        state_vals["HII_density"] = H_total * fc_density
-        state_vals["HeIII_density"] = He_total * fc_density
-        state_vals["DII_density"] = D_total * fc_density
-        # not exactly fully ionized. Are we conserving atomic metals?
-        for el in metal_totals:
-            my_ion = f"{el}II_density"
-            # if we are following an ionized version, put the density there
-            if my_ion in fc.density_fields:
-                state_vals[my_ion] = metal_totals[el]
-        # ignore HeII since we'll set it to tiny
-        state_vals["e_density"] = state_vals["HII_density"] + \
-          state_vals["HeIII_density"] / 2
-        if my_chemistry.metal_chemistry > 0:
-            # This assumes that the singly ionized state is the highest
-            # ion we are tracking for any metal.
-            state_vals["e_density"] += \
-              sum([state_vals[f"{el}II_density"] / _element_masses[el]
-                   for el in metal_species
-                   if f"{el}II_density" in fc.density_fields])
-    else:
-        raise ValueError("State must be either neutral or ionized.")
-
-    # Assign any metals that we are just following as tracers.
-    # For these, we will not follow any ions.
-    for el in metal_totals:
-        if f"{el}I_density" not in fc.density_fields:
-            state_vals[f"{el}_density"] = metal_totals[el]
+    _setup_ion_fields(fc, state_vals, element_densities, state)
 
     for field in fc.density_fields:
         fc[field][:] = state_vals.get(field, tiny_density)
