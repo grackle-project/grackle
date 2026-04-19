@@ -12,11 +12,11 @@
 #ifndef GRACKLE_GAS_PROPS_HPP
 #define GRACKLE_GAS_PROPS_HPP
 
-#include "calc_temp1d_cloudy_g.hpp"
 #include "grackle.h"
 #include "index_helper.h"
 #include "internal_units.hpp"
 #include "support/config.hpp"
+#include "tabulated/calc_temp1d_cloudy_g.hpp"
 #include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {

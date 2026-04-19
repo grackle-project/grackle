@@ -24,7 +24,7 @@
 #include "utils-cpp.hpp"
 
 #include "calc_temp_cloudy.hpp"
-#include "calc_temp1d_cloudy_g.hpp"
+#include "tabulated/calc_temp1d_cloudy_g.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 

@@ -16,10 +16,10 @@
 #include <cstdio>
 #include <vector>
 
-#include "fortran_func_decls.h"
-#include "fortran_func_wrappers.hpp"
+#include "../fortran_func_decls.h"
+#include "../fortran_func_wrappers.hpp"
 #include "grackle.h"
-#include "utils-cpp.hpp"
+#include "../utils-cpp.hpp"
 
 #include "calc_temp1d_cloudy_g.hpp"
 

@@ -1,18 +1,18 @@
 // See LICENSE file for license and copyright information
 
-/// @file calc_temp1d_cloudy_g-cpp.h
+/// @file
 /// @brief Declares signature of calc_temp1d_cloudy_g
 
 // This file was initially generated automatically during conversion of the
 // calc_temp1d_cloudy_g function from FORTRAN to C++
 
-#ifndef CALC_TEMP1D_CLOUDY_G_HPP
-#define CALC_TEMP1D_CLOUDY_G_HPP
+#ifndef TABULATED_CALC_TEMP1D_CLOUDY_G_HPP
+#define TABULATED_CALC_TEMP1D_CLOUDY_G_HPP
 
-#include "grackle.h"             // gr_float
-#include "fortran_func_decls.h"  // gr_mask_int
-#include "index_helper.h"
-#include "internal_units.hpp"
+#include "grackle.h"                // gr_float
+#include "../fortran_func_decls.h"  // gr_mask_int
+#include "../index_helper.h"
+#include "../internal_units.hpp"
 
 namespace grackle::impl {
 
@@ -48,4 +48,4 @@ void calc_temp1d_cloudy_g(const double* rhoH, double* tgas, double* mmw,
 
 }  // namespace grackle::impl
 
-#endif /* CALC_TEMP1D_CLOUDY_G_HPP */
+#endif /* TABULATED_CALC_TEMP1D_CLOUDY_G_HPP */

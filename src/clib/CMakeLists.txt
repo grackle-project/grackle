@@ -101,7 +101,6 @@ add_library(Grackle_Grackle
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
   calc_temp_cloudy.cpp calc_temp_cloudy.hpp
-  calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
   ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_cloudy_g.cpp cool1d_cloudy_g.hpp
@@ -145,6 +144,7 @@ add_library(Grackle_Grackle
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
   support/SimpleVec.hpp
+  tabulated/calc_temp1d_cloudy_g.cpp tabulated/calc_temp1d_cloudy_g.hpp
   tabulated/initialize_cloudy_data.cpp tabulated/initialize_cloudy_data.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
