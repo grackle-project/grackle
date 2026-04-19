@@ -23,11 +23,14 @@
 
 #include "calc_temp1d_cloudy.hpp"
 
-void grackle::impl::calc_temp1d_cloudy(
-    const double* rhoH, double* tgas, double* mmw, double dom, double zr,
-    int imetal, const gr_mask_type* itmask, chemistry_data* my_chemistry,
-    cloudy_data cloudy_table, grackle_field_data* my_fields,
-    InternalGrUnits internalu, IndexRange idx_range) {
+namespace GRIMPL_NAMESPACE_DECL {
+
+void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
+                        double dom, double zr, int imetal,
+                        const gr_mask_type* itmask,
+                        chemistry_data* my_chemistry, cloudy_data cloudy_table,
+                        grackle_field_data* my_fields,
+                        InternalGrUnits internalu, IndexRange idx_range) {
   // General Arguments
 
   grackle::impl::View<gr_float***> d(
@@ -202,3 +205,5 @@ void grackle::impl::calc_temp1d_cloudy(
 
   return;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL

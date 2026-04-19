@@ -13,8 +13,9 @@
 #include "../fortran_func_decls.h"  // gr_mask_int
 #include "../index_helper.h"
 #include "../internal_units.hpp"
+#include "../support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Calculate temperature and mean molecular weight for tabulated cooling.
 ///
@@ -45,6 +46,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
                         grackle_field_data* my_fields,
                         InternalGrUnits internalu, IndexRange idx_range);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* TABULATED_CALC_TEMP1D_CLOUDY_G_HPP */
