@@ -1,19 +1,27 @@
-// See LICENSE file for license and copyright information
-
-/// @file cool1d_cloudy_old_tables_g-cpp.h
-/// @brief Declares signature of cool1d_cloudy_old_tables_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares signature of cool1d_cloudy_old_tables
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // cool1d_cloudy_old_tables_g function from FORTRAN to C++
 
-#ifndef COOL1D_CLOUDY_OLD_TABLES_G_HPP
-#define COOL1D_CLOUDY_OLD_TABLES_G_HPP
+#ifndef TABULATED_COOL1D_CLOUDY_OLD_TABLES_HPP
+#define TABULATED_COOL1D_CLOUDY_OLD_TABLES_HPP
 
-#include "grackle.h"             // gr_float
-#include "fortran_func_decls.h"  // gr_mask_int
-#include "index_helper.h"        // IndexRange
+#include "grackle.h"                // gr_float
+#include "../fortran_func_decls.h"  // gr_mask_int
+#include "../index_helper.h"        // IndexRange
+#include "../support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Solve cloudy cooling by interpolating from the data. This version uses
 /// tables formatted for the original Cloudy cooling functionality in Enzo.
@@ -44,12 +52,12 @@ namespace grackle::impl {
 /// written by: Britton Smith, 2009
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
-void cool1d_cloudy_old_tables_g(
+void cool1d_cloudy_old_tables(
     const double* rhoH, double* metallicity, const double* logtem, double* edot,
     double comp2, double dom, double zr, const gr_mask_type* itmask,
     chemistry_data* my_chemistry, cloudy_data cloudy_table, gr_float* density,
     gr_float* e_density, grackle_field_data* my_fields, IndexRange idx_range);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* COOL1D_CLOUDY_OLD_TABLES_G_HPP */
+#endif /* TABULATED_COOL1D_CLOUDY_OLD_TABLES_HPP */

@@ -1,20 +1,21 @@
 // See LICENSE file for license and copyright information
 
-/// @file calc_temp1d_cloudy_g-cpp.h
+/// @file
 /// @brief Declares signature of calc_temp1d_cloudy_g
 
 // This file was initially generated automatically during conversion of the
 // calc_temp1d_cloudy_g function from FORTRAN to C++
 
-#ifndef CALC_TEMP1D_CLOUDY_G_HPP
-#define CALC_TEMP1D_CLOUDY_G_HPP
+#ifndef TABULATED_CALC_TEMP1D_CLOUDY_G_HPP
+#define TABULATED_CALC_TEMP1D_CLOUDY_G_HPP
 
-#include "grackle.h"             // gr_float
-#include "fortran_func_decls.h"  // gr_mask_int
-#include "index_helper.h"
-#include "internal_units.h"
+#include "grackle.h"                // gr_float
+#include "../fortran_func_decls.h"  // gr_mask_int
+#include "../index_helper.h"
+#include "../internal_units.hpp"
+#include "../support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Calculate temperature and mean molecular weight for tabulated cooling.
 ///
@@ -38,14 +39,13 @@ namespace grackle::impl {
 /// written by: Britton Smith, 2015
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
-void calc_temp1d_cloudy_g(const double* rhoH, double* tgas, double* mmw,
-                          double dom, double zr, int imetal,
-                          const gr_mask_type* itmask,
-                          chemistry_data* my_chemistry,
-                          cloudy_data cloudy_table,
-                          grackle_field_data* my_fields,
-                          InternalGrUnits internalu, IndexRange idx_range);
+void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
+                        double dom, double zr, int imetal,
+                        const gr_mask_type* itmask,
+                        chemistry_data* my_chemistry, cloudy_data cloudy_table,
+                        grackle_field_data* my_fields,
+                        InternalGrUnits internalu, IndexRange idx_range);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* CALC_TEMP1D_CLOUDY_G_HPP */
+#endif /* TABULATED_CALC_TEMP1D_CLOUDY_G_HPP */
