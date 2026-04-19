@@ -6,15 +6,15 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares the cool1d_cloudy_g function
+/// Declares the cool1d_cloudy function
 ///
 //===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // cool1d_cloudy_g function from FORTRAN to C++
 
-#ifndef TABULATED_COOL1D_CLOUDY_G_HPP
-#define TABULATED_COOL1D_CLOUDY_G_HPP
+#ifndef TABULATED_COOL1D_CLOUDY_HPP
+#define TABULATED_COOL1D_CLOUDY_HPP
 
 #include "grackle.h"                // gr_float
 #include "../fortran_func_decls.h"  // gr_mask_int
@@ -48,12 +48,12 @@ namespace grackle::impl {
 /// written by: Britton Smith, 2009
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
-void cool1d_cloudy_g(const double* rhoH, const double* metallicity,
-                     const double* logtem, double* edot, double comp2,
-                     double dom, double zr, int icmbTfloor, int iClHeat,
-                     int iZscale, const gr_mask_type* itmask,
-                     cloudy_data cloudy_table, IndexRange idx_range);
+void cool1d_cloudy(const double* rhoH, const double* metallicity,
+                   const double* logtem, double* edot, double comp2, double dom,
+                   double zr, int icmbTfloor, int iClHeat, int iZscale,
+                   const gr_mask_type* itmask, cloudy_data cloudy_table,
+                   IndexRange idx_range);
 
 }  // namespace grackle::impl
 
-#endif /* TABULATED_COOL1D_CLOUDY_G_HPP */
+#endif /* TABULATED_COOL1D_CLOUDY_HPP */

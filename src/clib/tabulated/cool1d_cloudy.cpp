@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the cool1d_cloudy_g function
+/// Implements the cool1d_cloudy function
 ///
 //===----------------------------------------------------------------------===//
 
@@ -21,13 +21,15 @@
 #include "../fortran_func_wrappers.hpp"
 #include "../utils-cpp.hpp"
 
-#include "cool1d_cloudy_g.hpp"
+#include "cool1d_cloudy.hpp"
 
-void grackle::impl::cool1d_cloudy_g(
-    const double* rhoH, const double* metallicity, const double* logtem,
-    double* edot, double comp2, double dom, double zr, int icmbTfloor,
-    int iClHeat, int iZscale, const gr_mask_type* itmask,
-    cloudy_data cloudy_table, IndexRange idx_range) {
+void grackle::impl::cool1d_cloudy(const double* rhoH, const double* metallicity,
+                                  const double* logtem, double* edot,
+                                  double comp2, double dom, double zr,
+                                  int icmbTfloor, int iClHeat, int iZscale,
+                                  const gr_mask_type* itmask,
+                                  cloudy_data cloudy_table,
+                                  IndexRange idx_range) {
   // Locals
 
   int i, get_heat;
