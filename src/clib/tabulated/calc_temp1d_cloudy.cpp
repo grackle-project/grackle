@@ -55,7 +55,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
 
   int i, ti;
   double inv_log10, muold, munew;
-  double dclPar[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION] = {};
   long long end_int;
 
   // Slice locals
@@ -71,23 +70,8 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   inv_log10 = 1. / std::log(10.);
 
   // Calculate parameter value slopes
-
-  dclPar[0] =
-      (cloudy_table.grid_parameters[0][cloudy_table.grid_dimension[0] - 1] -
-       cloudy_table.grid_parameters[0][0]) /
-      (double)(cloudy_table.grid_dimension[0] - 1);
-  if (cloudy_table.grid_rank > 1) {
-    dclPar[1] =
-        (cloudy_table.grid_parameters[1][cloudy_table.grid_dimension[1] - 1] -
-         cloudy_table.grid_parameters[1][0]) /
-        (double)(cloudy_table.grid_dimension[1] - 1);
-  }
-  if (cloudy_table.grid_rank > 2) {
-    dclPar[2] =
-        (cloudy_table.grid_parameters[2][cloudy_table.grid_dimension[2] - 1] -
-         cloudy_table.grid_parameters[2][0]) /
-        (double)(cloudy_table.grid_dimension[2] - 1);
-  }
+  const std::array<double, tabulated_detail::MAX_RANK> dclPar =
+      tabulated_detail::param_deltas(cloudy_table);
 
   // Calculate index for redshift dimension
   const long long zindex = tabulated_detail::find_zindex(zr, cloudy_table);
