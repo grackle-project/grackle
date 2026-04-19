@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
 /// @file
-/// @brief Declares signature of cool1d_cloudy_old_tables_g
+/// Implements the cool1d_cloudy_old_tables_g function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // cool1d_cloudy_old_tables_g function from FORTRAN to C++
