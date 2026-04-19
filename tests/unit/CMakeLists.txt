@@ -1,6 +1,7 @@
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
-add_executable(testFrozenKeyIdxBiMap support/test_unit_FrozenKeyIdxBiMap.cpp)
+add_executable(testFrozenKeyIdxBiMap
+  support/test_unit_hash.cpp support/test_unit_FrozenKeyIdxBiMap.cpp)
 target_link_libraries(testFrozenKeyIdxBiMap testdeps)
 gtest_discover_tests(testFrozenKeyIdxBiMap)
 
@@ -30,7 +31,7 @@ gtest_discover_tests(runVisitorTests)
 # -> one might argue that these are better classified as integration or
 #    end-to-end tests than as unit-test
 add_executable(runApiTests
-  test_ghost_zone.cpp test_api_ratequery.cpp test_dynamic_chem_param_api.cpp)
+  test_ghost_zone.cpp test_api_ratequery.cpp test_dynamic_chem_param_api.cpp test_inject_pathway.cpp)
 target_link_libraries(runApiTests testdeps)
 gtest_discover_tests(runApiTests)
 

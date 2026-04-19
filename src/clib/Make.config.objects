@@ -13,11 +13,13 @@
 
 OBJS_CONFIG_LIB = \
         $(AUTOGEN_DIR)/auto_general.lo \
-        calculate_cooling_time.lo \
-        calculate_dust_temperature.lo \
-        calculate_gamma.lo \
-        calculate_pressure.lo \
-        calculate_temperature.lo \
+        api/calculate_cooling_time.lo \
+        api/calculate_dust_temperature.lo \
+        api/calculate_gamma.lo \
+        api/calculate_pressure.lo \
+        api/calculate_temperature.lo \
+        api/set_default_chemistry_parameters.lo \
+        api/solve_chemistry.lo \
         calc_temp1d_cloudy_g.lo \
         calc_temp_cloudy_g.lo \
         collisional_rate_props.lo \
@@ -27,6 +29,7 @@ OBJS_CONFIG_LIB = \
         cool_multi_time_g.lo \
         dust/calc_all_tdust_gasgr_1d_g.lo \
         dust/calc_grain_size_increment_species_1d.lo \
+        dust/calc_tdust_1d_g.lo \
         dust/grain_species_info.lo \
         dynamic_api.lo \
         grackle_units.lo \
@@ -42,8 +45,6 @@ OBJS_CONFIG_LIB = \
         rate_timestep_g.lo \
         make_consistent.lo \
         scale_fields.lo \
-        set_default_chemistry_parameters.lo \
-        solve_chemistry.lo \
         solve_rate_cool.lo \
         status_reporting.lo \
         update_UVbackground_rates.lo \
@@ -54,6 +55,5 @@ OBJS_CONFIG_LIB = \
         ratequery.lo \
         gaussj_g.lo \
         support/h5io.lo \
-        utils.lo \
         utils-cpp.lo \
         internal_types.lo
