@@ -17,14 +17,14 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_decls.h"
-#include "index_helper.h"
-#include "scale_fields.hpp"
-#include "support/config.hpp"
-#include "utils-cpp.hpp"
+#include "../fortran_func_decls.h"
+#include "../index_helper.h"
+#include "../scale_fields.hpp"
+#include "../support/config.hpp"
+#include "../utils-cpp.hpp"
 
 #include "calc_temp_cloudy.hpp"
-#include "tabulated/calc_temp1d_cloudy.hpp"
+#include "calc_temp1d_cloudy.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
