@@ -121,7 +121,6 @@ add_library(Grackle_Grackle
   gas_props.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
-  initialize_cloudy_data.cpp initialize_cloudy_data.hpp
   initialize_rates.cpp initialize_rates.hpp
   initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp
   inject_model/grain_metal_inject_pathways.hpp
@@ -146,6 +145,7 @@ add_library(Grackle_Grackle
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
   support/SimpleVec.hpp
+  tabulated/initialize_cloudy_data.cpp tabulated/initialize_cloudy_data.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp

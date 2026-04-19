@@ -16,10 +16,10 @@
 #include <cstring> // std::strcmp
 #include "hdf5.h"
 #include "grackle.h"
-#include "internal_units.hpp"
+#include "../internal_units.hpp"
 #include "initialize_cloudy_data.hpp"
-#include "support/h5io.hpp"
-#include "status_reporting.h"
+#include "../support/h5io.hpp"
+#include "../status_reporting.h"
 
 #define SMALL_LOG_VALUE (-99.0)
 #define MAX_PARAMETER_NAME_LENGTH (512)

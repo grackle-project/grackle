@@ -32,7 +32,6 @@ src/clib/index_helper.h
 src/clib/init_misc_species_cool_rates.cpp
 src/clib/initialize_UVbackground_data.cpp
 src/clib/initialize_chemistry_data.cpp
-src/clib/initialize_cloudy_data.cpp
 src/clib/initialize_dust_yields.cpp
 src/clib/initialize_rates.cpp
 src/clib/internal_types.hpp
@@ -45,6 +44,7 @@ src/clib/status_reporting.c
 src/clib/status_reporting.h
 src/clib/step_rate_gauss_seidel.hpp
 src/clib/step_rate_newton_raphson.hpp
+src/clib/tabulated/initialize_cloudy_data.cpp
 src/clib/time_deriv_0d.hpp
 src/clib/update_UVbackground_rates.cpp
 src/clib/utils-cpp.cpp

@@ -34,7 +34,7 @@ OBJS_CONFIG_LIB = \
         grackle_units.lo \
 	index_helper.lo \
         initialize_chemistry_data.lo \
-        initialize_cloudy_data.lo \
+        tabulated/initialize_cloudy_data.lo \
         init_misc_species_cool_rates.lo \
         initialize_rates.lo \
         initialize_UVbackground_data.lo \

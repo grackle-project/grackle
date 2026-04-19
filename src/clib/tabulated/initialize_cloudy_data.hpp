@@ -10,8 +10,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef INITIALIZE_CLOUDY_DATA_H
-#define INITIALIZE_CLOUDY_DATA_H
+#ifndef TABULATED_INITIALIZE_CLOUDY_DATA_HPP
+#define TABULATED_INITIALIZE_CLOUDY_DATA_HPP
 
 #include "grackle.h"
 
@@ -28,4 +28,4 @@ int free_cloudy_data(cloudy_data* my_cloudy, chemistry_data* my_chemistry,
 
 }  // namespace grackle::impl
 
-#endif /* INITIALIZE_CLOUDY_DATA_H */
+#endif /* TABULATED_INITIALIZE_CLOUDY_DATA_HPP */
