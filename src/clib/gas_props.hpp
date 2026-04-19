@@ -16,7 +16,7 @@
 #include "index_helper.h"
 #include "internal_units.hpp"
 #include "support/config.hpp"
-#include "tabulated/calc_temp1d_cloudy_g.hpp"
+#include "tabulated/calc_temp1d_cloudy.hpp"
 #include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -169,9 +169,9 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
       }
     }
 
-    grackle::impl::calc_temp1d_cloudy_g(
-        rhoH, tgas, mmw, dom, zr, imetal, itmask, my_chemistry,
-        *primordial_cloudy_data, my_fields, internalu, idx_range);
+    grackle::impl::calc_temp1d_cloudy(rhoH, tgas, mmw, dom, zr, imetal, itmask,
+                                      my_chemistry, *primordial_cloudy_data,
+                                      my_fields, internalu, idx_range);
 
   } else {
     // get 3D views
