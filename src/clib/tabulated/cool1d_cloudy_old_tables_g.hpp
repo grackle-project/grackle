@@ -1,17 +1,17 @@
 // See LICENSE file for license and copyright information
 
-/// @file cool1d_cloudy_old_tables_g-cpp.h
-/// @brief Declares signature of cool1d_cloudy_old_tables_g
+/// @file
+/// Declares signature of cool1d_cloudy_old_tables_g
 
 // This file was initially generated automatically during conversion of the
 // cool1d_cloudy_old_tables_g function from FORTRAN to C++
 
-#ifndef COOL1D_CLOUDY_OLD_TABLES_G_HPP
-#define COOL1D_CLOUDY_OLD_TABLES_G_HPP
+#ifndef TABULATED_COOL1D_CLOUDY_OLD_TABLES_G_HPP
+#define TABULATED_COOL1D_CLOUDY_OLD_TABLES_G_HPP
 
-#include "grackle.h"             // gr_float
-#include "fortran_func_decls.h"  // gr_mask_int
-#include "index_helper.h"        // IndexRange
+#include "grackle.h"                // gr_float
+#include "../fortran_func_decls.h"  // gr_mask_int
+#include "../index_helper.h"        // IndexRange
 
 namespace grackle::impl {
 
@@ -52,4 +52,4 @@ void cool1d_cloudy_old_tables_g(
 
 }  // namespace grackle::impl
 
-#endif /* COOL1D_CLOUDY_OLD_TABLES_G_HPP */
+#endif /* TABULATED_COOL1D_CLOUDY_OLD_TABLES_G_HPP */

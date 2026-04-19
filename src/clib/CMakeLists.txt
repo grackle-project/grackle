@@ -102,7 +102,6 @@ add_library(Grackle_Grackle
   api/solve_chemistry.cpp
   ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
-  cool1d_cloudy_old_tables_g.cpp cool1d_cloudy_old_tables_g.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time.cpp cool_multi_time.hpp
   dust_props.hpp
@@ -145,6 +144,7 @@ add_library(Grackle_Grackle
   tabulated/calc_temp_cloudy.cpp tabulated/calc_temp_cloudy.hpp
   tabulated/calc_temp1d_cloudy.cpp tabulated/calc_temp1d_cloudy.hpp
   tabulated/cool1d_cloudy.cpp tabulated/cool1d_cloudy.hpp
+  tabulated/cool1d_cloudy_old_tables_g.cpp tabulated/cool1d_cloudy_old_tables_g.hpp
   tabulated/initialize_cloudy_data.cpp tabulated/initialize_cloudy_data.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp

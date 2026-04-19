@@ -19,7 +19,6 @@
 #include <cstdio>
 #include <vector>
 
-#include "cool1d_cloudy_old_tables_g.hpp"
 #include "cool1d_multi_g.hpp"
 #include "gas_props.hpp"
 #include "grackle.h"
@@ -29,6 +28,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "tabulated/cool1d_cloudy.hpp"
+#include "tabulated/cool1d_cloudy_old_tables_g.hpp"
 #include "utils-cpp.hpp"
 
 void grackle::impl::cool1d_multi_g(

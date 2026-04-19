@@ -1,6 +1,6 @@
 // See LICENSE file for license and copyright information
 
-/// @file cool1d_cloudy_old_tables_g-cpp.C
+/// @file
 /// @brief Declares signature of cool1d_cloudy_old_tables_g
 
 // This file was initially generated automatically during conversion of the
@@ -11,9 +11,9 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_decls.h"
-#include "fortran_func_wrappers.hpp"
-#include "utils-cpp.hpp"
+#include "../fortran_func_decls.h"
+#include "../fortran_func_wrappers.hpp"
+#include "../utils-cpp.hpp"
 
 #include "cool1d_cloudy_old_tables_g.hpp"
 
