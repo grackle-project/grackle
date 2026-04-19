@@ -74,7 +74,7 @@ double* load_heatcool_data(hid_t file_id, const char* dset_name,
 
 
 // initialize cloudy cooling data
-int grackle::impl::initialize_cloudy_data(
+int GRIMPL_NS::initialize_cloudy_data(
     chemistry_data *my_chemistry,
     chemistry_data_storage *my_rates,
     cloudy_data *my_cloudy, const char *group_name,
@@ -239,9 +239,9 @@ int grackle::impl::initialize_cloudy_data(
   return GR_SUCCESS;
 }
 
-int grackle::impl::free_cloudy_data(cloudy_data *my_cloudy,
-                                    chemistry_data *my_chemistry,
-                                    int primordial) {
+int GRIMPL_NS::free_cloudy_data(cloudy_data *my_cloudy,
+                                chemistry_data *my_chemistry,
+                                int primordial) {
 
   // this is designed to ensure we properly clean up from partially
   // initialized my_cloudy instances
