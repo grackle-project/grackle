@@ -18,7 +18,7 @@
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
-#include "internal_units.h"      // InternalGrUnits
+#include "internal_units.hpp"    // InternalGrUnits
 #include "internal_types.hpp"    // GrainSpeciesCollection
 #include "index_helper.h"        // IndexRange
 
@@ -33,14 +33,8 @@ namespace grackle::impl {
 /// @param[in] iter The current iteration (the first iteration is `1`)
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range
-/// @param[out] tgas 1D array to hold the computed gas temperatures in the
-///     @p idx_range
-/// @param[out] mmw 1D array to hold the computed mean molecular weight
-///     in the @p idx_range
-/// @param[in] p2d 1D array to hold the computed thermal gas pressures for
-///     the @p idx_range. This is computed using the user-specified nominal
-///     adiabatic index value (i.e. no attempts are made to correct for presence
-///     of H2)
+/// @param[in] tgas 1D array of gas temperatures for the @p idx_range
+/// @param[in] mmw 1D array of mean molecular weights for the @p idx_range
 /// @param[out] tdust 1D array to hold the computed dust temperatures at
 ///     each location in the @p index range. This **ONLY** used when using
 ///     variants of the classic 1-field dust-model or using the variant of the
@@ -51,8 +45,7 @@ namespace grackle::impl {
 /// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
 ///     location in the index range. In other words, this holds the dust mass
 ///     per unit gas mass (only used in certain configuration)
-/// @param[out] rhoH 1D array to hold the computed Hydrogen mass density
-///     for the @p idx_range
+/// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
 /// @param[out] itmask_metal
@@ -84,11 +77,10 @@ namespace grackle::impl {
 /// modified3: February, 2003 by Robert Harkness; iteration mask
 /// modified4: September, 2009 by BDS to include cloudy cooling
 /// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void cool1d_multi_g(int imetal, int iter, double* edot, double* tgas,
-                    double* mmw, double* p2d, double* tdust,
-                    double* metallicity, double* dust2gas, double* rhoH,
-                    gr_mask_type* itmask, gr_mask_type* itmask_metal,
-                    chemistry_data* my_chemistry,
+void cool1d_multi_g(int imetal, int iter, double* edot, const double* tgas,
+                    const double* mmw, double* tdust, double* metallicity,
+                    double* dust2gas, const double* rhoH, gr_mask_type* itmask,
+                    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
                     chemistry_data_storage* my_rates,
                     grackle_field_data* my_fields,
                     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
