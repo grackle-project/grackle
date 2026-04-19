@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file cool1d_cloudy_old_tables_g-cpp.C
-/// @brief Declares signature of cool1d_cloudy_old_tables_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements the cool1d_cloudy_old_tables function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // cool1d_cloudy_old_tables_g function from FORTRAN to C++
@@ -11,13 +18,16 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_decls.h"
-#include "fortran_func_wrappers.hpp"
-#include "utils-cpp.hpp"
+#include "../fortran_func_decls.h"
+#include "../fortran_func_wrappers.hpp"
+#include "../utils-cpp.hpp"
+#include "./common.hpp"
 
-#include "cool1d_cloudy_old_tables_g.hpp"
+#include "cool1d_cloudy_old_tables.hpp"
 
-void grackle::impl::cool1d_cloudy_old_tables_g(
+namespace GRIMPL_NAMESPACE_DECL {
+
+void cool1d_cloudy_old_tables(
     const double* rhoH, double* metallicity, const double* logtem, double* edot,
     double comp2, double dom, double zr, const gr_mask_type* itmask,
     chemistry_data* my_chemistry, cloudy_data cloudy_table, gr_float* density,
@@ -35,7 +45,6 @@ void grackle::impl::cool1d_cloudy_old_tables_g(
 
   int i;
   double inv_log10, log10_tCMB;
-  double dclPar[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION] = {};
 
   // Slice locals
 
@@ -58,35 +67,8 @@ void grackle::impl::cool1d_cloudy_old_tables_g(
   log10_tCMB = std::log10(comp2);
 
   // Calculate parameter value slopes
-
-  dclPar[0] =
-      (cloudy_table.grid_parameters[0][cloudy_table.grid_dimension[0] - 1] -
-       cloudy_table.grid_parameters[0][0]) /
-      (double)(cloudy_table.grid_dimension[0] - 1);
-  if (cloudy_table.grid_rank > 1) {
-    dclPar[1] =
-        (cloudy_table.grid_parameters[1][cloudy_table.grid_dimension[1] - 1] -
-         cloudy_table.grid_parameters[1][0]) /
-        (double)(cloudy_table.grid_dimension[1] - 1);
-  }
-  if (cloudy_table.grid_rank > 2) {
-    dclPar[2] =
-        (cloudy_table.grid_parameters[2][cloudy_table.grid_dimension[2] - 1] -
-         cloudy_table.grid_parameters[2][0]) /
-        (double)(cloudy_table.grid_dimension[2] - 1);
-  }
-  if (cloudy_table.grid_rank > 3) {
-    dclPar[3] =
-        (cloudy_table.grid_parameters[3][cloudy_table.grid_dimension[3] - 1] -
-         cloudy_table.grid_parameters[3][0]) /
-        (double)(cloudy_table.grid_dimension[3] - 1);
-  }
-  if (cloudy_table.grid_rank > 4) {
-    dclPar[4] =
-        (cloudy_table.grid_parameters[4][cloudy_table.grid_dimension[4] - 1] -
-         cloudy_table.grid_parameters[4][0]) /
-        (double)(cloudy_table.grid_dimension[4] - 1);
-  }
+  const std::array<double, tabulated_detail::MAX_RANK> dclPar =
+      tabulated_detail::param_deltas(cloudy_table);
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -303,3 +285,5 @@ void grackle::impl::cool1d_cloudy_old_tables_g(
 
   return;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL

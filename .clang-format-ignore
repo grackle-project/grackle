@@ -16,12 +16,12 @@ src/clib/api/calculate_pressure.cpp
 src/clib/api/calculate_temperature.cpp
 src/clib/api/set_default_chemistry_parameters.cpp
 src/clib/api/solve_chemistry.cpp
-src/clib/calc_tdust_3d.cpp
+src/clib/dust/calc_tdust_3d.cpp
 src/clib/chemistry_solver_funcs.hpp
 src/clib/cie_thin_cooling_rate_tables.h
 src/clib/cool1d_multi_g-cpp.C
 src/clib/cool1d_multi_g-cpp.h
-src/clib/cool_multi_time_g.cpp
+src/clib/cool_multi_time.cpp
 src/clib/dynamic_api.cpp
 src/clib/fortran_func_decls.h
 src/clib/fortran_func_wrappers.hpp
@@ -32,11 +32,10 @@ src/clib/index_helper.h
 src/clib/init_misc_species_cool_rates.cpp
 src/clib/initialize_UVbackground_data.cpp
 src/clib/initialize_chemistry_data.cpp
-src/clib/initialize_cloudy_data.cpp
 src/clib/initialize_dust_yields.cpp
 src/clib/initialize_rates.cpp
 src/clib/internal_types.hpp
-src/clib/internal_units.h
+src/clib/internal_units.hpp
 src/clib/interpolate.hpp
 src/clib/phys_constants.h
 src/clib/rate_functions.c
@@ -45,6 +44,7 @@ src/clib/status_reporting.c
 src/clib/status_reporting.h
 src/clib/step_rate_gauss_seidel.hpp
 src/clib/step_rate_newton_raphson.hpp
+src/clib/tabulated/initialize_cloudy_data.cpp
 src/clib/time_deriv_0d.hpp
 src/clib/update_UVbackground_rates.cpp
 src/clib/utils-cpp.cpp

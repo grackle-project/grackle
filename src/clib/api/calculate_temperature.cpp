@@ -12,10 +12,11 @@
 ************************************************************************/
 
 #include <cstdio>
-#include "calc_temp_cloudy_g.h"
+#include "../tabulated/calc_temp_cloudy.hpp"
 #include "grackle.h"
 #include "index_helper.h"
-#include "internal_units.h"
+#include "internal_units.hpp"
+#include "support/config.hpp"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -42,9 +43,9 @@ extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
 
   // we have special handling for tabulated-chemistry-mode
   if (my_chemistry->primordial_chemistry == 0) {
-    calc_temp_cloudy_g(temperature, imetal, my_chemistry,
-                       my_rates->cloudy_primordial, my_fields,
-                       new_internalu_(my_units));
+    GRIMPL_NS::calc_temp_cloudy(temperature, imetal, my_chemistry,
+                                my_rates->cloudy_primordial, my_fields,
+                                GRIMPL_NS::new_internalu_(my_units));
     return GR_SUCCESS;
   };
 

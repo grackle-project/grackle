@@ -16,18 +16,22 @@
 #include <cstdio>
 #include <vector>
 
-#include "fortran_func_decls.h"
-#include "fortran_func_wrappers.hpp"
+#include "../fortran_func_decls.h"
+#include "../fortran_func_wrappers.hpp"
 #include "grackle.h"
-#include "utils-cpp.hpp"
+#include "../utils-cpp.hpp"
+#include "./common.hpp"
 
-#include "calc_temp1d_cloudy_g.hpp"
+#include "calc_temp1d_cloudy.hpp"
 
-void grackle::impl::calc_temp1d_cloudy_g(
-    const double* rhoH, double* tgas, double* mmw, double dom, double zr,
-    int imetal, const gr_mask_type* itmask, chemistry_data* my_chemistry,
-    cloudy_data cloudy_table, grackle_field_data* my_fields,
-    InternalGrUnits internalu, IndexRange idx_range) {
+namespace GRIMPL_NAMESPACE_DECL {
+
+void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
+                        double dom, double zr, int imetal,
+                        const gr_mask_type* itmask,
+                        chemistry_data* my_chemistry, cloudy_data cloudy_table,
+                        grackle_field_data* my_fields,
+                        InternalGrUnits internalu, IndexRange idx_range) {
   // General Arguments
 
   grackle::impl::View<gr_float***> d(
@@ -50,9 +54,7 @@ void grackle::impl::calc_temp1d_cloudy_g(
   // Locals
 
   int i, ti;
-  long long zindex, zmidpt, zhighpt;
   double inv_log10, muold, munew;
-  double dclPar[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION] = {};
   long long end_int;
 
   // Slice locals
@@ -68,53 +70,11 @@ void grackle::impl::calc_temp1d_cloudy_g(
   inv_log10 = 1. / std::log(10.);
 
   // Calculate parameter value slopes
-
-  dclPar[0] =
-      (cloudy_table.grid_parameters[0][cloudy_table.grid_dimension[0] - 1] -
-       cloudy_table.grid_parameters[0][0]) /
-      (double)(cloudy_table.grid_dimension[0] - 1);
-  if (cloudy_table.grid_rank > 1) {
-    dclPar[1] =
-        (cloudy_table.grid_parameters[1][cloudy_table.grid_dimension[1] - 1] -
-         cloudy_table.grid_parameters[1][0]) /
-        (double)(cloudy_table.grid_dimension[1] - 1);
-  }
-  if (cloudy_table.grid_rank > 2) {
-    dclPar[2] =
-        (cloudy_table.grid_parameters[2][cloudy_table.grid_dimension[2] - 1] -
-         cloudy_table.grid_parameters[2][0]) /
-        (double)(cloudy_table.grid_dimension[2] - 1);
-  }
+  const std::array<double, tabulated_detail::MAX_RANK> dclPar =
+      tabulated_detail::param_deltas(cloudy_table);
 
   // Calculate index for redshift dimension
-  zindex = 1;
-  if (cloudy_table.grid_rank > 2) {
-    // Get index for redshift dimension via bisection
-
-    if (zr <= cloudy_table.grid_parameters[1][0]) {
-      zindex = 1;
-    } else if (zr >=
-               cloudy_table
-                   .grid_parameters[1][cloudy_table.grid_dimension[1] - 2]) {
-      zindex = cloudy_table.grid_dimension[1];
-      end_int = 1;
-    } else if (zr >=
-               cloudy_table
-                   .grid_parameters[1][cloudy_table.grid_dimension[1] - 3]) {
-      zindex = cloudy_table.grid_dimension[1] - 2;
-    } else {
-      zindex = 1;
-      zhighpt = cloudy_table.grid_dimension[1] - 2;
-      while ((zhighpt - zindex) > 1) {
-        zmidpt = int((zhighpt + zindex) / 2);
-        if (zr >= cloudy_table.grid_parameters[1][zmidpt - 1]) {
-          zindex = zmidpt;
-        } else {
-          zhighpt = zmidpt;
-        }
-      }
-    }
-  }
+  const long long zindex = tabulated_detail::find_zindex(zr, cloudy_table);
 
   for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -202,3 +162,5 @@ void grackle::impl::calc_temp1d_cloudy_g(
 
   return;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL
