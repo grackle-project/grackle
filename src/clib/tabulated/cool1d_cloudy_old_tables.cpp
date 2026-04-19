@@ -24,7 +24,9 @@
 
 #include "cool1d_cloudy_old_tables.hpp"
 
-void grackle::impl::cool1d_cloudy_old_tables(
+namespace GRIMPL_NAMESPACE_DECL {
+
+void cool1d_cloudy_old_tables(
     const double* rhoH, double* metallicity, const double* logtem, double* edot,
     double comp2, double dom, double zr, const gr_mask_type* itmask,
     chemistry_data* my_chemistry, cloudy_data cloudy_table, gr_float* density,
@@ -310,3 +312,5 @@ void grackle::impl::cool1d_cloudy_old_tables(
 
   return;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL

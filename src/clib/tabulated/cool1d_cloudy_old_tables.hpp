@@ -19,8 +19,9 @@
 #include "grackle.h"                // gr_float
 #include "../fortran_func_decls.h"  // gr_mask_int
 #include "../index_helper.h"        // IndexRange
+#include "../support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Solve cloudy cooling by interpolating from the data. This version uses
 /// tables formatted for the original Cloudy cooling functionality in Enzo.
@@ -57,6 +58,6 @@ void cool1d_cloudy_old_tables(
     chemistry_data* my_chemistry, cloudy_data cloudy_table, gr_float* density,
     gr_float* e_density, grackle_field_data* my_fields, IndexRange idx_range);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* TABULATED_COOL1D_CLOUDY_OLD_TABLES_HPP */
