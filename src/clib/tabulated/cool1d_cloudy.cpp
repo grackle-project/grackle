@@ -75,6 +75,9 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
         (double)(cloudy_table.grid_dimension[2] - 1);
   }
 
+  // Calculate index for redshift dimension
+  const long long zindex = tabulated_detail::find_zindex(zr, cloudy_table);
+
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       log10tem[i] = logtem[i] * inv_log10;
@@ -82,9 +85,6 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
       // Calculate proper log(n_H)
 
       log_n_h[i] = std::log10(rhoH[i] * dom);
-
-      // Calculate index for redshift dimension
-      const long long zindex = tabulated_detail::find_zindex(zr, cloudy_table);
 
       // Call interpolation functions to get heating/cooling
 
