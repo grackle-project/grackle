@@ -23,13 +23,13 @@
 
 #include "cool1d_cloudy.hpp"
 
-void grackle::impl::cool1d_cloudy(const double* rhoH, const double* metallicity,
-                                  const double* logtem, double* edot,
-                                  double comp2, double dom, double zr,
-                                  int icmbTfloor, int iClHeat, int iZscale,
-                                  const gr_mask_type* itmask,
-                                  cloudy_data cloudy_table,
-                                  IndexRange idx_range) {
+namespace GRIMPL_NAMESPACE_DECL {
+
+void cool1d_cloudy(const double* rhoH, const double* metallicity,
+                   const double* logtem, double* edot, double comp2, double dom,
+                   double zr, int icmbTfloor, int iClHeat, int iZscale,
+                   const gr_mask_type* itmask, cloudy_data cloudy_table,
+                   IndexRange idx_range) {
   // Locals
 
   int i, get_heat;
@@ -221,3 +221,5 @@ void grackle::impl::cool1d_cloudy(const double* rhoH, const double* metallicity,
 
   return;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL

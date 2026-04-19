@@ -19,8 +19,9 @@
 #include "grackle.h"                // gr_float
 #include "../fortran_func_decls.h"  // gr_mask_int
 #include "../index_helper.h"        // IndexRange
+#include "../support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Solve cloudy metal cooling/heating
 ///
@@ -54,6 +55,6 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
                    const gr_mask_type* itmask, cloudy_data cloudy_table,
                    IndexRange idx_range);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* TABULATED_COOL1D_CLOUDY_HPP */
