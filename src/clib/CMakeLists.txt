@@ -144,7 +144,7 @@ add_library(Grackle_Grackle
   tabulated/calc_temp_cloudy.cpp tabulated/calc_temp_cloudy.hpp
   tabulated/calc_temp1d_cloudy.cpp tabulated/calc_temp1d_cloudy.hpp
   tabulated/cool1d_cloudy.cpp tabulated/cool1d_cloudy.hpp
-  tabulated/cool1d_cloudy_old_tables_g.cpp tabulated/cool1d_cloudy_old_tables_g.hpp
+  tabulated/cool1d_cloudy_old_tables.cpp tabulated/cool1d_cloudy_old_tables.hpp
   tabulated/initialize_cloudy_data.cpp tabulated/initialize_cloudy_data.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp

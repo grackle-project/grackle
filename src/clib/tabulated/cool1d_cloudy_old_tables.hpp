@@ -6,15 +6,15 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares signature of cool1d_cloudy_old_tables_g
+/// Declares signature of cool1d_cloudy_old_tables
 ///
 //===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // cool1d_cloudy_old_tables_g function from FORTRAN to C++
 
-#ifndef TABULATED_COOL1D_CLOUDY_OLD_TABLES_G_HPP
-#define TABULATED_COOL1D_CLOUDY_OLD_TABLES_G_HPP
+#ifndef TABULATED_COOL1D_CLOUDY_OLD_TABLES_HPP
+#define TABULATED_COOL1D_CLOUDY_OLD_TABLES_HPP
 
 #include "grackle.h"                // gr_float
 #include "../fortran_func_decls.h"  // gr_mask_int
@@ -51,7 +51,7 @@ namespace grackle::impl {
 /// written by: Britton Smith, 2009
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
-void cool1d_cloudy_old_tables_g(
+void cool1d_cloudy_old_tables(
     const double* rhoH, double* metallicity, const double* logtem, double* edot,
     double comp2, double dom, double zr, const gr_mask_type* itmask,
     chemistry_data* my_chemistry, cloudy_data cloudy_table, gr_float* density,
@@ -59,4 +59,4 @@ void cool1d_cloudy_old_tables_g(
 
 }  // namespace grackle::impl
 
-#endif /* TABULATED_COOL1D_CLOUDY_OLD_TABLES_G_HPP */
+#endif /* TABULATED_COOL1D_CLOUDY_OLD_TABLES_HPP */
