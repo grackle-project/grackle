@@ -13,8 +13,8 @@
 
 #include <cstdio>
 #include "grackle.h"
-#include "cool_multi_time_g.h"
-#include "internal_units.h"
+#include "cool_multi_time.hpp"
+#include "internal_units.hpp"
 #include "self_shielding_err_check.hpp"
 #include "update_UVbackground_rates.hpp"
 
@@ -69,7 +69,7 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
   /* Check for a metal field. */
   int metal_field_present = (my_fields->metal_density != NULL) ? TRUE : FALSE;
 
-  InternalGrUnits internalu = new_internalu_(my_units);
+  GRIMPL_NS::InternalGrUnits internalu = GRIMPL_NS::new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
   if (grackle::impl::self_shielding_err_check(my_chemistry, my_fields,
@@ -79,7 +79,7 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
   }
 
   /* Solve cooling equations. */
-  cool_multi_time_g(
+  GRIMPL_NS::cool_multi_time(
     cooling_time, metal_field_present, internalu, my_chemistry, my_rates,
     my_fields, my_uvb_rates
   );
