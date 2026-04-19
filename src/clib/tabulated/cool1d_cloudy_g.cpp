@@ -18,8 +18,8 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_wrappers.hpp"
-#include "utils-cpp.hpp"
+#include "../fortran_func_wrappers.hpp"
+#include "../utils-cpp.hpp"
 
 #include "cool1d_cloudy_g.hpp"
 

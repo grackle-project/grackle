@@ -13,12 +13,12 @@
 // This file was initially generated automatically during conversion of the
 // cool1d_cloudy_g function from FORTRAN to C++
 
-#ifndef COOL1D_CLOUDY_G_HPP
-#define COOL1D_CLOUDY_G_HPP
+#ifndef TABULATED_COOL1D_CLOUDY_G_HPP
+#define TABULATED_COOL1D_CLOUDY_G_HPP
 
-#include "grackle.h"             // gr_float
-#include "fortran_func_decls.h"  // gr_mask_int
-#include "index_helper.h"        // IndexRange
+#include "grackle.h"                // gr_float
+#include "../fortran_func_decls.h"  // gr_mask_int
+#include "../index_helper.h"        // IndexRange
 
 namespace grackle::impl {
 
@@ -56,4 +56,4 @@ void cool1d_cloudy_g(const double* rhoH, const double* metallicity,
 
 }  // namespace grackle::impl
 
-#endif /* COOL1D_CLOUDY_G_HPP */
+#endif /* TABULATED_COOL1D_CLOUDY_G_HPP */
