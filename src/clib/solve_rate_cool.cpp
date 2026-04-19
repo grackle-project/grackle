@@ -17,18 +17,18 @@
 #include <cstdlib> // std::malloc, std::free
 #include <cstring> // std::memcpy
 #include <vector>
-#include <iostream>
+#include "gas_props.hpp"
 #include "grackle.h"
-#include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_types.hpp"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "make_consistent.hpp"
 #include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
+#include "support/config.hpp"
 #include "utils-cpp.hpp"
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
@@ -38,6 +38,8 @@
 #include "cool1d_multi_g.hpp"
 #include "scale_fields.hpp"
 #include "solve_rate_cool.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// overrides the subcycle timestep (for each index in the index-range that is
 /// selected by the given itmask) with the maximum allowed heating/cooling
@@ -54,25 +56,39 @@
 /// @param[in]     itmask Specifies the `idx_range`'s iteration-mask for this
 ///    calculation
 /// @param[in]     tgas specifies the gas temperatures for the `idx_range`
-/// @param[in]     p2d specifies the pressures for the `idx_range`. This is
-///    computed user-specified nominal adiabatic index value (i.e. no attempts
-///    are made to correct for presence of H2)
 /// @param[in,out] edot specifies the time derivative of internal energy
 ///    density for each location in `idx_range`. This may be overwritten to
 ///    enforce the floor.
+/// @param[in] my_chemistry holds a number of configuration parameters
+/// @param[in] my_fields specifies the field data
 static void enforce_max_heatcool_subcycle_dt_(
   double* dtit, IndexRange idx_range, double dt, const double* ttot,
-  const gr_mask_type* itmask, const double* tgas, const double* p2d,
-  double* edot, const chemistry_data* my_chemistry
+  const gr_mask_type* itmask, const double* tgas, double* edot,
+  const chemistry_data* my_chemistry, const grackle_field_data* my_fields
 ) {
+
+  View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                            my_fields->grid_dimension[1],
+                            my_fields->grid_dimension[2]);
+  View<const gr_float***> specific_eint(my_fields->internal_energy,
+                                        my_fields->grid_dimension[0],
+                                        my_fields->grid_dimension[1],
+                                        my_fields->grid_dimension[2]);
+
+  const int j = idx_range.j;
+  const int k = idx_range.k;
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
 
     if (itmask[i] != MASK_FALSE) {
-      // Set energy per unit volume of this cell based in the pressure
-      // (the gamma used here is the right one even for H2 since p2d
-      //  is calculated with this gamma).
-      double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.), tiny8);
+      // Calculate energy per unit volume
+      // 
+      // TODO: start using following snippet (and update gold-standard)
+      // double energy = std::fmax(double{d(i, j, k) * specific_eint(i, j, k)},
+      //                           tiny8);
+      double p = calc_pressure(
+        my_chemistry->Gamma, d(i, j, k), specific_eint(i, j, k));
+      double energy = std::fmax(p/(my_chemistry->Gamma-1.), tiny8);
 
       // If the temperature is at the bottom of the temperature look-up
       // table and edot < 0, then shut off the cooling.
@@ -186,7 +202,9 @@ static void setup_chem_scheme_masks_(
 /// Computes the timescale given by `ndens_Heq / (d ndens_Heq / d t)`
 ///
 /// This is used to help compute the subcycle timestep when using a primordial
-/// chemistry solver
+/// chemistry solver. For context, `ndens_Heq` refers to the equilibrium
+/// Hydrogen neutral Hydrogen number density.
+///
 ///
 /// @param my_chemistry holds a number of configuration parameters
 /// @param my_rates holds assorted rate data. In this function, this is being
@@ -199,18 +217,66 @@ static void setup_chem_scheme_masks_(
 /// @param k13, k22 1D arrays specifying the previously looked up, local values
 ///    of the k13 and k22 rates.
 /// @param local_rho specifies the local (total) mass density
+/// @param local_specific_eint specifies the local specific internal energy
 /// @param tgas 1D array specifying the temperature
-/// @param p2d 1D array specifying the pressures values. This is computed from
-///    the user-specified nominal adiabatic index value (i.e. no attempts
-///    are made to correct for presence of H2)
 /// @param edot 1D array specifying the time derivative of the internal energy
 ///    density
 /// @param i Specifies the index of the relevant zone in the 1D array. (**BE
 ///    AWARE:** this is a 0-based index)
 ///
-/// @note
-/// The `static` annotation indicates that this function is only visible to the
-/// current translation unit
+/// Calculating `dT/dt`
+/// ===================
+/// Our calculation of `(d/dt)ndens_Heq` makes use of `(d/dt)T`, where `T` is
+/// the gas temperature. It is worth briefly elaborating on this calculation.
+/// Temperature is given by `T = const * (ɣ - 1) * μ * ε / ρ`, where
+/// - `const` is `mH/kboltz`
+/// - `ɣ` is the adiabatic index
+/// - `μ` is the mean molecular weight
+/// - `ε` is the internal energy density (NOT specific internal energy)
+/// - `ρ` is the mass density
+///
+/// From here the time derivative is:
+/// @code{.unparsed}
+/// (dT/dt) = (const * μ * ε / ρ) * (dɣ/dt)
+///      + (const * (ɣ - 1) * ε / ρ) * (dμ/dt)
+///      + (const * (ɣ - 1) * μ / ρ) * (dε/dt)
+///      - (const * (ɣ - 1) * μ * ε / ρ²) * (dρ/dt)
+/// @endcode
+///
+/// In the context of this this calculation,
+/// - we assume `dɣ/dt = 0`. In more detail, `ɣ` actually varies with `T` and
+///   the relative abundance of molecular Hydrogen (compared to all other
+///   monatomic species)
+/// - we assume `dμ/dt = 0`. In more detail, `μ` depends on the species
+///   abundances.
+/// - the value of `dε/dt` is directly provided by the \p edot argument
+/// - we assume `dρ/dt = 0`. If this stops being strictly true in the future
+///   (e.g. if we allow mass transfer between gas and dust), it's probably an
+///   ok assumption for this calculation
+///
+/// These assumptions yield `(dT/dt) = (const * (ɣ - 1) * μ / ρ) * (dε/dt)`.
+/// This is equivalent to:
+/// - `(dT/dt) = (T / ε) * (dε/dt)` OR
+/// - `(dT/dt) = (∂T/∂ε) * (dε/dt)`
+///
+/// Historical Quirk
+/// ================
+/// For historical consistency, we currently approximate `(∂T/∂ε)` as `(∂T/∂p)`
+/// or `(∂T/∂ε)_approx = (∂T/∂p) = T/p`. `p` is the thermal pressure computed
+/// from `p = ε * (ɣ - 1)`. Thus, `(∂T/∂ε)_approx = (∂T/∂ε) / (ɣ - 1)`. Again,
+/// for historical consistency, we set `ɣ` to \ref my_chemistry::Gamma (which
+/// doesn't reflect additional degrees of freedom of molecular Hydrogen).
+///
+/// For the standard value of \ref my_chemistry::Gamma, `5/3`, this function
+/// effectively overestimates `(∂T/∂ε)`, and consequently the value of
+/// `(d/dt) ndens_Heq`, by a factor of 1.5. This reduces the size of the
+/// returned timestep by a factor of 1.5.
+///
+/// @todo
+/// We should really refactor the implementation to properly compute `(∂T/∂ε)`.
+/// If we decide that we want to continue to artifically shrink the timestep (I
+/// suspect that we do), then we should do that explicitly. This will break the
+/// gold standard.
 static double calc_Heq_div_dHeqdt_(
   const chemistry_data* my_chemistry,
   const chemistry_data_storage* my_rates,
@@ -219,8 +285,8 @@ static double calc_Heq_div_dHeqdt_(
   const double* k13,
   const double* k22,
   double local_rho,
+  double local_specific_eint,
   const double* tgas,
-  const double* p2d,
   const double* edot,
   int i
 ) {
@@ -236,16 +302,9 @@ static double calc_Heq_div_dHeqdt_(
   // Heq = (-1._DKIND / (4*k22)) * (k13 - sqrt(8 k13 k22 rho + k13^2))
   // We want to know dH_eq/dt.
   // - We can trivially get dH_eq/dT.
-  // - We have de/dt.
-  // - We need dT/de.
+  // - thus, dH_eq/dt = (dH_eq/dT) * (dT/dt)
   //
-  // T = (g-1)*p2d*utem/N; tgas == (g-1)(p2d*utem/N)
-  // dH_eq / dt = (dH_eq/dT) * (dT/de) * (de/dt)
-  // dH_eq / dT (see above; we can calculate the derivative here)
-  // dT / de = utem * (gamma - 1._DKIND) / N == tgas / p2d
-  // de / dt = edot
-  // Now we use our estimate of dT/de to get the estimated
-  // difference in the equilibrium
+  // The docstring provides details for computing dT/dt
   double eqt2 = std::fmin(std::log(tgas[i]) + 0.1*dlogtem, logTlininterp_buf.t2[i]);
   double eqtdef = (eqt2 - logTlininterp_buf.t1[i])/(logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
   double eqk222 = k22_table[logTlininterp_buf.indixe[i]-1] +
@@ -267,8 +326,13 @@ static double calc_Heq_div_dHeqdt_(
     std::sqrt(8.*eqk131*eqk221*
               my_chemistry->HydrogenFractionByMass*local_rho+std::pow(eqk131,2.)));
 
+  // as noted in the docstring: `(tgas[i]/p)` is an approximation for (dT/dε).
+  // It's almost always an over-estimate.
+  //
+  // see the docstring's todo-note for notes on refactoring
+  double p = calc_pressure(my_chemistry->Gamma, local_rho, local_specific_eint);
   double dheq = (std::fabs(heq2-heq1)/(std::exp(eqt2) - std::exp(eqt1)))
-    * (tgas[i]/p2d[i]) * edot[i];
+    * (tgas[i]/p) * edot[i];
   double heq = (-1. / (4.*k22[i])) * (k13[i]-
     std::sqrt(8.*k13[i]*k22[i]*
               my_chemistry->HydrogenFractionByMass*local_rho+std::pow(k13[i],2.)));
@@ -303,9 +367,6 @@ static double calc_Heq_div_dHeqdt_(
 /// @param[in] ddom specifies precomputed product of mass density and the
 ///    `dom` quantity for each location in `idx_range`
 /// @param[in] tgas specifies the gas temperatures for the `idx_range`
-/// @param[in] p2d specifies the pressures for the `idx_range`. This is
-///    computed user-specified nominal adiabatic index value (i.e. no attempts
-///    are made to correct for presence of H2)
 /// @param[in] edot specifies the time derivative of the internal energy
 ///    density for the `idx_range`.
 /// @param[in] my_chemistry holds a number of configuration parameters
@@ -330,7 +391,7 @@ static void set_subcycle_dt_from_chemistry_scheme_(
   const gr_mask_type* itmask_gs, const gr_mask_type* itmask_nr,
   const int* imp_eng, double* dedot, double* HIdot,
   const double* dedot_prev, const double* HIdot_prev,
-  const double* ddom, const double* tgas, const double* p2d, const double* edot,
+  const double* ddom, const double* tgas, const double* edot,
   const chemistry_data* my_chemistry, const chemistry_data_storage* my_rates,
   double dlogtem,
   const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
@@ -419,7 +480,7 @@ static void set_subcycle_dt_from_chemistry_scheme_(
           my_chemistry, my_rates, dlogtem, logTlininterp_buf,
           kcr_buf.data[CollisionalRxnLUT::k13],
           kcr_buf.data[CollisionalRxnLUT::k22],
-          d(i,j,k), tgas, p2d, edot, i
+          d(i,j,k), e(i,j,k), tgas, edot, i
         );
 
         dtit[i] = std::fmin(dtit[i], 0.1*Heq_div_dHeqdt);
@@ -501,8 +562,6 @@ static inline void coupled_rt_modify_itmask_(
 }
 
 // -------------------------------------------------------------
-
-namespace grackle::impl {
 
 /// Aggregates buffers used as scratch space in rate-related calculations
 ///
@@ -733,7 +792,6 @@ int solve_rate_cool(
     // obvious as we transcribe more routines.
     std::vector<double> dtit(my_fields->grid_dimension[0]);
     std::vector<double> ttot(my_fields->grid_dimension[0]);
-    std::vector<double> p2d(my_fields->grid_dimension[0]);
     std::vector<double> tgas(my_fields->grid_dimension[0]);
     std::vector<double> tdust(my_fields->grid_dimension[0]);
     std::vector<double> metallicity(my_fields->grid_dimension[0]);
@@ -807,11 +865,17 @@ int solve_rate_cool(
           }
         }
 
+        // calculate the basic gas properties (tgas, mmw, rhoH)
+        basic_gas_props(tgas.data(), mmw.data(), rhoH.data(), imetal,
+                        itmask.data(), my_chemistry,
+                        &my_rates->cloudy_primordial, my_fields, internalu,
+                        idx_range);
+
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
         cool1d_multi_g(
           imetal, iter,
           edot.data(),
-          tgas.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+          tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry,
           my_rates, my_fields,
@@ -871,7 +935,7 @@ int solve_rate_cool(
             spsolvbuf.itmask_nr, spsolvbuf.imp_eng,
             spsolvbuf.dedot, spsolvbuf.HIdot,
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev,
-            spsolvbuf.ddom, tgas.data(), p2d.data(), edot.data(),
+            spsolvbuf.ddom, tgas.data(), edot.data(),
             my_chemistry, my_rates, dlogtem, logTlininterp_buf, my_fields,
             spsolvbuf.kcr_buf
           );
@@ -886,7 +950,7 @@ int solve_rate_cool(
         // -> zones that will use Newton-Raphson scheme are ignored
         enforce_max_heatcool_subcycle_dt_(
           dtit.data(), idx_range, dt, ttot.data(), energy_itmask, tgas.data(),
-          p2d.data(), edot.data(), my_chemistry
+          edot.data(), my_chemistry, my_fields
         );
 
         // Update total and gas energy
@@ -917,7 +981,7 @@ int solve_rate_cool(
           // itmask_nr)
           grackle::impl::step_rate_newton_raphson(
             imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
-            dtit.data(), p2d.data(), tgas.data(), tdust.data(),
+            dtit.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
             spsolvbuf.h2dust, edot.data(), anydust, spsolvbuf.itmask_nr,
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
@@ -1024,4 +1088,4 @@ int solve_rate_cool(
   return ierr;
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
