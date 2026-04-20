@@ -25,6 +25,22 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
+/// returns the step in ln(T) of the gas temperature grid commonly shared for
+/// interpolating rates
+///
+/// @todo
+/// Consider designing a struct, embedded within @ref opaque_storage that
+/// caches this value. It probably makes sense to copy the table bounds from
+/// @ref chemistry_data
+inline double common_1D_rate_table_lnT_step(
+    const chemistry_data& my_chemistry) {
+  const int n_bins = my_chemistry.NumberOfTemperatureBins;
+  const double dlogtem = (std::log(my_chemistry.TemperatureEnd) -
+                          std::log(my_chemistry.TemperatureStart)) /
+                         (double)(n_bins - 1);
+  return dlogtem;
+}
+
 namespace detail {
 
 template <class UnaryFn>
@@ -32,13 +48,14 @@ template <class UnaryFn>
     LogTLinInterpScratchBuf& logTlininterp_buf, IndexRange idx_range,
     const chemistry_data& my_chemistry, const gr_mask_type* itmask,
     UnaryFn get_T_fn) {
-  // Get log values of start and end of lookup tables
-  const int n_bins = my_chemistry.NumberOfTemperatureBins;
+  // Get properties of the table
+  // todo: stop using long long. I suspect we could just use an int32_t. We only
+  //       need larger precision if the table holds more than ~2e9 elements
+  //       (i.e. several gigabytes of memory)
+  const long long n_bins{my_chemistry.NumberOfTemperatureBins};
   const double logtem_start = std::log(my_chemistry.TemperatureStart);
   const double logtem_end = std::log(my_chemistry.TemperatureEnd);
-  const double dlogtem = (std::log(my_chemistry.TemperatureEnd) -
-                          std::log(my_chemistry.TemperatureStart)) /
-                         (double)(n_bins - 1);
+  const double dlogtem = common_1D_rate_table_lnT_step(my_chemistry);
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -50,7 +67,7 @@ template <class UnaryFn>
       logTlininterp_buf.indixe[i] = GRIMPL_NS::clamp(
           (long long)((logTlininterp_buf.logtem[i] - logtem_start) / dlogtem) +
               1LL,
-          1LL, static_cast<long long>(n_bins) - 1LL);
+          1LL, n_bins - 1LL);
       logTlininterp_buf.t1[i] =
           (logtem_start + (logTlininterp_buf.indixe[i] - 1) * dlogtem);
       logTlininterp_buf.t2[i] =
