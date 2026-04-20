@@ -52,6 +52,7 @@ dependencies = [
   'h5py',
   'numpy',
   'matplotlib',
+  'roman',
   'yt>=4.0.2'
 ]
 
