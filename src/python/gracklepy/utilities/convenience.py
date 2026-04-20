@@ -88,7 +88,7 @@ def _setup_dust_densities(fc, state_vals, dust_to_gas_ratio):
     or on the injection metals.
     """
 
-    if fc.chemistry_data.metal_chemistry == 0:
+    if fc.chemistry_data.metal_chemistry == 0 or fc.chemistry_data.dust_species == 0:
         state_vals["dust_density"] = dust_to_gas_ratio * state_vals["density"]
 
     elif fc.chemistry_data.metal_chemistry == 1:
