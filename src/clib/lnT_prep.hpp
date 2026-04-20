@@ -25,14 +25,13 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-/// Fills buffers tracked by \p logTlininterp_buf and returns the spacing in
-/// logspace
-///
-/// @note the way that we return the spacing in logspace feels a little "hacky"
-inline double prep_lnT_lininterp_bufs(
+namespace detail {
+
+template <class UnaryFn>
+[[gnu::always_inline]] inline double prep_lnT_lininterp_bufs_(
     LogTLinInterpScratchBuf& logTlininterp_buf, IndexRange idx_range,
     const chemistry_data& my_chemistry, const gr_mask_type* itmask,
-    const double* temperature) {
+    UnaryFn get_T_fn) {
   // Get log values of start and end of lookup tables
   const int n_bins = my_chemistry.NumberOfTemperatureBins;
   const double logtem_start = std::log(my_chemistry.TemperatureStart);
@@ -43,7 +42,7 @@ inline double prep_lnT_lininterp_bufs(
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      logTlininterp_buf.logtem[i] = std::log(temperature[i]);
+      logTlininterp_buf.logtem[i] = std::log(get_T_fn(i));
       logTlininterp_buf.logtem[i] = GRIMPL_NS::clamp(
           logTlininterp_buf.logtem[i], logtem_start, logtem_end);
 
@@ -62,6 +61,21 @@ inline double prep_lnT_lininterp_bufs(
     }
   }
   return dlogtem;
+}
+
+}  // namespace detail
+
+/// Fills buffers tracked by \p logTlininterp_buf and returns the spacing in
+/// logspace
+///
+/// @note the way that we return the spacing in logspace feels a little "hacky"
+inline double prep_lnT_lininterp_bufs(
+    LogTLinInterpScratchBuf& logTlininterp_buf, IndexRange idx_range,
+    const chemistry_data& my_chemistry, const gr_mask_type* itmask,
+    const double* temperature) {
+  auto get_T = [temperature](int i) -> double { return temperature[i]; };
+  return detail::prep_lnT_lininterp_bufs_(logTlininterp_buf, idx_range,
+                                          my_chemistry, itmask, get_T);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
