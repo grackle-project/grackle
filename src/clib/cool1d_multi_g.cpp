@@ -197,7 +197,7 @@ void grackle::impl::cool1d_multi_g(
 
   // Iteration mask
 
-  gr_mask_type anydust, interp;
+  gr_mask_type anydust;
   std::vector<gr_mask_type> itmask_tab(my_fields->grid_dimension[0]);
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -212,14 +212,6 @@ void grackle::impl::cool1d_multi_g(
     anydust = MASK_FALSE;
   }
 
-  // Set flag for needing interpolation variables
-
-  if ((my_chemistry->primordial_chemistry > 0) ||
-      (my_chemistry->dust_chemistry > 0)) {
-    interp = MASK_TRUE;
-  } else {
-    interp = MASK_FALSE;
-  }
   // Set log values of start and end of lookup tables
 
   logtem0 = std::log(my_chemistry->TemperatureStart);
@@ -368,8 +360,11 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Compute interpolation indices
-
-  if (interp != MASK_FALSE) {
+  // -> strictly speaking, we could skip calculation of indices if
+  //    my_chemistry->primordial_chemistry == 0 AND
+  //    my_chemistry->dust_chemistry, but this is simpler (for now)
+  // -> realistically, we probably aren't wasting that much time
+  {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         // Compute index into the table and precompute parts of linear interp
