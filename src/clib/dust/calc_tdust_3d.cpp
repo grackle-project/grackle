@@ -24,6 +24,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
 
@@ -37,12 +38,6 @@ void calc_tdust_3d(
 {
 
   const double mh_local_var = mh_grflt;
-
-  // Set log values of start and end of lookup tables
-
-  const double logtem0  = std::log(my_chemistry->TemperatureStart);
-  const double logtem9  = std::log(my_chemistry->TemperatureEnd);
-  const double dlogtem  = (logtem9 - logtem0)/(double)(my_chemistry->NumberOfTemperatureBins-1);
 
   // Set unit-related quantities
   const double dom = internalu_calc_dom_(internalu);
@@ -232,25 +227,14 @@ void calc_tdust_3d(
 
           nh[i] = nh[i] * internalu.urho / mh_local_var;
 
-          // Compute log temperature and truncate if above/below table max/min
-
+          // copy temperature into 1D buffer
           tgas[i]   = gas_temp(i,j,k);
-          logTlininterp_buf.logtem[i] = std::log(tgas[i]);
-          logTlininterp_buf.logtem[i] = std::fmax(logTlininterp_buf.logtem[i], logtem0);
-          logTlininterp_buf.logtem[i] = std::fmin(logTlininterp_buf.logtem[i], logtem9);
-
-          // Compute index into the table and precompute parts of linear interp
-
-          logTlininterp_buf.indixe[i] = std::fmin(
-            my_chemistry->NumberOfTemperatureBins-1,
-            std::fmax(1,(long long)((logTlininterp_buf.logtem[i]-logtem0)/dlogtem)+1)
-          );
-          logTlininterp_buf.t1[i] = (logtem0 + (logTlininterp_buf.indixe[i] - 1)*dlogtem);
-          logTlininterp_buf.t2[i] = (logtem0 + (logTlininterp_buf.indixe[i]    )*dlogtem);
-          logTlininterp_buf.tdef[i] = (logTlininterp_buf.logtem[i] - logTlininterp_buf.t1[i]) / (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
-
         }
       }
+
+      // Compute log temperature and precompute standard interpolation props
+      prep_lnT_lininterp_bufs(logTlininterp_buf, idx_range, *my_chemistry,
+                              itmask_metal.data(), tgas.data());
 
       // Compute dust temperature(s) in the index-range
       calc_all_tdust_gasgr_1d_g(
