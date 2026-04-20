@@ -126,6 +126,7 @@ add_library(Grackle_Grackle
   internal_types.cpp internal_types.hpp
   internal_units.hpp
   interp_table_utils.hpp
+  lnT_prep.hpp
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
