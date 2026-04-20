@@ -44,7 +44,7 @@ inline double common_1D_rate_table_lnT_step(
 namespace detail {
 
 template <class UnaryFn>
-[[gnu::always_inline]] inline double prep_lnT_lininterp_bufs_(
+[[gnu::always_inline]] inline void prep_lnT_lininterp_bufs_(
     LogTLinInterpScratchBuf& logTlininterp_buf, IndexRange idx_range,
     const chemistry_data& my_chemistry, const gr_mask_type* itmask,
     UnaryFn get_T_fn) {
@@ -77,38 +77,33 @@ template <class UnaryFn>
           (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
     }
   }
-  return dlogtem;
 }
 
 }  // namespace detail
 
-/// Fills buffers tracked by \p logTlininterp_buf and returns the spacing in
-/// logspace
-///
-/// @note the way that we return the spacing in logspace feels a little "hacky"
-inline double prep_lnT_lininterp_bufs(
-    LogTLinInterpScratchBuf& logTlininterp_buf, IndexRange idx_range,
-    const chemistry_data& my_chemistry, const gr_mask_type* itmask,
-    const double* temperature) {
+/// Fills buffers tracked by \p logTlininterp_buf
+inline void prep_lnT_lininterp_bufs(LogTLinInterpScratchBuf& logTlininterp_buf,
+                                    IndexRange idx_range,
+                                    const chemistry_data& my_chemistry,
+                                    const gr_mask_type* itmask,
+                                    const double* temperature) {
   auto get_T = [temperature](int i) -> double { return temperature[i]; };
-  return detail::prep_lnT_lininterp_bufs_(logTlininterp_buf, idx_range,
-                                          my_chemistry, itmask, get_T);
+  detail::prep_lnT_lininterp_bufs_(logTlininterp_buf, idx_range, my_chemistry,
+                                   itmask, get_T);
 }
 
-/// Fills buffers tracked by @p logTlininterp_buf and returns the spacing in
-/// logspace. In this overload, we set each value to the arithmetic average of
-/// @p cur_T and @p old_T
-///
-/// @note the way that we return the spacing in logspace feels a little "hacky"
-inline double prep_lnT_lininterp_bufs(
-    LogTLinInterpScratchBuf& logTlininterp_buf, IndexRange idx_range,
-    const chemistry_data& my_chemistry, const gr_mask_type* itmask,
-    const double* cur_T, const double* old_T) {
+/// Fills buffers tracked by @p logTlininterp_buf. In this overload, we set each
+/// value to the arithmetic average of @p cur_T and @p old_T
+inline void prep_lnT_lininterp_bufs(LogTLinInterpScratchBuf& logTlininterp_buf,
+                                    IndexRange idx_range,
+                                    const chemistry_data& my_chemistry,
+                                    const gr_mask_type* itmask,
+                                    const double* cur_T, const double* old_T) {
   auto get_T = [cur_T, old_T](int i) -> double {
     return 0.5 * (cur_T[i] + old_T[i]);
   };
-  return detail::prep_lnT_lininterp_bufs_(logTlininterp_buf, idx_range,
-                                          my_chemistry, itmask, get_T);
+  detail::prep_lnT_lininterp_bufs_(logTlininterp_buf, idx_range, my_chemistry,
+                                   itmask, get_T);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
