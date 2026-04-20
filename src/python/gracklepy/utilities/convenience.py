@@ -82,11 +82,38 @@ def _get_appropriate_ion_field(fc, element, state):
 
     raise ValueError(f"Element {element} not in fluid container")
 
-def _setup_metal_abundances(fc, state_vals, nuclide_densities):
+def _setup_dust_densities(fc, state_vals, dust_to_gas_ratio):
+    """
+    Initialize the dust densities based on either the dust-to-gas ratio
+    or on the injection metals.
+    """
+
+    if fc.chemistry_data.metal_chemistry == 0:
+        state_vals["dust_density"] = dust_to_gas_ratio * state_vals["density"]
+
+    elif fc.chemistry_data.metal_chemistry == 1:
+        metal_field = fc.inject_pathway_density_yield_fields[0]
+        metal_density = state_vals[metal_field]
+        dust_density = 0
+        for gr, fmass in fc.chemistry_data._experimental_grain_inj_path_yields().items():
+            state_vals[gr] = fmass[0] * metal_density
+            dust_density += state_vals[gr]
+
+        state_vals["dust_density"] = dust_density
+
+    else:
+        raise ValueError("metal_chemistry must be either 0 or 1.")
+
+
+def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities):
     """
     Initialize the abundances of the metals based on the abundance pattern
     of the metal field. We either use a solar abundance pattern or that of
     an injection metal field if it is present and specifically selected.
+
+    Note, here we are not setting state_vals. Instead, we are populating
+    the nuclide_densities dict with will be used to set state_vals in
+    setup_ion_fields.
     """
 
     # assume a solar abundance pattern
@@ -97,8 +124,11 @@ def _setup_metal_abundances(fc, state_vals, nuclide_densities):
     # use the injection metal data
     elif fc.chemistry_data.metal_chemistry == 1:
         metal_field = fc.inject_pathway_density_yield_fields[0]
-        metal_nuclide_fractions = \
-          fc.chemistry_data._experimental_nuclide_gas_inj_path_yields()
+        metal_nuclide_fractions = {el: fmass[0] for el, fmass in
+          fc.chemistry_data._experimental_nuclide_gas_inj_path_yields().items()}
+
+    else:
+        raise ValueError("metal_chemistry must be either 0 or 1.")
 
     for el, fmass in metal_nuclide_fractions.items():
         if el not in fc.elements:
@@ -240,7 +270,6 @@ def setup_fluid_container(my_chemistry,
     state_vals = {
         "density": fc_density,
         "metal_density": metal_mass_fraction * fc_density,
-        "dust_density": dust_to_gas_ratio * fc_density
     }
 
     nuclide_densities = {
@@ -253,7 +282,8 @@ def setup_fluid_container(my_chemistry,
         nuclide_densities[el] *= state_vals["density"]
 
     _setup_inj_pathway_fields(state_vals, fc.inject_pathway_density_yield_fields)
-    _setup_metal_abundances(fc, state_vals, nuclide_densities)
+    _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities)
+    _setup_dust_densities(fc, state_vals, dust_to_gas_ratio)
     _setup_ion_fields(fc, state_vals, nuclide_densities, state)
 
     for field in fc.density_fields:
