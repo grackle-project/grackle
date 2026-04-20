@@ -78,6 +78,22 @@ inline double prep_lnT_lininterp_bufs(
                                           my_chemistry, itmask, get_T);
 }
 
+/// Fills buffers tracked by @p logTlininterp_buf and returns the spacing in
+/// logspace. In this overload, we set each value to the arithmetic average of
+/// @p cur_T and @p old_T
+///
+/// @note the way that we return the spacing in logspace feels a little "hacky"
+inline double prep_lnT_lininterp_bufs(
+    LogTLinInterpScratchBuf& logTlininterp_buf, IndexRange idx_range,
+    const chemistry_data& my_chemistry, const gr_mask_type* itmask,
+    const double* cur_T, const double* old_T) {
+  auto get_T = [cur_T, old_T](int i) -> double {
+    return 0.5 * (cur_T[i] + old_T[i]);
+  };
+  return detail::prep_lnT_lininterp_bufs_(logTlininterp_buf, idx_range,
+                                          my_chemistry, itmask, get_T);
+}
+
 }  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // LNT_PREP_HPP
