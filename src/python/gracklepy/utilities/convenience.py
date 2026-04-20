@@ -32,7 +32,7 @@ from gracklepy.utilities.physical_constants import \
 solar_mass_abundance = {element: solar_abundance[element] *
                         approximate_atomic_mass[element]
                         for element in solar_abundance
-                        if element not in ("H", "He", "D")}
+                        if element not in primordial_elements}
 solar_metal_mass = sum(solar_mass_abundance.values())
 
 def check_convergence(fc1, fc2, fields=None, tol=0.01):
@@ -82,16 +82,39 @@ def _get_appropriate_ion_field(fc, element, state):
 
     raise ValueError(f"Element {element} not in fluid container")
 
-def _setup_ion_fields(fc, state_vals, element_densities, state):
+def _setup_metal_abundances(fc, state_vals, nuclide_densities):
+    """
+    Initialize the abundances of the metals based on the abundance pattern
+    of the metal field. We either use a solar abundance pattern or that of
+    an injection metal field if it is present and specifically selected.
+    """
+
+    # assume a solar abundance pattern
+    if fc.chemistry_data.metal_chemistry == 0:
+        metal_nuclide_fractions = {el: solar_mass_abundance[el] / solar_metal_mass
+                                   for el in fc.elements if el not in primordial_elements}
+
+    # use the injection metal data
+    elif fc.chemistry_data.metal_chemistry == 1:
+        metal_field = fc.inject_pathway_density_yield_fields[0]
+        metal_nuclide_fractions = \
+          fc.chemistry_data._experimental_nuclide_gas_inj_path_yields()
+
+    for el, fmass in metal_nuclide_fractions.items():
+        if el not in fc.elements:
+            continue
+        nuclide_densities[el] = state_vals["metal_density"] * fmass
+
+def _setup_ion_fields(fc, state_vals, nuclide_densities, state):
     """
     Initialize density fields for the ions that will the dominant
     species for either a neutral or ionized state.
     """
 
     state_vals["e_density"] = 0
-    for el in element_densities:
+    for el in nuclide_densities:
         fname = _get_appropriate_ion_field(fc, el, state)
-        state_vals[fname] = element_densities[el]
+        state_vals[fname] = nuclide_densities[el]
 
         # add to electron density
         if state == "ionized":
@@ -102,7 +125,7 @@ def _setup_ion_fields(fc, state_vals, element_densities, state):
 
             ion = reg.groups()[0]
             charge = roman.fromRoman(ion) - 1
-            state_vals["e_density"] += element_densities[el] * charge / \
+            state_vals["e_density"] += nuclide_densities[el] * charge / \
               approximate_atomic_mass[el]
 
 def _setup_inj_pathway_fields(state_vals: dict[str, float],
@@ -220,25 +243,18 @@ def setup_fluid_container(my_chemistry,
         "dust_density": dust_to_gas_ratio * fc_density
     }
 
-    element_densities = {
+    nuclide_densities = {
         "H": fh * metal_free,
         "He": (1 - fh) * metal_free,
     }
     # someday, maybe we'll include D in the total
-    element_densities["D"] = element_densities["H"] * d2h
-    for el in element_densities:
-        element_densities[el] *= state_vals["density"]
-
-    for el in atomic_number:
-        if el in primordial_elements:
-            continue
-        if el not in fc.elements:
-            continue
-        element_densities[el] = state_vals["metal_density"] * \
-          solar_mass_abundance[el] / solar_metal_mass
+    nuclide_densities["D"] = nuclide_densities["H"] * d2h
+    for el in nuclide_densities:
+        nuclide_densities[el] *= state_vals["density"]
 
     _setup_inj_pathway_fields(state_vals, fc.inject_pathway_density_yield_fields)
-    _setup_ion_fields(fc, state_vals, element_densities, state)
+    _setup_metal_abundances(fc, state_vals, nuclide_densities)
+    _setup_ion_fields(fc, state_vals, nuclide_densities, state)
 
     for field in fc.density_fields:
         fc[field][:] = state_vals.get(field, tiny_density)
