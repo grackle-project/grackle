@@ -20,6 +20,7 @@
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
 #include "fortran_func_wrappers.hpp"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 #include "utils-field.hpp"
@@ -105,10 +106,10 @@ namespace grackle::impl {
 /// > dust-grain related heating and cooling should probably assume that the
 /// > dust-grain density is already 0.
 inline void lookup_dust_rates1d(
-    IndexRange idx_range, double dlogtem, const double* tdust,
-    const double* dust2gas, double* h2dust, double dom,
-    const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    IndexRange idx_range, const double* tdust, const double* dust2gas,
+    double* h2dust, double dom, const gr_mask_type* itmask_metal, double dt,
+    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    grackle_field_data* my_fields,
     grackle::impl::GrainSpeciesCollection grain_growth_rates,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
@@ -184,6 +185,7 @@ inline void lookup_dust_rates1d(
     }
 
   } else {  // my_chemistry->dust_species > 0
+    const double dlogtem = common_1D_rate_table_lnT_step(*my_chemistry);
 
     // The Fortran version of this function implicitly assumed that the
     // following condition was satisfied when my_chemistry->dust_species > 0

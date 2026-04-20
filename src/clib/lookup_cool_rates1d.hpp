@@ -789,8 +789,8 @@ inline void lookup_cool_rates1d(
 
   // Linearly Interpolate the Collisional Rxn Rates
   // ----------------------------------------------
-  double dlogtem = prep_lnT_lininterp_bufs(logTlininterp_buf, idx_range,
-                                           *my_chemistry, itmask, tgas1d);
+  prep_lnT_lininterp_bufs(logTlininterp_buf, idx_range, *my_chemistry, itmask,
+                          tgas1d);
 
   // interpolate all collisional reaction rates
   interpolate_collisional_rxn_rates_(kcol_buf, idx_range, tgas1d, itmask, dom,
@@ -807,8 +807,8 @@ inline void lookup_cool_rates1d(
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
-    lookup_dust_rates1d(idx_range, dlogtem, tdust, dust2gas, h2dust, dom,
-                        itmask_metal, dt, my_chemistry, my_rates, my_fields,
+    lookup_dust_rates1d(idx_range, tdust, dust2gas, h2dust, dom, itmask_metal,
+                        dt, my_chemistry, my_rates, my_fields,
                         grain_growth_rates, grain_temperatures,
                         logTlininterp_buf, internal_dust_prop_scratch_buf);
   }
