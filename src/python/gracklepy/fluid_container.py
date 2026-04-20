@@ -229,6 +229,24 @@ _indirectly_calculated_fields.update(
      for field in _dust_temperatures[max(_dust_temperatures.keys())]}
 )
 
+def _required_atomic_elements(my_chemistry):
+    """
+    Return the names of all the elements that we are following in an atomic
+    state in some form, either as individual ions or as the entire element.
+    """
+    elements = ()
+    if my_chemistry.primordial_chemistry > 0:
+        elements += ("H", "He")
+    if my_chemistry.primordial_chemistry > 2:
+        elements += ("D",)
+    if my_chemistry.metal_chemistry > 0:
+        elements += ("C", "O", "Si")
+    if my_chemistry.dust_species > 0:
+        elements += ("Mg",)
+    if my_chemistry.dust_species > 1:
+        elements += ("Al", "S", "Fe")
+    return elements
+
 def _ordered_inject_pathway_yield_densities(my_chemistry):
     """
     Returns the names of metal yield density field names for each injection
@@ -401,6 +419,10 @@ class FluidContainer(dict):
     @property
     def density_fields(self):
         return _required_density_fields(self.chemistry_data)
+
+    @property
+    def elements(self):
+        return _required_atomic_elements(self.chemistry_data)
 
     @property
     def inject_pathway_density_yield_fields(self):

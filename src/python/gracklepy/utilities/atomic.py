@@ -54,3 +54,5 @@ atomic_number = {
     "Mn": 25, "Fe": 26, "Co": 27,
     "Ni": 28, "Cu": 29, "Zn": 30,
     "D" : 1}
+
+primordial_elements = ("H", "He", "D")

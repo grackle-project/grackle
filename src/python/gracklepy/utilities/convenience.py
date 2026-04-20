@@ -23,6 +23,7 @@ from gracklepy.fluid_container import \
 from gracklepy.utilities.atomic import \
     approximate_atomic_mass, \
     atomic_number, \
+    primordial_elements, \
     solar_abundance
 from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
@@ -228,11 +229,13 @@ def setup_fluid_container(my_chemistry,
     for el in element_densities:
         element_densities[el] *= state_vals["density"]
 
-    metal_elements = ["C", "O", "Mg", "Al", "Si", "S", "Fe"]
-    metal_densities = {el: state_vals["metal_density"] *
-                           solar_mass_abundance[el] / solar_metal_mass
-                       for el in metal_elements}
-    element_densities.update(metal_densities)
+    for el in atomic_number:
+        if el in primordial_elements:
+            continue
+        if el not in fc.elements:
+            continue
+        element_densities[el] = state_vals["metal_density"] * \
+          solar_mass_abundance[el] / solar_metal_mass
 
     _setup_inj_pathway_fields(state_vals, fc.inject_pathway_density_yield_fields)
     _setup_ion_fields(fc, state_vals, element_densities, state)
