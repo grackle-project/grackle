@@ -233,8 +233,10 @@ void calc_tdust_3d(
       }
 
       // Compute log temperature and precompute standard interpolation props
-      prep_lnT_lininterp_bufs(logTlininterp_buf, idx_range, *my_chemistry,
-                              itmask_metal.data(), tgas.data());
+      LnTPreparer::prep_undamped_lnT_lininterp_bufs(logTlininterp_buf,
+                                                    idx_range, *my_chemistry,
+                                                    itmask_metal.data(),
+                                                    tgas.data());
 
       // Compute dust temperature(s) in the index-range
       calc_all_tdust_gasgr_1d_g(

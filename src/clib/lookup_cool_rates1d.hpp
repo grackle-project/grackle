@@ -789,8 +789,8 @@ inline void lookup_cool_rates1d(
 
   // Linearly Interpolate the Collisional Rxn Rates
   // ----------------------------------------------
-  prep_lnT_lininterp_bufs(logTlininterp_buf, idx_range, *my_chemistry, itmask,
-                          tgas1d);
+  LnTPreparer::prep_undamped_lnT_lininterp_bufs(logTlininterp_buf, idx_range,
+                                                *my_chemistry, itmask, tgas1d);
 
   // interpolate all collisional reaction rates
   interpolate_collisional_rxn_rates_(kcol_buf, idx_range, tgas1d, itmask, dom,
