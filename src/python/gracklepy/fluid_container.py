@@ -229,7 +229,7 @@ _indirectly_calculated_fields.update(
      for field in _dust_temperatures[max(_dust_temperatures.keys())]}
 )
 
-def _required_atomic_elements(my_chemistry):
+def _required_nuclides(my_chemistry):
     """
     Return the names of all the elements that we are following in an atomic
     state in some form, either as individual ions or as the entire element.
@@ -422,7 +422,7 @@ class FluidContainer(dict):
 
     @property
     def elements(self):
-        return _required_atomic_elements(self.chemistry_data)
+        return _required_nuclides(self.chemistry_data)
 
     @property
     def inject_pathway_density_yield_fields(self):
