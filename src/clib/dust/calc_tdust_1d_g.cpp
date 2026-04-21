@@ -92,7 +92,7 @@ void grackle::impl::calc_tdust_1d_g(
 
   floored_trad = std::fmax(
       1.,
-      trad);  // TODO: do we really want to write in a passed by copy input par?
+      trad);
   floored_trad4 = std::pow(floored_trad, 4);
 
   // \sum rho_SN kappa_SN / \sum rho_SN ndust_SN
