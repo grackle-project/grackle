@@ -13,7 +13,6 @@
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
-//#include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
 #include "gaussj_g.hpp"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
