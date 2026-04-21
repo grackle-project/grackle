@@ -229,19 +229,27 @@ _indirectly_calculated_fields.update(
      for field in _dust_temperatures[max(_dust_temperatures.keys())]}
 )
 
-_metal_yield_densities = \
-  ["local_ISM_metal_density",
-   "ccsn13_metal_density",
-   "ccsn20_metal_density",
-   "ccsn25_metal_density",
-   "ccsn30_metal_density",
-   "fsn13_metal_density",
-   "fsn15_metal_density",
-   "fsn50_metal_density",
-   "fsn80_metal_density",
-   "pisn170_metal_density",
-   "pisn200_metal_density",
-   "y19_metal_density"]
+def _ordered_inject_pathway_yield_densities(my_chemistry):
+    """
+    Returns the names of metal yield density field names for each injection
+    pathway in the appropriate order
+    """
+    # rate_map is safe as long as the instance doesn't outlive my_chemistry
+    rate_map = my_chemistry._unsafe_get_rate_map()
+    inject_path_names = rate_map.get("inject_model_names", [])
+
+    # perform a few sanity checks:
+    # - these checks should really be handled while initializing chemistry_data,
+    #   (by the core Grackle library) but we are preserving the checks for now
+    if my_chemistry.metal_chemistry > 0:
+        if (my_chemistry.multi_metals != 0) and (my_chemistry.multi_metals != 1):
+            raise ValueError("multi_metals must be either 0 or 1.")
+        elif len(inject_path_names) == 0:
+            raise AssertionError(
+                "Something is very wrong. There should be at least one injection "
+                "pathway yield field why metal_chemistry > 0"
+            )
+    return [f"{name}_metal_density" for name in inject_path_names]
 
 _base_radiation_transfer_fields = \
   ["RT_heating_rate",
@@ -259,12 +267,9 @@ def _required_density_fields(my_chemistry):
     if my_chemistry.dust_chemistry == 1:
         my_fields.append("dust_density")
     if my_chemistry.metal_chemistry > 0:
-        my_fields.extend(_dust_metal_densities[my_chemistry.dust_species] +
-                         _dust_densities[my_chemistry.dust_species])
-        if my_chemistry.multi_metals == 0:
-            my_fields.append(_metal_yield_densities[my_chemistry.metal_abundances])
-        else:
-            my_fields.extend(_metal_yield_densities)
+        my_fields.extend(_dust_metal_densities[my_chemistry.dust_species])
+        my_fields.extend(_dust_densities[my_chemistry.dust_species])
+        my_fields.extend(_ordered_inject_pathway_yield_densities(my_chemistry))
     return my_fields
 
 def _required_radiation_transfer_fields(my_chemistry):
@@ -334,17 +339,43 @@ _field_units = {
     "z_velocity": ("velocity_units", "cm/s"),
 }
 
+def _shape_arg_has_integer_type(arg) -> bool:
+    # checks if arg has a type that `np.zeros` would both accept for the shape
+    # argument and be interpretted as a scalar integer
+    # -> note: np.zeros raises TypeError for values of `True` or `3.`
+    if isinstance(arg, int):
+        return True
+    tmp = np.asarray(arg)
+    return tmp.ndim == 0 and np.issubdtype(tmp.dtype, np.integer)
 
 class FluidContainer(dict):
     def __init__(self, chemistry_data, n_vals, dtype="float64",
                  itype="int64"):
+        if not chemistry_data._is_initialized():
+            raise ValueError("chemistry_data must be initialized")
         super(FluidContainer, self).__init__()
         self.dtype = dtype
         self.chemistry_data = chemistry_data
-        self.n_vals = n_vals
+        if not _shape_arg_has_integer_type(n_vals):
+            raise TypeError(f"expected n_vals to be an integer, got {n_vals!r}")
+        elif n_vals <= 0:
+            raise ValueError("a non-positive n_vals is not allowed")
+        else:
+            self.n_vals = int(n_vals)
 
-        for field in self.input_fields + \
-          _required_calculated_fields(self.chemistry_data):
+        # first, allocate any injection pathway density fields so we can efficiently
+        # iterate over the fields' pointers in the order expected by the Grackle solver
+        # -> this works properly even when there are 0 injection pathways
+        inj_pathway_density_fields = self.inject_pathway_density_yield_fields
+        _shape = (len(inj_pathway_density_fields), self.n_vals)
+        self._inj_path_density_arrays = np.zeros(shape=_shape, dtype=self.dtype)
+        for i, field in enumerate(inj_pathway_density_fields):
+            self[field] = self._inj_path_density_arrays[i, :]
+
+        # allocate all other fields
+        for field in self.input_fields + _required_calculated_fields(chemistry_data):
+            if field in self:
+                continue
             self._setup_fluid(field)
 
     def __getitem__(self, key):
@@ -370,6 +401,11 @@ class FluidContainer(dict):
     @property
     def density_fields(self):
         return _required_density_fields(self.chemistry_data)
+
+    @property
+    def inject_pathway_density_yield_fields(self):
+        # the order of returned fields is significant
+        return _ordered_inject_pathway_yield_densities(self.chemistry_data)
 
     @property
     def input_fields(self):

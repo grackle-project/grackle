@@ -12,11 +12,8 @@ target_link_libraries(_grackle_internals INTERFACE Grackle::Grackle)
 target_compile_definitions(_grackle_internals
   # currently required for functions declared by fortran_func_wrappers.hpp
   INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>"
-  # suppresses warnings about C internal headers using our deprecated public
-  # headers (the files should include grackle.h instead). We're currently
-  # holding off on properly fixing this to minimize conflicts with pending PRs
-  # on the newchem-cpp branch
-  INTERFACE GRIMPL_PUBLIC_INCLUDE=1
+  # TODO: see what we can do to stop defining the following
+  INTERFACE GRIMPL_COMPILING_CORE_LIB=1
 )
 
 # this makes it possible to write an include-directive of a header from
@@ -120,6 +117,7 @@ add_library(grtestutils_core
   iterator_adaptor.hpp
   os.hpp os.cpp
   preset.hpp preset.cpp
+  ratequery.hpp
   utils.hpp utils.cpp
   view.cpp view.hpp
 )
@@ -164,6 +162,7 @@ if (TARGET GTest::gtest)
     googletest/assertions.hpp
     googletest/check_allclose.cpp googletest/check_allclose.hpp
     googletest/fixtures.hpp
+    googletest/matchers.hpp
   )
 
   target_link_libraries(grtestutils_googletest
