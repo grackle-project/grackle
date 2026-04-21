@@ -44,10 +44,6 @@ void FORTRAN_NAME(calc_gr_balance_g)(
   int* is, int* ie
 );
 
-void FORTRAN_NAME(gaussj_g)(
-  int* n, double* a_data_ptr, double* b, int* ierr
-);
-
 // in the following interpolate functions, all of the arguments are const
 // pointers other than value. (but I have just annotated the subset of
 // arguments with const that are necessary to get the desired wrapper function
