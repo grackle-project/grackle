@@ -1,6 +1,7 @@
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
-add_executable(testFrozenKeyIdxBiMap support/test_unit_FrozenKeyIdxBiMap.cpp)
+add_executable(testFrozenKeyIdxBiMap
+  support/test_unit_hash.cpp support/test_unit_FrozenKeyIdxBiMap.cpp)
 target_link_libraries(testFrozenKeyIdxBiMap testdeps)
 gtest_discover_tests(testFrozenKeyIdxBiMap)
 
@@ -19,6 +20,10 @@ gtest_discover_tests(runSolveCubicEquationTests)
 add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
 target_link_libraries(runGrainSpeciesIntoTests testdeps)
 gtest_discover_tests(runGrainSpeciesIntoTests)
+
+add_executable(testPartMap support/test_unit_PartMap.cpp)
+target_link_libraries(testPartMap testdeps)
+gtest_discover_tests(testPartMap)
 
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting testdeps)
