@@ -159,13 +159,13 @@ void grackle::impl::calc_tdust_1d_g(
     }
 
     // Calculate grain opacities
-    grackle::impl::calc_kappa_gr_g(tdustnow.data(), kgr, nm_itmask.data(), buf_len,
-                                   idx_range, &t_subl, &Td_N, &Td_Size, gr_dT,
-                                   gr_Td, logalsp.data(), *idspecies);
+    grackle::impl::calc_kappa_gr_g(tdustnow.data(), kgr, nm_itmask.data(),
+                                   buf_len, idx_range, &t_subl, &Td_N, &Td_Size,
+                                   gr_dT, gr_Td, logalsp.data(), *idspecies);
 
     grackle::impl::calc_kappa_gr_g(
-        tdplus.data(), kgrplus.data(), nm_itmask.data(), buf_len, idx_range, &t_subl,
-        &Td_N, &Td_Size, gr_dT, gr_Td, logalsp.data(), *idspecies);
+        tdplus.data(), kgrplus.data(), nm_itmask.data(), buf_len, idx_range,
+        &t_subl, &Td_N, &Td_Size, gr_dT, gr_Td, logalsp.data(), *idspecies);
 
     // Calculate heating/cooling balance
 
@@ -246,9 +246,9 @@ void grackle::impl::calc_tdust_1d_g(
         }
       }
 
-      grackle::impl::calc_kappa_gr_g(bi_t_mid.data(), kgr, bi_itmask.data(), buf_len,
-                                     idx_range, &t_subl, &Td_N, &Td_Size, gr_dT,
-                                     gr_Td, logalsp.data(), *idspecies);
+      grackle::impl::calc_kappa_gr_g(
+          bi_t_mid.data(), kgr, bi_itmask.data(), buf_len, idx_range, &t_subl,
+          &Td_N, &Td_Size, gr_dT, gr_Td, logalsp.data(), *idspecies);
 
       FORTRAN_NAME(calc_gr_balance_g)(
           bi_t_mid.data(), tgas, kgr, &floored_trad4, gasgr, gamma_isrf.data(),
