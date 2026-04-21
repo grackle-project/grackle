@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implementation of Gauss-Jordan elimination for solving linear systems
+///
+//===----------------------------------------------------------------------===//
+
 #include <cmath>
 #include <vector>
 

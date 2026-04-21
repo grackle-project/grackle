@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file gaussj_g.hpp
-/// @brief Implementation of Gauss-Jordan elimination for solving linear systems
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares the function for Gauss-Jordan elimination
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef GAUSSJ_G_HPP
 #define GAUSSJ_G_HPP
