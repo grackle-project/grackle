@@ -41,7 +41,7 @@ def query_grackle_version_props():
     latest_tagged_version = most_recent_tag[len(prefix) :]
 
     # get the actual revision when most_recent tag was introduced
-    revision_of_tag = _run(["git", "rev-parse", "-n", "1", most_recent_tag])
+    revision_of_tag = _run(["git", "rev-list", "-n", "1", most_recent_tag])
 
     # get the branch name and current revision
     branch = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"])

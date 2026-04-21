@@ -102,6 +102,11 @@ When you launch the tests, the output will look like the following:
 Running the gracklepy Test Suite
 --------------------------------
 
+.. important::
+
+   At the time of writing, the gracklepy suite **ONLY** works when you install :ref:`gracklepy from its source code <install-gracklepy-source>` in an editable installation.
+   Some tests won't work properly if you use a :ref:`prebuilt installation. <install-gracklepy-prebuilt>`
+
 As already noted, the gracklepy suite includes unit tests and answer tests.
 
 Unit tests (i.e., those with explicitly known correct answers) include
@@ -168,7 +173,7 @@ Sample Usage of the gracklepy Test Suite
 
 The following snippets illustrate ways how you might invoke the gracklepy test suite in different scenarios.
 
-Unless noted otherwise, each scenario assumes that you have already :ref:`installed gracklepy <install-gracklepy>` (reminder, you currently need editable installs for these tests).
+Unless noted otherwise, each scenario assumes that you have already :ref:`installed gracklepy from its source code <install-gracklepy-source>` (reminder, you currently need editable installs for these tests).
 Each shows snippets assuming that you are at the root of the Grackle directory.
 
 .. tabs::
@@ -238,7 +243,7 @@ Each shows snippets assuming that you are at the root of the Grackle directory.
          This scenario involves installing (and uninstalling) different versions of Gracklepy.
          These examples all use the simplest (and recommended) approach for installing Gracklepy, which builds it as a standalone library (and automatically manages all details about the core library).
 
-         You could also run the tests using :ref:`the other methods of installing Gracklepy <install-gracklepy>`, but that involves extra steps (in those cases you need to manually build and install/link the associated version of the core library).
+         You could also run the tests using :ref:`the other methods of installing Gracklepy from its source code <install-gracklepy-source>`, but that involves extra steps (in those cases you need to manually build and install/link the associated version of the core library).
          
 
       The basic premise is that you want to run the full gracklepy test suite (with answer verification) on a target version of the code called ``<target>``.

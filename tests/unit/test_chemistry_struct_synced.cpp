@@ -1,4 +1,4 @@
-#include "grtest_cmd.hpp"
+#include "grtestutils/cmd.hpp"
 
 #include <grackle.h>
 
@@ -22,8 +22,8 @@ using MemberTypeNameMap = std::map<std::string, std::string>;
 #else
   #define stringify(s) stringify_helper(s)
   #define stringify_helper(s) #s
-  static const char* GLOBAL_reader_path = stringify(READER_PATH);
-  static const char* GLOBAL_xml_path = stringify(XML_PATH);
+  static const char* const GLOBAL_reader_path = stringify(READER_PATH);
+  static const char* const GLOBAL_xml_path = stringify(XML_PATH);
 #endif
 
 
@@ -45,7 +45,7 @@ static MemberTypeNameMapResult try_parse_(const std::string& s) {
   std::size_t pos = 0;
   while (pos < len) {
     std::size_t lineend = s.find('\n', pos);
-    if (pos+1 >= lineend || lineend == s.npos) { break; }
+    if (pos+1 >= lineend || lineend == std::string::npos) { break; }
 
     std::smatch match;
     if (std::regex_match(s.begin()+pos, s.begin()+lineend, match, myregex)) {
@@ -105,7 +105,11 @@ MemberTypeNameMapResult query_struct_members(std::string struct_name)
       "The build-system failed to create the xml-file. (THIS SHOULDN'T HAPPEN)",
       {}
     };
-  } else if (std::fgetc(f) == EOF) {
+  }
+  bool file_is_empty = (std::fgetc(f) == EOF);
+  std::fclose(f);
+
+  if (file_is_empty) {
     std::string msg(
       "The build-system wrote an empty xml-file, which usually means that "
       "castxml wasn't installed. If you install castxml, you need to instruct "
@@ -114,7 +118,6 @@ MemberTypeNameMapResult query_struct_members(std::string struct_name)
     );
     return MemberTypeNameMapResult{msg, {}};
   }
-  std::fclose(f);
 
   // step 2: parse the xml
   // =====================
@@ -173,8 +176,8 @@ testing::AssertionResult HasExpectedMembers (
 #define EXPECT_MEMBERS(member_map, struct_name)                               \
   /* use determine the actual members */                                      \
   MemberTypeNameMapResult ref_TEMP_ = query_struct_members( struct_name );    \
-  if (ref_TEMP_.err.size() > 0 ) {                                            \
-    GTEST_SKIP() << "Issue inferring members of " << struct_name << ". "      \
+  if (!ref_TEMP_.err.empty()) {                                               \
+    GTEST_SKIP() << "Issue inferring members of " << (struct_name) << ". "    \
                  << ref_TEMP_.err;                                            \
   }                                                                           \
                                                                               \

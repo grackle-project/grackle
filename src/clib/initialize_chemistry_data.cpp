@@ -1,0 +1,647 @@
+/***********************************************************************
+/
+/ Initialize chemistry and cooling rate data
+/
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this
+/ software.
+************************************************************************/
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+#include <math.h>
+#include "grackle.h"
+#include "grackle_macros.h"
+#include "auto_general.hpp"
+#include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
+#include "initialize_cloudy_data.hpp"
+#include "initialize_rates.hpp"
+#include "initialize_UVbackground_data.hpp"
+#include "inject_model/grain_metal_inject_pathways.hpp"
+#include "internal_types.hpp" // drop_CollisionalRxnRateCollection
+#include "interp_table_utils.hpp" // free_interp_grid_
+#include "opaque_storage.hpp" // gr_opaque_storage
+#include "phys_constants.h"
+#include "ratequery.hpp"
+#include "status_reporting.h"
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+#if (GR_SUCCESS != SUCCESS) || (GR_FAIL != FAIL)
+#error "Sanity check failure: GR_SUCCESS must be consistent with SUCCESS and GR_FAIL must be consistent with FAIL"
+#endif
+
+static void show_parameters(FILE *fp, chemistry_data *my_chemistry);
+
+static void show_version(FILE *fp)
+{
+  grackle_version gversion = get_grackle_version();
+  fprintf (fp, "\n");
+  fprintf (fp, "The Grackle Version %s\n", gversion.version);
+  fprintf (fp, "Git Branch   %s\n", gversion.branch);
+  fprintf (fp, "Git Revision %s\n", gversion.revision);
+  fprintf (fp, "\n");
+}
+
+
+/**
+ * Initializes an empty #chemistry_data_storage struct with zeros and NULLs.
+ */
+static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_rates)
+{
+
+  my_rates->k13dd = NULL;
+
+  my_rates->k24 = 0.;
+  my_rates->k25 = 0.;
+  my_rates->k26 = 0.;
+
+  my_rates->k27 = 0.;
+  my_rates->k28 = 0.;
+  my_rates->k29 = 0.;
+  my_rates->k30 = 0.;
+  my_rates->k31 = 0.;
+
+  my_rates->h2dust = NULL;
+  my_rates->h2dustS = NULL;
+  my_rates->h2dustC = NULL;
+
+  my_rates->grain_growth_rate = NULL;
+
+  my_rates->n_cr_n = NULL;
+  my_rates->n_cr_d1 = NULL;
+  my_rates->n_cr_d2 = NULL;
+
+  my_rates->ceHI = NULL;
+  my_rates->ceHeI = NULL;
+  my_rates->ceHeII = NULL;
+  my_rates->ciHI = NULL;
+  my_rates->ciHeI = NULL;
+  my_rates->ciHeIS = NULL;
+  my_rates->ciHeII = NULL;
+  my_rates->reHII = NULL;
+  my_rates->reHeII1 = NULL;
+  my_rates->reHeII2 = NULL;
+  my_rates->reHeIII = NULL;
+  my_rates->brem = NULL;
+  my_rates->comp = 0.;
+  my_rates->comp_xray = 0.;
+  my_rates->temp_xray = 0.;
+
+  my_rates->piHI = 0.;
+  my_rates->piHeI = 0.;
+  my_rates->piHeII = 0.;
+
+  my_rates->crsHI = 0.;
+  my_rates->crsHeI = 0.;
+  my_rates->crsHeII = 0.;
+
+  my_rates->hyd01k = NULL;
+  my_rates->h2k01 = NULL;
+  my_rates->vibh = NULL;
+  my_rates->roth = NULL;
+  my_rates->rotl = NULL;
+  my_rates->GP99LowDensityLimit = NULL;
+  my_rates->GP99HighDensityLimit = NULL;
+
+  my_rates->GAHI = NULL;
+  my_rates->GAH2 = NULL;
+  my_rates->GAHe = NULL;
+  my_rates->GAHp = NULL;
+  my_rates->GAel = NULL;
+
+  my_rates->H2LTE = NULL;
+
+  my_rates->HDlte = NULL;
+  my_rates->HDlow = NULL;
+
+  my_rates->cieco = NULL;
+
+  my_rates->gammah = 0.;
+
+  my_rates->regr = NULL;
+
+  my_rates->gamma_isrf = 0.;
+  my_rates->gamma_isrf2 = 0.;
+
+  my_rates->gas_grain = NULL;
+  my_rates->gas_grain2 = NULL;
+
+  my_rates->cieY06 = NULL;
+
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LHD);
+
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCI);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCII);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOI);
+
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCO);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOH);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2O);
+
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->alphap);
+
+  my_rates->cloudy_data_new = -1;
+
+  my_rates->opaque_storage = NULL;
+}
+
+/// core logic of local_initialize_chemistry_data_
+///
+/// @note
+/// This has been separated from local_initialize_chemistry_data to ensure that
+/// any memory allocations tracked by reg_builder can be appropriately freed
+/// (this is somewhat unavoidable in C++ without destructors)
+static int local_initialize_chemistry_data_(
+    chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
+    code_units *my_units, grackle::impl::ratequery::RegBuilder* reg_builder)
+{
+
+  /* Better safe than sorry: Initialize everything to NULL/0 */
+  initialize_empty_chemistry_data_storage_struct(my_rates);
+
+  if (grackle_verbose) {
+    show_version(stdout);
+    fprintf(stdout, "Initializing grackle data.\n");
+  }
+
+  /* Set the minimum temperature for using tabulated metal cooling. */
+  if (my_chemistry->tabulated_cooling_minimum_temperature < -1.0) {
+    if (my_chemistry->metal_chemistry > 0) {
+      my_chemistry->tabulated_cooling_minimum_temperature = 1e4;
+    }
+    else {
+      my_chemistry->tabulated_cooling_minimum_temperature = -1.0;
+    }
+    if (grackle_verbose) {
+      fprintf(stdout, "Setting tabulated_cooling_minimum_temperature to %g.\n",
+              my_chemistry->tabulated_cooling_minimum_temperature);
+    }
+  }
+
+  // Activate dust chemistry machinery.
+  if (my_chemistry->dust_chemistry > 0) {
+
+    if (my_chemistry->metal_cooling < 1) {
+      fprintf(stderr, "ERROR: dust_chemistry > 0 requires metal_cooling > 0.\n");
+      return GR_FAIL;
+    }
+
+    if (my_chemistry->photoelectric_heating < 0) {
+      my_chemistry->photoelectric_heating = 2;
+      if (grackle_verbose) {
+        fprintf(stdout, "Dust chemistry enabled, setting photoelectric_heating to 2.\n");
+      }
+    }
+
+    if (my_chemistry->dust_recombination_cooling < 0) {
+      my_chemistry->dust_recombination_cooling = 1;
+      if (grackle_verbose) {
+        fprintf(stdout, "Dust chemistry enabled, setting dust_recombination_cooling to 1.\n");
+      }
+    }
+
+    if (my_chemistry->primordial_chemistry > 1 &&
+        my_chemistry->h2_on_dust == 0) {
+      my_chemistry->h2_on_dust = 1;
+      if (grackle_verbose) {
+        fprintf(stdout, "Dust chemistry enabled, setting h2_on_dust to 1.\n");
+      }
+    }
+
+  }
+
+  if (my_chemistry->dust_species > 0 &&
+      my_chemistry->use_dust_density_field == 0) {
+    fprintf(stderr, "ERROR: dust_species > 0 requires use_dust_density_field > 0.\n");
+    return GR_FAIL;
+  }
+
+  if (my_chemistry->dust_species == 0 &&
+      my_chemistry->use_multiple_dust_temperatures > 0) {
+    fprintf(stderr, "ERROR: dust_species = 0 requires use_multiple_dust_temperatures = 0.\n");
+    return GR_FAIL;
+  }
+
+  // Default photo-electric heating to off if unset.
+  if (my_chemistry->photoelectric_heating < 0) {
+    my_chemistry->photoelectric_heating = 0;
+  }
+
+//initialize OpenMP
+# ifndef _OPENMP
+  if (my_chemistry->omp_nthreads > 1) {
+    fprintf(stdout,
+            "omp_nthreads can't be set when Grackle isn't compiled with "
+            "OPENMP\n");
+    return GR_FAIL;
+  }
+# else /* _OPENMP */
+  if (my_chemistry->omp_nthreads < 1) {
+    // this is the default behavior (unless the user intervenes)
+    my_chemistry->omp_nthreads = omp_get_max_threads();
+  }
+//number of threads
+  omp_set_num_threads( my_chemistry->omp_nthreads );
+
+//schedule
+//const int chunk_size = -1;  // determined by default
+  const int chunk_size = 1;
+
+//omp_set_schedule( omp_sched_static,  chunk_size );
+//omp_set_schedule( omp_sched_dynamic, chunk_size );
+  omp_set_schedule( omp_sched_guided,  chunk_size );
+//omp_set_schedule( omp_sched_auto,    chunk_size );
+# endif
+
+  /* Only allow a units to be one with proper coordinates. */
+  if (my_units->comoving_coordinates == FALSE &&
+      my_units->a_units != 1.0) {
+    fprintf(stderr, "ERROR: a_units must be 1.0 if comoving_coordinates is 0.\n");
+    return GR_FAIL;
+  }
+
+  // deal with my_chemistry->HydrogenFractionByMass
+  // ==============================================
+  // - set_default_chemistry_parameters & local_initialize_chemistry_parameters
+  //   historically configured my_chemistry such that this member had a value
+  //   of 0.76 (the default when primordial_chemistry >= 1). If
+  //   primordial_chemistry == 0, this would always silently overwrite the
+  //   value in fully tabulated mode. This led to cases where downstream users
+  //   might mistakenly think they modified this parameter
+  //
+  // - New behavior: the member is now initialized to an undefined value
+  //   - if the user hasn't changed it, we now set it to the appropriate
+  //     default value
+  //   - if the user has changed it, the precise handling depends on the choice
+  //     of primordial_chemistry
+
+  if (my_chemistry->HydrogenFractionByMass > 1) {
+    fprintf(stderr, "ERROR: HydrogenFractionByMass cannot exceed 1.0\n");
+    return GR_FAIL;
+  } else if (my_chemistry->primordial_chemistry == 0) {
+    /* In fully tabulated mode, set H mass fraction according to
+       the abundances in Cloudy, which assumes n_He / n_H = 0.1.
+       This gives a value of about 0.716. Using the other default value
+       of 0.76 will result in negative electron densities at low
+       temperature. Below, use X = 1 / (1 + m_He * n_He / n_H). */
+
+    // we precomputed this value (in enhanced precision) rather than compute
+    // it on the fly to allow users to directly specify this value (without
+    // worrying about round-off issues)
+    const double default_Hfrac = 0.715768377353088514;
+    // TODO: at some point in the future, we should store the above value as
+    //       an attribute of the HDF5 table and read it in directly.
+
+    if (my_chemistry->HydrogenFractionByMass < 0) {
+      my_chemistry->HydrogenFractionByMass = default_Hfrac;
+    } else if (my_chemistry->HydrogenFractionByMass != default_Hfrac) {
+      fprintf(stderr,
+              "ERROR: Invalid HydrogenFractionByMass value is specified.\n"
+              " -> when primordial_chemistry == 0, the allowed values are\n"
+              "    are strictly enforced. You have 2 options: \n"
+              "      1. leave the value unset or set it to a negative number\n"
+              "         to have it calculated internally as %.18f\n"
+              "      2. set the value exactly to the above number\n"
+              " -> NOTE: for primordial_chemistry == 0, prior versions of\n"
+              "    Grackle would silently overwrite the value of\n"
+              "    HydrogenFractionByMass instead of reporting this error\n",
+              default_Hfrac);
+      return GR_FAIL;
+    }
+  } else {
+    const double default_Hfrac = 0.76;
+    if (my_chemistry->HydrogenFractionByMass < 0) {
+      my_chemistry->HydrogenFractionByMass = default_Hfrac;
+    }
+  }
+
+  // it's time to start initializing values in my_rates
+
+  // perform some basic allocations
+  my_rates->opaque_storage = new gr_opaque_storage;
+  my_rates->opaque_storage->kcol_rate_tables = nullptr;
+  my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
+  my_rates->opaque_storage->n_kcol_rate_indices = 0;
+  grackle::impl::init_empty_interp_grid_props_(
+    &my_rates->opaque_storage->h2dust_grain_interp_props);
+  my_rates->opaque_storage->grain_species_info = nullptr;
+  my_rates->opaque_storage->inject_pathway_props = nullptr;
+  my_rates->opaque_storage->registry = nullptr;
+
+  double co_length_units, co_density_units;
+  if (my_units->comoving_coordinates == TRUE) {
+    co_length_units = my_units->length_units;
+    co_density_units = my_units->density_units;
+  }
+  else {
+    co_length_units = my_units->length_units *
+      my_units->a_value * my_units->a_units;
+    co_density_units = my_units->density_units /
+      POW(my_units->a_value * my_units->a_units, 3);
+  }
+
+  // Compute rate tables.
+  if (grackle::impl::initialize_rates(my_chemistry, my_rates, my_units,
+                                      co_length_units, co_density_units,
+                                      reg_builder)
+      != GR_SUCCESS) {
+    fprintf(stderr, "Error in initialize_rates.\n");
+    return GR_FAIL;
+  }
+
+  /* Initialize Cloudy cooling. */
+  my_rates->cloudy_data_new = 1;
+  int read_data;
+
+  /* Primordial tables. */
+  read_data = my_chemistry->primordial_chemistry == 0;
+  if (grackle::impl::initialize_cloudy_data(
+        my_chemistry, my_rates, &my_rates->cloudy_primordial,
+        "Primordial", my_units, read_data) != GR_SUCCESS) {
+    fprintf(stderr, "Error in initialize_cloudy_data.\n");
+    return GR_FAIL;
+  }
+
+  /* Metal tables. */
+  read_data = my_chemistry->metal_cooling == TRUE;
+  if (grackle::impl::initialize_cloudy_data(
+        my_chemistry, my_rates, &my_rates->cloudy_metal,
+        "Metals", my_units, read_data) != GR_SUCCESS) {
+    fprintf(stderr, "Error in initialize_cloudy_data.\n");
+    return GR_FAIL;
+  }
+
+  /* Initialize UV Background data. */
+  if (grackle::impl::initialize_UVbackground_data(my_chemistry, my_rates)
+      != GR_SUCCESS) {
+    fprintf(stderr, "Error in initialize_UVbackground_data.\n");
+    return GR_FAIL;
+  }
+
+  /* store a copy of the initial units */
+  my_rates->initial_units = *my_units;
+
+  // initialize the registry
+  if (grackle::impl::ratequery::RegBuilder_misc_recipies(reg_builder,
+                                                         my_chemistry)
+      != GR_SUCCESS){
+    return GrPrintAndReturnErr("error in RegBuilder_misc_recipies");
+  }
+  my_rates->opaque_storage->registry = new grackle::impl::ratequery::Registry(
+    grackle::impl::ratequery::RegBuilder_consume_and_build(reg_builder)
+  );
+
+  if (grackle_verbose) {
+    time_t timer;
+    char tstr[80];
+    struct tm* tm_info;
+    time(&timer);
+    tm_info = localtime(&timer);
+    strftime(tstr, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+
+    const char* fname = "GRACKLE_INFO";
+
+    FILE *fptr = fopen(fname, "w");
+    if (fptr == nullptr) {
+      // on posix platforms we could give a more detailed error message
+      // - posix (not the C or C++ standard) mandates that `fopen` set errno
+      //   upon failure
+      // - properly informing the user of the error gets a little "hairy." We
+      //   should use POSIX's strerror_r to get the error (since regular
+      //   strerror may not be threadsafe). But we would need to account for
+      //   the fact that glibc describes an incompatible signature for
+      //   strerror_r (https://www.club.cc.cmu.edu/~cmccabe/blog_strerror.html)
+      // Since this isn't central to Grackle's functionality, we'll punt on
+      // this...
+      fprintf(stderr, "Failed to open \"%s\" file (to record config info)\n",
+              fname);
+      // an argument could be made that we should return with an error
+    } else {
+      fprintf(fptr, "%s\n", tstr);
+      show_version(fptr);
+      fprintf(fptr, "Grackle build options:\n");
+      auto_show_config(fptr);
+      fprintf(fptr, "Grackle build flags:\n");
+      auto_show_flags(fptr);
+      fprintf(fptr, "Grackle run-time parameters:\n");
+      show_parameters(fptr, my_chemistry);
+      fclose(fptr);
+    }
+
+    fprintf(stdout, "Grackle run-time parameters:\n");
+    show_parameters(stdout, my_chemistry);
+
+#   ifdef _OPENMP
+    int omp_nthread, omp_chunk_size;
+    omp_sched_t omp_schedule;
+
+    omp_get_schedule( &omp_schedule, &omp_chunk_size );
+#   pragma omp parallel
+#   pragma omp master
+    { omp_nthread = omp_get_num_threads(); }
+
+    fprintf( stdout, "OpenMP: on\n" );
+    fprintf( stdout, "  num_threads: %d\n", omp_nthread );
+    fprintf( stdout, "  schedule: %s\n", ( omp_schedule == omp_sched_static  ) ? "static"  :
+                                         ( omp_schedule == omp_sched_dynamic ) ? "dynamic" :
+                                         ( omp_schedule == omp_sched_guided  ) ? "guided"  :
+                                         ( omp_schedule == omp_sched_auto    ) ? "auto"    :
+                                                                                 "unknown" );
+    fprintf( stdout, "  chunk size: %d\n", omp_chunk_size );
+#   else
+    fprintf( stdout, "OpenMP: off\n" );
+#   endif
+  }
+
+  return GR_SUCCESS;
+}
+
+
+extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
+                                               chemistry_data_storage *my_rates,
+                                               code_units *my_units)
+{
+  namespace rate_q = grackle::impl::ratequery;
+  rate_q::RegBuilder reg_builder = rate_q::new_RegBuilder();
+
+  int out = local_initialize_chemistry_data_(my_chemistry, my_rates, my_units,
+                                             &reg_builder);
+  rate_q::drop_RegBuilder(&reg_builder);
+  return out;
+}
+
+extern "C" int initialize_chemistry_data(code_units *my_units)
+{
+  if (local_initialize_chemistry_data(grackle_data, &grackle_rates,
+                                      my_units) == GR_FAIL) {
+    fprintf(stderr, "Error in local_initialize_chemistry_data.\n");
+    return GR_FAIL;
+  }
+  return GR_SUCCESS;
+}
+
+// Define helpers for the show_parameters function
+// NOTE: it's okay that these functions all begin with an underscore since they
+//       each have internal linkage (i.e. they are each declared static)
+static void show_field_INT(FILE *fp, const char* field, int val)
+{ fprintf(fp, "%-33s = %d\n", field, val); }
+static void show_field_DOUBLE(FILE *fp, const char* field, double val)
+{ fprintf(fp, "%-33s = %g\n", field, val); }
+static void show_field_STRING(FILE *fp, const char* field, const char* val)
+{ fprintf(fp, "%-33s = %s\n", field, val); }
+
+// this function writes each field of my_chemistry to fp
+static void show_parameters(FILE *fp, chemistry_data *my_chemistry){
+  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) \
+    show_field_ ## TYPE (fp, #FIELD, my_chemistry->FIELD);
+  #include "grackle_chemistry_data_fields.def"
+  #undef ENTRY
+}
+
+extern "C" int free_chemistry_data(void){
+  if (local_free_chemistry_data(grackle_data, &grackle_rates) == GR_FAIL) {
+    fprintf(stderr, "Error in local_free_chemistry_data.\n");
+    return GR_FAIL;
+  }
+  return GR_SUCCESS;
+}
+
+extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
+                                         chemistry_data_storage *my_rates) {
+  if (my_chemistry->primordial_chemistry > 0) {
+    GRACKLE_FREE(my_rates->ceHI);
+    GRACKLE_FREE(my_rates->ceHeI);
+    GRACKLE_FREE(my_rates->ceHeII);
+    GRACKLE_FREE(my_rates->ciHI);
+    GRACKLE_FREE(my_rates->ciHeI);
+    GRACKLE_FREE(my_rates->ciHeIS);
+    GRACKLE_FREE(my_rates->ciHeII);
+    GRACKLE_FREE(my_rates->reHII);
+    GRACKLE_FREE(my_rates->reHeII1);
+    GRACKLE_FREE(my_rates->reHeII2);
+    GRACKLE_FREE(my_rates->reHeIII);
+    GRACKLE_FREE(my_rates->brem);
+    GRACKLE_FREE(my_rates->hyd01k);
+    GRACKLE_FREE(my_rates->h2k01);
+    GRACKLE_FREE(my_rates->vibh);
+    GRACKLE_FREE(my_rates->roth);
+    GRACKLE_FREE(my_rates->rotl);
+    GRACKLE_FREE(my_rates->GP99LowDensityLimit);
+    GRACKLE_FREE(my_rates->GP99HighDensityLimit);
+
+    GRACKLE_FREE(my_rates->HDlte);
+    GRACKLE_FREE(my_rates->HDlow);
+    GRACKLE_FREE(my_rates->cieco);
+    GRACKLE_FREE(my_rates->GAHI);
+    GRACKLE_FREE(my_rates->GAH2);
+    GRACKLE_FREE(my_rates->GAHe);
+    GRACKLE_FREE(my_rates->GAHp);
+    GRACKLE_FREE(my_rates->GAel);
+    GRACKLE_FREE(my_rates->H2LTE);
+    GRACKLE_FREE(my_rates->gas_grain);
+    GRACKLE_FREE(my_rates->gas_grain2);
+
+    grackle::impl::free_interp_grid_(&my_rates->LH2);
+    grackle::impl::free_interp_grid_(&my_rates->LHD);
+
+    // we deal with freeing other interp grids inside of
+    // free_misc_species_cool_rates
+
+    grackle::impl::free_interp_grid_(&my_rates->alphap);
+
+    GRACKLE_FREE(my_rates->k13dd);
+    GRACKLE_FREE(my_rates->h2dust);
+    GRACKLE_FREE(my_rates->n_cr_n);
+    GRACKLE_FREE(my_rates->n_cr_d1);
+    GRACKLE_FREE(my_rates->n_cr_d2);
+    GRACKLE_FREE(my_rates->h2dustS);
+    GRACKLE_FREE(my_rates->h2dustC);
+    GRACKLE_FREE(my_rates->grain_growth_rate);
+  }
+
+  grackle::impl::free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry,
+                                  /* primordial = */ 1);
+  grackle::impl::free_cloudy_data(&my_rates->cloudy_metal, my_chemistry,
+                                  /* primordial */ 0);
+  grackle::impl::free_UVBtable(&my_rates->UVbackground_table);
+
+  if (grackle::impl::free_misc_species_cool_rates(my_chemistry, my_rates) != GR_SUCCESS) {
+    fprintf(stderr, "Error in free_metal_chemistry_rates.\n");
+    return GR_FAIL;
+  }
+
+  // start freeing memory associated with opaque storage
+  // ---------------------------------------------------
+  if (my_rates->opaque_storage->kcol_rate_tables != nullptr) {
+    // delete contents of kcol_rate_tables
+    drop_CollisionalRxnRateCollection(my_rates->opaque_storage->kcol_rate_tables);
+    // delete kcol_rate_tables, itself
+    delete my_rates->opaque_storage->kcol_rate_tables;
+  }
+
+  if (my_rates->opaque_storage->used_kcol_rate_indices !=nullptr) {
+    // since used_kcol_rate_indices are just integers, we can directly
+    // deallocate them
+    delete[] my_rates->opaque_storage->used_kcol_rate_indices;
+  }
+
+  // delete contents of h2dust_grain_interp_props (automatically handles the
+  // case where we didn't allocate anything)
+  grackle::impl::free_interp_grid_props_(
+      &my_rates->opaque_storage->h2dust_grain_interp_props,
+      /* use_delete = */ false);
+  // since h2dust_grain_interp_props isn't a pointer, there is nothing more to
+  // allocate right here
+
+  if (my_rates->opaque_storage->grain_species_info != nullptr) {
+    // delete contents of grain_species_info
+    grackle::impl::drop_GrainSpeciesInfo(
+      my_rates->opaque_storage->grain_species_info);
+    // delete grain_species_info, itself
+    delete my_rates->opaque_storage->grain_species_info;
+  }
+
+  if (my_rates->opaque_storage->inject_pathway_props != nullptr) {
+    // delete contents of inject_pathway_props
+    grackle::impl::drop_GrainMetalInjectPathways(
+      my_rates->opaque_storage->inject_pathway_props);
+    // delete inject_pathway_props, itself
+    delete my_rates->opaque_storage->inject_pathway_props;
+  }
+
+  if (my_rates->opaque_storage->registry != nullptr) {
+    // delete contents of registry
+    grackle::impl::ratequery::drop_Registry(
+      my_rates->opaque_storage->registry
+    );
+    // delete registry, itself
+    delete my_rates->opaque_storage->registry;
+  }
+
+  delete my_rates->opaque_storage;
+  my_rates->opaque_storage = nullptr;
+
+  return GR_SUCCESS;
+}
+
+extern "C" int grimpl_check_consistency_(int gr_float_hdrsize) {
+  if (gr_float_hdrsize != ((int)sizeof(gr_float))) {
+    fprintf(stderr, "ERROR: Inconsistent floating-point precisions.\n"
+                    "       size of gr_float in the headers used during compilation = %d\n"
+                    "       size of gr_float in the library linked against during runtime = %d\n",
+                    gr_float_hdrsize, (int)sizeof(gr_float));
+    return GR_FAIL;
+  } else {
+    return GR_SUCCESS;
+  }
+}

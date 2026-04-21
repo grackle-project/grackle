@@ -99,12 +99,12 @@ struct OnlyGrainSpLUT {
   // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
   // slightly revise the system?)
   enum {
+    MgSiO3_dust,
+    AC_dust,
     SiM_dust,
     FeM_dust,
     Mg2SiO4_dust,
-    MgSiO3_dust,
     Fe3O4_dust,
-    AC_dust,
     SiO2_dust,
     MgO_dust,
     FeS_dust,
@@ -118,6 +118,11 @@ struct OnlyGrainSpLUT {
 };  // struct OnlyGrainSpLUT
 
 /// Defines the LUT for Standard Collisional reaction rates
+///
+/// @note
+/// If we ever make changes, we should consider how the changes will affect
+/// `get_CollisionalRxn_rateprop_`. If necessary, we could always refactor
+/// `get_CollisionalRxn_rateprop_` to not use this enum
 struct CollisionalRxnLUT {
   enum {
 #define ENTRY(NAME) NAME,

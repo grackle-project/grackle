@@ -125,9 +125,7 @@ struct Cool1DMultiScratchBuf {
   double* tgasold = nullptr;
   double* mynh = nullptr;
   double* myde = nullptr;
-  double* gammaha_eff = nullptr;
   double* gasgr_tdust = nullptr;
-  double* regr = nullptr;
 };
 
 /// used to help implement the visitor design pattern
@@ -143,9 +141,7 @@ void visit_member_pair(
   f(VIS_MEMBER_NAME("tgasold"), obj0.tgasold, obj1.tgasold, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("mynh"), obj0.mynh, obj1.mynh, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("myde"), obj0.myde, obj1.myde, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("gammaha_eff"), obj0.gammaha_eff, obj1.gammaha_eff, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("gasgr_tdust"), obj0.gasgr_tdust, obj1.gasgr_tdust, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("regr"), obj0.regr, obj1.regr, vis::idx_range_len_multiple(1));
   vis::end_visit(f);
 }
 
@@ -440,6 +436,14 @@ void drop_SpeciesCollection(SpeciesCollection*);
 /// @note
 /// This is something we may want to reuse. If we are willing to embrace C++,
 /// then we may want to use templates
+///
+/// @important
+/// In the near-term to mid-term, we want to refactor to move away from using
+/// @ref OnlyGrainSpLUT and instead start relying upon the order of grain
+/// species tracked by @ref grackle::impl::GrainSpeciesInfo (at the moment
+/// grains have the same order). This is possible because every block of logic
+/// using this struct applies the same logic to each grain species (in other
+/// words, the logic can be replaced with a for-loop over the grain species)
 struct GrainSpeciesCollection {
   double* data[OnlyGrainSpLUT::NUM_ENTRIES];
 };
