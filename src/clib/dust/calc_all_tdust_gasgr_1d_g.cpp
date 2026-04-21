@@ -76,7 +76,7 @@ void grackle::impl::calc_all_tdust_gasgr_1d_g(
   double dlog10Tdust = 0.0;
   double* log10Tdust_vals = nullptr;
 
-  // NOTE: gr_N is a historical names
+  // NOTE: gr_N is a historical name
   // -> it is pretty uninformative and should be changed!
   int gr_N[2] = {0, 0};
   if (inject_pathway_props != nullptr) {
