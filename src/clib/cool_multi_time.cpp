@@ -131,11 +131,8 @@ void cool_multi_time(
             logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
             tgas.data());
 
-      // Compute the cooling rate
-      int dummy_iter_arg=1;
-
       cool1d_multi_g(
-        imetal, dummy_iter_arg, edot.data(), tgas.data(),
+        imetal, edot.data(), tgas.data(),
         mmw.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
         my_chemistry, my_rates, my_fields, my_uvb_rates, internalu, idx_range,

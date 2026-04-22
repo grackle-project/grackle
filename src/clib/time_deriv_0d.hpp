@@ -488,7 +488,7 @@ void derivatives(
     lnT_preparer.record_T(
         pack.idx_range_1_element, pack.other_scratch_buf.itmask,
         pack.other_scratch_buf.tgas);
-    // actually compute the values
+    // -> actually compute the values
     lnT_preparer.prep_damped_lnT_lininterp_bufs(
         pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
         *my_chemistry, pack.other_scratch_buf.itmask,
@@ -496,7 +496,7 @@ void derivatives(
 
     // compute cooling rate, tdust, and metallicity for this row
     cool1d_multi_g(
-      pack.fwd_args.imetal, pack.fwd_args.iter,
+      pack.fwd_args.imetal,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
       pack.other_scratch_buf.mmw,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,

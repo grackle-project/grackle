@@ -32,7 +32,7 @@
 #include "utils-cpp.hpp"
 
 void grackle::impl::cool1d_multi_g(
-    int imetal, int iter, double* edot, const double* tgas, const double* mmw,
+    int imetal, double* edot, const double* tgas, const double* mmw,
     double* tdust, double* metallicity, double* dust2gas, const double* rhoH,
     gr_mask_type* itmask, gr_mask_type* itmask_metal,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,

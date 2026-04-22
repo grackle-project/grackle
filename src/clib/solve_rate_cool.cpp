@@ -746,8 +746,7 @@ int solve_rate_cool(
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
-
-    // construct object is computes log temperature and interpolation indices
+    // construct object to computes log temperature and interpolation indices
     // -> tgasold_ is reserved exclusive use by lnT_preparer (it retains
     //    values between cycles)
     // -> see docstring of LnTPreparer for extended discussion
@@ -826,7 +825,8 @@ int solve_rate_cool(
                         idx_range);
 
         // Compute log temperature and interpolation indices
-        if (iter == 1) {  // act as if tgas was temperature during prev iter
+        if (iter == 1) {
+          // act as if there was prev iter where temperature was the same
           lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
         }
         // technically, we could skip indices info if prim_chem == 0 AND
@@ -839,7 +839,7 @@ int solve_rate_cool(
 
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
         cool1d_multi_g(
-          imetal, iter,
+          imetal,
           edot.data(),
           tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), itmask.data(),
