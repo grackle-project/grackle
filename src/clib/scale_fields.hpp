@@ -79,8 +79,16 @@ inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
   }
 }
 
-/// Scales fields related to computing dust temperature
+/// A helper function for scaling the injection pathway metal density fields
+///
+/// @param[inout] my_fields holds the fields that will be updated in-place
+/// @param[in] factor The factor that is multiplied by the fields
+/// @param[in] n_inj_path_ptrs The number of pointers tracked by
+///     `my_fields->inject_pathway_metal_density`
+void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
+                                        gr_float factor, int n_inj_path_ptrs);
 
+/// Scales fields related to computing dust temperature
 inline void scale_fields_dust(chemistry_data* my_chemistry,
                               grackle_field_data* my_fields, int imetal,
                               gr_float factor, int n_inj_path_ptrs) {

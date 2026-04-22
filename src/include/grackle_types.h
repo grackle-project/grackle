@@ -73,15 +73,17 @@ typedef struct
   gr_float *metal_density;
 
   // dust_model1_track_elements = 1
-  gr_float *metal_density_carbon;   // gas-phase C (all ionisation states)
-  gr_float *metal_density_oxygen;   // gas-phase O (all ionisation states)
+  // These are *subsets* of metal_density (not separate fields).
+  gr_float *metal_density_carbon;   // gas-phase C (subset of metal_density)
+  gr_float *metal_density_oxygen;   // gas-phase O (subset of metal_density)
 
   // use_dust_density_field = 1
   gr_float *dust_density;
 
   // dust_model1_track_elements = 1
-  gr_float *dust_density_carbon;    // C mass locked in dust grains
-  gr_float *dust_density_oxygen;    // O mass locked in dust grains
+  // These are *subsets* of dust_density (not separate fields).
+  gr_float *dust_density_carbon;    // C in dust (subset of dust_density)
+  gr_float *dust_density_oxygen;    // O in dust (subset of dust_density)
 
   // primordial_chemistry = 1
   gr_float *e_density;

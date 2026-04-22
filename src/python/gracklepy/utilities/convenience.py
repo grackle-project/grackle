@@ -255,8 +255,9 @@ def setup_fluid_container(my_chemistry,
             f"ERROR: solver did not converge in {max_iterations} iterations.")
 
     # Element-resolved C/O initialisation for dust_model=1.
-    # Deferred until after convergence so that tracking and non-tracking
-    # runs converge from identical bulk fields.
+    # metal_density holds the *total* gas-phase metal budget; C and O are
+    # subsets of it (not separate). Same convention as dust_density /
+    # dust_density_carbon / dust_density_oxygen.
     if my_chemistry.dust_model1_track_elements == 1:
         M_total = fc["metal_density"] + fc["dust_density"]
         f_C_total = my_chemistry.dust_model1_C_total_fraction
@@ -266,9 +267,6 @@ def setup_fluid_container(my_chemistry,
 
         fc["metal_density_carbon"][:] = f_C_gas * M_total
         fc["metal_density_oxygen"][:] = f_O_gas * M_total
-        fc["metal_density"][:] = (fc["metal_density"]
-                                  - fc["metal_density_carbon"]
-                                  - fc["metal_density_oxygen"])
         fc["dust_density_carbon"][:] = (f_C_total - f_C_gas) * M_total
         fc["dust_density_oxygen"][:] = (f_O_total - f_O_gas) * M_total
 

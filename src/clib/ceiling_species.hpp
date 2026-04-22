@@ -265,16 +265,10 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
             metal_C_cs(i, j, k) = std::fmax(metal_C_cs(i, j, k), tiny_fortran_val);
             metal_O_cs(i, j, k) = std::fmax(metal_O_cs(i, j, k), tiny_fortran_val);
           }
-          {
-            double total_metal_cs = metal(i, j, k);
-            if (track_elements_cs) {
-              total_metal_cs += metal_C_cs(i, j, k) + metal_O_cs(i, j, k);
-            }
-            if (total_metal_cs > d(i, j, k)) {
-              eprintf("WARNING: metal density exceeds  total density!\n");
-              eprintf("i, j, k, metal, density =  %d %d %d %g %g\n", i, j, k,
-                      total_metal_cs, d(i, j, k));
-            }
+          if (metal(i, j, k) > d(i, j, k)) {
+            eprintf("WARNING: metal density exceeds  total density!\n");
+            eprintf("i, j, k, metal, density =  %d %d %d %g %g\n", i, j, k,
+                    metal(i, j, k), d(i, j, k));
           }
           // if( immulti .gt. 0 ) then
           //    metal_loc(i,j,k) = max(metal_loc(i,j,k), tiny)

@@ -296,9 +296,6 @@ void make_consistent(
       if ((imetal) == 1) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metalfree[i] = d(i, j, k) - metal(i, j, k);
-          if (track_elements_mc) {
-            metalfree[i] -= metal_C_mc(i, j, k) + metal_O_mc(i, j, k);
-          }
         }
       } else {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
@@ -567,18 +564,15 @@ void make_consistent(
           // !       if (d(i,j,k)*dom .lt.
           // !   &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
           // !   &       ,1.e6_DKIND)) then
-          double total_metal_mc = metal(i, j, k);
-          if (track_elements_mc) {
-            total_metal_mc += metal_C_mc(i, j, k) + metal_O_mc(i, j, k);
-          }
           // When track_elements is active, Cg/Og come from the tracked
           // fields (always valid), so bypass the density cutoff that
           // exists for the yield-based computation.
-          if (track_elements_mc ||
+          // if (track_elements_mc ||
+          if (
               ((imetal == 0) && (d(i, j, k) * dom < 1.e8)) ||
-              ((imetal == 1) && (((total_metal_mc <= 1.e-9 * d(i, j, k)) &&
+              ((imetal == 1) && (((metal(i, j, k) <= 1.e-9 * d(i, j, k)) &&
                                   (d(i, j, k) * dom < 1.e8)) ||
-                                 ((total_metal_mc > 1.e-9 * d(i, j, k)) &&
+                                 ((metal(i, j, k) > 1.e-9 * d(i, j, k)) &&
                                   (d(i, j, k) * dom < 1.e6))))) {
             totalOg = 16. / 28. * CO(i, j, k) + 32. / 44. * CO2(i, j, k) +
                       OI(i, j, k) + 16. / 17. * OH(i, j, k) +

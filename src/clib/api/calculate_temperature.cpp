@@ -97,14 +97,7 @@ extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
       }
 
       if (imetal) {
-	double total_metal = my_fields->metal_density[index];
-	if (my_chemistry->dust_model1_track_elements > 0 &&
-	    my_fields->metal_density_carbon != NULL &&
-	    my_fields->metal_density_oxygen != NULL) {
-	  total_metal += my_fields->metal_density_carbon[index]
-	              +  my_fields->metal_density_oxygen[index];
-	}
-	number_density += total_metal * inv_metal_mol;
+	number_density += my_fields->metal_density[index] * inv_metal_mol;
       }
  
       /* Ignore deuterium. */

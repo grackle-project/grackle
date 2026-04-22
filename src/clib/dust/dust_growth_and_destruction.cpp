@@ -7,9 +7,6 @@
 #include "utils-cpp.hpp"
 
 namespace {
-const double k_boltz = 1.3806504e-16;
-const double m_proton = 1.67262171e-24;
-const double pi_val = 3.141592653589793;
 const double sec_per_year = 3.155e7;
 
 const double tiny_value = 1.0e-20;
@@ -47,18 +44,6 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  bool track_elements = (my_chemistry->dust_model1_track_elements > 0 &&
-                         my_fields->metal_density_carbon != nullptr &&
-                         my_fields->metal_density_oxygen != nullptr);
-  grackle::impl::View<gr_float***> metal_C(
-      track_elements ? my_fields->metal_density_carbon : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_O(
-      track_elements ? my_fields->metal_density_oxygen : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
-
   double dens_proper = internalu.urho * std::pow(internalu.a_value, 3);
   double tau_ref =
       my_chemistry->dust_growth_tauref * 1e9 * sec_per_year / internalu.tbase1;
@@ -70,13 +55,8 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
 
     if (itmask[i] != MASK_FALSE) {
       double rho_dust = dust(i, idx_range.j, idx_range.k);
+      // metal_density holds total gas-phase metals (C, O, and all others)
       double rho_metal = metal(i, idx_range.j, idx_range.k);
-      // When tracking elements, rho_metal must include C and O for
-      // correct accretion timescale and metal availability
-      if (track_elements) {
-        rho_metal += metal_C(i, idx_range.j, idx_range.k)
-                  +  metal_O(i, idx_range.j, idx_range.k);
-      }
       double rho_d = d(i, idx_range.j, idx_range.k);
 
       // No metals to accrete onto grains — skip growth
@@ -323,10 +303,11 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
     if (itmask[i] != MASK_FALSE) {
       double rho_gas = d(i, idx_range.j, idx_range.k);
       double rho_dust = dust(i, idx_range.j, idx_range.k);
-      double rho_metal_other = metal(i, idx_range.j, idx_range.k);
+      // metal_density holds the total gas-phase metals (C + O + others)
+      double rho_metal_total = metal(i, idx_range.j, idx_range.k);
       double dt = dt_value[i];
 
-      // Load element-resolved fields (zero when not tracking)
+      // Load element-resolved subsets (zero when not tracking)
       double rho_metal_C = 0.0, rho_metal_O = 0.0;
       double rho_dust_C = 0.0, rho_dust_O = 0.0;
       if (track_elements) {
@@ -335,9 +316,9 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
         rho_dust_C  = dust_C(i, idx_range.j, idx_range.k);
         rho_dust_O  = dust_O(i, idx_range.j, idx_range.k);
       }
+      // Non-C, non-O gas metals, derived from the total
+      double rho_metal_other = rho_metal_total - rho_metal_C - rho_metal_O;
 
-      // Total gas-phase metals (needed for clamping and gas density update)
-      double rho_metal_total = rho_metal_other + rho_metal_C + rho_metal_O;
       double f_C     = (rho_metal_total > 0) ? rho_metal_C     / rho_metal_total : 0.0;
       double f_O     = (rho_metal_total > 0) ? rho_metal_O     / rho_metal_total : 0.0;
       double f_other = (rho_metal_total > 0) ? rho_metal_other / rho_metal_total : 0.0;
@@ -471,17 +452,6 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
         }
       }
 
-      // Gas density update:
-      // density includes all metal fields as a subset, but NOT dust_density.
-      // Track how total gas-phase metals changed to update gas density.
-      double old_metal_total = metal(i, idx_range.j, idx_range.k);
-      if (track_elements) {
-        old_metal_total += metal_C(i, idx_range.j, idx_range.k)
-                        +  metal_O(i, idx_range.j, idx_range.k);
-      }
-      double new_metal_total = rho_metal_other + rho_metal_C + rho_metal_O;
-      rho_gas = rho_gas + (new_metal_total - old_metal_total);
-
       // Safety checks
       if (rho_dust < 0) {
         fprintf(stderr,
@@ -501,18 +471,28 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
         rho_dust_O = std::min(rho_dust_O, rho_dust - rho_dust_C);
       }
 
-      fprintf(stderr,
-              "internal: dt=%e growth=%.10e destruct=%.10e "
-              "cre_dust=%.10e cre_metal=%.10e "
-              "gas=%.15e dust=%.15e metal=%.15e\n",
-              dt, growth_dM[i], destruction_dM[i],
-              creation_dust_dM[i], creation_metal_dM[i],
-              rho_gas, rho_dust, rho_metal_other + rho_metal_C + rho_metal_O);
+      // Gas density update:
+      // density includes all metal fields as a subset, but NOT dust_density.
+      // Track how total gas-phase metals changed to update gas density.
+      // Compute after clamping so metal_C/O remain subsets of the total.
+      double old_metal_total = metal(i, idx_range.j, idx_range.k);
+      double new_metal_total = rho_metal_other + rho_metal_C + rho_metal_O;
+      rho_gas = rho_gas + (new_metal_total - old_metal_total);
 
-      // Update the fields
+      // fprintf(stderr,
+      //         "internal: dt=%e growth=%.10e destruct=%.10e "
+      //         "cre_dust=%.10e cre_metal=%.10e "
+      //         "gas=%.15e dust=%.15e metal=%.15e\n",
+      //         dt, growth_dM[i], destruction_dM[i],
+      //         creation_dust_dM[i], creation_metal_dM[i],
+      //         rho_gas, rho_dust, new_metal_total);
+      fprintf(stderr, "checking: %e\n", rho_gas + rho_dust);
+
+      // Update the fields. metal_density now stores the *total* gas-phase
+      // metals; metal_density_carbon / oxygen are subsets of it.
       if (!dryrun) {
         dust(i, idx_range.j, idx_range.k) = (gr_float)rho_dust;
-        metal(i, idx_range.j, idx_range.k) = (gr_float)rho_metal_other;
+        metal(i, idx_range.j, idx_range.k) = (gr_float)new_metal_total;
         d(i, idx_range.j, idx_range.k) = (gr_float)rho_gas;
         if (track_elements) {
           metal_C(i, idx_range.j, idx_range.k) = (gr_float)rho_metal_C;

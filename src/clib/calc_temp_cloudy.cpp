@@ -71,21 +71,6 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     }
 
-    bool track_elements_temp =
-        (my_chemistry->dust_model1_track_elements > 0 &&
-         my_fields->metal_density_carbon != nullptr &&
-         my_fields->metal_density_oxygen != nullptr);
-    View<gr_float***> metal_C_temp(
-        track_elements_temp ? my_fields->metal_density_carbon
-                            : my_fields->density,
-        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-        my_fields->grid_dimension[2]);
-    View<gr_float***> metal_O_temp(
-        track_elements_temp ? my_fields->metal_density_oxygen
-                            : my_fields->density,
-        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-        my_fields->grid_dimension[2]);
-
     View<gr_float***> temperature(
         temperature_data_, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -112,13 +97,8 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
         itmask[i] = MASK_TRUE;
 
         if (imetal == 1) {
-          gr_float total_metal = metal(i, idx_range.j, idx_range.k);
-          if (track_elements_temp) {
-            total_metal += metal_C_temp(i, idx_range.j, idx_range.k)
-                        +  metal_O_temp(i, idx_range.j, idx_range.k);
-          }
           gr_float metal_free_density = (d(i, idx_range.j, idx_range.k) -
-                                         total_metal);
+                                         metal(i, idx_range.j, idx_range.k));
           rhoH[i] = f_H * metal_free_density;
         } else {
           rhoH[i] = f_H * d(i, idx_range.j, idx_range.k);
