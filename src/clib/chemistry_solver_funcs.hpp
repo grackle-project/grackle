@@ -586,9 +586,6 @@ inline void species_density_updates_gauss_seidel(
 
         if ( (my_chemistry->metal_chemistry == 1)  && 
              (itmask_metal[i] != MASK_FALSE) )  {
-          // we comment out the following line that assigns scoef to itself since
-          // it has no practical impact and produces a compiler warning
-          // scoef = scoef;
           acoef = acoef
               + kcol_buf[CollisionalRxnLUT::kz44][i] *   CII(i,j,k) / 12.
               + kcol_buf[CollisionalRxnLUT::kz45][i] *   OII(i,j,k) / 16.
@@ -1943,9 +1940,6 @@ inline void species_density_derivatives_0d(
 
     if ((my_chemistry->metal_chemistry == 1)  && 
         (itmask_metal[0] != MASK_FALSE))  {
-      // we comment out the following line that assigns scoef to itself since
-      // it has no practical impact and produces a compiler warning
-      // scoef = scoef;
       acoef = acoef
           + kcol_buf[CollisionalRxnLUT::kz44][0]    *   CII        / 12.
           + kcol_buf[CollisionalRxnLUT::kz45][0]    *   OII        / 16.
