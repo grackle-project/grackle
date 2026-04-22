@@ -6,32 +6,30 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the cool_multi_time_g function
+/// Implements the cool_multi_time function
 ///
 //===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // cool_multi_time_g function from FORTRAN to C++
 
-#include <cstdio>
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
-#include "cool_multi_time_g.h"
+#include "cool_multi_time.hpp"
+#include "gas_props.hpp"
 #include "grackle.h"
-#include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
 #include "inject_model/misc.hpp"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "internal_types.hpp"
 #include "scale_fields.hpp"
+#include "support/config.hpp"
 #include "utils-cpp.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+namespace GRIMPL_NAMESPACE_DECL {
 
-void cool_multi_time_g(
+void cool_multi_time(
   gr_float* cooltime_data_, int imetal, InternalGrUnits internalu,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates
@@ -42,9 +40,9 @@ void cool_multi_time_g(
   // Convert densities from comoving to 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    grackle::impl::scale_fields(
+    scale_fields(
         imetal, factor, my_chemistry, my_fields,
-        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
+        get_n_inject_pathway_density_ptrs(my_rates));
   }
 
 
@@ -53,26 +51,25 @@ void cool_multi_time_g(
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
 
-    grackle::impl::View<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-    grackle::impl::GrainSpeciesCollection grain_temperatures =
-      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+    GrainSpeciesCollection grain_temperatures =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
-      grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+    LogTLinInterpScratchBuf logTlininterp_buf =
+      new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
 
-    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf =
-      grackle::impl::new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
+    Cool1DMultiScratchBuf cool1dmulti_buf =
+      new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
  
-    grackle::impl::CoolHeatScratchBuf coolingheating_buf =
-      grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
+    CoolHeatScratchBuf coolingheating_buf =
+      new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
 
     // the following variables aren't embedded because they are structs or are
     // used in a number of different internal routines. Sorting these into
     // additional structs (or leaving them free-standing) will become more
     // obvious as we transcribe more routines.
 
-    std::vector<double> p2d(my_fields->grid_dimension[0]);
     std::vector<double> tgas(my_fields->grid_dimension[0]);
     std::vector<double> mmw(my_fields->grid_dimension[0]);
     std::vector<double> tdust(my_fields->grid_dimension[0]);
@@ -84,6 +81,16 @@ void cool_multi_time_g(
     // Iteration mask for multi_cool
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
+
+    // create views of density and internal energy fields to support 3D access
+    grackle::impl::View<gr_float***> d(my_fields->density,
+                                       my_fields->grid_dimension[0],
+                                       my_fields->grid_dimension[1],
+                                       my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> specific_eint(
+        my_fields->internal_energy, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
 
     // The following for-loop is a flattened loop over every k,j combination.
     // OpenMP divides this loop between all threads. Within the loop, we
@@ -99,12 +106,18 @@ void cool_multi_time_g(
         itmask[i] = MASK_TRUE;
       }
 
+      // calculate the basic gas properties (tgas, mmw, rhoH)
+      GRIMPL_NS::basic_gas_props(tgas.data(), mmw.data(), rhoH.data(), imetal,
+                                 itmask.data(), my_chemistry,
+                                 &my_rates->cloudy_primordial, my_fields,
+                                 internalu, idx_range);
+
       // Compute the cooling rate
       int dummy_iter_arg=1;
 
       cool1d_multi_g(
         imetal, dummy_iter_arg, edot.data(), tgas.data(),
-        mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+        mmw.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
         my_chemistry, my_rates, my_fields, my_uvb_rates, internalu, idx_range,
         grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
@@ -116,7 +129,11 @@ void cool_multi_time_g(
       //    in cool1d_multi_g)
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.),
+        // todo: directly compute energy density (may break gold standard)
+        double p = GRIMPL_NS::calc_pressure(my_chemistry->Gamma,
+                                            d(i, j, k),
+                                            specific_eint(i, j, k));
+        double energy = std::fmax(p/(my_chemistry->Gamma-1.),
                                   tiny_fortran_val);
         cooltime(i,j,k) = (gr_float)(energy/edot[i]);
       }
@@ -124,24 +141,22 @@ void cool_multi_time_g(
     }
 
     // cleanup temporaries
-    grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
-    grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
-    grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
-    grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
+    drop_GrainSpeciesCollection(&grain_temperatures);
+    drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
+    impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
 
   }  // OMP_PRAGMA("omp parallel")
 
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    grackle::impl::scale_fields(
+    scale_fields(
         imetal, factor, my_chemistry, my_fields,
-        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
+        get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   return;
 }
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace GRIMPL_NAMESPACE_DECL

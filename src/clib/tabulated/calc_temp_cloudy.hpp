@@ -6,26 +6,21 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares the calc_temp_cloudy_g function
+/// Declares the calc_temp_cloudy function
 ///
 //===----------------------------------------------------------------------===//
-
-/// @file calc_temp_cloudy_g-cpp.h
-/// @brief Declares signature of calc_temp_cloudy_g
 
 // This file was initially generated automatically during conversion of the
 // calc_temp_cloudy_g function from FORTRAN to C++
 
-#ifndef CALC_TEMP_CLOUDY_G_H
-#define CALC_TEMP_CLOUDY_G_H
+#ifndef TABULATED_CALC_TEMP_CLOUDY_HPP
+#define TABULATED_CALC_TEMP_CLOUDY_HPP
 
 #include "grackle.h"  // gr_float
-#include "internal_units.h"
+#include "../internal_units.hpp"
+#include "../support/config.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-// the following function can be called from C or C++
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Calculate temperature on a 3D grid using mmw from a cloudy table
 ///
@@ -42,14 +37,11 @@ extern "C" {
 ///
 /// @note
 /// We are specifying way more information than necessary!
-void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
-                        chemistry_data* my_chemistry,
-                        cloudy_data cloudy_primordial,
-                        grackle_field_data* my_fields,
-                        InternalGrUnits internalu);
+void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
+                      chemistry_data* my_chemistry,
+                      cloudy_data cloudy_primordial,
+                      grackle_field_data* my_fields, InternalGrUnits internalu);
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* CALC_TEMP_CLOUDY_G_H */
+#endif /* TABULATED_CALC_TEMP_CLOUDY_HPP */

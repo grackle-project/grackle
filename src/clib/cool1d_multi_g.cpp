@@ -18,23 +18,23 @@
 
 #include <cstdio>
 #include <vector>
-#include <iostream>
 
-#include "calc_temp1d_cloudy_g.hpp"
-#include "cool1d_cloudy_g.hpp"
-#include "cool1d_cloudy_old_tables_g.hpp"
 #include "cool1d_multi_g.hpp"
+#include "gas_props.hpp"
 #include "grackle.h"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "dust_props.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
+#include "tabulated/cool1d_cloudy.hpp"
+#include "tabulated/cool1d_cloudy_old_tables.hpp"
 #include "utils-cpp.hpp"
 
 void grackle::impl::cool1d_multi_g(
-    int imetal, int iter, double* edot, double* tgas, double* mmw, double* p2d,
-    double* tdust, double* metallicity, double* dust2gas, double* rhoH,
+    int imetal, int iter, double* edot, const double* tgas, const double* mmw,
+    double* tdust, double* metallicity, double* dust2gas, const double* rhoH,
     gr_mask_type* itmask, gr_mask_type* itmask_metal,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
@@ -115,14 +115,12 @@ void grackle::impl::cool1d_multi_g(
 
   // Declare some constants:
   const double mh_local_var = mh_grflt;
-  const double mu_metal = 16.;  // approx. mean molecular weight of metals
 
   // Locals
   int i, iZscale, mycmbTfloor;
-  double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2,
-      x, fudge, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother,
-      nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, ih2cox,
-      min_metallicity;
+  double dom, qq, vibl, zr, hdlte1, hdlow1, fudge, gphdl1, dom_inv, tau,
+      ciefudge, coolunit, tbase1, nSSh, nratio, nssh_he, nratio_he, fSShHI,
+      fSShHeI, ih2cox, min_metallicity;
   double comp1, comp2;
 
   // Performing heap allocations for all of the subsequent buffers within this
@@ -200,7 +198,7 @@ void grackle::impl::cool1d_multi_g(
 
   // Iteration mask
 
-  gr_mask_type anydust, interp;
+  gr_mask_type anydust;
   std::vector<gr_mask_type> itmask_tab(my_fields->grid_dimension[0]);
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -214,22 +212,6 @@ void grackle::impl::cool1d_multi_g(
   } else {
     anydust = MASK_FALSE;
   }
-
-  // Set flag for needing interpolation variables
-
-  if ((my_chemistry->primordial_chemistry > 0) ||
-      (my_chemistry->dust_chemistry > 0)) {
-    interp = MASK_TRUE;
-  } else {
-    interp = MASK_FALSE;
-  }
-  // Set log values of start and end of lookup tables
-
-  logtem0 = std::log(my_chemistry->TemperatureStart);
-  logtem9 = std::log(my_chemistry->TemperatureEnd);
-  dlogtem = (std::log(my_chemistry->TemperatureEnd) -
-             std::log(my_chemistry->TemperatureStart)) /
-            (double)(my_chemistry->NumberOfTemperatureBins - 1);
 
   // Set units
 
@@ -257,146 +239,6 @@ void grackle::impl::cool1d_multi_g(
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       edot[i] = 0.;
-    }
-  }
-
-  // Compute Pressure
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      p2d[i] = (my_chemistry->Gamma - 1.) * d(i, idx_range.j, idx_range.k) *
-               e(i, idx_range.j, idx_range.k);
-    }
-  }
-
-  // Compute Temperature
-
-  // If no chemistry, use a tabulated mean molecular weight
-  // and iterate to convergence.
-
-  if (my_chemistry->primordial_chemistry == 0) {
-    // fh is H mass fraction in metal-free gas.
-
-    if (imetal == 1) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          rhoH[i] = my_chemistry->HydrogenFractionByMass *
-                    (d(i, idx_range.j, idx_range.k) -
-                     metal(i, idx_range.j, idx_range.k));
-        }
-      }
-    } else {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          rhoH[i] = my_chemistry->HydrogenFractionByMass *
-                    d(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
-
-    grackle::impl::calc_temp1d_cloudy_g(
-        rhoH, tgas, mmw, dom, zr, imetal, itmask, my_chemistry,
-        my_rates->cloudy_primordial, my_fields, internalu, idx_range);
-
-  } else {
-    // Compute mean molecular weight (and temperature) directly
-
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        mmw[i] = (HeI(i, idx_range.j, idx_range.k) +
-                  HeII(i, idx_range.j, idx_range.k) +
-                  HeIII(i, idx_range.j, idx_range.k)) /
-                     4. +
-                 HI(i, idx_range.j, idx_range.k) +
-                 HII(i, idx_range.j, idx_range.k) +
-                 de(i, idx_range.j, idx_range.k);
-        rhoH[i] =
-            HI(i, idx_range.j, idx_range.k) + HII(i, idx_range.j, idx_range.k);
-        cool1dmulti_buf.myde[i] = de(i, idx_range.j, idx_range.k);
-      }
-    }
-
-    // (include molecular hydrogen, but ignore deuterium)
-
-    if (my_chemistry->primordial_chemistry > 1) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          mmw[i] = mmw[i] + HM(i, idx_range.j, idx_range.k) +
-                   (H2I(i, idx_range.j, idx_range.k) +
-                    H2II(i, idx_range.j, idx_range.k)) /
-                       2.;
-          rhoH[i] = rhoH[i] + H2I(i, idx_range.j, idx_range.k) +
-                    H2II(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
-
-    // Include metal species
-
-    if (imetal == 1) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          mmw[i] = mmw[i] + metal(i, idx_range.j, idx_range.k) / mu_metal;
-        }
-      }
-    }
-
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        tgas[i] = std::fmax(p2d[i] * internalu.utem / mmw[i],
-                            my_chemistry->TemperatureStart);
-        mmw[i] = d(i, idx_range.j, idx_range.k) / mmw[i];
-      }
-    }
-
-    // Correct temperature for gamma from H2
-
-    if (my_chemistry->primordial_chemistry > 1) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          nH2 = 0.5 * (H2I(i, idx_range.j, idx_range.k) +
-                       H2II(i, idx_range.j, idx_range.k));
-          nother = (HeI(i, idx_range.j, idx_range.k) +
-                    HeII(i, idx_range.j, idx_range.k) +
-                    HeIII(i, idx_range.j, idx_range.k)) /
-                       4. +
-                   HI(i, idx_range.j, idx_range.k) +
-                   HII(i, idx_range.j, idx_range.k) +
-                   de(i, idx_range.j, idx_range.k);
-
-          int iter_tgas = 0;
-          double tgas_err = huge8;
-          while ((iter_tgas < 100) && (tgas_err > 1.e-3)) {
-            // tgas0 is used when CALCULATE_TGAS_SELF_CONSISTENTLY is defined
-            [[maybe_unused]] double tgas0 = tgas[i];
-            if (nH2 / nother > 1.0e-3) {
-              x = 6100. / tgas[i];  // not quite self-consistent
-              if (x > 10.) {
-                gamma2 = 0.5 * 5.;
-              } else {
-                gamma2 = 0.5 * (5. + 2. * std::pow(x, 2) * std::exp(x) /
-                                         std::pow((std::exp(x) - 1), 2));
-              }
-            } else {
-              gamma2 = 2.5;
-            }
-            gamma2 =
-                1. + (nH2 + nother) /
-                         (nH2 * gamma2 + nother / (my_chemistry->Gamma - 1.));
-#ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
-            tgas[i] =
-                std::fmax((gamma2 - 1.) * mmw[i] *
-                              e(i, idx_range.j, idx_range.k) * internalu.utem,
-                          my_chemistry->TemperatureStart);
-            tgas_err = grackle::impl::dabs(tgas0 - tgas[i]) / tgas0;
-            iter_tgas = iter_tgas + 1;
-#else
-            tgas[i] = tgas[i] * (gamma2 - 1.) / (my_chemistry->Gamma - 1.);
-            iter_tgas = 101;
-#endif
-          }
-        }
-      }
     }
   }
 
@@ -497,41 +339,16 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      // Compute log temperature and truncate if above/below table max/min
-
-      logTlininterp_buf.logtem[i] =
-          std::log(0.5 * (tgas[i] + cool1dmulti_buf.tgasold[i]));
-      logTlininterp_buf.logtem[i] =
-          std::fmax(logTlininterp_buf.logtem[i], logtem0);
-      logTlininterp_buf.logtem[i] =
-          std::fmin(logTlininterp_buf.logtem[i], logtem9);
-    }
-  }
-
-  // Compute interpolation indices
-
-  if (interp != MASK_FALSE) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        // Compute index into the table and precompute parts of linear interp
-
-        logTlininterp_buf.indixe[i] = std::fmin(
-            my_chemistry->NumberOfTemperatureBins - 1,
-            std::fmax(1, (long long)((logTlininterp_buf.logtem[i] - logtem0) /
-                                     dlogtem) +
-                             1));
-        logTlininterp_buf.t1[i] =
-            (logtem0 + (logTlininterp_buf.indixe[i] - 1) * dlogtem);
-        logTlininterp_buf.t2[i] =
-            (logtem0 + (logTlininterp_buf.indixe[i]) * dlogtem);
-        logTlininterp_buf.tdef[i] =
-            (logTlininterp_buf.logtem[i] - logTlininterp_buf.t1[i]) /
-            (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
-      }
-    }
-  }
+  // Compute log temperature and interpolation indices
+  // -> strictly speaking, we could skip calculation of indices if
+  //    my_chemistry->primordial_chemistry == 0 AND
+  //    my_chemistry->dust_chemistry, but this is simpler (for now)
+  // -> realistically, we probably aren't wasting that much time
+  // -> the way that we temporarily construct LnTPreparer is a short-term hack
+  //    (it should actually persist across subcycles)
+  LnTPreparer lnT_preparer(cool1dmulti_buf.tgasold);
+  lnT_preparer.prep_damped_lnT_lininterp_bufs(logTlininterp_buf, idx_range,
+                                              *my_chemistry, itmask, tgas);
 
   // --- 6 species cooling ---
 
@@ -658,15 +475,15 @@ void grackle::impl::cool1d_multi_g(
 
         if (edot[i] != edot[i]) {
           OMP_PRAGMA_CRITICAL {
-            eprintf("NaN in edot[1]:  %d %d %d %g %g %g %g %g %g %g %g %g %g\n",
-                    i, idx_range.j, idx_range.k, edot[i],
+            eprintf("NaN in edot[1]:  %d %d %d %g %g %g %g %g %g %g %g %g\n", i,
+                    idx_range.j, idx_range.k, edot[i],
                     HI(i, idx_range.j, idx_range.k),
                     HII(i, idx_range.j, idx_range.k),
                     HeI(i, idx_range.j, idx_range.k),
                     HeII(i, idx_range.j, idx_range.k),
                     HeIII(i, idx_range.j, idx_range.k),
                     de(i, idx_range.j, idx_range.k),
-                    d(i, idx_range.j, idx_range.k), tgas[i], p2d[i]);
+                    d(i, idx_range.j, idx_range.k), tgas[i]);
           }
         }
       }
@@ -1365,11 +1182,14 @@ void grackle::impl::cool1d_multi_g(
   if (my_chemistry->primordial_chemistry == 0) {
     iZscale = 0;
     mycmbTfloor = 0;
-    grackle::impl::cool1d_cloudy_g(rhoH, metallicity, logTlininterp_buf.logtem,
-                                   edot, comp2, dom, zr, mycmbTfloor,
-                                   my_chemistry->UVbackground, iZscale, itmask,
-                                   my_rates->cloudy_primordial, idx_range);
+    grackle::impl::cool1d_cloudy(rhoH, metallicity, logTlininterp_buf.logtem,
+                                 edot, comp2, dom, zr, mycmbTfloor,
+                                 my_chemistry->UVbackground, iZscale, itmask,
+                                 my_rates->cloudy_primordial, idx_range);
+  }
 
+  // Store the electron density in a 1d array
+  if (my_chemistry->primordial_chemistry == 0) {
     // Calculate electron density from mean molecular weight
 
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -1381,12 +1201,17 @@ void grackle::impl::cool1d_multi_g(
           cool1dmulti_buf.myde[i] =
               cool1dmulti_buf.myde[i] -
               mmw[i] * metal(i, idx_range.j, idx_range.k) /
-                  (d(i, idx_range.j, idx_range.k) * mu_metal);
+                  (d(i, idx_range.j, idx_range.k) * MU_METAL);
         }
         cool1dmulti_buf.myde[i] =
             d(i, idx_range.j, idx_range.k) * cool1dmulti_buf.myde[i] / mmw[i];
         cool1dmulti_buf.myde[i] = std::fmax(cool1dmulti_buf.myde[i], 0.);
       }
+    }
+  } else {  // my_chemistry->primordial_chemistry > 0
+    // directly copy the already known electron density
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      cool1dmulti_buf.myde[i] = de(i, idx_range.j, idx_range.k);
     }
   }
 
@@ -1434,14 +1259,13 @@ void grackle::impl::cool1d_multi_g(
         if (edot[i] != edot[i]) {
           OMP_PRAGMA_CRITICAL {
             eprintf(
-                "NaN in edot[2]:  %d %d %d %g %g %g %g %g %g %g %g %g %g %g "
-                "%g\n",
+                "NaN in edot[2]:  %d %d %d %g %g %g %g %g %g %g %g %g %g %g \n",
                 i, idx_range.j, idx_range.k, edot[i],
                 photogamma(i, idx_range.j, idx_range.k),
                 HI(i, idx_range.j, idx_range.k),
                 de(i, idx_range.j, idx_range.k), d(i, idx_range.j, idx_range.k),
-                e(i, idx_range.j, idx_range.k), p2d[i], tgas[i], dom,
-                internalu.urho, internalu.a_value, mh_local_var);
+                e(i, idx_range.j, idx_range.k), tgas[i], dom, internalu.urho,
+                internalu.a_value, mh_local_var);
           }
         }
       }
@@ -1465,13 +1289,13 @@ void grackle::impl::cool1d_multi_g(
 
     if (my_rates->cloudy_data_new == 1) {
       iZscale = 1;
-      grackle::impl::cool1d_cloudy_g(
+      grackle::impl::cool1d_cloudy(
           rhoH, metallicity, logTlininterp_buf.logtem, edot, comp2, dom, zr,
           my_chemistry->cmb_temperature_floor, my_chemistry->UVbackground,
           iZscale, itmask_tab.data(), my_rates->cloudy_metal, idx_range);
 
     } else {
-      grackle::impl::cool1d_cloudy_old_tables_g(
+      grackle::impl::cool1d_cloudy_old_tables(
           rhoH, metallicity, logTlininterp_buf.logtem, edot, comp2, dom, zr,
           itmask_tab.data(), my_chemistry, my_rates->cloudy_metal,
           my_fields->density, my_fields->e_density, my_fields, idx_range);

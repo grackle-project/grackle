@@ -20,7 +20,6 @@
 #include "grackle_macros.h"
 #include "auto_general.hpp"
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
-#include "initialize_cloudy_data.hpp"
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -30,6 +29,7 @@
 #include "phys_constants.h"
 #include "ratequery.hpp"
 #include "status_reporting.h"
+#include "tabulated/initialize_cloudy_data.hpp"
 
 #ifdef _OPENMP
 #include <omp.h>

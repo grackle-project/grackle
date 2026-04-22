@@ -10,12 +10,13 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef INITIALIZE_CLOUDY_DATA_H
-#define INITIALIZE_CLOUDY_DATA_H
+#ifndef TABULATED_INITIALIZE_CLOUDY_DATA_HPP
+#define TABULATED_INITIALIZE_CLOUDY_DATA_HPP
 
 #include "grackle.h"
+#include "../support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 // initialize cloudy cooling data
 int initialize_cloudy_data(chemistry_data* my_chemistry,
@@ -26,6 +27,6 @@ int initialize_cloudy_data(chemistry_data* my_chemistry,
 int free_cloudy_data(cloudy_data* my_cloudy, chemistry_data* my_chemistry,
                      int primordial);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* INITIALIZE_CLOUDY_DATA_H */
+#endif /* TABULATED_INITIALIZE_CLOUDY_DATA_HPP */

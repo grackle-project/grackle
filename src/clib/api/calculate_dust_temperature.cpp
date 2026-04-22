@@ -12,9 +12,9 @@
 ************************************************************************/
 
 #include <cstdio>
-#include "calc_tdust_3d.h"
+#include "dust/calc_tdust_3d.hpp"
 #include "grackle.h"
-#include "internal_units.h"
+#include "internal_units.hpp"
 
 extern "C" int local_calculate_dust_temperature(
     chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
@@ -28,7 +28,7 @@ extern "C" int local_calculate_dust_temperature(
   if (my_chemistry->dust_chemistry < 1 && my_chemistry->h2_on_dust < 1)
     return GR_SUCCESS;
 
-  InternalGrUnits internalu = new_internalu_(my_units);
+  GRIMPL_NS::InternalGrUnits internalu = GRIMPL_NS::new_internalu_(my_units);
 
   /* Check for a metal field. */
 
@@ -50,7 +50,7 @@ extern "C" int local_calculate_dust_temperature(
     return GR_FAIL;
   }
 
-  calc_tdust_3d_g(
+  GRIMPL_NS::calc_tdust_3d(
     temperature, dust_temperature, metal_field_present, my_chemistry, my_rates,
     my_fields, internalu
   );

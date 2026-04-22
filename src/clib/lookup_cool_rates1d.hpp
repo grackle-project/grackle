@@ -22,6 +22,7 @@
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
@@ -788,38 +789,8 @@ inline void lookup_cool_rates1d(
 
   // Linearly Interpolate the Collisional Rxn Rates
   // ----------------------------------------------
-
-  // Set log values of start and end of lookup tables
-  const double logtem_start = std::log(my_chemistry->TemperatureStart);
-  const double logtem_end = std::log(my_chemistry->TemperatureEnd);
-  const double dlogtem = (std::log(my_chemistry->TemperatureEnd) -
-                          std::log(my_chemistry->TemperatureStart)) /
-                         (double)(my_chemistry->NumberOfTemperatureBins - 1);
-
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      // Compute temp-centered temperature (and log)
-
-      // logtem(i) = log(0.5_DKIND*(tgas(i)+tgasold(i)))
-      logTlininterp_buf.logtem[i] = std::log(tgas1d[i]);
-      logTlininterp_buf.logtem[i] = grackle::impl::clamp(
-          logTlininterp_buf.logtem[i], logtem_start, logtem_end);
-
-      // Find index into tble and precompute interpolation values
-
-      logTlininterp_buf.indixe[i] = grackle::impl::clamp(
-          (long long)((logTlininterp_buf.logtem[i] - logtem_start) / dlogtem) +
-              1LL,
-          1LL, (long long)my_chemistry->NumberOfTemperatureBins - 1LL);
-      logTlininterp_buf.t1[i] =
-          (logtem_start + (logTlininterp_buf.indixe[i] - 1) * dlogtem);
-      logTlininterp_buf.t2[i] =
-          (logtem_start + (logTlininterp_buf.indixe[i]) * dlogtem);
-      logTlininterp_buf.tdef[i] =
-          (logTlininterp_buf.logtem[i] - logTlininterp_buf.t1[i]) /
-          (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
-    }
-  }
+  LnTPreparer::prep_undamped_lnT_lininterp_bufs(logTlininterp_buf, idx_range,
+                                                *my_chemistry, itmask, tgas1d);
 
   // interpolate all collisional reaction rates
   interpolate_collisional_rxn_rates_(kcol_buf, idx_range, tgas1d, itmask, dom,
@@ -836,8 +807,8 @@ inline void lookup_cool_rates1d(
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
-    lookup_dust_rates1d(idx_range, dlogtem, tdust, dust2gas, h2dust, dom,
-                        itmask_metal, dt, my_chemistry, my_rates, my_fields,
+    lookup_dust_rates1d(idx_range, tdust, dust2gas, h2dust, dom, itmask_metal,
+                        dt, my_chemistry, my_rates, my_fields,
                         grain_growth_rates, grain_temperatures,
                         logTlininterp_buf, internal_dust_prop_scratch_buf);
   }
