@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <vector>
 
+#include "dust/calc_all_tdust_gasgr_1d_g.hpp"
 #include "calc_tdust_3d.h"
 #include "dust_props.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
@@ -23,6 +24,7 @@
 #include "grackle.h"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
+#include "inject_model/misc.hpp"
 #include "internal_types.hpp"
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
@@ -37,8 +39,6 @@ void calc_tdust_3d_g(
   grackle_field_data* my_fields, InternalGrUnits internalu
 )
 {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
   const double mh_local_var = mh_grflt;
 
@@ -61,7 +61,9 @@ void calc_tdust_3d_g(
   // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
-    grackle::impl::scale_fields_dust(my_chemistry, my_fields, imetal, factor);
+    grackle::impl::scale_fields_dust(
+        my_chemistry, my_fields, imetal, factor,
+        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   OMP_PRAGMA("omp parallel")
@@ -253,13 +255,13 @@ void calc_tdust_3d_g(
       }
 
       // Compute dust temperature(s) in the index-range
-      f_wrap::calc_all_tdust_gasgr_1d_g(
-        trad, tgas.data(), tdust.data(), metallicity.data(), dust2gas.data(),
-        nh.data(), gasgr_tdust.data(), itmask_metal.data(), internalu.coolunit,
-        gasgr.data(), myisrf.data(), kappa_tot.data(), my_chemistry, my_rates,
-        my_fields, idx_range, grain_temperatures, gas_grainsp_heatrate,
-        grain_kappa, logTlininterp_buf, internal_dust_prop_buf
-      );
+      grackle::impl::calc_all_tdust_gasgr_1d_g(
+        trad, tgas.data(), tdust.data(), metallicity.data(),
+        dust2gas.data(), nh.data(), gasgr_tdust.data(), itmask_metal.data(),
+        internalu.coolunit, gasgr.data(), myisrf.data(), kappa_tot.data(),
+        my_chemistry, my_rates, my_fields, idx_range, grain_temperatures,
+        gas_grainsp_heatrate, logTlininterp_buf, internal_dust_prop_buf,
+        grain_kappa);
 
       // Copy slice values back to grid
 
@@ -303,7 +305,9 @@ void calc_tdust_3d_g(
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)std::pow(internalu.a_value,3);
-    grackle::impl::scale_fields_dust(my_chemistry, my_fields, imetal, factor);
+    grackle::impl::scale_fields_dust(
+        my_chemistry, my_fields, imetal, factor,
+        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   return;

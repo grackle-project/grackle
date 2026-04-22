@@ -36,6 +36,7 @@ enum class ChemPreset {
   primchem2,
   primchem3,
   primchem4_dustspecies3,
+  primchem4_dustspecies3_allinjectpaths,
 };
 
 /// override the settings of my_chem based on the specified preset
@@ -108,8 +109,16 @@ public:
 
   // getter functions
   const code_units& initial_units() const { return this->initial_units_; }
+
   chemistry_data* my_chemistry() { return this->my_chemistry_.get(); }
+  const chemistry_data* my_chemistry() const {
+    return this->my_chemistry_.get();
+  }
+
   chemistry_data_storage* my_rates() { return this->my_rates_.get(); }
+  const chemistry_data_storage* my_rates() const {
+    return this->my_rates_.get();
+  }
 
   /// create an initialized instance from a preset
   static GrackleCtxPack create(const FullConfPreset& preset,

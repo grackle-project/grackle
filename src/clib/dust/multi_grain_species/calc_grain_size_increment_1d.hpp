@@ -26,7 +26,7 @@
 #include "fortran_func_decls.h"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
-#include "inject_model/inject_path_field_pack.hpp"
+#include "inject_model/misc.hpp"
 #include "LUT.hpp"
 #include "utils-cpp.hpp"
 #include "utils-field.hpp"
@@ -136,21 +136,17 @@ inline void calc_grain_size_increment_1d(
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
 
-    InjectPathFieldPack inject_path_metal_densities =
-        setup_InjectPathFieldPack(my_chemistry, my_fields);
-
-    int start = inject_path_metal_densities.start_idx;
-    int stop = inject_path_metal_densities.stop_idx;
+    const gr_float* const* inject_pathway_metal_densities =
+        get_inject_pathway_metal_density(my_chemistry, my_fields);
 
     // make arrays
-    for (int count = start; count < stop; count++) {
+    for (int count = 0; count < n_pathways; count++) {
       // when my_chemistry->multi_metals == 0, inj_path_metal_dens wraps
       // the same pointer as `metal`
 
       grackle::impl::View<const gr_float***> inj_path_metal_dens(
-          inject_path_metal_densities.fields[count],
-          my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-          my_fields->grid_dimension[2]);
+          inject_pathway_metal_densities[count], my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
       // calculate the max ratio between inj_path_metal_dens and metal
       gr_float max_ratio = std::numeric_limits<gr_float>::lowest();
