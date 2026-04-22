@@ -94,7 +94,7 @@ add_library(Grackle_Grackle
   auto_general.hpp
 
   # C++ Source (and Private Header Files)
-  dust_growth_and_destruction.cpp dust_growth_and_destruction.hpp
+  dust/dust_growth_and_destruction.cpp dust/dust_growth_and_destruction.hpp
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
   calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
