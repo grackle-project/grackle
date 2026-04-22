@@ -29,7 +29,6 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
-#include "dust_growth_and_destruction.hpp"
 
 void grackle::impl::cool1d_multi_g(
     int imetal, int iter, double* edot, double* tgas, double* mmw, double* p2d,
