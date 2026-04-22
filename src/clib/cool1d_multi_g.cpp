@@ -27,7 +27,6 @@
 #include "dust_props.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
-#include "lnT_prep.hpp"
 #include "tabulated/cool1d_cloudy.hpp"
 #include "tabulated/cool1d_cloudy_old_tables.hpp"
 #include "utils-cpp.hpp"
@@ -288,16 +287,6 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  // If this is the first time through, just set tgasold to tgas
-
-  if (iter == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        cool1dmulti_buf.tgasold[i] = tgas[i];
-      }
-    }
-  }
-
   // Compute log densities
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -338,17 +327,6 @@ void grackle::impl::cool1d_multi_g(
            d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
     }
   }
-
-  // Compute log temperature and interpolation indices
-  // -> strictly speaking, we could skip calculation of indices if
-  //    my_chemistry->primordial_chemistry == 0 AND
-  //    my_chemistry->dust_chemistry, but this is simpler (for now)
-  // -> realistically, we probably aren't wasting that much time
-  // -> the way that we temporarily construct LnTPreparer is a short-term hack
-  //    (it should actually persist across subcycles)
-  LnTPreparer lnT_preparer(cool1dmulti_buf.tgasold);
-  lnT_preparer.prep_damped_lnT_lininterp_bufs(logTlininterp_buf, idx_range,
-                                              *my_chemistry, itmask, tgas);
 
   // --- 6 species cooling ---
 
@@ -1559,14 +1537,6 @@ void grackle::impl::cool1d_multi_g(
           edot[i] = 0.e0;
         }
       }
-    }
-  }
-
-  // Set tgasold
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      cool1dmulti_buf.tgasold[i] = tgas[i];
     }
   }
 

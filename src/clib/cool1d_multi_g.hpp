@@ -60,10 +60,9 @@ namespace grackle::impl {
 /// @param[in] grain_temperatures buffers to hold individual grain species
 ///     temperatures. This is only used in certain configurations (i.e. when we
 ///     aren't using the tdust argument)
-/// @param[in] logTlininterp_buf Scratch space used to temporarily hold values
-///     for each location in @p idx_range with values that are used to linearly
-///     interpolate tables with respect to the natural log of @p tgas1d. (Any
-///     values previously stored here will be overwritten)
+/// @param[in] logTlininterp_buf Hold values for each location in @p idx_range
+///     that are used to linearly interpolate tables with respect to the natural
+///     log of @p tgas1d.
 /// @param[in] cool1dmulti_buf Pre-allocated buffers that are used by this
 ///     function for scratch space (to hold a variety of quantities)
 /// @param[in] coolingheating_buf Pre-allocated buffers that are used by this

@@ -23,6 +23,7 @@
 #include "inject_model/misc.hpp"
 #include "internal_units.hpp"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
 #include "scale_fields.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"
@@ -82,6 +83,13 @@ void cool_multi_time(
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
+    // construct object to computes log temperature and interpolation indices
+    // -> tgasold_ is reserved exclusive use by lnT_preparer (it retains
+    //    values between cycles)
+    // -> see docstring of LnTPreparer for extended discussion
+    std::vector<double> tgasold_(my_fields->grid_dimension[0]);
+    LnTPreparer lnT_preparer(tgasold_.data());
+
     // create views of density and internal energy fields to support 3D access
     grackle::impl::View<gr_float***> d(my_fields->density,
                                        my_fields->grid_dimension[0],
@@ -111,6 +119,17 @@ void cool_multi_time(
                                  itmask.data(), my_chemistry,
                                  &my_rates->cloudy_primordial, my_fields,
                                  internalu, idx_range);
+
+      // precompute natural log of T and related interpolation info
+      // -> the calculation encodes damping logic used with an integrator that
+      //    adjusts ln(T) based on the temperature from the prior subcycle.
+      //    We act as if there was prev iter where temperature was the same
+      lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
+        // technically, we could skip indices info if prim_chem == 0 AND
+        // dust_chemistry == 0. But we leave that for the future
+        lnT_preparer.prep_damped_lnT_lininterp_bufs(
+            logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
+            tgas.data());
 
       // Compute the cooling rate
       int dummy_iter_arg=1;

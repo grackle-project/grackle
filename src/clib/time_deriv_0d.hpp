@@ -14,6 +14,7 @@
 #include "grackle_macros.h" // GRACKLE_FREE
 #include "index_helper.h"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
 #include "rate_timestep_g.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "utils-field.hpp"
@@ -462,6 +463,9 @@ void derivatives(
 
   pack.other_scratch_buf.itmask[0] = MASK_TRUE;
 
+  // construct object to computes log temperature and interpolation indices
+  double tgasold_buf_[1] = {-1.0};  // <- use a dummy value
+  LnTPreparer lnT_preparer(tgasold_buf_);
 
   // configure the relevant members of `pack.fields` to point to the buffers
   // specified by the rhosp and eint argument.
@@ -478,6 +482,17 @@ void derivatives(
                     pack.other_scratch_buf.itmask, my_chemistry,
                     &my_rates->cloudy_primordial, &pack.fields, internalu,
                     pack.idx_range_1_element);
+
+    // precompute natural log of T and related interpolation info
+    // -> act as if there was prev iter where temperature was the same
+    lnT_preparer.record_T(
+        pack.idx_range_1_element, pack.other_scratch_buf.itmask,
+        pack.other_scratch_buf.tgas);
+    // actually compute the values
+    lnT_preparer.prep_damped_lnT_lininterp_bufs(
+        pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
+        *my_chemistry, pack.other_scratch_buf.itmask,
+        pack.other_scratch_buf.tgas);
 
     // compute cooling rate, tdust, and metallicity for this row
     cool1d_multi_g(
