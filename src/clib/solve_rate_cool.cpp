@@ -37,7 +37,7 @@
 #include "cool1d_multi_g.hpp"
 #include "scale_fields.hpp"
 #include "solve_rate_cool.hpp"
-#include "dust_growth_and_destruction.hpp"
+#include "dust/dust_growth_and_destruction.hpp"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
 /// selected by the given itmask) with the maximum allowed heating/cooling
