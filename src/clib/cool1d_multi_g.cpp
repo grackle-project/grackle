@@ -344,8 +344,11 @@ void grackle::impl::cool1d_multi_g(
   //    my_chemistry->primordial_chemistry == 0 AND
   //    my_chemistry->dust_chemistry, but this is simpler (for now)
   // -> realistically, we probably aren't wasting that much time
-  prep_lnT_lininterp_bufs(logTlininterp_buf, idx_range, *my_chemistry, itmask,
-                          tgas, cool1dmulti_buf.tgasold);
+  // -> the way that we temporarily construct LnTPreparer is a short-term hack
+  //    (it should actually persist across subcycles)
+  LnTPreparer lnT_preparer(cool1dmulti_buf.tgasold);
+  lnT_preparer.prep_damped_lnT_lininterp_bufs(logTlininterp_buf, idx_range,
+                                              *my_chemistry, itmask, tgas);
 
   // --- 6 species cooling ---
 

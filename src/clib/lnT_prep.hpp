@@ -81,20 +81,6 @@ template <class UnaryFn>
 
 }  // namespace detail
 
-/// Fills buffers tracked by @p logTlininterp_buf. In this overload, we set each
-/// value to the arithmetic average of @p cur_T and @p old_T
-inline void prep_lnT_lininterp_bufs(LogTLinInterpScratchBuf& logTlininterp_buf,
-                                    IndexRange idx_range,
-                                    const chemistry_data& my_chemistry,
-                                    const gr_mask_type* itmask,
-                                    const double* cur_T, const double* old_T) {
-  auto get_T = [cur_T, old_T](int i) -> double {
-    return 0.5 * (cur_T[i] + old_T[i]);
-  };
-  detail::prep_lnT_lininterp_bufs_(logTlininterp_buf, idx_range, my_chemistry,
-                                   itmask, get_T);
-}
-
 /// Encapsulates logic for computing ln(T) related values
 ///
 /// At face value instances fulfill a simple purpose:
