@@ -22,7 +22,6 @@
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "internal_types.hpp"
-#include "lnT_prep.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
@@ -755,9 +754,9 @@ inline void apply_misc_shield_factors(
 /// @param[in] grain_temperatures individual grain species temperatures. This
 ///     is only used in certain configurations (i.e. when we aren't using the
 ///     tdust argument)
-/// @param[out] logTlininterp_buf Buffers that are filled with values for each
-///     location in @p idx_range with valuea that are used to linearly
-///     interpolate tables with respect to the natural log of @p tgas1d
+/// @param[in] logTlininterp_buf Hold values for each location in @p idx_range
+///     that are used to linearly interpolate tables with respect to the natural
+///     log of @p tgas1d.
 /// @param[out] kcol_buf Buffers filled with the collisional reaction rates for
 ///     each location in @p idx_range
 /// @param[out] kshield_buf Buffers filled with shielding-adjusted photo
@@ -789,8 +788,6 @@ inline void lookup_cool_rates1d(
 
   // Linearly Interpolate the Collisional Rxn Rates
   // ----------------------------------------------
-  LnTPreparer::prep_undamped_lnT_lininterp_bufs(logTlininterp_buf, idx_range,
-                                                *my_chemistry, itmask, tgas1d);
 
   // interpolate all collisional reaction rates
   interpolate_collisional_rxn_rates_(kcol_buf, idx_range, tgas1d, itmask, dom,

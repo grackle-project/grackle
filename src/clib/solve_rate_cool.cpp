@@ -853,6 +853,14 @@ int solve_rate_cool(
 
         if (my_chemistry->primordial_chemistry > 0)  {
 
+          // overwrite the log temperature and interpolation indices
+          // (this time we don't use damping)
+          //
+          // TODO(breaks-gold-standard): stop overwriting these values
+          LnTPreparer::prep_undamped_lnT_lininterp_bufs(
+              logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
+              tgas.data());
+
           // Look-up rates as a function of temperature for 1D set of zones
           //  (maybe should add itmask to this call)
           //

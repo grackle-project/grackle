@@ -509,6 +509,14 @@ void derivatives(
     );
   }
 
+  // overwrite the log temperature and interpolation indices
+  // -> when pack.local_edot_handling == 1, this is mathematically equivalent to
+  //    the earlier calculation, but may have slightly different numerical vals
+  LnTPreparer::prep_undamped_lnT_lininterp_bufs(
+      pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
+      *my_chemistry, pack.other_scratch_buf.itmask,
+      pack.other_scratch_buf.tgas);
+
   // uses the temperature to look up the chemical rates (they are interpolated
   // with respect to log temperature from input tables)
   grackle::impl::lookup_cool_rates1d(
