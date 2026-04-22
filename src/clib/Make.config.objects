@@ -30,7 +30,7 @@ OBJS_CONFIG_LIB = \
         dust/calc_all_tdust_gasgr_1d_g.lo \
         dust/calc_tdust_1d_g.lo \
         dust/grain_species_info.lo \
-        dust_growth_and_destruction.lo \
+        dust/dust_growth_and_destruction.lo \
         dynamic_api.lo \
         grackle_units.lo \
 	index_helper.lo \

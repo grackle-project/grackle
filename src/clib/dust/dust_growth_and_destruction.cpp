@@ -7,9 +7,6 @@
 #include "utils-cpp.hpp"
 
 namespace {
-const double k_boltz = 1.3806504e-16;
-const double m_proton = 1.67262171e-24;
-const double pi_val = 3.141592653589793;
 const double sec_per_year = 3.155e7;
 
 const double tiny_value = 1.0e-20;
