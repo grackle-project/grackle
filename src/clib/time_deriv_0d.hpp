@@ -463,10 +463,6 @@ void derivatives(
 
   pack.other_scratch_buf.itmask[0] = MASK_TRUE;
 
-  // construct object to computes log temperature and interpolation indices
-  double tgasold_buf_[1] = {-1.0};  // <- use a dummy value
-  LnTPreparer lnT_preparer(tgasold_buf_);
-
   // configure the relevant members of `pack.fields` to point to the buffers
   // specified by the rhosp and eint argument.
   // -> the "Future Performance Considerations" section of the docstring has
@@ -474,8 +470,18 @@ void derivatives(
   copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rhosp, 1);
   pack.fields.internal_energy = &eint[0];
 
-  if (pack.local_edot_handling == 1) {
+  if (pack.local_edot_handling != 1) {
+    // in this branch, we're effectively ignoring the dependence of temperature
+    // on species number density.
+    // -> strictly speaking, this is false since gamma and the mean molecular
+    //    weight vary with respect to species densities
 
+    // precompute natural log of T and related interpolation info
+    LnTPreparer::prep_undamped_lnT_lininterp_bufs(
+        pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
+        *my_chemistry, pack.other_scratch_buf.itmask,
+        pack.other_scratch_buf.tgas);
+  } else {
     // calculate the basic gas properties (tgas, mmw, rhoH)
     basic_gas_props(pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
                     pack.other_scratch_buf.rhoH, pack.fwd_args.imetal,
@@ -484,12 +490,7 @@ void derivatives(
                     pack.idx_range_1_element);
 
     // precompute natural log of T and related interpolation info
-    // -> act as if there was prev iter where temperature was the same
-    lnT_preparer.record_T(
-        pack.idx_range_1_element, pack.other_scratch_buf.itmask,
-        pack.other_scratch_buf.tgas);
-    // -> actually compute the values
-    lnT_preparer.prep_damped_lnT_lininterp_bufs(
+    LnTPreparer::prep_undamped_lnT_lininterp_bufs(
         pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
         *my_chemistry, pack.other_scratch_buf.itmask,
         pack.other_scratch_buf.tgas);
@@ -508,14 +509,6 @@ void derivatives(
       pack.main_scratch_buf.coolingheating_buf
     );
   }
-
-  // overwrite the log temperature and interpolation indices
-  // -> when pack.local_edot_handling == 1, this is mathematically equivalent to
-  //    the earlier calculation, but may have slightly different numerical vals
-  LnTPreparer::prep_undamped_lnT_lininterp_bufs(
-      pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
-      *my_chemistry, pack.other_scratch_buf.itmask,
-      pack.other_scratch_buf.tgas);
 
   // uses the temperature to look up the chemical rates (they are interpolated
   // with respect to log temperature from input tables)
