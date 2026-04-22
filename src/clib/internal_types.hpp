@@ -120,9 +120,6 @@ void drop_CoolHeatScratchBuf(CoolHeatScratchBuf*);
 /// distinction has been preserved during transcription, but it is not clear
 /// how real the distinction truly is.
 struct Cool1DMultiScratchBuf {
-  /// unlike the other members in this struct, tgasold is retained between
-  /// iterations. Thus, it may be better to remove it from this struct
-  double* tgasold = nullptr;
   double* mynh = nullptr;
   double* myde = nullptr;
   double* gasgr_tdust = nullptr;
@@ -138,7 +135,6 @@ void visit_member_pair(
   namespace vis = ::grackle::impl::visitor;
 
   vis::begin_visit("Cool1DMultiScratchBuf", f);
-  f(VIS_MEMBER_NAME("tgasold"), obj0.tgasold, obj1.tgasold, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("mynh"), obj0.mynh, obj1.mynh, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("myde"), obj0.myde, obj1.myde, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("gasgr_tdust"), obj0.gasgr_tdust, obj1.gasgr_tdust, vis::idx_range_len_multiple(1));
