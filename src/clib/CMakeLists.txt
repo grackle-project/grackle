@@ -118,6 +118,7 @@ add_library(Grackle_Grackle
   dust/multi_grain_species/calc_grain_size_increment_1d.hpp
   dust/misc.hpp
   dynamic_api.cpp
+  full_rxn_rate_buf.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_cloudy_data.cpp initialize_cloudy_data.hpp
