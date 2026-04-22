@@ -929,6 +929,13 @@ int solve_rate_cool(
           );
 
         }
+        // TEMPORARY: dust growth/destruction is currently invoked here as its
+        // own block. Eventually, the growth and destruction rates should be
+        // computed alongside the other dust rates (stored together in the
+        // newly-created FullRxnRateBuf), and the dust density updates should
+        // happen alongside the other density updates rather than as a
+        // separate pass. The placement below is a short-term stopgap and
+        // will be restructured in the future.
         if (my_chemistry->dust_model == 1){
           // Calculate dust growth rates and store in growth_dM array
           grackle::impl::dust_growth(
