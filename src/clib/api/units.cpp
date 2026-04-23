@@ -11,15 +11,10 @@
 / software.
 ************************************************************************/
 
-#include <stdlib.h>
 #include <cstring>
-#include <cstdio>
-#include <time.h>
 #include <cmath>
+#include <cstdio>
 #include "grackle.h"
-#include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
 extern "C" double get_velocity_units(const code_units *my_units)
