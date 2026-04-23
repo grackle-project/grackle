@@ -28,6 +28,8 @@
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "dust_props.hpp"
+#include "dust/calc_all_tdust_gasgr_1d_g.hpp"
+#include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
