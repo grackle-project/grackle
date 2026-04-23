@@ -11,18 +11,13 @@
 / software.
 ************************************************************************/
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
-#include <math.h>
+#include <cstring>
+#include <cmath>
+#include <cstdio>
 #include "grackle.h"
-#include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
-double get_velocity_units(const code_units *my_units)
+extern "C" double get_velocity_units(const code_units *my_units)
 {
   double velocity_units = my_units->length_units / my_units->time_units;
   if (my_units->comoving_coordinates == 1) {
@@ -31,18 +26,18 @@ double get_velocity_units(const code_units *my_units)
   return velocity_units;
 }
 
-void set_velocity_units(code_units *my_units)
+extern "C" void set_velocity_units(code_units *my_units)
 {
   my_units->velocity_units = get_velocity_units(my_units);
 }
 
 static double get_temperature_units_(double velocity_units)
 {
-  return mh * POW(velocity_units, 2) / kboltz;
+  return mh * std::pow(velocity_units, 2.0) / kboltz;
 }
 
 
-double get_temperature_units(const code_units *my_units)
+extern "C" double get_temperature_units(const code_units *my_units)
 {
   return get_temperature_units_(get_velocity_units(my_units));
 }
@@ -74,14 +69,14 @@ static double required_velocity_units_(const chemistry_data_storage * my_rates,
 // the name will be the name of the macro
 #define STRINGIFY_MACRO_NAME(x) #x
 
-#define _ERR_UNIT_RETURN -1.0
+static constexpr int err_unit_return_ = -1.0;
 
-double gr_query_units(const chemistry_data_storage * my_rates,
-                      const char* units_name, double current_a_value)
+extern "C" double gr_query_units(const chemistry_data_storage * my_rates,
+                                 const char* units_name, double current_a_value)
 {
   if (my_rates == NULL) {
-    fprintf(stderr, "my_rates argument is NULL\n");
-    return _ERR_UNIT_RETURN; // maybe we should abort?
+    std::fprintf(stderr, "my_rates argument is NULL\n");
+    return err_unit_return_; // maybe we should abort?
   }
   const code_units* initial_units = &(my_rates->initial_units);
 
@@ -95,55 +90,57 @@ double gr_query_units(const chemistry_data_storage * my_rates,
   } else if ((initial_units->comoving_coordinates == 0) && !is_unchanged) {
     // we need to use this '#' syntax to ensure that the macro name is treated
     // as a string (if we don't it could be expanded to it's underlying value)
-    fprintf(stderr,
-            "for non-comoving coordinates, current_a_value must be the value "
-            "given by the %s constant or it must EXACTLY match the initial "
-            "a_value\n",
-            STRINGIFY_MACRO_NAME(GR_SPECIFY_INITIAL_A_VALUE));
-    return _ERR_UNIT_RETURN;
+    std::fprintf(
+        stderr,
+        "for non-comoving coordinates, current_a_value must be the value "
+        "given by the %s constant or it must EXACTLY match the initial "
+        "a_value\n",
+        STRINGIFY_MACRO_NAME(GR_SPECIFY_INITIAL_A_VALUE));
+    return err_unit_return_;
 
   } else if (current_a_value <= 0.0) {
-    fprintf(stderr,
-            "current_a_value must be the value given by the %s constant, or a "
-            "positive value.\n",
-            STRINGIFY_MACRO_NAME(GR_SPECIFY_INITIAL_A_VALUE));
-    return _ERR_UNIT_RETURN;
+    std::fprintf(
+        stderr,
+        "current_a_value must be the value given by the %s constant, or a "
+        "positive value.\n",
+        STRINGIFY_MACRO_NAME(GR_SPECIFY_INITIAL_A_VALUE));
+    return err_unit_return_;
 
   }
 
   // now handle check the units name
   if (units_name == NULL) {
-    fprintf(stderr, "units_name argument is NULL\n");
-    return _ERR_UNIT_RETURN; // maybe we should abort?
+    std::fprintf(stderr, "units_name argument is NULL\n");
+    return err_unit_return_; // maybe we should abort?
 
-  } else if (strcmp(units_name, "density_units") == 0) {
+  } else if (std::strcmp(units_name, "density_units") == 0) {
     double init_d_u = initial_units->density_units;
     return (is_unchanged) ? init_d_u
       : init_d_u * pow( (initial_units->a_value / current_a_value), 3);
 
-  } else if (strcmp(units_name, "length_units") == 0) {
+  } else if (std::strcmp(units_name, "length_units") == 0) {
     double init_l_u = initial_units->length_units;
     return (is_unchanged) ? init_l_u
       : init_l_u * (current_a_value / initial_units->a_value);
 
-  } else if (strcmp(units_name, "time_units") == 0) {
+  } else if (std::strcmp(units_name, "time_units") == 0) {
     return initial_units->time_units;
 
-  } else if (strcmp(units_name, "velocity_units") == 0) {
+  } else if (std::strcmp(units_name, "velocity_units") == 0) {
     return required_velocity_units_(my_rates, current_a_value);
 
-  } else if (strcmp(units_name, "temperature_units") == 0) {
+  } else if (std::strcmp(units_name, "temperature_units") == 0) {
     return get_temperature_units_(required_velocity_units_(my_rates,
                                                            current_a_value));
 
-  } else if (strcmp(units_name, "a_value") == 0) {
+  } else if (std::strcmp(units_name, "a_value") == 0) {
     return current_a_value;
 
-  } else if (strcmp(units_name, "a_units") == 0) {
+  } else if (std::strcmp(units_name, "a_units") == 0) {
     return initial_units->a_units;
 
   } else {
-    fprintf(stderr, "unknown units name: \"%s\"\n", units_name);
-    return _ERR_UNIT_RETURN;
+    std::fprintf(stderr, "unknown units name: \"%s\"\n", units_name);
+    return err_unit_return_;
   }
 }

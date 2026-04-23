@@ -16,6 +16,7 @@ src/clib/api/calculate_pressure.cpp
 src/clib/api/calculate_temperature.cpp
 src/clib/api/set_default_chemistry_parameters.cpp
 src/clib/api/solve_chemistry.cpp
+src/clib/api/units.cpp
 src/clib/calc_tdust_3d.cpp
 src/clib/chemistry_solver_funcs.hpp
 src/clib/cie_thin_cooling_rate_tables.h
@@ -26,7 +27,6 @@ src/clib/dynamic_api.cpp
 src/clib/fortran_func_decls.h
 src/clib/fortran_func_wrappers.hpp
 src/clib/grackle_macros.h
-src/clib/grackle_units.c
 src/clib/index_helper.c
 src/clib/index_helper.h
 src/clib/init_misc_species_cool_rates.cpp
