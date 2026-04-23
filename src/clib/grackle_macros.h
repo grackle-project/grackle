@@ -84,10 +84,6 @@
 
 /* Standard definitions (well, fairly standard) */
 
-#ifndef NULL
-#define NULL      0
-#endif
-
 #ifdef FAIL
 #undef FAIL
 #endif
