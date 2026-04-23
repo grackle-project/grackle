@@ -764,6 +764,8 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.vol_org_dust_temperature = get_field(fc, "vol_org_dust_temperature")
     my_fields.H2O_ice_dust_temperature = get_field(fc, "H2O_ice_dust_temperature")
 
+    my_fields.sne_rate = get_field(fc, "sne_rate")
+
     return my_fields
 
 def solve_chemistry(fc, my_dt):

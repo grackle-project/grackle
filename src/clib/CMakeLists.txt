@@ -100,6 +100,7 @@ add_library(Grackle_Grackle
   api/calculate_temperature.cpp
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
+  dust/dust_growth_and_destruction.cpp dust/dust_growth_and_destruction.hpp
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
   calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp

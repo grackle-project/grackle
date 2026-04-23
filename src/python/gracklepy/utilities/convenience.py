@@ -148,6 +148,7 @@ def setup_fluid_container(my_chemistry,
     fh = my_chemistry.HydrogenFractionByMass
     d2h = my_chemistry.DeuteriumToHydrogenRatio
 
+    # d = gas + metal (dust is independent of d)
     metal_free = 1 - metal_mass_fraction
     H_total = fh * metal_free
     He_total = (1 - fh) * metal_free

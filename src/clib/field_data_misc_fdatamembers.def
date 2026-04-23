@@ -79,3 +79,6 @@ ENTRY(Al2O3_dust_temperature)
 ENTRY(ref_org_dust_temperature)
 ENTRY(vol_org_dust_temperature)
 ENTRY(H2O_ice_dust_temperature)
+
+ // dust model parameter
+ ENTRY(sne_rate)

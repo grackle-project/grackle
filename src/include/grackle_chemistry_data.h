@@ -312,6 +312,23 @@ typedef struct
    */
   int solver_method;
 
+  /* dust model selection
+   * 0: default (runs calc_grain_size_increment_1d as usual)
+   * 1: harrison dust model
+   */
+  int dust_model;
+
+  /* Flag to use snetimestep */
+  int use_sne_field;
+
+  /* flag and parameters for Li+ 2019 dust growth and destruction */
+  double dust_destruction_eff;
+  double sne_coeff;
+  double sne_shockspeed;
+  double dust_grainsize;
+  double dust_growth_densref;
+  double dust_growth_tauref;
+
 } chemistry_data;
 
 /*****************************
