@@ -131,18 +131,4 @@
 #define tiny8 1.0e-40
 #define huge8 1.0e40
 
-/* Macro definitions (things C should have) */
-
-#ifndef __cplusplus
-
-// we exclude these from C++ source code because min & max can collide with
-// the names of some C++ symbols
-
-// we can replace all occurences of max with fmax in the future
-#define max(A,B) ((A) > (B) ? (A) : (B))
-// I think we can delete this macro right now (I don't think it's EVER used!)
-#define min(A,B) ((A) < (B) ? (A) : (B))
-
-#endif /* end of macro defintions for C code (excluded from C++) */
-
 #endif
