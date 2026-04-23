@@ -103,7 +103,8 @@ extern "C" int local_calculate_pressure(chemistry_data *my_chemistry,
         if (nH2 / number_density > 1e-3) {
           x = 6100.0 / temp;
 	  if (x < 10.0)
-	    GammaH2Inverse = 0.5*(5 + 2.0 * x*x * exp(x)/POW(exp(x)-1.0,2));
+	    GammaH2Inverse = 0.5*(5 + 2.0 * x*x * std::exp(x)/std::pow(std::exp(x)-1.0,
+                                                                 2.0));
         }
 
 	Gamma1 = 1.0 + (nH2 + number_density) /

@@ -149,6 +149,4 @@
 #define SIN(X) sin((double) (X))
 #endif /* end of macro defintions for C code (excluded from C++) */
 
-#define POW(X,Y) pow((double) (X), (double) (Y))
-
 #endif
