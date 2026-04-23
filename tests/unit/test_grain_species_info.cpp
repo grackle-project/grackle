@@ -12,6 +12,7 @@
 #include <gtest/gtest.h>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,6 +20,7 @@
 
 #include "LUT.hpp"
 #include "dust/grain_species_info.hpp"
+#include "support/FrozenKeyIdxBiMap.hpp"
 
 namespace {  // stuff in an anonymous namespace is local to this file
 
@@ -116,9 +118,11 @@ using unique_GrainSpeciesInfo_ptr =
 /// This is useful for preventing memory leaks when tests fail
 unique_GrainSpeciesInfo_ptr make_unique_GrainSpeciesInfo(
     int dust_species_param) {
+  // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
   grackle::impl::GrainSpeciesInfo* ptr = new grackle::impl::GrainSpeciesInfo;
   (*ptr) = grackle::impl::new_GrainSpeciesInfo(dust_species_param);
   return unique_GrainSpeciesInfo_ptr(ptr, GrainSpeciesInfoDeleter());
+  // NOLINTEND(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
 }  // anonymous namespace
@@ -128,9 +132,24 @@ TEST(OnlyGrainSpLUTTest, CheckNumEntries) {
   ASSERT_EQ(OnlyGrainSpLUT::NUM_ENTRIES, number_known_grain_species());
 }
 
+/// represents the dust_species parameter of chemistry_data
+///
+/// @note
+/// This **ONLY** exists to make the test names more concise
+enum class DustSpeciesParam : int {
+  DustSpeciesEq1 = 1,
+  DustSpeciesEq2 = 2,
+  DustSpeciesEq3 = 3,
+};
+
+// teach googletest how to print DustSpeciesParam
+void PrintTo(const DustSpeciesParam dust_species_param, std::ostream* os) {
+  *os << "DustSpeciesEq" << static_cast<int>(dust_species_param);
+}
+
 /// Define a fixture for running parameterized tests of the GrainSpeciesInfo
 /// machinery. The tests are parameterized by the dust_species parameter.
-class GrainSpeciesInfoTest : public testing::TestWithParam<int> {
+class GrainSpeciesInfoTest : public testing::TestWithParam<DustSpeciesParam> {
 protected:
   /// set up the grain_species_info pointer
   ///
@@ -138,7 +157,7 @@ protected:
   /// We **ONLY** perform setup in this method (rather than in a default
   /// constructor) because we want to perform some basic sanity checks
   void SetUp() override {
-    int dust_species = GetParam();
+    int dust_species = static_cast<int>(GetParam());
     grain_species_info_ = make_unique_GrainSpeciesInfo(dust_species);
 
     // perform 3 sanity checks!
@@ -155,27 +174,51 @@ protected:
   unique_GrainSpeciesInfo_ptr grain_species_info_;
 };
 
-TEST_P(GrainSpeciesInfoTest, CheckOnlyGrainSpeciesLUTConsistency) {
+TEST_P(GrainSpeciesInfoTest, OnlyGrainSpeciesLUT) {
+  // this test
+  // -> seeks to check consistency with the LUT
+  // -> is somewhat redundant with the SpeciesLUTCompare tests and is more work
+  //    to maintain
+
+  // construct a vector with an element for each entry in OnlyGrainSpeciesLUT
+  std::vector<SpNameIndexPair> ref_l{
+      {"MgSiO3_dust", OnlyGrainSpLUT::MgSiO3_dust},
+      {"AC_dust", OnlyGrainSpLUT::AC_dust},
+      {"SiM_dust", OnlyGrainSpLUT::SiM_dust},
+      {"FeM_dust", OnlyGrainSpLUT::FeM_dust},
+      {"Mg2SiO4_dust", OnlyGrainSpLUT::Mg2SiO4_dust},
+      {"Fe3O4_dust", OnlyGrainSpLUT::Fe3O4_dust},
+      {"SiO2_dust", OnlyGrainSpLUT::SiO2_dust},
+      {"MgO_dust", OnlyGrainSpLUT::MgO_dust},
+      {"FeS_dust", OnlyGrainSpLUT::FeS_dust},
+      {"Al2O3_dust", OnlyGrainSpLUT::Al2O3_dust},
+      {"ref_org_dust", OnlyGrainSpLUT::ref_org_dust},
+      {"vol_org_dust", OnlyGrainSpLUT::vol_org_dust},
+      {"H2O_ice_dust", OnlyGrainSpLUT::H2O_ice_dust},
+  };
+
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
-    // sanity check!
-    ASSERT_NE(grain_species_info_->species_info[i].name, nullptr);
-    // actual check!
-    EXPECT_EQ(i, grain_species_info_->species_info[i].onlygrainsp_idx)
-        << "element " << i << " of the GrainSpeciesInfo::species_info array "
-        << "doesn't seem to be synchronized with the OnlyGrainSpeciesLUT "
-        << "enumeration. At face value (there aren't other related bugs), "
-        << "OnlyGrainSpeciesLUT::" << grain_species_info_->species_info[i].name
-        << " seems to have a value of "
-        << grain_species_info_->species_info[i].onlygrainsp_idx;
+    const char* name = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
+        &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
+
+    ASSERT_NE(name, nullptr);      // sanity check!
+    EXPECT_EQ(i, ref_l[i].index);  // sanity check!
+
+    // actual check:
+    EXPECT_EQ(std::string(name), ref_l[i].name)
+        << "the grain species associated with index " << i << " in the "
+        << "GrainSpeciesInfo instance doesn't seem to be synchronized with "
+        << "the OnlyGrainSpeciesLUT enumeration.";
   }
 }
 
-TEST_P(GrainSpeciesInfoTest, SublimationTemperature) {
+TEST_P(GrainSpeciesInfoTest, SublimationTemp) {
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
-    // sanity check!
-    ASSERT_NE(grain_species_info_->species_info[i].name, nullptr);
+    const char* name = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
+        &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
+    ASSERT_NE(name, nullptr);  // sanity check!
     // actual check!
     EXPECT_GT(grain_species_info_->species_info[i].sublimation_temperature, 0)
         << "element " << i << " of the GrainSpeciesInfo::species_info array "
@@ -190,10 +233,11 @@ TEST_P(GrainSpeciesInfoTest, SpeciesLUTCompare) {
 
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
-    // sanity check!
-    ASSERT_NE(grain_species_info_->species_info[i].name, nullptr);
+    const char* name_cstr = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
+        &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
+    ASSERT_NE(name_cstr, nullptr);  // sanity check!
     // actual check!
-    std::string actual_name(grain_species_info_->species_info[i].name);
+    std::string actual_name(name_cstr);
     EXPECT_EQ(actual_name, ref_list[i].name)
         << "according to the reference list, the grain species at index " << i
         << " should be `" << ref_list[i].name << "` (not `" << actual_name
@@ -209,7 +253,7 @@ TEST_P(GrainSpeciesInfoTest, SpeciesLUTCompare) {
 // check that the grackle::impl::max_ingredients_per_grain_species constant
 // indeed holds the maximum number of ingredients that a grain species can
 // have.
-TEST_P(GrainSpeciesInfoTest, MaxIngredientsPerGrainSpecies) {
+TEST_P(GrainSpeciesInfoTest, MaxIngredients) {
   // go through and compute the number of ingredients for each species
   int n_grain_species = grain_species_info_->n_species;
   int max_ingredient_count = 0;
@@ -219,7 +263,7 @@ TEST_P(GrainSpeciesInfoTest, MaxIngredientsPerGrainSpecies) {
         grain_species_info_->species_info[gsp_idx].n_growth_ingredients);
   }
 
-  if (MAX_dust_species_VAL == GetParam()) {
+  if (MAX_dust_species_VAL == static_cast<int>(GetParam())) {
     EXPECT_EQ(max_ingredient_count,
               grackle::impl::max_ingredients_per_grain_species)
         << "it appears that grackle::impl::max_ingredients_per_grain_species "
@@ -267,7 +311,7 @@ std::map<std::string, std::vector<CoefNamePair>> get_ingredients(
 // NOTE: currently, this is extremely crude! We've almost finished machinery
 // that will make this a lot easier (and less verbose!)
 TEST_P(GrainSpeciesInfoTest, SampledGrainIngredients) {
-  int dust_chemistry_parameter = GetParam();
+  int dust_chemistry_parameter = static_cast<int>(GetParam());
 
   // get the list of ALL know chemical species names, in the cannonical order
   const std::vector<std::string> chem_species_names = chemical_species_list();
@@ -286,7 +330,10 @@ TEST_P(GrainSpeciesInfoTest, SampledGrainIngredients) {
   for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
     const grackle::impl::GrainSpeciesInfoEntry& species_info =
         grain_species_info_->species_info[gsp_idx];
-    std::string name = species_info.name;
+    const char* name_ptr = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
+        &grain_species_info_->name_map, gsp_idx);
+    ASSERT_NE(nullptr, name_ptr);  // sanity check!
+    std::string name = name_ptr;
 
     // try to coerce the ingredients to a vector
     std::vector<CoefNamePair> ingred_vec;
@@ -321,29 +368,15 @@ TEST_P(GrainSpeciesInfoTest, SampledGrainIngredients) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    ,  // <- this comma is meaningful
-    GrainSpeciesInfoTest, testing::Range(1, MAX_dust_species_VAL + 1),
-    // adjust how the value is formatted in the test name
-    [](const testing::TestParamInfo<GrainSpeciesInfoTest::ParamType>& info) {
-      int val = info.param;
-      std::string name = "DustSpeciesEq" + std::to_string(val);
-      return name;
-    });
+    /* 1st arg is intentionally empty */, GrainSpeciesInfoTest,
+    testing::Values(DustSpeciesParam::DustSpeciesEq1,
+                    DustSpeciesParam::DustSpeciesEq2,
+                    DustSpeciesParam::DustSpeciesEq3));
 
 // check the GrainSpeciesInfo object when constructed from dust_species
 // parameters that hold extreme values
 TEST(GrainSpeciesInfoTestMisc, DustSpeciesExtremeValues) {
-  {
-    unique_GrainSpeciesInfo_ptr ptr = make_unique_GrainSpeciesInfo(0);
-    EXPECT_EQ(ptr->n_species, 0)
-        << "GrainSpeciesInfo::n_species should be 0 when the dust_species "
-        << "parameter is 0.";
-    EXPECT_EQ(ptr->species_info, nullptr)
-        << "GrainSpeciesInfo::species_info should be a nullptr when "
-        << "dust_species parameter is 0.";
-  }
-
-  int invalid_dust_species_values[2] = {-42423, MAX_dust_species_VAL + 1};
+  int invalid_dust_species_values[3] = {-42423, 0, MAX_dust_species_VAL + 1};
   for (auto dust_species_param : invalid_dust_species_values) {
     unique_GrainSpeciesInfo_ptr ptr =
         make_unique_GrainSpeciesInfo(dust_species_param);
