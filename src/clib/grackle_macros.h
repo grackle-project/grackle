@@ -143,10 +143,6 @@
 // I think we can delete this macro right now (I don't think it's EVER used!)
 #define min(A,B) ((A) < (B) ? (A) : (B))
 
-// TODO: remove the following 3 macros (they are NEVER used)
-#define sign(A)  ((A) >  0  ?  1  : -1 )
-#define COS(X) cos((double) (X))
-#define SIN(X) sin((double) (X))
 #endif /* end of macro defintions for C code (excluded from C++) */
 
 #endif
