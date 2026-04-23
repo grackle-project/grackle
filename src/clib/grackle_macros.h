@@ -82,20 +82,6 @@
   #define GRFLOAT_C(DBL_LITERAL) ( DBL_LITERAL )
 #endif
 
-/* Precision-dependent definitions */
-
-#ifdef GRACKLE_FLOAT_4
-#define FSYM "f"
-#define ESYM "e"
-#endif
-
-#ifdef GRACKLE_FLOAT_8
-#define FSYM "lf"
-#define ESYM "le"
-#endif
-
-#define GSYM "g"
-
 /* Standard definitions (well, fairly standard) */
 
 #ifndef NULL
