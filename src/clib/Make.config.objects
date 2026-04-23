@@ -31,7 +31,7 @@ OBJS_CONFIG_LIB = \
         dust/calc_tdust_1d_g.lo \
         dust/grain_species_info.lo \
         dynamic_api.lo \
-        grackle_units.lo \
+        api/units.lo \
 	index_helper.lo \
         initialize_chemistry_data.lo \
         initialize_cloudy_data.lo \

@@ -82,7 +82,6 @@ configure_file(auto_general.cpp.in auto_general.cpp @ONLY)
 add_library(Grackle_Grackle
 
   # C source files
-  grackle_units.c
   index_helper.c
   rate_functions.c
   status_reporting.c status_reporting.h
@@ -100,6 +99,7 @@ add_library(Grackle_Grackle
   api/calculate_temperature.cpp
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
+  api/units.cpp
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
   calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
