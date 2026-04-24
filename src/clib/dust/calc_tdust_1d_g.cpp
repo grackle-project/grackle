@@ -25,14 +25,12 @@
 
 #include "calc_tdust_1d_g.hpp"
 
-void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
-                                    double* gasgr, const double* gamma_isrfa,
-                                    const double* isrf,
-                                    const gr_mask_type* itmask, double trad,
-                                    int buf_len, int gr_N, const double* gr_dT,
-                                    const double* gr_Td, const gr_float* alsp_data_,
-                                    double* kgr, const int* idspecies,
-                                    IndexRange idx_range) {
+void grackle::impl::calc_tdust_1d_g(
+    double* tdust, double* tgas, double* nh, double* gasgr,
+    const double* gamma_isrfa, const double* isrf, const gr_mask_type* itmask,
+    double trad, int buf_len, int gr_N, const double* gr_dT,
+    const double* gr_Td, const gr_float* alsp_data_, double* kgr,
+    const int* idspecies, IndexRange idx_range) {
   // opacity table of a grain species
   //
   // In some configurations gr_N can be 0 while the backing buffer may still be
