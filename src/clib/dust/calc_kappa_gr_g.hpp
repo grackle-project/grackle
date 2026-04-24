@@ -52,10 +52,11 @@ namespace grackle::impl {
 /// written by: Britton Smith, September, 2011
 /// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
 // TODO: logalsp_data_ should be made a double* rather than a gr_float*
-void calc_kappa_gr_g(const double* tdust, double* kgr, const gr_mask_type* itmask,
-                     int in, IndexRange idx_range, double t_subl,
-                     int gr_N, int gr_Size, double gr_dT,
-                     const double* gr_Td, const gr_float* logalsp_data_, int idspecies);
+void calc_kappa_gr_g(const double* tdust, double* kgr,
+                     const gr_mask_type* itmask, int in, IndexRange idx_range,
+                     double t_subl, int gr_N, int gr_Size, double gr_dT,
+                     const double* gr_Td, const gr_float* logalsp_data_,
+                     int idspecies);
 
 }  // namespace grackle::impl
 #endif /* CALC_KAPPA_GR_G_HPP */

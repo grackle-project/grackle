@@ -22,12 +22,10 @@
 
 #include "calc_kappa_gr_g.hpp"
 
-void grackle::impl::calc_kappa_gr_g(const double* tdust, double* kgr,
-                                    const gr_mask_type* itmask, int in,
-                                    IndexRange idx_range, double t_subl,
-                                    int gr_N, int gr_Size,
-                                    double gr_dT, const double* gr_Td,
-                                    const gr_float* logalsp_data_, int idspecies) {
+void grackle::impl::calc_kappa_gr_g(
+    const double* tdust, double* kgr, const gr_mask_type* itmask, int in,
+    IndexRange idx_range, double t_subl, int gr_N, int gr_Size, double gr_dT,
+    const double* gr_Td, const gr_float* logalsp_data_, int idspecies) {
   // Parameters
 
   // grain opacity from Omukai (2000, equation 17) normalized by
