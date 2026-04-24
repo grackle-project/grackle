@@ -33,7 +33,7 @@ namespace grackle::impl {
 ///  opacities have units of cm^2/g and they are measured "per unit
 ///  gas mass."
 ///
-/// @param[in]  tdust 1D array to hold gas temperatures
+/// @param[in]  tdust 1D array holding dust temperatures
 /// @param[out] kgr Array to hold computed grain opacities
 ///   configurations)
 /// @param[in]  itmask Iteration mask
@@ -46,15 +46,16 @@ namespace grackle::impl {
 /// @param[in]  gr_dT Temperature spacing of the grain opacity table
 /// @param[in]  gr_Td Temperature values of the grain opacity table
 /// @param[in]  logalsp_data_ Grain opacity table data
-/// @param[in]  idspecies Array of grain species IDs (only used in certain
+/// @param[in]  idspecies Array of grain species IDs
 ///
 /// @par History
 /// written by: Britton Smith, September, 2011
 /// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void calc_kappa_gr_g(double* tdust, double* kgr, const gr_mask_type* itmask,
-                     int in, IndexRange idx_range, const double* t_subl,
-                     int* gr_N, const int* gr_Size, const double* gr_dT,
-                     double* gr_Td, gr_float* logalsp_data_, int idspecies);
+// TODO: logalsp_data_ should be made a double* rather than a gr_float*
+void calc_kappa_gr_g(const double* tdust, double* kgr, const gr_mask_type* itmask,
+                     int in, IndexRange idx_range, double t_subl,
+                     int gr_N, int gr_Size, double gr_dT,
+                     const double* gr_Td, const gr_float* logalsp_data_, int idspecies);
 
 }  // namespace grackle::impl
 #endif /* CALC_KAPPA_GR_G_HPP */
