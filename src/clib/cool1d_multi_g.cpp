@@ -281,6 +281,32 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
+  if (my_chemistry->primordial_chemistry == 0) {
+    // Calculate electron density from mean molecular weight
+
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        cool1dmulti_buf.myde[i] =
+            1 -
+            mmw[i] * (3.0 * my_chemistry->HydrogenFractionByMass + 1.0) / 4.0;
+        if (imetal == 1) {
+          cool1dmulti_buf.myde[i] =
+              cool1dmulti_buf.myde[i] -
+              mmw[i] * metal(i, idx_range.j, idx_range.k) /
+                  (d(i, idx_range.j, idx_range.k) * MU_METAL);
+        }
+        cool1dmulti_buf.myde[i] =
+            d(i, idx_range.j, idx_range.k) * cool1dmulti_buf.myde[i] / mmw[i];
+        cool1dmulti_buf.myde[i] = std::fmax(cool1dmulti_buf.myde[i], 0.);
+      }
+    }
+  } else {  // my_chemistry->primordial_chemistry > 0
+    // directly copy the already known electron density
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      cool1dmulti_buf.myde[i] = de(i, idx_range.j, idx_range.k);
+    }
+  }
+
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       cool1dmulti_buf.mynh[i] = rhoH[i] * dom;
@@ -1164,33 +1190,6 @@ void grackle::impl::cool1d_multi_g(
                                  edot, comp2, dom, zr, mycmbTfloor,
                                  my_chemistry->UVbackground, iZscale, itmask,
                                  my_rates->cloudy_primordial, idx_range);
-  }
-
-  // Store the electron density in a 1d array
-  if (my_chemistry->primordial_chemistry == 0) {
-    // Calculate electron density from mean molecular weight
-
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        cool1dmulti_buf.myde[i] =
-            1 -
-            mmw[i] * (3.0 * my_chemistry->HydrogenFractionByMass + 1.0) / 4.0;
-        if (imetal == 1) {
-          cool1dmulti_buf.myde[i] =
-              cool1dmulti_buf.myde[i] -
-              mmw[i] * metal(i, idx_range.j, idx_range.k) /
-                  (d(i, idx_range.j, idx_range.k) * MU_METAL);
-        }
-        cool1dmulti_buf.myde[i] =
-            d(i, idx_range.j, idx_range.k) * cool1dmulti_buf.myde[i] / mmw[i];
-        cool1dmulti_buf.myde[i] = std::fmax(cool1dmulti_buf.myde[i], 0.);
-      }
-    }
-  } else {  // my_chemistry->primordial_chemistry > 0
-    // directly copy the already known electron density
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      cool1dmulti_buf.myde[i] = de(i, idx_range.j, idx_range.k);
-    }
   }
 
   // Photo-electric heating by UV-irradiated dust
