@@ -724,6 +724,7 @@ int solve_rate_cool(
     std::vector<double> dust2gas(my_fields->grid_dimension[0]);
     std::vector<double> rhoH(my_fields->grid_dimension[0]);
     std::vector<double> mmw(my_fields->grid_dimension[0]);
+    std::vector<double> nelec_times_mH(my_fields->grid_dimension[0]);
     std::vector<double> edot(my_fields->grid_dimension[0]);
 
     // iteration masks
@@ -829,7 +830,7 @@ int solve_rate_cool(
           imetal,
           edot.data(),
           tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
-          dust2gas.data(), rhoH.data(), itmask.data(),
+          dust2gas.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry,
           my_rates, my_fields,
           *my_uvb_rates, internalu,
@@ -934,7 +935,7 @@ int solve_rate_cool(
             imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
             dtit.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
-            edot.data(), anydust, spsolvbuf.itmask_nr,
+            nelec_times_mH.data(), edot.data(), anydust, spsolvbuf.itmask_nr,
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
             my_fields, *my_uvb_rates, internalu, grain_temperatures,
             logTlininterp_buf, cool1dmulti_buf, coolingheating_buf,

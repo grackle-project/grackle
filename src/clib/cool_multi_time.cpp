@@ -77,6 +77,7 @@ void cool_multi_time(
     std::vector<double> metallicity(my_fields->grid_dimension[0]);
     std::vector<double> dust2gas(my_fields->grid_dimension[0]);
     std::vector<double> rhoH(my_fields->grid_dimension[0]);
+    std::vector<double> nelec_times_mH(my_fields->grid_dimension[0]);
     std::vector<double> edot(my_fields->grid_dimension[0]);
 
     // Iteration mask for multi_cool
@@ -121,7 +122,8 @@ void cool_multi_time(
       cool1d_multi_g(
         imetal, edot.data(), tgas.data(),
         mmw.data(), tdust.data(), metallicity.data(),
-        dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
+        dust2gas.data(), rhoH.data(), nelec_times_mH.data(), 
+        itmask.data(), itmask_metal.data(),
         my_chemistry, my_rates, my_fields, my_uvb_rates, internalu, idx_range,
         grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf

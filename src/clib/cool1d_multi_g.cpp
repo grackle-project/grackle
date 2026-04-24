@@ -34,7 +34,7 @@
 void grackle::impl::cool1d_multi_g(
     int imetal, double* edot, const double* tgas, const double* mmw,
     double* tdust, double* metallicity, double* dust2gas, const double* rhoH,
-    gr_mask_type* itmask, gr_mask_type* itmask_metal,
+    double* nelec_times_mH, gr_mask_type* itmask, gr_mask_type* itmask_metal,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
     InternalGrUnits internalu, IndexRange idx_range,
@@ -132,9 +132,6 @@ void grackle::impl::cool1d_multi_g(
   // - in the longer term the goal is to refactor this logic to remove as many
   //   of these buffers as possible (without crippling cache performance on
   //   CPUs)
-
-  std::vector<double> nelec_times_mH_(my_fields->grid_dimension[0]);
-  double* nelec_times_mH = nelec_times_mH_.data();
 
   std::vector<double> gaHI(my_fields->grid_dimension[0]);
   std::vector<double> gaH2(my_fields->grid_dimension[0]);
