@@ -264,48 +264,9 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Calculate metallicity and H number density
-
-  if (imetal == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        metallicity[i] = metal(i, idx_range.j, idx_range.k) /
-                         d(i, idx_range.j, idx_range.k) /
-                         my_chemistry->SolarMetalFractionByMass;
-      }
-    }
-  } else {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        metallicity[i] = tiny_fortran_val;
-      }
-    }
-  }
-
-  if (my_chemistry->primordial_chemistry == 0) {
-    // Calculate electron density from mean molecular weight
-
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        cool1dmulti_buf.myde[i] =
-            1 -
-            mmw[i] * (3.0 * my_chemistry->HydrogenFractionByMass + 1.0) / 4.0;
-        if (imetal == 1) {
-          cool1dmulti_buf.myde[i] =
-              cool1dmulti_buf.myde[i] -
-              mmw[i] * metal(i, idx_range.j, idx_range.k) /
-                  (d(i, idx_range.j, idx_range.k) * MU_METAL);
-        }
-        cool1dmulti_buf.myde[i] =
-            d(i, idx_range.j, idx_range.k) * cool1dmulti_buf.myde[i] / mmw[i];
-        cool1dmulti_buf.myde[i] = std::fmax(cool1dmulti_buf.myde[i], 0.);
-      }
-    }
-  } else {  // my_chemistry->primordial_chemistry > 0
-    // directly copy the already known electron density
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      cool1dmulti_buf.myde[i] = de(i, idx_range.j, idx_range.k);
-    }
-  }
+  calc_metallicity_and_electron_density(metallicity, cool1dmulti_buf.myde,
+                                        idx_range, imetal, itmask, mmw,
+                                        my_chemistry, my_fields);
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {

@@ -12,6 +12,7 @@
 #ifndef GRACKLE_GAS_PROPS_HPP
 #define GRACKLE_GAS_PROPS_HPP
 
+#include "fortran_func_decls.h"
 #include "grackle.h"
 #include "index_helper.h"
 #include "internal_units.hpp"
@@ -306,6 +307,81 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
 #endif
         }
       }
+    }
+  }
+}
+
+/// fill metallicity and electron density buffers for specified @p idx_range
+///
+/// @note This function was primarily created to help move the enclosed logic
+/// out of @ref cool1d_multi_g.
+///
+/// @param[out] metallicity 1D array to hold the computed metallicity for the
+///     @p idx_range
+/// @param[out] nelec_times_mH 1D array to hold the number density of electrons
+///     (multiplied by the Hydrogen mass) for the @p idx_range
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] imetal Indicates whether metals are evolved
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] mmw 1D array of mean molecular weights for the @p idx_range
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] my_fields Specifies the field data.
+inline void calc_metallicity_and_electron_density(
+    double* metallicity, double* nelec_times_mH, IndexRange idx_range,
+    int imetal, const gr_mask_type* itmask, const double* mmw,
+    const chemistry_data* my_chemistry, const grackle_field_data* my_fields) {
+  View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                            my_fields->grid_dimension[1],
+                            my_fields->grid_dimension[2]);
+  View<const gr_float***> metal(
+      my_fields->metal_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  // calculate metallicity
+  if (imetal == 1) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        metallicity[i] = metal(i, idx_range.j, idx_range.k) /
+                         d(i, idx_range.j, idx_range.k) /
+                         my_chemistry->SolarMetalFractionByMass;
+      }
+    }
+  } else {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        metallicity[i] = tiny_fortran_val;
+      }
+    }
+  }
+
+  // fill the nelec_times_mH buffer
+  if (my_chemistry->primordial_chemistry == 0) {
+    // Calculate electron density from mean molecular weight
+
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        nelec_times_mH[i] =
+            1 -
+            mmw[i] * (3.0 * my_chemistry->HydrogenFractionByMass + 1.0) / 4.0;
+        if (imetal == 1) {
+          nelec_times_mH[i] = nelec_times_mH[i] -
+                              mmw[i] * metal(i, idx_range.j, idx_range.k) /
+                                  (d(i, idx_range.j, idx_range.k) * MU_METAL);
+        }
+        nelec_times_mH[i] =
+            d(i, idx_range.j, idx_range.k) * nelec_times_mH[i] / mmw[i];
+        nelec_times_mH[i] = std::fmax(nelec_times_mH[i], 0.);
+      }
+    }
+  } else {  // my_chemistry->primordial_chemistry > 0
+    // directly copy the already known electron density
+
+    View<const gr_float***> de(
+        my_fields->e_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      nelec_times_mH[i] = de(i, idx_range.j, idx_range.k);
     }
   }
 }
