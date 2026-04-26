@@ -29,18 +29,18 @@ void grackle::impl::calc_tdust_1d_g(
     double* tdust, double* tgas, double* nh, double* gasgr,
     const double* gamma_isrfa, const double* isrf, const gr_mask_type* itmask,
     double trad, int buf_len, int gr_N, const double* gr_dT,
-    const double* gr_Td, const gr_float* alsp_data_, double* kgr,
+    const double* gr_Td, const double* alsp_data_, double* kgr,
     const int* idspecies, IndexRange idx_range) {
   // opacity table of a grain species
   //
   // In some configurations gr_N can be 0 while the backing buffer may still be
   // non-null. The View invariant disallows non-null data with a zero leading
   // extent, so pass nullptr for the zero-length case.
-  const gr_float* alsp_ptr = (gr_N > 0) ? alsp_data_ : nullptr;
-  grackle::impl::View<const gr_float**> alsp(alsp_ptr, gr_N, buf_len);
-  std::vector<gr_float> logalsp_data_(gr_N * buf_len);
-  gr_float* logalsp_ptr = (gr_N > 0) ? logalsp_data_.data() : nullptr;
-  grackle::impl::View<gr_float**> logalsp(logalsp_ptr, gr_N, buf_len);
+  const double* alsp_ptr = (gr_N > 0) ? alsp_data_ : nullptr;
+  grackle::impl::View<const double**> alsp(alsp_ptr, gr_N, buf_len);
+  std::vector<double> logalsp_data_(gr_N * buf_len);
+  double* logalsp_ptr = (gr_N > 0) ? logalsp_data_.data() : nullptr;
+  grackle::impl::View<double**> logalsp(logalsp_ptr, gr_N, buf_len);
   int Td_Size;
   int Td_N;
 

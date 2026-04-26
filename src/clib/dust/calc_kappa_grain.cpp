@@ -25,7 +25,7 @@
 void grackle::impl::calc_kappa_grain(
     const double* tdust, double* kgr, const gr_mask_type* itmask, int in,
     IndexRange idx_range, double t_subl, int gr_N, int gr_Size, double gr_dT,
-    const double* gr_Td, const gr_float* logalsp_data_, int idspecies) {
+    const double* gr_Td, const double* logalsp_data_, int idspecies) {
   // Parameters
 
   // grain opacity from Omukai (2000, equation 17) normalized by
@@ -41,13 +41,13 @@ void grackle::impl::calc_kappa_grain(
   const double kgr200 = 16.0 / 0.00934;
 
   // Opacity table
-  grackle::impl::View<const gr_float**> logalsp(logalsp_data_, gr_N, in);
+  grackle::impl::View<const double**> logalsp(logalsp_data_, gr_N, in);
 
   // Locals
 
   int i;
-  gr_float logkgr;
-  std::vector<gr_float> logalsp1(gr_Size);
+  double logkgr;
+  std::vector<double> logalsp1(gr_Size);
   long long gr_N_i64;
   double log10tdust;
 
