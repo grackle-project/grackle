@@ -25,12 +25,14 @@
 
 #include "calc_tdust_1d_g.hpp"
 
-void grackle::impl::calc_tdust_1d_g(
-    double* tdust, double* tgas, double* nh, double* gasgr,
-    const double* gamma_isrfa, const double* isrf, const gr_mask_type* itmask,
-    double trad, int buf_len, int gr_N, double gr_dT,
-    const double* gr_Td, const double* alsp_data_, double* kgr,
-    int idspecies, IndexRange idx_range) {
+void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
+                                    double* gasgr, const double* gamma_isrfa,
+                                    const double* isrf,
+                                    const gr_mask_type* itmask, double trad,
+                                    int buf_len, int gr_N, double gr_dT,
+                                    const double* gr_Td,
+                                    const double* alsp_data_, double* kgr,
+                                    int idspecies, IndexRange idx_range) {
   // opacity table of a grain species
   //
   // In some configurations gr_N can be 0 while the backing buffer may still be
@@ -245,9 +247,9 @@ void grackle::impl::calc_tdust_1d_g(
         }
       }
 
-      grackle::impl::calc_kappa_grain(
-          bi_t_mid.data(), kgr, bi_itmask.data(), buf_len, idx_range, t_subl,
-          Td_N, Td_Size, gr_dT, gr_Td, logalsp.data(), idspecies);
+      grackle::impl::calc_kappa_grain(bi_t_mid.data(), kgr, bi_itmask.data(),
+                                      buf_len, idx_range, t_subl, Td_N, Td_Size,
+                                      gr_dT, gr_Td, logalsp.data(), idspecies);
 
       FORTRAN_NAME(calc_gr_balance_g)(
           bi_t_mid.data(), tgas, kgr, &floored_trad4, gasgr, gamma_isrf.data(),

@@ -306,8 +306,8 @@ void grackle::impl::calc_all_tdust_gasgr_1d_g(
           my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::AC_dust],
-          grain_kappa.data[OnlyGrainSpLUT::AC_dust],
-          my_chemistry->dust_species, idx_range);
+          grain_kappa.data[OnlyGrainSpLUT::AC_dust], my_chemistry->dust_species,
+          idx_range);
     }
 
     if (my_chemistry->dust_species > 1) {
