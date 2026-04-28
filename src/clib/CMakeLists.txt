@@ -110,6 +110,7 @@ add_library(Grackle_Grackle
   cool_multi_time.cpp cool_multi_time.hpp
   dust_props.hpp
   dust/calc_all_tdust_gasgr_1d_g.cpp dust/calc_all_tdust_gasgr_1d_g.hpp
+  dust/calc_kappa_grain.cpp dust/calc_kappa_grain.hpp
   dust/calc_tdust_1d_g.cpp dust/calc_tdust_1d_g.hpp
   dust/calc_tdust_3d.cpp dust/calc_tdust_3d.hpp
   dust/gas_heat_cool.hpp
@@ -118,6 +119,7 @@ add_library(Grackle_Grackle
   dust/multi_grain_species/calc_grain_size_increment_1d.hpp
   dust/misc.hpp
   dynamic_api.cpp
+  full_rxn_rate_buf.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_cloudy_data.cpp initialize_cloudy_data.hpp
@@ -143,13 +145,13 @@ add_library(Grackle_Grackle
   support/FrozenKeyIdxBiMap_detail.hpp
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
-  support/SimpleVec.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
   support/config.hpp
+  support/PartMap.hpp
   visitor/common.hpp
   visitor/copy.hpp
   visitor/memory.hpp

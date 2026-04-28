@@ -133,23 +133,6 @@ void grackle::impl::drop_CollisionalRxnRateCollection(
 
 // -----------------------------------------------------------------
 
-grackle::impl::PhotoRxnRateCollection grackle::impl::new_PhotoRxnRateCollection(
-    int nelem) {
-  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
-  grackle::impl::PhotoRxnRateCollection out;
-  grackle::impl::visitor::VisitorCtx ctx{static_cast<unsigned int>(nelem)};
-  grackle::impl::visit_member(&out,
-                              grackle::impl::visitor::AllocateMembers{ctx});
-  return out;
-}
-
-void grackle::impl::drop_PhotoRxnRateCollection(
-    grackle::impl::PhotoRxnRateCollection* ptr) {
-  grackle::impl::visit_member(ptr, grackle::impl::visitor::FreeMembers{});
-}
-
-// -----------------------------------------------------------------
-
 grackle::impl::ChemHeatingRates grackle::impl::new_ChemHeatingRates(int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   ChemHeatingRates out;
