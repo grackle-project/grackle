@@ -23,7 +23,7 @@ namespace grtest {
 enum class InitStatus {
   success,
   generic_fail,
-  datafile_notfound,
+  standard_datafile_notfound,
 };
 
 /// represents different presets for initializing chemistry_data
@@ -36,6 +36,7 @@ enum class ChemPreset {
   primchem2,
   primchem3,
   primchem4_dustspecies3,
+  primchem4_dustspecies3_allinjectpaths,
 };
 
 /// override the settings of my_chem based on the specified preset

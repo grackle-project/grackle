@@ -161,18 +161,15 @@ cdef extern from "grackle.h":
       gr_float *ref_org_dust_density;
       gr_float *vol_org_dust_density;
       gr_float *H2O_ice_dust_density;
-      gr_float *local_ISM_metal_density;
-      gr_float *ccsn13_metal_density;
-      gr_float *ccsn20_metal_density;
-      gr_float *ccsn25_metal_density;
-      gr_float *ccsn30_metal_density;
-      gr_float *fsn13_metal_density;
-      gr_float *fsn15_metal_density;
-      gr_float *fsn50_metal_density;
-      gr_float *fsn80_metal_density;
-      gr_float *pisn170_metal_density;
-      gr_float *pisn200_metal_density;
-      gr_float *y19_metal_density;
+
+      # the array-length should be kept synchronized with the value of the
+      # GRIMPL_MAX_INJ_PATHWAYS macro
+      # -> cython prevents us from directly using GRIMPL_MAX_INJ_PATHWAYS
+      # -> unfortunately cython doesn't complain if the values differ
+      # -> I suspect the specified length may not actually matter, but that
+      #    is NOT confirmed by the documentation
+      gr_float *inject_pathway_metal_density[12];
+
       gr_float *volumetric_heating_rate;
       gr_float *specific_heating_rate;
       gr_float *temperature_floor;
@@ -313,12 +310,22 @@ cdef extern from "grackle.h":
         grunstable_rateid_type rate_id,
         const double* buf)
 
+    int grunstable_ratequery_get_str(
+        c_chemistry_data_storage* my_rates,
+        grunstable_rateid_type rate_id,
+        char* const * buf
+    );
+
+    cdef enum grunstable_types:
+        GRUNSTABLE_TYPE_F64
+        GRUNSTABLE_TYPE_STR
+
     cdef enum grunstable_ratequery_prop_kind:
         GRUNSTABLE_QPROP_NDIM
         GRUNSTABLE_QPROP_SHAPE
-        GRUNSTABLE_QPROP_TYPE
         GRUNSTABLE_QPROP_MAXITEMSIZE
         GRUNSTABLE_QPROP_WRITABLE
+        GRUNSTABLE_QPROP_DTYPE
 
     int grunstable_ratequery_prop(
         const c_chemistry_data_storage* my_rates,

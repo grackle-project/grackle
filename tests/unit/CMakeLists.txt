@@ -1,5 +1,10 @@
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
+add_executable(testFrozenKeyIdxBiMap
+  support/test_unit_hash.cpp support/test_unit_FrozenKeyIdxBiMap.cpp)
+target_link_libraries(testFrozenKeyIdxBiMap testdeps)
+gtest_discover_tests(testFrozenKeyIdxBiMap)
+
 add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
 target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
@@ -11,6 +16,10 @@ gtest_discover_tests(runLinAlgTests)
 add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
 target_link_libraries(runGrainSpeciesIntoTests testdeps)
 gtest_discover_tests(runGrainSpeciesIntoTests)
+
+add_executable(testPartMap support/test_unit_PartMap.cpp)
+target_link_libraries(testPartMap testdeps)
+gtest_discover_tests(testPartMap)
 
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting testdeps)
@@ -25,7 +34,8 @@ gtest_discover_tests(runVisitorTests)
 # tests of the API functions
 # -> one might argue that these are better classified as integration or
 #    end-to-end tests than as unit-test
-add_executable(runApiTests test_ghost_zone.cpp test_api_ratequery.cpp)
+add_executable(runApiTests
+  test_ghost_zone.cpp test_api_ratequery.cpp test_dynamic_chem_param_api.cpp test_inject_pathway.cpp)
 target_link_libraries(runApiTests testdeps)
 gtest_discover_tests(runApiTests)
 

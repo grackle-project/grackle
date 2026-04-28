@@ -24,6 +24,7 @@
 #include "utils-cpp.hpp"
 
 #include "calc_temp_cloudy_g.h"
+#include "calc_temp1d_cloudy_g.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,14 +35,20 @@ void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
                         cloudy_data cloudy_primordial,
                         grackle_field_data* my_fields,
                         InternalGrUnits internalu) {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
   // Calc quantities using values specified by internalu
   const double dom = internalu_calc_dom_(internalu);
   const double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;
 
-  // Convert densities from comoving to proper
+  // this assertion is a hint to clang-analyzer about the relationship between
+  // `imetal` and whether `metal_density` is a nullptr
+  // -> for context, `scale_fields_table` is inlined into this function. Rather
+  //    than look at `imetal`, it checks if `metal_density` is a nullptr
+  // -> without this assertion clang-tidy will infer that since there's an
+  //    explicit check for whether `metal_density` is null, regardless of
+  //    `imetal`'s value, then it must be possible for `metal_density` to be
+  //    null when `imetal` is 1. Then, it would report an error
+  GR_INTERNAL_REQUIRE((imetal != 1) || (my_fields->metal_density != nullptr),
+                      "imetal has an incorrect value");
 
   if (internalu.extfields_in_comoving == 1) {
     double factor = std::pow(internalu.a_value, -3);
@@ -101,9 +108,9 @@ void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
       }
 
       // Calculate temperature and mean molecular weight
-      f_wrap::calc_temp1d_cloudy_g(
-          rhoH.data(), idx_range, tgas.data(), mmw.data(), dom, zr, imetal,
-          cloudy_primordial, itmask.data(), my_chemistry, my_fields, internalu);
+      grackle::impl::calc_temp1d_cloudy_g(
+          rhoH.data(), tgas.data(), mmw.data(), dom, zr, imetal, itmask.data(),
+          my_chemistry, cloudy_primordial, my_fields, internalu, idx_range);
 
       // Record the computed temperature values in the output array
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {

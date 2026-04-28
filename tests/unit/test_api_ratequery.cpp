@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <algorithm>  // std::min, std::max
+#include <cstring>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -21,16 +22,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "grtestutils/iterator_adaptor.hpp"
+#include "grtestutils/ratequery.hpp"
 #include "grtestutils/googletest/assertions.hpp"
 #include "grtestutils/googletest/fixtures.hpp"
 
 #include "grackle.h"
+#include "inject_model/raw_data.hpp"  // grackle::impl::inj_model_input::N_Injection_Pathways
 #include "status_reporting.h"
-
-/// returns the rateid used to denote invalid rate names
-grunstable_rateid_type get_invalid_rateid(const grtest::GrackleCtxPack& pack) {
-  return grunstable_ratequery_id(pack.my_rates(), nullptr);
-}
 
 using SimpleRateQueryTest =
     grtest::ConfigPresetFixture<grtest::ChemPreset::primchem4_dustspecies3,
@@ -53,7 +51,7 @@ TEST_F(SimpleRateQueryTest, IthRateChecks) {
 
 TEST_F(SimpleRateQueryTest, EmptyNameQuery) {
   grunstable_rateid_type rateid = grunstable_ratequery_id(pack.my_rates(), "");
-  EXPECT_EQ(rateid, get_invalid_rateid(pack));
+  EXPECT_EQ(rateid, grtest::get_invalid_rateid(pack));
 }
 
 TEST_F(SimpleRateQueryTest, InvalidNameQuery) {
@@ -66,18 +64,6 @@ TEST_F(SimpleRateQueryTest, InvalidNameQuery) {
 // through all rates made available via the ratequery interface. To make the
 // tests themselves as easy to read as possible, we implate a C++-style
 // iterator to wrap part of the interface
-
-std::string stringify_prop_kind(enum grunstable_ratequery_prop_kind kind) {
-  switch (kind) {
-    case GRUNSTABLE_QPROP_NDIM:
-      return "GRUNSTABLE_QPROP_NDIM";
-    case GRUNSTABLE_QPROP_SHAPE:
-      return "GRUNSTABLE_QPROP_SHAPE";
-    case GRUNSTABLE_QPROP_MAXITEMSIZE:
-      return "GRUNSTABLE_QPROP_MAXITEMSIZE";
-  }
-  GR_INTERNAL_UNREACHABLE_ERROR();
-}
 
 /// return a vector of some invalid rateids
 std::vector<grunstable_rateid_type> invalid_rateids(
@@ -123,16 +109,27 @@ TEST_F(SimpleRateQueryTest, PropertyInvalidRateID) {
       ASSERT_GR_ERR(grunstable_ratequery_prop(pack.my_rates(), invalid_id, kind,
                                               buf.data()))
           << "executed with invalid_id=" << invalid_id
-          << ", kind=" << stringify_prop_kind(kind);
+          << ", kind=" << grtest::stringify_prop_kind(kind);
       EXPECT_THAT(buf, testing::Each(testing::Eq(DEFAULT_VAL)))
           << "grunstable_ratequery_prop mutated the ptr even though it "
           << "reported a failure. It was called with an invalid id of "
-          << invalid_id << " and a kind of " << stringify_prop_kind(kind);
+          << invalid_id << " and a kind of "
+          << grtest::stringify_prop_kind(kind);
     }
   }
 }
 
 using ParametrizedRateQueryTest = grtest::ParametrizedConfigPresetFixture;
+
+TEST_P(ParametrizedRateQueryTest, InvalidIdCollision) {
+  grunstable_rateid_type invalid_id =
+      grunstable_ratequery_id(pack.my_rates(), nullptr);
+  for (const grtest::NameIdPair pair : grtest::RateQueryRange(pack)) {
+    EXPECT_NE(invalid_id, pair.id)
+        << "there is a collision between the canonical invalid id "
+        << "and the id associated with the \"" << pair.name << "\" rate";
+  }
+}
 
 TEST_P(ParametrizedRateQueryTest, AllUnique) {
   std::set<std::string> name_set;
@@ -180,81 +177,109 @@ TEST_P(ParametrizedRateQueryTest, Property) {
           << "buf holds the shape queried for " << pair;
     }
 
+    long long tmp = DEFAULT_VAL;
+    EXPECT_GR_SUCCESS(grunstable_ratequery_prop(pack.my_rates(), pair.id,
+                                                GRUNSTABLE_QPROP_DTYPE, &tmp))
+        << "for " << pair;
+    std::optional<enum grunstable_types> dtype_maybe =
+        grtest::safe_type_enum_cast(tmp);
+    if (!dtype_maybe.has_value()) {
+      GTEST_FAIL() << "Error coercing " << tmp << ", the dtype for " << pair
+                   << ", to an enum value";
+    }
+    enum grunstable_types dtype = dtype_maybe.value();
+
     long long maxitemsize = DEFAULT_VAL;
     EXPECT_GR_SUCCESS(grunstable_ratequery_prop(
         pack.my_rates(), pair.id, GRUNSTABLE_QPROP_MAXITEMSIZE, &maxitemsize))
         << "for " << pair;
-    EXPECT_EQ(maxitemsize, sizeof(double)) << "for " << pair;
+    if (dtype == GRUNSTABLE_TYPE_F64) {
+      EXPECT_EQ(maxitemsize, sizeof(double)) << "for " << pair;
+    } else {
+      EXPECT_GT(maxitemsize, 0) << "for " << pair;
+    }
+
+    long long writable = DEFAULT_VAL;
+    EXPECT_GR_SUCCESS(grunstable_ratequery_prop(
+        pack.my_rates(), pair.id, GRUNSTABLE_QPROP_WRITABLE, &writable))
+        << "for " << pair;
+    EXPECT_THAT(writable, ::testing::AnyOf(0LL, 1LL)) << "for " << pair;
   }
 }
 
-/// summarizes details about rate properties
-struct RateProperties {
-  std::vector<long long> shape;
-  std::size_t maxitemsize;
+// This test case performs basic sanity checks when it comes to querying arrays
+// of strings (this doesn't really care whether the queried values are correct)
+//
+// note: this test isn't currently part of the parameterized suite since some
+//       presets don't have any queryable arrays of strings (at least at the
+//       time of writing)
+TEST_F(SimpleRateQueryTest, GetStr) {
+  std::vector<char> char_buffer;
+  std::vector<char*> str_buffer;
 
-  bool operator==(const RateProperties& other) const {
-    return maxitemsize == other.maxitemsize && shape == other.shape;
-  }
+  bool any_str = false;
 
-  long long n_items() const {
-    long long n_items = 1LL;
-    for (std::size_t i = 0; i < shape.size(); i++) {
-      n_items *= shape[i];
+  // iterate over every known (rate-name, rate-id) pair
+  for (const grtest::NameIdPair pair : grtest::RateQueryRange(pack)) {
+    // get the properties associated with the current rate
+    std::optional<grtest::RateProperties> maybe_props =
+        grtest::try_query_RateProperties(pack.my_rates(), pair.id);
+    if (!maybe_props.has_value()) {
+      GTEST_FAIL()
+          << "something went wrong while trying to lookup the properties for "
+          << "the " << pair << " rate.";
     }
-    return n_items;  // this is correct even for scalars
-  }
-
-  /// teach googletest how to print this type
-  friend void PrintTo(const RateProperties& props, std::ostream* os) {
-    *os << "{shape={";
-    for (std::size_t i = 0; i < props.shape.size(); i++) {
-      if (i != 0) {
-        *os << ", ";
-      }
-      *os << props.shape[i];
+    grtest::RateProperties props = maybe_props.value();
+    if (props.dtype != GRUNSTABLE_TYPE_STR) {
+      continue;
     }
-    *os << "}, maxitemsize=" << props.maxitemsize << "}";
-  }
-};
+    any_str = true;  // <- record that we have seen a string
 
-/// construct a RateProperties instance for the specified rate
-///
-/// returns an empty optional if any there are any issues
-std::optional<RateProperties> try_query_RateProperties(
-    chemistry_data_storage* my_rates, grunstable_rateid_type rateid) {
-  long long ndim = -1LL;
-  std::vector<long long> shape;
-  if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_NDIM,
-                                &ndim) != GR_SUCCESS) {
-    return std::nullopt;
-  } else if (ndim != 0LL) {
-    if (ndim < 0LL) {  // <- sanity check!
-      return std::nullopt;
+    // the following check probably won't ever change
+    ASSERT_LT(props.shape.size(), 2)
+        << pair << " appears to correspond to a multi-dimensional array of "
+        << "strings";
+
+    // we may need to remove the following check
+    EXPECT_NE(props.shape.size(), 0)
+        << pair << " appears to correspond to a single scalar string";
+
+    ASSERT_GT(props.n_items(), 0LL) << "for " << pair;
+    std::size_t n_strings = static_cast<std::size_t>(props.n_items());
+
+    // set up the buffers for loading the data
+    // -> (we allocate more memory than necessary)
+    std::size_t bytes_per_str = props.maxitemsize;
+    constexpr char DUMMY_CHAR = '}';
+    char_buffer.assign(bytes_per_str * n_strings, DUMMY_CHAR);
+    str_buffer.clear();
+    for (std::size_t i = 0; i < n_strings; i++) {
+      str_buffer.push_back(char_buffer.data() + i * bytes_per_str);
     }
-    shape.assign(ndim, 0LL);
-    if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_SHAPE,
-                                  shape.data()) != GR_SUCCESS) {
-      return std::nullopt;
+
+    ASSERT_GR_SUCCESS(grunstable_ratequery_get_str(pack.my_rates(), pair.id,
+                                                   str_buffer.data()))
+        << "for " << pair;
+
+    std::size_t max_strlen = 0;
+    for (std::size_t i = 0; i < n_strings; i++) {
+      ASSERT_NE(str_buffer[i][0], DUMMY_CHAR)
+          << "nothing wasn't written for index " << i << " of the string "
+          << "array associated with " << pair;
+      std::size_t cur_strlen = std::strlen(str_buffer[i]);
+      EXPECT_GT(cur_strlen, 0)
+          << "The element at index " << i << " of the string array, associated "
+          << "with " << pair << ", is an empty string.";
+      max_strlen = std::max(max_strlen, cur_strlen);
     }
+    EXPECT_EQ(max_strlen + 1, bytes_per_str)
+        << "The queried maxitemsize for " << pair << "doesn't match the "
+        << "maximum number of bytes per string. Strictly speaking, this "
+        << "doesn't violate any API guarantees, but it would be nice to "
+        << "avoid wasting memory.";
   }
 
-  // sanity check! confirm that no shape elements are non-positive
-  if (std::count_if(shape.begin(), shape.end(),
-                    [](long long x) { return x <= 0; }) > 0) {
-    return std::nullopt;  // sanity check failed!
-  }
-
-  long long maxitemsize = -1LL;
-  if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_MAXITEMSIZE,
-                                &maxitemsize) != GR_SUCCESS) {
-    return std::nullopt;
-  }
-  if (maxitemsize <= 0LL) {
-    return std::nullopt;
-  }
-
-  return {RateProperties{shape, static_cast<std::size_t>(maxitemsize)}};
+  ASSERT_TRUE(any_str) << "no string keys were encountered for the preset";
 }
 
 // returns a value that differs from the input
@@ -265,21 +290,28 @@ static double remap_value(double in) {
   return -in;
 }
 
-TEST_P(ParametrizedRateQueryTest, SetAndGet) {
+// This test case performs basic sanity checks when it comes to querying arrays
+// of double-precision values
+TEST_P(ParametrizedRateQueryTest, SetAndGetF64) {
   std::vector<double> initial_buf;
   std::vector<double> post_update_buf;
 
   // iterate over every known (rate-name, rate-id) pair
   for (const grtest::NameIdPair pair : grtest::RateQueryRange(pack)) {
     // get the properties associated with the current rate
-    std::optional<RateProperties> maybe_props =
-        try_query_RateProperties(pack.my_rates(), pair.id);
+    std::optional<grtest::RateProperties> maybe_props =
+        grtest::try_query_RateProperties(pack.my_rates(), pair.id);
     if (!maybe_props.has_value()) {
       GTEST_FAIL()
           << "something went wrong while trying to lookup the properties for "
           << "the " << pair << " rate.";
     }
-    RateProperties props = maybe_props.value();
+    grtest::RateProperties props = maybe_props.value();
+
+    if (!props.writable || props.dtype != GRUNSTABLE_TYPE_F64) {
+      continue;
+    }
+
     long long n_items = props.n_items();
 
     // load in data associated with the current rate
@@ -326,23 +358,52 @@ INSTANTIATE_TEST_SUITE_P(
 // -> this may not be the most maintainable test (we may want to re-evaluate it
 //    in the future)
 
-enum RateKind { scalar_f64, simple_1d_rate, k13dd };
+enum RateKind {
+  scalar_f64,
+  simple_1d_rate,
+  k13dd,
+  inject_path_yield,
+  inject_path_names
+};
 
-static RateProperties RateProperties_from_RateKind(
+static long long get_n_inj_pathways(const chemistry_data* my_chemistry) {
+  if (my_chemistry->metal_chemistry <= 0) {
+    GR_INTERNAL_ERROR("there are no injection pathways");
+  } else if (my_chemistry->multi_metals == 0) {
+    return 1LL;
+  } else {
+    return static_cast<long long>(
+        grackle::impl::inj_model_input::N_Injection_Pathways);
+  }
+};
+
+static grtest::ExpectedRateProperties RateProperties_from_RateKind(
     const chemistry_data* my_chemistry, RateKind kind) {
+  using grtest::ExpectedRateProperties;
+  const enum grunstable_types f64dtype = GRUNSTABLE_TYPE_F64;
+  const enum grunstable_types strdtype = GRUNSTABLE_TYPE_STR;
+
   switch (kind) {
     case RateKind::scalar_f64: {
       std::vector<long long> shape = {};  // <-- intentionally empty
-      return RateProperties{shape, sizeof(double)};
+      return ExpectedRateProperties{shape, f64dtype, true};
     }
     case RateKind::simple_1d_rate: {
       std::vector<long long> shape = {my_chemistry->NumberOfTemperatureBins};
-      return RateProperties{shape, sizeof(double)};
+      return ExpectedRateProperties{shape, f64dtype, true};
     }
     case RateKind::k13dd: {
       std::vector<long long> shape = {my_chemistry->NumberOfTemperatureBins *
                                       14};
-      return RateProperties{shape, sizeof(double)};
+      return ExpectedRateProperties{shape, f64dtype, true};
+    }
+    case RateKind::inject_path_yield: {
+      std::vector<long long> shape = {get_n_inj_pathways(my_chemistry)};
+      return ExpectedRateProperties{shape, f64dtype, true};
+    }
+    case RateKind::inject_path_names: {
+      std::vector<long long> shape = {get_n_inj_pathways(my_chemistry)};
+      return ExpectedRateProperties{shape, strdtype, false};
     }
   }
   GR_INTERNAL_UNREACHABLE_ERROR()
@@ -374,6 +435,23 @@ std::map<std::string, RateKind> known_rates() {
 
   out.insert({"k13dd", RateKind::k13dd});
 
+  std::vector<std::string> metal_nuclides = {"C",  "O", "Mg", "Al",
+                                             "Si", "S", "Fe"};
+  for (const std::string& metal_nuclide : metal_nuclides) {
+    out.insert({"inject_path_gas_yield_frac." + metal_nuclide,
+                RateKind::inject_path_yield});
+  }
+  std::vector<std::string> known_grain_species = {
+      "MgSiO3_dust",  "AC_dust",      "SiM_dust",    "FeM_dust", "Mg2SiO4_dust",
+      "Fe3O4_dust",   "SiO2_dust",    "MgO_dust",    "FeS_dust", "Al2O3_dust",
+      "ref_org_dust", "vol_org_dust", "H2O_ice_dust"};
+  for (const std::string& grain_species : known_grain_species) {
+    out.insert({"inject_path_grain_yield_frac." + grain_species,
+                RateKind::inject_path_yield});
+  }
+
+  out.insert({"inject_model_names", RateKind::inject_path_names});
+
   return out;
 }
 
@@ -393,18 +471,18 @@ TEST_F(KnownRateQueryTest, CheckProperties) {
       continue;  // the rateid is **NOT** in known_rate_map
     }
     // construct the expected properties
-    RateProperties expected_props =
+    grtest::ExpectedRateProperties expected_props =
         RateProperties_from_RateKind(pack.my_chemistry(), search->second);
 
     // load the actual props
-    std::optional<RateProperties> maybe_actual_props =
-        try_query_RateProperties(pack.my_rates(), pair.id);
+    std::optional<grtest::RateProperties> maybe_actual_props =
+        grtest::try_query_RateProperties(pack.my_rates(), pair.id);
     if (!maybe_actual_props.has_value()) {
       GTEST_FAIL()
           << "something went wrong while trying to lookup the properties for "
           << "the " << pair << " rate.";
     }
-    RateProperties actual_props = maybe_actual_props.value();
+    grtest::RateProperties actual_props = maybe_actual_props.value();
 
     EXPECT_EQ(expected_props, actual_props)
         << "this mismatch in the queried properties is for the " << pair
