@@ -103,7 +103,6 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
 /// MainScratchBuf and track pointers to previously allocated memory buffer
 /// for all cases
 struct Assorted1ElemBuf {
-  double p2d[1];
   double tgas[1];
   double tdust[1];
   double metallicity[1];
@@ -265,7 +264,7 @@ inline void configure_ContextPack(
 /// function), and we have removed the unnecessary logic from this function,
 /// this should be combined with configure_ContextPack
 inline void scratchbufs_copy_into_pack(
-  int index, ContextPack* pack, const double* p2d, const double* tgas,
+  int index, ContextPack* pack, const double* tgas,
   const double* tdust, const double* metallicity, const double* dust2gas,
   const double* rhoH, const double* mmw,
   const double* edot, grackle::impl::GrainSpeciesCollection grain_temperatures,
@@ -320,8 +319,8 @@ inline void scratchbufs_copy_into_pack(
   }
 
   // second, we copy the remaining values
-  pack->other_scratch_buf.p2d[0] = p2d[index];
-  // we may want to recalculate this regardless of whether we are co-evolving
+  //
+  // we may want to recalculate tgas regardless of whether we're co-evolving
   // internal-energy (since temperature is dependent on the species number
   // densities
   pack->other_scratch_buf.tgas[0] = tgas[index];
@@ -342,7 +341,7 @@ inline void scratchbufs_copy_into_pack(
 /// right now as we pursue transcription). In particular, it makes no logical
 /// sense to overwrite the value of cool1dmulti_buf.tgasold
 inline void scratchbufs_copy_from_pack(
-  int index, ContextPack* pack, double* p2d, double* tgas,
+  int index, ContextPack* pack, double* tgas,
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
   double* mmw, double* edot,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
@@ -378,7 +377,6 @@ inline void scratchbufs_copy_from_pack(
   }
 
   // second, we copy the remaining values
-  p2d[index] = pack->other_scratch_buf.p2d[0];
   tgas[index] = pack->other_scratch_buf.tgas[0];
   tdust[index] = pack->other_scratch_buf.tdust[0];
   metallicity[index] = pack->other_scratch_buf.metallicity[0];
@@ -471,7 +469,7 @@ void derivatives(
     cool1d_multi_g(
       pack.fwd_args.imetal, pack.fwd_args.iter,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
-      pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d,
+      pack.other_scratch_buf.mmw,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
       pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
       pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
