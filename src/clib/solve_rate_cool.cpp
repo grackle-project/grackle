@@ -25,7 +25,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_types.hpp"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "make_consistent.hpp"
 #include "opaque_storage.hpp"

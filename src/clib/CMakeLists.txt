@@ -130,6 +130,7 @@ add_library(Grackle_Grackle
   inject_model/misc.hpp
   inject_model/raw_data.cpp inject_model/raw_data.hpp
   internal_types.cpp internal_types.hpp
+  internal_units.hpp
   interp_table_utils.hpp
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
