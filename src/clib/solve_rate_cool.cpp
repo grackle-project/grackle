@@ -25,7 +25,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_types.hpp"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "make_consistent.hpp"
 #include "opaque_storage.hpp"
@@ -891,7 +891,7 @@ int solve_rate_cool(
           grackle::impl::step_rate_gauss_seidel(
             dtit.data(), idx_range, anydust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
-            itmask_metal.data(), my_chemistry, my_fields, *my_uvb_rates,
+            itmask_metal.data(), my_chemistry, my_fields,
             spsolvbuf.species_tmpdens, spsolvbuf.rxn_rate_buf
           );
 
