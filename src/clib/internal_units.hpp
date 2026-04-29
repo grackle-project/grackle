@@ -367,7 +367,7 @@ inline InternalGrUnits new_internalu_helper_(
     co_length_units = my_units->length_units *
       my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
-      std::pow(my_units->a_value * my_units->a_units, 3);
+      std::pow(my_units->a_value * my_units->a_units, 3.0);
   }
 
   // Part 2: initialize output units and copy some stuff from frontend units
