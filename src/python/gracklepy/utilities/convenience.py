@@ -118,6 +118,7 @@ def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities):
 
     # assume a solar abundance pattern
     if fc.chemistry_data.metal_chemistry == 0:
+        metal_field = "metal_density"
         metal_nuclide_fractions = {el: solar_mass_abundance[el] / solar_metal_mass
                                    for el in fc.elements if el not in primordial_elements}
 
@@ -133,7 +134,7 @@ def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities):
     for el, fmass in metal_nuclide_fractions.items():
         if el not in fc.elements:
             continue
-        nuclide_densities[el] = state_vals["metal_density"] * fmass
+        nuclide_densities[el] = state_vals[metal_field] * fmass
 
 def _setup_ion_fields(fc, state_vals, nuclide_densities, state):
     """
