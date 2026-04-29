@@ -24,6 +24,11 @@ solar_abundance = {
     "Ni": 1.78e-06, "Cu": 1.62e-08, "Zn": 3.98e-08,
     "D" : 0}
 
+# Note, "H" here technically refers to protium, i.e., the
+# hydrogen isotope with a mass number of 1.
+# When primordial_chemistry >= 3, we also follow deuterium
+# (hydrogen with 1 proton and 1 neutron), which we denote
+# below as "D".
 atomic_mass = {
     "H" : 1.00794,   "He": 4.002602,  "Li": 6.941,
     "Be": 9.012182,  "B" : 10.811,    "C" : 12.0107,
