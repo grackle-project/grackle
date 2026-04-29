@@ -17,7 +17,6 @@ import roman
 import sys
 
 from gracklepy.fluid_container import \
-    _element_masses, \
     FluidContainer
 
 from gracklepy.utilities.atomic import \
