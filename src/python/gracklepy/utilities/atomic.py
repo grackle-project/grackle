@@ -24,7 +24,7 @@ solar_abundance = {
     "Ni": 1.78e-06, "Cu": 1.62e-08, "Zn": 3.98e-08,
     "D" : 0}
 
-exact_atomic_mass = {
+atomic_mass = {
     "H" : 1.00794,   "He": 4.002602,  "Li": 6.941,
     "Be": 9.012182,  "B" : 10.811,    "C" : 12.0107,
     "N" : 14.0067,   "O" : 15.9994,   "F" : 18.9984032,
@@ -36,11 +36,6 @@ exact_atomic_mass = {
     "Mn": 54.938049, "Fe": 55.845,    "Co": 58.933200,
     "Ni": 58.6934,   "Cu": 63.546,    "Zn": 65.409,
     "D" : 2.0141017778}
-
-approximate_atomic_mass = {
-    el: round(exact_atomic_mass[el])
-    for el in exact_atomic_mass
-}
 
 atomic_number = {
     "H" : 1,  "He": 2,  "Li": 3,
@@ -54,5 +49,18 @@ atomic_number = {
     "Mn": 25, "Fe": 26, "Co": 27,
     "Ni": 28, "Cu": 29, "Zn": 30,
     "D" : 1}
+
+mass_number = {
+    "H" : 1,  "He": 4,  "Li": 7,
+    "Be": 9,  "B" : 11,  "C" : 12,
+    "N" : 14,  "O" : 16,  "F" : 19,
+    "Ne": 20, "Na": 23, "Mg": 24,
+    "Al": 27, "Si": 28, "P" : 31,
+    "S" : 32, "Cl": 35, "Ar": 40,
+    "K" : 39, "Ca": 40, "Sc": 45,
+    "Ti": 48, "V" : 51, "Cr": 52,
+    "Mn": 55, "Fe": 56, "Co": 59,
+    "Ni": 58, "Cu": 63, "Zn": 64,
+    "D" : 2}
 
 primordial_elements = ("H", "He", "D")

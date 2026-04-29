@@ -21,8 +21,8 @@ from gracklepy.fluid_container import \
     FluidContainer
 
 from gracklepy.utilities.atomic import \
-    approximate_atomic_mass, \
     atomic_number, \
+    mass_number, \
     primordial_elements, \
     solar_abundance
 from gracklepy.utilities.physical_constants import \
@@ -30,7 +30,7 @@ from gracklepy.utilities.physical_constants import \
     sec_per_Myr
 
 solar_mass_abundance = {element: solar_abundance[element] *
-                        approximate_atomic_mass[element]
+                        mass_number[element]
                         for element in solar_abundance
                         if element not in primordial_elements}
 solar_metal_mass = sum(solar_mass_abundance.values())
@@ -156,7 +156,7 @@ def _setup_ion_fields(fc, state_vals, nuclide_densities, state):
             ion = reg.groups()[0]
             charge = roman.fromRoman(ion) - 1
             state_vals["e_density"] += nuclide_densities[el] * charge / \
-              approximate_atomic_mass[el]
+              mass_number[el]
 
 def _setup_inj_pathway_fields(state_vals: dict[str, float],
                               inj_pathway_yield_field_names: list[str]):
