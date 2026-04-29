@@ -13,7 +13,7 @@
 
 #include <cstdio>
 #include "grackle.h"
-#include "cool_multi_time_g.h"
+#include "cool_multi_time.hpp"
 #include "internal_units.h"
 #include "self_shielding_err_check.hpp"
 #include "update_UVbackground_rates.hpp"
@@ -79,7 +79,7 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
   }
 
   /* Solve cooling equations. */
-  cool_multi_time_g(
+  GRIMPL_NS::cool_multi_time(
     cooling_time, metal_field_present, internalu, my_chemistry, my_rates,
     my_fields, my_uvb_rates
   );
