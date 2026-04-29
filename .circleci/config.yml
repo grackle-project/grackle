@@ -1,11 +1,11 @@
 version: 2.1
 
 commands:
-  set-env:
-    description: "Set environment variables."
+  setup-system-for-pytest:
+    description: "Set up the system for pytest."
     steps:
       - run:
-          name: "Set environment variables."
+          name: "Setup System"
           command: |
             echo "backend : Agg" > $HOME/matplotlibrc
             echo 'export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH' >> $BASH_ENV
@@ -17,27 +17,10 @@ commands:
               git fetch --tags https://github.com/$CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME
             fi
 
-  install-cmake-dependencies:
-    description: "Install minimal dependencies needed for a CMake build"
-    steps:
-      - run:
-          name: "Install minimal dependencies needed for a CMake build"
-          command: |
             git submodule update --init --remote
-            sudo apt update
-            sudo apt install -y libhdf5-serial-dev gfortran ninja-build cmake
+            ./scripts/ci/install_dependencies.py --color \
+              --preset classic-build --preset cmake-build
 
-  install-dependencies:
-    description: "Install dependencies."
-    steps:
-      - install-cmake-dependencies
-      - run:
-          name: "Install all other dependencies."
-          command: |
-            source $BASH_ENV
-            # libtool-bin is a requirement of the classic build-system
-            # castxml is a requirement of the gracklepy test-suite
-            sudo apt install -y libtool-bin castxml
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
@@ -270,8 +253,7 @@ jobs:
 
     steps:
       - checkout
-      - set-env
-      - install-dependencies
+      - setup-system-for-pytest
       - download-test-data
       - store-gracklepy-suite-gold-standard-answers
 
@@ -316,20 +298,20 @@ jobs:
 
     steps:
       - checkout
-      - install-cmake-dependencies
-      - run:
-          name: "update CMake to newer version"
-          command: |
-            sudo apt remove cmake -y
-            sudo apt install python3-pip
-            # this is a hack to install a newer version of CMake (through PyPI)
-            pip3 install cmake
+      # we pinned cmake to an arbitrarily new version
+      - run: |
+          git submodule update --init --remote
+          ./scripts/ci/install_dependencies.py --color \
+              --preset corelib-tests --preset static-analysis \
+              --software cmake=4.2 --software clang-tidy=20 \
+              --manual-install-dir ~/local_deps
 
       - run:
           name: "Build libgrackle and all of the core library's tests"
           command: |
             cmake --preset ci-linux
             cmake --build build_ci-linux
+
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
           command: ctest --test-dir build_ci-linux --output-on-failure
@@ -348,72 +330,6 @@ jobs:
       #    environment:
       #      OMP_NUM_THREADS: 4
 
-
-      # the following step currently uses the llvm hosted repositories
-      # (described at https://apt.llvm.org/)
-      # -> if the day ever comes where we need to install using a different
-      #    mechanism, we could always install it from the package on PyPI
-      # -> we could also leverage the current installation approach to make
-      #    test-builds with llvm
-      - run:
-          name: "Install clang-tidy"
-          command: |
-            # at the moment, we are trying to keep this synchronized with the
-            # version of clang-format used in pre-commit
-            LLVM_VERSION=20
-
-            # todo: maybe move this logic into a script
-
-            # in general we could replace a lot of the following with with the
-            # script downloaded via `wget https://apt.llvm.org/llvm.sh`
-            # -> it seems like the script may do a lot of extra unnecessary work
-
-            # Step 1: register LLVM's official apt registry
-            # =============================================
-
-            # Step 1a: add the llvm key for authenticating packages
-            GPG_DST=/etc/apt/trusted.gpg.d/apt.llvm.org.asc
-            GPG_SRC_URL="https://apt.llvm.org/llvm-snapshot.gpg.key"
-            wget -qO- "${GPG_SRC_URL}" | sudo tee "${GPG_DST}"
-
-            # Step 1b: lookup the codename of the distribution (e.g. jammy)
-            # -> Debian: only provides VERSION_CODENAME
-            # -> vanilla Ubuntu: UBUNTU_CODENAME & VERSION_CODENAME are same
-            # -> distinction is more important for (some) Ubuntu derivatives
-            source <(grep -F 'UBUNTU_CODENAME' /etc/os-release)
-            CODENAME="${UBUNTU_CODENAME}"
-
-            # step 1c: record the actual source of the package
-            # -> the formula for determining the uri and suite-name is fairly
-            #    consistent unless you are describing Debian Testing or the
-            #    LLVM version under active development
-            uri="http://apt.llvm.org/${CODENAME}/"
-            suite="llvm-toolchain-${CODENAME}-${LLVM_VERSION}"
-            sudo add-apt-repository \
-                --yes \
-                --sourceslist "deb ${uri} ${suite} main"
-
-            # Step 2: actually download clang-tidy
-            # ====================================
-            sudo apt-get update
-            sudo apt-get install -y clang-tidy-${LLVM_VERSION}
-
-            # Step 3: Santity Check and make a symlink
-            # ========================================
-            # The symlink is VERY hacky, but it lets us avoid carrying the
-            # LLVM_VERSION variable between job steps
-            bin_path="/usr/bin/clang-tidy-${LLVM_VERSION}"
-            if [ ! -f ${bin_path} ]; then
-              echo "Our assumptions about where the file is installed is wrong"
-              exit 1
-            elif [ -f /usr/bin/clang-tidy ]; then
-              echo "another version of clang-tidy seems to be installed"
-              exit 1
-            else
-              # this is pretty hacky!
-              sudo ln -s ${bin_path} /usr/bin/clang-tidy
-            fi
-
       - run:
           name: "Run clang-tidy"
           command: |
@@ -424,6 +340,27 @@ jobs:
               -D 'GRACKLE_DEV_CLANG_TIDY=clang-tidy;-warnings-as-errors=*'
             cmake --build build_ci-linux-nowarn
 
+
+  installtest:
+
+    executor:
+      name: python
+      tag: 3.7.17
+      resource_class: small  # <- 1 core
+
+    working_directory: ~/grackle
+
+    steps:
+      - checkout
+      - run: git submodule update --init --remote
+
+      # I believe that the following command makes docker available in the
+      # environment where we are executing commands
+      # -> this is only needed since the job's executor is a Docker container
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - run: tests/install-tests/installtest.py exec
 
   docs-build:
     parameters:
@@ -442,6 +379,7 @@ jobs:
       - install-docs-dependencies
       - build-docs
 
+
 workflows:
    version: 2
 
@@ -453,6 +391,9 @@ workflows:
 
        - corelib-tests:
            name: "Core library test suite"
+
+       - installtest:
+           name: "Test linking against various configurations of core library"
 
        - docs-build:
            name: "Docs build"
@@ -473,6 +414,9 @@ workflows:
 
        - corelib-tests:
            name: "Core library test suite"
+
+       - installtest:
+           name: "Installtest"
 
        - docs-build:
            name: "Docs build"

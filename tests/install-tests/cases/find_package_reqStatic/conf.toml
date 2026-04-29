@@ -1,0 +1,46 @@
+[shared]
+# this table is used to specify options common to all tests
+
+# the file from GRACKLE_ROOT/src/example to copy
+src_file = "c_example.c"
+
+# the path to the example binary relative to the sample project directory
+# that will be produced by executing the supplied commands
+# (if the commands succeed)
+output_binary = "build/example_app"
+
+
+# enumerate each of the test cases
+# ================================
+
+[test.LinkSharedFailure]
+parametrize = [
+  {image = "shared_build", Grackle_DIR="/home/gr-user/grackle/build"},
+  {image = "shared_install", Grackle_DIR="/home/gr-user/local"},
+]
+
+# we expect this to fail since CMakeLists.txt demands a shared lib
+# and none is available
+expect_cmd_fail=true
+
+image.use-param = "image"
+cmds = ["Grackle_DIR='{Grackle_DIR}' cmake -Bbuild"]
+override_LD_LIBRARY_PATH = false
+
+[test.LinkStatic]
+parametrize = [
+  {image = "static_build", Grackle_DIR="/home/gr-user/grackle/build"},
+  {image = "static_install", Grackle_DIR="/home/gr-user/local"},
+  # in each following case, a shared and static lib have both been installed
+  # (the only difference is the order of installations)
+  {image = "shared_static_install", Grackle_DIR="/home/gr-user/local"},
+  {image = "static_shared_install", Grackle_DIR="/home/gr-user/local"},
+]
+
+image.use-param = "image"
+cmds = [
+  "Grackle_DIR='{Grackle_DIR}' cmake -Bbuild",
+  "cmake --build build"
+]
+override_LD_LIBRARY_PATH = false
+

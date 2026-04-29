@@ -1,0 +1,149 @@
+# This is analogous to a gitignore file
+#
+# Maybe we should consider a strategy where we dynamically generate this file
+# based on the files that git ignores?
+# -> this could be useful for ignoring files inside .gitignore and
+#    user-specific ignored files from .git/info/exclude
+
+# To avoid issues, I've tried to ignore files that CMakeLists.txt may expect to
+# be present...
+
+# exclude documentation directories
+doc
+
+# exclude build directories
+build*
+
+# exclude directories used to track gold-standard answers
+# (this may only be relavant for Matthew)
+gold-standards-*
+
+# exclude the directory where installtest logic is defined
+# -> first, none of this scripts are touched when the container is executed
+#    (the test-logic is effectively executed through a remote shell from
+#    outside the container)
+# -> if we don't exclude these files, then every modification triggers a cache
+#    invalidation (which slows down the process of adding/modifying tests)
+./tests/install-tests
+
+# cached python files
+*/__pycache__
+
+# machine-specific cache files
+./config
+
+# exclude gracklepy code examples
+src/python/examples
+
+# exclude gracklepy tests
+src/python/tests
+
+# an argument might be made for exclude all of src/python, but I worry that
+# this could produce semi-confusing failues if we ever merge PRs 235, 237, and
+# 246 through
+
+# following entries are inspired by files excluded from sdist in pyproject.toml
+# =============================================================================
+
+# CI related files
+./.circleci
+./.readthedocs.yml
+./.github
+
+
+# exclude files related to creating precompiled gracklepy wheels
+scripts/wheels
+
+
+
+# the remaining entries were all adapted from the .gitignore files
+# ================================================================
+*.a
+*.la
+*.lai
+*.lo
+*.o
+*.lo
+*~
+*.pyc
+*.exe
+*.so
+*.dylib
+
+TAGS
+DEPEND
+DEPEND.bak
+out.compile
+out.make.DEPEND
+svn_version.def
+temp.show-*
+Make.config.machine
+Make.config.override
+*.mod
+CMakeUserPresets.json
+
+src/clib/autogen
+src/clib/libgrackle.so
+src/example/cxx_example
+src/example/cxx_table_example
+src/example/c_example
+src/example/c_table_example
+src/example/c_example_nostruct
+src/example/c_table_example_nostruct
+src/example/fortran_example
+src/example/fortran_table_example
+src/example/GRACKLE_INFO
+src/example/Table__OMP_Performance
+src/example/flake8.out
+src/example/*.png
+src/python/build/*
+src/python/*.png
+# these images will be written to whatever directory you run the tests from
+cooling.png
+fractions.png
+src/python/flake8.out
+src/python/.cache/*
+src/python/pygrackle.egg-info/*
+src/python/pygrackle/*.c
+src/python/tests/test_answers
+.pytest_cache/
+
+# Used by lots of tools (e.g. pyenv, uv)
+.python-version
+
+# UV
+# People can put custom config options in here (any options we want to distribute
+# will go into pyproject.toml
+uv.toml
+#   This is commonly ignored for libraries.
+uv.lock
+
+# IDE stuff
+.idea/
+.vscode/
+
+# created by the clangd language server
+.cache/
+
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+
+# Ruff stuff:
+.ruff_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# from MacOS
+.DS_Store
+
