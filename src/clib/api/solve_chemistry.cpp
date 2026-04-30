@@ -1,6 +1,6 @@
 /***********************************************************************
 /
-/ Calculate cooling time field
+/ Solve the chemistry and cooling
 /
 /
 / Copyright (c) 2013, Enzo/Grackle Development Team.
@@ -13,18 +13,18 @@
 
 #include <cstdio>
 #include "grackle.h"
-#include "cool_multi_time_g.h"
 #include "internal_units.h"
+#include "self_shielding_err_check.hpp"
+#include "solve_rate_cool.hpp"
 #include "update_UVbackground_rates.hpp"
-#include "utils.h"
 
-extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
-                                            chemistry_data_storage *my_rates,
-                                            code_units *my_units,
-                                            grackle_field_data *my_fields,
-                                            gr_float *cooling_time)
+extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
+                                     chemistry_data_storage *my_rates,
+                                     code_units *my_units,
+                                     grackle_field_data *my_fields,
+                                     double dt_value)
 {
- 
+
   /* Return if this doesn't concern us. */
 
   if (!my_chemistry->use_grackle)
@@ -67,32 +67,42 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
   }
 
   /* Check for a metal field. */
-  int metal_field_present = (my_fields->metal_density != NULL) ? TRUE : FALSE;
+
+  int metal_field_present = TRUE;
+  if (my_fields->metal_density == NULL)
+    metal_field_present = FALSE;
 
   InternalGrUnits internalu = new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
-  if (self_shielding_err_check(my_chemistry, my_fields,
-                               "local_calculate_temperature") != GR_SUCCESS) {
+  if (grackle::impl::self_shielding_err_check(my_chemistry, my_fields,
+                                              "local_solve_chemistry")
+      != GR_SUCCESS) {
     return GR_FAIL;
   }
 
-  /* Solve cooling equations. */
-  cool_multi_time_g(
-    cooling_time, metal_field_present, internalu, my_chemistry, my_rates,
-    my_fields, my_uvb_rates
+  /* Call the routine to solve cooling equations. */
+
+  int ierr = grackle::impl::solve_rate_cool(
+    metal_field_present, dt_value, internalu,
+    my_chemistry, my_rates, my_fields, &my_uvb_rates
   );
- 
-  return GR_SUCCESS;
+
+  if (ierr != GR_SUCCESS) {
+    std::fprintf(stderr, "Error in solve_rate_cool.\n");
+  }
+
+  return ierr;
+
 }
 
-extern "C" int calculate_cooling_time(code_units *my_units,
-                                      grackle_field_data *my_fields,
-                                      gr_float *cooling_time)
+extern "C" int solve_chemistry(code_units *my_units,
+                               grackle_field_data *my_fields,
+                               double dt_value)
 {
-  if (local_calculate_cooling_time(grackle_data, &grackle_rates, my_units,
-                                   my_fields, cooling_time) != GR_SUCCESS) {
-    std::fprintf(stderr, "Error in local_calculate_cooling_time.\n");
+  if (local_solve_chemistry(grackle_data, &grackle_rates,
+                            my_units, my_fields, dt_value) != GR_SUCCESS) {
+    std::fprintf(stderr, "Error in local_solve_chemistry.\n");
     return GR_FAIL;
   }
   return GR_SUCCESS;

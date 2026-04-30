@@ -58,14 +58,19 @@ extern "C" int gr_initialize_field_data(grackle_field_data *my_fields)
   // to hold datafields, to have values of NULL
 
   // part 1: modify species-field members that grackle can evolve
-  #define ENTRY(SPECIES_NAME) my_fields->SPECIES_NAME ## _density = NULL;
+  #define ENTRY(SPECIES_NAME) my_fields->SPECIES_NAME ## _density = nullptr;
   #include "field_data_evolved_species.def"
   #undef ENTRY
 
   // part 2: modify all other field members
-  #define ENTRY(MEMBER_NAME) my_fields->MEMBER_NAME = NULL;
+  #define ENTRY(MEMBER_NAME) my_fields->MEMBER_NAME = nullptr;
   #include "field_data_misc_fdatamembers.def"
   #undef ENTRY
+
+  // Part 3: modify inject pathway density field slots
+  for (int i = 0; i < GRIMPL_MAX_INJ_PATHWAYS; i++) {
+    my_fields->inject_pathway_metal_density[i] = nullptr;
+  }
 
   return GR_SUCCESS;
 }

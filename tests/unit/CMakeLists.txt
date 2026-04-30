@@ -3,7 +3,8 @@
 
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
-add_executable(testFrozenKeyIdxBiMap support/test_unit_FrozenKeyIdxBiMap.cpp)
+add_executable(testFrozenKeyIdxBiMap
+  support/test_unit_hash.cpp support/test_unit_FrozenKeyIdxBiMap.cpp)
 target_link_libraries(testFrozenKeyIdxBiMap testdeps)
 gtest_discover_tests(testFrozenKeyIdxBiMap)
 
@@ -18,6 +19,10 @@ gtest_discover_tests(runLinAlgTests)
 add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
 target_link_libraries(runGrainSpeciesIntoTests testdeps)
 gtest_discover_tests(runGrainSpeciesIntoTests)
+
+add_executable(testPartMap support/test_unit_PartMap.cpp)
+target_link_libraries(testPartMap testdeps)
+gtest_discover_tests(testPartMap)
 
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting testdeps)
@@ -34,7 +39,7 @@ gtest_discover_tests(runVisitorTests)
 # -> the line is a little blurry because these are the most minimal tests of
 #    the API
 add_executable(runApiTests
-  test_api_ratequery.cpp test_dynamic_chem_param_api.cpp)
+  test_api_ratequery.cpp test_dynamic_chem_param_api.cpp test_inject_pathway.cpp)
 target_link_libraries(runApiTests testdeps)
 gtest_discover_tests(runApiTests)
 

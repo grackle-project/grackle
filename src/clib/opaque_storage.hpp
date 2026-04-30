@@ -17,6 +17,7 @@
 #include "dust/grain_species_info.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
+#include "ratequery.hpp"
 
 /// a struct that used to wrap some private storage details
 ///
@@ -100,6 +101,9 @@ struct gr_opaque_storage {
   /// Tracks metal and grain yields for each modeled injection pathway as well
   /// as other grain properties
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props;
+
+  /// used to implement the experimental ratequery machinery
+  grackle::impl::ratequery::Registry* registry;
 };
 
 #endif /* OPAQUE_STORAGE_HPP */

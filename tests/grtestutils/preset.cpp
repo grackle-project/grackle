@@ -29,6 +29,8 @@ static std::string to_string(const grtest::ChemPreset& preset) {
       return "pc=3";
     case grtest::ChemPreset::primchem4_dustspecies3:
       return "pc=4-dust_species=3";
+    case grtest::ChemPreset::primchem4_dustspecies3_allinjectpaths:
+      return "pc=4-dust_species=3-multi_metals=1";
   }
 
   GR_INTERNAL_UNREACHABLE_ERROR();
@@ -77,6 +79,16 @@ InitStatus setup_chemistry_data_from_preset(chemistry_data* my_chem,
       my_chem->metal_chemistry = 1;
       my_chem->dust_species = 3;
       my_chem->use_dust_density_field = 1;
+      my_chem->multi_metals = 0;
+      return InitStatus::success;
+    }
+    case ChemPreset::primchem4_dustspecies3_allinjectpaths: {
+      my_chem->primordial_chemistry = 4;
+      my_chem->dust_chemistry = 1;
+      my_chem->metal_chemistry = 1;
+      my_chem->dust_species = 3;
+      my_chem->use_dust_density_field = 1;
+      my_chem->multi_metals = 1;
       return InitStatus::success;
     }
   }

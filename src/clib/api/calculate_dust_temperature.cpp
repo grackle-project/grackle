@@ -12,7 +12,7 @@
 ************************************************************************/
 
 #include <cstdio>
-#include "calc_tdust_3d.h"
+#include "dust/calc_tdust_3d.hpp"
 #include "grackle.h"
 #include "internal_units.h"
 
@@ -50,7 +50,7 @@ extern "C" int local_calculate_dust_temperature(
     return GR_FAIL;
   }
 
-  calc_tdust_3d_g(
+  GRIMPL_NS::calc_tdust_3d(
     temperature, dust_temperature, metal_field_present, my_chemistry, my_rates,
     my_fields, internalu
   );

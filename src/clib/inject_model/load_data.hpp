@@ -14,6 +14,7 @@
 #define INJECT_MODEL_LOAD_DATA_HPP
 
 #include "grackle.h"
+#include "../ratequery.hpp"
 
 namespace grackle::impl {
 
@@ -22,7 +23,8 @@ namespace grackle::impl {
 ///
 /// @returns GR_SUCCESS if successful
 int load_inject_path_data(const chemistry_data* my_chemistry,
-                          chemistry_data_storage* my_rates);
+                          chemistry_data_storage* my_rates,
+                          ratequery::RegBuilder* reg_builder);
 
 }  // namespace grackle::impl
 

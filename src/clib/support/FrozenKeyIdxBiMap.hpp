@@ -8,13 +8,6 @@
 /// @file
 /// Declares the internal FrozenKeyIdxBiMap type
 ///
-/// All insertions occur during initialization. This simplifies a lot of
-/// bookkeeping.
-///
-/// The underlying implementation of this type is *highly* suboptimal (it's
-/// simplistic at the cost of speed). PR #484 introduce a drop-in replacement
-/// the API won't change that is much faster
-///
 //===----------------------------------------------------------------------===//
 #ifndef SUPPORT_FROZENKEYIDXBIMAP_HPP
 #define SUPPORT_FROZENKEYIDXBIMAP_HPP
@@ -22,19 +15,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <limits>
 
-#include "grackle.h"
+#include "config.hpp"
 #include "status_reporting.h"
+#include "FrozenKeyIdxBiMap_detail.hpp"
 
-namespace grackle::impl {
-
-// the motivation for this constant is provided in PR #484 (its related
-// to some optimizations in the FrozenKeyIdxBiMap implementation)
-namespace bimap_detail {
-/// specifies maximum allowed length of a key (excluding the null character).
-inline constexpr uint16_t KEYLEN_MAX = 29;
-}  // namespace bimap_detail
+namespace GRIMPL_NAMESPACE_DECL {
 
 // the following doxygen comment block logically groups every all parts of
 // the (internal) API for Grackle's (internal) FrozenKeyIdxBiMap. It's useful
@@ -84,16 +70,81 @@ enum class BiMapMode {
 /// @ref BiMapMode::REFS_KEYDATA. Their docstrings provide more context. When
 /// in doubt, prefer the former mode.
 ///
-/// @par Replacement in PR #484
-/// The current implementation is extremely oversimplified and inefficient! It
-/// doesn't even use a hash table. The purpose is to create a simple abstract
-/// data structure for which the implementation will be dramatically improved
-/// by PR #484 (but the interface won't be touched at all).
+/// @par Implementation Notes
+/// At the time of writing, the type is primarily implemented in terms of
+/// a hash table that uses open-addressing with linear probing to resolve
+/// collisions. The implementation heavily draws from logic I wrote for Enzo-E:
+///   https://github.com/enzo-project/enzo-e/blob/main/src/Cello/view_StringIndRdOnlyMap.hpp
+/// (More details are provided below under C++ considerations)
+///
+/// @par Why Frozen?
+/// The contents are "frozen" for 3 primary reasons:
+/// 1. It drastically simplifies the implementation (we don't have to worry
+///    about deletion -- which can be quite messy)
+/// 2. Linear-probing generally provides better data locality than other hash
+///    collision resolution techniques, but generally has other drawbacks.
+///    Freezing the contents lets us mitigate many drawbacks (mostly related to
+///    the deletion operation)
+/// 3. It could let us make copy operations cheaper. If we know the map won't
+///    change, we could just use reference counting.
+///
+/// @par Consideration: Reference Counting
+/// The original C++ leverages @c std::shared_ptr to achieve reference counting
+/// (and reduce the cost of copying). Theoretically, I would like to see us use
+/// some kind of reference-counting too. But this is tricky in library code,
+/// given the diversity of threading libraries that are not formally
+/// interoperable. I think the only way to properly do this would be to come up
+/// with a system for allowing registration of locks/atomics with Grackle as a
+/// whole.
+///
+/// @par C++ Considerations
+/// It would definitely be worth evaluating whether we should embrace C++
+/// in order to convert this to a full-blown class and adopt characteristics
+/// present in the original Enzo-E version:
+/// - most importantly, it would greatly reduce the chance of memory leaks
+/// - (much less importantly) it would be a lot more ergonomic (& less clunky)
+/// - But, for reasons expressed above, I am concerned about using
+///   @c std::shared_ptr for reference counting.
 ///
 /// @par
-/// The PR with the improved version, also updates this docstring with a
-/// detailed explanation of design decisions (like why the contents
-/// are "frozen") and highlights a number of potential improvements.
+/// I would be stunned if <tt> std::map<std::string, uint16_t> </tt> or
+/// <tt> std::map<const char*, uint16_t> </tt> is faster than the internal
+/// hash table since @c std::map is usually implemented as a tree.
+///
+/// @par Potential Improvements
+/// Simple Ideas:
+/// - We could be smarter about the order that we insert keys into the table
+///   (in the constructor) to minimize the search time.
+/// - We might be able to come up with a better hash function
+///
+/// @par
+/// A more ambitious idea is to embed string allocations within the rows for
+/// @ref BiMapMode::COPIES_KEYDATA mode. This is possible thanks to the fact
+/// that we use @ref bimap_detail::KEYLEN_MAX to limit the size of keys.
+/// - Essentially, we would replace @ref bimap_StrU16_detail::Row with
+///   something like the following:
+///   @code{.cpp}
+///   struct alignas(32) PackedRow { char data[32]; };
+///
+///   bool is_empty(PackedRow& r) { return data[0] == '\0' }
+///   const char* get_key(PackedRow r) { return r.data; }
+///   uint16_t get_val(Packed r) {
+///     stdd::uint16_t o;
+///     std::memcpy(&o, r.data+30, 2);
+///     return o;
+///   }
+///   @endcode
+/// - additional context about the preceding snippet:
+///   - when empty, a @c PackedRow::data is filled with '\0'
+///   - otherwise, @c PackedRow::data encodes the key-value pair:
+///     - data[0:30] is the null-terminated key string ('\0' fills unused space)
+///     - data[30:32] encodes the 16-bit value
+///   - @c alignas(32) primarily ensures better cacheline alignment.
+/// - Benefits of this change:
+///   1. better locality (if @c PackedRow is in the cache, so is the key-string)
+///   2. probing can use memcmp without a checking whether a row is empty
+///   3. with a little extra care, we could use the forced alignment of
+///      @c PackedRow::data to compare strings with SIMD instructions
 ///
 /// @note
 /// The contents of this struct should be considered an implementation
@@ -103,17 +154,33 @@ struct FrozenKeyIdxBiMap {
   // don't forget to update FrozenKeyIdxBiMap_clone when changing members
 
   /// the number of contained strings
-  int length;
-  /// array of keys
-  const char** keys;
+  bimap_detail::rowidx_type length;
+  /// the number of elements in table_rows
+  bimap_detail::rowidx_type capacity;
+  /// max number of rows that must be probed to determine if a key is contained
+  bimap_detail::rowidx_type max_probe;
   /// specifies ownership of keys, @see BiMapMode
   BiMapMode mode;
+
+  /// actual hash table data
+  bimap_StrU16_detail::Row* table_rows;
+  /// tracks the row indices to make iteration faster
+  bimap_detail::rowidx_type* ordered_row_indices;
 };
 
-// ugh, it's unfortunate that we need to make this... but for now its useful.
-// Ideally, we would refactor so that we can get rid of this function.
+/// Create an invalid FrozenKeyIdxBiMap
+///
+/// @note
+/// ugh, it's unfortunate that we need to make this... but for now it's useful.
+/// Ideally, we would refactor so that we can get rid of this function. A
+/// useful compromise might simply put it within the bimap_detail namespace
 inline FrozenKeyIdxBiMap mk_invalid_FrozenKeyIdxBiMap() {
-  return FrozenKeyIdxBiMap{-1, nullptr, BiMapMode::REFS_KEYDATA};
+  return FrozenKeyIdxBiMap{bimap_detail::INVALID_VAL,
+                           bimap_detail::INVALID_VAL,
+                           0,
+                           BiMapMode::REFS_KEYDATA,
+                           nullptr,
+                           nullptr};
 }
 
 /// Constructs a new FrozenKeyIdxBiMap
@@ -130,71 +197,8 @@ inline FrozenKeyIdxBiMap mk_invalid_FrozenKeyIdxBiMap() {
 /// ugly/clunky, but it's the only practical way to achieve comparable behavior
 /// to other internal data types. The best alternatives involve things like
 /// std::optional or converting this type to a simple C++ class.
-inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
-                                               int key_count, BiMapMode mode) {
-  if (keys == nullptr && key_count == 0) {
-    return FrozenKeyIdxBiMap{0, nullptr, mode};
-  }
-
-  // check the specified keys
-  int max_keys = static_cast<int>(std::numeric_limits<uint16_t>::max());
-  if (key_count < 1 || key_count > max_keys) {
-    GrPrintErrMsg("key_count must be positive & can't exceed %d", max_keys);
-    return mk_invalid_FrozenKeyIdxBiMap();
-  } else if (keys == nullptr) {
-    GrPrintErrMsg("keys must not be a nullptr");
-    return mk_invalid_FrozenKeyIdxBiMap();
-  }
-  for (int i = 0; i < key_count; i++) {
-    GR_INTERNAL_REQUIRE(keys[i] != nullptr, "Can't specify a nullptr key");
-    std::size_t n_chrs_without_nul = std::strlen(keys[i]);
-    if (n_chrs_without_nul == 0 ||
-        n_chrs_without_nul > bimap_detail::KEYLEN_MAX) {
-      GrPrintErrMsg(
-          "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
-          "exceeding %d",
-          keys[i], i, bimap_detail::KEYLEN_MAX);
-      return mk_invalid_FrozenKeyIdxBiMap();
-    }
-    // check uniqueness
-    for (int j = 0; j < i; j++) {
-      if (strcmp(keys[i], keys[j]) == 0) {
-        GrPrintErrMsg("\"%s\" key repeats", keys[i]);
-        return mk_invalid_FrozenKeyIdxBiMap();
-      }
-    }
-  }
-
-  // now, actually construct the result
-  const char** out_keys = nullptr;
-  switch (mode) {
-    case BiMapMode::REFS_KEYDATA: {
-      out_keys = new const char*[key_count];
-      for (int i = 0; i < key_count; i++) {
-        out_keys[i] = keys[i];
-      }
-      break;
-    }
-    case BiMapMode::COPIES_KEYDATA: {
-      char** tmp_keys = new char*[key_count];
-      for (int i = 0; i < key_count; i++) {
-        std::size_t n_chrs_without_nul = std::strlen(keys[i]);
-        tmp_keys[i] = new char[n_chrs_without_nul + 1];
-        std::memcpy(tmp_keys[i], keys[i], n_chrs_without_nul + 1);
-      }
-      out_keys = (const char**)tmp_keys;
-      break;
-    }
-    default: {
-      GrPrintErrMsg("unknown mode");
-      return mk_invalid_FrozenKeyIdxBiMap();
-    }
-  }
-
-  return FrozenKeyIdxBiMap{/* length = */ key_count,
-                           /* keys = */ out_keys,
-                           /* mode = */ mode};
-}
+FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[], int key_count,
+                                        BiMapMode mode);
 
 /// checks whether a creational function produced a valid bimap
 ///
@@ -206,7 +210,7 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
 /// way to signal that FrozenKeyIdxBiMap is in an invalid state. This function
 /// @b ONLY checks for that particular signature.
 inline bool FrozenKeyIdxBiMap_is_ok(const FrozenKeyIdxBiMap* ptr) {
-  return (ptr->length != -1);
+  return ptr->length != bimap_detail::INVALID_VAL;
 }
 
 /// Destroys the internal data tracked by an instance
@@ -232,13 +236,22 @@ inline bool FrozenKeyIdxBiMap_is_ok(const FrozenKeyIdxBiMap* ptr) {
 ///   drop_FrozenKeyIdxBiMap(&bimap);        // <- this is BAD
 ///   @endcode
 inline void drop_FrozenKeyIdxBiMap(FrozenKeyIdxBiMap* ptr) {
-  if (ptr->mode == BiMapMode::COPIES_KEYDATA) {
-    for (int i = 0; i < ptr->length; i++) {
-      delete[] ptr->keys[i];
-    }
-  }
-  if (ptr->keys != nullptr) {
-    delete[] ptr->keys;
+  if (FrozenKeyIdxBiMap_is_ok(ptr)) {
+    if (ptr->length > 0) {
+      if (ptr->mode == BiMapMode::COPIES_KEYDATA) {
+        for (bimap_detail::rowidx_type i = 0; i < ptr->capacity; i++) {
+          bimap_StrU16_detail::Row* row = ptr->table_rows + i;
+          // casting from (const char*) to (char*) should be legal (as long as
+          // there were no bugs modifying the value of ptr->mode)
+          if (row->keylen > 0) {
+            delete[] row->key;
+          }
+        }
+      }
+      delete[] ptr->table_rows;
+      delete[] ptr->ordered_row_indices;
+    }  // ptr->length > 0
+    (*ptr) = mk_invalid_FrozenKeyIdxBiMap();
   }
 }
 
@@ -253,9 +266,7 @@ inline void drop_FrozenKeyIdxBiMap(FrozenKeyIdxBiMap* ptr) {
 /// ugly/clunky, but it's the only practical way to achieve comparable behavior
 /// to other internal data types. The best alternatives involve things like
 /// std::optional or converting this type to a simple C++ class.
-inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
-  return new_FrozenKeyIdxBiMap(ptr->keys, ptr->length, ptr->mode);
-};
+FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr);
 
 namespace bimap {
 
@@ -284,13 +295,10 @@ struct AccessRslt {
 ///     the key is present)
 inline bimap::AccessRslt FrozenKeyIdxBiMap_find(const FrozenKeyIdxBiMap* map,
                                                 const char* key) {
-  GR_INTERNAL_REQUIRE(key != nullptr, "A nullptr key is forbidden");
-  for (int i = 0; i < map->length; i++) {
-    if (std::strcmp(map->keys[i], key) == 0) {
-      return bimap::AccessRslt{true, static_cast<uint16_t>(i)};
-    }
-  }
-  return bimap::AccessRslt{false, 0};
+  uint16_t tmp = bimap_StrU16_detail::search(map->table_rows, key,
+                                             map->capacity, map->max_probe)
+                     .val;
+  return bimap::AccessRslt{tmp != bimap_detail::INVALID_VAL, tmp};
 }
 
 /// returns whether the map contains the key
@@ -333,11 +341,138 @@ inline const char* FrozenKeyIdxBiMap_inverse_find(const FrozenKeyIdxBiMap* map,
   if (idx >= map->length || idx < 0) {
     return nullptr;
   }
-  return map->keys[idx];  // this can't be a nullptr
+  const char* out = map->table_rows[map->ordered_row_indices[idx]].key;
+  GR_INTERNAL_REQUIRE(out != nullptr, "logical error: string can't be nullptr");
+  return out;
 }
 
 /** @}*/  // end of group
 
-}  // namespace grackle::impl
+namespace bimap_detail {
+
+/// a helper function used to actually allocate memory for FrozenKeyIdxBiMap
+inline FrozenKeyIdxBiMap alloc(uint16_t length, uint16_t capacity,
+                               BiMapMode mode) {
+  // it would be nice to handle allocate all pointers as a single block of
+  // memory, but that gets tricky. Essentially, we would allocate uninitialized
+  // memory and manually use placement-new (and the corresponding `delete`)
+  using bimap_detail::rowidx_type;
+  using bimap_StrU16_detail::Row;
+  FrozenKeyIdxBiMap out = {
+      /*length=*/length,
+      /*capacity=*/capacity,
+      /*max_probe=*/capacity,
+      /*mode=*/mode,
+      /*table_rows=*/(capacity > 0) ? new Row[capacity] : nullptr,
+      /*ordered_row_indices=*/(length > 0) ? new rowidx_type[length] : nullptr};
+  for (uint16_t i = 0; i < capacity; i++) {
+    out.table_rows[i].keylen = 0;
+  }
+  return out;
+}
+
+}  // namespace bimap_detail
+
+inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
+                                               int key_count, BiMapMode mode) {
+  int64_t max_len = static_cast<int64_t>(bimap_cap_detail::max_key_count());
+  if (keys == nullptr && key_count == 0) {
+    return bimap_detail::alloc(0, 0, mode);
+  } else if (keys == nullptr) {
+    GrPrintErrMsg("keys must not be a nullptr");
+    return mk_invalid_FrozenKeyIdxBiMap();
+  } else if (key_count < 1 || static_cast<int64_t>(key_count) > max_len) {
+    GrPrintErrMsg("key_count must be positive & can't exceed %lld",
+                  static_cast<long long int>(max_len));
+    return mk_invalid_FrozenKeyIdxBiMap();
+  }
+
+  // based on the preceding check, this shouldn't be able to fail
+  bimap_detail::rowidx_type capacity =
+      bimap_cap_detail::calc_map_capacity(key_count);
+  GR_INTERNAL_REQUIRE(capacity > 0, "something went wrong");
+
+  // let's validate the keys
+  for (int i = 0; i < key_count; i++) {
+    GR_INTERNAL_REQUIRE(keys[i] != nullptr, "Can't specify a nullptr key");
+    std::size_t n_chrs_without_nul = std::strlen(keys[i]);
+    if (n_chrs_without_nul == 0 ||
+        n_chrs_without_nul > bimap_detail::KEYLEN_MAX) {
+      GrPrintErrMsg(
+          "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
+          "exceeding %d",
+          keys[i], i, bimap_detail::KEYLEN_MAX);
+      return mk_invalid_FrozenKeyIdxBiMap();
+    }
+    // check uniqueness
+    for (int j = 0; j < i; j++) {
+      if (strcmp(keys[i], keys[j]) == 0) {
+        GrPrintErrMsg("\"%s\" key repeats", keys[i]);
+        return mk_invalid_FrozenKeyIdxBiMap();
+      }
+    }
+  }
+
+  // now, that we know we will succeed, lets construct the bimap
+  FrozenKeyIdxBiMap out = bimap_detail::alloc(key_count, capacity, mode);
+
+  // now it's time to fill in the array
+  int max_probe_count = 1;
+  for (int i = 0; i < key_count; i++) {
+    // search for the first empty row
+    bimap_StrU16_detail::SearchRslt search_rslt = bimap_StrU16_detail::search(
+        out.table_rows, keys[i], capacity, capacity);
+    // this should be infallible (especially after we already did some checks)
+    GR_INTERNAL_REQUIRE(search_rslt.probe_count != 0, "sanity check failed");
+
+    // now we overwrite the row
+    bimap_StrU16_detail::overwrite_row(out.table_rows + search_rslt.rowidx,
+                                       keys[i], std::strlen(keys[i]), i,
+                                       mode == BiMapMode::COPIES_KEYDATA);
+    out.ordered_row_indices[i] = search_rslt.rowidx;
+
+    max_probe_count = std::max(max_probe_count, search_rslt.probe_count);
+  }
+  out.max_probe = max_probe_count;
+
+  return out;
+}
+
+inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
+  if (!FrozenKeyIdxBiMap_is_ok(ptr)) {
+    return mk_invalid_FrozenKeyIdxBiMap();
+  }
+
+  FrozenKeyIdxBiMap out =
+      bimap_detail::alloc(ptr->length, ptr->capacity, ptr->mode);
+  out.max_probe = ptr->max_probe;
+
+  if (ptr->length == 0) {
+    return out;
+  }
+
+  // give the compiler/linter a hint that out.table_rows is not a nullptr
+  // (this is guaranteed by the preceding early exit)
+  GR_INTERNAL_REQUIRE(
+      (out.table_rows != nullptr) && (out.ordered_row_indices != nullptr),
+      "something is very wrong!");
+
+  bool copy_key_data = out.mode == BiMapMode::COPIES_KEYDATA;
+  for (bimap_detail::rowidx_type i = 0; i < ptr->capacity; i++) {
+    const bimap_StrU16_detail::Row& ref_row = ptr->table_rows[i];
+    if (ref_row.keylen > 0) {
+      bimap_StrU16_detail::overwrite_row(out.table_rows + i, ref_row.key,
+                                         ref_row.keylen, ref_row.value,
+                                         copy_key_data);
+    }
+  }
+
+  for (bimap_detail::rowidx_type i = 0; i < ptr->length; i++) {
+    out.ordered_row_indices[i] = ptr->ordered_row_indices[i];
+  }
+  return out;
+};
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // SUPPORT_FROZENKEYIDXBIMAP_HPP

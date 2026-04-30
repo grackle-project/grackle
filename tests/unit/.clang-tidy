@@ -1,0 +1,15 @@
+# this file lets alter the checks that clang-tidy uses
+# - by default, we inherit all checks (and options) from parent directories
+
+
+# we modify the behavior of the bugprone-unchecked-optional-access check to
+# allow usage of the `.value()` method without an explicit check for whether
+# an optional contains a value
+# - the primary motivation is that it's fairly verbose to check if an optional
+#   is empty (in a way that Googletest reports an error) without trigger this
+#   warning. Our policy is to continue checking before we access an optional,
+#   but if we ever forget, the worst that happens is that the test-case aborts
+#   with an error because an expection was raised.
+# - maybe we can come up with a workaround involving a macro in the future?
+CheckOptions:
+  bugprone-unchecked-optional-access.IgnoreValueCalls: true

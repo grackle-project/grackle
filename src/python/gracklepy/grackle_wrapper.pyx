@@ -12,14 +12,52 @@
 ########################################################################
 
 import copy
-import functools
+import weakref
+import sys
+from types import MappingProxyType
 from gracklepy.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
 
 from libc.limits cimport INT_MAX
+from libc.stdlib cimport malloc, free
 from .grackle_defs cimport *
 import numpy as np
+
+# define a set of rate-related properties that the chemistry_data extension
+# type must support as attributes:
+# - historically, these rates have been accessible regardless of whether a
+#   chemistry solver class has been defined to use them.
+# - in the near future, the _rate_mapping_access machinery may lose the ability
+#   to access rate buffers that are not being actively used
+# - we will use this set to ensure that these types remain accessible
+_legacy_rate_attrs = frozenset(
+    [
+        "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11",
+        "k12", "k13", "k14", "k15", "k16", "k17", "k18", "k19", "k20", "k21",
+        "k22", "k23", "k50", "k51", "k52", "k53", "k54", "k55", "k56", "k57",
+        "k58", "k13dd",
+        # radiative rates:
+        "k24", "k25", "k26", "k27", "k28", "k29", "k30", "k31",
+
+        # A question for another time (before releasing Grackle 3.5):
+        # - do we want to provide an alternative approach for people to query
+        #   rates? (like a method or function?)
+        #   - If so, then maybe we don't the following to be attributes of
+        #     chemistry_data
+        # - for now, they are accessible as attributes of chemistry_data
+
+        # 15 species rates (with DM, HDII, HeHII)
+        "k125", "k129", "k130", "k131", "k132", "k133", "k134", "k135", "k136",
+        "k137", "k148", "k149", "k150", "k151", "k152", "k153",
+        # metal species rates:
+        "kz15", "kz16", "kz17", "kz18", "kz19", "kz20", "kz21", "kz22", "kz23",
+        "kz24", "kz25", "kz26", "kz27", "kz28", "kz29", "kz30", "kz31", "kz32",
+        "kz33", "kz34", "kz35", "kz36", "kz37", "kz38", "kz39", "kz40", "kz41",
+        "kz42", "kz43", "kz44", "kz45", "kz46", "kz47", "kz48", "kz49", "kz50",
+        "kz51", "kz52", "kz53", "kz54",
+    ]
+)
 
 cdef class chemistry_data:
     cdef _wrapped_c_chemistry_data data
@@ -36,18 +74,19 @@ cdef class chemistry_data:
     #   backwards compatibility)
     cdef object data_copy_from_init
 
+    # ensure that weak references can be made to instances of this type
+    cdef object __weakref__
+
     def __cinit__(self):
         self.data = _wrapped_c_chemistry_data()
-        self._rate_map = _rate_mapping_access.from_ptr_and_callback(
-            ptr=&self.rates,
-            callback=functools.partial(
-                _get_rate_shape, wrapped_chemistry_data_obj = self.data
-            )
-        )
+        self._rate_map = _rate_mapping_access.from_ptr(&self.rates, weakref.ref(self))
         self.data_copy_from_init = None
 
+    def _is_initialized(self):
+        return self.data_copy_from_init is not None
+
     cdef void _try_uninitialize(self):
-        if self.data_copy_from_init is None:
+        if not self._is_initialized():
             return # nothing to uninitialize
 
         c_local_free_chemistry_data(
@@ -99,10 +138,8 @@ cdef class chemistry_data:
         except KeyError:
             pass
 
-        try:
-            return self._rate_map[name] # case where name specifies a rate
-        except KeyError:
-            pass
+        if name in _legacy_rate_attrs:
+            return self._rate_map.get(name)
 
         # this method is expected to raise AttributeError when it fails
         raise AttributeError(
@@ -149,15 +186,92 @@ cdef class chemistry_data:
         except KeyError:
             pass
 
-        try:
-            self._rate_map[name] = value
-            return # early exit
-        except KeyError:
-            pass
+        if name in _legacy_rate_attrs:
+            try:
+                self._rate_map[name] = value
+                return # early exit
+            except KeyError:
+                raise AttributeError(
+                    f"attribute '{name}' of '{type(self).__name__}' can't be "
+                    "mutated under the current configuration"
+                ) from None
 
         raise AttributeError(
             f"'{type(self).__name__}' object has no attribute '{name}'"
         )
+
+    def _experimental_nuclide_gas_inj_path_yields(
+        self
+    ) -> MappingProxyType[str, np.ndarray]:
+        """
+        Just like ``_experimental_grain_inj_path_yields`` except that it
+        returns yield-fractions for the gas-phase components of each
+        relevant metal nuclide (rather than yield fractions for grain
+        species).
+
+        Note
+        ----
+        See the docstring for ``_experimental_grain_inj_path_yields`` for a
+        discussion of how we might want to modify the interface for accessing
+        this information before stabilizing the API.
+        """
+        return _get_inj_path_yield_map(self._rate_map, "inject_path_gas_yield_frac.")
+
+    def _experimental_grain_inj_path_yields(
+        self
+    ) -> MappingProxyType[str, np.ndarray]:
+        """
+        A helper method that returns a dictionary of grain-species yields
+        expected by each modelled injection pathway (if there are any). This
+        is **ONLY** meaningful when using the multi-grain species dust model.
+
+        This method returns an immutable mapping that maps the name of each
+        relevant grain-species to a 1D array of yield fractions of that
+        species. In a given array, element ``i`` corresponds to the initial
+        yield assumed for the injection pathway specified by
+        ``FluidContainer.inject_pathway_density_yield_fields[i]``.
+
+        Note
+        ----
+        While we must make this information available in order to properly
+        make use of the multi-grain species dust models (as consistently as
+        possible), we are still experimenting with how best to do this.
+
+        Before we stabilize the API for accessing this information:
+
+        - we may want to consider replacing both this method and the
+          ``_experimental_nuclide_gas_inj_path_yields`` method, with a single
+          method that instead returns a dataclass that holds the information
+          currently returned by the existing methods. This has a couple of
+          appealing properites:
+          1. all injection pathway information is only used in a very small
+             subset of Grackle configurations. It makes logical sense to
+             return all of this information together at once (plus, we could
+             return `None` if the information isn't defined)
+          2. if we ever wanted to expose additional injection pathway
+             information to end-users (like the initial size moments assumed
+             by each pathway for each grain-species), it would be a logical
+             place to group the information
+
+        - alternatively, we may want to get rid of special methods for curating
+          this information and instead provide an interface to the
+          query-machinery that mirrors the C-interface and require python users
+          to use that same interface:
+          - In the long term, I think that this would be a lot better
+            (especially if we make this the preferred way to access all rate
+            info like k1, k2, ...).
+          - But, in the shorter term, this requires us to make a bunch of final
+            decisions about the interface.
+          - If we do this, I think we may want to first shift from using
+            single-string keys to a key consisting of a string-pair. This
+            could plausibly make a more ergonomic interface
+
+        - we also need to decide on whether we want to make this information
+          mutable. Currently, we don't support any mutations. I don't actually
+          think this is an issue since we're moving towards using HDF5 files
+          for configuring this information
+        """
+        return _get_inj_path_yield_map(self._rate_map, "inject_path_grain_yield_frac.")
 
     property h2dust:
         def __get__(self):
@@ -472,7 +586,6 @@ cdef class chemistry_data:
             return self.density_units * self.energy_units
 
 
-
 cdef gr_float* get_field(object fc, object name) except? NULL:
     """
     Helper function to retrieve a field's pointer from a ``FluidContainer``
@@ -605,18 +718,14 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.vol_org_dust_density = get_field(fc, "vol_org_dust_density")
     my_fields.H2O_ice_dust_density = get_field(fc, "H2O_ice_dust_density")
 
-    my_fields.local_ISM_metal_density = get_field(fc, "local_ISM_metal_density")
-    my_fields.ccsn13_metal_density = get_field(fc, "ccsn13_metal_density")
-    my_fields.ccsn20_metal_density = get_field(fc, "ccsn20_metal_density")
-    my_fields.ccsn25_metal_density = get_field(fc, "ccsn25_metal_density")
-    my_fields.ccsn30_metal_density = get_field(fc, "ccsn30_metal_density")
-    my_fields.fsn13_metal_density = get_field(fc, "fsn13_metal_density")
-    my_fields.fsn15_metal_density = get_field(fc, "fsn15_metal_density")
-    my_fields.fsn50_metal_density = get_field(fc, "fsn50_metal_density")
-    my_fields.fsn80_metal_density = get_field(fc, "fsn80_metal_density")
-    my_fields.pisn170_metal_density = get_field(fc, "pisn170_metal_density")
-    my_fields.pisn200_metal_density = get_field(fc, "pisn200_metal_density")
-    my_fields.y19_metal_density = get_field(fc, "y19_metal_density")
+    # copy over pointers to all (if any) injection pathway metal density fields
+    # -> the data already has the order expected by the Grackle solver
+    cdef gr_float[:, ::1] inj_path_fields = fc._inj_path_density_arrays
+    assert inj_path_fields.shape[1] == fc.n_vals  # sanity check
+    cdef Py_ssize_t n_pathways = inj_path_fields.shape[0]
+    cdef Py_ssize_t i
+    for i in range(n_pathways):
+        my_fields.inject_pathway_metal_density[i] = &inj_path_fields[i, 0]
 
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
@@ -871,44 +980,175 @@ cdef class _wrapped_c_chemistry_data:
             out[k] = self[k]
         return out
 
-def _get_rate_shape(wrapped_chemistry_data_obj, rate_name):
-    # for now we need to manually keep this updated.
-    # -> in the future, we could add probably encode some/all of this
-    #    information within Grackle's ratequery API
-
-    def _is_standard_colrecombination_rate(rate_name):
-        if rate_name[:2] == 'kz' and rate_name[2:].isdecimal():
-            return 11 <= int(rate_name[2:]) <= 54
-        elif rate_name[:1] == 'k' and rate_name[1:].isdecimal():
-            digit = int(rate_name[1:])
-            return ( (1 <= digit <= 23) or
-                     (50 <= digit <= 58) or
-                     (125 <= digit <= 153) )
-        return False
-
-    if rate_name in ("k24", "k25", "k26", "k27", "k28", "k29", "k30", "k31"):
-        return () # the rate is a scalar
-    elif _is_standard_colrecombination_rate(rate_name):
-        return (wrapped_chemistry_data_obj['NumberOfTemperatureBins'],)
-    elif rate_name == 'k13dd':
-        return (wrapped_chemistry_data_obj['NumberOfTemperatureBins'] * 14,)
+def _portable_reshape(arr: np.ndarray, shape: tuple[int, ...]) -> np.ndarray:
+    """
+    Reshape a numpy array (raises an error if a copy can't be avoided)
+    """
+    if np.__version__.startswith("1.") or np.__version__.startswith("2.0."):
+        out = arr.view()
+        out.shape = shape
+        return out
     else:
-        raise RuntimeError(
-            "the shape of the rate {rate_name!r} has not been specified yet"
-        )
+        return arr.reshape(shape, order="C", copy=False)
 
-@functools.lru_cache   # (could use functools.cache starting in python3.9)
-def _name_rateid_map():
-    cdef dict out = {}
-    cdef const char* rate_name
-    cdef grunstable_rateid_type rate_id
-    cdef unsigned long long i = 0
-    while True:
-        rate_name = grunstable_ith_rate(i, &rate_id)
-        if rate_name is NULL:
-            return out
-        out[rate_name.decode('UTF-8')] = int(rate_id)
-        i+=1
+
+class RatequeryFailException(Exception):
+    pass
+
+cdef long long rateq_raw_nonshape_prop(
+    c_chemistry_data_storage *ptr,
+    grunstable_rateid_type rate_id,
+    grunstable_ratequery_prop_kind prop_kind,
+) except*:
+    """
+    queries a non-shape property & raises RatequeryFailException on failure
+
+    This **ONLY** exists to simplify the implementation of rateq_get_prop
+    """
+    cdef long long buf
+    cdef int ret = grunstable_ratequery_prop(ptr, rate_id, prop_kind, &buf)
+    if ret != GR_SUCCESS:
+        raise RatequeryFailException()
+    return buf
+
+cdef object rateq_get_prop(
+    c_chemistry_data_storage *ptr,
+    grunstable_rateid_type rate_id,
+    grunstable_ratequery_prop_kind prop_kind,
+) except*:
+    """
+    query the property and coerce the result to the appropriate python type
+
+    Notes
+    -----
+    If performance becomes a concern, we should stop using
+    RatequeryFailException.
+    """
+    cdef long long buf[7]
+    cdef int ret_code
+    if prop_kind == GRUNSTABLE_QPROP_SHAPE:
+        ndim = rateq_get_prop(ptr, rate_id, prop_kind=GRUNSTABLE_QPROP_NDIM)
+        if ndim > 7:
+            raise RuntimeError(
+                f"rate_id {rate_id} has a questionable number of dims: {ndim}"
+            )
+        elif ndim == 0:
+            return ()
+        else:
+            ret_code = grunstable_ratequery_prop(
+                ptr, rate_id, GRUNSTABLE_QPROP_SHAPE, &buf[0]
+            )
+            if ret_code != GR_SUCCESS:
+                raise RuntimeError(
+                    f"shape query fail after ndim query success, for {rate_id=}"
+                )
+            return tuple(int(buf[i]) for i in range(ndim))
+    elif (prop_kind == GRUNSTABLE_QPROP_NDIM or
+          prop_kind == GRUNSTABLE_QPROP_MAXITEMSIZE):
+        buf[0] = rateq_raw_nonshape_prop(ptr, rate_id, prop_kind)
+        #if sizeof(Py_ssize_t) > sizeof(long long):
+        #    if 
+        return int(buf[0])
+    elif prop_kind == GRUNSTABLE_QPROP_WRITABLE:
+        buf[0] = rateq_raw_nonshape_prop(ptr, rate_id, prop_kind)
+        return bool(buf[0])
+    elif prop_kind == GRUNSTABLE_QPROP_DTYPE:
+        buf[0] = rateq_raw_nonshape_prop(ptr, rate_id, prop_kind)
+        if buf[0] == GRUNSTABLE_TYPE_F64:
+            return float
+        elif buf[0] == GRUNSTABLE_TYPE_STR:
+            return str
+        else:
+            # did we forget to update this function after adding a dtype?
+            raise RuntimeError(f"{rate_id=} has an unknown dtype")
+    else:
+        # did we forget to update this function after adding a new prop_kind?
+        raise ValueError(f"recieved an unknown prop_kind: {prop_kind}")
+
+cdef list rateq_load_string(
+    c_chemistry_data_storage *ptr,
+    grunstable_rateid_type rate_id,
+    Py_ssize_t n_items,
+    object key
+):
+    """
+    Load the single string or list of strings associated with rate_id
+
+    Notes
+    -----
+    strings are very much a special case (compared to say floating point
+    values or integer values)
+    """
+    # reminder: when Cython casts python's built-in (arbitrary precision) int type to a
+    #     C type will check for overflows during the cast
+    #     https://cython.readthedocs.io/en/3.0.x/src/quickstart/cythonize.html
+
+    # query max number of bytes per string (includes space for trailing '\0')
+    cdef Py_ssize_t bytes_per_string
+    try:
+        bytes_per_string= <Py_ssize_t>(
+            rateq_get_prop(ptr, rate_id, GRUNSTABLE_QPROP_MAXITEMSIZE)
+        )
+    except OverflowError:
+        raise RuntimeError(f"bytes per string is suspiciously big ({key=})") from None
+
+    # let's confirm that the allocation size doesn't exceed the max value of Py_ssize_t
+    # -> technically, the max allocation size shouldn't exceed SIZE_MAX from C's
+    #    <stdint.h> header (i.e. the max value of size_t)
+    # -> for simplicity, we require that it doesn't exceed the max value of Py_ssize_t
+    #    (by definition, the max value represented by Py_ssize_t uses 1 less bit of
+    #    storage than SIZE_MAX)
+    cdef Py_ssize_t max_alloc_size = sys.maxsize  # sys.maxsize is max val of Py_ssize_t
+    if (max_alloc_size / bytes_per_string) < n_items:
+        raise RuntimeError(f"{key=} requires too much memory to load")
+
+    # allocate memory
+    cdef char* str_storage = <char*> malloc(bytes_per_string * n_items)
+    cdef char** str_array = <char* const*> malloc(sizeof(char*) * n_items)
+    cdef Py_ssize_t i
+    cdef list out = []
+    try:
+        for i in range(n_items):
+            str_array[i] = &str_storage[i*bytes_per_string]
+
+        if (grunstable_ratequery_get_str(ptr, rate_id, <char* const *>str_array)
+            != GR_SUCCESS):
+            raise RuntimeError(f"Error retrieving data for the \"{key}\" key")
+
+        for i in range(n_items):
+            out.append((<bytes>str_array[i]).decode("ASCII"))
+    finally:
+        free(str_array)
+        free(str_storage)
+
+    return out
+
+
+cdef object rateq_load_f64(
+    c_chemistry_data_storage *ptr,
+    grunstable_rateid_type rate_id,
+    Py_ssize_t n_items,
+    object key
+):
+    """
+    Returns a 1D numpy array of loaded 64-bit floats
+
+    Notes
+    -----
+    If we add more types (other than strings), it would be easier to use cython's
+    fused-type functionality to generalize this function
+    """
+    out = np.empty(shape=(n_items,), dtype=np.float64)
+    cdef double[:] memview = out
+    if grunstable_ratequery_get_f64(ptr, rate_id, &memview[0]) != GR_SUCCESS:
+        raise RuntimeError(f"Error retrieving data for the \"{key}\" key")
+
+    # we set the WRITABLE flag to False so that people don't mistakenly believe
+    # that by modifying the array in place that they are updating Grackle's
+    # internal buffers
+    out.setflags(write=False)
+    return out
+
 
 cdef class _rate_mapping_access:
     # This class is used internally by the chemistry_data extension class to
@@ -924,77 +1164,216 @@ cdef class _rate_mapping_access:
     #   we might make some different choices)
 
     cdef c_chemistry_data_storage *_ptr
-    cdef object _rate_shape_callback
+    cdef dict _cached_name_rateid_map
+
+    # holds an object returned by weakref.ref that was called on the object
+    # that owns the wrapped _ptr.
+    # -> this is tracked purely as a safety mechanism to ensure that we won't
+    #    try to access a dangling pointer (to guard against programming mistakes
+    #    within the python module)
+    # -> if we are extremely concerned about performance, we can probably remove
+    #    this attribute
+    cdef object _parent_weakref
 
     def __cinit__(self):
         self._ptr = NULL
-        self._rate_shape_callback = None
+        self._cached_name_rateid_map = None
 
     def __init__(self):
         # Prevent accidental instantiation from normal Python code
         raise TypeError("This class cannot be instantiated directly.")
 
     @staticmethod
-    cdef _rate_mapping_access from_ptr_and_callback(
-        c_chemistry_data_storage *ptr, object callback
-    ):
+    cdef _rate_mapping_access from_ptr(c_chemistry_data_storage *ptr,
+                                       object parent_weakref):
+        """
+        Construct a _rate_mapping_access instance from the provided pointer
+        """
         cdef _rate_mapping_access out = _rate_mapping_access.__new__(
             _rate_mapping_access
         )
         out._ptr = ptr
-        out._rate_shape_callback = callback
+        out._parent_weakref = parent_weakref
         return out
 
-    def _access_rate(self, key, val):
-        # determine whether the rate needs to be updated
-        update_rate = (val is not _NOSETVAL)
+    @property
+    def _name_rateid_map(self):
+        """returns a mapping between rate names and rate id"""
 
-        rate_id = _name_rateid_map()[key] # will raise a KeyError if not known
-
-        if self._ptr is NULL:
+        parent_weakref = self._parent_weakref
+        if parent_weakref() is None:
+            raise RuntimeError(
+                "this appears to be a dangling instance. Access to rates "
+                "can't be provided when the parent has been garbage collected"
+            )
+        elif self._cached_name_rateid_map is not None:
+            return self._cached_name_rateid_map
+        elif self._ptr is NULL:
             raise RuntimeError(
                 "this instance hasn't been configured with a pointer for it "
                 "access retrieve data from"
             )
 
-        # retrieve the pointer
-        cdef double* rate_ptr = grunstable_ratequery_get_ptr(self._ptr, rate_id)
+        cdef dict out = {}
+        cdef const char* rate_name
+        cdef grunstable_rateid_type rate_id
+        cdef unsigned long long i = 0
+        while True:
+            rate_name = grunstable_ith_rate(self._ptr, i, &rate_id)
+            if rate_name is NULL:
+                self._cached_name_rateid_map = out
+                return out
+            out[rate_name.decode('UTF-8')] = int(rate_id)
+            i+=1
 
-        # lookup the shape of the rates
-        callback = self._rate_shape_callback
-        shape = callback(rate_name=key)
+    def _try_get_shape_type_pair(
+        self, rate_id: int
+    ) -> tuple[tuple[int, ...], type[float] | type[str]]:
+        """
+        try to query the shape associated with rate_id
+        """
+        cdef grunstable_rateid_type casted_id = <grunstable_rateid_type>(rate_id)
+        try:
+            shape = rateq_get_prop(self._ptr, casted_id, GRUNSTABLE_QPROP_SHAPE)
+            dtype = rateq_get_prop(self._ptr, casted_id, GRUNSTABLE_QPROP_DTYPE)
+            return (shape, dtype)
+        except RatequeryFailException:
+            return None
 
-        # predeclare a memoryview to use with 1d arrays
-        cdef double[:] memview
+    def _get_rate(self, key: str):
+        """
+        Returns a numpy array that holds a copy of grackle's internal data
+        associated with `key`
 
-        if shape == (): # handle the scalar case!
-            if update_rate:
-                rate_ptr[0] = <double?>val # <double?> cast performs type check
-            return float(rate_ptr[0])
-        elif len(shape) == 1:
-            if update_rate:
-                raise RuntimeError(
-                    f"You cannot assign a value to the {key!r} rate.\n\n"
-                    "If you are looking to modify the rate's values, you "
-                    f"should retrieve the {key!r} rate's value (a numpy "
-                    "array), and modify the values in place"
-                )
-            size = shape[0]
-            memview = <double[:size]>(rate_ptr)
-            return np.asarray(memview)
+        Parameters
+        ----------
+        key: str
+            The name of the quantity to access
+
+        Returns
+        -------
+        np.ndarray or float or list of strings or string
+            The retrieved value
+        """
+
+        # lookup the rate_id and shape of the rates
+        rate_id = self._name_rateid_map[key]
+        shape, dtype = self._try_get_shape_type_pair(rate_id)
+
+        ndim = len(shape)
+        nelements = 1 if shape == () else np.prod(shape)
+
+        if dtype == str:
+            if ndim > 1:
+                raise RuntimeError("multi-dimensional arrays of strings aren't alowed")
+            out = rateq_load_string(self._ptr, rate_id, nelements, key)
+        elif dtype == float:
+            out = rateq_load_f64(self._ptr, rate_id, nelements, key)
         else:
-            raise RuntimeError(
-                "no support is in place for higher dimensional arrays"
+            raise RuntimeError(f"no support (yet?) for rates of {dtype} values")
+
+        # declare a few memoryview types
+        if shape == ():
+            return dtype(out[0])
+        elif ndim != 1:
+            return _portable_reshape(out, shape=shape)
+        return out
+
+    def _set_rate(self, key, val):
+        """
+        Copies value(s) into the Grackle solver's internal buffer associated
+        with `key`
+
+        Parameters
+        ----------
+        key: str
+            The name of the quantity to modify
+        val: array_like
+            The values to be written
+        """
+        # lookup the rate_id and shape of the rates
+        rate_id = self._name_rateid_map[key]
+        shape, dtype = self._try_get_shape_type_pair(rate_id)
+
+        if dtype == str:
+            raise ValueError(
+                f"Grackle doesn't support assignment to keys (like \"{key}\") that are"
+                "associated with string values"
             )
+        elif dtype != float:
+            raise RuntimeError(f"no support (yet?) for rates of {dtype} values")
 
-    def __getitem__(self, key): return self._access_rate(key, _NOSETVAL)
+        # validate that val meets expectations and then coerce to `buf` a 1D numpy
+        # array that we can feed to the C function
+        if np.shape(val) != shape:
+            if shape == ():
+                raise ValueError(f"The \"{key}\" key expects a scalar")
+            raise ValueError(f"The \"{key}\" expects a value with shape, {shape}")
+        elif shape == ():
+            coerced = float(val)
+            buf = np.array([coerced])
+        else:
+            coerced = np.asanyarray(val, dtype=np.float64, order="C")
+            if hasattr(coerced, "unit") or hasattr(coerced, "units"):
+                # val is probably an astropy.Quantity or unyt.unyt_array instance
+                raise ValueError(
+                    f"'{type(self).__name__}' can't handle numpy.ndarray subclasses "
+                    "that attach unit information"
+                )
+            buf = _portable_reshape(coerced, shape = (coerced.size,))
 
-    def __setitem__(self, key, value): self._access_rate(key, value)
+        # create a memoryview of out (so we can access the underlying pointer)
+        cdef const double[:] memview = buf
 
-    def __iter__(self): return iter(_name_rateid_map())
+        if grunstable_ratequery_set_f64(self._ptr, rate_id, &memview[0]) != GR_SUCCESS:
+            writable = rateq_get_prop(self._ptr, rate_id, GRUNSTABLE_QPROP_WRITABLE)
+            if writable:
+                raise RuntimeError(
+                    f"Error writing to data associated with the \"{key}\" key"
+                )
+            else:
+                raise ValueError(
+                    f"the values associated with the \"{key}\" key can't be overwritten"
+                )
 
-    def __len__(self): return len(_name_rateid_map())
+    def get(self, key, default=None, /):
+        """
+        Retrieve the value associated with key, if key is known. Otherwise,
+        return the default.
+        """
+        try:
+            return self._get_rate(key)
+        except KeyError:
+            return default
 
+    def __getitem__(self, key): return self._get_rate(key)
+
+    def __setitem__(self, key, value): self._set_rate(key, value)
+
+    def __iter__(self): return iter(self._name_rateid_map)
+
+    def __len__(self): return len(self._name_rateid_map)
+
+
+def _get_inj_path_yield_map(
+    rate_map: _rate_mapping_access, key_prefix: str
+) -> MappingProxyType[str, np.ndarray]:
+    """
+    A helper function to return read-only mappings of arrays that share a
+    common prefix
+    """
+    if not key_prefix:
+        raise ValueError("key_prefix must be a non-empty string")
+    # we will strip off the common prefix
+    suffix_start = len(key_prefix)
+
+    tmp = {key[suffix_start:] : rate_map[key] for key in rate_map
+           if key.startswith(key_prefix)}
+
+    # we return a MappingProxyType rather than a regular dict to reflect the fact
+    # users can't directly the mutate the queried entries (the entries also don't
+    # have the numpy array's writable flag set to False)
+    return MappingProxyType(tmp)
 
 
 def _query_units(chemistry_data chem_data, object name,
