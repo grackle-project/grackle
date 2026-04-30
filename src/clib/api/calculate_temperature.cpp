@@ -15,7 +15,7 @@
 #include "calc_temp_cloudy.hpp"
 #include "grackle.h"
 #include "index_helper.h"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "support/config.hpp"
 
 #ifdef _OPENMP
@@ -45,7 +45,7 @@ extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
   if (my_chemistry->primordial_chemistry == 0) {
     GRIMPL_NS::calc_temp_cloudy(temperature, imetal, my_chemistry,
                                 my_rates->cloudy_primordial, my_fields,
-                                new_internalu_(my_units));
+                                GRIMPL_NS::new_internalu_(my_units));
     return GR_SUCCESS;
   };
 

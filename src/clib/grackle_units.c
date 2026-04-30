@@ -38,7 +38,7 @@ void set_velocity_units(code_units *my_units)
 
 static double get_temperature_units_(double velocity_units)
 {
-  return mh * POW(velocity_units, 2) / kboltz;
+  return mh * pow(velocity_units, 2.0) / kboltz;
 }
 
 

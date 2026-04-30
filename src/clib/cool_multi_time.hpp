@@ -17,7 +17,7 @@
 #define COOL_MULTI_TIME_HPP
 
 #include "grackle.h"  // gr_float
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "support/config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {

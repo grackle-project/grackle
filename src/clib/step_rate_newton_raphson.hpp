@@ -17,7 +17,7 @@
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
