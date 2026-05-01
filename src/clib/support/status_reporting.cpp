@@ -14,6 +14,7 @@
 #include <cstdarg>  // std::va_list, va_copy, va_end, va_start
 #include <cstdio>   // std::fflush, std::fprintf, stderr, std::vsnprintf
 #include <cstdlib>  // std::abort
+#include <vector>
 
 #include "status_reporting.hpp"
 #include "grackle.h" // GR_FAIL
@@ -27,7 +28,7 @@ static void vprint_err_(
     ? "{unspecified}" : locinfo.fn_name;
 
   const char* fallback_msg_ = "{nullptr encountered instead of error message}";
-  char* dynamic_msg_buf = nullptr;
+  std::vector<char> dynamic_msg_buf;
   const char* msg_buf;
   if (msg == nullptr) {
     msg_buf = fallback_msg_;
@@ -41,13 +42,13 @@ static void vprint_err_(
     va_end(vlist_copy);
 
     // allocate the buffer to hold the message
-    dynamic_msg_buf = new char[msg_len];
+    dynamic_msg_buf.resize(msg_len);
 
     // actually format the message
-    std::vsnprintf(dynamic_msg_buf, msg_len, msg, vlist);
+    std::vsnprintf(dynamic_msg_buf.data(), msg_len, msg, vlist);
     va_end(vlist);
 
-    msg_buf = dynamic_msg_buf;
+    msg_buf = dynamic_msg_buf.data();
   }
 
   const char* descr = (internal_error == 1) ? "FATAL" : "ERROR";
@@ -56,8 +57,6 @@ static void vprint_err_(
     stderr, "Grackle-%s %s:%d in %s] %s\n", descr, locinfo.file,
     locinfo.lineno, santized_func_name, msg_buf
   );
-
-  if (dynamic_msg_buf != nullptr) { delete[] dynamic_msg_buf; }
 }
 
 void grimpl_abort_with_internal_err_(
