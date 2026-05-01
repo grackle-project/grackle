@@ -83,7 +83,6 @@ add_library(Grackle_Grackle
 
   # C source files
   index_helper.c
-  rate_functions.c
   status_reporting.c status_reporting.h
 
   # auto-generated C++ source files
@@ -136,6 +135,7 @@ add_library(Grackle_Grackle
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
   ratequery.cpp ratequery.hpp
+  rate_functions.cpp
   rate_timestep_g.cpp rate_timestep_g.hpp
   scale_fields.cpp scale_fields.hpp
   self_shielding_err_check.hpp

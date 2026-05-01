@@ -33,7 +33,7 @@
 
 
 // Calculation of k1 (HI + e --> HII + 2e)
-double k1_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k1_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
@@ -54,7 +54,7 @@ double k1_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k3 (HeI + e --> HeII + 2e)
-double k3_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k3_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
@@ -75,7 +75,7 @@ double k3_rate(double T, double units, chemistry_data *my_chemistry)
 }   
 
 //Calculation of k4 (HeII + e --> HeI + photon)
-double k4_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k4_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
 
@@ -95,7 +95,7 @@ double k4_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k2 (HII + e --> HI + photon)
-double k2_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->CaseBRecombination == 1) {
         if (T < 1.0e9) {
@@ -127,7 +127,7 @@ double k2_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k5 (HeII + e --> HeIII + 2e)
-double k5_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k5_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
@@ -150,7 +150,7 @@ double k5_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k6 (HeIII + e --> HeII + photon)
-double k6_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k6_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k6;
     //Has case B recombination setting.
@@ -169,14 +169,14 @@ double k6_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k7 (HI + e --> HM + photon)
-double k7_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k7_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Fit --> Stancil, Lepp & Dalgarno (1998, ApJ, 509, 1). Based on photodetachment cross-section --> Wishart (1979, MNRAS, 187, P59).
     return 3.0e-16*pow(T/3.0e2, 0.95) * exp(-T/9.32e3) / units;
 }
 
 //Calculation of k8 (HI + HM --> H2I* + e)
-double k8_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k8_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Fit based on experimental measurements --> Kreckel et al (2010, Science, 329, 69).
     return 1.35e-9 * ( pow(T, 9.8493e-2) + 3.2852e-1*pow(T, 5.5610e-1) + 2.771e-7*pow(T, 2.1826) )
@@ -185,7 +185,7 @@ double k8_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k9 (HI + HII --> H2II + photon)
-double k9_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k9_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k9;
     //Fit --> Latif et al (2015, MNRAS, 446, 3163): valid for 1 < T < 32000 K.
@@ -203,13 +203,13 @@ double k9_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k10 (H2II + HI --> H2I* + HII)
-double k10_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k10_rate(double T, double units, chemistry_data *my_chemistry)
 {
     return 6.0e-10 / units;
 }
 
 //Calculation of k11 (H2I + HII --> H2II + HI)
-double k11_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k11_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double logT = log(T);
     double T_ev = T / 11605.0;
@@ -250,7 +250,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k12 (H2I + e --> 2HI + e)
-double k12_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k12_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
     
@@ -265,7 +265,7 @@ double k12_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k13 (H2I + HI --> 3HI)
-double k13_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k13_rate(double T, double units, chemistry_data *my_chemistry)
 {   
     double T_ev = T / 11605.0;
 
@@ -458,7 +458,7 @@ static void k13dd_rate_(double T, int idt, double units, double *k13dd_results,
 }
 
 //Calculation of k13dd. k13dd_results is a pointer to an array of length 14 * sizeof(double).
-void k13dd_rate(double T, double units, double *k13dd_results, chemistry_data *my_chemistry)
+extern "C" void k13dd_rate(double T, double units, double *k13dd_results, chemistry_data *my_chemistry)
 {
     for (int idt = 0; idt < 2; idt++){
         k13dd_rate_(T, idt, units, k13dd_results, my_chemistry);
@@ -466,7 +466,7 @@ void k13dd_rate(double T, double units, double *k13dd_results, chemistry_data *m
 }
 
 //Calculation of k14 (HM + e --> HI + 2e)
-double k14_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k14_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
@@ -489,7 +489,7 @@ double k14_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k15 (HM + HI --> 2HI + e)
-double k15_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k15_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
@@ -513,14 +513,14 @@ double k15_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k16 (HM + HI --> 2HI)
-double k16_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k16_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Fit --> Croft et al (1999, MNRAS, 304, 327). Based on cross-section --> Fussen & Kubach (1986, J. Phys. B, 18 L31).
     return 2.4e-6*(1.0 + T/2.0e4) / sqrt(T) / units;
 }
 
 //Calculation of k17 (HM + HI --> H2I + e)
-double k17_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k17_rate(double T, double units, chemistry_data *my_chemistry)
 {
      double k17;
     if (T > 1.0e4) {
@@ -532,7 +532,7 @@ double k17_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k18 (H2I + e --> 2HI)
-double k18_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k18_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k18;
     if (T > 617.0) {
@@ -544,24 +544,24 @@ double k18_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k19 (H2I + HM --> H2I + HI)
-double k19_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k19_rate(double T, double units, chemistry_data *my_chemistry)
 {
     return 5.e-7 * sqrt(100.0/T) / units;
 }
 
 //Calculation of k20 (This is not currently used in the code)
-double k20_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k20_rate(double T, double units, chemistry_data *my_chemistry)
 {
     return tiny;
 }
 
 //Calculation of k21 (2HI + H2I --> H2I + H2I)
-double k21_rate(double T, double units, chemistry_data *my_chemistry){
+extern "C" double k21_rate(double T, double units, chemistry_data *my_chemistry){
     return 2.8e-31 * pow(T, -0.6) / units;
 }
 
 //Calculation of k22 (2HI + HI --> H2I + HI)
-double k22_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k22_rate(double T, double units, chemistry_data *my_chemistry)
 {   
     double k22;
     switch (my_chemistry->three_body_rate) {
@@ -608,7 +608,7 @@ double k22_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k23.
-double k23_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k23_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k23;
     k23 = ( (8.125e-8/sqrt(T)) * exp(-52000.0/T) * (1.0 - exp(-6000.0/T)) ) / units;
@@ -617,7 +617,7 @@ double k23_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k50 (HII + DI --> HI + DII)
-double k50_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k50_rate(double T, double units, chemistry_data *my_chemistry)
 {
   if (my_chemistry->hd_reaction_rates == 0) {
     // Fit taken from Savin (2002) which is valid for T < 2e5 K.
@@ -641,7 +641,7 @@ double k50_rate(double T, double units, chemistry_data *my_chemistry)
 }
         
 //Calculation of k51 (HI + DII --> HII + DI)
-double k51_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k51_rate(double T, double units, chemistry_data *my_chemistry)
 {   
   if (my_chemistry->hd_reaction_rates == 0) {
       // Fit taken from Savin (2002) which is valid for T < 2e5 K.
@@ -659,7 +659,7 @@ double k51_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k52 (H2I + DII --> HDI + HII)
-double k52_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k52_rate(double T, double units, chemistry_data *my_chemistry)
 {
   if (my_chemistry->hd_reaction_rates == 0) {
     // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
@@ -682,7 +682,7 @@ double k52_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k53 (HDI + HII --> H2I + DII)
-double k53_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k53_rate(double T, double units, chemistry_data *my_chemistry)
 {
   if (my_chemistry->hd_reaction_rates == 0) {
     // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
@@ -699,7 +699,7 @@ double k53_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k54 (H2I + DI --> HDI + HI)
-double k54_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k54_rate(double T, double units, chemistry_data *my_chemistry)
 {
   if (my_chemistry->hd_reaction_rates == 0) {
     // Fit from Clark et al (2011), which is based on data in Mielke et al (2003).
@@ -724,7 +724,7 @@ double k54_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k55 (HDI + HI --> H2I + DI)
-double k55_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k55_rate(double T, double units, chemistry_data *my_chemistry)
 {
   if (my_chemistry->hd_reaction_rates == 0) {
     // Fit from Galli & Palla (2002), which is based on Shavitt (1959).
@@ -748,7 +748,7 @@ double k55_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k56 (DI + HM --> HDI + e)
-double k56_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k56_rate(double T, double units, chemistry_data *my_chemistry)
 {
   if (my_chemistry->hd_reaction_rates == 0) {
     // This is the same as DM + HI --> HDI + e
@@ -767,7 +767,7 @@ double k56_rate(double T, double units, chemistry_data *my_chemistry)
 }
         
 //Calculation of k57 (HI + HI --> HII + HI + e)
-double k57_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k57_rate(double T, double units, chemistry_data *my_chemistry)
 {
     // These rate coefficients are from Lenzuni, Chernoff & Salpeter (1991).
     // k57 value based on experimental cross-sections from Gealy & van Zyl (1987).
@@ -779,7 +779,7 @@ double k57_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of k58 (HI + HeI --> HII + HeI + e)
-double k58_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double k58_rate(double T, double units, chemistry_data *my_chemistry)
 {
     // These rate coefficients are from Lenzuni, Chernoff & Salpeter (1991).
     // k58 value based on cross-sections from van Zyl, Le & Amme (1981).
@@ -791,7 +791,7 @@ double k58_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of h2dust (2H + grain --> H2 + grain)
-double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
+extern "C" double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
 {
     //Defined at the top of initialize_rates but pasted here for ease.
     double fgr = 0.009387;
@@ -823,28 +823,28 @@ double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_che
 }
 
 //Calculation of n_cr_n.
-double n_cr_n_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double n_cr_n_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //H2 formation heating terms from Equation 23, Omuaki (2000).
     return 1.0e6 * pow(T, -0.5);
 }
 
 //Calculation of n_cr_d1.
-double n_cr_d1_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double n_cr_d1_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //H2 formation heating terms from Equation 23, Omuaki (2000).
     return 1.6 * exp(-pow(400.0 / T, 2.0));
 }
 
 //Calculation of n_cr_d2.
-double n_cr_d2_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double n_cr_d2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //H2 formation heating terms from Equation 23, Omuaki (2000).
     return 1.4 * exp(-12000.0 / (T + 1200.0));
 }
 
 //Calculation of ceHI.
-double ceHI_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double ceHI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->collisional_excitation_rates == 1){
         return 7.5e-19*exp( -fmin(log(dhuge), 118348.0 / T) )
@@ -855,7 +855,7 @@ double ceHI_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of ceHeI.
-double ceHeI_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double ceHeI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->collisional_excitation_rates == 1){
         return 9.1e-27*exp(-fmin(log(dhuge), 13179.0/T))
@@ -866,7 +866,7 @@ double ceHeI_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of ceHeII.
-double ceHeII_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double ceHeII_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->collisional_excitation_rates == 1){
         return 5.54e-17*exp(-fmin(log(dhuge), 473638.0/T))
@@ -877,7 +877,7 @@ double ceHeII_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of ciHeIS.
-double ciHeIS_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double ciHeIS_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->collisional_ionisation_rates == 1){
         return 5.01e-27*pow(T, -0.1687) / ( 1.0 + sqrt(T/1.0e5) )
@@ -888,7 +888,7 @@ double ciHeIS_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of ciHI.
-double ciHI_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double ciHI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Collisional ionization. Polynomial fit from Tom Abel.
     if (my_chemistry->collisional_ionisation_rates == 1){
@@ -899,7 +899,7 @@ double ciHI_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of ciHeI.
-double ciHeI_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double ciHeI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Collisional ionization. Polynomial fit from Tom Abel.
     if (my_chemistry->collisional_ionisation_rates == 1){
@@ -910,7 +910,7 @@ double ciHeI_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of ciHeII.
-double ciHeII_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double ciHeII_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Collisional ionization. Polynomial fit from Tom Abel.
     if (my_chemistry->collisional_ionisation_rates == 1){
@@ -921,7 +921,7 @@ double ciHeII_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of reHII.
-double reHII_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double reHII_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->recombination_cooling_rates == 1){
         //Define parameters used in the calculations.
@@ -943,7 +943,7 @@ double reHII_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of reHII.
-double reHeII1_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double reHeII1_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->recombination_cooling_rates == 1){
         //Define parameters used in the calculations.
@@ -963,7 +963,7 @@ double reHeII1_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of reHII2.
-double reHeII2_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double reHeII2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Dielectronic recombination (Cen, 1992).
     if (my_chemistry->recombination_cooling_rates == 1){
@@ -977,7 +977,12 @@ double reHeII2_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of reHIII.
-double reHeIII_rate(double T, double units, chemistry_data *my_chemistry)
+// The linter tries to warn that this name is confusable with reHeII1_rate.
+// While that is indeed true, we're stuck with the names until Grackle 4.0
+// (so we suppress the lint)
+//
+// NOLINTNEXTLINE(misc-confusable-identifiers)
+extern "C" double reHeIII_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->recombination_cooling_rates == 1){
         //Define parameters used in the calculations.
@@ -999,7 +1004,7 @@ double reHeIII_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of brem.
-double brem_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double brem_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->bremsstrahlung_cooling_rates == 1){
         return 1.43e-27 * sqrt(T)
@@ -1011,7 +1016,7 @@ double brem_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of vibh.
-double vibh_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double vibh_rate(double T, double units, chemistry_data *my_chemistry)
 {
     // The following snippet seems to be duplicated from hyd01k_rate
     //double par_dum;
@@ -1025,7 +1030,7 @@ double vibh_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of hyd01k.
-double hyd01k_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double hyd01k_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Dummy parameter used in the calculation.
     double par_dum;
@@ -1040,7 +1045,7 @@ double hyd01k_rate(double T, double units, chemistry_data *my_chemistry)
 }
             
 //Calculation of h2k01.
-double h2k01_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double h2k01_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Dummy parameter used in the calculation.
     double par_dum = 8.152e-13 * ( 4.2 / (kboltz * (T + 1190.0)) + 1.0 / (kboltz * T));
@@ -1049,7 +1054,7 @@ double h2k01_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of rotl.
-double rotl_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double rotl_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double par_x = log10(T / 1.0e4); //Parameter used in the following calculation.
 
@@ -1061,7 +1066,7 @@ double rotl_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of roth.
-double roth_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double roth_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double par_x = log10(T/1.0e4); //Parameter used in the following calculation.
 
@@ -1073,7 +1078,7 @@ double roth_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of GP99LowDensityLimit.
-double GP99LowDensityLimit_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double GP99LowDensityLimit_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
     double tm = fmax(T, 13.0); //no cooling below 13 Kelvin
@@ -1085,7 +1090,7 @@ double GP99LowDensityLimit_rate(double T, double units, chemistry_data *my_chemi
 }
 
 //Calculatin of GP99HighDensityLimit.
-double GP99HighDensityLimit_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double GP99HighDensityLimit_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
     double tm = fmax(T, 13.0); //no cooling below 13 Kelvin
@@ -1101,7 +1106,7 @@ double GP99HighDensityLimit_rate(double T, double units, chemistry_data *my_chem
 }
 
 //Calculation of GAHI.
-double GAHI_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double GAHI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     /* -- Comments from original code -- 
     h2_h_cooling_rate == 1 :
@@ -1170,7 +1175,7 @@ double GAHI_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of GAH2.
-double GAH2_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double GAH2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
     double tm  = fmax(T, 10.0);
@@ -1186,7 +1191,7 @@ double GAH2_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of GAHe.
-double GAHe_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double GAHe_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
     double tm  = fmax(T, 10.0);
@@ -1202,7 +1207,7 @@ double GAHe_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of GAHp.
-double GAHp_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double GAHp_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
     double tm  = fmax(T, 10.0);
@@ -1218,7 +1223,7 @@ double GAHp_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of GAel.
-double GAel_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double GAel_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
     double tm  = fmax(T, 10.0);
@@ -1251,7 +1256,7 @@ double GAel_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of H2LTE.
-double H2LTE_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double H2LTE_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
     double tm  = fmax(T, 10.0);
@@ -1275,7 +1280,7 @@ double H2LTE_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of HDlte.
-double HDlte_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double HDlte_rate(double T, double units, chemistry_data *my_chemistry)
 {   
     //Fit from Coppola et al 2011. LTE (ergs/s) -> hdlte (ergs cm3/s)
 
@@ -1294,7 +1299,7 @@ double HDlte_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of HDlow.
-double HDlow_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double HDlow_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Rate based on (Wrathmall, Gusdorf & Flower, 2007) HD-H collisional excitation rates.
     //Constrain temperature.
@@ -1311,7 +1316,7 @@ double HDlow_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of cie_thin_cooling_rate.
-double cie_thin_cooling_rate(double T){
+extern "C" double cie_thin_cooling_rate(double T){
 
     /* 
     *  Comments found in the original fortran code:
@@ -1379,14 +1384,14 @@ double cie_thin_cooling_rate(double T){
 }
 
 //Calculation of cieco.
-double cieco_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double cieco_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double cierate = cie_thin_cooling_rate(T);
 
     return cierate * (mh/2.0) / units;
 }
 
-double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
 {
   double grain_coef;
   double fgr = 0.009387;
@@ -1419,7 +1424,7 @@ double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
   }
 }
 
-double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Variables.
     double f_vel = 0.5 / sqrt(2.0) + 0.0833333 / sqrt(4.0);
@@ -1430,7 +1435,7 @@ double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 
-double regr_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double regr_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //(Equation 9, Wolfire et al., 1995)
     double grbeta = 0.74 / pow(T, 0.068);
@@ -1440,12 +1445,12 @@ double regr_rate(double T, double units, chemistry_data *my_chemistry)
 //The below rates are scalar -- they have no temperature dependence.
 
 //Calculation of comp.
-double comp_rate(double units, chemistry_data *my_chemistry)
+extern "C" double comp_rate(double units, chemistry_data *my_chemistry)
 {
     return 5.65e-36 / units;
 }
 
-double gammah_rate(double units, chemistry_data *my_chemistry)
+extern "C" double gammah_rate(double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->photoelectric_heating <= 1) {
        // Default: 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3)
@@ -1457,7 +1462,7 @@ double gammah_rate(double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of gamma_isrf.
-double gamma_isrf_rate(double units, chemistry_data *my_chemistry)
+extern "C" double gamma_isrf_rate(double units, chemistry_data *my_chemistry)
 {
   // Parameter definition.
   double fgr = 0.009387;
@@ -1480,7 +1485,7 @@ double gamma_isrf_rate(double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of gamma_isrf2.
-double gamma_isrf2_rate(double units, chemistry_data *my_chemistry)
+extern "C" double gamma_isrf2_rate(double units, chemistry_data *my_chemistry)
 {
     return 5.3e-3;
     //MW interstellar radiation field (Goldsmith 2001)
@@ -1489,7 +1494,7 @@ double gamma_isrf2_rate(double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of grain growth rate.
-double grain_growth_rate(double T, double units, chemistry_data *my_chemistry)
+extern "C" double grain_growth_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double vH_avg = sqrt( kboltz * T / 2.0 / pi / mh);
     return 4.0 * vH_avg * mh / units;
@@ -1498,7 +1503,7 @@ double grain_growth_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of H2 formation rate on S grain surfaces. (Cazaux & Tielens 2002)
-double h2dust_S_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
+extern "C" double h2dust_S_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
 {
     // Constants. 
     double E_HC_Silicate = 200.0, E_HP_Silicate = 650.0, E_S_Silicate = 3.0e4;
@@ -1519,7 +1524,7 @@ double h2dust_S_rate(double T, double T_dust, double units, chemistry_data *my_c
 }
 
 //Calculation of H2 formation rate on C grain surfaces. (Cazaux & Tielens 2002)
-double h2dust_C_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
+extern "C" double h2dust_C_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
 {
     // Constants.
     double E_HC_AmCarbon = 250.0, E_HP_AmCarbon = 800.0, E_S_AmCarbon = 3.0e4;
