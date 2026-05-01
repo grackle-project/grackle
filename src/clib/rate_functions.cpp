@@ -29,7 +29,7 @@
 #include "grackle_rate_functions.h"
 #include "cie_thin_cooling_rate_tables.hpp"
 #include "phys_constants.h"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 #include "support/config.hpp"
 
 

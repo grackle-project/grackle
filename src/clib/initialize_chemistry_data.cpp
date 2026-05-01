@@ -29,7 +29,7 @@
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 #include "ratequery.hpp"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 #ifdef _OPENMP
 #include <omp.h>

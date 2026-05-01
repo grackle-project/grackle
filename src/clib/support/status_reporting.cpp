@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "status_reporting.h"
+#include "status_reporting.hpp"
 #include "grackle.h" // GR_FAIL
 
 // this is the internal routine that everything else dispatches to
@@ -41,7 +41,7 @@ static void vprint_err_(
     va_end(vlist_copy);
 
     // allocate the buffer to hold the message
-    dynamic_msg_buf = malloc(sizeof(char) * msg_len);
+    dynamic_msg_buf = new char[msg_len];
 
     // actually format the message
     vsnprintf(dynamic_msg_buf, msg_len, msg, vlist);
@@ -57,7 +57,7 @@ static void vprint_err_(
     locinfo.lineno, santized_func_name, msg_buf
   );
 
-  if (dynamic_msg_buf != NULL) { free(dynamic_msg_buf); }
+  if (dynamic_msg_buf != NULL) { delete[] dynamic_msg_buf; }
 }
 
 void grimpl_abort_with_internal_err_(
@@ -78,6 +78,7 @@ int grimpl_print_and_return_err_(
   va_list args;
   va_start(args, msg);
   vprint_err_(0, locinfo, msg, args);
+  va_end(args);
   return GR_FAIL;
 }
 
@@ -87,5 +88,6 @@ void grimpl_print_err_msg_(
   va_list args;
   va_start(args, msg);
   vprint_err_(0, locinfo, msg, args);
+  va_end(args);
 }
 

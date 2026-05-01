@@ -123,8 +123,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef STATUS_REPORTING_H
-#define STATUS_REPORTING_H
+#ifndef SUPPORT_STATUS_REPORTING_HPP
+#define SUPPORT_STATUS_REPORTING_HPP
 
 #ifdef __cplusplus
 extern "C" {
@@ -375,4 +375,4 @@ ERRFMT_ATTR_(2) void grimpl_print_err_msg_(
 } // extern "C"
 #endif
 
-#endif /* STATUS_REPORTING */
+#endif  // SUPPORT_STATUS_REPORTING_HPP
