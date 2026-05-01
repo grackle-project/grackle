@@ -1332,6 +1332,10 @@ extern "C" double cie_thin_cooling_rate(double T){
     *      it is not clear what happens in the regime where H2 becomes mostly dissociated.
     */
 
+    // bring the names t_cie_c and cie_table_c into the current scope
+    using GRIMPL_NS::cie_thin_cooling_rate_table::t_cie_c;
+    using GRIMPL_NS::cie_thin_cooling_rate_table::cie_table_c;
+
     //* Compute rough extrapolations for extreme temperatures.
     // Low temperatures extrapolated with fourth power.
     if (T <= t_cie_c[0]) {

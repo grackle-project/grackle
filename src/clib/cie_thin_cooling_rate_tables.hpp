@@ -12,8 +12,13 @@
 #ifndef CIE_THIN_COOLING_RATE_TABLES_HPP
 #define CIE_THIN_COOLING_RATE_TABLES_HPP
 
+#include "support/config.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
+namespace cie_thin_cooling_rate_table {
+
 //First array.
-double t_cie_c[] = {4.000e02,4.040e02,4.080e02,4.121e02,4.162e02, \
+inline constexpr const double t_cie_c[] = {4.000e02,4.040e02,4.080e02,4.121e02,4.162e02, \
           4.204e02,4.246e02,4.289e02,4.331e02,4.375e02,4.418e02, \
           4.463e02,4.507e02,4.552e02,4.598e02,4.644e02,4.690e02, \
           4.737e02,4.785e02,4.832e02,4.881e02,4.930e02,4.979e02, \
@@ -64,7 +69,7 @@ double t_cie_c[] = {4.000e02,4.040e02,4.080e02,4.121e02,4.162e02, \
           6.955e03};
 
 //Second array.
-double cie_table_c[] = {1.435e-15,1.488e-15,1.544e-15,1.601e-15,1.661e-15, \
+inline constexpr const double cie_table_c[] = {1.435e-15,1.488e-15,1.544e-15,1.601e-15,1.661e-15, \
           1.722e-15,1.786e-15,1.853e-15,1.922e-15,1.993e-15,2.067e-15, \
           2.143e-15,2.223e-15,2.305e-15,2.390e-15,2.479e-15,2.570e-15, \
           2.665e-15,2.763e-15,2.865e-15,2.971e-15,3.080e-15,3.194e-15, \
@@ -113,5 +118,8 @@ double cie_table_c[] = {1.435e-15,1.488e-15,1.544e-15,1.601e-15,1.661e-15, \
           1.239e-10,1.275e-10,1.311e-10,1.348e-10,1.386e-10,1.425e-10, \
           1.464e-10,1.505e-10,1.546e-10,1.588e-10,1.631e-10,1.674e-10, \
           1.719e-10};
+
+}  // namespace cie_thin_cooling_rate_table
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // CIE_THIN_COOLING_RATE_TABLES_HPP
