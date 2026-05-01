@@ -1,15 +1,15 @@
-/**********************************************************************
- * ---- File containing definitions of all rates ----
- *
- * Written by: Ewan Jones
- * Date of Creation: 26/4/2021
- * 
- * Purpose:
- *  Contains definitions for all rates. These will be called within 
- *  calc_rates_g_c.
- * 
- * Set "units" parameter = 1 for cgs unit outputs.
-**********************************************************************/
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// @author Ewan Jones
+/// Contains definitions of all classic rates.
+///
+//===----------------------------------------------------------------------===//
 
 //* Macro definitions for constants.
 //Kelvin to eV conversion factor
