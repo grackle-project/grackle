@@ -22,6 +22,7 @@
 #endif
 
 #include <math.h>
+#include <cmath>
 
 #include "grackle_macros.h"
 #include "grackle_types.h"
@@ -35,19 +36,19 @@
 extern "C" double k1_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
-    double logT_ev = log(T_ev);
+    double logT_ev = std::log(T_ev);
 
-    double k1 = exp( -32.71396786375
+    double k1 = std::exp( -32.71396786375
                         + 13.53655609057*logT_ev
-                        - 5.739328757388*pow(logT_ev, 2)
-                        + 1.563154982022*pow(logT_ev, 3)
-                        - 0.2877056004391*pow(logT_ev, 4)
-                        + 0.03482559773736999*pow(logT_ev, 5)
-                        - 0.00263197617559*pow(logT_ev, 6)
-                        + 0.0001119543953861*pow(logT_ev, 7)
-                        - 2.039149852002e-6*pow(logT_ev, 8)) / units;
+                        - 5.739328757388*std::pow(logT_ev, 2)
+                        + 1.563154982022*std::pow(logT_ev, 3)
+                        - 0.2877056004391*std::pow(logT_ev, 4)
+                        + 0.03482559773736999*std::pow(logT_ev, 5)
+                        - 0.00263197617559*std::pow(logT_ev, 6)
+                        + 0.0001119543953861*std::pow(logT_ev, 7)
+                        - 2.039149852002e-6*std::pow(logT_ev, 8)) / units;
     if (T_ev <= 0.8){
-        k1 = fmax(tiny, k1); 
+        k1 = std::fmax(tiny, k1); 
     }
     return k1;
 }
@@ -56,18 +57,18 @@ extern "C" double k1_rate(double T, double units, chemistry_data *my_chemistry)
 extern "C" double k3_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
-    double logT_ev = log(T_ev);
+    double logT_ev = std::log(T_ev);
 
     if (T_ev > 0.8){
-        return exp( -44.09864886561001
+        return std::exp( -44.09864886561001
                 + 23.91596563469*logT_ev
-                - 10.75323019821*pow(logT_ev, 2)
-                + 3.058038757198*pow(logT_ev, 3)
-                - 0.5685118909884001*pow(logT_ev, 4)
-                + 0.06795391233790001*pow(logT_ev, 5)
-                - 0.005009056101857001*pow(logT_ev, 6)
-                + 0.0002067236157507*pow(logT_ev, 7)
-                - 3.649161410833e-6*pow(logT_ev, 8)) / units;
+                - 10.75323019821*std::pow(logT_ev, 2)
+                + 3.058038757198*std::pow(logT_ev, 3)
+                - 0.5685118909884001*std::pow(logT_ev, 4)
+                + 0.06795391233790001*std::pow(logT_ev, 5)
+                - 0.005009056101857001*std::pow(logT_ev, 6)
+                + 0.0002067236157507*std::pow(logT_ev, 7)
+                - 3.649161410833e-6*std::pow(logT_ev, 8)) / units;
     } else {
         return tiny;
     }
@@ -80,16 +81,16 @@ extern "C" double k4_rate(double T, double units, chemistry_data *my_chemistry)
 
     //If case B recombination on.
     if (my_chemistry->CaseBRecombination == 1){
-        return 1.26e-14 * pow(5.7067e5/T, 0.75) / units;
+        return 1.26e-14 * std::pow(5.7067e5/T, 0.75) / units;
     }
 
     //If case B recombination off.
     if (T_ev > 0.8){
-        return (1.54e-9*(1.0 + 0.3 / exp(8.099328789667/T_ev))
-             / (exp(40.49664394833662/T_ev)*pow(T_ev, 1.5))
-             + 3.92e-13/pow(T_ev, 0.6353)) / units;
+        return (1.54e-9*(1.0 + 0.3 / std::exp(8.099328789667/T_ev))
+             / (std::exp(40.49664394833662/T_ev)*std::pow(T_ev, 1.5))
+             + 3.92e-13/std::pow(T_ev, 0.6353)) / units;
     } else {
-        return 3.92e-13/pow(T_ev, 0.6353) / units;
+        return 3.92e-13/std::pow(T_ev, 0.6353) / units;
     }
 }
 
@@ -98,8 +99,8 @@ extern "C" double k2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->CaseBRecombination == 1) {
         if (T < 1.0e9) {
-            return 4.881357e-6*pow(T, -1.5) \
-                * pow((1.0 + 1.14813e2*pow(T, -0.407)), -2.242) / units;
+            return 4.881357e-6*std::pow(T, -1.5) \
+                * std::pow((1.0 + 1.14813e2*std::pow(T, -0.407)), -2.242) / units;
         } else {
             return tiny;
         }  
@@ -107,18 +108,18 @@ extern "C" double k2_rate(double T, double units, chemistry_data *my_chemistry)
         if (T > 5500) {
             //Convert temperature to appropriate form.
             double T_ev = T / tevk;
-            double logT_ev = log(T_ev);
+            double logT_ev = std::log(T_ev);
 
-            return exp( -28.61303380689232 \
+            return std::exp( -28.61303380689232 \
                 - 0.7241125657826851*logT_ev \
-                - 0.02026044731984691*pow(logT_ev, 2) \
-                - 0.002380861877349834*pow(logT_ev, 3) \
-                - 0.0003212605213188796*pow(logT_ev, 4) \
-                - 0.00001421502914054107*pow(logT_ev, 5) \
-                + 4.989108920299513e-6*pow(logT_ev, 6) \
-                + 5.755614137575758e-7*pow(logT_ev, 7) \
-                - 1.856767039775261e-8*pow(logT_ev, 8) \
-                - 3.071135243196595e-9*pow(logT_ev, 9)) / units;
+                - 0.02026044731984691*std::pow(logT_ev, 2) \
+                - 0.002380861877349834*std::pow(logT_ev, 3) \
+                - 0.0003212605213188796*std::pow(logT_ev, 4) \
+                - 0.00001421502914054107*std::pow(logT_ev, 5) \
+                + 4.989108920299513e-6*std::pow(logT_ev, 6) \
+                + 5.755614137575758e-7*std::pow(logT_ev, 7) \
+                - 1.856767039775261e-8*std::pow(logT_ev, 8) \
+                - 3.071135243196595e-9*std::pow(logT_ev, 9)) / units;
         } else {
             return k4_rate(T, units, my_chemistry);
         }
@@ -129,19 +130,19 @@ extern "C" double k2_rate(double T, double units, chemistry_data *my_chemistry)
 extern "C" double k5_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
-    double logT_ev = log(T_ev);
+    double logT_ev = std::log(T_ev);
 
     double k5;
     if (T_ev > 0.8){
-        k5 = exp(-68.71040990212001
+        k5 = std::exp(-68.71040990212001
                 + 43.93347632635*logT_ev
-                - 18.48066993568*pow(logT_ev, 2)
-                + 4.701626486759002*pow(logT_ev, 3)
-                - 0.7692466334492*pow(logT_ev, 4)
-                + 0.08113042097303*pow(logT_ev, 5)
-                - 0.005324020628287001*pow(logT_ev, 6)
-                + 0.0001975705312221*pow(logT_ev, 7)
-                - 3.165581065665e-6*pow(logT_ev, 8)) / units;
+                - 18.48066993568*std::pow(logT_ev, 2)
+                + 4.701626486759002*std::pow(logT_ev, 3)
+                - 0.7692466334492*std::pow(logT_ev, 4)
+                + 0.08113042097303*std::pow(logT_ev, 5)
+                - 0.005324020628287001*std::pow(logT_ev, 6)
+                + 0.0001975705312221*std::pow(logT_ev, 7)
+                - 3.165581065665e-6*std::pow(logT_ev, 8)) / units;
     } else {
         k5 = tiny;
     }
@@ -155,14 +156,14 @@ extern "C" double k6_rate(double T, double units, chemistry_data *my_chemistry)
     //Has case B recombination setting.
     if (my_chemistry->CaseBRecombination == 1) {
         if (T < 1.0e9) {
-            k6 = 7.8155e-5*pow(T, -1.5)
-                * pow((1.0 + 2.0189e2*pow(T, -0.407)), -2.242) / units;
+            k6 = 7.8155e-5*std::pow(T, -1.5)
+                * std::pow((1.0 + 2.0189e2*std::pow(T, -0.407)), -2.242) / units;
         } else {
             k6 = tiny;
         }
     } else {
-        k6 = 3.36e-10/sqrt(T)/pow(T/1.0e3, 0.2)
-             / (1.0 + pow(T/1.0e6, 0.7)) / units;
+        k6 = 3.36e-10/std::sqrt(T)/std::pow(T/1.0e3, 0.2)
+             / (1.0 + std::pow(T/1.0e6, 0.7)) / units;
     }
     return k6;
 }
@@ -171,15 +172,15 @@ extern "C" double k6_rate(double T, double units, chemistry_data *my_chemistry)
 extern "C" double k7_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Fit --> Stancil, Lepp & Dalgarno (1998, ApJ, 509, 1). Based on photodetachment cross-section --> Wishart (1979, MNRAS, 187, P59).
-    return 3.0e-16*pow(T/3.0e2, 0.95) * exp(-T/9.32e3) / units;
+    return 3.0e-16*std::pow(T/3.0e2, 0.95) * std::exp(-T/9.32e3) / units;
 }
 
 //Calculation of k8 (HI + HM --> H2I* + e)
 extern "C" double k8_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    //Fit based on experimental measurements --> Kreckel et al (2010, Science, 329, 69).
-    return 1.35e-9 * ( pow(T, 9.8493e-2) + 3.2852e-1*pow(T, 5.5610e-1) + 2.771e-7*pow(T, 2.1826) )
-                / ( 1.0 + 6.191e-3*pow(T, 1.0461) + 8.9712e-11*pow(T, 3.0424) + 3.2576e-14*pow(T, 3.7741) )
+    //Fit based on std::experimental measurements --> Kreckel et al (2010, Science, 329, 69).
+    return 1.35e-9 * ( std::pow(T, 9.8493e-2) + 3.2852e-1*std::pow(T, 5.5610e-1) + 2.771e-7*std::pow(T, 2.1826) )
+                / ( 1.0 + 6.191e-3*std::pow(T, 1.0461) + 8.9712e-11*std::pow(T, 3.0424) + 3.2576e-14*std::pow(T, 3.7741) )
                 / units;
 }
 
@@ -189,13 +190,13 @@ extern "C" double k9_rate(double T, double units, chemistry_data *my_chemistry)
     double k9;
     //Fit --> Latif et al (2015, MNRAS, 446, 3163): valid for 1 < T < 32000 K.
     if (T < 30.0) {
-        k9 = 2.10e-20*pow(T/30.0, -0.15) / units;
+        k9 = 2.10e-20*std::pow(T/30.0, -0.15) / units;
     } else {
         //If temperature is exceeding 32000 K, it is instead fixed at 32000 K -- the behaviour at this temperature should not be important.
-        double T_k9 = fmin(T, 3.2e4);
+        double T_k9 = std::fmin(T, 3.2e4);
 
-        k9 = pow(10.0, -18.20  - 3.194*log10(T_k9)
-                + 1.786*pow(log10(T_k9), 2) - 0.2072*pow(log10(T_k9), 3))
+        k9 = std::pow(10.0, -18.20  - 3.194*std::log10(T_k9)
+                + 1.786*std::pow(std::log10(T_k9), 2) - 0.2072*std::pow(std::log10(T_k9), 3))
                 / units;
     }
     return k9;
@@ -210,33 +211,33 @@ extern "C" double k10_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of k11 (H2I + HII --> H2II + HI)
 extern "C" double k11_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double logT = log(T);
+    double logT = std::log(T);
     double T_ev = T / 11605.0;
-    double logT_ev = log(T_ev);
+    double logT_ev = std::log(T_ev);
 
     double k11;
     if ( T_ev > 0.3) {
         //k11 is calculated by using either Savin 2004 or Abel et al. 1996. The parameter to control this is within the chemistry_data struct.
         if (my_chemistry->h2_charge_exchange_rate == 1) {
-            k11 = ( exp(-21237.15/T) *
+            k11 = ( std::exp(-21237.15/T) *
                 (- 3.3232183e-07
                 + 3.3735382e-07 * logT
-                - 1.4491368e-07 * pow(logT, 2)
-                + 3.4172805e-08 * pow(logT, 3)
-                - 4.7813720e-09 * pow(logT, 4)
-                + 3.9731542e-10 * pow(logT, 5)
-                - 1.8171411e-11 * pow(logT, 6)
-                + 3.5311932e-13 * pow(logT, 7))) / units;
+                - 1.4491368e-07 * std::pow(logT, 2)
+                + 3.4172805e-08 * std::pow(logT, 3)
+                - 4.7813720e-09 * std::pow(logT, 4)
+                + 3.9731542e-10 * std::pow(logT, 5)
+                - 1.8171411e-11 * std::pow(logT, 6)
+                + 3.5311932e-13 * std::pow(logT, 7))) / units;
         } else if (my_chemistry->h2_charge_exchange_rate == 2) {
-            k11 = exp( -24.24914687731536
+            k11 = std::exp( -24.24914687731536
                 + 3.400824447095291*logT_ev
-                - 3.898003964650152*pow(logT_ev, 2)
-                + 2.045587822403071*pow(logT_ev, 3)
-                - 0.5416182856220388*pow(logT_ev, 4)
-                + 0.0841077503763412*pow(logT_ev, 5)
-                - 0.007879026154483455*pow(logT_ev, 6)
-                + 0.0004138398421504563*pow(logT_ev, 7)
-                - 9.36345888928611e-6*pow(logT_ev, 8)) / units;
+                - 3.898003964650152*std::pow(logT_ev, 2)
+                + 2.045587822403071*std::pow(logT_ev, 3)
+                - 0.5416182856220388*std::pow(logT_ev, 4)
+                + 0.0841077503763412*std::pow(logT_ev, 5)
+                - 0.007879026154483455*std::pow(logT_ev, 6)
+                + 0.0004138398421504563*std::pow(logT_ev, 7)
+                - 9.36345888928611e-6*std::pow(logT_ev, 8)) / units;
         } else {
             GR_INTERNAL_ERROR(
                 "k11_rate flag set to unknown value. This must be either 1 "
@@ -257,7 +258,7 @@ extern "C" double k12_rate(double T, double units, chemistry_data *my_chemistry)
     double k12;
     if ( T_ev > 0.3) {
         //k12 --> Trevisan & Tennyson (2002, Plasma Phys. Cont. Fus., 44, 1263).
-        k12 = 4.4886e-9*pow(T, 0.109127) * exp(-101858.0/T) / units;
+        k12 = 4.4886e-9*std::pow(T, 0.109127) * std::exp(-101858.0/T) / units;
     } else {
         k12 = tiny;
     }
@@ -274,8 +275,8 @@ extern "C" double k13_rate(double T, double units, chemistry_data *my_chemistry)
 
         case 0:
             if ( T_ev > 0.3) {
-                k13 = 1.0670825e-10*pow(T_ev, 2.012)
-                    / ( exp(4.463/T_ev) * pow((1.0 + 0.2472*T_ev), 3.512) ); 
+                k13 = 1.0670825e-10*std::pow(T_ev, 2.012)
+                    / ( std::exp(4.463/T_ev) * std::pow((1.0 + 0.2472*T_ev), 3.512) ); 
             } else {
                 k13 = tiny * units;
             }
@@ -283,34 +284,34 @@ extern "C" double k13_rate(double T, double units, chemistry_data *my_chemistry)
 
         case 1:
             //Inverse of PSS83 three-body rate
-            k13 = (5.24e-7 / pow(T, 0.485)) * exp(-5.2e4 / T);
+            k13 = (5.24e-7 / std::pow(T, 0.485)) * std::exp(-5.2e4 / T);
             break;
 
         case 2:
             //Inverse of CW83 rate
-            k13 = 8.4e-11 * pow(T, 0.515) * exp(-5.2e4 / T);
+            k13 = 8.4e-11 * std::pow(T, 0.515) * std::exp(-5.2e4 / T);
             break;
 
         case 3:
             //Rate from JGC67, used by FH07 to construct their three-body rate
-            k13 = (1.38e-4 / pow(T, 1.025)) * exp(-5.2e4 / T);
+            k13 = (1.38e-4 / std::pow(T, 1.025)) * std::exp(-5.2e4 / T);
             break;
 
         case 4:
             //High density limiting rate from MSM96
-            k13 = pow(1e1 ,(-178.4239 - 68.42243 * log10(T)
-                            + 43.20243 * pow(log10(T), 2)
-                            - 4.633167 * pow(log10(T), 3) 
-                            + 69.70086 * log10(1.0 + 40870.38 / T)
+            k13 = std::pow(1e1 ,(-178.4239 - 68.42243 * std::log10(T)
+                            + 43.20243 * std::pow(std::log10(T), 2)
+                            - 4.633167 * std::pow(std::log10(T), 3) 
+                            + 69.70086 * std::log10(1.0 + 40870.38 / T)
                             - (23705.7 / T)));
             break;
 
         case 5:
             //From detailed balance from Forrey rate
             if (T <= 3000.0) {
-                k13 = 2.4e-8 * exp(-5.2e4/T);
+                k13 = 2.4e-8 * std::exp(-5.2e4/T);
             } else {
-                k13 = 2.2e-6 * pow(T, -0.565) * exp(-5.2e4/T); 
+                k13 = 2.2e-6 * std::pow(T, -0.565) * std::exp(-5.2e4/T); 
             }
             break;
         
@@ -411,34 +412,34 @@ static void k13dd_rate_(double T, int idt, double units, double *k13dd_results,
     }
 
     //Define log10 of the temperature for convenience in the following calculations.
-    double log10_T = log10(T);
+    double log10_T = std::log10(T);
 
     //*Calculate parameters needed to obtain the rates by using the fitting parameters.
     //High density limit.
-    double a = fitParam[0] + fitParam[1]*log10_T + fitParam[2]*pow(log10_T, 2) \
-               + fitParam[3]*pow(log10_T, 3) + fitParam[4]*log10(1.0 + fitParam[5]/T);
+    double a = fitParam[0] + fitParam[1]*log10_T + fitParam[2]*std::pow(log10_T, 2) \
+               + fitParam[3]*std::pow(log10_T, 3) + fitParam[4]*std::log10(1.0 + fitParam[5]/T);
     double a1 = fitParam[6]/T;
     //Low density limit.
-    double b = fitParam[7] + fitParam[8]*log10_T + fitParam[9]*pow(log10_T, 2) \
-               + fitParam[10]*log10(1.0 + fitParam[11]/T); 
+    double b = fitParam[7] + fitParam[8]*log10_T + fitParam[9]*std::pow(log10_T, 2) \
+               + fitParam[10]*std::log10(1.0 + fitParam[11]/T); 
     double b1 = fitParam[12]/T;
     //Critical density.
-    double c = fitParam[13] + fitParam[14]*log10_T + fitParam[15]*pow(log10_T, 2) \
+    double c = fitParam[13] + fitParam[14]*log10_T + fitParam[15]*std::pow(log10_T, 2) \
                + fitParam[16]/T;
     double c1 = fitParam[17] + c;
-    double d = fitParam[18] + fitParam[19]*exp(-T/1850.0) + fitParam[20]*exp(-T/440.0);
+    double d = fitParam[18] + fitParam[19]*std::exp(-T/1850.0) + fitParam[20]*std::exp(-T/440.0);
 
     //*Calculate the rates from the parameters above.
     f1 = a;
     f2 = a - b;
     f3 = a1;
     f4 = a1 - b1;
-    f5 = pow(10.0, c);
-    f6 = pow(10.0, c1);
+    f5 = std::pow(10.0, c);
+    f6 = std::pow(10.0, c1);
     f7 = d;
     
     //*Store the rates appropriately.
-    k13dd_results[idt*7] = f1 - log10(units);
+    k13dd_results[idt*7] = f1 - std::log10(units);
     k13dd_results[1 + idt*7] = f2;
     k13dd_results[2 + idt*7] = f3;
     k13dd_results[3 + idt*7] = f4;
@@ -448,11 +449,11 @@ static void k13dd_rate_(double T, int idt, double units, double *k13dd_results,
 
     //* Modify some of the rates if alternative scheme selected
     if (my_chemistry->three_body_rate){
-        k13dd_results[idt*7]     = log10(1.12e-10 * exp(-7.035e4 / T) / units);
-        k13dd_results[1 + idt*7] = log10(6.5e-7 / sqrt(T) * exp(-5.2e4 / T) *
-                                         (1. - exp(-6.3e3 / T)) / units);
-        k13dd_results[2 + idt*7] = pow(1.0e1, (4.0 - 0.416 * log10(T / 1.0e4) -
-                                       0.327 * pow(log10(T / 1.0e4),2)));
+        k13dd_results[idt*7]     = std::log10(1.12e-10 * std::exp(-7.035e4 / T) / units);
+        k13dd_results[1 + idt*7] = std::log10(6.5e-7 / std::sqrt(T) * std::exp(-5.2e4 / T) *
+                                         (1. - std::exp(-6.3e3 / T)) / units);
+        k13dd_results[2 + idt*7] = std::pow(1.0e1, (4.0 - 0.416 * std::log10(T / 1.0e4) -
+                                       0.327 * std::pow(std::log10(T / 1.0e4),2)));
     }
 }
 
@@ -468,19 +469,19 @@ extern "C" void k13dd_rate(double T, double units, double *k13dd_results, chemis
 extern "C" double k14_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
-    double logT_ev = log(T_ev);
+    double logT_ev = std::log(T_ev);
 
     double k14;
     if (T_ev > 0.04) {
-        k14 = exp( -18.01849334273
+        k14 = std::exp( -18.01849334273
              + 2.360852208681*logT_ev
-             - 0.2827443061704*pow(logT_ev, 2)
-             + 0.01623316639567*pow(logT_ev, 3)
-             - 0.03365012031362999*pow(logT_ev, 4)
-             + 0.01178329782711*pow(logT_ev, 5)
-             - 0.001656194699504*pow(logT_ev, 6)
-             + 0.0001068275202678*pow(logT_ev, 7)
-             - 2.631285809207e-6*pow(logT_ev, 8)) / units;
+             - 0.2827443061704*std::pow(logT_ev, 2)
+             + 0.01623316639567*std::pow(logT_ev, 3)
+             - 0.03365012031362999*std::pow(logT_ev, 4)
+             + 0.01178329782711*std::pow(logT_ev, 5)
+             - 0.001656194699504*std::pow(logT_ev, 6)
+             + 0.0001068275202678*std::pow(logT_ev, 7)
+             - 2.631285809207e-6*std::pow(logT_ev, 8)) / units;
     } else {
         k14 = tiny;
     }
@@ -491,22 +492,22 @@ extern "C" double k14_rate(double T, double units, chemistry_data *my_chemistry)
 extern "C" double k15_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
-    double logT_ev = log(T_ev);
+    double logT_ev = std::log(T_ev);
     
     double k15;
     if (T_ev > 0.1) {
-        k15 = exp( -20.37260896533324
+        k15 = std::exp( -20.37260896533324
              + 1.139449335841631*logT_ev
-             - 0.1421013521554148*pow(logT_ev, 2)
-             + 0.00846445538663*pow(logT_ev, 3)
-             - 0.0014327641212992*pow(logT_ev, 4)
-             + 0.0002012250284791*pow(logT_ev, 5)
-             + 0.0000866396324309*pow(logT_ev, 6)
-             - 0.00002585009680264*pow(logT_ev, 7)
-             + 2.4555011970392e-6*pow(logT_ev, 8)
-             - 8.06838246118e-8*pow(logT_ev, 9) ) / units;
+             - 0.1421013521554148*std::pow(logT_ev, 2)
+             + 0.00846445538663*std::pow(logT_ev, 3)
+             - 0.0014327641212992*std::pow(logT_ev, 4)
+             + 0.0002012250284791*std::pow(logT_ev, 5)
+             + 0.0000866396324309*std::pow(logT_ev, 6)
+             - 0.00002585009680264*std::pow(logT_ev, 7)
+             + 2.4555011970392e-6*std::pow(logT_ev, 8)
+             - 8.06838246118e-8*std::pow(logT_ev, 9) ) / units;
     } else {
-        k15 = 2.56e-9*pow(T_ev, 1.78186) / units;
+        k15 = 2.56e-9*std::pow(T_ev, 1.78186) / units;
     }
     return k15;
 }
@@ -515,7 +516,7 @@ extern "C" double k15_rate(double T, double units, chemistry_data *my_chemistry)
 extern "C" double k16_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Fit --> Croft et al (1999, MNRAS, 304, 327). Based on cross-section --> Fussen & Kubach (1986, J. Phys. B, 18 L31).
-    return 2.4e-6*(1.0 + T/2.0e4) / sqrt(T) / units;
+    return 2.4e-6*(1.0 + T/2.0e4) / std::sqrt(T) / units;
 }
 
 //Calculation of k17 (HM + HI --> H2I + e)
@@ -523,9 +524,9 @@ extern "C" double k17_rate(double T, double units, chemistry_data *my_chemistry)
 {
      double k17;
     if (T > 1.0e4) {
-        k17 = 4.0e-4*pow(T, -1.4) * exp(-15100.0/T) / units;
+        k17 = 4.0e-4*std::pow(T, -1.4) * std::exp(-15100.0/T) / units;
     } else {
-        k17 = 1.0e-8*pow(T, -0.4) / units;
+        k17 = 1.0e-8*std::pow(T, -0.4) / units;
     }
     return k17;
 }
@@ -535,7 +536,7 @@ extern "C" double k18_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k18;
     if (T > 617.0) {
-        k18 = 1.32e-6*pow(T, -0.76) / units;
+        k18 = 1.32e-6*std::pow(T, -0.76) / units;
     } else {
         k18 = 1.0e-8 / units;
     }
@@ -545,7 +546,7 @@ extern "C" double k18_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of k19 (H2I + HM --> H2I + HI)
 extern "C" double k19_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    return 5.e-7 * sqrt(100.0/T) / units;
+    return 5.e-7 * std::sqrt(100.0/T) / units;
 }
 
 //Calculation of k20 (This is not currently used in the code)
@@ -556,7 +557,7 @@ extern "C" double k20_rate(double T, double units, chemistry_data *my_chemistry)
 
 //Calculation of k21 (2HI + H2I --> H2I + H2I)
 extern "C" double k21_rate(double T, double units, chemistry_data *my_chemistry){
-    return 2.8e-31 * pow(T, -0.6) / units;
+    return 2.8e-31 * std::pow(T, -0.6) / units;
 }
 
 //Calculation of k22 (2HI + HI --> H2I + HI)
@@ -567,9 +568,9 @@ extern "C" double k22_rate(double T, double units, chemistry_data *my_chemistry)
 
         case 0:
             if (T <= 300.0) {
-                k22 = 1.3e-32 * pow(T/300.0, -0.38);
+                k22 = 1.3e-32 * std::pow(T/300.0, -0.38);
             } else {
-                k22 = 1.3e-32 * pow(T/300.0, -1.0);
+                k22 = 1.3e-32 * std::pow(T/300.0, -1.0);
             }
             break;
 
@@ -585,17 +586,17 @@ extern "C" double k22_rate(double T, double units, chemistry_data *my_chemistry)
 
         case 3:
             //FH07 three-body rate
-            k22 = 1.44e-26 / pow(T, 1.54);
+            k22 = 1.44e-26 / std::pow(T, 1.54);
             break;
 
         case 4:
             //Rate from Glover (2008), derived by detailed balance from MSM96
-            k22 = 7.7e-31 / pow(T, 0.464);
+            k22 = 7.7e-31 / std::pow(T, 0.464);
             break;
     
         case 5:
             //Rate from Forrey (2013)
-            k22 = (6e-32 / pow(T, 0.25)) + (2e-31 / pow(T, 0.5));
+            k22 = (6e-32 / std::pow(T, 0.25)) + (2e-31 / std::pow(T, 0.5));
             break;
 
         default:
@@ -610,8 +611,8 @@ extern "C" double k22_rate(double T, double units, chemistry_data *my_chemistry)
 extern "C" double k23_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k23;
-    k23 = ( (8.125e-8/sqrt(T)) * exp(-52000.0/T) * (1.0 - exp(-6000.0/T)) ) / units;
-    k23 = fmax(tiny, k23);
+    k23 = ( (8.125e-8/std::sqrt(T)) * std::exp(-52000.0/T) * (1.0 - std::exp(-6000.0/T)) ) / units;
+    k23 = std::fmax(tiny, k23);
     return k23;
 }
 
@@ -622,16 +623,16 @@ extern "C" double k50_rate(double T, double units, chemistry_data *my_chemistry)
     // Fit taken from Savin (2002) which is valid for T < 2e5 K.
     // We extrapolate for higher temperatures.
     if (T <= 2.0e5) {
-      return (2.0e-10 * pow(T, 0.402) * exp(-3.71e1/T)
-              - 3.31e-17 * pow(T, 1.48)) / units;
+      return (2.0e-10 * std::pow(T, 0.402) * std::exp(-3.71e1/T)
+              - 3.31e-17 * std::pow(T, 1.48)) / units;
     }
     else {
-      return 2.5e-8 * pow(T/2.0e5, 0.402) / units;
+      return 2.5e-8 * std::pow(T/2.0e5, 0.402) / units;
     }
   }
   // Stancil, Lepp & Dalgarno (1998)
   else if (my_chemistry->hd_reaction_rates == 1) {
-    return 1.0e-9 * exp(-41.0 / T) / units;
+    return 1.0e-9 * std::exp(-41.0 / T) / units;
   }
   else {
     GR_INTERNAL_ERROR("hd_reaction_rates can only be 0 or 1.\n");
@@ -643,8 +644,8 @@ extern "C" double k51_rate(double T, double units, chemistry_data *my_chemistry)
 {   
   if (my_chemistry->hd_reaction_rates == 0) {
       // Fit taken from Savin (2002) which is valid for T < 2e5 K.
-      return (2.06e-10 * pow(T, 0.396) * exp(-3.30e1/T)
-              + 2.03e-9 * pow(T, -0.332)) / units;
+      return (2.06e-10 * std::pow(T, 0.396) * std::exp(-3.30e1/T)
+              + 2.03e-9 * std::pow(T, -0.332)) / units;
   }
   // Stancil, Lepp & Dalgarno (1998)
   else if (my_chemistry->hd_reaction_rates == 1) {
@@ -663,7 +664,7 @@ extern "C" double k52_rate(double T, double units, chemistry_data *my_chemistry)
     // If T > 1e4 K use fixed value for k52 to avoid numerical issues with fitting function.
     // In this limit this reaction is not expected to be important anyway.
     if (T <= 1e4) {
-      return 1.0e-9 * (0.417 + 0.846 * log10(T) - 0.137 * pow(log10(T), 2)) / units;
+      return 1.0e-9 * (0.417 + 0.846 * std::log10(T) - 0.137 * std::pow(std::log10(T), 2)) / units;
     } else {
       return 1.609e-9 / units;
     }
@@ -682,11 +683,11 @@ extern "C" double k53_rate(double T, double units, chemistry_data *my_chemistry)
 {
   if (my_chemistry->hd_reaction_rates == 0) {
     // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
-    return 1.1e-9 * exp(-4.88e2/T) / units;
+    return 1.1e-9 * std::exp(-4.88e2/T) / units;
   }
   // Stancil, Lepp & Dalgarno (1998)
   else if (my_chemistry->hd_reaction_rates == 1) {
-    return 1.0e-9 * exp(-464.0 / T) / units;
+    return 1.0e-9 * std::exp(-464.0 / T) / units;
   }
   else {
     GR_INTERNAL_ERROR("hd_reaction_rates can only be 0 or 1.\n");
@@ -699,18 +700,18 @@ extern "C" double k54_rate(double T, double units, chemistry_data *my_chemistry)
   if (my_chemistry->hd_reaction_rates == 0) {
     // Fit from Clark et al (2011), which is based on data in Mielke et al (2003).
     if (T <= 2.0e3) {
-      return pow(1.0e1, (-5.64737e1 + 5.88886 * log10(T)
-                         + 7.19692  * pow(log10(T), 2)
-                         + 2.25069  * pow(log10(T), 3)
-                         - 2.16903  * pow(log10(T), 4)
-                         + 3.17887e-1 * pow(log10(T), 5)));
+      return std::pow(1.0e1, (-5.64737e1 + 5.88886 * std::log10(T)
+                         + 7.19692  * std::pow(std::log10(T), 2)
+                         + 2.25069  * std::pow(std::log10(T), 3)
+                         - 2.16903  * std::pow(std::log10(T), 4)
+                         + 3.17887e-1 * std::pow(std::log10(T), 5)));
     } else {
-      return 3.17e-10 * exp(-5.207e3 / T);
+      return 3.17e-10 * std::exp(-5.207e3 / T);
     }
   }
   // Stancil, Lepp & Dalgarno (1998)
   else if (my_chemistry->hd_reaction_rates == 1) {
-    return 7.5e-11 * exp(-3820.0 / T) / units;
+    return 7.5e-11 * std::exp(-3820.0 / T) / units;
     }
   else {
     GR_INTERNAL_ERROR( "hd_reaction_rates can only be 0 or 1.\n");
@@ -728,12 +729,12 @@ extern "C" double k55_rate(double T, double units, chemistry_data *my_chemistry)
     if (T <= 2.0e2) {
       return 1.08e-22 / units;
     } else {
-      return 5.25e-11 * exp(-4.43e3/T + 1.739e5/pow(T, 2)) / units;
+      return 5.25e-11 * std::exp(-4.43e3/T + 1.739e5/std::pow(T, 2)) / units;
     }
   }
   // Stancil, Lepp & Dalgarno (1998)
   else if (my_chemistry->hd_reaction_rates == 1) {
-    return 7.5e-11 * exp(-4240.0 / T) / units;
+    return 7.5e-11 * std::exp(-4240.0 / T) / units;
   }
   else {
     GR_INTERNAL_ERROR("hd_reaction_rates can only be 0 or 1.\n");
@@ -751,7 +752,7 @@ extern "C" double k56_rate(double T, double units, chemistry_data *my_chemistry)
   }
   // Stancil, Lepp & Dalgarno (1998)
   else if (my_chemistry->hd_reaction_rates == 1) {
-    return 1.5e-9 * pow(T / 3.0e2, -0.1) / units;
+    return 1.5e-9 * std::pow(T / 3.0e2, -0.1) / units;
   }
   else {
     GR_INTERNAL_ERROR("hd_reaction_rates can only be 0 or 1.\n");
@@ -764,7 +765,7 @@ extern "C" double k57_rate(double T, double units, chemistry_data *my_chemistry)
     // These rate coefficients are from Lenzuni, Chernoff & Salpeter (1991).
     // k57 value based on experimental cross-sections from Gealy & van Zyl (1987).
     if (T > 3.0e3) {
-        return 1.2e-17  * pow(T, 1.2) * exp(-1.578e5 / T) / units;
+        return 1.2e-17  * std::pow(T, 1.2) * std::exp(-1.578e5 / T) / units;
     } else {
         return tiny;
     }
@@ -776,7 +777,7 @@ extern "C" double k58_rate(double T, double units, chemistry_data *my_chemistry)
     // These rate coefficients are from Lenzuni, Chernoff & Salpeter (1991).
     // k58 value based on cross-sections from van Zyl, Le & Amme (1981).
     if (T > 3.0e3) {
-        return 1.75e-17 * pow(T, 1.3) * exp(-1.578e5 / T) / units;
+        return 1.75e-17 * std::pow(T, 1.3) * std::exp(-1.578e5 / T) / units;
     } else {
         return tiny;
     }
@@ -799,16 +800,16 @@ extern "C" double h2dust_rate(double T, double T_dust, double units, chemistry_d
     if (my_chemistry->h2_dust_rate == 1) {
         //k23 from Omukai (2000).
 
-        h2dust = 6.0e-17 / fgr * pow(T / 300.0, 0.5) * 
-                (pow(1.0 + exp(7.5e2 * ((1.0 / 75.0) - (1.0 / T_dust))), -1.0)) *
-                (pow(1.0 + (4.0e-2 * pow(T + T_dust, 0.5))
-                + (2.0e-3 * T) + (8.0e-6 * pow(T, 2.0)), -1.0));
+        h2dust = 6.0e-17 / fgr * std::pow(T / 300.0, 0.5) * 
+                (std::pow(1.0 + std::exp(7.5e2 * ((1.0 / 75.0) - (1.0 / T_dust))), -1.0)) *
+                (std::pow(1.0 + (4.0e-2 * std::pow(T + T_dust, 0.5))
+                + (2.0e-3 * T) + (8.0e-6 * std::pow(T, 2.0)), -1.0));
         
     } else {
         //Equation 3.8 from Hollenbach & McKee (1979).
 
-        h2dust = 3.0e-17 / fgr * pow(T_2, 0.5) / (1.0 + 0.4 * pow(T_2 + T_dust_2, 0.5)
-                + 0.2 * T_2 + 8.0e-2 * pow(T_2, 2.0));
+        h2dust = 3.0e-17 / fgr * std::pow(T_2, 0.5) / (1.0 + 0.4 * std::pow(T_2 + T_dust_2, 0.5)
+                + 0.2 * T_2 + 8.0e-2 * std::pow(T_2, 2.0));
 
     }
     return h2dust / units;
@@ -818,29 +819,29 @@ extern "C" double h2dust_rate(double T, double T_dust, double units, chemistry_d
 extern "C" double n_cr_n_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //H2 formation heating terms from Equation 23, Omuaki (2000).
-    return 1.0e6 * pow(T, -0.5);
+    return 1.0e6 * std::pow(T, -0.5);
 }
 
 //Calculation of n_cr_d1.
 extern "C" double n_cr_d1_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //H2 formation heating terms from Equation 23, Omuaki (2000).
-    return 1.6 * exp(-pow(400.0 / T, 2.0));
+    return 1.6 * std::exp(-std::pow(400.0 / T, 2.0));
 }
 
 //Calculation of n_cr_d2.
 extern "C" double n_cr_d2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //H2 formation heating terms from Equation 23, Omuaki (2000).
-    return 1.4 * exp(-12000.0 / (T + 1200.0));
+    return 1.4 * std::exp(-12000.0 / (T + 1200.0));
 }
 
 //Calculation of ceHI.
 extern "C" double ceHI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->collisional_excitation_rates == 1){
-        return 7.5e-19*exp( -fmin(log(dhuge), 118348.0 / T) )
-                / ( 1.0 + sqrt(T / 1.0e5) ) / units;
+        return 7.5e-19*std::exp( -std::fmin(std::log(dhuge), 118348.0 / T) )
+                / ( 1.0 + std::sqrt(T / 1.0e5) ) / units;
     } else {
         return tiny;
     }
@@ -850,8 +851,8 @@ extern "C" double ceHI_rate(double T, double units, chemistry_data *my_chemistry
 extern "C" double ceHeI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->collisional_excitation_rates == 1){
-        return 9.1e-27*exp(-fmin(log(dhuge), 13179.0/T))
-                * pow(T, -0.1687) / ( 1.0 + sqrt(T/1.0e5) ) / units;
+        return 9.1e-27*std::exp(-std::fmin(std::log(dhuge), 13179.0/T))
+                * std::pow(T, -0.1687) / ( 1.0 + std::sqrt(T/1.0e5) ) / units;
     } else {
         return tiny;
     }
@@ -861,8 +862,8 @@ extern "C" double ceHeI_rate(double T, double units, chemistry_data *my_chemistr
 extern "C" double ceHeII_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->collisional_excitation_rates == 1){
-        return 5.54e-17*exp(-fmin(log(dhuge), 473638.0/T))
-                * pow(T, -0.3970) / ( 1.0 + sqrt(T/1.0e5) ) / units;
+        return 5.54e-17*std::exp(-std::fmin(std::log(dhuge), 473638.0/T))
+                * std::pow(T, -0.3970) / ( 1.0 + std::sqrt(T/1.0e5) ) / units;
     } else {
         return tiny;
     }
@@ -872,8 +873,8 @@ extern "C" double ceHeII_rate(double T, double units, chemistry_data *my_chemist
 extern "C" double ciHeIS_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->collisional_ionisation_rates == 1){
-        return 5.01e-27*pow(T, -0.1687) / ( 1.0 + sqrt(T/1.0e5) )
-                * exp(-fmin(log(dhuge), 55338.0/T)) / units;
+        return 5.01e-27*std::pow(T, -0.1687) / ( 1.0 + std::sqrt(T/1.0e5) )
+                * std::exp(-std::fmin(std::log(dhuge), 55338.0/T)) / units;
     } else {
         return tiny;
     }
@@ -921,12 +922,12 @@ extern "C" double reHII_rate(double T, double units, chemistry_data *my_chemistr
 
         //These depend on if the user has chosen recombination case A or B.
         if (my_chemistry->CaseBRecombination == 1) {
-            return 3.435e-30 * T * pow(lambdaHI, 1.970)
-                    / pow( 1.0 + pow(lambdaHI/2.25, 0.376), 3.720)
+            return 3.435e-30 * T * std::pow(lambdaHI, 1.970)
+                    / std::pow( 1.0 + std::pow(lambdaHI/2.25, 0.376), 3.720)
                     / units;
         } else {
-            return 1.778e-29 * T * pow(lambdaHI, 1.965)
-                    / pow(1.0 + pow(lambdaHI/0.541, 0.502), 2.697)
+            return 1.778e-29 * T * std::pow(lambdaHI, 1.965)
+                    / std::pow(1.0 + std::pow(lambdaHI/0.541, 0.502), 2.697)
                     / units; 
         }
     } else {
@@ -943,10 +944,10 @@ extern "C" double reHeII1_rate(double T, double units, chemistry_data *my_chemis
 
         //These depend on if the user has chosen recombination case A or B.
         if (my_chemistry->CaseBRecombination == 1) {
-            return 1.26e-14 * kboltz * T * pow(lambdaHeII, 0.75)
+            return 1.26e-14 * kboltz * T * std::pow(lambdaHeII, 0.75)
                             / units;
         } else {
-            return 3e-14 * kboltz * T * pow(lambdaHeII, 0.654)
+            return 3e-14 * kboltz * T * std::pow(lambdaHeII, 0.654)
                     / units;
         }
     } else {
@@ -959,9 +960,9 @@ extern "C" double reHeII2_rate(double T, double units, chemistry_data *my_chemis
 {
     //Dielectronic recombination (Cen, 1992).
     if (my_chemistry->recombination_cooling_rates == 1){
-        return 1.24e-13 * pow(T, -1.5)
-                * exp( -fmin(log(dhuge), 470000.0 / T) )
-                * ( 1.0 + 0.3 * exp( -fmin(log(dhuge), 94000.0 / T) ) ) 
+        return 1.24e-13 * std::pow(T, -1.5)
+                * std::exp( -std::fmin(std::log(dhuge), 470000.0 / T) )
+                * ( 1.0 + 0.3 * std::exp( -std::fmin(std::log(dhuge), 94000.0 / T) ) ) 
                 / units;
     } else {
         return tiny;
@@ -982,12 +983,12 @@ extern "C" double reHeIII_rate(double T, double units, chemistry_data *my_chemis
 
         //These depend on if the user has chosen recombination case A or B.
         if (my_chemistry->CaseBRecombination == 1) {
-            return 8.0 * 3.435e-30 * T * pow(lambdaHeIII, 1.970)
-                    / pow(1.0 + pow(lambdaHeIII / 2.25, 0.376), 3.720) 
+            return 8.0 * 3.435e-30 * T * std::pow(lambdaHeIII, 1.970)
+                    / std::pow(1.0 + std::pow(lambdaHeIII / 2.25, 0.376), 3.720) 
                     / units;
         } else {
-            return 8.0 * 1.778e-29 * T * pow(lambdaHeIII, 1.965)
-                    / pow(1.0 + pow(lambdaHeIII / 0.541, 0.502), 2.697)
+            return 8.0 * 1.778e-29 * T * std::pow(lambdaHeIII, 1.965)
+                    / std::pow(1.0 + std::pow(lambdaHeIII / 0.541, 0.502), 2.697)
                     / units;
         }
     } else {
@@ -999,8 +1000,8 @@ extern "C" double reHeIII_rate(double T, double units, chemistry_data *my_chemis
 extern "C" double brem_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->bremsstrahlung_cooling_rates == 1){
-        return 1.43e-27 * sqrt(T)
-                * ( 1.1 + 0.34 * exp( -pow(5.5 - log10(T), 2) / 3.0) )
+        return 1.43e-27 * std::sqrt(T)
+                * ( 1.1 + 0.34 * std::exp( -std::pow(5.5 - std::log10(T), 2) / 3.0) )
                 / units;
     } else {
         return tiny;
@@ -1013,12 +1014,12 @@ extern "C" double vibh_rate(double T, double units, chemistry_data *my_chemistry
     // The following snippet seems to be duplicated from hyd01k_rate
     //double par_dum;
     //if (T > 1635.0) {
-    //    par_dum = 1.0e-12 * sqrt(T) * exp(-1000.0 / T);
+    //    par_dum = 1.0e-12 * std::sqrt(T) * std::exp(-1000.0 / T);
     //} else {
-    //    par_dum = 1.4e-13 * exp( (T / 125.0) - pow(T / 577.0, 2) );
+    //    par_dum = 1.4e-13 * std::exp( (T / 125.0) - std::pow(T / 577.0, 2) );
     //}
 
-    return 1.1e-18 * exp( -fmin(log(dhuge), 6744.0 / T) ) / units;
+    return 1.1e-18 * std::exp( -std::fmin(std::log(dhuge), 6744.0 / T) ) / units;
 }
 
 //Calculation of hyd01k.
@@ -1027,12 +1028,12 @@ extern "C" double hyd01k_rate(double T, double units, chemistry_data *my_chemist
     //Dummy parameter used in the calculation.
     double par_dum;
     if (T > 1635.0) {
-        par_dum = 1.0e-12 * sqrt(T) * exp(-1000.0 / T);
+        par_dum = 1.0e-12 * std::sqrt(T) * std::exp(-1000.0 / T);
     } else {
-        par_dum = 1.4e-13 * exp( (T / 125.0) - pow(T / 577.0, 2) );
+        par_dum = 1.4e-13 * std::exp( (T / 125.0) - std::pow(T / 577.0, 2) );
     }
 
-    return par_dum * exp( -fmin( log(dhuge), 8.152e-13 / (kboltz * T) ) )
+    return par_dum * std::exp( -std::fmin( std::log(dhuge), 8.152e-13 / (kboltz * T) ) )
             / units;
 }
             
@@ -1042,30 +1043,30 @@ extern "C" double h2k01_rate(double T, double units, chemistry_data *my_chemistr
     //Dummy parameter used in the calculation.
     double par_dum = 8.152e-13 * ( 4.2 / (kboltz * (T + 1190.0)) + 1.0 / (kboltz * T));
 
-    return 1.45e-12 * sqrt(T) * exp(-fmin(log(dhuge), par_dum)) / units;
+    return 1.45e-12 * std::sqrt(T) * std::exp(-std::fmin(std::log(dhuge), par_dum)) / units;
 }
 
 //Calculation of rotl.
 extern "C" double rotl_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double par_x = log10(T / 1.0e4); //Parameter used in the following calculation.
+    double par_x = std::log10(T / 1.0e4); //Parameter used in the following calculation.
 
     if (T > 4031.0) {
-        return 1.38e-22 * exp(-9243.0 / T) / units;
+        return 1.38e-22 * std::exp(-9243.0 / T) / units;
     } else {
-        return pow(10.0, -22.9 - 0.553 * par_x - 1.148 * pow(par_x, 2)) / units;
+        return std::pow(10.0, -22.9 - 0.553 * par_x - 1.148 * std::pow(par_x, 2)) / units;
     }
 }
 
 //Calculation of roth.
 extern "C" double roth_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double par_x = log10(T/1.0e4); //Parameter used in the following calculation.
+    double par_x = std::log10(T/1.0e4); //Parameter used in the following calculation.
 
     if(T > 1087.0) {
-        return 3.9e-19 * exp(-6118.0 / T) / units;
+        return 3.9e-19 * std::exp(-6118.0 / T) / units;
     } else {
-        return pow(10.0, -19.24 + 0.474*par_x - 1.247*pow(par_x, 2)) / units;
+        return std::pow(10.0, -19.24 + 0.474*par_x - 1.247*std::pow(par_x, 2)) / units;
     }
 }
 
@@ -1073,26 +1074,26 @@ extern "C" double roth_rate(double T, double units, chemistry_data *my_chemistry
 extern "C" double GP99LowDensityLimit_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
-    double tm = fmax(T, 13.0); //no cooling below 13 Kelvin
-    tm = fmin(tm, 1.0e5); //fixes numerics
-    double lt = log10(tm);
+    double tm = std::fmax(T, 13.0); //no cooling below 13 Kelvin
+    tm = std::fmin(tm, 1.0e5); //fixes numerics
+    double lt = std::log10(tm);
 
-    return pow(10.0, -103.0 + 97.59*lt - 48.05*pow(lt, 2) + 10.8*pow(lt, 3)
-            - 0.9032*pow(lt, 4)) / units;
+    return std::pow(10.0, -103.0 + 97.59*lt - 48.05*std::pow(lt, 2) + 10.8*std::pow(lt, 3)
+            - 0.9032*std::pow(lt, 4)) / units;
 }
 
 //Calculatin of GP99HighDensityLimit.
 extern "C" double GP99HighDensityLimit_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
-    double tm = fmax(T, 13.0); //no cooling below 13 Kelvin
-    tm = fmin(tm, 1.0e5); //fixes numerics
+    double tm = std::fmax(T, 13.0); //no cooling below 13 Kelvin
+    tm = std::fmin(tm, 1.0e5); //fixes numerics
     double t3 = tm / 1000.0;
 
     //Simplify formula for clarity.
-    double HDLR = ( 9.5e-22*pow(t3, 3.76) ) / ( 1.0 + 0.12*pow(t3, 2.1) ) *
-            exp( -pow((0.13 / t3), 3) ) + 3.0e-24 * exp(-0.51 / t3);
-    double HDLV = 6.7e-19*exp(-5.86 / t3) + 1.6e-18*exp(-11.7 / t3);
+    double HDLR = ( 9.5e-22*std::pow(t3, 3.76) ) / ( 1.0 + 0.12*std::pow(t3, 2.1) ) *
+            std::exp( -std::pow((0.13 / t3), 3) ) + 3.0e-24 * std::exp(-0.51 / t3);
+    double HDLV = 6.7e-19*std::exp(-5.86 / t3) + 1.6e-18*std::exp(-11.7 / t3);
 
     return (HDLR + HDLV) / units;
 }
@@ -1117,46 +1118,46 @@ extern "C" double GAHI_rate(double T, double units, chemistry_data *my_chemistry
     */
 
     //Constrain temperature.
-    double tm  = fmax(T, 10.0);
-    tm  = fmin(tm, 1.0e4);
-    double lt3 = log10(tm / 1.0e3);
+    double tm  = std::fmax(T, 10.0);
+    tm  = std::fmin(tm, 1.0e4);
+    double lt3 = std::log10(tm / 1.0e3);
 
     //Calculate GAHI using user-specified method.
     if (my_chemistry->h2_h_cooling_rate == 1) {
         if (tm < 1e2) {
             return 0.0;
         } else {
-            return pow(10.0, -24.07950609
+            return std::pow(10.0, -24.07950609
                             + 4.54182810 * lt3
-                            - 2.40206896 * pow(lt3, 2)
-                            - 0.75355292 * pow(lt3, 3)
-                            + 4.69258178 * pow(lt3, 4)
-                            - 2.79573574 * pow(lt3, 5)
-                            - 3.14766075 * pow(lt3, 6)
-                            + 2.50751333 * pow(lt3, 7)) / units;
+                            - 2.40206896 * std::pow(lt3, 2)
+                            - 0.75355292 * std::pow(lt3, 3)
+                            + 4.69258178 * std::pow(lt3, 4)
+                            - 2.79573574 * std::pow(lt3, 5)
+                            - 3.14766075 * std::pow(lt3, 6)
+                            + 2.50751333 * std::pow(lt3, 7)) / units;
         }
     } else if (my_chemistry->h2_h_cooling_rate == 2) {
         if (tm < 1.0e2) {
-            return pow(10.0, -16.818342
+            return std::pow(10.0, -16.818342
                             + 37.383713 * lt3
-                            + 58.145166 * pow(lt3, 2)
-                            + 48.656103 * pow(lt3, 3)
-                            + 20.159831 * pow(lt3, 4)
-                            + 3.8479610 * pow(lt3, 5)) / units;
+                            + 58.145166 * std::pow(lt3, 2)
+                            + 48.656103 * std::pow(lt3, 3)
+                            + 20.159831 * std::pow(lt3, 4)
+                            + 3.8479610 * std::pow(lt3, 5)) / units;
         } else if (tm < 1.0e3) {
-            return pow(10.0, -24.311209
+            return std::pow(10.0, -24.311209
                             + 3.5692468 * lt3
-                            - 11.332860 * pow(lt3, 2)
-                            - 27.850082 * pow(lt3, 3)
-                            - 21.328264 * pow(lt3, 4)
-                            - 4.2519023 * pow(lt3, 5)) / units;
+                            - 11.332860 * std::pow(lt3, 2)
+                            - 27.850082 * std::pow(lt3, 3)
+                            - 21.328264 * std::pow(lt3, 4)
+                            - 4.2519023 * std::pow(lt3, 5)) / units;
         } else {
-            return pow(10.0, -24.311209
+            return std::pow(10.0, -24.311209
                             + 4.6450521 * lt3
-                            - 3.7209846 * pow(lt3, 2)
-                            + 5.9369081 * pow(lt3, 3)
-                            - 5.5108047 * pow(lt3, 4)
-                            + 1.5538288 * pow(lt3, 5)) / units;
+                            - 3.7209846 * std::pow(lt3, 2)
+                            + 5.9369081 * std::pow(lt3, 3)
+                            - 5.5108047 * std::pow(lt3, 4)
+                            + 1.5538288 * std::pow(lt3, 5)) / units;
         }
     } else {
         GR_INTERNAL_ERROR(
@@ -1169,80 +1170,80 @@ extern "C" double GAHI_rate(double T, double units, chemistry_data *my_chemistry
 extern "C" double GAH2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
-    double tm  = fmax(T, 10.0);
-    tm  = fmin(tm, 1.0e4);
-    double lt3 = log10(tm / 1.0e3);
+    double tm  = std::fmax(T, 10.0);
+    tm  = std::fmin(tm, 1.0e4);
+    double lt3 = std::log10(tm / 1.0e3);
 
-    return pow(10.0, -23.962112
+    return std::pow(10.0, -23.962112
             + 2.09433740  * lt3
-            - 0.77151436 * pow(lt3, 2)
-            + 0.43693353 * pow(lt3, 3)
-            - 0.14913216 * pow(lt3, 4)
-            - 0.033638326 * pow(lt3, 5)) / units;
+            - 0.77151436 * std::pow(lt3, 2)
+            + 0.43693353 * std::pow(lt3, 3)
+            - 0.14913216 * std::pow(lt3, 4)
+            - 0.033638326 * std::pow(lt3, 5)) / units;
 }
 
 //Calculation of GAHe.
 extern "C" double GAHe_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
-    double tm  = fmax(T, 10.0);
-    tm  = fmin(tm, 1.0e4);
-    double lt3 = log10(tm / 1.0e3);
+    double tm  = std::fmax(T, 10.0);
+    tm  = std::fmin(tm, 1.0e4);
+    double lt3 = std::log10(tm / 1.0e3);
 
-    return pow(10.0, -23.689237
+    return std::pow(10.0, -23.689237
             + 2.1892372  * lt3
-            - 0.81520438 * pow(lt3, 2)
-            + 0.29036281 * pow(lt3, 3)
-            - 0.16596184 * pow(lt3, 4)
-            + 0.19191375 * pow(lt3, 5)) / units;
+            - 0.81520438 * std::pow(lt3, 2)
+            + 0.29036281 * std::pow(lt3, 3)
+            - 0.16596184 * std::pow(lt3, 4)
+            + 0.19191375 * std::pow(lt3, 5)) / units;
 }
 
 //Calculation of GAHp.
 extern "C" double GAHp_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
-    double tm  = fmax(T, 10.0);
-    tm  = fmin(tm, 1.0e4);
-    double lt3 = log10(tm / 1.0e3);
+    double tm  = std::fmax(T, 10.0);
+    tm  = std::fmin(tm, 1.0e4);
+    double lt3 = std::log10(tm / 1.0e3);
 
-    return pow(10.0, -22.089523
+    return std::pow(10.0, -22.089523
             + 1.5714711   * lt3
-            + 0.015391166 * pow(lt3, 2)
-            - 0.23619985  * pow(lt3, 3)
-            - 0.51002221  * pow(lt3, 4)
-            + 0.32168730  * pow(lt3, 5)) / units;
+            + 0.015391166 * std::pow(lt3, 2)
+            - 0.23619985  * std::pow(lt3, 3)
+            - 0.51002221  * std::pow(lt3, 4)
+            + 0.32168730  * std::pow(lt3, 5)) / units;
 }
 
 //Calculation of GAel.
 extern "C" double GAel_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
-    double tm  = fmax(T, 10.0);
-    tm  = fmin(tm, 1.0e4);
-    double lt3 = log10(tm / 1.0e3);
+    double tm  = std::fmax(T, 10.0);
+    tm  = std::fmin(tm, 1.0e4);
+    double lt3 = std::log10(tm / 1.0e3);
 
     if (tm < 100.0) {
         return 0.0;
     } else if (tm < 500.0) {
-        return pow(10.0, -21.928796
+        return std::pow(10.0, -21.928796
                 + 16.815730 * lt3
-                + 96.743155 * pow(lt3, 2)
-                + 343.19180 * pow(lt3, 3)
-                + 734.71651 * pow(lt3, 4)
-                + 983.67576 * pow(lt3, 5)
-                + 801.81247 * pow(lt3, 6)
-                + 364.14446 * pow(lt3, 7)
-                + 70.609154 * pow(lt3, 8)) / units;
+                + 96.743155 * std::pow(lt3, 2)
+                + 343.19180 * std::pow(lt3, 3)
+                + 734.71651 * std::pow(lt3, 4)
+                + 983.67576 * std::pow(lt3, 5)
+                + 801.81247 * std::pow(lt3, 6)
+                + 364.14446 * std::pow(lt3, 7)
+                + 70.609154 * std::pow(lt3, 8)) / units;
     } else {
-        return pow(10.0, -22.921189
+        return std::pow(10.0, -22.921189
                 + 1.6802758  * lt3
-                + 0.93310622 * pow(lt3, 2)
-                + 4.0406627  * pow(lt3, 3)
-                - 4.7274036  * pow(lt3, 4)
-                - 8.8077017  * pow(lt3, 5)
-                + 8.9167183  * pow(lt3, 6)
-                + 6.4380698  * pow(lt3, 7)
-                - 6.3701156  * pow(lt3, 8)) / units;
+                + 0.93310622 * std::pow(lt3, 2)
+                + 4.0406627  * std::pow(lt3, 3)
+                - 4.7274036  * std::pow(lt3, 4)
+                - 8.8077017  * std::pow(lt3, 5)
+                + 8.9167183  * std::pow(lt3, 6)
+                + 6.4380698  * std::pow(lt3, 7)
+                - 6.3701156  * std::pow(lt3, 8)) / units;
     }
 }
 
@@ -1250,23 +1251,23 @@ extern "C" double GAel_rate(double T, double units, chemistry_data *my_chemistry
 extern "C" double H2LTE_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Constrain temperature.
-    double tm  = fmax(T, 10.0);
-    tm  = fmin(tm, 1.0e4);
-    double lt3 = log10(tm / 1.0e3);
+    double tm  = std::fmax(T, 10.0);
+    tm  = std::fmin(tm, 1.0e4);
+    double lt3 = std::log10(tm / 1.0e3);
 
     if (tm < 1.0e2) {
         //Simple extrapolation as H2 cooling insignificant at these temperatures.
-        return 7.0e-27 * pow(tm, 1.5) * exp(-512.0 / tm) / units;
+        return 7.0e-27 * std::pow(tm, 1.5) * std::exp(-512.0 / tm) / units;
     } else {
-        return pow(10.0, -20.584225
+        return std::pow(10.0, -20.584225
                 + 5.0194035 * lt3
-                - 1.5738805 * pow(lt3, 2)
-                - 4.7155769 * pow(lt3, 3)
-                + 2.4714161 * pow(lt3, 4)
-                + 5.4710750 * pow(lt3, 5)
-                - 3.9467356 * pow(lt3, 6)
-                - 2.2148338 * pow(lt3, 7)
-                + 1.8161874 * pow(lt3, 8)) / units;
+                - 1.5738805 * std::pow(lt3, 2)
+                - 4.7155769 * std::pow(lt3, 3)
+                + 2.4714161 * std::pow(lt3, 4)
+                + 5.4710750 * std::pow(lt3, 5)
+                - 3.9467356 * std::pow(lt3, 6)
+                - 2.2148338 * std::pow(lt3, 7)
+                + 1.8161874 * std::pow(lt3, 8)) / units;
     }
 }
 
@@ -1276,16 +1277,16 @@ extern "C" double HDlte_rate(double T, double units, chemistry_data *my_chemistr
     //Fit from Coppola et al 2011. LTE (ergs/s) -> hdlte (ergs cm3/s)
 
     //Constain temperature.
-    double tm  = fmax(T, 10.0);
-    tm  = fmin(tm, 3.0e4);
+    double tm  = std::fmax(T, 10.0);
+    tm  = std::fmin(tm, 3.0e4);
 
-    double HDlte = -55.5725 + 56.649 * log10(tm)
-                    - 37.9102  * pow(log10(tm), 2)
-                    + 12.698   * pow(log10(tm), 3)
-                    - 2.02424  * pow(log10(tm), 4)
-                    + 0.122393 * pow(log10(tm), 5);
+    double HDlte = -55.5725 + 56.649 * std::log10(tm)
+                    - 37.9102  * std::pow(std::log10(tm), 2)
+                    + 12.698   * std::pow(std::log10(tm), 3)
+                    - 2.02424  * std::pow(std::log10(tm), 4)
+                    + 0.122393 * std::pow(std::log10(tm), 5);
 
-    return pow(10.0, fmin(HDlte, 0.0)) / units;
+    return std::pow(10.0, std::fmin(HDlte, 0.0)) / units;
 
 }
 
@@ -1294,16 +1295,16 @@ extern "C" double HDlow_rate(double T, double units, chemistry_data *my_chemistr
 {
     //Rate based on (Wrathmall, Gusdorf & Flower, 2007) HD-H collisional excitation rates.
     //Constrain temperature.
-    double tm = fmax(T, 1.0e1);
-    tm = fmin(tm, 6.0e3);
+    double tm = std::fmax(T, 1.0e1);
+    tm = std::fmin(tm, 6.0e3);
 
-    double HDlow = -23.175780  + 1.5035261 * log10(tm/1.0e3)
-                    + 0.40871403  * pow(log10(tm/1.0e3), 2)
-                    + 0.17849311  * pow(log10(tm/1.0e3), 3)
-                    - 0.077291388 * pow(log10(tm/1.0e3), 4)
-                    + 0.10031326 * pow(log10(tm/1.0e3), 5);
+    double HDlow = -23.175780  + 1.5035261 * std::log10(tm/1.0e3)
+                    + 0.40871403  * std::pow(std::log10(tm/1.0e3), 2)
+                    + 0.17849311  * std::pow(std::log10(tm/1.0e3), 3)
+                    - 0.077291388 * std::pow(std::log10(tm/1.0e3), 4)
+                    + 0.10031326 * std::pow(std::log10(tm/1.0e3), 5);
     
-    return pow(10.0, HDlow) / units;
+    return std::pow(10.0, HDlow) / units;
 }
 
 //Calculation of cie_thin_cooling_rate.
@@ -1329,11 +1330,11 @@ extern "C" double cie_thin_cooling_rate(double T){
     //* Compute rough extrapolations for extreme temperatures.
     // Low temperatures extrapolated with fourth power.
     if (T <= t_cie_c[0]) {
-        return cie_table_c[0]*pow(T/t_cie_c[0], 4);
+        return cie_table_c[0]*std::pow(T/t_cie_c[0], 4);
     }
     // High temperatures extrapolated with third power.
     if (T >= t_cie_c[287]) {
-        return cie_table_c[287]*pow(T/t_cie_c[287], 3);
+        return cie_table_c[287]*std::pow(T/t_cie_c[287], 3);
     }
 
     //* Compute CIE cooling rate for moderate temperatures.
@@ -1386,8 +1387,8 @@ extern "C" double gasGrain_rate(double T, double units, chemistry_data *my_chemi
   if (my_chemistry->gas_grain_cooling_rate == 0) {
     //Calculate energy transfer from gas to dust grains (Equation 2.15, Hollenbach & McKee, 1989).
     //Normalize to the HM89 dust-to-gas ratio.
-    grain_coef = 1.2e-31 * pow(1.0e3, -0.5) / fgr;
-    return grain_coef * pow(T, 0.5) * (1.0 - 0.8 * exp(-75.0 / T)) / units;
+    grain_coef = 1.2e-31 * std::pow(1.0e3, -0.5) / fgr;
+    return grain_coef * std::pow(T, 0.5) * (1.0 - 0.8 * std::exp(-75.0 / T)) / units;
   }
   else if (my_chemistry->gas_grain_cooling_rate == 1) {
     /*
@@ -1399,12 +1400,12 @@ extern "C" double gasGrain_rate(double T, double units, chemistry_data *my_chemi
       is for a MRN-like broken power-law.
       GC racalculated these rates for Omukai's dust model.
     */
-    grain_coef = 2.57033e-32 * pow(1.033,-0.5) / fgr;
-    double f_vel = 0.5 / sqrt(2.0) + 0.0833333 / sqrt(4.0);
+    grain_coef = 2.57033e-32 * std::pow(1.033,-0.5) / fgr;
+    double f_vel = 0.5 / std::sqrt(2.0) + 0.0833333 / std::sqrt(4.0);
     // Hollenbach & McKee (1989) considered the contribution of other species
     // than protons and charged grains, but we now consider only H2 and He
     // and neglect charged grains (Schneider et al. 2006).
-    return grain_coef * f_vel * pow(T, 0.5) / units;
+    return grain_coef * f_vel * std::pow(T, 0.5) / units;
   }
   else {
     GR_INTERNAL_ERROR("gas_grain_cooling_rate can only be 0 or 1.\n");
@@ -1414,8 +1415,8 @@ extern "C" double gasGrain_rate(double T, double units, chemistry_data *my_chemi
 extern "C" double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Variables.
-    double f_vel = 0.5 / sqrt(2.0) + 0.0833333 / sqrt(4.0);
-    double vH_avg = sqrt(kboltz * T / 2.0 / pi / mh);
+    double f_vel = 0.5 / std::sqrt(2.0) + 0.0833333 / std::sqrt(4.0);
+    double vH_avg = std::sqrt(kboltz * T / 2.0 / pi / mh);
 
     return f_vel * 4.0 * vH_avg * 2.0 * kboltz * mh / units;
     //Later multiplied by sigma_gr / mass_gr for arbitrary size distribution.
@@ -1425,8 +1426,8 @@ extern "C" double gasGrain2_rate(double T, double units, chemistry_data *my_chem
 extern "C" double regr_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //(Equation 9, Wolfire et al., 1995)
-    double grbeta = 0.74 / pow(T, 0.068);
-    return  4.65e-30 * pow(T, 0.94 + 0.5 * grbeta) / units;
+    double grbeta = 0.74 / std::pow(T, 0.068);
+    return  4.65e-30 * std::pow(T, 0.94 + 0.5 * grbeta) / units;
 }
 
 //The below rates are scalar -- they have no temperature dependence.
@@ -1482,7 +1483,7 @@ extern "C" double gamma_isrf2_rate(double units, chemistry_data *my_chemistry)
 //Calculation of grain growth rate.
 extern "C" double grain_growth_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double vH_avg = sqrt( kboltz * T / 2.0 / pi / mh);
+    double vH_avg = std::sqrt( kboltz * T / 2.0 / pi / mh);
     return 4.0 * vH_avg * mh / units;
     // Factor of 4 because gas-phase molecules are accreted
     // onto the entire surface area of grains.
@@ -1495,14 +1496,14 @@ extern "C" double h2dust_S_rate(double T, double T_dust, double units, chemistry
     double E_HC_Silicate = 200.0, E_HP_Silicate = 650.0, E_S_Silicate = 3.0e4;
 
     // Sticking probability.
-    double S_H = pow(1.0 + 0.4*pow((T + T_dust)/100.0, 0.5) + 0.2 * (T/100.0) +
-                 0.08*pow(T/100.0,2.0), -1.0);
+    double S_H = std::pow(1.0 + 0.4*std::pow((T + T_dust)/100.0, 0.5) + 0.2 * (T/100.0) +
+                 0.08*std::pow(T/100.0,2.0), -1.0);
 
     // Calculate variables.
-    double bHP_aPC = 1.0/4.0 * pow(1.0 + sqrt((E_HC_Silicate - E_S_Silicate) /
-                     (E_HP_Silicate - E_S_Silicate)), 2.0) * exp(-E_S_Silicate / T_dust);
-    double epsilon_H2 = pow(1.0 + bHP_aPC, -1.0);
-    double vH_avg = sqrt( kboltz * T / 2.0 / pi / mh);
+    double bHP_aPC = 1.0/4.0 * std::pow(1.0 + std::sqrt((E_HC_Silicate - E_S_Silicate) /
+                     (E_HP_Silicate - E_S_Silicate)), 2.0) * std::exp(-E_S_Silicate / T_dust);
+    double epsilon_H2 = std::pow(1.0 + bHP_aPC, -1.0);
+    double vH_avg = std::sqrt( kboltz * T / 2.0 / pi / mh);
 
     return 0.5 * 4.0 * vH_avg * S_H * epsilon_H2 * mh / units;
     // Factor of 4 because gas-phase molecules are accreted
@@ -1516,14 +1517,14 @@ extern "C" double h2dust_C_rate(double T, double T_dust, double units, chemistry
     double E_HC_AmCarbon = 250.0, E_HP_AmCarbon = 800.0, E_S_AmCarbon = 3.0e4;
 
     // Sticking probability.
-    double S_H = pow(1.0 + 0.4*pow((T + T_dust)/100.0, 0.5) + 0.2 * (T/100.0) +
-                 0.08*pow(T/100.0,2.0), -1.0);
+    double S_H = std::pow(1.0 + 0.4*std::pow((T + T_dust)/100.0, 0.5) + 0.2 * (T/100.0) +
+                 0.08*std::pow(T/100.0,2.0), -1.0);
 
     // Calculate variables.
-    double bHP_aPC = 1.0/4.0 * pow(1.0 + sqrt((E_HC_AmCarbon - E_S_AmCarbon) /
-                     (E_HP_AmCarbon - E_S_AmCarbon)), 2.0) * exp(-E_S_AmCarbon / T_dust);
-    double epsilon_H2 = pow(1.0 + bHP_aPC, -1.0);
-    double vH_avg = sqrt( kboltz * T / 2.0 / pi / mh);
+    double bHP_aPC = 1.0/4.0 * std::pow(1.0 + std::sqrt((E_HC_AmCarbon - E_S_AmCarbon) /
+                     (E_HP_AmCarbon - E_S_AmCarbon)), 2.0) * std::exp(-E_S_AmCarbon / T_dust);
+    double epsilon_H2 = std::pow(1.0 + bHP_aPC, -1.0);
+    double vH_avg = std::sqrt( kboltz * T / 2.0 / pi / mh);
 
     return 0.5 * 4.0 * vH_avg * S_H * epsilon_H2 * mh / units;
     // Factor of 4 because gas-phase molecules are accreted
