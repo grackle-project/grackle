@@ -22,14 +22,13 @@
 #endif
 
 #include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "cie_thin_cooling_rate_tables.h"
 #include "phys_constants.h"
+#include "status_reporting.h"
 
 
 // Calculation of k1 (HI + e --> HII + 2e)
@@ -239,9 +238,10 @@ extern "C" double k11_rate(double T, double units, chemistry_data *my_chemistry)
                 + 0.0004138398421504563*pow(logT_ev, 7)
                 - 9.36345888928611e-6*pow(logT_ev, 8)) / units;
         } else {
-            fprintf(stderr, "k11_rate flag set to unknown value. This must be either 1 \
-                             or 2 but was set to %d \n", my_chemistry->h2_charge_exchange_rate);
-            exit(1);
+            GR_INTERNAL_ERROR(
+                "k11_rate flag set to unknown value. This must be either 1 "
+                "or 2 but was set to %d \n",
+                my_chemistry->h2_charge_exchange_rate);
         }
     } else {
         k11 = tiny;
@@ -315,9 +315,9 @@ extern "C" double k13_rate(double T, double units, chemistry_data *my_chemistry)
             break;
         
         default:
-            fprintf(stderr, "three_body_rate has been set to an unknown value: %d \n",
+            GR_INTERNAL_ERROR(
+                "three_body_rate has been set to an unknown value: %d \n",
                 my_chemistry->three_body_rate);
-            exit(1);
     }
     return k13 / units;
 }
@@ -407,8 +407,7 @@ static void k13dd_rate_(double T, int idt, double units, double *k13dd_results,
         fitParam[20]  =    2.937507e+00;
     } else {
         //Print error message if value of idt is invalid and return failure.
-        fprintf(stderr, "idt has been set to an unknown value. Expected 0 or 1, received %d \n", idt);
-        exit(1);
+        GR_INTERNAL_ERROR("idt has been set to an unknown value. Expected 0 or 1, received %d \n", idt);
     }
 
     //Define log10 of the temperature for convenience in the following calculations.
@@ -600,9 +599,9 @@ extern "C" double k22_rate(double T, double units, chemistry_data *my_chemistry)
             break;
 
         default:
-            fprintf(stderr, "three_body_rate has been set to an unknown value: %d \n",
+            GR_INTERNAL_ERROR(
+                "three_body_rate has been set to an unknown value: %d \n",
                 my_chemistry->three_body_rate);
-            exit(1);
     }
     return k22 / units;
 }
@@ -635,8 +634,7 @@ extern "C" double k50_rate(double T, double units, chemistry_data *my_chemistry)
     return 1.0e-9 * exp(-41.0 / T) / units;
   }
   else {
-    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
-    exit(1);
+    GR_INTERNAL_ERROR("hd_reaction_rates can only be 0 or 1.\n");
   }
 }
         
@@ -653,8 +651,7 @@ extern "C" double k51_rate(double T, double units, chemistry_data *my_chemistry)
     return 1.0e-9 / units;
   }
   else {
-    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
-    exit(1);
+    GR_INTERNAL_ERROR("hd_reaction_rates can only be 0 or 1.\n");
   }
 }
 
@@ -676,8 +673,7 @@ extern "C" double k52_rate(double T, double units, chemistry_data *my_chemistry)
     return 2.1e-9 / units;
   }
   else {
-    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
-    exit(1);
+    GR_INTERNAL_ERROR("hd_reaction_rates can only be 0 or 1.\n");
   }
 }
 
@@ -693,8 +689,7 @@ extern "C" double k53_rate(double T, double units, chemistry_data *my_chemistry)
     return 1.0e-9 * exp(-464.0 / T) / units;
   }
   else {
-    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
-    exit(1);
+    GR_INTERNAL_ERROR("hd_reaction_rates can only be 0 or 1.\n");
   }
 }
 
@@ -718,8 +713,7 @@ extern "C" double k54_rate(double T, double units, chemistry_data *my_chemistry)
     return 7.5e-11 * exp(-3820.0 / T) / units;
     }
   else {
-    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
-    exit(1);
+    GR_INTERNAL_ERROR( "hd_reaction_rates can only be 0 or 1.\n");
   }
 }
 
@@ -742,8 +736,7 @@ extern "C" double k55_rate(double T, double units, chemistry_data *my_chemistry)
     return 7.5e-11 * exp(-4240.0 / T) / units;
   }
   else {
-    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
-    exit(1);
+    GR_INTERNAL_ERROR("hd_reaction_rates can only be 0 or 1.\n");
   }
 }
 
@@ -761,8 +754,7 @@ extern "C" double k56_rate(double T, double units, chemistry_data *my_chemistry)
     return 1.5e-9 * pow(T / 3.0e2, -0.1) / units;
   }
   else {
-    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
-    exit(1);
+    GR_INTERNAL_ERROR("hd_reaction_rates can only be 0 or 1.\n");
   }
 }
         
@@ -1167,10 +1159,9 @@ extern "C" double GAHI_rate(double T, double units, chemistry_data *my_chemistry
                             + 1.5538288 * pow(lt3, 5)) / units;
         }
     } else {
-        fprintf(stderr, "h2_h_cooling_rate must be 1 or 2, it has been set \
-                to %d \n", my_chemistry->h2_h_cooling_rate);
-        exit(1);
-
+        GR_INTERNAL_ERROR(
+            "h2_h_cooling_rate must be 1 or 2, it has been set to %d \n",
+            my_chemistry->h2_h_cooling_rate);
     }
 }
 
@@ -1375,12 +1366,9 @@ extern "C" double cie_thin_cooling_rate(double T){
     //   gracefully (if failure is even possible)
     // - for now, loudly exitting with a failure is better than quietly
     //   continuing with a garbage value
-    fprintf(
-      stderr,
-      "INTERNAL ERROR: something went horribly wrong while computing the "
-      "optically thin cooling rate due to CIE cooling. Aborting\n"
-    );
-    abort();
+    GR_INTERNAL_ERROR(
+        "INTERNAL ERROR: something went horribly wrong while computing the "
+        "optically thin cooling rate due to CIE cooling\n");
 }
 
 //Calculation of cieco.
@@ -1419,8 +1407,7 @@ extern "C" double gasGrain_rate(double T, double units, chemistry_data *my_chemi
     return grain_coef * f_vel * pow(T, 0.5) / units;
   }
   else {
-    fprintf(stderr, "gas_grain_cooling_rate can only be 0 or 1.\n");
-    exit(1);
+    GR_INTERNAL_ERROR("gas_grain_cooling_rate can only be 0 or 1.\n");
   }
 }
 
@@ -1479,8 +1466,7 @@ extern "C" double gamma_isrf_rate(double units, chemistry_data *my_chemistry)
     // The factor 2 to cancel out the molecular mass of H2.
   }
   else {
-    fprintf(stderr, "uniform_grain_isrf_heating_rate can only be 0 or 1.\n");
-    exit(1);
+    GR_INTERNAL_ERROR("uniform_grain_isrf_heating_rate can only be 0 or 1.\n");
   }
 }
 
