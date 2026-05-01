@@ -23,13 +23,13 @@ static void vprint_err_(
   int internal_error, const struct grimpl_source_location_ locinfo,
   const char* msg, std::va_list vlist
 ) {
-  const char* santized_func_name = (locinfo.fn_name == NULL)
+  const char* santized_func_name = (locinfo.fn_name == nullptr)
     ? "{unspecified}" : locinfo.fn_name;
 
-  const char* fallback_msg_ = "{NULL encountered instead of error message}";
-  char* dynamic_msg_buf = NULL;
+  const char* fallback_msg_ = "{nullptr encountered instead of error message}";
+  char* dynamic_msg_buf = nullptr;
   const char* msg_buf;
-  if (msg == NULL) {
+  if (msg == nullptr) {
     msg_buf = fallback_msg_;
   } else {
     // make a copy of the variadic function arguments
@@ -37,7 +37,7 @@ static void vprint_err_(
     va_copy(vlist_copy, vlist);
 
     // get the total size of the formatted message
-    std::size_t msg_len = std::vsnprintf(NULL, 0, msg, vlist_copy) + 1;
+    std::size_t msg_len = std::vsnprintf(nullptr, 0, msg, vlist_copy) + 1;
     va_end(vlist_copy);
 
     // allocate the buffer to hold the message
@@ -57,7 +57,7 @@ static void vprint_err_(
     locinfo.lineno, santized_func_name, msg_buf
   );
 
-  if (dynamic_msg_buf != NULL) { delete[] dynamic_msg_buf; }
+  if (dynamic_msg_buf != nullptr) { delete[] dynamic_msg_buf; }
 }
 
 void grimpl_abort_with_internal_err_(
