@@ -479,14 +479,14 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
       double new_metal_total = rho_metal_other + rho_metal_C + rho_metal_O;
       rho_gas = rho_gas + (new_metal_total - old_metal_total);
 
-      // fprintf(stderr,
-      //         "internal: dt=%e growth=%.10e destruct=%.10e "
-      //         "cre_dust=%.10e cre_metal=%.10e "
-      //         "gas=%.15e dust=%.15e metal=%.15e\n",
-      //         dt, growth_dM[i], destruction_dM[i],
-      //         creation_dust_dM[i], creation_metal_dM[i],
-      //         rho_gas, rho_dust, new_metal_total);
-      fprintf(stderr, "checking: %e\n", rho_gas + rho_dust);
+      fprintf(stderr,
+              "internal: dt=%e growth=%.10e destruct=%.10e "
+              "cre_dust=%.10e cre_metal=%.10e "
+              "gas=%.15e dust=%.15e metal=%.15e\n",
+              dt, growth_dM[i], destruction_dM[i],
+              creation_dust_dM[i], creation_metal_dM[i],
+              rho_gas, rho_dust, new_metal_total);
+      // fprintf(stderr, "checking: %e\n", rho_gas + rho_dust);
 
       // Update the fields. metal_density now stores the *total* gas-phase
       // metals; metal_density_carbon / oxygen are subsets of it.

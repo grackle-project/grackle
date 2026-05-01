@@ -14,6 +14,7 @@
 // make_consistent_g function from FORTRAN to C++
 
 #include <cstdio>
+#include <cstdlib>
 #include <vector>
 
 #include "grackle.h"
@@ -567,8 +568,8 @@ void make_consistent(
           // When track_elements is active, Cg/Og come from the tracked
           // fields (always valid), so bypass the density cutoff that
           // exists for the yield-based computation.
-          // if (track_elements_mc ||
-          if (
+          if (track_elements_mc ||
+          // if (
               ((imetal == 0) && (d(i, j, k) * dom < 1.e8)) ||
               ((imetal == 1) && (((metal(i, j, k) <= 1.e-9 * d(i, j, k)) &&
                                   (d(i, j, k) * dom < 1.e8)) ||

@@ -101,7 +101,7 @@ add_library(Grackle_Grackle
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
   calc_temp_cloudy.cpp calc_temp_cloudy.hpp
-  dust_growth_and_destruction.cpp dust_growth_and_destruction.hpp
+  dust/dust_growth_and_destruction.cpp dust/dust_growth_and_destruction.hpp
   calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
   ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
