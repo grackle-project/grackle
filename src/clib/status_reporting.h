@@ -1,6 +1,11 @@
-// See LICENSE file for license and copyright information
-
-/// @file status_reporting.h
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
 /// @brief Declares the tools used for result-reporting
 ///
 /// Purpose
@@ -115,6 +120,8 @@
 /// An issue will be created that describes various strategies for improved
 /// reporting. A common strategy for dealing with simple errors involves exit
 /// codes...
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef STATUS_REPORTING_H
 #define STATUS_REPORTING_H

@@ -1,5 +1,15 @@
-/// @file status_reporting.c
+
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
 /// @brief Implements status reporting functionality
+///
+//===----------------------------------------------------------------------===//
 
 #include <stdarg.h>
 #include <stdio.h>
