@@ -130,39 +130,14 @@
 extern "C" {
 #endif
 
-// define attributes to annotate functionsA:
-// 1. ERRFMT_ATTR_(fmt_pos) tells the compiler argument number `fmt_pos`
-//    expects a printf-style format-string. Compilers supporting this will
-//    know to check consistency between arg-types and the string @ compile-time
-// 2. suppress warnings that may arise about not returning in control-flows
-//    where an internal error aborts the program with NORETURN_ATTR_
-// 3. compiler raises warnings when the value returned by a function annotated
-//    with NODISCARD_ATTR_ isn't used. We use this for a function where this is
-//    almost certainly indicative of programming error
-
-#if 0
-  // this branch will be used once we transition to compiling all non-fortran
-  // files with C++17. (We use the official syntax for specifying attributes)
-  // - starting in C++17, implementations know to ignore attributes that they
-  //   don't recognize
-  #define ERRFMT_ATTR_(fmt_pos) [[gnu::format(__printf__, fmt_pos, fmt_pos+1)]]
-  #define NORETURN_ATTR_ [[noreturn]]
-  #define NODISCARD_ATTR_ [[nodiscard]]
-
-#elif defined(__GNUG__)
-  #define ERRFMT_ATTR_(fmt_pos)                                               \
-    __attribute__((format(__printf__, fmt_pos, fmt_pos+1)))
-  #define NORETURN_ATTR_ __attribute__((noreturn))
-  // unlike [[nodiscard]], warnings associated with the following might not be
-  // suppressed by casting the result to (void). (this is ok for this file)
-  #define NODISCARD_ATTR_ __attribute__((warn_unused_result))
-
-#else
-  #define NORETURN_ATTR_ /* ... */
-  #define ERRFMT_ATTR_(fmt_pos) /* ... */
-  #define NODISCARD_ATTR_ /* ... */
-
-#endif
+// ERRFMT_ATTR_(fmt_pos) expands to an attribute for annotating a function:
+// - it tells the compiler that argument number `fmt_pos` of a function expects
+//   a printf-style format-string. Compilers supporting this will know to check
+//   consistency between the types of subsequent arguments and the format
+//   syntax in the format string (the check occurs at compile-time)
+// - reminder: starting in C++17, implementations know to ignore attributes
+//   that they don't recognize
+#define ERRFMT_ATTR_(fmt_pos) [[gnu::format(__printf__, fmt_pos, fmt_pos+1)]]
 
 // ---------------------------------------
 
@@ -212,7 +187,7 @@ static inline struct grimpl_source_location_ get_src_location_(
   get_src_location_(__FILE__, __LINE__, __GRIMPL_PRETTY_FUNC__)
 
 /// helper function that helps implement GR_INTERNAL_ERROR and
-ERRFMT_ATTR_(2) NORETURN_ATTR_ void grimpl_abort_with_internal_err_(
+ERRFMT_ATTR_(2) [[noreturn]] void grimpl_abort_with_internal_err_(
   const struct grimpl_source_location_ locinfo, const char* msg, ...
 );
 
@@ -282,7 +257,7 @@ ERRFMT_ATTR_(2) NORETURN_ATTR_ void grimpl_abort_with_internal_err_(
                                     "location shouldn't be reachable"); }
 
 // helper function
-ERRFMT_ATTR_(2) NODISCARD_ATTR_ int grimpl_print_and_return_err_(
+ERRFMT_ATTR_(2) [[nodiscard]] int grimpl_print_and_return_err_(
   const struct grimpl_source_location_ locinfo, const char* msg, ...
 );
 
@@ -366,8 +341,6 @@ ERRFMT_ATTR_(2) void grimpl_print_err_msg_(
 // undefine the attributes so we avoid leaking them
 // ------------------------------------------------
 #undef ERRFMT_ATTR_
-#undef NORETURN_ATTR_
-#undef NODISCARD_ATTR_
 
 // I don't think we can undef __GRIMPL_PRETTY_FUNC__ without causing issues
 
