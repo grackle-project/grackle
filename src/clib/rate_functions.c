@@ -322,9 +322,20 @@ double k13_rate(double T, double units, chemistry_data *my_chemistry)
     return k13 / units;
 }
 
-//Calculates 7 k13dd coefficients for given idt (0 or 1).
-//This is an internal function not meant to be accessed by the user -- use k13dd_rate.
-void _k13dd_rate(double T, int idt, double units, double *k13dd_results, chemistry_data *my_chemistry)
+/// Internal helper function that calculates 7 of the density-dependent
+/// coefficients pertaining to the dissociation of molecular Hydrogen
+///
+/// @param[in] T the gas temperature (in K)
+/// @param[in] idt When this is 0, the computed coefficients pertain to
+///     direct collisional dissociation. When this is 1, the computed
+///     coefficients pertain to dissociative tunneling.
+/// @param[out] k13dd_results buffer that is filled with coefficients
+/// @param[in] my_chemistry holds a number of configuration parameters.
+///
+/// @todo Replace the my_chemistry argument with a boolean (based on the value
+///       that chemistry_date::three_body_rate
+static void k13dd_rate_(double T, int idt, double units, double *k13dd_results,
+                        const chemistry_data *my_chemistry)
 {   
     //*Define variables for each of the rates and give them a preliminary value.
     double f1 = tiny;
@@ -450,7 +461,7 @@ void _k13dd_rate(double T, int idt, double units, double *k13dd_results, chemist
 void k13dd_rate(double T, double units, double *k13dd_results, chemistry_data *my_chemistry)
 {
     for (int idt = 0; idt < 2; idt++){
-        _k13dd_rate(T, idt, units, k13dd_results, my_chemistry);
+        k13dd_rate_(T, idt, units, k13dd_results, my_chemistry);
     }
 }
 
