@@ -27,7 +27,7 @@
 #include "grackle_macros.h"
 #include "grackle.h"
 #include "grackle_rate_functions.h"
-#include "cie_thin_cooling_rate_tables.h"
+#include "cie_thin_cooling_rate_tables.hpp"
 #include "phys_constants.h"
 #include "status_reporting.h"
 #include "support/config.hpp"

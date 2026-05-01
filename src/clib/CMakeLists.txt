@@ -102,6 +102,7 @@ add_library(Grackle_Grackle
   calc_temp_cloudy.cpp calc_temp_cloudy.hpp
   calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
   ceiling_species.hpp
+  cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_cloudy_g.cpp cool1d_cloudy_g.hpp
   cool1d_cloudy_old_tables_g.cpp cool1d_cloudy_old_tables_g.hpp
@@ -185,7 +186,6 @@ add_library(Grackle_Grackle
   ../include/grackle_types.h
 
   # private headers
-  cie_thin_cooling_rate_tables.h
   fortran_func_decls.h
   field_data_evolved_species.def    # <-- acts as a C header
   field_data_misc_fdatamembers.def  # <-- acts as a C header

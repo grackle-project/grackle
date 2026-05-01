@@ -9,8 +9,8 @@
  * 
  */
 /*******************************************************************************/
-#ifndef __CIE_THIN_COOLING_RATE_TABLES_H__
-#define __CIE_THIN_COOLING_RATE_TABLES_H__
+#ifndef CIE_THIN_COOLING_RATE_TABLES_HPP
+#define CIE_THIN_COOLING_RATE_TABLES_HPP
 
 //First array.
 double t_cie_c[] = {4.000e02,4.040e02,4.080e02,4.121e02,4.162e02, \
@@ -114,4 +114,4 @@ double cie_table_c[] = {1.435e-15,1.488e-15,1.544e-15,1.601e-15,1.661e-15, \
           1.464e-10,1.505e-10,1.546e-10,1.588e-10,1.631e-10,1.674e-10, \
           1.719e-10};
 
-#endif
+#endif  // CIE_THIN_COOLING_RATE_TABLES_HPP
