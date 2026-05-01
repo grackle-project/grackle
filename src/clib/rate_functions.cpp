@@ -25,8 +25,8 @@
 #include <cmath>
 
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
+#include "grackle.h"
+#include "grackle_rate_functions.h"
 #include "cie_thin_cooling_rate_tables.h"
 #include "phys_constants.h"
 #include "status_reporting.h"
