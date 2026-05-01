@@ -134,4 +134,27 @@ struct CollisionalRxnLUT {
 
 };  // CollisionalRxnLUT struct
 
+/// Defines the LUT for Standard radiative reaction rates
+///
+/// @note
+/// If we ever make changes, we should consider how the changes will affect
+/// @ref grackle::impl::ratequery::get_PhotoRxn_Entry. If necessary, we could
+/// always refactor that function to not use this enum
+struct PhotoRxnLUT {
+  enum {
+    // Radiative rates for 6-species network
+    k24,
+    k25,
+    k26,
+    // Radiative rates for 9-species network
+    k27,
+    k28,
+    k29,
+    k30,
+    k31,
+
+    NUM_ENTRIES  // <- (specifies the number of shieldable radiative reactions)
+  };  // enum
+};  // PhotoRxnLUT struct
+
 #endif /* LUT_HPP */

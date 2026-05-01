@@ -116,7 +116,7 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
   // locals
   const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
-  const PhotoRxnRateCollection kshield_buf = rxn_rate_buf.radiative;
+  const double* const* kph_buf = FullRxnRateBuf_kph_bufs(&rxn_rate_buf);
 
   int i;
   double atten;
@@ -153,25 +153,28 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
             kcol_buf[CollisionalRxnLUT::k58][i] *
                 HI(i, idx_range.j, idx_range.k) *
                 HeI(i, idx_range.j, idx_range.k) / 4. +
-            (kshield_buf.k24[i] * HI(i, idx_range.j, idx_range.k) +
-             kshield_buf.k25[i] * HeII(i, idx_range.j, idx_range.k) / 4. +
-             kshield_buf.k26[i] * HeI(i, idx_range.j, idx_range.k) / 4.);
+            (kph_buf[PhotoRxnLUT::k24][i] * HI(i, idx_range.j, idx_range.k) +
+             kph_buf[PhotoRxnLUT::k25][i] * HeII(i, idx_range.j, idx_range.k) /
+                 4. +
+             kph_buf[PhotoRxnLUT::k26][i] * HeI(i, idx_range.j, idx_range.k) /
+                 4.);
 
         // Compute the HI density rate-of-change
 
-        HIdot[i] = -kcol_buf[CollisionalRxnLUT::k1][i] *
-                       HI(i, idx_range.j, idx_range.k) *
-                       de(i, idx_range.j, idx_range.k) +
-                   kcol_buf[CollisionalRxnLUT::k2][i] *
-                       HII(i, idx_range.j, idx_range.k) *
-                       de(i, idx_range.j, idx_range.k) -
-                   kcol_buf[CollisionalRxnLUT::k57][i] *
-                       HI(i, idx_range.j, idx_range.k) *
-                       HI(i, idx_range.j, idx_range.k) -
-                   kcol_buf[CollisionalRxnLUT::k58][i] *
-                       HI(i, idx_range.j, idx_range.k) *
-                       HeI(i, idx_range.j, idx_range.k) / 4. -
-                   kshield_buf.k24[i] * HI(i, idx_range.j, idx_range.k);
+        HIdot[i] =
+            -kcol_buf[CollisionalRxnLUT::k1][i] *
+                HI(i, idx_range.j, idx_range.k) *
+                de(i, idx_range.j, idx_range.k) +
+            kcol_buf[CollisionalRxnLUT::k2][i] *
+                HII(i, idx_range.j, idx_range.k) *
+                de(i, idx_range.j, idx_range.k) -
+            kcol_buf[CollisionalRxnLUT::k57][i] *
+                HI(i, idx_range.j, idx_range.k) *
+                HI(i, idx_range.j, idx_range.k) -
+            kcol_buf[CollisionalRxnLUT::k58][i] *
+                HI(i, idx_range.j, idx_range.k) *
+                HeI(i, idx_range.j, idx_range.k) / 4. -
+            kph_buf[PhotoRxnLUT::k24][i] * HI(i, idx_range.j, idx_range.k);
       }
     }
   } else {
@@ -231,8 +234,9 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
             kcol_buf[CollisionalRxnLUT::k58][i] *
                 HI(i, idx_range.j, idx_range.k) *
                 HeI(i, idx_range.j, idx_range.k) / 4. -
-            kshield_buf.k24[i] * HI(i, idx_range.j, idx_range.k) +
-            2.0 * kshield_buf.k31[i] * H2I(i, idx_range.j, idx_range.k) / 2.0;
+            kph_buf[PhotoRxnLUT::k24][i] * HI(i, idx_range.j, idx_range.k) +
+            2.0 * kph_buf[PhotoRxnLUT::k31][i] *
+                H2I(i, idx_range.j, idx_range.k) / 2.0;
 
         // Add H2 formation on dust grains
 
@@ -289,9 +293,11 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
             kcol_buf[CollisionalRxnLUT::k58][i] *
                 HI(i, idx_range.j, idx_range.k) *
                 HeI(i, idx_range.j, idx_range.k) / 4. +
-            (kshield_buf.k24[i] * HI(i, idx_range.j, idx_range.k) +
-             kshield_buf.k25[i] * HeII(i, idx_range.j, idx_range.k) / 4. +
-             kshield_buf.k26[i] * HeI(i, idx_range.j, idx_range.k) / 4.);
+            (kph_buf[PhotoRxnLUT::k24][i] * HI(i, idx_range.j, idx_range.k) +
+             kph_buf[PhotoRxnLUT::k25][i] * HeII(i, idx_range.j, idx_range.k) /
+                 4. +
+             kph_buf[PhotoRxnLUT::k26][i] * HeI(i, idx_range.j, idx_range.k) /
+                 4.);
 
         // HII, HeII, HeIII recombination heating
 
