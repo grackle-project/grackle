@@ -30,6 +30,7 @@
 #include "cie_thin_cooling_rate_tables.h"
 #include "phys_constants.h"
 #include "status_reporting.h"
+#include "support/config.hpp"
 
 
 // Calculation of k1 (HI + e --> HII + 2e)
@@ -323,6 +324,8 @@ extern "C" double k13_rate(double T, double units, chemistry_data *my_chemistry)
     return k13 / units;
 }
 
+namespace GRIMPL_NAMESPACE_DECL {
+
 /// Internal helper function that calculates 7 of the density-dependent
 /// coefficients pertaining to the dissociation of molecular Hydrogen
 ///
@@ -335,8 +338,8 @@ extern "C" double k13_rate(double T, double units, chemistry_data *my_chemistry)
 ///
 /// @todo Replace the my_chemistry argument with a boolean (based on the value
 ///       that chemistry_date::three_body_rate
-static void k13dd_rate_(double T, int idt, double units, double *k13dd_results,
-                        const chemistry_data *my_chemistry)
+void k13dd_rate_(double T, int idt, double units, double *k13dd_results,
+                 const chemistry_data *my_chemistry)
 {   
     //*Define variables for each of the rates and give them a preliminary value.
     double f1 = tiny;
@@ -457,11 +460,13 @@ static void k13dd_rate_(double T, int idt, double units, double *k13dd_results,
     }
 }
 
+}  // namespace GRIMPL_NAMESPACE_DECL
+
 //Calculation of k13dd. k13dd_results is a pointer to an array of length 14 * sizeof(double).
 extern "C" void k13dd_rate(double T, double units, double *k13dd_results, chemistry_data *my_chemistry)
 {
     for (int idt = 0; idt < 2; idt++){
-        k13dd_rate_(T, idt, units, k13dd_results, my_chemistry);
+        GRIMPL_NS::k13dd_rate_(T, idt, units, k13dd_results, my_chemistry);
     }
 }
 
