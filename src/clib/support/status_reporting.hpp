@@ -126,10 +126,6 @@
 #ifndef SUPPORT_STATUS_REPORTING_HPP
 #define SUPPORT_STATUS_REPORTING_HPP
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // ERRFMT_ATTR_(fmt_pos) expands to an attribute for annotating a function:
 // - it tells the compiler that argument number `fmt_pos` of a function expects
 //   a printf-style format-string. Compilers supporting this will know to check
@@ -343,9 +339,5 @@ ERRFMT_ATTR_(2) void grimpl_print_err_msg_(
 #undef ERRFMT_ATTR_
 
 // I don't think we can undef __GRIMPL_PRETTY_FUNC__ without causing issues
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif  // SUPPORT_STATUS_REPORTING_HPP
