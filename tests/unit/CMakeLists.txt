@@ -24,7 +24,7 @@ add_executable(testPartMap support/test_unit_PartMap.cpp)
 target_link_libraries(testPartMap testdeps)
 gtest_discover_tests(testPartMap)
 
-add_executable(runStatusReporting test_status_reporting.cpp)
+add_executable(runStatusReporting support/test_status_reporting.cpp)
 target_link_libraries(runStatusReporting testdeps)
 gtest_discover_tests(runStatusReporting)
 
