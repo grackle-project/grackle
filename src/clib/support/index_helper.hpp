@@ -140,7 +140,7 @@ struct IndexRange
 // to help the compiler optimize the associated for-loops, this function:
 //   - is implemented inline
 //   - returns results as a struct rather than by modifying pointer arguments
-static inline field_flat_index_range inner_flat_range_(
+inline field_flat_index_range inner_flat_range_(
   int outer_index, const grackle_index_helper* ind_helper
 )
 {
@@ -154,7 +154,7 @@ static inline field_flat_index_range inner_flat_range_(
 
 /// constructs an IndexRange, which holds the 3D index information for an
 /// "islice."
-static inline IndexRange make_idx_range_(
+inline IndexRange make_idx_range_(
   int outer_index, const grackle_index_helper* idx_helper
 )
 {
