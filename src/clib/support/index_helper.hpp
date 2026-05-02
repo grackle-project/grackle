@@ -13,7 +13,7 @@
 #ifndef SUPPORT_INDEX_HELPER_HPP
 #define SUPPORT_INDEX_HELPER_HPP
 
-#include "grackle_types.h" // grackle_field_data
+#include "grackle.h"  // grackle_field_data
 
 /***********************************************************************
 /  
