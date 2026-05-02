@@ -17,10 +17,6 @@
 
 #include "grackle_types.h" // grackle_field_data
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 /***********************************************************************
 /  
 / VARIABLE TYPES
@@ -199,9 +195,5 @@ inline grackle_index_helper build_index_helper_(
   out.outer_ind_size = num_k_inds * out.num_j_inds;
   return out;
 }
-
-#ifdef __cplusplus
-} // extern "C"
-#endif /* __cplusplus */
 
 #endif  // SUPPORT_INDEX_HELPER_HPP
