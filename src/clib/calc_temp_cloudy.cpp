@@ -18,7 +18,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "scale_fields.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"

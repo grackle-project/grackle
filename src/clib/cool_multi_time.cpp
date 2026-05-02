@@ -18,7 +18,7 @@
 #include "cool1d_multi_g.hpp"
 #include "cool_multi_time.hpp"
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_units.hpp"
 #include "internal_types.hpp"

@@ -13,7 +13,7 @@
 #include <cstdio>
 
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "inject_model/misc.hpp"
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"

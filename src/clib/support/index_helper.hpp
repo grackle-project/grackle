@@ -12,8 +12,8 @@
 / software.
 ************************************************************************/
 
-#ifndef __GRACKLE_PRIVATE_H_
-#define __GRACKLE_PRIVATE_H_
+#ifndef SUPPORT_INDEX_HELPER_HPP
+#define SUPPORT_INDEX_HELPER_HPP
 
 #include "grackle_types.h" // grackle_field_data
 
@@ -175,4 +175,4 @@ grackle_index_helper build_index_helper_(const grackle_field_data *my_fields);
 } // extern "C"
 #endif /* __cplusplus */
 
-#endif
+#endif  // SUPPORT_INDEX_HELPER_HPP

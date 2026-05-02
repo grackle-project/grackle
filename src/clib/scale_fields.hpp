@@ -15,7 +15,7 @@
 #define SCALE_FIELDS_HPP
 
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "utils-cpp.hpp"
 
 namespace grackle::impl {

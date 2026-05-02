@@ -9,9 +9,9 @@
 #ifndef COOL1D_CLOUDY_OLD_TABLES_G_HPP
 #define COOL1D_CLOUDY_OLD_TABLES_G_HPP
 
-#include "grackle.h"             // gr_float
-#include "fortran_func_decls.h"  // gr_mask_int
-#include "index_helper.h"        // IndexRange
+#include "grackle.h"                 // gr_float
+#include "fortran_func_decls.h"      // gr_mask_int
+#include "support/index_helper.hpp"  // IndexRange
 
 namespace grackle::impl {
 

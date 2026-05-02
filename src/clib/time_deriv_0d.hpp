@@ -13,7 +13,7 @@
 #include "full_rxn_rate_buf.hpp"
 #include "grackle.h"
 #include "grackle_macros.h" // GRACKLE_FREE
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "rate_timestep_g.hpp"
 #include "lookup_cool_rates1d.hpp"

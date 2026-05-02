@@ -81,9 +81,6 @@ configure_file(auto_general.cpp.in auto_general.cpp @ONLY)
 
 add_library(Grackle_Grackle
 
-  # C source files
-  index_helper.c
-
   # auto-generated C++ source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.cpp
   # here is the companion header file (not generated)
@@ -146,6 +143,7 @@ add_library(Grackle_Grackle
   support/FrozenKeyIdxBiMap_detail.hpp
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
+  support/index_helper.cpp support/index_helper.hpp
   support/status_reporting.cpp support/status_reporting.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
@@ -191,7 +189,6 @@ add_library(Grackle_Grackle
   field_data_misc_fdatamembers.def  # <-- acts as a C header
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
-  index_helper.h
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
 

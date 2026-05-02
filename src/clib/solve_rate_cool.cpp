@@ -21,7 +21,7 @@
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
 #include "full_rxn_rate_buf.hpp"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_types.hpp"

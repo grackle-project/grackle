@@ -27,8 +27,6 @@ src/clib/dynamic_api.cpp
 src/clib/fortran_func_decls.h
 src/clib/fortran_func_wrappers.hpp
 src/clib/grackle_macros.h
-src/clib/index_helper.c
-src/clib/index_helper.h
 src/clib/init_misc_species_cool_rates.cpp
 src/clib/initialize_UVbackground_data.cpp
 src/clib/initialize_chemistry_data.cpp
@@ -41,6 +39,8 @@ src/clib/interpolate.hpp
 src/clib/phys_constants.h
 src/clib/rate_functions.cpp
 src/clib/solve_rate_cool.cpp
+src/clib/support/index_helper.cpp
+src/clib/support/index_helper.hpp
 src/clib/support/status_reporting.cpp
 src/clib/support/status_reporting.hpp
 src/clib/step_rate_gauss_seidel.hpp
