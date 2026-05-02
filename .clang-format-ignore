@@ -39,7 +39,6 @@ src/clib/interpolate.hpp
 src/clib/phys_constants.h
 src/clib/rate_functions.cpp
 src/clib/solve_rate_cool.cpp
-src/clib/support/index_helper.cpp
 src/clib/support/index_helper.hpp
 src/clib/support/status_reporting.cpp
 src/clib/support/status_reporting.hpp
