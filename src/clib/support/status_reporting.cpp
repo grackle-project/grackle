@@ -46,7 +46,6 @@ static void vprint_err_(int internal_error, SourceLocation locinfo,
 
     // actually format the message
     std::vsnprintf(dynamic_msg_buf.data(), msg_len, msg, vlist);
-    va_end(vlist);
 
     msg_buf = dynamic_msg_buf.data();
   }
