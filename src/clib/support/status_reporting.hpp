@@ -139,7 +139,7 @@
 
 // ---------------------------------------
 
-/// @def      __GRIMPL_PRETTY_FUNC__
+/// @def      GRIMPL_PRETTY_FUNC_MAGIC_CONST
 /// @brief    a magic contant like __LINE__ or __FILE__ used to specify the
 ///           name of the current function
 ///
@@ -153,9 +153,9 @@
 ///   more information about the function (like the scope of the function, the
 ///   the function signature, any template specialization, etc.).
 #ifdef __GNUG__
-  #define __GRIMPL_PRETTY_FUNC__ __PRETTY_FUNCTION__
+  #define GRIMPL_PRETTY_FUNC_MAGIC_CONST __PRETTY_FUNCTION__
 #else
-  #define __GRIMPL_PRETTY_FUNC__ __func__
+  #define GRIMPL_PRETTY_FUNC_MAGIC_CONST __func__
 #endif
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -166,7 +166,7 @@ struct SourceLocation{
   const char* fn_name;
 };
 
-/// This is a helper function used to help implement __GRIMPL_SRCLOC__
+/// This is a helper function used to help implement GRIMPL_SRCLOC_INFO
 inline SourceLocation get_SourceLocation(const char* file, int lineno,
                                          const char* fn_name) {
   SourceLocation out;
@@ -178,11 +178,11 @@ inline SourceLocation get_SourceLocation(const char* file, int lineno,
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
-/// @def __GRIMPL_SRCLOC__
+/// @def GRIMPL_SRCLOC_INFO
 /// @brief Roughly equivalent to __FILE__, __LINE__, etc. But, it gathers the
 ///        info for us in a very concise manner
-#define __GRIMPL_SRCLOC__                                                   \
-  ::GRIMPL_NS::get_SourceLocation(__FILE__, __LINE__, __GRIMPL_PRETTY_FUNC__)
+#define GRIMPL_SRCLOC_INFO                                                   \
+  ::GRIMPL_NS::get_SourceLocation(__FILE__, __LINE__, GRIMPL_PRETTY_FUNC_MAGIC_CONST)
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -208,11 +208,11 @@ ERRFMT_ATTR_(2) [[noreturn]] void abort_with_internal_err_(
 /// at least 1 variadic argument (even in cases when ``msg`` doesn't format
 /// any arguments). There is no portable way around this until C++ 20.
 #define GR_INTERNAL_ERROR(...)                                            \
-  { ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
+  { ::GRIMPL_NS::abort_with_internal_err_(GRIMPL_SRCLOC_INFO, __VA_ARGS__); }
 // we define GRIMPL_ERROR to avoid merge conflicts. The plan is to remove it in
 // the future (after avoiding merge conflicts)
 #define GRIMPL_ERROR(...)                                                 \
-  { ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
+  { ::GRIMPL_NS::abort_with_internal_err_(GRIMPL_SRCLOC_INFO, __VA_ARGS__); }
 
 
 /// @def GR_INTERNAL_REQUIRE
@@ -234,7 +234,7 @@ ERRFMT_ATTR_(2) [[noreturn]] void abort_with_internal_err_(
 #define GR_INTERNAL_REQUIRE(cond, ...)                                        \
   {                                                                           \
     if (!(cond)) {                                                            \
-      ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__,                \
+      ::GRIMPL_NS::abort_with_internal_err_(GRIMPL_SRCLOC_INFO,                \
                                             __VA_ARGS__);                     \
     }                                                                         \
   }
@@ -243,7 +243,7 @@ ERRFMT_ATTR_(2) [[noreturn]] void abort_with_internal_err_(
 #define GRIMPL_REQUIRE(cond, ...)                                             \
   {                                                                           \
     if (!(cond)) {                                                            \
-      ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__,                \
+      ::GRIMPL_NS::abort_with_internal_err_(GRIMPL_SRCLOC_INFO,               \
                                             __VA_ARGS__);                     \
     }                                                                         \
   }
@@ -291,7 +291,7 @@ ERRFMT_ATTR_(2) [[nodiscard]] int print_and_return_err_(SourceLocation locinfo,
 /// interface that we can easily replace in the future if/when we improve error
 /// reporting
 #define GrPrintAndReturnErr(...)                                             \
-  ::GRIMPL_NS::print_and_return_err_(__GRIMPL_SRCLOC__, __VA_ARGS__);
+  ::GRIMPL_NS::print_and_return_err_(GRIMPL_SRCLOC_INFO, __VA_ARGS__);
 
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -315,7 +315,7 @@ ERRFMT_ATTR_(2) void print_err_msg_(SourceLocation locinfo, const char* msg,
 /// The ``fmt`` arg is a printf-style format argument specifying the error
 /// message. The remaining args arguments are used to format error message
 #define GrPrintErrMsg(...)                                      \
-  ::GRIMPL_NS::print_err_msg_(__GRIMPL_SRCLOC__, __VA_ARGS__);
+  ::GRIMPL_NS::print_err_msg_(GRIMPL_SRCLOC_INFO, __VA_ARGS__);
 
 /// @def GR_INTERNAL_UNREACHABLE_ERROR()
 /// @brief function-like macro that aborts with a (lethal) error message
@@ -331,13 +331,14 @@ ERRFMT_ATTR_(2) void print_err_msg_(SourceLocation locinfo, const char* msg,
 /// undefined behavior). (An argument could be made for conditionally compiling
 /// this macro into the alternatives to test speed)
 #define GR_INTERNAL_UNREACHABLE_ERROR()                                       \
-{ ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__,                    \
+{ ::GRIMPL_NS::abort_with_internal_err_(GRIMPL_SRCLOC_INFO,                   \
                                         "location shouldn't be reachable"); }
 
 // undefine the attributes so we avoid leaking them
 // ------------------------------------------------
 #undef ERRFMT_ATTR_
 
-// I don't think we can undef __GRIMPL_PRETTY_FUNC__ without causing issues
+// I don't think we can undef GRIMPL_PRETTY_FUNC_MAGIC_CONST or
+// GRIMPL_SRCLOC_INFO without causing issues
 
 #endif  // SUPPORT_STATUS_REPORTING_HPP
