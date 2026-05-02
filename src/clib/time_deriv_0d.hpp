@@ -215,7 +215,7 @@ inline ContextPack new_ContextPack(
   // - we explicitly follow the standard idiom for constructing an IndexRange
   //   and avoid directly constructing it (if the internals change we don't
   //   want to fix it here).
-  const grackle_index_helper idx_helper = build_index_helper_(&pack.fields);
+  const IndexHelper idx_helper = build_index_helper_(&pack.fields);
   pack.idx_range_1_element = make_idx_range_(0, &idx_helper);
 
   // initialize other members

@@ -74,7 +74,7 @@ std::vector<double> fill_mask(const IndexRegion& idx_region, IndexingStrat s) {
   int rank = idx_region.idx_mapping_.rank();
 
   // set up index_helper:
-  grackle_index_helper index_helper;
+  GRIMPL_NS::IndexHelper index_helper;
   {
     std::vector<int> start = idx_region.start_;
     std::vector<int> end(rank);
@@ -91,7 +91,7 @@ std::vector<double> fill_mask(const IndexRegion& idx_region, IndexingStrat s) {
     tmp.grid_start = start.data();
     tmp.grid_end = end.data();
 
-    index_helper = build_index_helper_(&tmp);
+    index_helper = GRIMPL_NS::build_index_helper_(&tmp);
   }
   int outer_idx_size = index_helper.outer_ind_size;
 
@@ -100,7 +100,7 @@ std::vector<double> fill_mask(const IndexRegion& idx_region, IndexingStrat s) {
   switch (s) {
     case IndexingStrat::FLAT: {
       for (int outer_idx = 0; outer_idx < outer_idx_size; outer_idx++) {
-        field_flat_index_range flat_idx_range =
+        GRIMPL_NS::FieldFlatIndexRange flat_idx_range =
             inner_flat_range_(outer_idx, &index_helper);
         for (int i = flat_idx_range.start; i <= flat_idx_range.end; i++) {
           out[i] += 1;
@@ -113,14 +113,16 @@ std::vector<double> fill_mask(const IndexRegion& idx_region, IndexingStrat s) {
           idx_region.idx_mapping_;
       if (rank == 1) {
         for (int outer_idx = 0; outer_idx < outer_idx_size; outer_idx++) {
-          IndexRange idx_range = make_idx_range_(outer_idx, &index_helper);
+          GRIMPL_NS::IndexRange idx_range =
+              GRIMPL_NS::make_idx_range_(outer_idx, &index_helper);
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
             out[i] += 1;
           }
         }
       } else if (rank == 2) {
         for (int outer_idx = 0; outer_idx < outer_idx_size; outer_idx++) {
-          IndexRange idx_range = make_idx_range_(outer_idx, &index_helper);
+          GRIMPL_NS::IndexRange idx_range =
+              GRIMPL_NS::make_idx_range_(outer_idx, &index_helper);
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
             int flat_idx = idx_mapping(i, idx_range.j);
             out[flat_idx] += 1;
@@ -128,7 +130,8 @@ std::vector<double> fill_mask(const IndexRegion& idx_region, IndexingStrat s) {
         }
       } else if (rank == 3) {
         for (int outer_idx = 0; outer_idx < outer_idx_size; outer_idx++) {
-          IndexRange idx_range = make_idx_range_(outer_idx, &index_helper);
+          GRIMPL_NS::IndexRange idx_range =
+              GRIMPL_NS::make_idx_range_(outer_idx, &index_helper);
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
             int flat_idx = idx_mapping(i, idx_range.j, idx_range.k);
             out[flat_idx] += 1;

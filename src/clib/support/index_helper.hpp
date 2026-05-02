@@ -14,6 +14,9 @@
 #define SUPPORT_INDEX_HELPER_HPP
 
 #include "grackle.h"  // grackle_field_data
+#include "config.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// @brief internal type to assist with iterating over 3D index-space.
 ///
@@ -24,7 +27,7 @@
 ///   and `t`). In 3D, this loop corresponds to the `i` axis.
 ///
 /// To create an instance, you should use @ref build_index_helper_
-struct grackle_index_helper
+struct IndexHelper
 {
   int i_start;
   int i_end;
@@ -46,7 +49,7 @@ struct grackle_index_helper
 /// you treat the fields as flattened 1d arrays
 ///
 /// To create an instance, you should use @ref build_index_helper_
-struct field_flat_index_range
+struct FieldFlatIndexRange
 {
   int start;
   int end;
@@ -63,7 +66,7 @@ struct field_flat_index_range
 ///   in the underlying flat 1d buffer that holds a field's data. In some cases
 ///   (e.g. Fortran Arrays) the remapping is done behind the scenes and in
 ///   cases, it is more explicit (but the logic is always somewhere)
-/// - For context, the `field_flat_index_range` can be used to specify the same
+/// - For context, the `FieldFlatIndexRange` can be used to specify the same
 ///   range for 3D fields, but the remapping logic is pre-applied (this makes
 ///   it much less useful when you have these custom buffers)
 ///
@@ -123,30 +126,27 @@ struct IndexRange
   int i_end;
 };
 
-/// @brief Construct a @ref field_flat_index_range from a
-///     @ref grackle_index_helper
+/// @brief Construct a @ref FieldFlatIndexRange from a @ref IndexHelper
 ///
 /// @ref
 /// to help the compiler optimize the associated for-loops, this function:
 /// - is implemented inline (to allow the compiler to inline this function)
 /// - returns results as a struct rather than by modifying pointer arguments
-inline field_flat_index_range inner_flat_range_(
-  int outer_index, const grackle_index_helper* ind_helper
-)
+inline FieldFlatIndexRange inner_flat_range_(int outer_index,
+                                                const IndexHelper* ind_helper)
 {
   int k = (outer_index / ind_helper->num_j_inds) + ind_helper->k_start;
   int j = (outer_index % ind_helper->num_j_inds) + ind_helper->j_start;
   int outer_offset = ind_helper->i_dim * (j + ind_helper->j_dim * k);
-  field_flat_index_range out = {ind_helper->i_start + outer_offset,
-                                ind_helper->i_end + outer_offset};
+  FieldFlatIndexRange out = {ind_helper->i_start + outer_offset,
+                             ind_helper->i_end + outer_offset};
   return out;
 }
 
 /// @brief constructs an IndexRange, which holds the 3D index information for an
 /// "islice."
-inline IndexRange make_idx_range_(
-  int outer_index, const grackle_index_helper* idx_helper
-)
+inline IndexRange make_idx_range_(int outer_index,
+                                  const IndexHelper* idx_helper)
 {
   IndexRange out;
   out.k = (outer_index / idx_helper->num_j_inds) + idx_helper->k_start;
@@ -159,15 +159,14 @@ inline IndexRange make_idx_range_(
   return out;
 }
 
-/// @brief Construct a new @ref grackle_index_helper
+/// @brief Construct a new @ref IndexHelper
 ///
 /// @note
 /// This function is only declared `inline` as a matter of convenience. If it
 /// would help compile-times, we could always move the definition to a source
 /// file
-inline grackle_index_helper build_index_helper_(
-    const grackle_field_data *my_fields) {
-  grackle_index_helper out;
+inline IndexHelper build_index_helper_(const grackle_field_data *my_fields) {
+  IndexHelper out;
   const int rank = my_fields->grid_rank;
 
   // handle i indices
@@ -175,13 +174,13 @@ inline grackle_index_helper build_index_helper_(
   out.i_start = my_fields->grid_start[0];
   out.i_end   = my_fields->grid_end[0];
 
-  // handle j indices (j_end isn't tracked by grackle_index_helper)
+  // handle j indices (j_end isn't tracked by IndexHelper)
   out.j_dim   = (rank >= 2) ? my_fields->grid_dimension[1] : 1;
   out.j_start = (rank >= 2) ? my_fields->grid_start[1]     : 0;
   int j_end   = (rank >= 2) ? my_fields->grid_end[1]       : 0;
   out.num_j_inds = (j_end - out.j_start) + 1;
 
-  // handle k indices (k_end & k_dim aren't tracked by grackle_index_helper)
+  // handle k indices (k_end & k_dim aren't tracked by IndexHelper)
   out.k_start = (rank >= 3) ? my_fields->grid_start[2]     : 0;
   int k_end   = (rank >= 3) ? my_fields->grid_end[2]       : 0;
   int num_k_inds = (k_end - out.k_start) + 1;
@@ -189,5 +188,7 @@ inline grackle_index_helper build_index_helper_(
   out.outer_ind_size = num_k_inds * out.num_j_inds;
   return out;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // SUPPORT_INDEX_HELPER_HPP

@@ -64,7 +64,8 @@ extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
   const double inv_metal_mol = 1.0 / MU_METAL;
 
   /* Compute properties used to index the field. */
-  const grackle_index_helper ind_helper = build_index_helper_(my_fields);
+  const GRIMPL_NS::IndexHelper ind_helper
+      = GRIMPL_NS::build_index_helper_(my_fields);
 
   /* Compute temperature with mu calculated directly. */
 
@@ -75,8 +76,8 @@ extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
 # endif
   for (int outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-    const field_flat_index_range range = inner_flat_range_(outer_ind,
-                                                           &ind_helper);
+    const GRIMPL_NS::FieldFlatIndexRange range = inner_flat_range_
+        (outer_ind, &ind_helper);
 
     for (int index = range.start; index <= range.end; index++) {
 

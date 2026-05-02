@@ -52,7 +52,7 @@ void calc_tdust_3d(
   const double trad = (gr_float)(2.73) * ((gr_float)(1.) + zr);
 
   // Loop over zones, and do an entire i-column in one go
-  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {

@@ -31,7 +31,8 @@ extern "C" int local_calculate_pressure(chemistry_data *my_chemistry,
     return GR_SUCCESS;
 
   double tiny_number = 1.e-20;
-  const grackle_index_helper ind_helper = build_index_helper_(my_fields);
+  const GRIMPL_NS::IndexHelper ind_helper
+      = GRIMPL_NS::build_index_helper_(my_fields);
   int outer_ind, index;
 
   /* parallelize the k and j loops with OpenMP
@@ -41,8 +42,8 @@ extern "C" int local_calculate_pressure(chemistry_data *my_chemistry,
 # endif
   for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-    const field_flat_index_range range = inner_flat_range_(outer_ind,
-                                                           &ind_helper);
+    GRIMPL_NS::FieldFlatIndexRange range = GRIMPL_NS::inner_flat_range_(
+        outer_ind, &ind_helper);
 
     for (index = range.start; index <= range.end; index++) {
 
@@ -73,8 +74,8 @@ extern "C" int local_calculate_pressure(chemistry_data *my_chemistry,
 #   endif
     for (int outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-      const field_flat_index_range range = inner_flat_range_(outer_ind,
-                                                             &ind_helper);
+      const GRIMPL_NS::FieldFlatIndexRange range = GRIMPL_NS::inner_flat_range_
+          (outer_ind, &ind_helper);
 
       for (index = range.start; index <= range.end; index++) {
 
