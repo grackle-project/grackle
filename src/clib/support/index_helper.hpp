@@ -15,12 +15,6 @@
 
 #include "grackle.h"  // grackle_field_data
 
-/***********************************************************************
-/  
-/ VARIABLE TYPES
-/
-************************************************************************/
-
 /// internal type to assist with iterating over 3D index-space.
 ///
 /// An instance, `obj`, is commonly used in a 2-level nested for-loop:
@@ -124,12 +118,6 @@ struct IndexRange
   // holds the value of `i_stop-1` (remove when transcription is done)
   int i_end;
 };
-
-/***********************************************************************
-/  
-/ FUNCTION DECLARATIONS
-/
-************************************************************************/
 
 // to help the compiler optimize the associated for-loops, this function:
 //   - is implemented inline
