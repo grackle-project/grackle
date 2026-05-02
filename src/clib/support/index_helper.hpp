@@ -15,13 +15,15 @@
 
 #include "grackle.h"  // grackle_field_data
 
-/// internal type to assist with iterating over 3D index-space.
+/// @brief internal type to assist with iterating over 3D index-space.
 ///
 /// An instance, `obj`, is commonly used in a 2-level nested for-loop:
 /// - the outer loop iterates over index `t` for `0 <= t < obj.outer_ind_size`.
 ///   In 3D, this loop corresponds to `j`,`k` index pairs.
 /// - the inner loop iterate over the "index-range" (constructed from `obj`
 ///   and `t`). In 3D, this loop corresponds to the `i` axis.
+///
+/// To create an instance, you should use @ref build_index_helper_
 struct grackle_index_helper
 {
   int i_start;
@@ -40,8 +42,10 @@ struct grackle_index_helper
 
 };
 
-/// Specifies a range of indices for grackle's 3D fields, for use when you 
-/// treat the fields as flattened 1d arrays
+/// @brief Specifies a range of indices for grackle's 3D fields, for use when
+/// you treat the fields as flattened 1d arrays
+///
+/// To create an instance, you should use @ref build_index_helper_
 struct field_flat_index_range
 {
   int start;
@@ -119,9 +123,13 @@ struct IndexRange
   int i_end;
 };
 
-// to help the compiler optimize the associated for-loops, this function:
-//   - is implemented inline
-//   - returns results as a struct rather than by modifying pointer arguments
+/// @brief Construct a @ref field_flat_index_range from a
+///     @ref grackle_index_helper
+///
+/// @ref
+/// to help the compiler optimize the associated for-loops, this function:
+/// - is implemented inline (to allow the compiler to inline this function)
+/// - returns results as a struct rather than by modifying pointer arguments
 inline field_flat_index_range inner_flat_range_(
   int outer_index, const grackle_index_helper* ind_helper
 )
@@ -134,7 +142,7 @@ inline field_flat_index_range inner_flat_range_(
   return out;
 }
 
-/// constructs an IndexRange, which holds the 3D index information for an
+/// @brief constructs an IndexRange, which holds the 3D index information for an
 /// "islice."
 inline IndexRange make_idx_range_(
   int outer_index, const grackle_index_helper* idx_helper
