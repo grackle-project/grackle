@@ -126,6 +126,8 @@
 #ifndef SUPPORT_STATUS_REPORTING_HPP
 #define SUPPORT_STATUS_REPORTING_HPP
 
+#include "config.hpp"
+
 // ERRFMT_ATTR_(fmt_pos) expands to an attribute for annotating a function:
 // - it tells the compiler that argument number `fmt_pos` of a function expects
 //   a printf-style format-string. Compilers supporting this will know to check
@@ -156,36 +158,40 @@
   #define __GRIMPL_PRETTY_FUNC__ __func__
 #endif
 
-struct grimpl_source_location_{
+namespace GRIMPL_NAMESPACE_DECL {
+
+struct SourceLocation{
   const char* file;
   int lineno;
   const char* fn_name;
 };
 
 /// This is a helper function used to help implement __GRIMPL_SRCLOC__
-///
-/// @note
-/// static is required to use inline with C
-static inline struct grimpl_source_location_ get_src_location_(
-  const char* file, int lineno, const char* fn_name
-) {
-  struct grimpl_source_location_ out;
+inline SourceLocation get_SourceLocation(const char* file, int lineno,
+                                         const char* fn_name) {
+  SourceLocation out;
   out.file = file;
   out.lineno = lineno;
   out.fn_name = fn_name;
   return out;
 }
 
+}  // namespace GRIMPL_NAMESPACE_DECL
+
 /// @def __GRIMPL_SRCLOC__
 /// @brief Roughly equivalent to __FILE__, __LINE__, etc. But, it gathers the
 ///        info for us in a very concise manner
 #define __GRIMPL_SRCLOC__                                                   \
-  get_src_location_(__FILE__, __LINE__, __GRIMPL_PRETTY_FUNC__)
+  ::GRIMPL_NS::get_SourceLocation(__FILE__, __LINE__, __GRIMPL_PRETTY_FUNC__)
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// helper function that helps implement GR_INTERNAL_ERROR and
-ERRFMT_ATTR_(2) [[noreturn]] void grimpl_abort_with_internal_err_(
-  const struct grimpl_source_location_ locinfo, const char* msg, ...
-);
+/// GR_INTERNAL_REQUIRE
+ERRFMT_ATTR_(2) [[noreturn]] void abort_with_internal_err_(
+    SourceLocation locinfo, const char* msg, ...);
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 /// @def GR_INTERNAL_ERROR
 /// @brief function-like macro that handles a (lethal) error message
@@ -202,11 +208,11 @@ ERRFMT_ATTR_(2) [[noreturn]] void grimpl_abort_with_internal_err_(
 /// at least 1 variadic argument (even in cases when ``msg`` doesn't format
 /// any arguments). There is no portable way around this until C++ 20.
 #define GR_INTERNAL_ERROR(...)                                            \
-  { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
+  { ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
 // we define GRIMPL_ERROR to avoid merge conflicts. The plan is to remove it in
 // the future (after avoiding merge conflicts)
 #define GRIMPL_ERROR(...)                                                 \
-  { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
+  { ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
 
 
 /// @def GR_INTERNAL_REQUIRE
@@ -225,14 +231,22 @@ ERRFMT_ATTR_(2) [[noreturn]] void grimpl_abort_with_internal_err_(
 ///
 /// @note
 /// The behavior is independent of the ``NDEBUG`` macro
-#define GR_INTERNAL_REQUIRE(cond, ...)                                     \
-  {  if (!(cond))                                                              \
-      { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); } }
+#define GR_INTERNAL_REQUIRE(cond, ...)                                        \
+  {                                                                           \
+    if (!(cond)) {                                                            \
+      ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__,                \
+                                            __VA_ARGS__);                     \
+    }                                                                         \
+  }
 // we define GRIMPL_REQUIRE to avoid merge conflicts. The plan is to remove it
 // in the future (after avoiding merge conflicts)
 #define GRIMPL_REQUIRE(cond, ...)                                             \
-  {  if (!(cond))                                                             \
-      { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); } }
+  {                                                                           \
+    if (!(cond)) {                                                            \
+      ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__,                \
+                                            __VA_ARGS__);                     \
+    }                                                                         \
+  }
 
 
 /// @def GR_INTERNAL_UNREACHABLE_ERROR()
@@ -248,14 +262,16 @@ ERRFMT_ATTR_(2) [[noreturn]] void grimpl_abort_with_internal_err_(
 /// aborts the program with an error if its executed (the other cases produce
 /// undefined behavior). (An argument could be made for conditionally compiling
 /// this macro into the alternatives to test speed)
-#define GR_INTERNAL_UNREACHABLE_ERROR()                                    \
-  { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__,                     \
-                                    "location shouldn't be reachable"); }
+#define GR_INTERNAL_UNREACHABLE_ERROR()                                        \
+  { ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__,                   \
+                                          "location shouldn't be reachable"); }
 
+namespace GRIMPL_NAMESPACE_DECL {
 // helper function
-ERRFMT_ATTR_(2) [[nodiscard]] int grimpl_print_and_return_err_(
-  const struct grimpl_source_location_ locinfo, const char* msg, ...
-);
+ERRFMT_ATTR_(2) [[nodiscard]] int print_and_return_err_(SourceLocation locinfo,
+                                                        const char* msg, ...);
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 /// @def GrPrintAndReturnErr
 /// @brief prints the error message & returns the appropriate status-value
@@ -292,13 +308,14 @@ ERRFMT_ATTR_(2) [[nodiscard]] int grimpl_print_and_return_err_(
 /// interface that we can easily replace in the future if/when we improve error
 /// reporting
 #define GrPrintAndReturnErr(...)                                             \
-  grimpl_print_and_return_err_(__GRIMPL_SRCLOC__, __VA_ARGS__);
+  ::GRIMPL_NS::print_and_return_err_(__GRIMPL_SRCLOC__, __VA_ARGS__);
 
 
+namespace GRIMPL_NAMESPACE_DECL {
 // helper function
-ERRFMT_ATTR_(2) void grimpl_print_err_msg_(
-  const struct grimpl_source_location_ locinfo, const char* msg, ...
-);
+ERRFMT_ATTR_(2) void print_err_msg_(SourceLocation locinfo, const char* msg,
+                                    ...);
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 /// @def GrPrintErrMsg
 /// @brief prints the appropriate error message.
@@ -314,8 +331,8 @@ ERRFMT_ATTR_(2) void grimpl_print_err_msg_(
 ///
 /// The ``fmt`` arg is a printf-style format argument specifying the error
 /// message. The remaining args arguments are used to format error message
-#define GrPrintErrMsg(...)                              \
-  grimpl_print_err_msg_(__GRIMPL_SRCLOC__, __VA_ARGS__);
+#define GrPrintErrMsg(...)                                      \
+  ::GRIMPL_NS::print_err_msg_(__GRIMPL_SRCLOC__, __VA_ARGS__);
 
 /// @def GR_INTERNAL_UNREACHABLE_ERROR()
 /// @brief function-like macro that aborts with a (lethal) error message
@@ -330,9 +347,9 @@ ERRFMT_ATTR_(2) void grimpl_print_err_msg_(
 /// aborts the program with an error if its executed (the other cases produce
 /// undefined behavior). (An argument could be made for conditionally compiling
 /// this macro into the alternatives to test speed)
-#define GR_INTERNAL_UNREACHABLE_ERROR()                                    \
-{ grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__,                     \
-"location shouldn't be reachable"); }
+#define GR_INTERNAL_UNREACHABLE_ERROR()                                       \
+{ ::GRIMPL_NS::abort_with_internal_err_(__GRIMPL_SRCLOC__,                    \
+                                        "location shouldn't be reachable"); }
 
 // undefine the attributes so we avoid leaking them
 // ------------------------------------------------

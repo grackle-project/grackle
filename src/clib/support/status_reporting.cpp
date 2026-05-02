@@ -19,11 +19,11 @@
 #include "status_reporting.hpp"
 #include "grackle.h" // GR_FAIL
 
+namespace GRIMPL_NAMESPACE_DECL {
+
 // this is the internal routine that everything else dispatches to
-static void vprint_err_(
-  int internal_error, const struct grimpl_source_location_ locinfo,
-  const char* msg, std::va_list vlist
-) {
+static void vprint_err_(int internal_error, SourceLocation locinfo,
+                        const char* msg, std::va_list vlist) {
   const char* santized_func_name = (locinfo.fn_name == nullptr)
     ? "{unspecified}" : locinfo.fn_name;
 
@@ -59,9 +59,7 @@ static void vprint_err_(
   );
 }
 
-void grimpl_abort_with_internal_err_(
-  const struct grimpl_source_location_ locinfo, const char* msg, ...
-) {
+void abort_with_internal_err_(SourceLocation locinfo, const char* msg, ...) {
   std::va_list args;
   va_start(args, msg);
   vprint_err_(1, locinfo, msg, args);
@@ -71,9 +69,7 @@ void grimpl_abort_with_internal_err_(
   std::abort();
 }
 
-int grimpl_print_and_return_err_(
-  const struct grimpl_source_location_ locinfo, const char* msg, ...
-) {
+int print_and_return_err_(SourceLocation locinfo, const char* msg, ...) {
   std::va_list args;
   va_start(args, msg);
   vprint_err_(0, locinfo, msg, args);
@@ -81,12 +77,11 @@ int grimpl_print_and_return_err_(
   return GR_FAIL;
 }
 
-void grimpl_print_err_msg_(
-  const struct grimpl_source_location_ locinfo, const char* msg, ...
-) {
+void print_err_msg_(SourceLocation locinfo, const char* msg, ...) {
   va_list args;
   va_start(args, msg);
   vprint_err_(0, locinfo, msg, args);
   va_end(args);
 }
 
+}  // namespace GRIMPL_NAMESPACE_DECL
