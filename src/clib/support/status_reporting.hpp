@@ -8,6 +8,10 @@
 /// @file
 /// @brief Declares the tools used for result-reporting
 ///
+//===----------------------------------------------------------------------===//
+
+/// @defgroup statusreportgrp Status Reporting Machinery and Utilties
+///
 /// Purpose
 /// =======
 /// Define machinery to let us standardize our internal logic for
@@ -120,8 +124,7 @@
 /// An issue will be created that describes various strategies for improved
 /// reporting. A common strategy for dealing with simple errors involves exit
 /// codes...
-///
-//===----------------------------------------------------------------------===//
+/** @{ */
 
 #ifndef SUPPORT_STATUS_REPORTING_HPP
 #define SUPPORT_STATUS_REPORTING_HPP
@@ -340,5 +343,7 @@ ERRFMT_ATTR_(2) void print_err_msg_(SourceLocation locinfo, const char* msg,
 
 // I don't think we can undef GRIMPL_PRETTY_FUNC_MAGIC_CONST or
 // GRIMPL_SRCLOC_INFO without causing issues
+
+/** @}*/ // end of doxygen documentation group
 
 #endif  // SUPPORT_STATUS_REPORTING_HPP
