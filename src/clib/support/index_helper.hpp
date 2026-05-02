@@ -34,7 +34,7 @@ extern "C" {
 ///   In 3D, this loop corresponds to `j`,`k` index pairs.
 /// - the inner loop iterate over the "index-range" (constructed from `obj`
 ///   and `t`). In 3D, this loop corresponds to the `i` axis.
-typedef struct
+struct grackle_index_helper
 {
   int i_start;
   int i_end;
@@ -50,15 +50,15 @@ typedef struct
   int num_j_inds;
   int outer_ind_size;
 
-} grackle_index_helper;
+};
 
 /// Specifies a range of indices for grackle's 3D fields, for use when you 
 /// treat the fields as flattened 1d arrays
-typedef struct
+struct field_flat_index_range
 {
   int start;
   int end;
-} field_flat_index_range;
+};
 
 /// Specifies the range of indices for grackle's 3D fields.
 ///
@@ -112,7 +112,7 @@ typedef struct
 /// @par Future Usage
 /// If we continue using this type after we complete transcription, we can have
 /// it take on a prominent role in adding GPU-support.
-typedef struct IndexRange
+struct IndexRange
 {
   // specifies the fixed (0-based) j and k indices to be used with the range
   int j;
@@ -129,7 +129,7 @@ typedef struct IndexRange
 
   // holds the value of `i_stop-1` (remove when transcription is done)
   int i_end;
-} IndexRange;
+};
 
 /***********************************************************************
 /  
