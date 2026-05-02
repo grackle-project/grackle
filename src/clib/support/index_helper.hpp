@@ -1,16 +1,14 @@
-/***********************************************************************
-/
-/ Declare Grackle's index_helper type and associated functions. This is only
-/ intended to be used internally.
-/
-/
-/ Copyright (c) 2013, Enzo/Grackle Development Team.
-/
-/ Distributed under the terms of the Enzo Public Licence.
-/
-/ The full license is in the file LICENSE, distributed with this 
-/ software.
-************************************************************************/
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Define internal logic to help with indexing
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef SUPPORT_INDEX_HELPER_HPP
 #define SUPPORT_INDEX_HELPER_HPP
