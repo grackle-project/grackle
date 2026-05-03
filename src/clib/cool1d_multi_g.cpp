@@ -830,27 +830,6 @@ void grackle::impl::cool1d_multi_g(
         my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
   }
 
-  // Add primordial contributions to the continuum linear absorption coefs
-  // -> Gen Chiaki added this logic. If section 2.2.3 of Chiaki & Wise (2019)
-  //    accurately describes this logic, then this should be a Planck mean
-  //    opacity
-  if (my_chemistry->use_primordial_continuum_opacity == 1) {
-    const InterpGrid& interp_grid = opaque_storage.alphap;
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        double log_a =
-            interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
-                           interp_grid.props.parameters[0],
-                           interp_grid.props.parameter_spacing[0],
-                           interp_grid.props.parameters[1],
-                           interp_grid.props.parameter_spacing[1],
-                           interp_grid.props.data_size, interp_grid.data);
-
-        alpha_continuum[i] += std::pow(10.0, log_a);
-      }
-    }
-  }
-
   // Add contributions from dust opacity to alpha_continuum, the continuum
   // linear absorption coefficient
   //
@@ -1325,6 +1304,28 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Continuum opacity
+
+  // Add primordial contributions to the continuum linear absorption coefs
+  // -> Gen Chiaki added this logic. If section 2.2.3 of Chiaki & Wise (2019)
+  //    accurately describes this logic, then this should be a Planck mean
+  //    opacity
+  if (my_chemistry->use_primordial_continuum_opacity == 1) {
+    const InterpGrid& interp_grid = opaque_storage.alphap;
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        // ! primordial continuum opacity !!
+        double log10_a =
+            interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
+                           interp_grid.props.parameters[0],
+                           interp_grid.props.parameter_spacing[0],
+                           interp_grid.props.parameters[1],
+                           interp_grid.props.parameter_spacing[1],
+                           interp_grid.props.data_size, interp_grid.data);
+
+        alpha_continuum[i] += std::pow(10.0, log10_a);
+      }
+    }
+  }
 
   // todo: stop allocating a buffer for tau_con
   std::vector<double> tau_con(my_fields->grid_dimension[0]);
