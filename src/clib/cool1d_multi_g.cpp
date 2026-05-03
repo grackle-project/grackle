@@ -848,26 +848,6 @@ void grackle::impl::cool1d_multi_g(
         my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
   }
 
-  // Add primordial contributions to the continuum linear absorption coefs
-  // -> Gen Chiaki added this logic. If section 2.2.3 of Chiaki & Wise (2019)
-  //    accurately describes this logic, then this should be a Planck mean
-  //    opacity
-  if (my_chemistry->use_primordial_continuum_opacity == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        double log_a = grackle::impl::fortran_wrapper::interpolate_2d_g(
-            logrho[i], logT[i], my_rates->alphap.props.dimension,
-            my_rates->alphap.props.parameters[0],
-            my_rates->alphap.props.parameter_spacing[0],
-            my_rates->alphap.props.parameters[1],
-            my_rates->alphap.props.parameter_spacing[1],
-            my_rates->alphap.props.data_size, my_rates->alphap.data);
-
-        alpha_continuum[i] += std::pow(10.0, log_a);
-      }
-    }
-  }
-
   // Add contributions from dust opacity to alpha_continuum, the continuum
   // linear absorption coefficient
   //
@@ -1430,6 +1410,26 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Continuum opacity
+
+  // Add primordial contributions to the continuum linear absorption coefs
+  // -> Gen Chiaki added this logic. If section 2.2.3 of Chiaki & Wise (2019)
+  //    accurately describes this logic, then this should be a Planck mean
+  //    opacity
+  if (my_chemistry->use_primordial_continuum_opacity == 1) {
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        double log_a = grackle::impl::fortran_wrapper::interpolate_2d_g(
+            logrho[i], logT[i], my_rates->alphap.props.dimension,
+            my_rates->alphap.props.parameters[0],
+            my_rates->alphap.props.parameter_spacing[0],
+            my_rates->alphap.props.parameters[1],
+            my_rates->alphap.props.parameter_spacing[1],
+            my_rates->alphap.props.data_size, my_rates->alphap.data);
+
+        alpha_continuum[i] += std::pow(10.0, log_a);
+      }
+    }
+  }
 
   // todo: stop allocating a buffer for tau_con
   std::vector<double> tau_con(my_fields->grid_dimension[0]);
