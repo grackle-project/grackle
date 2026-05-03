@@ -508,6 +508,12 @@ void derivatives(
                             pack.fwd_args.imetal, pack.idx_range_1_element,
                             my_chemistry);
 
+    // initialize the edot buffer
+    // -> setting edot to tiny_fortran_val is purely for historical consistency
+    // -> I don't think setting it to 0 will cause any problems
+    pack.other_scratch_buf.edot[0] =
+        (pack.other_scratch_buf.itmask[0] == MASK_FALSE) ? tiny_fortran_val : 0.0;
+
     // Compute the edot values (so we can get the cooling time)
     // -> at this time the function also fillls dust2gas and tdust
     // -> (we plan to factor out the extra calculations)

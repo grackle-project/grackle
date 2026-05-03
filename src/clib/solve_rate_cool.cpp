@@ -828,6 +828,19 @@ int solve_rate_cool(
                                 metallicity.data(), imetal, idx_range,
                                 my_chemistry);
 
+        // Initialize edot
+        // -> we primarily set edot to tiny_fortran_val for historical
+        //    consistency with the behavior of Tfloor.
+        // -> it would be better to set it to 0 and modify the subcycle timestep
+        //    to explicitly work around an edot of 0. This makes Grackle more
+        //    robust for simulations where the initial conditions are in
+        //    thermal equilibrium (edot = 0) by construction
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          edot[i] = (itmask[i] == MASK_FALSE) * tiny_fortran_val;
+          // the above line is a branchless version of
+          // edot[i] = (itmask[i] == MASK_FALSE) ? tiny_fortran_val : 0.0;
+        }
+
         // Compute the edot values (so we can get the cooling time)
         // -> at this time the function also fillls dust2gas and tdust.
         // -> (we plan to factor out the extra calculations)

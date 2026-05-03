@@ -124,6 +124,14 @@ void cool_multi_time(
                               metallicity.data(), imetal, idx_range,
                               my_chemistry);
 
+      // Initialize edot
+      // -> we're setting edot to tiny_fortran_val to avoid a divide-by-zero
+      //    when Tfloor is relevant. The more robust solution is explicitly
+      //    avoid dividing by zero when computing cooltime
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        edot[i] = (itmask[i] == MASK_FALSE) ? tiny_fortran_val : 0.0;
+      }
+
       // compute edot
       cool1d_multi_g(
         edot.data(), tgas.data(),

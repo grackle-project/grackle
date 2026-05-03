@@ -31,7 +31,9 @@ namespace grackle::impl {
 /// the functionality.
 ///
 /// @param[out] edot 1D array to hold the computed the time derivative of the
-///     internal energy in the @p idx_range
+///     internal energy in the @p idx_range. Contributions are accumulated in
+///     this buffer. In other words, this function does **NOT** set elements to
+///     to 0 before adding contributions.
 /// @param[in] tgas 1D array of gas temperatures for the @p idx_range
 /// @param[in] mmw 1D array of mean molecular weights for the @p idx_range
 /// @param[out] tdust 1D array to hold the computed dust temperatures at

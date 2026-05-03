@@ -228,13 +228,6 @@ void grackle::impl::cool1d_multi_g(
   // multiplicative factor for including/excluding H2 cooling
   ih2cox = (double)(my_chemistry->ih2co);
 
-  // Initialize edot
-  for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    edot[i] = (itmask[i] == MASK_FALSE) * tiny_fortran_val;
-    // the above line is a branchless version of
-    // edot[i] = (itmask[i] == MASK_FALSE) ? tiny_fortran_val : 0.0;
-  }
-
   // Calculate H number density
   // TODO: get rid of this buffer
   // -> the difference between accessing cool1dmulti_buf.mynh and recomputing
