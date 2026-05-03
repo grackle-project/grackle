@@ -50,7 +50,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in]  my_fields specifies all of the field data
 /// @param[in]  internalu Specifies unit information
 static void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
-                             chemistry_data* my_chemistry,
+                             const chemistry_data* my_chemistry,
                              cloudy_data cloudy_primordial,
                              grackle_field_data* my_fields,
                              InternalGrUnits internalu)
