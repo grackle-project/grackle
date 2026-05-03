@@ -24,6 +24,7 @@
 #include "internal_units.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
+#include "mask.hpp"
 #include "scale_fields.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"
@@ -115,6 +116,13 @@ void cool_multi_time(
                          logTlininterp_buf, imetal, itmask.data(),
                          my_chemistry, &my_rates->cloudy_primordial,
                          my_fields, internalu, idx_range, nullptr);
+
+      // Adjust itmask based on Tfloor and fill itmask_metal
+      mask::adjust_from_Tfloor(itmask.data(), tgas.data(), idx_range,
+                               my_chemistry, my_fields);
+      mask::fill_itmask_metal(itmask_metal.data(), itmask.data(),
+                              metallicity.data(), imetal, idx_range,
+                              my_chemistry);
 
       // compute edot
       cool1d_multi_g(

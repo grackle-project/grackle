@@ -17,6 +17,7 @@
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
+#include "mask.hpp"
 #include "rate_timestep_g.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "utils-field.hpp"
@@ -493,9 +494,22 @@ void derivatives(
                        // are filled with the undamped version of the algorithm
                        nullptr);
 
+    // Adjust itmask based on Tfloor and fill itmask_metal
+    // -> TODO: I think we should strongly consider skipping these adjustments
+    //    (if we are near the threshold where the masking is affected, that
+    //    could mess with the numerical partial derivatives)
+    mask::adjust_from_Tfloor(pack.other_scratch_buf.itmask,
+                             pack.other_scratch_buf.tgas,
+                             pack.idx_range_1_element, my_chemistry,
+                             &pack.fields);
+    mask::fill_itmask_metal(&pack.local_itmask_metal,
+                            pack.other_scratch_buf.itmask,
+                            pack.other_scratch_buf.metallicity,
+                            pack.fwd_args.imetal, pack.idx_range_1_element,
+                            my_chemistry);
+
     // Compute the edot values (so we can get the cooling time)
-    // -> at this time the function also fillls dust2gas and tdust. It can
-    //    also modify itmask and itmask_metal
+    // -> at this time the function also fillls dust2gas and tdust
     // -> (we plan to factor out the extra calculations)
     cool1d_multi_g(
       pack.fwd_args.imetal,

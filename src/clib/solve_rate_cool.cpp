@@ -26,6 +26,7 @@
 #include "internal_units.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "make_consistent.hpp"
+#include "mask.hpp"
 #include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "support/config.hpp"
@@ -820,9 +821,15 @@ int solve_rate_cool(
         // "damping" when we fill up logTlininterp_buf)
         lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
 
+        // Adjust itmask based on Tfloor and fill itmask_metal
+        mask::adjust_from_Tfloor(itmask.data(), tgas.data(), idx_range,
+                                 my_chemistry, my_fields);
+        mask::fill_itmask_metal(itmask_metal.data(), itmask.data(),
+                                metallicity.data(), imetal, idx_range,
+                                my_chemistry);
+
         // Compute the edot values (so we can get the cooling time)
-        // -> at this time the function also fillls dust2gas and tdust. It can
-        //    also modify itmask and itmask_metal
+        // -> at this time the function also fillls dust2gas and tdust.
         // -> (we plan to factor out the extra calculations)
         cool1d_multi_g(
           imetal,
