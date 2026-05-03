@@ -25,11 +25,11 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-/// Holds 1D arrays used for linear interpolation
+/// @brief Holds precomputed 1D arrays used for linearly interpolating rates
+/// with respect to a commonly shared gas temperature grid
 ///
 /// A common idiom within Grackle is to construct 1D tables of different
-/// quantities (I think its mostly different types of rates) sampled at various
-/// log temperature values during setup.
+/// quantities sampled at various ln(T) values during setup.
 /// - when performing calculations on simulation data, Grackle will compute
 ///   values from these tables.
 /// - Since these tables are all sampled at the same log-temperature values, we
@@ -38,15 +38,14 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// - the values of the buffers in this data structure at a given location are
 ///   used encode this information about logT table location.
 ///
-/// @note
-/// Logic related to this struct is a prime candidate for logic that we probably
-/// want to refactor after we complete transcription from Fortran
+/// See @ref LnTPreparer for the logic that is used fill these buffers
 ///
-/// @todo
-/// Once we finish transcribing, we may want to make the naming a little more
-/// generic since it can be used for more than just temperature
+/// @note
+/// If we are willing to more fully embrace C++, we might want to attach a
+/// method that actually does the interpolation. We may also want to make
+/// adustments to prevent mutations of the members of a ``const`` instance
 struct LogTLinInterpScratchBuf {
-  long long* indixe = nullptr;
+  long long* indixe = nullptr;  // <- todo make this int64_t*
   double* t1 = nullptr;
   double* t2 = nullptr;
   double* logtem = nullptr;
