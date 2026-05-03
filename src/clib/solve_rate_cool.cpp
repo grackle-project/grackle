@@ -724,6 +724,8 @@ int solve_rate_cool(
     std::vector<double> dust2gas(my_fields->grid_dimension[0]);
     std::vector<double> rhoH(my_fields->grid_dimension[0]);
     std::vector<double> mmw(my_fields->grid_dimension[0]);
+    // when primordial_chemistry > 0, this buffer simply holds copies of
+    // of the e_density field
     std::vector<double> nelec_times_mH(my_fields->grid_dimension[0]);
     std::vector<double> edot(my_fields->grid_dimension[0]);
 
