@@ -234,21 +234,11 @@ void grackle::impl::cool1d_multi_g(
   // ignore metal chemistry/cooling below this metallicity
   min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
 
-  // Initialize edot
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      edot[i] = 0.;
-    }
-  }
-
   // Skip if below the temperature floor
-
   if (my_chemistry->use_temperature_floor == 1) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         if (tgas[i] <= my_chemistry->temperature_floor_scalar) {
-          edot[i] = tiny_fortran_val;
           itmask[i] = MASK_FALSE;
         }
       }
@@ -257,11 +247,15 @@ void grackle::impl::cool1d_multi_g(
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         if (tgas[i] <= Tfloor(i, idx_range.j, idx_range.k)) {
-          edot[i] = tiny_fortran_val;
           itmask[i] = MASK_FALSE;
         }
       }
     }
+  }
+
+  // Initialize edot
+  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    edot[i] = (itmask[i] == MASK_FALSE) ? tiny_fortran_val : 0.0;
   }
 
   // Calculate H number density
