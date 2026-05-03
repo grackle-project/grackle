@@ -1,0 +1,63 @@
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Defines some mask-related functionality
+///
+//===----------------------------------------------------------------------===//
+
+#ifndef MASK_HPP
+#define MASK_HPP
+
+#include "fortran_func_decls.h"  // gr_mask_int
+#include "grackle.h"
+#include "index_helper.h"
+#include "support/config.hpp"
+#include "utils-cpp.hpp"  // View
+
+namespace GRIMPL_NAMESPACE_DECL {
+namespace mask {
+
+/// @brief adjust @p itmask based on the temperature floor for the @p idx_range
+///
+/// @param[inout] itmask The iteration-mask of the @p idx_range that is
+///     adjusted by this function
+/// @param[in] tgas 1D array of gas temperatures for the @p idx_range
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] my_fields Specifies the field data.
+inline void adjust_from_Tfloor(gr_mask_type* itmask, const double* tgas,
+                               IndexRange idx_range,
+                               const chemistry_data* my_chemistry,
+                               const grackle_field_data* my_fields) {
+  if (my_chemistry->use_temperature_floor == 1) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        if (tgas[i] <= my_chemistry->temperature_floor_scalar) {
+          itmask[i] = MASK_FALSE;
+        }
+      }
+    }
+  } else if (my_chemistry->use_temperature_floor == 2) {
+    grackle::impl::View<gr_float***> Tfloor(
+        my_fields->temperature_floor, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        if (tgas[i] <= Tfloor(i, idx_range.j, idx_range.k)) {
+          itmask[i] = MASK_FALSE;
+        }
+      }
+    }
+  }
+}
+
+}  // namespace mask
+}  // namespace GRIMPL_NAMESPACE_DECL
+
+#endif  // MASK_HPP

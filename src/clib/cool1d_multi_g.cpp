@@ -27,6 +27,7 @@
 #include "dust_props.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
+#include "mask.hpp"
 #include "tabulated/cool1d_cloudy.hpp"
 #include "tabulated/cool1d_cloudy_old_tables.hpp"
 #include "utils-cpp.hpp"
@@ -87,9 +88,6 @@ void grackle::impl::cool1d_multi_g(
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> Mheat(
       my_fields->specific_heating_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Tfloor(
-      my_fields->temperature_floor, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> photogamma(
       my_fields->RT_heating_rate, my_fields->grid_dimension[0],
@@ -232,23 +230,7 @@ void grackle::impl::cool1d_multi_g(
   ih2cox = (double)(my_chemistry->ih2co);
 
   // Skip if below the temperature floor
-  if (my_chemistry->use_temperature_floor == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] <= my_chemistry->temperature_floor_scalar) {
-          itmask[i] = MASK_FALSE;
-        }
-      }
-    }
-  } else if (my_chemistry->use_temperature_floor == 2) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] <= Tfloor(i, idx_range.j, idx_range.k)) {
-          itmask[i] = MASK_FALSE;
-        }
-      }
-    }
-  }
+  mask::adjust_from_Tfloor(itmask, tgas, idx_range, my_chemistry, my_fields);
 
   // Iteration mask for metal-rich cells
   if (imetal == 1) {
