@@ -233,20 +233,8 @@ void grackle::impl::cool1d_multi_g(
   mask::adjust_from_Tfloor(itmask, tgas, idx_range, my_chemistry, my_fields);
 
   // Iteration mask for metal-rich cells
-  if (imetal == 1) {
-    double min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (metallicity[i] >= min_metallicity) {
-        itmask_metal[i] = itmask[i];
-      } else {
-        itmask_metal[i] = MASK_FALSE;
-      }
-    }
-  } else {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      itmask_metal[i] = MASK_FALSE;
-    }
-  }
+  mask::fill_itmask_metal(itmask_metal, itmask, metallicity, imetal, idx_range,
+                          my_chemistry);
 
   // Initialize edot
   for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
