@@ -181,7 +181,7 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> LCO(my_fields->grid_dimension[0]);
   std::vector<double> LOH(my_fields->grid_dimension[0]);
   std::vector<double> LH2O(my_fields->grid_dimension[0]);
-  std::vector<double> alpha(my_fields->grid_dimension[0]);
+  std::vector<double> alpha_continuum(my_fields->grid_dimension[0]);
   std::vector<double> alphad(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
   std::vector<double> tau_con(my_fields->grid_dimension[0]);
@@ -841,20 +841,20 @@ void grackle::impl::cool1d_multi_g(
                                interp_grid.props.parameter_spacing[1],
                                interp_grid.props.data_size, interp_grid.data);
 
-        alpha[i] = std::pow(1.e1, log_a);
+        alpha_continuum[i] = std::pow(1.e1, log_a);
       }
     }
 
   } else {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        alpha[i] = 0.f;
+        alpha_continuum[i] = 0.f;
       }
     }
   }
 
-  // Add contributions from dust opacity to alpha, the linear absorption
-  // coefficient
+  // Add contributions from dust opacity to alpha_continuum, the continuum
+  // linear absorption coefficient
   //
   //  The original Fortran version of this function had the following 2
   //  comments:
@@ -867,7 +867,7 @@ void grackle::impl::cool1d_multi_g(
         if (single_species_dust_model) {
           // In the future, we should consider renaming `alphad`. The
           // current name is a little confusing since:
-          // - the related `alpha` variable holds linear absorption
+          // - the related `alpha_continuum` variable holds linear absorption
           //   coefficients (which is commonly denoted by the Greek
           //   letter alpha)
           // - in contrast, `alphad` only ever holds the sum of
@@ -901,15 +901,16 @@ void grackle::impl::cool1d_multi_g(
           }
         }
 
-        alpha[i] = alpha[i] + alphad[i] * d(i, idx_range.j, idx_range.k) * dom *
-                                  mh_local_var;
+        alpha_continuum[i] =
+            alpha_continuum[i] +
+            alphad[i] * d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
       }
     }
   }
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
-      tau_con[i] = alpha[i] * lshield_con[i];
+      tau_con[i] = alpha_continuum[i] * lshield_con[i];
     }
   }
 
