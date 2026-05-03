@@ -126,7 +126,7 @@ void cool_multi_time(
 
       // compute edot
       cool1d_multi_g(
-        imetal, edot.data(), tgas.data(),
+        edot.data(), tgas.data(),
         mmw.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), rhoH.data(), nelec_times_mH.data(), 
         itmask.data(), itmask_metal.data(),

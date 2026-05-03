@@ -30,7 +30,6 @@ namespace grackle::impl {
 /// This function does a lot. It probably makes sense to break off some of
 /// the functionality.
 ///
-/// @param[in] imetal Indicates whether metals are evolved
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range
 /// @param[in] tgas 1D array of gas temperatures for the @p idx_range
@@ -49,7 +48,10 @@ namespace grackle::impl {
 ///     (multiplied by the Hydrogen mass) for the @p idx_range
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
-/// @param[out] itmask_metal
+/// @param[in] itmask_metal Specifies the general metal-focused iteration-mask
+///     of the @p idx_range for this calculation. Essentially, it is used to
+///     skip metal-related calculations in zones that are extremely metal-poor
+///     (or even metal-free).
 /// @param[in] my_chemistry holds a number of configuration parameters.
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
@@ -77,11 +79,12 @@ namespace grackle::impl {
 /// modified3: February, 2003 by Robert Harkness; iteration mask
 /// modified4: September, 2009 by BDS to include cloudy cooling
 /// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void cool1d_multi_g(int imetal, double* edot, const double* tgas,
-                    const double* mmw, double* tdust, const double* metallicity,
-                    double* dust2gas, const double* rhoH,
-                    const double* nelec_times_mH, gr_mask_type* itmask,
-                    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+void cool1d_multi_g(double* edot, const double* tgas, const double* mmw,
+                    double* tdust, const double* metallicity, double* dust2gas,
+                    const double* rhoH, const double* nelec_times_mH,
+                    const gr_mask_type* itmask,
+                    const gr_mask_type* itmask_metal,
+                    chemistry_data* my_chemistry,
                     chemistry_data_storage* my_rates,
                     grackle_field_data* my_fields,
                     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,

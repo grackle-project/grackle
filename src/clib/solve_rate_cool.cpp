@@ -832,7 +832,6 @@ int solve_rate_cool(
         // -> at this time the function also fillls dust2gas and tdust.
         // -> (we plan to factor out the extra calculations)
         cool1d_multi_g(
-          imetal,
           edot.data(),
           tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),

@@ -512,7 +512,6 @@ void derivatives(
     // -> at this time the function also fillls dust2gas and tdust
     // -> (we plan to factor out the extra calculations)
     cool1d_multi_g(
-      pack.fwd_args.imetal,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
       pack.other_scratch_buf.mmw,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
