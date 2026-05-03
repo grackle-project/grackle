@@ -73,12 +73,11 @@ inline void dust_related_props(
     const gr_mask_type* itmask, gr_mask_type* itmask_metal,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
     grackle_field_data* my_fields, InternalGrUnits internalu,
-    IndexRange idx_range, LogTLinInterpScratchBuf logTlininterp_buf,
-    double trad, double* dust2gas, double* tdust,
-    GrainSpeciesCollection grain_temperatures, double* gasgr,
-    GrainSpeciesCollection gas_grainsp_heatrate, double* kappa_tot,
-    GrainSpeciesCollection grain_kappa, double* gasgr_tdust, double* myisrf,
-    InternalDustPropBuf internal_dust_prop_buf) {
+    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf, double trad,
+    double* dust2gas, double* tdust, GrainSpeciesCollection grain_temperatures,
+    double* gasgr, GrainSpeciesCollection gas_grainsp_heatrate,
+    double* kappa_tot, GrainSpeciesCollection grain_kappa, double* gasgr_tdust,
+    double* myisrf, InternalDustPropBuf internal_dust_prop_buf) {
   // get relevant unit values
   double dom = internalu_calc_dom_(internalu);
   double coolunit = internalu.coolunit;

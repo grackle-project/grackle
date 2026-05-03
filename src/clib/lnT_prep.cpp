@@ -16,15 +16,15 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-LogTLinInterpScratchBuf new_LogTLinInterpScratchBuf(int nelem) {
+LnTLinInterpBuf new_LnTLinInterpBuf(int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
-  LogTLinInterpScratchBuf out;
+  LnTLinInterpBuf out;
   visitor::VisitorCtx ctx{static_cast<unsigned int>(nelem)};
   visit_member(&out, visitor::AllocateMembers{ctx});
   return out;
 }
 
-void drop_LogTLinInterpScratchBuf(LogTLinInterpScratchBuf* ptr) {
+void drop_LnTLinInterpBuf(LnTLinInterpBuf* ptr) {
   visit_member(ptr, visitor::FreeMembers{});
 }
 

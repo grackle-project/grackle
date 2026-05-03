@@ -55,7 +55,7 @@ struct FrozenSimpleArgs {
 /// preallocated buffers.
 struct MainScratchBuf {
   GrainSpeciesCollection grain_temperatures;
-  LogTLinInterpScratchBuf logTlininterp_buf;
+  LnTLinInterpBuf logTlininterp_buf;
   Cool1DMultiScratchBuf cool1dmulti_buf;
   CoolHeatScratchBuf coolingheating_buf;
   ChemHeatingRates chemheatrates_buf;
@@ -73,7 +73,7 @@ MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
   int nelem = 1;
   MainScratchBuf out;
   out.grain_temperatures = new_GrainSpeciesCollection(nelem);
-  out.logTlininterp_buf = new_LogTLinInterpScratchBuf(nelem);
+  out.logTlininterp_buf = new_LnTLinInterpBuf(nelem);
   out.cool1dmulti_buf = new_Cool1DMultiScratchBuf(nelem);
   out.coolingheating_buf = new_CoolHeatScratchBuf(nelem);
   out.chemheatrates_buf = new_ChemHeatingRates(nelem);
@@ -87,7 +87,7 @@ MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
 
 void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_GrainSpeciesCollection(&ptr->grain_temperatures);
-  drop_LogTLinInterpScratchBuf(&ptr->logTlininterp_buf);
+  drop_LnTLinInterpBuf(&ptr->logTlininterp_buf);
   drop_Cool1DMultiScratchBuf(&ptr->cool1dmulti_buf);
   drop_CoolHeatScratchBuf(&ptr->coolingheating_buf);
   drop_ChemHeatingRates(&ptr->chemheatrates_buf);
@@ -270,7 +270,7 @@ inline void scratchbufs_copy_into_pack(
   const double* tdust, const double* metallicity, const double* dust2gas,
   const double* rhoH, const double* mmw,
   const double* edot, grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
   grackle::impl::CoolHeatScratchBuf coolingheating_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf
@@ -347,7 +347,7 @@ inline void scratchbufs_copy_from_pack(
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
   double* mmw, double* edot,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
   grackle::impl::CoolHeatScratchBuf coolingheating_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf

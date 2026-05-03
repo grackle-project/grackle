@@ -57,8 +57,8 @@ void cool_multi_time(
     GrainSpeciesCollection grain_temperatures =
       new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
-    LogTLinInterpScratchBuf logTlininterp_buf =
-      new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+    LnTLinInterpBuf logTlininterp_buf =
+      new_LnTLinInterpBuf(my_fields->grid_dimension[0]);
 
     Cool1DMultiScratchBuf cool1dmulti_buf =
       new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
@@ -158,7 +158,7 @@ void cool_multi_time(
 
     // cleanup temporaries
     drop_GrainSpeciesCollection(&grain_temperatures);
-    drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    drop_LnTLinInterpBuf(&logTlininterp_buf);
     drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
 

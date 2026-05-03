@@ -98,8 +98,8 @@ void calc_tdust_3d(
     std::vector<double> myisrf(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
-    LogTLinInterpScratchBuf logTlininterp_buf =
-      new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+    LnTLinInterpBuf logTlininterp_buf =
+      new_LnTLinInterpBuf(my_fields->grid_dimension[0]);
 
     GrainSpeciesCollection grain_temperatures =
       new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
@@ -279,7 +279,7 @@ void calc_tdust_3d(
 
     }
 
-    drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    drop_LnTLinInterpBuf(&logTlininterp_buf);
     drop_GrainSpeciesCollection(&grain_temperatures);
     drop_InternalDustPropBuf(&internal_dust_prop_buf);
     drop_GrainSpeciesCollection(&grain_kappa);

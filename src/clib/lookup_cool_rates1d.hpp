@@ -104,7 +104,7 @@ void secondary_ionization_adjustments(IndexRange idx_range,
 inline void interpolate_h2_heating_terms_(
     grackle::impl::ChemHeatingRates chemheatrates_buf, IndexRange idx_range,
     chemistry_data_storage* my_rates, const gr_mask_type* itmask,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf) {
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       chemheatrates_buf.n_cr_n[i] =
@@ -145,7 +145,7 @@ inline void interpolate_kcol_rate_tables_(
     FullRxnRateBuf rxn_rate_buf, IndexRange idx_range,
     grackle::impl::CollisionalRxnRateCollection kcol_rate_tables,
     int* kcol_lut_indices, int n_rates, const gr_mask_type* itmask,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf) {
   // TODO: make this more efficient
   // -> to accomplish this, we probably need to account for the fact that all
   //    of the buffers within grackle::impl::CollisionalRxnRateCollection are
@@ -189,7 +189,7 @@ inline void interpolate_collisional_rxn_rates_(
     FullRxnRateBuf rxn_rate_buf, IndexRange idx_range, const double* tgas1d,
     const gr_mask_type* itmask, double dom, chemistry_data* my_chemistry,
     grackle_field_data* my_fields, chemistry_data_storage* my_rates,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf) {
   // There are 2 parts to this function
   // ----------------------------------
 
@@ -785,7 +785,7 @@ inline void lookup_cool_rates1d(
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
     grackle::impl::ChemHeatingRates chemheatrates_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
