@@ -40,12 +40,13 @@ namespace grackle::impl {
 ///     variants of the classic 1-field dust-model or using the variant of the
 ///     multi-grain-species model where all grains are configured to share a
 ///     single temperature.
-/// @param[in]  metallicity 1D array to hold the computed metallicity for the
-///     @p idx_range
+/// @param[in]  metallicity 1D array of metallicities for the @p idx_range
 /// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
 ///     location in the index range. In other words, this holds the dust mass
 ///     per unit gas mass (only used in certain configuration)
 /// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
+/// @param[in] nelec_times_mH 1D array holding the number density of electrons
+///     (multiplied by the Hydrogen mass) for the @p idx_range
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
 /// @param[out] itmask_metal
@@ -77,9 +78,9 @@ namespace grackle::impl {
 /// modified4: September, 2009 by BDS to include cloudy cooling
 /// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
 void cool1d_multi_g(int imetal, double* edot, const double* tgas,
-                    const double* mmw, double* tdust, double* metallicity,
+                    const double* mmw, double* tdust, const double* metallicity,
                     double* dust2gas, const double* rhoH,
-                    double* nelec_times_mH, gr_mask_type* itmask,
+                    const double* nelec_times_mH, gr_mask_type* itmask,
                     gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
                     chemistry_data_storage* my_rates,
                     grackle_field_data* my_fields,

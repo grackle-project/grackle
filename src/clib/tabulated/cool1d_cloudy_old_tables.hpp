@@ -52,11 +52,14 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// written by: Britton Smith, 2009
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
-void cool1d_cloudy_old_tables(
-    const double* rhoH, double* metallicity, const double* logtem, double* edot,
-    double comp2, double dom, double zr, const gr_mask_type* itmask,
-    chemistry_data* my_chemistry, cloudy_data cloudy_table, gr_float* density,
-    gr_float* e_density, grackle_field_data* my_fields, IndexRange idx_range);
+void cool1d_cloudy_old_tables(const double* rhoH, const double* metallicity,
+                              const double* logtem, double* edot, double comp2,
+                              double dom, double zr, const gr_mask_type* itmask,
+                              chemistry_data* my_chemistry,
+                              cloudy_data cloudy_table, gr_float* density,
+                              gr_float* e_density,
+                              grackle_field_data* my_fields,
+                              IndexRange idx_range);
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 

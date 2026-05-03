@@ -69,15 +69,16 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in,out] internal_dust_prop_buf Holds scratch-space for holding
 ///     grain-specific information
 inline void dust_related_props(
-    gr_mask_type anydust, const double* tgas, double* nH, double* metallicity,
-    const gr_mask_type* itmask, gr_mask_type* itmask_metal,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields, InternalGrUnits internalu,
-    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf, double trad,
-    double* dust2gas, double* tdust, GrainSpeciesCollection grain_temperatures,
-    double* gasgr, GrainSpeciesCollection gas_grainsp_heatrate,
-    double* kappa_tot, GrainSpeciesCollection grain_kappa, double* gasgr_tdust,
-    double* myisrf, InternalDustPropBuf internal_dust_prop_buf) {
+    gr_mask_type anydust, const double* tgas, double* nH,
+    const double* metallicity, const gr_mask_type* itmask,
+    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range,
+    LnTLinInterpBuf logTlininterp_buf, double trad, double* dust2gas,
+    double* tdust, GrainSpeciesCollection grain_temperatures, double* gasgr,
+    GrainSpeciesCollection gas_grainsp_heatrate, double* kappa_tot,
+    GrainSpeciesCollection grain_kappa, double* gasgr_tdust, double* myisrf,
+    InternalDustPropBuf internal_dust_prop_buf) {
   // get relevant unit values
   double dom = internalu_calc_dom_(internalu);
   double coolunit = internalu.coolunit;
@@ -148,9 +149,10 @@ inline void dust_related_props(
     // -> this needs to wait until we finish transcription (so that we can
     //    propagate the const annotation down the function stack)
     grackle::impl::calc_all_tdust_gasgr_1d_g(
-        trad, const_cast<double*>(tgas), tdust, metallicity, dust2gas, nH,
-        gasgr_tdust, itmask_metal, coolunit, gasgr, myisrf, kappa_tot,
-        my_chemistry, my_rates, my_fields, idx_range, grain_temperatures,
+        trad, const_cast<double*>(tgas), tdust,
+        const_cast<double*>(metallicity), dust2gas, nH, gasgr_tdust,
+        itmask_metal, coolunit, gasgr, myisrf, kappa_tot, my_chemistry,
+        my_rates, my_fields, idx_range, grain_temperatures,
         gas_grainsp_heatrate, logTlininterp_buf, internal_dust_prop_buf,
         grain_kappa);
   }
