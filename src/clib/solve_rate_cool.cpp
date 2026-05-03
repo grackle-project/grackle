@@ -809,15 +809,18 @@ int solve_rate_cool(
                         idx_range);
 
         // Compute log temperature and interpolation indices
+        // (technically, we could skip indices info if prim_chem == 0 AND
+        //  dust_chemistry == 0. But we leave that for the future)
         if (iter == 1) {
           // act as if there was prev iter where temperature was the same
-          lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
+          LnTPreparer::prep_undamped_lnT_lininterp_bufs(
+              logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
+              tgas.data());
+        } else {
+          lnT_preparer.prep_damped_lnT_lininterp_bufs(
+              logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
+              tgas.data());
         }
-        // technically, we could skip indices info if prim_chem == 0 AND
-        // dust_chemistry == 0. But we leave that for the future
-        lnT_preparer.prep_damped_lnT_lininterp_bufs(
-            logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
-            tgas.data());
         // record the current temperature (used for "damping" next iter)
         lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
 
