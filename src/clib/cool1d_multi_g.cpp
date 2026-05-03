@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <vector>
 
+#include "dust/grain_species_info.hpp"
 #include "cool1d_multi_g.hpp"
 #include "gas_props.hpp"
 #include "grackle.h"
@@ -171,7 +172,6 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> LOH(my_fields->grid_dimension[0]);
   std::vector<double> LH2O(my_fields->grid_dimension[0]);
   std::vector<double> alpha_continuum(my_fields->grid_dimension[0]);
-  std::vector<double> alphad(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
 
   // buffers of intermediate quantities used within dust-routines (for
@@ -857,48 +857,21 @@ void grackle::impl::cool1d_multi_g(
   //    ! We better not include dust opacity.
   // It's a little unclear how relevant these comments actually are.
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
+    int n_grain_species =
+        my_rates->opaque_storage->grain_species_info->n_species;
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
+        double kappa_sum = 0.0;
         if (my_chemistry->use_multiple_dust_temperatures == 0) {
-          // In the future, we should consider renaming `alphad`. The
-          // current name is a little confusing since:
-          // - the related `alpha_continuum` variable holds linear absorption
-          //   coefficients (which is commonly denoted by the Greek
-          //   letter alpha)
-          // - in contrast, `alphad` only ever holds the sum of
-          //   opacity coefficients (commonly denoted by the Greek
-          //   letter kappa)
-
-          alphad[i] = kappa_tot[i];
-
+          kappa_sum = kappa_tot[i];
         } else {
-          if (my_chemistry->dust_species > 0) {
-            alphad[i] = grain_kappa.data[OnlyGrainSpLUT::MgSiO3_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::AC_dust][i];
-          }
-          if (my_chemistry->dust_species > 1) {
-            alphad[i] = alphad[i] +
-                        grain_kappa.data[OnlyGrainSpLUT::SiM_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::FeM_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::Fe3O4_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::SiO2_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::MgO_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::FeS_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::Al2O3_dust][i];
-          }
-          if (my_chemistry->dust_species > 2) {
-            alphad[i] =
-                alphad[i] +
-                gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust][i] +
-                gas_grainsp_heatrate.data[OnlyGrainSpLUT::vol_org_dust][i] +
-                gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust][i];
+          for (int grsp_i = 0; grsp_i < n_grain_species; grsp_i++) {
+            kappa_sum += grain_kappa.data[grsp_i][i];
           }
         }
 
-        alpha_continuum[i] =
-            alpha_continuum[i] +
-            alphad[i] * d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
+        alpha_continuum[i] +=
+            kappa_sum * d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
       }
     }
   }
