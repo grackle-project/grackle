@@ -184,7 +184,6 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> alpha_continuum(my_fields->grid_dimension[0]);
   std::vector<double> alphad(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
-  double log_a;
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
 
@@ -831,21 +830,23 @@ void grackle::impl::cool1d_multi_g(
         my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
   }
 
-  // Compute continuum opacity
-
+  // Add primordial contributions to the continuum linear absorption coefs
+  // -> Gen Chiaki added this logic. If section 2.2.3 of Chiaki & Wise (2019)
+  //    accurately describes this logic, then this should be a Planck mean
+  //    opacity
   if (my_chemistry->use_primordial_continuum_opacity == 1) {
     const InterpGrid& interp_grid = opaque_storage.alphap;
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        // ! primordial continuum opacity !!
-        log_a = interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
-                               interp_grid.props.parameters[0],
-                               interp_grid.props.parameter_spacing[0],
-                               interp_grid.props.parameters[1],
-                               interp_grid.props.parameter_spacing[1],
-                               interp_grid.props.data_size, interp_grid.data);
+        double log_a =
+            interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
+                           interp_grid.props.parameters[0],
+                           interp_grid.props.parameter_spacing[0],
+                           interp_grid.props.parameters[1],
+                           interp_grid.props.parameter_spacing[1],
+                           interp_grid.props.data_size, interp_grid.data);
 
-        alpha_continuum[i] = std::pow(1.e1, log_a);
+        alpha_continuum[i] += std::pow(10.0, log_a);
       }
     }
   }
