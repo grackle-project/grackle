@@ -108,20 +108,15 @@ void cool_multi_time(
         itmask[i] = MASK_TRUE;
       }
 
-      // calculate the basic gas properties (tgas, mmw, rhoH)
-      GRIMPL_NS::basic_gas_props(tgas.data(), mmw.data(), rhoH.data(), imetal,
-                                 itmask.data(), my_chemistry,
-                                 &my_rates->cloudy_primordial, my_fields,
-                                 internalu, idx_range);
-      GRIMPL_NS::calc_metallicity_and_electron_density(
-          metallicity.data(), nelec_times_mH.data(), idx_range, imetal,
-          itmask.data(), mmw.data(), my_chemistry, my_fields); 
+      // compute gas properties (tgas, mmw, rhoH, metallicity, nelec_times_mH)
+      // and fill up logTlinterp_buf
+      extended_gas_props(tgas.data(), mmw.data(), rhoH.data(),
+                         metallicity.data(), nelec_times_mH.data(),
+                         logTlininterp_buf, imetal, itmask.data(),
+                         my_chemistry, &my_rates->cloudy_primordial,
+                         my_fields, internalu, idx_range, nullptr);
 
-      // precompute natural log of T and related interpolation info
-      LnTPreparer::prep_undamped_lnT_lininterp_bufs(
-          logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
-          tgas.data());
-
+      // compute edot
       cool1d_multi_g(
         imetal, edot.data(), tgas.data(),
         mmw.data(), tdust.data(), metallicity.data(),

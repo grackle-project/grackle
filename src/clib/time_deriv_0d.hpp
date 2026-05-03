@@ -478,26 +478,25 @@ void derivatives(
         *my_chemistry, pack.other_scratch_buf.itmask,
         pack.other_scratch_buf.tgas);
   } else {
-    // calculate the basic gas properties (tgas, mmw, rhoH)
-    basic_gas_props(pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
-                    pack.other_scratch_buf.rhoH, pack.fwd_args.imetal,
-                    pack.other_scratch_buf.itmask, my_chemistry,
-                    &my_rates->cloudy_primordial, &pack.fields, internalu,
-                    pack.idx_range_1_element);
-    calc_metallicity_and_electron_density(
-        pack.other_scratch_buf.metallicity,
-        pack.other_scratch_buf.nelec_times_mH,
-        pack.idx_range_1_element, pack.fwd_args.imetal,
-        pack.other_scratch_buf.itmask, pack.other_scratch_buf.mmw,
-        my_chemistry, &pack.fields);
-            
-    // precompute natural log of T and related interpolation info
-    LnTPreparer::prep_undamped_lnT_lininterp_bufs(
-        pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
-        *my_chemistry, pack.other_scratch_buf.itmask,
-        pack.other_scratch_buf.tgas);
+    // compute gas properties (tgas, mmw, rhoH, metallicity, nelec_times_mH)
+    // and fill up logTlinterp_buf
+    extended_gas_props(pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
+                       pack.other_scratch_buf.rhoH,
+                       pack.other_scratch_buf.metallicity,
+                       pack.other_scratch_buf.nelec_times_mH,
+                       pack.main_scratch_buf.logTlininterp_buf,
+                       pack.fwd_args.imetal, pack.other_scratch_buf.itmask,
+                       my_chemistry, &my_rates->cloudy_primordial, &pack.fields,
+                       internalu, pack.idx_range_1_element,
+                       // passing nullptr means that values in
+                       // pack.main_scratch_buf.logTlininterp_buf
+                       // are filled with the undamped version of the algorithm
+                       nullptr);
 
-    // compute cooling rate, tdust, and metallicity for this row
+    // Compute the edot values (so we can get the cooling time)
+    // -> at this time the function also fillls dust2gas and tdust. It can
+    //    also modify itmask and itmask_metal
+    // -> (we plan to factor out the extra calculations)
     cool1d_multi_g(
       pack.fwd_args.imetal,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,

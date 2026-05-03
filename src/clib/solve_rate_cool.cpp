@@ -803,32 +803,25 @@ int solve_rate_cool(
           }
         }
 
-        // calculate the basic gas properties (tgas, mmw, rhoH)
-        basic_gas_props(tgas.data(), mmw.data(), rhoH.data(), imetal,
-                        itmask.data(), my_chemistry,
-                        &my_rates->cloudy_primordial, my_fields, internalu,
-                        idx_range);
-        calc_metallicity_and_electron_density(
-            metallicity.data(), nelec_times_mH.data(), idx_range, imetal,
-            itmask.data(), mmw.data(), my_chemistry, my_fields);
+        // compute gas properties (tgas, mmw, rhoH, metallicity, nelec_times_mH)
+        // and fill up logTlinterp_buf
+        extended_gas_props(tgas.data(), mmw.data(), rhoH.data(),
+                           metallicity.data(), nelec_times_mH.data(),
+                           logTlininterp_buf, imetal, itmask.data(),
+                           my_chemistry, &my_rates->cloudy_primordial,
+                           my_fields, internalu, idx_range,
+                           // if (iter == 1), we act as if there was a previous
+                           // iteration where temperature was the same
+                           (iter == 1) ? nullptr : &lnT_preparer);
 
-        // Compute log temperature and interpolation indices
-        // (technically, we could skip indices info if prim_chem == 0 AND
-        //  dust_chemistry == 0. But we leave that for the future)
-        if (iter == 1) {
-          // act as if there was prev iter where temperature was the same
-          LnTPreparer::prep_undamped_lnT_lininterp_bufs(
-              logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
-              tgas.data());
-        } else {
-          lnT_preparer.prep_damped_lnT_lininterp_bufs(
-              logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
-              tgas.data());
-        }
-        // record the current temperature (used for "damping" next iter)
+        // record the current temperature (next iteration, these are used for
+        // "damping" when we fill up logTlininterp_buf)
         lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
 
-        // Compute the cooling rate, tgas, tdust, and metallicity for this row
+        // Compute the edot values (so we can get the cooling time)
+        // -> at this time the function also fillls dust2gas and tdust. It can
+        //    also modify itmask and itmask_metal
+        // -> (we plan to factor out the extra calculations)
         cool1d_multi_g(
           imetal,
           edot.data(),

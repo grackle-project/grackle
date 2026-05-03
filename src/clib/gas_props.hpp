@@ -16,6 +16,7 @@
 #include "grackle.h"
 #include "index_helper.h"
 #include "internal_units.hpp"
+#include "lnT_prep.hpp"
 #include "support/config.hpp"
 #include "tabulated/calc_temp1d_cloudy.hpp"
 #include "utils-cpp.hpp"
@@ -383,6 +384,130 @@ inline void calc_metallicity_and_electron_density(
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       nelec_times_mH[i] = de(i, idx_range.j, idx_range.k);
     }
+  }
+}
+
+/// @brief calculate gas property-related quantities for the @p idx_range
+///
+/// Internally, this calls @ref basic_gas_props (filling @p tgas, @p mmw, and
+/// @p rhoH) and @ref calc_metallicity_and_electron_density (filling
+/// @p metallicity and @p nelec_times_mH). It also fills buffers within
+/// @p lnT_lininterp_buf.
+///
+/// Purpose
+/// -------
+/// The impetus for creating this function was that the sequence of wrapped
+/// function calls occurred 3 separate times in the codebase. Essentially, the
+/// computed quantities are all prerequisites for computing cooling or reaction
+/// rates.
+///
+/// From a purely conceptual perspective, the choice to fill the
+/// @p lnT_lininterp_buf buffers as part of this function certainly feel
+/// inelegant. Whereas the other quantities are inherently gas properties based
+/// on the physics model, these buffers inherently depend on a purely numerical
+/// choice: the spacing of the commonly used ln(T) grid.
+///
+/// With that said, there are multiple (somewhat related) pragmatic reasons to
+/// fill these buffers as part of this function:
+/// 1. These quantities are always calculated in proximity to one another
+///    since they are all prerequisites for computing rates (we've already
+///    touched upon this)
+/// 2. As we reconcile some of the inconsistencies highlighted within the
+///    docstring of @ref LnTPreparer, there's a reasonable chance that the
+///    choices of damping/undamping may be uncoupled from the
+///    @p lnT_lininterp_buf buffers and more directly tied to the computed
+///    temperatures
+/// 3. Relatedly, we will probably want to compute partial derivatives of most
+///    (all?) of the computed quantities (to make the newton-raphson solver more
+///    robust) with respect to specific internal energy and chemistry species.
+///    It may make sense to handle that together (we probably need to refactor
+///    in order to accomplish that).
+///
+/// Future Thoughts
+/// ===============
+///
+/// Addressing mmw
+/// --------------
+/// At the time of writing, the @p mmw buffer is **ONLY** used outside this to
+/// function to compute the adiabatic sound speed in order to get the Jeans
+/// length (which is used as a length scale for estimating for optical depth).
+/// It's worth noting that we can replace the presently used formula
+/// > ``adiabatic_sound_speed = sqrt(gamma * kboltz * T / (mmw * mH))``
+/// with
+/// > ``adiabatic_sound_speed = sqrt(gamma * (gamma - 1) * specific_eint)``
+///
+/// Thus, we can stop tracking @p mmw outside of this function (with some
+/// clever refactoring we can reduce the number of scratch buffers that are
+/// internally used).
+///
+/// Before undertaking this change, it's worth asking
+/// > Is the current choice to estimate gamma with @ref chemistry_data::Gamma
+/// > accurate enough for us?
+/// If there are indeed concerns about accuracy, we should probably refactor
+/// this function to fill a 1D buffer of @p gamma values that can be used for
+/// this purpose. The relative cost compared to returning a @p mmw is just a
+/// couple extra assignment operations.
+///
+/// Scratch Buffers
+/// ---------------
+/// In the future, we should really pass in some scratch space for computing
+/// temperature when primordial_chemistry == 0
+///
+/// @param[out] tgas 1D array to hold the computed gas temperatures in the
+///     @p idx_range
+/// @param[out] mmw 1D array to hold the computed mean molecular weight
+///     in the @p idx_range
+/// @param[out] rhoH 1D array to hold the computed Hydrogen mass density
+///     for the @p idx_range
+/// @param[out] metallicity 1D array to hold the computed metallicity for the
+///     @p idx_range
+/// @param[out] nelec_times_mH 1D array to hold the number density of electrons
+///     (multiplied by the Hydrogen mass) for the @p idx_range
+/// @param[out] lnT_lininterp_buf Buffers for each location in @p idx_range that
+///     are used to hold precomputed values that help linearly interpolate
+///     tables with respect to the natural log of @p tgas. The strategy for
+///     filling these buffers depends on the value passed to @p lnT_preparer
+/// @param[in] imetal Indicates whether metals are evolved
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] primordial_cloudy_data Cloudy cooling table data for primordial
+///     species. (Only used when my_chemistry->primordial_chemistry is 0)
+/// @param[in] my_fields Specifies the field data.
+/// @param[in] internalu Specifies Grackle's internal unit-system
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] lnT_preparer When provided, this is used to fill
+///     @p lnT_lininterp_buf (the calculation includes the effect of damping).
+///     Otherwise (i.e. when its a ``nullptr``), the filling of lnT_linterp_buf
+///     uses undamped values
+inline void extended_gas_props(double* tgas, double* mmw, double* rhoH,
+                               double* metallicity, double* nelec_times_mH,
+                               LnTLinInterpBuf& lnT_lininterp_buf, int imetal,
+                               const gr_mask_type* itmask,
+                               const chemistry_data* my_chemistry,
+                               const cloudy_data* primordial_cloudy_data,
+                               const grackle_field_data* my_fields,
+                               InternalGrUnits internalu, IndexRange idx_range,
+                               const LnTPreparer* lnT_preparer) {
+  basic_gas_props(tgas, mmw, rhoH, imetal, itmask, my_chemistry,
+                  primordial_cloudy_data, my_fields, internalu, idx_range);
+  calc_metallicity_and_electron_density(metallicity, nelec_times_mH, idx_range,
+                                        imetal, itmask, mmw, my_chemistry,
+                                        my_fields);
+
+  // technically, we could skip the filling of lnT_lininterp_bufs if
+  // primordial_chemistry == 0 AND dust_chemistry == 0.
+  //
+  // If we decide that provides an important performance gain, it probably
+  // makes sense to make lnT_interp_buf expect a pointer and pass a nullptr in
+  // that scenario (i.e. we should explicitly handle that condition outside of
+  // this function rather than handling it implicitly)
+  if (lnT_preparer == nullptr) {
+    LnTPreparer::prep_undamped_lnT_lininterp_bufs(lnT_lininterp_buf, idx_range,
+                                                  *my_chemistry, itmask, tgas);
+  } else {
+    lnT_preparer->prep_damped_lnT_lininterp_bufs(lnT_lininterp_buf, idx_range,
+                                                 *my_chemistry, itmask, tgas);
   }
 }
 
