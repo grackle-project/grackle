@@ -484,7 +484,13 @@ void derivatives(
                     pack.other_scratch_buf.itmask, my_chemistry,
                     &my_rates->cloudy_primordial, &pack.fields, internalu,
                     pack.idx_range_1_element);
-
+    calc_metallicity_and_electron_density(
+        pack.other_scratch_buf.metallicity,
+        pack.other_scratch_buf.nelec_times_mH,
+        pack.idx_range_1_element, pack.fwd_args.imetal,
+        pack.other_scratch_buf.itmask, pack.other_scratch_buf.mmw,
+        my_chemistry, &pack.fields);
+            
     // precompute natural log of T and related interpolation info
     LnTPreparer::prep_undamped_lnT_lininterp_bufs(
         pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,

@@ -263,10 +263,11 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  // Calculate metallicity and H number density
-  calc_metallicity_and_electron_density(metallicity, nelec_times_mH, idx_range,
-                                        imetal, itmask, mmw, my_chemistry,
-                                        my_fields);
+  // Calculate H number density
+  // TODO: get rid of this buffer
+  // -> the difference between accessing cool1dmulti_buf.mynh and recomputing
+  //    the value each time we need it is very small.
+  // -> Getting rid of the buffer reduces cache complexity and simplifies logic
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {

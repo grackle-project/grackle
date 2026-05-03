@@ -808,6 +808,9 @@ int solve_rate_cool(
                         itmask.data(), my_chemistry,
                         &my_rates->cloudy_primordial, my_fields, internalu,
                         idx_range);
+        calc_metallicity_and_electron_density(
+            metallicity.data(), nelec_times_mH.data(), idx_range, imetal,
+            itmask.data(), mmw.data(), my_chemistry, my_fields);
 
         // Compute log temperature and interpolation indices
         // (technically, we could skip indices info if prim_chem == 0 AND

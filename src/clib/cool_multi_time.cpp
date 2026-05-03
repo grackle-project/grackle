@@ -113,6 +113,9 @@ void cool_multi_time(
                                  itmask.data(), my_chemistry,
                                  &my_rates->cloudy_primordial, my_fields,
                                  internalu, idx_range);
+      GRIMPL_NS::calc_metallicity_and_electron_density(
+          metallicity.data(), nelec_times_mH.data(), idx_range, imetal,
+          itmask.data(), mmw.data(), my_chemistry, my_fields); 
 
       // precompute natural log of T and related interpolation info
       LnTPreparer::prep_undamped_lnT_lininterp_bufs(
