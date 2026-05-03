@@ -830,6 +830,11 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
+  // zero-out the continuum absorption coefficients
+  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    alpha_continuum[i] = 0.0;
+  }
+
   dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
                      itmask_metal, my_chemistry, my_rates, my_fields, internalu,
                      idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
@@ -859,13 +864,6 @@ void grackle::impl::cool1d_multi_g(
             my_rates->alphap.props.data_size, my_rates->alphap.data);
 
         alpha_continuum[i] = std::pow(1.e1, log_a);
-      }
-    }
-
-  } else {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        alpha_continuum[i] = 0.f;
       }
     }
   }
