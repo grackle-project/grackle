@@ -45,7 +45,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @todo
 /// Once we finish transcribing, we may want to make the naming a little more
 /// generic since it can be used for more than just temperature
-struct LogTLinInterpScratchBuf{
+struct LogTLinInterpScratchBuf {
   long long* indixe = nullptr;
   double* t1 = nullptr;
   double* t2 = nullptr;
@@ -56,18 +56,20 @@ struct LogTLinInterpScratchBuf{
 /// used to help implement the visitor design pattern
 ///
 /// (avoid using this unless you really have to)
-template<class BinaryFn>
-void visit_member_pair(
-  LogTLinInterpScratchBuf& obj0, LogTLinInterpScratchBuf& obj1, BinaryFn f
-) {
+template <class BinaryFn>
+void visit_member_pair(LogTLinInterpScratchBuf& obj0,
+                       LogTLinInterpScratchBuf& obj1, BinaryFn f) {
   namespace vis = ::grackle::impl::visitor;
 
   vis::begin_visit("LogTLinInterpScratchBuf", f);
-  f(VIS_MEMBER_NAME("indixe"), obj0.indixe, obj1.indixe, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("indixe"), obj0.indixe, obj1.indixe,
+    vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("t1"), obj0.t1, obj1.t1, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("t2"), obj0.t2, obj1.t2, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("logtem"), obj0.logtem, obj1.logtem, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("tdef"), obj0.tdef, obj1.tdef, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("logtem"), obj0.logtem, obj1.logtem,
+    vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("tdef"), obj0.tdef, obj1.tdef,
+    vis::idx_range_len_multiple(1));
   vis::end_visit(f);
 }
 
@@ -89,7 +91,6 @@ LogTLinInterpScratchBuf new_LogTLinInterpScratchBuf(int nelem);
 ///
 /// This effectively invokes the destructor
 void drop_LogTLinInterpScratchBuf(LogTLinInterpScratchBuf*);
-
 
 /// returns the step in ln(T) of the gas temperature grid commonly shared for
 /// interpolating rates
