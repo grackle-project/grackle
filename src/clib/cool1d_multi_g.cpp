@@ -173,7 +173,6 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> alpha_continuum(my_fields->grid_dimension[0]);
   std::vector<double> alphad(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
-  double log_a;
 
   // buffers of intermediate quantities used within dust-routines (for
   // calculating quantites related to heating/cooling)
@@ -849,13 +848,14 @@ void grackle::impl::cool1d_multi_g(
         my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
   }
 
-  // Compute continuum opacity
-
+  // Add primordial contributions to the continuum linear absorption coefs
+  // -> Gen Chiaki added this logic. If section 2.2.3 of Chiaki & Wise (2019)
+  //    accurately describes this logic, then this should be a Planck mean
+  //    opacity
   if (my_chemistry->use_primordial_continuum_opacity == 1) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        // ! primordial continuum opacity !!
-        log_a = grackle::impl::fortran_wrapper::interpolate_2d_g(
+        double log_a = grackle::impl::fortran_wrapper::interpolate_2d_g(
             logrho[i], logT[i], my_rates->alphap.props.dimension,
             my_rates->alphap.props.parameters[0],
             my_rates->alphap.props.parameter_spacing[0],
@@ -863,7 +863,7 @@ void grackle::impl::cool1d_multi_g(
             my_rates->alphap.props.parameter_spacing[1],
             my_rates->alphap.props.data_size, my_rates->alphap.data);
 
-        alpha_continuum[i] = std::pow(1.e1, log_a);
+        alpha_continuum[i] += std::pow(10.0, log_a);
       }
     }
   }
