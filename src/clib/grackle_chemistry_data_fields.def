@@ -374,3 +374,35 @@ ENTRY(dust_growth_tauref, DOUBLE, 0.004)
 /* Dust creation by stellar feedback parameters */
 ENTRY(dust_condensation_eff, DOUBLE, 1.5e-1)
 ENTRY(sne_metal_yield, DOUBLE, 3.0)
+
+/* Two-species dust tracking (silicate + carbonaceous).
+   Requires dust_model=1. Mutually exclusive with dust_model1_track_elements.
+   0) off (default — bulk dust_density)
+   1) on  — evolves dust_density_silicate, dust_density_carbonaceous and
+            5-element gas tracking (C, O, Mg, Si, Fe).
+   REF: Choban+2022 MNRAS 514, 4506; Hirashita 2015 MNRAS 447, 2937;
+        McKinnon+2018 MNRAS 478, 2851 */
+ENTRY(dust_species_track, INT, 0)
+
+/* Species-specific growth (accretion) reference timescales [Gyr].
+   Used in tau = tau_ref * (a/0.1um) * (n_ref/n_H) * sqrt(T_ref/T) * (Z_sun_X/rho_X).
+   REF: Hirashita 2011 ApJ 743, 159 Table 1; Asano+2013 EP&S 65, 213 */
+ENTRY(dust_growth_tauref_silicate, DOUBLE, 0.4)
+ENTRY(dust_growth_tauref_carbon,   DOUBLE, 2.0)
+
+/* Species-specific thermal sputtering reference timescales [yr].
+   Same scaling as Draine & Salpeter 1979 ApJ 231, 77; Tielens+1994 ApJ 431, 321:
+   tau_sp = tau_ref * (a/0.1) * (1e-27/(rho*n)) * ((2e6/T)^2.5 + 1).
+   REF (silicate): Tsai & Mathews 1995 ApJ 448, 84
+   REF (carbon, ~2x silicate): Nozawa+2006 ApJ 648, 435 */
+ENTRY(dust_sputter_tauref_silicate, DOUBLE, 1.7e8)
+ENTRY(dust_sputter_tauref_carbon,   DOUBLE, 3.4e8)
+
+/* Silicate stoichiometric mass fractions (50/50 olivine MgFeSiO4 +
+   pyroxene MgSiO3 by mass). Used for both growth depletion and
+   destruction release of Mg/Fe/Si/O. Sum = 1.000.
+   REF: Draine 2003 ARA&A 41, 241; Dwek 1998 ApJ 501, 643 */
+ENTRY(dust_silicate_f_Mg, DOUBLE, 0.190)
+ENTRY(dust_silicate_f_Fe, DOUBLE, 0.163)
+ENTRY(dust_silicate_f_Si, DOUBLE, 0.221)
+ENTRY(dust_silicate_f_O,  DOUBLE, 0.426)

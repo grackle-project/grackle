@@ -353,6 +353,32 @@ typedef struct
   double dust_condensation_eff;
   double sne_metal_yield;
 
+  /* Two-species dust tracking (silicate + carbonaceous).
+     Requires dust_model=1. Mutually exclusive with dust_model1_track_elements.
+     0) off — bulk dust_density (default)
+     1) on  — evolves dust_density_silicate, dust_density_carbonaceous and
+              5-element gas tracking (C, O, Mg, Si, Fe).
+     REF: Choban+2022 MNRAS 514, 4506; Hirashita 2015 MNRAS 447, 2937 */
+  int dust_species_track;
+
+  /* Species-specific growth (accretion) reference timescales [Gyr].
+     REF: Hirashita 2011 ApJ 743, 159 Table 1; Asano+2013 EP&S 65, 213 */
+  double dust_growth_tauref_silicate;
+  double dust_growth_tauref_carbon;
+
+  /* Species-specific thermal sputtering reference timescales [yr].
+     REF (silicate): Tsai & Mathews 1995 ApJ 448, 84
+     REF (carbon):   Nozawa+2006 ApJ 648, 435 */
+  double dust_sputter_tauref_silicate;
+  double dust_sputter_tauref_carbon;
+
+  /* Silicate stoichiometric mass fractions (50/50 olivine MgFeSiO4 +
+     pyroxene MgSiO3 by mass). Sum = 1.000.
+     REF: Draine 2003 ARA&A 41, 241; Dwek 1998 ApJ 501, 643 */
+  double dust_silicate_f_Mg;
+  double dust_silicate_f_Fe;
+  double dust_silicate_f_Si;
+  double dust_silicate_f_O;
 
 } chemistry_data;
 

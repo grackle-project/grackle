@@ -273,6 +273,18 @@ def _required_density_fields(my_chemistry):
             "dust_density_carbon",
             "dust_density_oxygen",
         ])
+    if my_chemistry.dust_species_track == 1:
+        # Two-species dust (silicate + carbonaceous) with 5-element gas tracking.
+        # REF: Choban+2022 MNRAS 514, 4506; Hirashita 2015 MNRAS 447, 2937
+        my_fields.extend([
+            "metal_density_carbon",
+            "metal_density_oxygen",
+            "metal_density_magnesium",
+            "metal_density_silicon",
+            "metal_density_iron",
+            "dust_density_silicate",
+            "dust_density_carbonaceous",
+        ])
     if my_chemistry.metal_chemistry > 0:
         my_fields.extend(_dust_metal_densities[my_chemistry.dust_species])
         my_fields.extend(_dust_densities[my_chemistry.dust_species])

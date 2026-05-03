@@ -72,10 +72,17 @@ typedef struct
   // metal_cooling = 1
   gr_float *metal_density;
 
-  // dust_model1_track_elements = 1
+  // dust_model1_track_elements = 1 OR dust_species_track = 1
   // These are *subsets* of metal_density (not separate fields).
   gr_float *metal_density_carbon;   // gas-phase C (subset of metal_density)
   gr_float *metal_density_oxygen;   // gas-phase O (subset of metal_density)
+
+  // dust_species_track = 1
+  // 5-element gas tracking adds Mg, Si, Fe alongside C, O above.
+  // Subsets of metal_density. REF: Choban+2022 MNRAS 514, 4506
+  gr_float *metal_density_magnesium;
+  gr_float *metal_density_silicon;
+  gr_float *metal_density_iron;
 
   // use_dust_density_field = 1
   gr_float *dust_density;
@@ -84,6 +91,12 @@ typedef struct
   // These are *subsets* of dust_density (not separate fields).
   gr_float *dust_density_carbon;    // C in dust (subset of dust_density)
   gr_float *dust_density_oxygen;    // O in dust (subset of dust_density)
+
+  // dust_species_track = 1
+  // Two-species dust: bulk dust_density = silicate + carbonaceous.
+  // REF: Hirashita 2015 MNRAS 447, 2937; McKinnon+2018 MNRAS 478, 2851
+  gr_float *dust_density_silicate;
+  gr_float *dust_density_carbonaceous;
 
   // primordial_chemistry = 1
   gr_float *e_density;
