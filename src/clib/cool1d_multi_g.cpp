@@ -120,7 +120,7 @@ void grackle::impl::cool1d_multi_g(
   int i, iZscale, mycmbTfloor;
   double dom, qq, vibl, zr, hdlte1, hdlow1, fudge, gphdl1, dom_inv, tau,
       ciefudge, coolunit, tbase1, nSSh, nratio, nssh_he, nratio_he, fSShHI,
-      fSShHeI, ih2cox, min_metallicity;
+      fSShHeI, ih2cox;
   double comp1, comp2;
 
   // Performing heap allocations for all of the subsequent buffers within this
@@ -231,9 +231,6 @@ void grackle::impl::cool1d_multi_g(
   // multiplicative factor for including/excluding H2 cooling
   ih2cox = (double)(my_chemistry->ih2co);
 
-  // ignore metal chemistry/cooling below this metallicity
-  min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
-
   // Skip if below the temperature floor
   if (my_chemistry->use_temperature_floor == 1) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -250,6 +247,22 @@ void grackle::impl::cool1d_multi_g(
           itmask[i] = MASK_FALSE;
         }
       }
+    }
+  }
+
+  // Iteration mask for metal-rich cells
+  if (imetal == 1) {
+    double min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (metallicity[i] >= min_metallicity) {
+        itmask_metal[i] = itmask[i];
+      } else {
+        itmask_metal[i] = MASK_FALSE;
+      }
+    }
+  } else {
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      itmask_metal[i] = MASK_FALSE;
     }
   }
 
@@ -860,21 +873,6 @@ void grackle::impl::cool1d_multi_g(
                         (3. * dom);
         }
       }
-    }
-  }
-
-  // Iteration mask for metal-rich cells
-  if (imetal == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (metallicity[i] >= min_metallicity) {
-        itmask_metal[i] = itmask[i];
-      } else {
-        itmask_metal[i] = MASK_FALSE;
-      }
-    }
-  } else {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      itmask_metal[i] = MASK_FALSE;
     }
   }
 
