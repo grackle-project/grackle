@@ -59,9 +59,9 @@ public:
       : idx_mapping_(idx_mapping), start_(start), stop_(stop) {
     int rank = idx_mapping_.rank();
     GR_INTERNAL_REQUIRE(rank >= 1, "non-positive rank is forbidden");
-    GR_INTERNAL_REQUIRE(start_.size() == rank,
+    GR_INTERNAL_REQUIRE(start_.size() == static_cast<std::size_t>(rank),
                         "the number of args in start arg must match rank");
-    GR_INTERNAL_REQUIRE(stop_.size() == rank,
+    GR_INTERNAL_REQUIRE(stop_.size() == static_cast<std::size_t>(rank),
                         "the number of args in stop arg must match rank");
   }
 };
