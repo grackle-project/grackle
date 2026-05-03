@@ -21,6 +21,7 @@
 #include "grackle.h"
 #include "index_helper.h"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
 
 namespace grackle::impl {
 

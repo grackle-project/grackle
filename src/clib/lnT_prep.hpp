@@ -6,8 +6,8 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Defines logic for precomputing ln(T) and filling associated buffers with
-/// values pertaining to 1D interpolation
+/// Declare/Define logic for precomputing ln(T) and filling associated buffers
+/// with values pertaining to 1D interpolation
 ///
 //===----------------------------------------------------------------------===//
 
@@ -19,11 +19,77 @@
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "grackle.h"
 #include "index_helper.h"
-#include "internal_types.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"  // GRIMPL_NS::clamp
+#include "visitor/common.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
+
+/// Holds 1D arrays used for linear interpolation
+///
+/// A common idiom within Grackle is to construct 1D tables of different
+/// quantities (I think its mostly different types of rates) sampled at various
+/// log temperature values during setup.
+/// - when performing calculations on simulation data, Grackle will compute
+///   values from these tables.
+/// - Since these tables are all sampled at the same log-temperature values, we
+///   can reuse information about the current location in the table between
+///   different interpolations to speed up the calculation
+/// - the values of the buffers in this data structure at a given location are
+///   used encode this information about logT table location.
+///
+/// @note
+/// Logic related to this struct is a prime candidate for logic that we probably
+/// want to refactor after we complete transcription from Fortran
+///
+/// @todo
+/// Once we finish transcribing, we may want to make the naming a little more
+/// generic since it can be used for more than just temperature
+struct LogTLinInterpScratchBuf{
+  long long* indixe = nullptr;
+  double* t1 = nullptr;
+  double* t2 = nullptr;
+  double* logtem = nullptr;
+  double* tdef = nullptr;
+};
+
+/// used to help implement the visitor design pattern
+///
+/// (avoid using this unless you really have to)
+template<class BinaryFn>
+void visit_member_pair(
+  LogTLinInterpScratchBuf& obj0, LogTLinInterpScratchBuf& obj1, BinaryFn f
+) {
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("LogTLinInterpScratchBuf", f);
+  f(VIS_MEMBER_NAME("indixe"), obj0.indixe, obj1.indixe, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("t1"), obj0.t1, obj1.t1, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("t2"), obj0.t2, obj1.t2, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("logtem"), obj0.logtem, obj1.logtem, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("tdef"), obj0.tdef, obj1.tdef, vis::idx_range_len_multiple(1));
+  vis::end_visit(f);
+}
+
+/// implements the visitor design pattern
+///
+/// @param ptr[in,out] Members of the specified object will be visited
+/// @param fn[in] Calls function that will be applied to each function
+template <class UnaryVisitor>
+inline void visit_member(LogTLinInterpScratchBuf* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, LogTLinInterpScratchBuf, ptr, fn);
+}
+
+/// allocates the contents of a new LogTLinInterpScratchBuf
+///
+/// @param nelem The number of elements in each buffer
+LogTLinInterpScratchBuf new_LogTLinInterpScratchBuf(int nelem);
+
+/// performs cleanup of the contents of LogTLinInterpScratchBuf
+///
+/// This effectively invokes the destructor
+void drop_LogTLinInterpScratchBuf(LogTLinInterpScratchBuf*);
+
 
 /// returns the step in ln(T) of the gas temperature grid commonly shared for
 /// interpolating rates

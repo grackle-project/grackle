@@ -21,6 +21,7 @@
 #include "internal_units.hpp"    // InternalGrUnits
 #include "internal_types.hpp"    // GrainSpeciesCollection
 #include "index_helper.h"        // IndexRange
+#include "lnT_prep.hpp"          // LogTLinInterpScratchBuf
 
 namespace grackle::impl {
 
