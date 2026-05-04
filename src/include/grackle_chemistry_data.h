@@ -318,23 +318,6 @@ typedef struct
    */
   int dust_model;
 
-  /* Track gas-phase C and O as separate element density fields,
-     with corresponding dust-phase composition bookkeeping.
-     Requires dust_model=1.
-     0) off — bulk metal_density behaviour (default)
-     1) on — element-resolved C/O tracking */
-  int dust_model1_track_elements;
-
-  /* Element mass fractions for initialising C/O fields (Pollack et al. 1994).
-     "total" = fraction of total metals (gas + dust) that is the element.
-     "gas"   = fraction of total metals that is gas-phase element.
-     Dust-phase fraction = total - gas.
-     Defaults are local ISM values (inject_pathway_props pathway 0). */
-  double dust_model1_C_total_fraction;
-  double dust_model1_C_gas_fraction;
-  double dust_model1_O_total_fraction;
-  double dust_model1_O_gas_fraction;
-
   /* Flag to use snetimestep */
   int use_sne_field;
 
@@ -354,7 +337,7 @@ typedef struct
   double sne_metal_yield;
 
   /* Two-species dust tracking (silicate + carbonaceous).
-     Requires dust_model=1. Mutually exclusive with dust_model1_track_elements.
+     Requires dust_model=1.
      0) off — bulk dust_density (default)
      1) on  — evolves dust_density_silicate, dust_density_carbonaceous and
               5-element gas tracking (C, O, Mg, Si, Fe).

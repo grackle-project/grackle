@@ -106,33 +106,9 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
   grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  bool track_elements_sf =
-      (my_chemistry->dust_model1_track_elements > 0 &&
-       my_fields->metal_density_carbon != nullptr &&
-       my_fields->metal_density_oxygen != nullptr);
-  grackle::impl::View<gr_float***> metal_C_sf(
-      track_elements_sf ? my_fields->metal_density_carbon
-                        : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_O_sf(
-      track_elements_sf ? my_fields->metal_density_oxygen
-                        : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust_C_sf(
-      track_elements_sf ? my_fields->dust_density_carbon
-                        : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust_O_sf(
-      track_elements_sf ? my_fields->dust_density_oxygen
-                        : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> CI(
       my_fields->CI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -296,13 +272,6 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metal(i, j, k) = metal(i, j, k) * factor;
         }
-        if (track_elements_sf) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            metal_C_sf(i, j, k) = metal_C_sf(i, j, k) * factor;
-            metal_O_sf(i, j, k) = metal_O_sf(i, j, k) * factor;
-          }
-        }
-
         if (my_chemistry->metal_chemistry == 1) {
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
             CI(i, j, k) = CI(i, j, k) * factor;
@@ -348,12 +317,6 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
         if (my_chemistry->use_dust_density_field == 1) {
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
             dust(i, j, k) = dust(i, j, k) * factor;
-          }
-          if (track_elements_sf) {
-            for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-              dust_C_sf(i, j, k) = dust_C_sf(i, j, k) * factor;
-              dust_O_sf(i, j, k) = dust_O_sf(i, j, k) * factor;
-            }
           }
 
           if ((my_chemistry->grain_growth == 1) ||

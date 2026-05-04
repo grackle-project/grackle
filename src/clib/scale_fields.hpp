@@ -95,30 +95,6 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
   grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  bool track_elements_sfd =
-      (my_chemistry->dust_model1_track_elements > 0 &&
-       my_fields->metal_density_carbon != nullptr &&
-       my_fields->metal_density_oxygen != nullptr);
-  grackle::impl::View<gr_float***> metal_C_sfd(
-      track_elements_sfd ? my_fields->metal_density_carbon
-                         : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_O_sfd(
-      track_elements_sfd ? my_fields->metal_density_oxygen
-                         : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust_C_sfd(
-      track_elements_sfd ? my_fields->dust_density_carbon
-                         : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust_O_sfd(
-      track_elements_sfd ? my_fields->dust_density_oxygen
-                         : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -174,10 +150,6 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
     if (imetal == 1) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         metal(i, j, k) = metal(i, j, k) * factor;
-        if (track_elements_sfd) {
-          metal_C_sfd(i, j, k) = metal_C_sfd(i, j, k) * factor;
-          metal_O_sfd(i, j, k) = metal_O_sfd(i, j, k) * factor;
-        }
         // if (my_chemistry->multi_metals > 0) {
         //   metal_loc(i, j, k) = metal_loc(i, j, k) * factor;
         //   metal_C13(i, j, k) = metal_C13(i, j, k) * factor;
@@ -197,10 +169,6 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
     if (my_chemistry->use_dust_density_field == 1) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         dust(i, j, k) = dust(i, j, k) * factor;
-        if (track_elements_sfd) {
-          dust_C_sfd(i, j, k) = dust_C_sfd(i, j, k) * factor;
-          dust_O_sfd(i, j, k) = dust_O_sfd(i, j, k) * factor;
-        }
         if ((my_chemistry->grain_growth == 1) ||
             (my_chemistry->dust_sublimation == 1)) {
           // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then

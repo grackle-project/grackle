@@ -35,15 +35,6 @@ void dust_growth_species(
     double* growth_dM_carbon     // output: carbonaceous accretion rate
 );
 
-// Calculates stellar feedback injection rates (Dwek 1998 framework).
-// Each SN injects m_Z metals: fraction delta -> dust, (1-delta) -> gas metals.
-void dust_creation(chemistry_data* my_chemistry, grackle_field_data* my_fields,
-                   InternalGrUnits internalu, IndexRange idx_range,
-                   const gr_mask_type* itmask, const double* dt_value,
-                   double* creation_dust_dM,   // output: dust creation rate
-                   double* creation_metal_dM   // output: gas-phase metal injection rate
-);
-
 // Calculates dust destruction rates from SNe shocks and thermal sputtering.
 // Stores the mass change dM for each cell in destruction_dM array.
 void dust_destruction(
@@ -53,6 +44,25 @@ void dust_destruction(
     double* destruction_dM  // output: mass change rate for each cell
 );
 
+// Species-specific destruction (SN shocks + thermal sputtering) onto the two
+// dust populations. Active when dust_species_track == 1.
+//   - shock yield: graphite is baseline (factor 1.0); silicate ~1.5x more
+//     easily destroyed [REF: Slavin, Dwek, Jones 2015 ApJ 803, 7;
+//     Jones+1996 ApJ 469, 740]
+//   - thermal sputtering: species-specific tau_ref
+//     [REF (silicate): Tsai & Mathews 1995 ApJ 448, 84;
+//      REF (carbon, ~2x silicate): Nozawa+2006 ApJ 648, 435]
+//     with Draine & Salpeter 1979 / Tielens+1994 scaling form
+// No bulk dM, no partitioning — Phase D wires the species outputs into
+// dust_update().
+void dust_destruction_species(
+    chemistry_data* my_chemistry, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range, const gr_mask_type* itmask,
+    const double* dt_value, const double* t_gas,
+    double* destruction_dM_silicate,  // output: silicate destruction rate
+    double* destruction_dM_carbon     // output: carbonaceous destruction rate
+);
+
 // Update the density fields using calculated mass changes.
 void dust_update(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
@@ -60,8 +70,26 @@ void dust_update(
     const double* dt_value,
     const double* growth_dM,         // input: mass change from growth
     const double* destruction_dM,    // input: mass change from destruction
-    const double* creation_dust_dM,  // input: dust created by stellar feedback
-    const double* creation_metal_dM, // input: gas-phase metals from stellar feedback
+    bool dryrun);
+
+// Species-specific field update for the two-species path (dust_species_track==1).
+// Per-channel mass exchange:
+//   - carbon channel:    rho_dust_carbonaceous <-> metal_density_carbon
+//   - silicate channel:  rho_dust_silicate <-> {Mg, Fe, Si, O} at stoichiometric
+//                        mass fractions f_X (Choban+2022 §2.2; 50/50 olivine +
+//                        pyroxene mix, Draine 2003 / Dwek 1998).
+// Per-channel pre-cap in absolute mass units replaces the legacy 3-way active[]
+// shortfall mask. No SN injection here — Phase D drops the in-Grackle
+// dust_creation pathway from the species branch; host code seeds dust species
+// directly (or via inject_pathway machinery in make_consistent).
+void dust_update_species(
+    chemistry_data* my_chemistry, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range, const gr_mask_type* itmask,
+    const double* dt_value,
+    const double* growth_dM_silicate,      // input: silicate accretion rate
+    const double* growth_dM_carbon,        // input: carbonaceous accretion rate
+    const double* destruction_dM_silicate, // input: silicate destruction rate (<=0)
+    const double* destruction_dM_carbon,   // input: carbonaceous destruction rate (<=0)
     bool dryrun);
 
 }  // namespace grackle::impl

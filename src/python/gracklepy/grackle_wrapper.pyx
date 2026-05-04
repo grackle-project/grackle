@@ -661,8 +661,6 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.metal_density_silicon = get_field(fc, "metal_density_silicon")
     my_fields.metal_density_iron = get_field(fc, "metal_density_iron")
     my_fields.dust_density = get_field(fc, "dust_density")
-    my_fields.dust_density_carbon = get_field(fc, "dust_density_carbon")
-    my_fields.dust_density_oxygen = get_field(fc, "dust_density_oxygen")
     my_fields.dust_density_silicate = get_field(fc, "dust_density_silicate")
     my_fields.dust_density_carbonaceous = get_field(fc, "dust_density_carbonaceous")
 

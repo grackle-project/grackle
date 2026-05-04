@@ -28,7 +28,7 @@ ENTRY(z_velocity)
   // metal_cooling = 1
 ENTRY(metal_density)
 
-  // dust_model1_track_elements = 1 OR dust_species_track = 1
+  // dust_species_track = 1
 ENTRY(metal_density_carbon)
 ENTRY(metal_density_oxygen)
 
@@ -39,10 +39,6 @@ ENTRY(metal_density_iron)
 
   // use_dust_density_field = 1
 ENTRY(dust_density)
-
-  // dust_model1_track_elements = 1
-ENTRY(dust_density_carbon)
-ENTRY(dust_density_oxygen)
 
   // dust_species_track = 1 (two-species dust)
 ENTRY(dust_density_silicate)

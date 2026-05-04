@@ -72,7 +72,7 @@ typedef struct
   // metal_cooling = 1
   gr_float *metal_density;
 
-  // dust_model1_track_elements = 1 OR dust_species_track = 1
+  // dust_species_track = 1
   // These are *subsets* of metal_density (not separate fields).
   gr_float *metal_density_carbon;   // gas-phase C (subset of metal_density)
   gr_float *metal_density_oxygen;   // gas-phase O (subset of metal_density)
@@ -86,11 +86,6 @@ typedef struct
 
   // use_dust_density_field = 1
   gr_float *dust_density;
-
-  // dust_model1_track_elements = 1
-  // These are *subsets* of dust_density (not separate fields).
-  gr_float *dust_density_carbon;    // C in dust (subset of dust_density)
-  gr_float *dust_density_oxygen;    // O in dust (subset of dust_density)
 
   // dust_species_track = 1
   // Two-species dust: bulk dust_density = silicate + carbonaceous.

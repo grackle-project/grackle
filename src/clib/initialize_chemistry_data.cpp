@@ -232,17 +232,6 @@ static int local_initialize_chemistry_data_(
     return GR_FAIL;
   }
 
-  if (my_chemistry->dust_model1_track_elements > 0) {
-    if (my_chemistry->dust_model != 1) {
-      fprintf(stderr, "ERROR: dust_model1_track_elements requires dust_model=1.\n");
-      return GR_FAIL;
-    }
-    if (my_chemistry->metal_cooling != 1) {
-      fprintf(stderr, "ERROR: dust_model1_track_elements requires metal_cooling=1.\n");
-      return GR_FAIL;
-    }
-  }
-
   // Default photo-electric heating to off if unset.
   if (my_chemistry->photoelectric_heating < 0) {
     my_chemistry->photoelectric_heating = 0;

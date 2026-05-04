@@ -728,15 +728,15 @@ int solve_rate_cool(
     std::vector<double> mmw(my_fields->grid_dimension[0]);
     std::vector<double> edot(my_fields->grid_dimension[0]);
 
-    // Arrays to store dust growth, destruction, and creation mass changes
+    // Arrays to store dust growth and destruction mass changes
     std::vector<double> growth_dM(my_fields->grid_dimension[0]);
     std::vector<double> destruction_dM(my_fields->grid_dimension[0]);
-    std::vector<double> creation_dust_dM(my_fields->grid_dimension[0]);
-    std::vector<double> creation_metal_dM(my_fields->grid_dimension[0]);
-    // Phase B: species-specific accretion outputs (used when
+    // Phase B/C: species-specific growth & destruction outputs (used when
     // dust_species_track == 1; Phase D wires them into dust_update())
     std::vector<double> growth_dM_silicate(my_fields->grid_dimension[0]);
     std::vector<double> growth_dM_carbon(my_fields->grid_dimension[0]);
+    std::vector<double> destruction_dM_silicate(my_fields->grid_dimension[0]);
+    std::vector<double> destruction_dM_carbon(my_fields->grid_dimension[0]);
 
     // iteration masks
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
@@ -943,21 +943,35 @@ int solve_rate_cool(
               dtit.data(), tgas.data(), growth_dM.data());
           }
 
-          // // Calculate dust creation rates from stellar feedback
-          // grackle::impl::dust_creation(
-          //   my_chemistry, my_fields, internalu, idx_range, itmask.data(),
-          //   dtit.data(), creation_dust_dM.data(), creation_metal_dM.data());
+          // Calculate dust destruction rates: bulk path (legacy) or species
+          // path (silicate + carbonaceous, Phase C). dust_update() still
+          // consumes the bulk destruction_dM until Phase D rewires it.
+          if (my_chemistry->dust_species_track == 1) {
+            grackle::impl::dust_destruction_species(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(), tgas.data(),
+              destruction_dM_silicate.data(), destruction_dM_carbon.data());
+          } else {
+            grackle::impl::dust_destruction(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(), tgas.data(), destruction_dM.data());
+          }
 
-          // Calculate dust destruction rates and store in destruction_dM array
-          grackle::impl::dust_destruction(
-            my_chemistry, my_fields, internalu, idx_range, itmask.data(),
-            dtit.data(), tgas.data(), destruction_dM.data());
-
-          // Apply the calculated rates to update density fields
-          grackle::impl::dust_update(
-            my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
-            growth_dM.data(), destruction_dM.data(),
-            creation_dust_dM.data(), creation_metal_dM.data(), false);
+          // Apply the calculated rates to update density fields.  Species
+          // path runs the per-channel update (no SN injection on this branch);
+          // legacy bulk path is unchanged.
+          if (my_chemistry->dust_species_track == 1) {
+            grackle::impl::dust_update_species(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(),
+              growth_dM_silicate.data(), growth_dM_carbon.data(),
+              destruction_dM_silicate.data(), destruction_dM_carbon.data(),
+              false);
+          } else {
+            grackle::impl::dust_update(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
+              growth_dM.data(), destruction_dM.data(), false);
+          }
         }
 
         // Add the timestep to the elapsed time for each cell and find

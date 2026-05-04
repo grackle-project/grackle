@@ -69,20 +69,6 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
   GRIMPL_NS::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  bool track_elements_cs =
-      (my_chemistry->dust_model1_track_elements > 0 &&
-       my_fields->metal_density_carbon != nullptr &&
-       my_fields->metal_density_oxygen != nullptr);
-  grackle::impl::View<gr_float***> metal_C_cs(
-      track_elements_cs ? my_fields->metal_density_carbon
-                        : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_O_cs(
-      track_elements_cs ? my_fields->metal_density_oxygen
-                        : my_fields->density,
-      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -261,10 +247,6 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
       for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metal(i, j, k) = std::fmax(metal(i, j, k), tiny_fortran_val);
-          if (track_elements_cs) {
-            metal_C_cs(i, j, k) = std::fmax(metal_C_cs(i, j, k), tiny_fortran_val);
-            metal_O_cs(i, j, k) = std::fmax(metal_O_cs(i, j, k), tiny_fortran_val);
-          }
           if (metal(i, j, k) > d(i, j, k)) {
             eprintf("WARNING: metal density exceeds  total density!\n");
             eprintf("i, j, k, metal, density =  %d %d %d %g %g\n", i, j, k,
