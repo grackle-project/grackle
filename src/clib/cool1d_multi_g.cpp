@@ -184,7 +184,6 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> alpha_continuum(my_fields->grid_dimension[0]);
   std::vector<double> alphad(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
-  std::vector<double> tau_con(my_fields->grid_dimension[0]);
   double log_a;
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
@@ -908,12 +907,6 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      tau_con[i] = alpha_continuum[i] * lshield_con[i];
-    }
-  }
-
   // --- Compute (external) radiative heating terms ---
   // Photoionization heating
 
@@ -1333,6 +1326,14 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Continuum opacity
+
+  // todo: stop allocating a buffer for tau_con
+  std::vector<double> tau_con(my_fields->grid_dimension[0]);
+  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      tau_con[i] = alpha_continuum[i] * lshield_con[i];
+    }
+  }
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
