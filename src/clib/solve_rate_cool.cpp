@@ -733,6 +733,10 @@ int solve_rate_cool(
     std::vector<double> destruction_dM(my_fields->grid_dimension[0]);
     std::vector<double> creation_dust_dM(my_fields->grid_dimension[0]);
     std::vector<double> creation_metal_dM(my_fields->grid_dimension[0]);
+    // Phase B: species-specific accretion outputs (used when
+    // dust_species_track == 1; Phase D wires them into dust_update())
+    std::vector<double> growth_dM_silicate(my_fields->grid_dimension[0]);
+    std::vector<double> growth_dM_carbon(my_fields->grid_dimension[0]);
 
     // iteration masks
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
@@ -925,10 +929,19 @@ int solve_rate_cool(
         // separate pass. The placement below is a short-term stopgap and
         // will be restructured once that integration lands.
         if (my_chemistry->dust_model == 1){
-          // Calculate dust growth rates and store in growth_dM array
-          grackle::impl::dust_growth(
-            my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
-            tgas.data(), growth_dM.data());
+          // Calculate dust growth rates: bulk path (legacy) or species path
+          // (silicate + carbonaceous, Phase B). dust_update() still consumes
+          // the bulk growth_dM until Phase D rewires it.
+          if (my_chemistry->dust_species_track == 1) {
+            grackle::impl::dust_growth_species(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(), tgas.data(),
+              growth_dM_silicate.data(), growth_dM_carbon.data());
+          } else {
+            grackle::impl::dust_growth(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(), tgas.data(), growth_dM.data());
+          }
 
           // // Calculate dust creation rates from stellar feedback
           // grackle::impl::dust_creation(

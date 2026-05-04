@@ -19,6 +19,22 @@ void dust_growth(chemistry_data* my_chemistry, grackle_field_data* my_fields,
                  double* growth_dM  // output: mass change rate for each cell
 );
 
+// Species-specific accretion onto two pre-existing dust populations
+// (silicate + carbonaceous). Active when dust_species_track == 1.
+//   - carbonaceous: rate-limited by gas-phase carbon
+//   - silicate: rate-limited by min over {Mg, Si, Fe, O} of (rho_X / f_X),
+//     following the Choban+2022 MNRAS 514, 4506 §2.2 key-reactant approach
+// Per-species tau_accr structural form follows Hirashita 2011 ApJ 743, 159
+// Eq. (16)-(17). No bulk dM, no partitioning — Phase D wires the species
+// outputs into dust_update().
+void dust_growth_species(
+    chemistry_data* my_chemistry, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range,
+    const gr_mask_type* itmask, const double* dt_value, const double* t_gas,
+    double* growth_dM_silicate,  // output: silicate accretion rate
+    double* growth_dM_carbon     // output: carbonaceous accretion rate
+);
+
 // Calculates stellar feedback injection rates (Dwek 1998 framework).
 // Each SN injects m_Z metals: fraction delta -> dust, (1-delta) -> gas metals.
 void dust_creation(chemistry_data* my_chemistry, grackle_field_data* my_fields,

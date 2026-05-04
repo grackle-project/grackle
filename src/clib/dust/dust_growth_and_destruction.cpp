@@ -94,6 +94,125 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
 }
 
 // ==========================================
+// DUST GROWTH (SPECIES-SPECIFIC: silicate + carbonaceous)
+// ==========================================
+// Two parallel accretion rates onto pre-existing dust seeds, gated by
+// dust_species_track == 1. Carbonaceous growth is rate-limited by gas-phase
+// carbon. Silicate growth is rate-limited by the least-available key
+// reactant in {Mg, Si, Fe, O} weighted by stoichiometric mass fraction
+// f_X (Choban+2022 MNRAS 514, 4506 §2.2). The structural form of tau_accr
+// follows Hirashita 2011 ApJ 743, 159 Eq. (16)-(17):
+//   tau_accr = tau_ref · (rho_ref / rho) · (T_ref/T)^0.5 · (Z_sun / Z_X)
+// reusing the same dust_growth_densref / SolarMetalFractionByMass scaling
+// convention as the bulk dust_growth() above.
+void grackle::impl::dust_growth_species(
+    chemistry_data* my_chemistry, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range,
+    const gr_mask_type* itmask, const double* dt_value, const double* t_gas,
+    double* growth_dM_silicate, double* growth_dM_carbon) {
+
+  grackle::impl::View<gr_float***> d(
+      my_fields->density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_sil(
+      my_fields->dust_density_silicate, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_carb(
+      my_fields->dust_density_carbonaceous, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> mC(
+      my_fields->metal_density_carbon, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> mO(
+      my_fields->metal_density_oxygen, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> mMg(
+      my_fields->metal_density_magnesium, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> mSi(
+      my_fields->metal_density_silicon, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> mFe(
+      my_fields->metal_density_iron, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  double dens_proper = internalu.urho * std::pow(internalu.a_value, 3);
+  // tau_ref values are stored in Gyr (Hirashita 2011 Table 1 convention)
+  double tau_ref_sil = my_chemistry->dust_growth_tauref_silicate * 1e9 *
+                       sec_per_year / internalu.tbase1;
+  double tau_ref_carb = my_chemistry->dust_growth_tauref_carbon * 1e9 *
+                        sec_per_year / internalu.tbase1;
+
+  double f_Mg = my_chemistry->dust_silicate_f_Mg;
+  double f_Fe = my_chemistry->dust_silicate_f_Fe;
+  double f_Si = my_chemistry->dust_silicate_f_Si;
+  double f_O  = my_chemistry->dust_silicate_f_O;
+
+  // --- MAIN LOOP ---
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    growth_dM_silicate[i] = 0.0;
+    growth_dM_carbon[i] = 0.0;
+
+    if (itmask[i] != MASK_FALSE) {
+      double rho_gas = d(i, idx_range.j, idx_range.k);
+      double rho_dust_sil_i  = dust_sil(i, idx_range.j, idx_range.k);
+      double rho_dust_carb_i = dust_carb(i, idx_range.j, idx_range.k);
+
+      double rho_C  = mC(i, idx_range.j, idx_range.k);
+      double rho_O  = mO(i, idx_range.j, idx_range.k);
+      double rho_Mg = mMg(i, idx_range.j, idx_range.k);
+      double rho_Si = mSi(i, idx_range.j, idx_range.k);
+      double rho_Fe = mFe(i, idx_range.j, idx_range.k);
+
+      double T  = t_gas[i];
+      double dt = dt_value[i];
+
+      double accr_struct = (my_chemistry->dust_growth_densref / dens_proper) *
+                           std::pow(t_ref / T, 0.5);
+
+      // ---------- Carbonaceous: rate-limited by gas-phase C ----------
+      if (rho_C >= metal_gate_threshold * rho_gas && rho_dust_carb_i > 0.0) {
+        double rho_C_eff = std::max(rho_C, tiny_value);
+        double tau_accr_carb = tau_ref_carb * accr_struct *
+                               (my_chemistry->SolarMetalFractionByMass /
+                                rho_C_eff);
+        tau_accr_carb = std::min(std::max(tau_accr_carb, tiny_value),
+                                 huge_value);
+        double frac_avail = rho_C / (rho_dust_carb_i + rho_C);
+        frac_avail = std::clamp(frac_avail, 0.0, 1.0);
+        double rate = frac_avail * (rho_dust_carb_i / tau_accr_carb);
+        growth_dM_carbon[i] = std::min(rate, rho_C / dt);
+      }
+
+      // ---------- Silicate: Choban+2022 key-reactant ----------
+      // For each key element X, the maximum silicate dust mass that could
+      // be assembled from X is rho_X / f_X. The bottleneck element sets
+      // the rate.
+      double mass_from_Mg = (f_Mg > 0.0) ? rho_Mg / f_Mg : huge_value;
+      double mass_from_Fe = (f_Fe > 0.0) ? rho_Fe / f_Fe : huge_value;
+      double mass_from_Si = (f_Si > 0.0) ? rho_Si / f_Si : huge_value;
+      double mass_from_O  = (f_O  > 0.0) ? rho_O  / f_O  : huge_value;
+      double rho_sil_pool = std::min(std::min(mass_from_Mg, mass_from_Fe),
+                                     std::min(mass_from_Si, mass_from_O));
+
+      if (rho_sil_pool >= metal_gate_threshold * rho_gas &&
+          rho_dust_sil_i > 0.0) {
+        double rho_pool_eff = std::max(rho_sil_pool, tiny_value);
+        double tau_accr_sil = tau_ref_sil * accr_struct *
+                              (my_chemistry->SolarMetalFractionByMass /
+                               rho_pool_eff);
+        tau_accr_sil = std::min(std::max(tau_accr_sil, tiny_value),
+                                huge_value);
+        double frac_avail = rho_sil_pool / (rho_dust_sil_i + rho_sil_pool);
+        frac_avail = std::clamp(frac_avail, 0.0, 1.0);
+        double rate = frac_avail * (rho_dust_sil_i / tau_accr_sil);
+        growth_dM_silicate[i] = std::min(rate, rho_sil_pool / dt);
+      }
+    }
+  }
+}
+
+// ==========================================
 // DUST CREATION (STELLAR FEEDBACK)
 // ==========================================
 // Following the standard dust evolution framework (Dwek 1998, ApJ 501, 643;
