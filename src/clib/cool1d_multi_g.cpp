@@ -238,6 +238,46 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
+  // zero-out the continuum absorption coefficients
+  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    alpha_continuum[i] = 0.0;
+  }
+
+  dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
+                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
+                     idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
+                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
+                     kappa_tot.data(), grain_kappa, cool1dmulti_buf.gasgr_tdust,
+                     myisrf.data(), internal_dust_prop_buf);
+
+  // Add contributions from dust opacity to alpha_continuum, the continuum
+  // linear absorption coefficient
+  //
+  //  The original Fortran version of this function had the following 2
+  //  comments:
+  //    ! if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
+  //    ! We better not include dust opacity.
+  // It's a little unclear how relevant these comments actually are.
+  if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
+    int n_grain_species =
+        my_rates->opaque_storage->grain_species_info->n_species;
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask_metal[i] != MASK_FALSE) {
+        double kappa_sum = 0.0;
+        if (my_chemistry->use_multiple_dust_temperatures == 0) {
+          kappa_sum = kappa_tot[i];
+        } else {
+          for (int grsp_i = 0; grsp_i < n_grain_species; grsp_i++) {
+            kappa_sum += grain_kappa.data[grsp_i][i];
+          }
+        }
+
+        alpha_continuum[i] +=
+            kappa_sum * d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
+      }
+    }
+  }
+
   // Compute log densities
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -829,51 +869,11 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  // zero-out the continuum absorption coefficients
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    alpha_continuum[i] = 0.0;
-  }
-
-  dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
-                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
-                     idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
-                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
-                     kappa_tot.data(), grain_kappa, cool1dmulti_buf.gasgr_tdust,
-                     myisrf.data(), internal_dust_prop_buf);
-
   // Calculate dust cooling rate
   if (anydust != MASK_FALSE) {
     dust_gas_edot::update_edot_dust_cooling_rate(
         edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
         my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
-  }
-
-  // Add contributions from dust opacity to alpha_continuum, the continuum
-  // linear absorption coefficient
-  //
-  //  The original Fortran version of this function had the following 2
-  //  comments:
-  //    ! if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
-  //    ! We better not include dust opacity.
-  // It's a little unclear how relevant these comments actually are.
-  if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
-    int n_grain_species =
-        my_rates->opaque_storage->grain_species_info->n_species;
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask_metal[i] != MASK_FALSE) {
-        double kappa_sum = 0.0;
-        if (my_chemistry->use_multiple_dust_temperatures == 0) {
-          kappa_sum = kappa_tot[i];
-        } else {
-          for (int grsp_i = 0; grsp_i < n_grain_species; grsp_i++) {
-            kappa_sum += grain_kappa.data[grsp_i][i];
-          }
-        }
-
-        alpha_continuum[i] +=
-            kappa_sum * d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
-      }
-    }
   }
 
   // --- Compute (external) radiative heating terms ---
