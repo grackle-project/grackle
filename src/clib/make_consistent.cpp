@@ -982,6 +982,32 @@ void make_consistent(
     }
   }
 
+  // Phase E invariant: bulk dust_density = silicate + carbonaceous.
+  // dust_update_species() maintains this per-cell, but external mutations
+  // (host injection, inject_pathway writes) can break it before make_consistent.
+  // Re-derive here so downstream consumers (calc_tdust_3d.cpp, cooling tables)
+  // see a consistent bulk field.
+  if (my_chemistry->dust_species_track == 1) {
+    grackle::impl::View<gr_float***> dust_bulk(
+        my_fields->dust_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<const gr_float***> dust_sil(
+        const_cast<const gr_float*>(my_fields->dust_density_silicate),
+        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+        my_fields->grid_dimension[2]);
+    grackle::impl::View<const gr_float***> dust_carb(
+        const_cast<const gr_float*>(my_fields->dust_density_carbonaceous),
+        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+        my_fields->grid_dimension[2]);
+    for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+      for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          dust_bulk(i, j, k) = dust_sil(i, j, k) + dust_carb(i, j, k);
+        }
+      }
+    }
+  }
+
   return;
 }
 
