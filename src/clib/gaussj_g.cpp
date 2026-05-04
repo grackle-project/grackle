@@ -76,7 +76,7 @@ int gaussj_g(int n, double* coef_matrix_fortran, double* vector) {
   }
 
   // Compute back substitution
-  for (int row = n - 1; row < n; row--) {
+  for (int row = n - 1; row >= 0; row--) {
     for (int col = row + 1; col < n; col++) {
       vector[row] -= coef_matrix[row * n + col] * vector[col];
     }
