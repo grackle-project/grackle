@@ -19,7 +19,7 @@
 #include "index_helper.h"  // IndexHelper
 #include "utils-cpp.hpp"   // View
 #include "internal_types.hpp"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "dust_props.hpp"
 #include "support/config.hpp"
 

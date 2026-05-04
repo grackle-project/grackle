@@ -347,7 +347,7 @@ static int local_initialize_chemistry_data_(
     co_length_units = my_units->length_units *
       my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
-      POW(my_units->a_value * my_units->a_units, 3);
+      std::pow(my_units->a_value * my_units->a_units, 3.0);
   }
 
   // Compute rate tables.

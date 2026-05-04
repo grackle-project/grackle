@@ -6,21 +6,19 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the calc_tdust_3d_g function
+/// Implements the calc_tdust_3d function
 ///
 //===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // calc_tdust_3d_g function from FORTRAN to C++
 
-#include <cstdio>
 #include <vector>
 
 #include "dust/calc_all_tdust_gasgr_1d_g.hpp"
-#include "calc_tdust_3d.h"
+#include "calc_tdust_3d.hpp"
 #include "dust_props.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
-#include "fortran_func_wrappers.hpp"
 #include "grackle.h"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -29,11 +27,9 @@
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+namespace GRIMPL_NAMESPACE_DECL {
 
-void calc_tdust_3d_g(
+void calc_tdust_3d(
   gr_float* gas_temp_data_, gr_float* dust_temp_data_, int imetal,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, InternalGrUnits internalu
@@ -61,9 +57,9 @@ void calc_tdust_3d_g(
   // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
-    grackle::impl::scale_fields_dust(
+    scale_fields_dust(
         my_chemistry, my_fields, imetal, factor,
-        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
+        get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   OMP_PRAGMA("omp parallel")
@@ -71,30 +67,30 @@ void calc_tdust_3d_g(
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
 
-    grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> HI(my_fields->HI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> HII(my_fields->HII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> H2I(my_fields->H2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> H2II(my_fields->H2II_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> gas_temp(gas_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> dust_temp(dust_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> isrf_habing(my_fields->isrf_habing, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> dust(my_fields->dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> HI(my_fields->HI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> HII(my_fields->HII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> H2I(my_fields->H2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> H2II(my_fields->H2II_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> gas_temp(gas_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> dust_temp(dust_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> isrf_habing(my_fields->isrf_habing, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> dust(my_fields->dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-    grackle::impl::View<gr_float***> SiM_temp(my_fields->SiM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> FeM_temp(my_fields->FeM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> Mg2SiO4_temp(my_fields->Mg2SiO4_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> MgSiO3_temp(my_fields->MgSiO3_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> Fe3O4_temp(my_fields->Fe3O4_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> AC_temp(my_fields->AC_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> SiO2D_temp(my_fields->SiO2_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> MgO_temp(my_fields->MgO_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> FeS_temp(my_fields->FeS_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> Al2O3_temp(my_fields->Al2O3_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> reforg_temp(my_fields->ref_org_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> volorg_temp(my_fields->vol_org_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> H2Oice_temp(my_fields->H2O_ice_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> SiM_temp(my_fields->SiM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> FeM_temp(my_fields->FeM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> Mg2SiO4_temp(my_fields->Mg2SiO4_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> MgSiO3_temp(my_fields->MgSiO3_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> Fe3O4_temp(my_fields->Fe3O4_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> AC_temp(my_fields->AC_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> SiO2D_temp(my_fields->SiO2_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> MgO_temp(my_fields->MgO_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> FeS_temp(my_fields->FeS_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> Al2O3_temp(my_fields->Al2O3_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> reforg_temp(my_fields->ref_org_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> volorg_temp(my_fields->vol_org_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<gr_float***> H2Oice_temp(my_fields->H2O_ice_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     // buffers that store values computed within an index-range
     std::vector<double> metallicity(my_fields->grid_dimension[0]);
@@ -107,16 +103,16 @@ void calc_tdust_3d_g(
     std::vector<double> myisrf(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
-      grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+    LogTLinInterpScratchBuf logTlininterp_buf =
+      new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
 
-    grackle::impl::GrainSpeciesCollection grain_temperatures =
-      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+    GrainSpeciesCollection grain_temperatures =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
-    grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
-      grackle::impl::new_InternalDustPropBuf(
+    InternalDustPropBuf internal_dust_prop_buf =
+      new_InternalDustPropBuf(
         my_fields->grid_dimension[0],
-        grackle::impl::GrainMetalInjectPathways_get_n_log10Tdust_vals(
+        GrainMetalInjectPathways_get_n_log10Tdust_vals(
           my_rates->opaque_storage->inject_pathway_props
         )
       );
@@ -126,15 +122,15 @@ void calc_tdust_3d_g(
 
     // opacity coefficients for each dust grain (the product of opacity
     // coefficient & gas mass density is the linear absortpion coefficient)
-    grackle::impl::GrainSpeciesCollection grain_kappa =
-      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+    GrainSpeciesCollection grain_kappa =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
     // closely related to grain_kappa
     std::vector<double> kappa_tot(my_fields->grid_dimension[0]);
 
     // holds the gas/grain-species heat transfer rates
-    grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate =
-      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+    GrainSpeciesCollection gas_grainsp_heatrate =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
 
     // The following for-loop is a flattened loop over every k,j combination.
@@ -167,7 +163,7 @@ void calc_tdust_3d_g(
 
       if ( (my_chemistry->use_dust_density_field > 0)  &&  (my_chemistry->dust_species > 0) )  {
 
-        grackle::impl::calc_grain_size_increment_1d (
+        calc_grain_size_increment_1d (
           dom, idx_range, itmask_metal.data(), my_chemistry,
           my_rates->opaque_storage->grain_species_info,
           my_rates->opaque_storage->inject_pathway_props,
@@ -257,7 +253,7 @@ void calc_tdust_3d_g(
       }
 
       // Compute dust temperature(s) in the index-range
-      grackle::impl::calc_all_tdust_gasgr_1d_g(
+      calc_all_tdust_gasgr_1d_g(
         trad, tgas.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), nh.data(), gasgr_tdust.data(), itmask_metal.data(),
         internalu.coolunit, gasgr.data(), myisrf.data(), kappa_tot.data(),
@@ -297,24 +293,22 @@ void calc_tdust_3d_g(
 
     }
 
-    grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
-    grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
-    grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
-    grackle::impl::drop_GrainSpeciesCollection(&grain_kappa);
-    grackle::impl::drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
+    drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    drop_GrainSpeciesCollection(&grain_temperatures);
+    drop_InternalDustPropBuf(&internal_dust_prop_buf);
+    drop_GrainSpeciesCollection(&grain_kappa);
+    drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
   }  // OMP_PRAGMA("omp parallel")
 
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)std::pow(internalu.a_value,3);
-    grackle::impl::scale_fields_dust(
+    scale_fields_dust(
         my_chemistry, my_fields, imetal, factor,
-        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
+        get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   return;
 }
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace GRIMPL_NAMESPACE_DECL

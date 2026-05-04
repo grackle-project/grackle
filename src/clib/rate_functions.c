@@ -601,7 +601,7 @@ double k23_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k23;
     k23 = ( (8.125e-8/sqrt(T)) * exp(-52000.0/T) * (1.0 - exp(-6000.0/T)) ) / units;
-    k23 = max(tiny, k23);
+    k23 = fmax(tiny, k23);
     return k23;
 }
 
