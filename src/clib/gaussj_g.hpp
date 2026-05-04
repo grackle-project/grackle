@@ -34,7 +34,7 @@ const double eps_zero = 1e-20;
 /// @retval 0 indicates success
 /// @retval 1 indicates that the matrix is singular
 ///
-int gaussj_g(int n, double* coef_matrix, double* vector);
+int gaussj_g(int n, const double* coef_matrix, double* vector);
 
 }  // namespace grackle::impl
 

@@ -17,7 +17,7 @@
 
 namespace grackle::impl {
 
-int gaussj_g(int n, double* coef_matrix_fortran, double* vector) {
+int gaussj_g(int n, const double* coef_matrix_fortran, double* vector) {
   // TODO: to be removed
   // Copy the matrix to a C-style layout (column-major order)
   std::vector<double> coef_matrix(n * n);
