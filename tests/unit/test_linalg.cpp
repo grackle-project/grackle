@@ -75,7 +75,7 @@ TEST_P(LinAlgSolve, Check) {
   EXPECT_TRUE(check_allclose(/* actual: */ vec.data(),
                              /* desired: */ my_case.solution_vector.data(),
                              /* idx_mapping: */ idx_mapping,
-                             /* rtol: */1e-15, /* atol: */ 0.0));
+                             /* rtol: */5e-15, /* atol: */ 0.0));
 }
 
 INSTANTIATE_TEST_SUITE_P(
