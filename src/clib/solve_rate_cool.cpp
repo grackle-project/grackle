@@ -929,38 +929,16 @@ int solve_rate_cool(
         // separate pass. The placement below is a short-term stopgap and
         // will be restructured once that integration lands.
         if (my_chemistry->dust_model == 1){
-          // Calculate dust growth rates: bulk path (legacy) or species path
-          // (silicate + carbonaceous, Phase B). dust_update() still consumes
-          // the bulk growth_dM until Phase D rewires it.
           if (my_chemistry->dust_species_track == 1) {
+            // Calculate and apply the silicate + carbonaceous rates.
             grackle::impl::dust_growth_species(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(),
               dtit.data(), tgas.data(),
               growth_dM_silicate.data(), growth_dM_carbon.data());
-          } else {
-            grackle::impl::dust_growth(
-              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
-              dtit.data(), tgas.data(), growth_dM.data());
-          }
-
-          // Calculate dust destruction rates: bulk path (legacy) or species
-          // path (silicate + carbonaceous, Phase C). dust_update() still
-          // consumes the bulk destruction_dM until Phase D rewires it.
-          if (my_chemistry->dust_species_track == 1) {
             grackle::impl::dust_destruction_species(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(),
               dtit.data(), tgas.data(),
               destruction_dM_silicate.data(), destruction_dM_carbon.data());
-          } else {
-            grackle::impl::dust_destruction(
-              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
-              dtit.data(), tgas.data(), destruction_dM.data());
-          }
-
-          // Apply the calculated rates to update density fields.  Species
-          // path runs the per-channel update (no SN injection on this branch);
-          // legacy bulk path is unchanged.
-          if (my_chemistry->dust_species_track == 1) {
             grackle::impl::dust_update_species(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(),
               dtit.data(),
@@ -968,6 +946,12 @@ int solve_rate_cool(
               destruction_dM_silicate.data(), destruction_dM_carbon.data(),
               false);
           } else {
+            grackle::impl::dust_growth(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(), tgas.data(), growth_dM.data());
+            grackle::impl::dust_destruction(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(), tgas.data(), destruction_dM.data());
             grackle::impl::dust_update(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
               growth_dM.data(), destruction_dM.data(), false);

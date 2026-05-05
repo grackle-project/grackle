@@ -353,6 +353,7 @@ ENTRY(sne_shockspeed, DOUBLE, 1.0e2)
 ENTRY(dust_grainsize, DOUBLE, 1.0e-1)
 ENTRY(dust_growth_densref, DOUBLE, 2.3e-22)
 ENTRY(dust_growth_tauref, DOUBLE, 0.004)
+ENTRY(dust_growth_sticking_coeff, DOUBLE, 3.0e-1)
 
 /* Dust creation by stellar feedback parameters */
 ENTRY(dust_condensation_eff, DOUBLE, 1.5e-1)
@@ -368,14 +369,17 @@ ENTRY(sne_metal_yield, DOUBLE, 3.0)
 ENTRY(dust_species_track, INT, 0)
 
 /* Species-specific growth (accretion) reference timescales [Gyr].
-   Used in tau = tau_ref * (a/0.1um) * (n_ref/n_H) * sqrt(T_ref/T) * (Z_sun_X/rho_X).
-   REF: Hirashita 2011 ApJ 743, 159 Table 1; Asano+2013 EP&S 65, 213 */
-ENTRY(dust_growth_tauref_silicate, DOUBLE, 0.4)
-ENTRY(dust_growth_tauref_carbon,   DOUBLE, 2.0)
+   Normalized at n_H = 1e3 cm^-3, T = 50 K, S = 0.3, a = 0.1 micron, and
+   solar key-species abundance for the carbon / limiting silicate reactant
+   pools. dust_growth_species rescales these values by
+   (dust_grainsize / 0.1) * (0.3 / dust_growth_sticking_coeff).
+   REF: Hirashita 2011 MNRAS 416, 1340 section 2.6; Asano+2013 EP&S 65, 213 */
+ENTRY(dust_growth_tauref_silicate, DOUBLE, 6.3e-2)
+ENTRY(dust_growth_tauref_carbon,   DOUBLE, 5.59e-2)
 
 /* Species-specific thermal sputtering reference timescales [yr].
    Same scaling as Draine & Salpeter 1979 ApJ 231, 77; Tielens+1994 ApJ 431, 321:
-   tau_sp = tau_ref * (a/0.1) * (1e-27/(rho*n)) * ((2e6/T)^2.5 + 1).
+   tau_sp = tau_ref * (a/0.1) * (1e-27/rho_gas) * ((2e6/T)^2.5 + 1).
    REF (silicate): Tsai & Mathews 1995 ApJ 448, 84
    REF (carbon, ~2x silicate): Nozawa+2006 ApJ 648, 435 */
 ENTRY(dust_sputter_tauref_silicate, DOUBLE, 1.7e8)

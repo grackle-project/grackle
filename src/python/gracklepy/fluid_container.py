@@ -269,16 +269,18 @@ def _required_density_fields(my_chemistry):
     if my_chemistry.dust_species_track == 1:
         # Two-species dust (silicate + carbonaceous) with 5-element gas tracking.
         # REF: Choban+2022 MNRAS 514, 4506; Hirashita 2015 MNRAS 447, 2937
-        # Bulk metal_density / dust_density are also required because
-        # destruction + update still operate on bulk until Phase D rewires.
+        # Bulk metal_density and dust_density are required invariants for this
+        # path, even when cooling itself is disabled.
+        if "metal_density" not in my_fields:
+            my_fields.append("metal_density")
+        if "dust_density" not in my_fields:
+            my_fields.append("dust_density")
         my_fields.extend([
-            "metal_density",
             "metal_density_carbon",
             "metal_density_oxygen",
             "metal_density_magnesium",
             "metal_density_silicon",
             "metal_density_iron",
-            "dust_density",
             "dust_density_silicate",
             "dust_density_carbonaceous",
         ])

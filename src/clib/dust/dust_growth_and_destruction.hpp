@@ -24,8 +24,11 @@ void dust_growth(chemistry_data* my_chemistry, grackle_field_data* my_fields,
 //   - carbonaceous: rate-limited by gas-phase carbon
 //   - silicate: rate-limited by min over {Mg, Si, Fe, O} of (rho_X / f_X),
 //     following the Choban+2022 MNRAS 514, 4506 §2.2 key-reactant approach
-// Per-species tau_accr structural form follows Hirashita 2011 ApJ 743, 159
-// Eq. (16)-(17). No bulk dM, no partitioning — Phase D wires the species
+// Per-species tau_accr uses the Hirashita 2011 section 2.6 normalization:
+// n_H = 1e3 cm^-3, T = 50 K, S = 0.3, a = 0.1 micron, and solar key-species
+// abundance, with S rescaled by dust_growth_sticking_coeff and a rescaled by
+// dust_grainsize / 0.1. This is independent of the bulk SIMBA
+// dust_growth_densref. No bulk dM, no partitioning — Phase D wires the species
 // outputs into dust_update().
 void dust_growth_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
@@ -46,9 +49,9 @@ void dust_destruction(
 
 // Species-specific destruction (SN shocks + thermal sputtering) onto the two
 // dust populations. Active when dust_species_track == 1.
-//   - shock yield: graphite is baseline (factor 1.0); silicate ~1.5x more
-//     easily destroyed [REF: Slavin, Dwek, Jones 2015 ApJ 803, 7;
-//     Jones+1996 ApJ 469, 740]
+//   - shock yield: graphite is baseline (factor 1.0); silicate follows the
+//     Slavin+2015 standard SNR gas-cleared mass ratio 990/600 = 1.65
+//     [REF: Slavin, Dwek, Jones 2015 ApJ 803, 7; Jones+1996 ApJ 469, 740]
 //   - thermal sputtering: species-specific tau_ref
 //     [REF (silicate): Tsai & Mathews 1995 ApJ 448, 84;
 //      REF (carbon, ~2x silicate): Nozawa+2006 ApJ 648, 435]

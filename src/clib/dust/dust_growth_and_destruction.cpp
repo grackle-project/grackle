@@ -13,6 +13,17 @@ const double tiny_value = 1.0e-20;
 const double huge_value = 1.0e+20;
 
 const double t_ref = 20;
+const double species_t_ref = 50;
+const double species_nH_ref = 1.0e3;
+
+// Solar metal mass fractions for the tracked dust-forming elements, relative
+// to total solar metals. These match gracklepy.utilities.convenience, which
+// seeds the dust_species_track gas reservoirs from metal_density.
+const double solar_frac_C  = 0.15925782394660776;
+const double solar_frac_O  = 0.4242932765702842;
+const double solar_frac_Mg = 0.045644817372018066;
+const double solar_frac_Si = 0.052744600629574714;
+const double solar_frac_Fe = 0.08523143041944482;
 
 // Gate thresholds for dust evolution: skip cells where both dust and metals
 // are negligible fractions of the baryon density.  The metal threshold matches
@@ -98,13 +109,21 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
 // ==========================================
 // Two parallel accretion rates onto pre-existing dust seeds, gated by
 // dust_species_track == 1. Carbonaceous growth is rate-limited by gas-phase
-// carbon. Silicate growth is rate-limited by the least-available key
-// reactant in {Mg, Si, Fe, O} weighted by stoichiometric mass fraction
-// f_X (Choban+2022 MNRAS 514, 4506 §2.2). The structural form of tau_accr
-// follows Hirashita 2011 ApJ 743, 159 Eq. (16)-(17):
-//   tau_accr = tau_ref · (rho_ref / rho) · (T_ref/T)^0.5 · (Z_sun / Z_X)
-// reusing the same dust_growth_densref / SolarMetalFractionByMass scaling
-// convention as the bulk dust_growth() above.
+// carbon. Silicate growth is rate-limited by the least-available reactant in
+// {Mg, Si, Fe, O} weighted by stoichiometric mass fraction f_X.
+//
+// The species tau_ref values follow Hirashita 2011 MNRAS 416, 1340 section
+// 2.6: they are normalized at n_H = 1e3 cm^-3, T = 50 K, S = 0.3,
+// a = 0.1 micron, and solar abundance of the relevant key species. This branch
+// rescales the paper's S_0.3 factor through dust_growth_sticking_coeff and
+// a_0.1 through dust_grainsize / 0.1.
+// It therefore computes the density factor from local hydrogen number density,
+// not from the bulk SIMBA
+// dust_growth_densref parameter. Since this path tracks five silicate
+// elements, we apply the same key-species logic to the limiting stoichiometric
+// pool and normalize by that pool's solar value. This preserves tau_ref for a
+// solar mixture while slowing growth when any required silicate reactant is
+// depleted.
 void grackle::impl::dust_growth_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range,
@@ -120,6 +139,45 @@ void grackle::impl::dust_growth_species(
   grackle::impl::View<gr_float***> dust_carb(
       my_fields->dust_density_carbonaceous, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal(
+      my_fields->metal_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  bool use_H_fields = (my_chemistry->primordial_chemistry > 0);
+  bool use_H2_fields = (my_chemistry->primordial_chemistry > 1);
+  bool use_HD_fields = (my_chemistry->primordial_chemistry > 2);
+  bool use_HeH_fields = (my_chemistry->primordial_chemistry > 3);
+  grackle::impl::View<gr_float***> HI(
+      use_H_fields ? my_fields->HI_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> HII(
+      use_H_fields ? my_fields->HII_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> HM(
+      use_H2_fields ? my_fields->HM_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> H2I(
+      use_H2_fields ? my_fields->H2I_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> H2II(
+      use_H2_fields ? my_fields->H2II_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> HDI(
+      use_HD_fields ? my_fields->HDI_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> HDII(
+      use_HeH_fields ? my_fields->HDII_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> HeHII(
+      use_HeH_fields ? my_fields->HeHII_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> mC(
       my_fields->metal_density_carbon, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -137,17 +195,44 @@ void grackle::impl::dust_growth_species(
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   double dens_proper = internalu.urho * std::pow(internalu.a_value, 3);
-  // tau_ref values are stored in Gyr (Hirashita 2011 Table 1 convention)
+  // tau_ref values are stored in Gyr (Hirashita 2011 section 2.6).
   double tau_ref_sil = my_chemistry->dust_growth_tauref_silicate * 1e9 *
                        sec_per_year / internalu.tbase1;
   double tau_ref_carb = my_chemistry->dust_growth_tauref_carbon * 1e9 *
                         sec_per_year / internalu.tbase1;
+  double sticking_factor =
+      (my_chemistry->dust_growth_sticking_coeff > 0.0)
+          ? 0.3 / my_chemistry->dust_growth_sticking_coeff
+          : huge_value;
+  double grain_size_factor =
+      (my_chemistry->dust_grainsize > 0.0)
+          ? my_chemistry->dust_grainsize / 0.1
+          : huge_value;
 
   double f_Mg = my_chemistry->dust_silicate_f_Mg;
   double f_Fe = my_chemistry->dust_silicate_f_Fe;
   double f_Si = my_chemistry->dust_silicate_f_Si;
   double f_O  = my_chemistry->dust_silicate_f_O;
 
+  double solar_nonmetal =
+      std::max(1.0 - my_chemistry->SolarMetalFractionByMass, tiny_value);
+  double solar_H = std::max(my_chemistry->HydrogenFractionByMass *
+                            solar_nonmetal, tiny_value);
+  double solar_C  = my_chemistry->SolarMetalFractionByMass *
+                    solar_frac_C / solar_H;
+  double solar_O  = my_chemistry->SolarMetalFractionByMass *
+                    solar_frac_O / solar_H;
+  double solar_Mg = my_chemistry->SolarMetalFractionByMass *
+                    solar_frac_Mg / solar_H;
+  double solar_Si = my_chemistry->SolarMetalFractionByMass *
+                    solar_frac_Si / solar_H;
+  double solar_Fe = my_chemistry->SolarMetalFractionByMass *
+                    solar_frac_Fe / solar_H;
+
+  double solar_pool_Mg = (f_Mg > 0.0) ? solar_Mg / f_Mg : huge_value;
+  double solar_pool_Fe = (f_Fe > 0.0) ? solar_Fe / f_Fe : huge_value;
+  double solar_pool_Si = (f_Si > 0.0) ? solar_Si / f_Si : huge_value;
+  double solar_pool_O  = (f_O  > 0.0) ? solar_O  / f_O  : huge_value;
   // --- MAIN LOOP ---
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     growth_dM_silicate[i] = 0.0;
@@ -157,6 +242,7 @@ void grackle::impl::dust_growth_species(
       double rho_gas = d(i, idx_range.j, idx_range.k);
       double rho_dust_sil_i  = dust_sil(i, idx_range.j, idx_range.k);
       double rho_dust_carb_i = dust_carb(i, idx_range.j, idx_range.k);
+      double rho_metal_total = metal(i, idx_range.j, idx_range.k);
 
       double rho_C  = mC(i, idx_range.j, idx_range.k);
       double rho_O  = mO(i, idx_range.j, idx_range.k);
@@ -164,18 +250,48 @@ void grackle::impl::dust_growth_species(
       double rho_Si = mSi(i, idx_range.j, idx_range.k);
       double rho_Fe = mFe(i, idx_range.j, idx_range.k);
 
-      double T  = t_gas[i];
+      double T  = std::max(t_gas[i], tiny_value);
       double dt = dt_value[i];
+      double rho_nonmetal = rho_gas - rho_metal_total;
+      if (rho_nonmetal <= 0.0) {
+        continue;
+      }
+      double rho_H_nuclei = my_chemistry->HydrogenFractionByMass *
+                            rho_nonmetal;
+      if (use_H_fields) {
+        rho_H_nuclei = HI(i, idx_range.j, idx_range.k) +
+                       HII(i, idx_range.j, idx_range.k);
+        if (use_H2_fields) {
+          rho_H_nuclei += HM(i, idx_range.j, idx_range.k) +
+                          H2I(i, idx_range.j, idx_range.k) +
+                          H2II(i, idx_range.j, idx_range.k);
+        }
+        if (use_HD_fields) {
+          rho_H_nuclei += HDI(i, idx_range.j, idx_range.k) / 3.0;
+        }
+        if (use_HeH_fields) {
+          rho_H_nuclei += HDII(i, idx_range.j, idx_range.k) / 3.0 +
+                          HeHII(i, idx_range.j, idx_range.k) / 5.0;
+        }
+      }
+      double nH = rho_H_nuclei * dens_proper / mh;
+      if (rho_gas <= 0.0 || rho_H_nuclei <= 0.0 || nH <= 0.0) {
+        continue;
+      }
 
-      double accr_struct = (my_chemistry->dust_growth_densref / dens_proper) *
-                           std::pow(t_ref / T, 0.5);
+      double accr_struct = (species_nH_ref / nH) *
+                           std::pow(species_t_ref / T, 0.5);
 
       // ---------- Carbonaceous: rate-limited by gas-phase C ----------
-      if (rho_C >= metal_gate_threshold * rho_gas && rho_dust_carb_i > 0.0) {
-        double rho_C_eff = std::max(rho_C, tiny_value);
+      if (rho_C >= metal_gate_threshold * rho_gas &&
+          rho_dust_carb_i > 0.0 && solar_C > 0.0 && dt > 0.0) {
+        double rho_C_total = rho_C + rho_dust_carb_i;
+        double z_C_total_eff = std::max(rho_C_total / rho_H_nuclei,
+                                        tiny_value);
         double tau_accr_carb = tau_ref_carb * accr_struct *
-                               (my_chemistry->SolarMetalFractionByMass /
-                                rho_C_eff);
+                               (solar_C / z_C_total_eff) *
+                               grain_size_factor *
+                               sticking_factor;
         tau_accr_carb = std::min(std::max(tau_accr_carb, tiny_value),
                                  huge_value);
         double frac_avail = rho_C / (rho_dust_carb_i + rho_C);
@@ -187,20 +303,40 @@ void grackle::impl::dust_growth_species(
       // ---------- Silicate: Choban+2022 key-reactant ----------
       // For each key element X, the maximum silicate dust mass that could
       // be assembled from X is rho_X / f_X. The bottleneck element sets
-      // the rate.
+      // the rate, and the solar normalization must use that same element.
       double mass_from_Mg = (f_Mg > 0.0) ? rho_Mg / f_Mg : huge_value;
       double mass_from_Fe = (f_Fe > 0.0) ? rho_Fe / f_Fe : huge_value;
       double mass_from_Si = (f_Si > 0.0) ? rho_Si / f_Si : huge_value;
       double mass_from_O  = (f_O  > 0.0) ? rho_O  / f_O  : huge_value;
-      double rho_sil_pool = std::min(std::min(mass_from_Mg, mass_from_Fe),
-                                     std::min(mass_from_Si, mass_from_O));
+
+      double rho_sil_pool = huge_value;
+      double solar_sil_pool = 0.0;
+      if (f_Mg > 0.0 && mass_from_Mg < rho_sil_pool) {
+        rho_sil_pool = mass_from_Mg;
+        solar_sil_pool = solar_pool_Mg;
+      }
+      if (f_Fe > 0.0 && mass_from_Fe < rho_sil_pool) {
+        rho_sil_pool = mass_from_Fe;
+        solar_sil_pool = solar_pool_Fe;
+      }
+      if (f_Si > 0.0 && mass_from_Si < rho_sil_pool) {
+        rho_sil_pool = mass_from_Si;
+        solar_sil_pool = solar_pool_Si;
+      }
+      if (f_O > 0.0 && mass_from_O < rho_sil_pool) {
+        rho_sil_pool = mass_from_O;
+        solar_sil_pool = solar_pool_O;
+      }
 
       if (rho_sil_pool >= metal_gate_threshold * rho_gas &&
-          rho_dust_sil_i > 0.0) {
-        double rho_pool_eff = std::max(rho_sil_pool, tiny_value);
+          rho_dust_sil_i > 0.0 && solar_sil_pool > 0.0 && dt > 0.0) {
+        double rho_sil_total_pool = rho_sil_pool + rho_dust_sil_i;
+        double z_pool_total_eff = std::max(rho_sil_total_pool / rho_H_nuclei,
+                                           tiny_value);
         double tau_accr_sil = tau_ref_sil * accr_struct *
-                              (my_chemistry->SolarMetalFractionByMass /
-                               rho_pool_eff);
+                              (solar_sil_pool / z_pool_total_eff) *
+                              grain_size_factor *
+                              sticking_factor;
         tau_accr_sil = std::min(std::max(tau_accr_sil, tiny_value),
                                 huge_value);
         double frac_avail = rho_sil_pool / (rho_dust_sil_i + rho_sil_pool);
@@ -322,14 +458,15 @@ void grackle::impl::dust_destruction(
 // ==========================================
 // SN-shock destruction + thermal sputtering applied independently to each
 // dust species, gated by dust_species_track == 1. Carbonaceous (graphite)
-// is the shock-vulnerability baseline; silicates are ~1.5x more easily
-// shattered by SN shocks under canonical ISM conditions
+// is the shock-vulnerability baseline; Slavin+2015 Table 2 gives gas-cleared
+// masses of 990 Msun for silicates and 600 Msun for carbonaceous grains in
+// their standard SNR model, so silicates are destroyed about 1.65x faster
 // [REF: Slavin, Dwek, Jones 2015 ApJ 803, 7; Jones+1996 ApJ 469, 740].
 // Thermal sputtering uses species-specific tau_ref values
 // [REF (silicate): Tsai & Mathews 1995 ApJ 448, 84;
 //  REF (carbon, ~2x silicate): Nozawa+2006 ApJ 648, 435]
 // with the same Draine & Salpeter 1979 / Tielens+1994 scaling form
-// (a/0.1) * (1e-27/(rho*n)) * ((2e6/T)^2.5 + 1) used by the bulk path.
+// (a/0.1) * (1e-27/rho_gas) * ((2e6/T)^2.5 + 1) used by the bulk path.
 // Phase D wires the species outputs into dust_update().
 void grackle::impl::dust_destruction_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
@@ -366,10 +503,10 @@ void grackle::impl::dust_destruction_species(
                  (internalu.urho * std::pow(internalu.uxyz, 3));
 
   // Species-specific shock-vulnerability multipliers. Graphite is the
-  // baseline (1.0); silicate is ~1.5x more easily destroyed under
-  // canonical SN-shock conditions. [REF: Slavin+2015 ApJ 803, 7]
+  // baseline (1.0); silicate follows the standard Slavin+2015 SNR
+  // gas-cleared mass ratio, 990/600 = 1.65.
   const double shock_factor_carbon   = 1.0;
-  const double shock_factor_silicate = 1.5;
+  const double shock_factor_silicate = 1.65;
 
   // Species-specific thermal sputtering tau_ref (params stored in years)
   double tau_sput_ref_sil = my_chemistry->dust_sputter_tauref_silicate *
@@ -392,8 +529,11 @@ void grackle::impl::dust_destruction_species(
       if (!sil_active && !carb_active) continue;
 
       double sne_this = use_sne ? sne(i, idx_range.j, idx_range.k) : 0.0;
-      double temp = t_gas[i];
+      if (rho_gas <= 0.0) continue;
+
+      double temp = std::max(t_gas[i], tiny_value);
       double dt = dt_value[i];
+      if (dt <= 0.0) continue;
 
       // Common (species-independent) sputtering structural factor
       double sput_struct = (my_chemistry->dust_grainsize / 0.1) *
@@ -520,6 +660,10 @@ void grackle::impl::dust_update_species(
     double rho_Si = mSi(i, idx_range.j, idx_range.k);
     double rho_Fe = mFe(i, idx_range.j, idx_range.k);
     double dt = dt_value[i];
+    if (dt <= 0.0) continue;
+
+    double rho_tracked_before = rho_C + rho_O + rho_Mg + rho_Si + rho_Fe;
+    double rho_metal_other = rho_metal_total - rho_tracked_before;
 
     // dM > 0 means net growth (gas reactants -> dust);
     // dM < 0 means net destruction (dust -> gas reactants).
@@ -557,31 +701,33 @@ void grackle::impl::dust_update_species(
     rho_Si -= dM_sil * f_Si;
     rho_O  -= dM_sil * f_O;
 
-    // Bulk dust = silicate + carbonaceous (Phase E will enforce as invariant
-    // in make_consistent; computing it here keeps the bulk field in sync).
-    double rho_dust_new = rho_dust_sil_i + rho_dust_carb_i;
-
-    // Total gas-phase metal change: -(dM_carb + dM_sil) (metals lost when
-    // dust grows).  metal_density_other (= total - C - O - Mg - Si - Fe) is
-    // unchanged on the dust loop per Choban+2022 §2.2.
-    double delta_metal_total = -(dM_carb + dM_sil);
-    double rho_metal_new = rho_metal_total + delta_metal_total;
-
-    // Gas density tracks metals as a subset (dust is not part of `density`).
-    rho_gas += delta_metal_total;
-
     // Floors / NaN guard
     rho_dust_carb_i = std::max(0.0, rho_dust_carb_i);
     rho_dust_sil_i  = std::max(0.0, rho_dust_sil_i);
-    rho_dust_new    = std::max(0.0, rho_dust_new);
     rho_C  = std::max(0.0, rho_C);
     rho_O  = std::max(0.0, rho_O);
     rho_Mg = std::max(0.0, rho_Mg);
     rho_Si = std::max(0.0, rho_Si);
     rho_Fe = std::max(0.0, rho_Fe);
-    rho_metal_new = std::max(0.0, rho_metal_new);
 
-    if (std::isnan(rho_dust_new) || std::isnan(rho_metal_new)) {
+    // Bulk dust = silicate + carbonaceous (Phase E will enforce as invariant
+    // in make_consistent; computing it here keeps the bulk field in sync).
+    double rho_dust_new = rho_dust_sil_i + rho_dust_carb_i;
+
+    // metal_density_other (= total - C - O - Mg - Si - Fe) is unchanged on
+    // the dust loop. Rebuilding total metals from the updated tracked fields
+    // preserves consistency even if user-edited silicate fractions do not sum
+    // to exactly one.
+    double rho_tracked_after = rho_C + rho_O + rho_Mg + rho_Si + rho_Fe;
+    double rho_metal_new = rho_metal_other + rho_tracked_after;
+    rho_metal_new = std::max(0.0, rho_metal_new);
+    double delta_metal_total = rho_metal_new - rho_metal_total;
+
+    // Gas density tracks metals as a subset (dust is not part of `density`).
+    rho_gas += delta_metal_total;
+
+    if (std::isnan(rho_dust_new) || std::isnan(rho_metal_new) ||
+        std::isnan(rho_gas)) {
       std::cout << "dust_update_species: NaN at cell " << i
                 << " dM_carb=" << dM_carb << " dM_sil=" << dM_sil << std::endl;
       continue;

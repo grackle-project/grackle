@@ -109,6 +109,27 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
   grackle::impl::View<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_C(
+      my_fields->metal_density_carbon, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_O(
+      my_fields->metal_density_oxygen, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_Mg(
+      my_fields->metal_density_magnesium, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_Si(
+      my_fields->metal_density_silicon, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal_Fe(
+      my_fields->metal_density_iron, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_sil(
+      my_fields->dust_density_silicate, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_carb(
+      my_fields->dust_density_carbonaceous, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> CI(
       my_fields->CI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -268,10 +289,21 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
         }
       }
 
-      if (imetal == 1) {
+      if ((imetal == 1) || (my_chemistry->dust_species_track == 1)) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metal(i, j, k) = metal(i, j, k) * factor;
         }
+      }
+      if (my_chemistry->dust_species_track == 1) {
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          metal_C(i, j, k) = metal_C(i, j, k) * factor;
+          metal_O(i, j, k) = metal_O(i, j, k) * factor;
+          metal_Mg(i, j, k) = metal_Mg(i, j, k) * factor;
+          metal_Si(i, j, k) = metal_Si(i, j, k) * factor;
+          metal_Fe(i, j, k) = metal_Fe(i, j, k) * factor;
+        }
+      }
+      if (imetal == 1) {
         if (my_chemistry->metal_chemistry == 1) {
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
             CI(i, j, k) = CI(i, j, k) * factor;
@@ -313,41 +345,48 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
             }
           }
         }
+      }
 
-        if (my_chemistry->use_dust_density_field == 1) {
+      if ((my_chemistry->use_dust_density_field == 1) ||
+          (my_chemistry->dust_species_track == 1)) {
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          dust(i, j, k) = dust(i, j, k) * factor;
+        }
+        if (my_chemistry->dust_species_track == 1) {
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            dust(i, j, k) = dust(i, j, k) * factor;
+            dust_sil(i, j, k) = dust_sil(i, j, k) * factor;
+            dust_carb(i, j, k) = dust_carb(i, j, k) * factor;
           }
+        }
 
-          if ((my_chemistry->grain_growth == 1) ||
-              (my_chemistry->dust_sublimation == 1)) {
-            if (my_chemistry->dust_species > 0) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
-                AC(i, j, k) = AC(i, j, k) * factor;
-              }
+        if ((my_chemistry->grain_growth == 1) ||
+            (my_chemistry->dust_sublimation == 1)) {
+          if (my_chemistry->dust_species > 0) {
+            for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
+                 i++) {
+              MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
+              AC(i, j, k) = AC(i, j, k) * factor;
             }
-            if (my_chemistry->dust_species > 1) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                SiM(i, j, k) = SiM(i, j, k) * factor;
-                FeM(i, j, k) = FeM(i, j, k) * factor;
-                Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
-                Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
-                SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
-                MgO(i, j, k) = MgO(i, j, k) * factor;
-                FeS(i, j, k) = FeS(i, j, k) * factor;
-                Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
-              }
+          }
+          if (my_chemistry->dust_species > 1) {
+            for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
+                 i++) {
+              SiM(i, j, k) = SiM(i, j, k) * factor;
+              FeM(i, j, k) = FeM(i, j, k) * factor;
+              Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
+              Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
+              SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
+              MgO(i, j, k) = MgO(i, j, k) * factor;
+              FeS(i, j, k) = FeS(i, j, k) * factor;
+              Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
             }
-            if (my_chemistry->dust_species > 2) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                reforg(i, j, k) = reforg(i, j, k) * factor;
-                volorg(i, j, k) = volorg(i, j, k) * factor;
-                H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
-              }
+          }
+          if (my_chemistry->dust_species > 2) {
+            for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
+                 i++) {
+              reforg(i, j, k) = reforg(i, j, k) * factor;
+              volorg(i, j, k) = volorg(i, j, k) * factor;
+              H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
             }
           }
         }

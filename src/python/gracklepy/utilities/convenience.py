@@ -18,10 +18,68 @@ from gracklepy.fluid_container import \
     _element_masses, \
     FluidContainer
 
-from gracklepy.utilities.atomic import solar_abundance
+from gracklepy.utilities.atomic import solar_abundance, atomic_mass
 from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
+
+_DUST_SPECIES_ELEMENT_FIELDS = {
+    "C":  "metal_density_carbon",
+    "O":  "metal_density_oxygen",
+    "Mg": "metal_density_magnesium",
+    "Si": "metal_density_silicon",
+    "Fe": "metal_density_iron",
+}
+
+# Default silicate / carbonaceous mass split for IC seeding.
+# REF: Draine 2003 ARA&A 41, 241; Zubko, Dwek & Arendt 2004 ApJS 152, 211 —
+# canonical MW diffuse-ISM split is ~0.6-0.7 silicate, ~0.3-0.4 carbonaceous.
+_DUST_SPECIES_FRACTIONS = {
+    "silicate":     0.65,
+    "carbonaceous": 0.35,
+}
+
+
+def solar_metal_mass_fractions(elements=("C", "O", "Mg", "Si", "Fe")):
+    """
+    Mass fractions of given elements relative to total solar metal mass.
+
+    Converts number-density ratios n_X/n_H from atomic.solar_abundance into
+    mass fractions of the total metal mass via
+        f_X = (n_X * A_X) / sum_Y (n_Y * A_Y)
+    where the sum runs over all metals (everything except H, He) so the
+    fractions sum to <= 1 (the 5 dust-relevant elements account for ~80%
+    of solar metal mass).
+    """
+    metals = [el for el in solar_abundance if el not in ("H", "He")]
+    total = sum(solar_abundance[el] * atomic_mass[el] for el in metals)
+    return {el: solar_abundance[el] * atomic_mass[el] / total for el in elements}
+
+
+def seed_dust_species_metal_elements(fc):
+    """
+    Fill metal_density_carbon/oxygen/magnesium/silicon/iron from
+    fc['metal_density'] using solar mass fractions. Required when
+    dust_species_track==1: dust_update_species() reads these as the
+    gas-phase reservoir for silicate accretion (Mg/Fe/Si/O via Choban+2022
+    key-reactant scheme) and feeds shock destruction back into them.
+    """
+    fractions = solar_metal_mass_fractions(_DUST_SPECIES_ELEMENT_FIELDS.keys())
+    for el, field in _DUST_SPECIES_ELEMENT_FIELDS.items():
+        fc[field][:] = fractions[el] * fc["metal_density"]
+
+
+def seed_dust_species_dust(fc):
+    """
+    Split fc['dust_density'] into silicate / carbonaceous reservoirs using
+    canonical MW diffuse-ISM mass fractions (Draine 2003).
+    """
+    fc["dust_density_silicate"][:]     = (
+        _DUST_SPECIES_FRACTIONS["silicate"] * fc["dust_density"]
+    )
+    fc["dust_density_carbonaceous"][:] = (
+        _DUST_SPECIES_FRACTIONS["carbonaceous"] * fc["dust_density"]
+    )
 
 def check_convergence(fc1, fc2, fields=None, tol=0.01):
     "Check for fields to be different by less than tol."
@@ -209,6 +267,10 @@ def setup_fluid_container(my_chemistry,
 
     for field in fc.density_fields:
         fc[field][:] = state_vals.get(field, tiny_density)
+
+    if my_chemistry.dust_species_track == 1:
+        seed_dust_species_metal_elements(fc)
+        seed_dust_species_dust(fc)
 
     fc.calculate_mean_molecular_weight()
     fc["internal_energy"] = temperature / \

@@ -77,6 +77,66 @@ inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
       }
     }
   }
+  if (my_fields->metal_density_magnesium != nullptr) {
+    grackle::impl::View<gr_float***> metal_Mg(
+        my_fields->metal_density_magnesium, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+          metal_Mg(i, j, k) = metal_Mg(i, j, k) * factor;
+        }
+      }
+    }
+  }
+  if (my_fields->metal_density_silicon != nullptr) {
+    grackle::impl::View<gr_float***> metal_Si(
+        my_fields->metal_density_silicon, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+          metal_Si(i, j, k) = metal_Si(i, j, k) * factor;
+        }
+      }
+    }
+  }
+  if (my_fields->metal_density_iron != nullptr) {
+    grackle::impl::View<gr_float***> metal_Fe(
+        my_fields->metal_density_iron, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+          metal_Fe(i, j, k) = metal_Fe(i, j, k) * factor;
+        }
+      }
+    }
+  }
+  if (my_fields->dust_density_silicate != nullptr) {
+    grackle::impl::View<gr_float***> dust_sil(
+        my_fields->dust_density_silicate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+          dust_sil(i, j, k) = dust_sil(i, j, k) * factor;
+        }
+      }
+    }
+  }
+  if (my_fields->dust_density_carbonaceous != nullptr) {
+    grackle::impl::View<gr_float***> dust_carb(
+        my_fields->dust_density_carbonaceous, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+          dust_carb(i, j, k) = dust_carb(i, j, k) * factor;
+        }
+      }
+    }
+  }
 }
 
 /// A helper function for scaling the injection pathway metal density fields

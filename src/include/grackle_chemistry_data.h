@@ -331,6 +331,9 @@ typedef struct
   double dust_grainsize;
   double dust_growth_densref;
   double dust_growth_tauref;
+  /* Sticking coefficient S for species-specific dust growth.
+     dust_growth_species rescales tau_ref by 0.3 / S. */
+  double dust_growth_sticking_coeff;
 
   /* parameters for dust creation*/
   double dust_condensation_eff;
@@ -345,7 +348,10 @@ typedef struct
   int dust_species_track;
 
   /* Species-specific growth (accretion) reference timescales [Gyr].
-     REF: Hirashita 2011 ApJ 743, 159 Table 1; Asano+2013 EP&S 65, 213 */
+     Normalized at n_H = 1e3 cm^-3, T = 50 K, S = 0.3, a = 0.1 micron,
+     and solar key-species abundance. Rescaled by dust_grainsize and
+     dust_growth_sticking_coeff.
+     REF: Hirashita 2011 MNRAS 416, 1340 section 2.6; Asano+2013 EP&S 65, 213 */
   double dust_growth_tauref_silicate;
   double dust_growth_tauref_carbon;
 
