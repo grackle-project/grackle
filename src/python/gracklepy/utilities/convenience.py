@@ -139,6 +139,27 @@ def _setup_ion_fields(fc, state_vals, nuclide_densities, state):
     """
     Initialize density fields for the ions that will the dominant
     species for either a neutral or ionized state.
+
+    Note, here we define ion mass densities in a way that is almost
+    certainly not exactly correct and may not even be totally
+    self-consistent with the Grackle core library.
+
+    Here, we define the mass density of element X as:
+    rho_X = n_x * m_H * A_X,
+    where n_X is the number density of element X, m_H is the hydrogen
+    mass, and A_X is the mass number of the most commonly occurring
+    isotope of element X.
+
+    This is reflected in the Grackle core library where, for example,
+    He is exactly 4 * m_H and D is 2 * m_H. However, at the time of
+    writing, the intention of the original authors is not entirely
+    clear. We, the current developers, also considered an alternative
+    interpretation for the adoption of species masses as integer
+    multiples of m_H: they may be atomic masses rounded to the nearest
+    integer, where "atomic mass" means the average mass of all isotopes
+    weighted by their natural abundance. Generally speaking, this gives
+    the same value as the mass number approach, but there are some
+    exceptions (e.g., Cu and Zn, not currently tracked by Grackle).
     """
 
     state_vals["e_density"] = 0

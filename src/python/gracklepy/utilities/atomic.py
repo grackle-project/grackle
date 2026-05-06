@@ -11,6 +11,17 @@
 # software.
 ########################################################################
 
+# Solar abundances by number (as opposed to by mass) taken from the
+# Cloudy photoionization code documentation (see
+# https://gitlab.nublado.org/cloudy/cloudy/-/wikis/home).
+#
+# Note, "H" here technically refers to protium, i.e., the
+# hydrogen isotope with a mass number of 1.
+# When primordial_chemistry >= 3, we also follow deuterium
+# (hydrogen with 1 proton and 1 neutron), which we denote
+# below as "D". Deuterium does not appear in the solar
+# abundance table presented by Cloudy. This is here
+# mainly to allow the FluidContainer to initialize properly.
 solar_abundance = {
     "H" : 1.00e+00, "He": 1.00e-01, "Li": 2.04e-09,
     "Be": 2.63e-11, "B" : 6.17e-10, "C" : 2.45e-04,
@@ -24,11 +35,9 @@ solar_abundance = {
     "Ni": 1.78e-06, "Cu": 1.62e-08, "Zn": 3.98e-08,
     "D" : 0}
 
-# Note, "H" here technically refers to protium, i.e., the
-# hydrogen isotope with a mass number of 1.
-# When primordial_chemistry >= 3, we also follow deuterium
-# (hydrogen with 1 proton and 1 neutron), which we denote
-# below as "D".
+# Atomic masses in amu of the first 30 elements and deuterium.
+# In the case of all but deuterium, these are averages of all
+# isotopes weighted by their natural abundance.
 atomic_mass = {
     "H" : 1.00794,   "He": 4.002602,  "Li": 6.941,
     "Be": 9.012182,  "B" : 10.811,    "C" : 12.0107,
@@ -55,10 +64,12 @@ atomic_number = {
     "Ni": 28, "Cu": 29, "Zn": 30,
     "D" : 1}
 
+# Mass number (i.e., the number of protons plus neutrons)
+# for the most commonly occuring isotope.
 mass_number = {
     "H" : 1,  "He": 4,  "Li": 7,
-    "Be": 9,  "B" : 11,  "C" : 12,
-    "N" : 14,  "O" : 16,  "F" : 19,
+    "Be": 9,  "B" : 11, "C" : 12,
+    "N" : 14, "O" : 16, "F" : 19,
     "Ne": 20, "Na": 23, "Mg": 24,
     "Al": 27, "Si": 28, "P" : 31,
     "S" : 32, "Cl": 35, "Ar": 40,
