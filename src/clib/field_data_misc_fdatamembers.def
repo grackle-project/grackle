@@ -40,8 +40,10 @@ ENTRY(metal_density_iron)
   // use_dust_density_field = 1
 ENTRY(dust_density)
 
-  // dust_species_track = 1 (two-species dust)
+  // dust_species_track = 1 (olivine + pyroxene + carbonaceous dust)
 ENTRY(dust_density_silicate)
+ENTRY(dust_density_olivine)
+ENTRY(dust_density_pyroxene)
 ENTRY(dust_density_carbonaceous)
 
   // use_volumetric_heating_rate = 1

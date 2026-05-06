@@ -267,7 +267,9 @@ def _required_density_fields(my_chemistry):
     if my_chemistry.dust_chemistry == 1:
         my_fields.append("dust_density")
     if my_chemistry.dust_species_track == 1:
-        # Two-species dust (silicate + carbonaceous) with 5-element gas tracking.
+        # Species-resolved dust (olivine + pyroxene + carbonaceous) with
+        # 5-element gas tracking. dust_density_silicate is a compatibility
+        # sum of olivine + pyroxene.
         # REF: Choban+2022 MNRAS 514, 4506; Hirashita 2015 MNRAS 447, 2937
         # Bulk metal_density and dust_density are required invariants for this
         # path, even when cooling itself is disabled.
@@ -282,6 +284,8 @@ def _required_density_fields(my_chemistry):
             "metal_density_silicon",
             "metal_density_iron",
             "dust_density_silicate",
+            "dust_density_olivine",
+            "dust_density_pyroxene",
             "dust_density_carbonaceous",
         ])
     if my_chemistry.metal_chemistry > 0:

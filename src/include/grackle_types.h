@@ -88,9 +88,13 @@ typedef struct
   gr_float *dust_density;
 
   // dust_species_track = 1
-  // Two-species dust: bulk dust_density = silicate + carbonaceous.
-  // REF: Hirashita 2015 MNRAS 447, 2937; McKinnon+2018 MNRAS 478, 2851
+  // Three-species dust: bulk dust_density = olivine + pyroxene +
+  // carbonaceous. dust_density_silicate is kept as the derived
+  // olivine + pyroxene sum for compatibility.
+  // REF: Choban+2022 MNRAS 514, 4506; Hirashita 2015 MNRAS 447, 2937
   gr_float *dust_density_silicate;
+  gr_float *dust_density_olivine;
+  gr_float *dust_density_pyroxene;
   gr_float *dust_density_carbonaceous;
 
   // primordial_chemistry = 1

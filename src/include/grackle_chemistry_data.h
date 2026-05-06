@@ -339,11 +339,13 @@ typedef struct
   double dust_condensation_eff;
   double sne_metal_yield;
 
-  /* Two-species dust tracking (silicate + carbonaceous).
+  /* Species-resolved dust tracking.
      Requires dust_model=1.
      0) off — bulk dust_density (default)
-     1) on  — evolves dust_density_silicate, dust_density_carbonaceous and
-              5-element gas tracking (C, O, Mg, Si, Fe).
+     1) on  — evolves dust_density_olivine, dust_density_pyroxene,
+              dust_density_carbonaceous and 5-element gas tracking
+              (C, O, Mg, Si, Fe). dust_density_silicate is maintained as
+              olivine + pyroxene for compatibility.
      REF: Choban+2022 MNRAS 514, 4506; Hirashita 2015 MNRAS 447, 2937 */
   int dust_species_track;
 
@@ -361,13 +363,22 @@ typedef struct
   double dust_sputter_tauref_silicate;
   double dust_sputter_tauref_carbon;
 
-  /* Silicate stoichiometric mass fractions (50/50 olivine MgFeSiO4 +
-     pyroxene MgSiO3 by mass). Sum = 1.000.
-     REF: Draine 2003 ARA&A 41, 241; Dwek 1998 ApJ 501, 643 */
-  double dust_silicate_f_Mg;
-  double dust_silicate_f_Fe;
-  double dust_silicate_f_Si;
-  double dust_silicate_f_O;
+  /* Initial/fallback mass fraction of silicate dust in olivine. The live
+     olivine/pyroxene ratio evolves once the split fields are active. */
+  double dust_silicate_olivine_fraction;
+
+  /* Olivine stoichiometric mass fractions for MgFeSiO4. Sum = 1.000. */
+  double dust_olivine_f_Mg;
+  double dust_olivine_f_Fe;
+  double dust_olivine_f_Si;
+  double dust_olivine_f_O;
+
+  /* Pyroxene stoichiometric mass fractions for MgSiO3. Sum = 1.000.
+     Fe is zero so Fe depletion does not halt pyroxene growth. */
+  double dust_pyroxene_f_Mg;
+  double dust_pyroxene_f_Fe;
+  double dust_pyroxene_f_Si;
+  double dust_pyroxene_f_O;
 
 } chemistry_data;
 

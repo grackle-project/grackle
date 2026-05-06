@@ -105,12 +105,13 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
 }
 
 // ==========================================
-// DUST GROWTH (SPECIES-SPECIFIC: silicate + carbonaceous)
+// DUST GROWTH (SPECIES-SPECIFIC: olivine + pyroxene + carbonaceous)
 // ==========================================
-// Two parallel accretion rates onto pre-existing dust seeds, gated by
+// Parallel accretion rates onto pre-existing dust seeds, gated by
 // dust_species_track == 1. Carbonaceous growth is rate-limited by gas-phase
-// carbon. Silicate growth is rate-limited by the least-available reactant in
-// {Mg, Si, Fe, O} weighted by stoichiometric mass fraction f_X.
+// carbon. Olivine growth is rate-limited by the least-available reactant in
+// {Mg, Si, Fe, O}; pyroxene growth is limited by {Mg, Si, O} because its Fe
+// stoichiometric coefficient is zero.
 //
 // The species tau_ref values follow Hirashita 2011 MNRAS 416, 1340 section
 // 2.6: they are normalized at n_H = 1e3 cm^-3, T = 50 K, S = 0.3,
@@ -120,21 +121,24 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
 // It therefore computes the density factor from local hydrogen number density,
 // not from the bulk SIMBA
 // dust_growth_densref parameter. Since this path tracks five silicate
-// elements, we apply the same key-species logic to the limiting stoichiometric
-// pool and normalize by that pool's solar value. This preserves tau_ref for a
-// solar mixture while slowing growth when any required silicate reactant is
-// depleted.
+// elements, we apply the same key-species logic separately to olivine and
+// pyroxene. This preserves tau_ref for a solar mixture while slowing each
+// channel only when a reactant required by that channel is depleted.
 void grackle::impl::dust_growth_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range,
     const gr_mask_type* itmask, const double* dt_value, const double* t_gas,
-    double* growth_dM_silicate, double* growth_dM_carbon) {
+    double* growth_dM_olivine, double* growth_dM_pyroxene,
+    double* growth_dM_carbon) {
 
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust_sil(
-      my_fields->dust_density_silicate, my_fields->grid_dimension[0],
+  grackle::impl::View<gr_float***> dust_oliv(
+      my_fields->dust_density_olivine, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_pyro(
+      my_fields->dust_density_pyroxene, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust_carb(
       my_fields->dust_density_carbonaceous, my_fields->grid_dimension[0],
@@ -209,10 +213,14 @@ void grackle::impl::dust_growth_species(
           ? my_chemistry->dust_grainsize / 0.1
           : huge_value;
 
-  double f_Mg = my_chemistry->dust_silicate_f_Mg;
-  double f_Fe = my_chemistry->dust_silicate_f_Fe;
-  double f_Si = my_chemistry->dust_silicate_f_Si;
-  double f_O  = my_chemistry->dust_silicate_f_O;
+  double f_ol_Mg = my_chemistry->dust_olivine_f_Mg;
+  double f_ol_Fe = my_chemistry->dust_olivine_f_Fe;
+  double f_ol_Si = my_chemistry->dust_olivine_f_Si;
+  double f_ol_O  = my_chemistry->dust_olivine_f_O;
+  double f_py_Mg = my_chemistry->dust_pyroxene_f_Mg;
+  double f_py_Fe = my_chemistry->dust_pyroxene_f_Fe;
+  double f_py_Si = my_chemistry->dust_pyroxene_f_Si;
+  double f_py_O  = my_chemistry->dust_pyroxene_f_O;
 
   double solar_nonmetal =
       std::max(1.0 - my_chemistry->SolarMetalFractionByMass, tiny_value);
@@ -229,18 +237,16 @@ void grackle::impl::dust_growth_species(
   double solar_Fe = my_chemistry->SolarMetalFractionByMass *
                     solar_frac_Fe / solar_H;
 
-  double solar_pool_Mg = (f_Mg > 0.0) ? solar_Mg / f_Mg : huge_value;
-  double solar_pool_Fe = (f_Fe > 0.0) ? solar_Fe / f_Fe : huge_value;
-  double solar_pool_Si = (f_Si > 0.0) ? solar_Si / f_Si : huge_value;
-  double solar_pool_O  = (f_O  > 0.0) ? solar_O  / f_O  : huge_value;
   // --- MAIN LOOP ---
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    growth_dM_silicate[i] = 0.0;
+    growth_dM_olivine[i] = 0.0;
+    growth_dM_pyroxene[i] = 0.0;
     growth_dM_carbon[i] = 0.0;
 
     if (itmask[i] != MASK_FALSE) {
       double rho_gas = d(i, idx_range.j, idx_range.k);
-      double rho_dust_sil_i  = dust_sil(i, idx_range.j, idx_range.k);
+      double rho_dust_oliv_i = dust_oliv(i, idx_range.j, idx_range.k);
+      double rho_dust_pyro_i = dust_pyro(i, idx_range.j, idx_range.k);
       double rho_dust_carb_i = dust_carb(i, idx_range.j, idx_range.k);
       double rho_metal_total = metal(i, idx_range.j, idx_range.k);
 
@@ -300,50 +306,52 @@ void grackle::impl::dust_growth_species(
         growth_dM_carbon[i] = std::min(rate, rho_C / dt);
       }
 
-      // ---------- Silicate: Choban+2022 key-reactant ----------
-      // For each key element X, the maximum silicate dust mass that could
-      // be assembled from X is rho_X / f_X. The bottleneck element sets
-      // the rate, and the solar normalization must use that same element.
-      double mass_from_Mg = (f_Mg > 0.0) ? rho_Mg / f_Mg : huge_value;
-      double mass_from_Fe = (f_Fe > 0.0) ? rho_Fe / f_Fe : huge_value;
-      double mass_from_Si = (f_Si > 0.0) ? rho_Si / f_Si : huge_value;
-      double mass_from_O  = (f_O  > 0.0) ? rho_O  / f_O  : huge_value;
+      // ---------- Silicates: Choban+2022 key-reactant by species ----------
+      // For each required element X, the maximum dust mass that could be
+      // assembled from X is rho_X / f_X. The bottleneck element sets the
+      // rate, and the solar normalization must use that same element.
+      auto silicate_growth_rate = [&](double rho_dust, double f_Mg,
+                                      double f_Fe, double f_Si,
+                                      double f_O) -> double {
+        if (rho_dust <= 0.0 || dt <= 0.0) return 0.0;
 
-      double rho_sil_pool = huge_value;
-      double solar_sil_pool = 0.0;
-      if (f_Mg > 0.0 && mass_from_Mg < rho_sil_pool) {
-        rho_sil_pool = mass_from_Mg;
-        solar_sil_pool = solar_pool_Mg;
-      }
-      if (f_Fe > 0.0 && mass_from_Fe < rho_sil_pool) {
-        rho_sil_pool = mass_from_Fe;
-        solar_sil_pool = solar_pool_Fe;
-      }
-      if (f_Si > 0.0 && mass_from_Si < rho_sil_pool) {
-        rho_sil_pool = mass_from_Si;
-        solar_sil_pool = solar_pool_Si;
-      }
-      if (f_O > 0.0 && mass_from_O < rho_sil_pool) {
-        rho_sil_pool = mass_from_O;
-        solar_sil_pool = solar_pool_O;
-      }
+        double rho_pool = huge_value;
+        double solar_pool = 0.0;
+        auto consider_pool = [&](double rho_X, double f_X, double solar_X) {
+          if (f_X <= 0.0) return;
+          double mass_from_X = rho_X / f_X;
+          if (mass_from_X < rho_pool) {
+            rho_pool = mass_from_X;
+            solar_pool = solar_X / f_X;
+          }
+        };
+        consider_pool(rho_Mg, f_Mg, solar_Mg);
+        consider_pool(rho_Fe, f_Fe, solar_Fe);
+        consider_pool(rho_Si, f_Si, solar_Si);
+        consider_pool(rho_O,  f_O,  solar_O);
 
-      if (rho_sil_pool >= metal_gate_threshold * rho_gas &&
-          rho_dust_sil_i > 0.0 && solar_sil_pool > 0.0 && dt > 0.0) {
-        double rho_sil_total_pool = rho_sil_pool + rho_dust_sil_i;
-        double z_pool_total_eff = std::max(rho_sil_total_pool / rho_H_nuclei,
+        if (rho_pool < metal_gate_threshold * rho_gas || solar_pool <= 0.0) {
+          return 0.0;
+        }
+
+        double rho_total_pool = rho_pool + rho_dust;
+        double z_pool_total_eff = std::max(rho_total_pool / rho_H_nuclei,
                                            tiny_value);
-        double tau_accr_sil = tau_ref_sil * accr_struct *
-                              (solar_sil_pool / z_pool_total_eff) *
-                              grain_size_factor *
-                              sticking_factor;
-        tau_accr_sil = std::min(std::max(tau_accr_sil, tiny_value),
-                                huge_value);
-        double frac_avail = rho_sil_pool / (rho_dust_sil_i + rho_sil_pool);
+        double tau_accr = tau_ref_sil * accr_struct *
+                          (solar_pool / z_pool_total_eff) *
+                          grain_size_factor *
+                          sticking_factor;
+        tau_accr = std::min(std::max(tau_accr, tiny_value), huge_value);
+        double frac_avail = rho_pool / (rho_dust + rho_pool);
         frac_avail = std::clamp(frac_avail, 0.0, 1.0);
-        double rate = frac_avail * (rho_dust_sil_i / tau_accr_sil);
-        growth_dM_silicate[i] = std::min(rate, rho_sil_pool / dt);
-      }
+        double rate = frac_avail * (rho_dust / tau_accr);
+        return std::min(rate, rho_pool / dt);
+      };
+
+      growth_dM_olivine[i] = silicate_growth_rate(
+          rho_dust_oliv_i, f_ol_Mg, f_ol_Fe, f_ol_Si, f_ol_O);
+      growth_dM_pyroxene[i] = silicate_growth_rate(
+          rho_dust_pyro_i, f_py_Mg, f_py_Fe, f_py_Si, f_py_O);
     }
   }
 }
@@ -454,11 +462,12 @@ void grackle::impl::dust_destruction(
 }
 
 // ==========================================
-// DUST DESTRUCTION (SPECIES-SPECIFIC: silicate + carbonaceous)
+// DUST DESTRUCTION (SPECIES-SPECIFIC: olivine + pyroxene + carbonaceous)
 // ==========================================
 // SN-shock destruction + thermal sputtering applied independently to each
-// dust species, gated by dust_species_track == 1. Carbonaceous (graphite)
-// is the shock-vulnerability baseline; Slavin+2015 Table 2 gives gas-cleared
+// dust species, gated by dust_species_track == 1. Carbonaceous (graphite) is
+// the shock-vulnerability baseline; olivine and pyroxene use the same
+// silicate destruction coefficients. Slavin+2015 Table 2 gives gas-cleared
 // masses of 990 Msun for silicates and 600 Msun for carbonaceous grains in
 // their standard SNR model, so silicates are destroyed about 1.65x faster
 // [REF: Slavin, Dwek, Jones 2015 ApJ 803, 7; Jones+1996 ApJ 469, 740].
@@ -472,13 +481,17 @@ void grackle::impl::dust_destruction_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range,
     const gr_mask_type* itmask, const double* dt_value, const double* t_gas,
-    double* destruction_dM_silicate, double* destruction_dM_carbon) {
+    double* destruction_dM_olivine, double* destruction_dM_pyroxene,
+    double* destruction_dM_carbon) {
 
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust_sil(
-      my_fields->dust_density_silicate, my_fields->grid_dimension[0],
+  grackle::impl::View<gr_float***> dust_oliv(
+      my_fields->dust_density_olivine, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_pyro(
+      my_fields->dust_density_pyroxene, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust_carb(
       my_fields->dust_density_carbonaceous, my_fields->grid_dimension[0],
@@ -516,17 +529,20 @@ void grackle::impl::dust_destruction_species(
 
   // --- MAIN LOOP ---
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    destruction_dM_silicate[i] = 0.0;
+    destruction_dM_olivine[i] = 0.0;
+    destruction_dM_pyroxene[i] = 0.0;
     destruction_dM_carbon[i] = 0.0;
 
     if (itmask[i] != MASK_FALSE) {
       double rho_gas = d(i, idx_range.j, idx_range.k);
-      double rho_dust_sil_i  = dust_sil(i, idx_range.j, idx_range.k);
+      double rho_dust_oliv_i = dust_oliv(i, idx_range.j, idx_range.k);
+      double rho_dust_pyro_i = dust_pyro(i, idx_range.j, idx_range.k);
       double rho_dust_carb_i = dust_carb(i, idx_range.j, idx_range.k);
 
-      bool sil_active  = (rho_dust_sil_i  >= dust_gate_threshold * rho_gas);
+      bool oliv_active = (rho_dust_oliv_i >= dust_gate_threshold * rho_gas);
+      bool pyro_active = (rho_dust_pyro_i >= dust_gate_threshold * rho_gas);
       bool carb_active = (rho_dust_carb_i >= dust_gate_threshold * rho_gas);
-      if (!sil_active && !carb_active) continue;
+      if (!oliv_active && !pyro_active && !carb_active) continue;
 
       double sne_this = use_sne ? sne(i, idx_range.j, idx_range.k) : 0.0;
       if (rho_gas <= 0.0) continue;
@@ -582,24 +598,27 @@ void grackle::impl::dust_destruction_species(
         destruction_dM_carbon[i] = compute_dM(
             rho_dust_carb_i, shock_factor_carbon, tau_sput_ref_carb);
       }
-      if (sil_active) {
-        destruction_dM_silicate[i] = compute_dM(
-            rho_dust_sil_i, shock_factor_silicate, tau_sput_ref_sil);
+      if (oliv_active) {
+        destruction_dM_olivine[i] = compute_dM(
+            rho_dust_oliv_i, shock_factor_silicate, tau_sput_ref_sil);
+      }
+      if (pyro_active) {
+        destruction_dM_pyroxene[i] = compute_dM(
+            rho_dust_pyro_i, shock_factor_silicate, tau_sput_ref_sil);
       }
     }
   }
 }
 
 // ==========================================
-// DUST UPDATE (SPECIES-SPECIFIC: silicate + carbonaceous)
+// DUST UPDATE (SPECIES-SPECIFIC: olivine + pyroxene + carbonaceous)
 // ==========================================
 // Per-channel mass exchange between dust species and their corresponding
 // gas-phase reactant pools.  Active when dust_species_track == 1.
 //
 //   carbon channel:   rho_dust_carbonaceous <-> rho_metal_carbon
-//   silicate channel: rho_dust_silicate <-> {Mg, Fe, Si, O} at fractions f_X
-//                     (Choban+2022 §2.2; 50/50 olivine+pyroxene per
-//                      Draine 2003 / Dwek 1998).
+//   olivine channel:  rho_dust_olivine <-> {Mg, Fe, Si, O} as MgFeSiO4
+//   pyroxene channel: rho_dust_pyroxene <-> {Mg, Si, O} as MgSiO3
 //
 // Per-channel pre-cap in absolute mass units replaces the legacy 3-way active[]
 // shortfall iteration: growth is capped by the limiting reactant, destruction
@@ -608,8 +627,10 @@ void grackle::impl::dust_destruction_species(
 void grackle::impl::dust_update_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range, const gr_mask_type* itmask,
-    const double* dt_value, const double* growth_dM_silicate,
-    const double* growth_dM_carbon, const double* destruction_dM_silicate,
+    const double* dt_value, const double* growth_dM_olivine,
+    const double* growth_dM_pyroxene, const double* growth_dM_carbon,
+    const double* destruction_dM_olivine,
+    const double* destruction_dM_pyroxene,
     const double* destruction_dM_carbon, bool dryrun) {
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
@@ -619,6 +640,12 @@ void grackle::impl::dust_update_species(
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust_sil(
       my_fields->dust_density_silicate, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_oliv(
+      my_fields->dust_density_olivine, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_pyro(
+      my_fields->dust_density_pyroxene, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust_carb(
       my_fields->dust_density_carbonaceous, my_fields->grid_dimension[0],
@@ -642,16 +669,21 @@ void grackle::impl::dust_update_species(
       my_fields->metal_density_iron, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  const double f_Mg = my_chemistry->dust_silicate_f_Mg;
-  const double f_Fe = my_chemistry->dust_silicate_f_Fe;
-  const double f_Si = my_chemistry->dust_silicate_f_Si;
-  const double f_O  = my_chemistry->dust_silicate_f_O;
+  const double f_ol_Mg = my_chemistry->dust_olivine_f_Mg;
+  const double f_ol_Fe = my_chemistry->dust_olivine_f_Fe;
+  const double f_ol_Si = my_chemistry->dust_olivine_f_Si;
+  const double f_ol_O  = my_chemistry->dust_olivine_f_O;
+  const double f_py_Mg = my_chemistry->dust_pyroxene_f_Mg;
+  const double f_py_Fe = my_chemistry->dust_pyroxene_f_Fe;
+  const double f_py_Si = my_chemistry->dust_pyroxene_f_Si;
+  const double f_py_O  = my_chemistry->dust_pyroxene_f_O;
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] == MASK_FALSE) continue;
 
     double rho_gas = d(i, idx_range.j, idx_range.k);
-    double rho_dust_sil_i  = dust_sil(i, idx_range.j, idx_range.k);
+    double rho_dust_oliv_i = dust_oliv(i, idx_range.j, idx_range.k);
+    double rho_dust_pyro_i = dust_pyro(i, idx_range.j, idx_range.k);
     double rho_dust_carb_i = dust_carb(i, idx_range.j, idx_range.k);
     double rho_metal_total = metal(i, idx_range.j, idx_range.k);
     double rho_C  = mC(i, idx_range.j, idx_range.k);
@@ -668,7 +700,10 @@ void grackle::impl::dust_update_species(
     // dM > 0 means net growth (gas reactants -> dust);
     // dM < 0 means net destruction (dust -> gas reactants).
     double dM_carb = (growth_dM_carbon[i] + destruction_dM_carbon[i]) * dt;
-    double dM_sil  = (growth_dM_silicate[i] + destruction_dM_silicate[i]) * dt;
+    double dM_oliv = (growth_dM_olivine[i] +
+                      destruction_dM_olivine[i]) * dt;
+    double dM_pyro = (growth_dM_pyroxene[i] +
+                      destruction_dM_pyroxene[i]) * dt;
 
     // ---------- Per-channel pre-cap ----------
     // Carbon channel: bounded by rho_C (growth) or rho_dust_carb (destruction).
@@ -678,40 +713,96 @@ void grackle::impl::dust_update_species(
       dM_carb = std::max(dM_carb, -rho_dust_carb_i);
     }
 
-    // Silicate channel: growth limited by least-available reactant per
-    // stoichiometric coefficient; destruction limited by silicate dust mass.
-    if (dM_sil > 0.0) {
-      double cap = dM_sil;
-      if (f_Mg > 0.0) cap = std::min(cap, rho_Mg / f_Mg);
-      if (f_Fe > 0.0) cap = std::min(cap, rho_Fe / f_Fe);
-      if (f_Si > 0.0) cap = std::min(cap, rho_Si / f_Si);
-      if (f_O  > 0.0) cap = std::min(cap, rho_O  / f_O);
-      dM_sil = std::max(0.0, cap);
+    // Olivine and pyroxene channels share Mg/Si/O but not Fe. First cap
+    // destruction by each species' own dust mass.
+    if (dM_oliv < 0.0) {
+      dM_oliv = std::max(dM_oliv, -rho_dust_oliv_i);
+    }
+    if (dM_pyro < 0.0) {
+      dM_pyro = std::max(dM_pyro, -rho_dust_pyro_i);
+    }
+
+    // Then cap positive growth jointly against the shared gas reservoirs.
+    // This preserves pyroxene growth when Fe alone limits olivine, while still
+    // preventing double-use of Mg/Si/O if both channels grow together.
+    double dM_oliv_grow = std::max(dM_oliv, 0.0);
+    double dM_pyro_grow = std::max(dM_pyro, 0.0);
+    for (int cap_iter = 0; cap_iter < 4; cap_iter++) {
+      double scale = 1.0;
+      int limiter = -1;  // 0=Mg, 1=Fe, 2=Si, 3=O
+      auto consider_element = [&](double rho_X, double c_ol,
+                                  double c_py, int element_id) {
+        double need = dM_oliv_grow * c_ol + dM_pyro_grow * c_py;
+        if (need > rho_X && need > 0.0) {
+          double trial = std::max(0.0, rho_X / need);
+          if (trial < scale) {
+            scale = trial;
+            limiter = element_id;
+          }
+        }
+      };
+      consider_element(rho_Mg, f_ol_Mg, f_py_Mg, 0);
+      consider_element(rho_Fe, f_ol_Fe, f_py_Fe, 1);
+      consider_element(rho_Si, f_ol_Si, f_py_Si, 2);
+      consider_element(rho_O,  f_ol_O,  f_py_O,  3);
+      if (limiter < 0 || scale >= 1.0) break;
+
+      if (limiter == 0) {
+        if (f_ol_Mg > 0.0) dM_oliv_grow *= scale;
+        if (f_py_Mg > 0.0) dM_pyro_grow *= scale;
+      } else if (limiter == 1) {
+        if (f_ol_Fe > 0.0) dM_oliv_grow *= scale;
+        if (f_py_Fe > 0.0) dM_pyro_grow *= scale;
+      } else if (limiter == 2) {
+        if (f_ol_Si > 0.0) dM_oliv_grow *= scale;
+        if (f_py_Si > 0.0) dM_pyro_grow *= scale;
+      } else {
+        if (f_ol_O > 0.0) dM_oliv_grow *= scale;
+        if (f_py_O > 0.0) dM_pyro_grow *= scale;
+      }
+    }
+    if (dM_oliv > 0.0) {
+      dM_oliv = dM_oliv_grow;
+    }
+    if (dM_pyro > 0.0) {
+      dM_pyro = dM_pyro_grow;
+    }
+
+    if (dM_oliv < 0.0) {
+      dM_oliv = std::max(dM_oliv, -rho_dust_oliv_i);
     } else {
-      dM_sil = std::max(dM_sil, -rho_dust_sil_i);
+      dM_oliv = std::max(dM_oliv, 0.0);
+    }
+    if (dM_pyro < 0.0) {
+      dM_pyro = std::max(dM_pyro, -rho_dust_pyro_i);
+    } else {
+      dM_pyro = std::max(dM_pyro, 0.0);
     }
 
     // ---------- Apply ----------
     rho_dust_carb_i += dM_carb;
     rho_C           -= dM_carb;
 
-    rho_dust_sil_i += dM_sil;
-    rho_Mg -= dM_sil * f_Mg;
-    rho_Fe -= dM_sil * f_Fe;
-    rho_Si -= dM_sil * f_Si;
-    rho_O  -= dM_sil * f_O;
+    rho_dust_oliv_i += dM_oliv;
+    rho_dust_pyro_i += dM_pyro;
+    rho_Mg -= dM_oliv * f_ol_Mg + dM_pyro * f_py_Mg;
+    rho_Fe -= dM_oliv * f_ol_Fe + dM_pyro * f_py_Fe;
+    rho_Si -= dM_oliv * f_ol_Si + dM_pyro * f_py_Si;
+    rho_O  -= dM_oliv * f_ol_O  + dM_pyro * f_py_O;
 
     // Floors / NaN guard
     rho_dust_carb_i = std::max(0.0, rho_dust_carb_i);
-    rho_dust_sil_i  = std::max(0.0, rho_dust_sil_i);
+    rho_dust_oliv_i = std::max(0.0, rho_dust_oliv_i);
+    rho_dust_pyro_i = std::max(0.0, rho_dust_pyro_i);
     rho_C  = std::max(0.0, rho_C);
     rho_O  = std::max(0.0, rho_O);
     rho_Mg = std::max(0.0, rho_Mg);
     rho_Si = std::max(0.0, rho_Si);
     rho_Fe = std::max(0.0, rho_Fe);
 
-    // Bulk dust = silicate + carbonaceous (Phase E will enforce as invariant
-    // in make_consistent; computing it here keeps the bulk field in sync).
+    // Bulk dust = olivine + pyroxene + carbonaceous. The compatibility
+    // silicate field is olivine + pyroxene.
+    double rho_dust_sil_i = rho_dust_oliv_i + rho_dust_pyro_i;
     double rho_dust_new = rho_dust_sil_i + rho_dust_carb_i;
 
     // metal_density_other (= total - C - O - Mg - Si - Fe) is unchanged on
@@ -729,13 +820,17 @@ void grackle::impl::dust_update_species(
     if (std::isnan(rho_dust_new) || std::isnan(rho_metal_new) ||
         std::isnan(rho_gas)) {
       std::cout << "dust_update_species: NaN at cell " << i
-                << " dM_carb=" << dM_carb << " dM_sil=" << dM_sil << std::endl;
+                << " dM_carb=" << dM_carb
+                << " dM_oliv=" << dM_oliv
+                << " dM_pyro=" << dM_pyro << std::endl;
       continue;
     }
 
     if (!dryrun) {
       dust(i, idx_range.j, idx_range.k)      = (gr_float)rho_dust_new;
       dust_sil(i, idx_range.j, idx_range.k)  = (gr_float)rho_dust_sil_i;
+      dust_oliv(i, idx_range.j, idx_range.k) = (gr_float)rho_dust_oliv_i;
+      dust_pyro(i, idx_range.j, idx_range.k) = (gr_float)rho_dust_pyro_i;
       dust_carb(i, idx_range.j, idx_range.k) = (gr_float)rho_dust_carb_i;
       metal(i, idx_range.j, idx_range.k)     = (gr_float)rho_metal_new;
       mC(i, idx_range.j, idx_range.k)        = (gr_float)rho_C;

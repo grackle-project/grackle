@@ -125,6 +125,30 @@ inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
       }
     }
   }
+  if (my_fields->dust_density_olivine != nullptr) {
+    grackle::impl::View<gr_float***> dust_oliv(
+        my_fields->dust_density_olivine, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+          dust_oliv(i, j, k) = dust_oliv(i, j, k) * factor;
+        }
+      }
+    }
+  }
+  if (my_fields->dust_density_pyroxene != nullptr) {
+    grackle::impl::View<gr_float***> dust_pyro(
+        my_fields->dust_density_pyroxene, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+          dust_pyro(i, j, k) = dust_pyro(i, j, k) * factor;
+        }
+      }
+    }
+  }
   if (my_fields->dust_density_carbonaceous != nullptr) {
     grackle::impl::View<gr_float***> dust_carb(
         my_fields->dust_density_carbonaceous, my_fields->grid_dimension[0],

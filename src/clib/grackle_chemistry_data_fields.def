@@ -359,11 +359,13 @@ ENTRY(dust_growth_sticking_coeff, DOUBLE, 3.0e-1)
 ENTRY(dust_condensation_eff, DOUBLE, 1.5e-1)
 ENTRY(sne_metal_yield, DOUBLE, 3.0)
 
-/* Two-species dust tracking (silicate + carbonaceous).
+/* Species-resolved dust tracking.
    Requires dust_model=1.
    0) off (default — bulk dust_density)
-   1) on  — evolves dust_density_silicate, dust_density_carbonaceous and
-            5-element gas tracking (C, O, Mg, Si, Fe).
+   1) on  — evolves dust_density_olivine, dust_density_pyroxene,
+            dust_density_carbonaceous and 5-element gas tracking
+            (C, O, Mg, Si, Fe). dust_density_silicate is maintained as
+            olivine + pyroxene for compatibility.
    REF: Choban+2022 MNRAS 514, 4506; Hirashita 2015 MNRAS 447, 2937;
         McKinnon+2018 MNRAS 478, 2851 */
 ENTRY(dust_species_track, INT, 0)
@@ -385,11 +387,18 @@ ENTRY(dust_growth_tauref_carbon,   DOUBLE, 5.59e-2)
 ENTRY(dust_sputter_tauref_silicate, DOUBLE, 1.7e8)
 ENTRY(dust_sputter_tauref_carbon,   DOUBLE, 3.4e8)
 
-/* Silicate stoichiometric mass fractions (50/50 olivine MgFeSiO4 +
-   pyroxene MgSiO3 by mass). Used for both growth depletion and
-   destruction release of Mg/Fe/Si/O. Sum = 1.000.
-   REF: Draine 2003 ARA&A 41, 241; Dwek 1998 ApJ 501, 643 */
-ENTRY(dust_silicate_f_Mg, DOUBLE, 0.190)
-ENTRY(dust_silicate_f_Fe, DOUBLE, 0.163)
-ENTRY(dust_silicate_f_Si, DOUBLE, 0.221)
-ENTRY(dust_silicate_f_O,  DOUBLE, 0.426)
+/* Initial/fallback mass fraction of silicate dust in olivine. The live
+   olivine/pyroxene ratio evolves once the split fields are active. */
+ENTRY(dust_silicate_olivine_fraction, DOUBLE, 0.5)
+
+/* Olivine stoichiometric mass fractions for MgFeSiO4. Sum = 1.000. */
+ENTRY(dust_olivine_f_Mg, DOUBLE, 0.141)
+ENTRY(dust_olivine_f_Fe, DOUBLE, 0.324)
+ENTRY(dust_olivine_f_Si, DOUBLE, 0.163)
+ENTRY(dust_olivine_f_O,  DOUBLE, 0.372)
+
+/* Pyroxene stoichiometric mass fractions for MgSiO3. Sum = 1.000. */
+ENTRY(dust_pyroxene_f_Mg, DOUBLE, 0.242)
+ENTRY(dust_pyroxene_f_Fe, DOUBLE, 0.0)
+ENTRY(dust_pyroxene_f_Si, DOUBLE, 0.280)
+ENTRY(dust_pyroxene_f_O,  DOUBLE, 0.478)

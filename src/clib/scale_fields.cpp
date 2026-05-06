@@ -127,6 +127,12 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
   grackle::impl::View<gr_float***> dust_sil(
       my_fields->dust_density_silicate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_oliv(
+      my_fields->dust_density_olivine, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> dust_pyro(
+      my_fields->dust_density_pyroxene, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust_carb(
       my_fields->dust_density_carbonaceous, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -355,6 +361,8 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
         if (my_chemistry->dust_species_track == 1) {
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
             dust_sil(i, j, k) = dust_sil(i, j, k) * factor;
+            dust_oliv(i, j, k) = dust_oliv(i, j, k) * factor;
+            dust_pyro(i, j, k) = dust_pyro(i, j, k) * factor;
             dust_carb(i, j, k) = dust_carb(i, j, k) * factor;
           }
         }

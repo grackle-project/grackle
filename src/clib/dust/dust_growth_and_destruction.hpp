@@ -19,10 +19,11 @@ void dust_growth(chemistry_data* my_chemistry, grackle_field_data* my_fields,
                  double* growth_dM  // output: mass change rate for each cell
 );
 
-// Species-specific accretion onto two pre-existing dust populations
-// (silicate + carbonaceous). Active when dust_species_track == 1.
+// Species-specific accretion onto three pre-existing dust populations
+// (olivine + pyroxene + carbonaceous). Active when dust_species_track == 1.
 //   - carbonaceous: rate-limited by gas-phase carbon
-//   - silicate: rate-limited by min over {Mg, Si, Fe, O} of (rho_X / f_X),
+//   - olivine: rate-limited by min over {Mg, Fe, Si, O} of (rho_X / f_X)
+//   - pyroxene: rate-limited by min over {Mg, Si, O} of (rho_X / f_X)
 //     following the Choban+2022 MNRAS 514, 4506 §2.2 key-reactant approach
 // Per-species tau_accr uses the Hirashita 2011 section 2.6 normalization:
 // n_H = 1e3 cm^-3, T = 50 K, S = 0.3, a = 0.1 micron, and solar key-species
@@ -34,7 +35,8 @@ void dust_growth_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range,
     const gr_mask_type* itmask, const double* dt_value, const double* t_gas,
-    double* growth_dM_silicate,  // output: silicate accretion rate
+    double* growth_dM_olivine,   // output: olivine accretion rate
+    double* growth_dM_pyroxene,  // output: pyroxene accretion rate
     double* growth_dM_carbon     // output: carbonaceous accretion rate
 );
 
@@ -47,9 +49,10 @@ void dust_destruction(
     double* destruction_dM  // output: mass change rate for each cell
 );
 
-// Species-specific destruction (SN shocks + thermal sputtering) onto the two
+// Species-specific destruction (SN shocks + thermal sputtering) onto the three
 // dust populations. Active when dust_species_track == 1.
-//   - shock yield: graphite is baseline (factor 1.0); silicate follows the
+//   - shock yield: graphite is baseline (factor 1.0); olivine and pyroxene
+//     both follow the
 //     Slavin+2015 standard SNR gas-cleared mass ratio 990/600 = 1.65
 //     [REF: Slavin, Dwek, Jones 2015 ApJ 803, 7; Jones+1996 ApJ 469, 740]
 //   - thermal sputtering: species-specific tau_ref
@@ -62,7 +65,8 @@ void dust_destruction_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range, const gr_mask_type* itmask,
     const double* dt_value, const double* t_gas,
-    double* destruction_dM_silicate,  // output: silicate destruction rate
+    double* destruction_dM_olivine,   // output: olivine destruction rate
+    double* destruction_dM_pyroxene,  // output: pyroxene destruction rate
     double* destruction_dM_carbon     // output: carbonaceous destruction rate
 );
 
@@ -75,12 +79,12 @@ void dust_update(
     const double* destruction_dM,    // input: mass change from destruction
     bool dryrun);
 
-// Species-specific field update for the two-species path (dust_species_track==1).
+// Species-specific field update for the split-silicate path
+// (dust_species_track==1).
 // Per-channel mass exchange:
 //   - carbon channel:    rho_dust_carbonaceous <-> metal_density_carbon
-//   - silicate channel:  rho_dust_silicate <-> {Mg, Fe, Si, O} at stoichiometric
-//                        mass fractions f_X (Choban+2022 §2.2; 50/50 olivine +
-//                        pyroxene mix, Draine 2003 / Dwek 1998).
+//   - olivine channel:   rho_dust_olivine <-> {Mg, Fe, Si, O} as MgFeSiO4
+//   - pyroxene channel:  rho_dust_pyroxene <-> {Mg, Si, O} as MgSiO3
 // Per-channel pre-cap in absolute mass units replaces the legacy 3-way active[]
 // shortfall mask. No SN injection here — Phase D drops the in-Grackle
 // dust_creation pathway from the species branch; host code seeds dust species
@@ -89,9 +93,11 @@ void dust_update_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range, const gr_mask_type* itmask,
     const double* dt_value,
-    const double* growth_dM_silicate,      // input: silicate accretion rate
+    const double* growth_dM_olivine,       // input: olivine accretion rate
+    const double* growth_dM_pyroxene,      // input: pyroxene accretion rate
     const double* growth_dM_carbon,        // input: carbonaceous accretion rate
-    const double* destruction_dM_silicate, // input: silicate destruction rate (<=0)
+    const double* destruction_dM_olivine,  // input: olivine destruction rate (<=0)
+    const double* destruction_dM_pyroxene, // input: pyroxene destruction rate (<=0)
     const double* destruction_dM_carbon,   // input: carbonaceous destruction rate (<=0)
     bool dryrun);
 
