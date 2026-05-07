@@ -35,6 +35,7 @@ _parameter_exclude = (
     {"metal_chemistry": 1, "metal_cooling": 0},
     {"grackle_data_file": "CloudyData_noUVB.h5", "UVbackground": 1},
     {"dust_species": 0, "use_multiple_dust_temperatures": 1},
+    {"primordial_chemistry": 0, "dust_recombination_cooling": 1},
 )
 
 _model_test_grids = \
@@ -91,8 +92,6 @@ _model_test_grids = \
                     "UVbackground": 1,
                     "cmb_temperature_floor": 1,
                     "grackle_data_file": "CloudyData_UVB=HM2012.h5",
-                    "photoelectric_heating": 0,
-                    "dust_recombination_cooling": 0,
                 },
                 "grid": \
                 {
@@ -100,8 +99,8 @@ _model_test_grids = \
                     "dust_chemistry": (0, 1),
                     "metal_cooling": (0, 1),
                     "metal_chemistry": (0, 1),
-                    "photoelectric_heating": (1, 2, 3),
-                    "dust_recombination_cooling": (1,),
+                    "photoelectric_heating": (0, 1, 2, 3),
+                    "dust_recombination_cooling": (0, 1,),
                 },
             },
             "inputs": \
