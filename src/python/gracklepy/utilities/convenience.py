@@ -119,7 +119,7 @@ def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities):
     if fc.chemistry_data.metal_chemistry == 0:
         metal_field = "metal_density"
         metal_nuclide_fractions = {el: solar_mass_abundance[el] / solar_metal_mass
-                                   for el in fc.elements if el not in primordial_elements}
+                                   for el in fc.nuclides if el not in primordial_elements}
 
     # use the injection metal data
     elif fc.chemistry_data.metal_chemistry == 1:
@@ -131,7 +131,7 @@ def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities):
         raise ValueError("metal_chemistry must be either 0 or 1.")
 
     for el, fmass in metal_nuclide_fractions.items():
-        if el not in fc.elements:
+        if el not in fc.nuclides:
             continue
         nuclide_densities[el] = state_vals[metal_field] * fmass
 
@@ -164,7 +164,7 @@ def _setup_ion_fields(fc, state_vals, nuclide_densities, state):
 
     state_vals["e_density"] = 0
     for el in nuclide_densities:
-        if el not in fc.elements:
+        if el not in fc.nuclides:
             continue
 
         fname = _get_appropriate_ion_field(fc, el, state)

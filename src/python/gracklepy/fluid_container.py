@@ -421,7 +421,7 @@ class FluidContainer(dict):
         return _required_density_fields(self.chemistry_data)
 
     @property
-    def elements(self):
+    def nuclides(self):
         return _required_nuclides(self.chemistry_data)
 
     @property
