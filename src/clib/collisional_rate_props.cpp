@@ -134,7 +134,7 @@
 #include "collisional_rate_props.hpp"  // forward declaration
 #include "grackle_macros.h"            // tiny
 #include "internal_types.hpp"          // CollisionalRxnRateCollection
-#include "internal_units.h"            // InternalGrUnits
+#include "internal_units.hpp"          // InternalGrUnits
 #include "LUT.hpp"                     // CollisionalRxnLUT
 #include "opaque_storage.hpp"          // gr_opaque_storage
 
