@@ -17,10 +17,7 @@
 #include <cstdlib> // std::malloc, std::free
 #include <cstring> // std::memcpy
 #include <vector>
-#include <iostream>
 #include "grackle.h"
-#include "fortran_func_wrappers.hpp"
-#include "full_rxn_rate_buf.hpp"
 #include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
@@ -30,6 +27,7 @@
 #include "make_consistent.hpp"
 #include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
+#include "support/config.hpp"
 #include "utils-cpp.hpp"
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
@@ -39,6 +37,8 @@
 #include "cool1d_multi_g.hpp"
 #include "scale_fields.hpp"
 #include "solve_rate_cool.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// overrides the subcycle timestep (for each index in the index-range that is
 /// selected by the given itmask) with the maximum allowed heating/cooling
@@ -505,8 +505,6 @@ static inline void coupled_rt_modify_itmask_(
 
 // -------------------------------------------------------------
 
-namespace grackle::impl {
-
 /// Aggregates buffers used as scratch space in rate-related calculations
 ///
 /// This exists to encapsulate the logic for all of the local buffers used in
@@ -789,6 +787,10 @@ int solve_rate_cool(
         for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           if (itmask[i] != MASK_FALSE)  {
             dtit[i] = huge8;
+            // todo: get rid of this buffer, we only use it in 2 spots at the
+            //       top level of this integrator
+            p2d[i] = calc_pressure(my_chemistry->Gamma, d(i, j, k), e(i, j, k));
+
           }
         }
 
@@ -796,7 +798,7 @@ int solve_rate_cool(
         cool1d_multi_g(
           imetal, iter,
           edot.data(),
-          tgas.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+          tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry,
           my_rates, my_fields,
@@ -900,7 +902,7 @@ int solve_rate_cool(
           // itmask_nr)
           grackle::impl::step_rate_newton_raphson(
             imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
-            dtit.data(), p2d.data(), tgas.data(), tdust.data(),
+            dtit.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
             edot.data(), anydust, spsolvbuf.itmask_nr,
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
@@ -1007,4 +1009,4 @@ int solve_rate_cool(
   return ierr;
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
