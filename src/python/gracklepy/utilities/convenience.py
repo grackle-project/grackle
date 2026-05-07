@@ -164,6 +164,9 @@ def _setup_ion_fields(fc, state_vals, nuclide_densities, state):
 
     state_vals["e_density"] = 0
     for el in nuclide_densities:
+        if el not in fc.elements:
+            continue
+
         fname = _get_appropriate_ion_field(fc, el, state)
         state_vals[fname] = nuclide_densities[el]
 
