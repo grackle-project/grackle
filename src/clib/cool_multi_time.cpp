@@ -23,6 +23,7 @@
 #include "internal_units.hpp"
 #include "internal_types.hpp"
 #include "scale_fields.hpp"
+#include "support/config.hpp"
 #include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -68,7 +69,6 @@ void cool_multi_time(
     // additional structs (or leaving them free-standing) will become more
     // obvious as we transcribe more routines.
 
-    std::vector<double> p2d(my_fields->grid_dimension[0]);
     std::vector<double> tgas(my_fields->grid_dimension[0]);
     std::vector<double> mmw(my_fields->grid_dimension[0]);
     std::vector<double> tdust(my_fields->grid_dimension[0]);
@@ -80,6 +80,16 @@ void cool_multi_time(
     // Iteration mask for multi_cool
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
+
+    // create views of density and internal energy fields to support 3D access
+    grackle::impl::View<gr_float***> d(my_fields->density,
+                                       my_fields->grid_dimension[0],
+                                       my_fields->grid_dimension[1],
+                                       my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> specific_eint(
+        my_fields->internal_energy, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
 
     // The following for-loop is a flattened loop over every k,j combination.
     // OpenMP divides this loop between all threads. Within the loop, we
@@ -100,7 +110,7 @@ void cool_multi_time(
 
       cool1d_multi_g(
         imetal, dummy_iter_arg, edot.data(), tgas.data(),
-        mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+        mmw.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
         my_chemistry, my_rates, my_fields, my_uvb_rates, internalu, idx_range,
         grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
@@ -112,7 +122,11 @@ void cool_multi_time(
       //    in cool1d_multi_g)
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.),
+        // todo: directly compute energy density (may break gold standard)
+        double p = GRIMPL_NS::calc_pressure(my_chemistry->Gamma,
+                                            d(i, j, k),
+                                            specific_eint(i, j, k));
+        double energy = std::fmax(p/(my_chemistry->Gamma-1.),
                                   tiny_fortran_val);
         cooltime(i,j,k) = (gr_float)(energy/edot[i]);
       }
