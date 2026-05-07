@@ -70,14 +70,14 @@ def _get_appropriate_ion_field(fc, element, state):
         raise ValueError("State must be either neutral or ionized.")
 
     for i in order:
-        fname = f"{element}{roman.toRoman(i)}_density"
-        if fname in fc.density_fields:
-            return fname
+        field_name = f"{element}{roman.toRoman(i)}_density"
+        if field_name in fc.density_fields:
+            return field_name
 
     # If we are tracking a field to represent the entire element, return that.
-    fname = f"{element}_density"
-    if fname in fc.density_fields:
-        return fname
+    field_name = f"{element}_density"
+    if field_name in fc.density_fields:
+        return field_name
 
     raise ValueError(f"Element {element} not in fluid container")
 
@@ -167,12 +167,12 @@ def _setup_ion_fields(fc, state_vals, nuclide_densities, state):
         if el not in fc.nuclides:
             continue
 
-        fname = _get_appropriate_ion_field(fc, el, state)
-        state_vals[fname] = nuclide_densities[el]
+        field_name = _get_appropriate_ion_field(fc, el, state)
+        state_vals[field_name] = nuclide_densities[el]
 
         # add to electron density
         if state == "ionized":
-            reg = re.search(f"{el}(\w+)_density", fname)
+            reg = re.search(rf"{el}(\w+)_density", field_name)
             # skip density fields representing the whole element
             if reg is None:
                 continue

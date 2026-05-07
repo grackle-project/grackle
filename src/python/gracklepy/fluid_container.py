@@ -577,17 +577,17 @@ class FluidContainer(dict):
               _fc_calculated_fields:
 
                 if field in _indirectly_calculated_fields:
-                    fname = _indirectly_calculated_fields[field]
+                    field_name = _indirectly_calculated_fields[field]
                 else:
-                    fname = f"calculate_{field}"
+                    field_name = f"calculate_{field}"
 
-                func = getattr(self, fname, None)
+                func = getattr(self, field_name, None)
                 if func is None:
                     raise RuntimeError(f"No function for calculating {field}.")
 
-                if fname not in called:
+                if field_name not in called:
                     func()
-                    called.append(fname)
+                    called.append(field_name)
 
         else:
             all_fields = data.keys()
