@@ -181,11 +181,11 @@ void grackle::impl::calc_grain_size_increment_species_1d(
         coef2 = coef2 / coef3;
 
         FORTRAN_NAME(solve_cubic_equation)(&coef2, &coef1, &coef0, &drsp[i]);
-        // TODO: to be removed after fixing the numerical issue with i=0 and
-        // idx_range.j=idx_range.k=0
-        if (i == 0 && idx_range.j == 0 && idx_range.k == 0) {
-          drsp[i] = 0.e0;
-        }
+        // // TODO: to be removed after fixing the numerical issue with i=0 and
+        // // idx_range.j=idx_range.k=0
+        // if (i == 0 && idx_range.j == 0 && idx_range.k == 0) {
+        //   drsp[i] = 0.e0;
+        // }
 
         drsp[i] = std::fmax(drsp[i], 0.e0);
       }
