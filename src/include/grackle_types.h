@@ -79,7 +79,7 @@ typedef struct
 
   // dust_species_track = 1
   // 5-element gas tracking adds Mg, Si, Fe alongside C, O above.
-  // Subsets of metal_density. REF: Choban+2022 MNRAS 514, 4506
+  // Subsets of metal_density.
   gr_float *metal_density_magnesium;
   gr_float *metal_density_silicon;
   gr_float *metal_density_iron;
@@ -88,13 +88,13 @@ typedef struct
   gr_float *dust_density;
 
   // dust_species_track = 1
-  // Three-species dust: bulk dust_density = olivine + pyroxene +
+  // Three-species dust: bulk dust_density = Mg-silicate + Fe-silicate +
   // carbonaceous. dust_density_silicate is kept as the derived
-  // olivine + pyroxene sum for compatibility.
-  // REF: Choban+2022 MNRAS 514, 4506; Hirashita 2015 MNRAS 447, 2937
+  // Mg-silicate + Fe-silicate sum for compatibility.
+  // REF: Trayford+2026 MNRAS 545, staf2040.
   gr_float *dust_density_silicate;
-  gr_float *dust_density_olivine;
-  gr_float *dust_density_pyroxene;
+  gr_float *dust_density_mg_silicate;
+  gr_float *dust_density_fe_silicate;
   gr_float *dust_density_carbonaceous;
 
   // primordial_chemistry = 1

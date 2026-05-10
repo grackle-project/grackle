@@ -733,11 +733,11 @@ int solve_rate_cool(
     std::vector<double> destruction_dM(my_fields->grid_dimension[0]);
     // Phase B/C: species-specific growth & destruction outputs (used when
     // dust_species_track == 1; Phase D wires them into dust_update())
-    std::vector<double> growth_dM_olivine(my_fields->grid_dimension[0]);
-    std::vector<double> growth_dM_pyroxene(my_fields->grid_dimension[0]);
+    std::vector<double> growth_dM_mg_silicate(my_fields->grid_dimension[0]);
+    std::vector<double> growth_dM_fe_silicate(my_fields->grid_dimension[0]);
     std::vector<double> growth_dM_carbon(my_fields->grid_dimension[0]);
-    std::vector<double> destruction_dM_olivine(my_fields->grid_dimension[0]);
-    std::vector<double> destruction_dM_pyroxene(my_fields->grid_dimension[0]);
+    std::vector<double> destruction_dM_mg_silicate(my_fields->grid_dimension[0]);
+    std::vector<double> destruction_dM_fe_silicate(my_fields->grid_dimension[0]);
     std::vector<double> destruction_dM_carbon(my_fields->grid_dimension[0]);
 
     // iteration masks
@@ -932,23 +932,23 @@ int solve_rate_cool(
         // will be restructured once that integration lands.
         if (my_chemistry->dust_model == 1){
           if (my_chemistry->dust_species_track == 1) {
-            // Calculate and apply the olivine + pyroxene + carbonaceous rates.
+            // Calculate and apply the Mg-silicate + Fe-silicate + carbonaceous rates.
             grackle::impl::dust_growth_species(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(),
               dtit.data(), tgas.data(),
-              growth_dM_olivine.data(), growth_dM_pyroxene.data(),
+              growth_dM_mg_silicate.data(), growth_dM_fe_silicate.data(),
               growth_dM_carbon.data());
             grackle::impl::dust_destruction_species(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(),
               dtit.data(), tgas.data(),
-              destruction_dM_olivine.data(), destruction_dM_pyroxene.data(),
+              destruction_dM_mg_silicate.data(), destruction_dM_fe_silicate.data(),
               destruction_dM_carbon.data());
             grackle::impl::dust_update_species(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(),
               dtit.data(),
-              growth_dM_olivine.data(), growth_dM_pyroxene.data(),
+              growth_dM_mg_silicate.data(), growth_dM_fe_silicate.data(),
               growth_dM_carbon.data(),
-              destruction_dM_olivine.data(), destruction_dM_pyroxene.data(),
+              destruction_dM_mg_silicate.data(), destruction_dM_fe_silicate.data(),
               destruction_dM_carbon.data(),
               false);
           } else {

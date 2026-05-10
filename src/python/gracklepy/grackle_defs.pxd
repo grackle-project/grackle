@@ -116,8 +116,8 @@ cdef extern from "grackle.h":
       gr_float *metal_density_iron;
       gr_float *dust_density;
       gr_float *dust_density_silicate;
-      gr_float *dust_density_olivine;
-      gr_float *dust_density_pyroxene;
+      gr_float *dust_density_mg_silicate;
+      gr_float *dust_density_fe_silicate;
       gr_float *dust_density_carbonaceous;
       gr_float *e_density;
       gr_float *HI_density;

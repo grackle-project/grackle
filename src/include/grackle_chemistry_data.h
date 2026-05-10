@@ -342,43 +342,48 @@ typedef struct
   /* Species-resolved dust tracking.
      Requires dust_model=1.
      0) off — bulk dust_density (default)
-     1) on  — evolves dust_density_olivine, dust_density_pyroxene,
+     1) on  — evolves dust_density_mg_silicate, dust_density_fe_silicate,
               dust_density_carbonaceous and 5-element gas tracking
               (C, O, Mg, Si, Fe). dust_density_silicate is maintained as
-              olivine + pyroxene for compatibility.
-     REF: Choban+2022 MNRAS 514, 4506; Hirashita 2015 MNRAS 447, 2937 */
+              Mg-silicate + Fe-silicate for compatibility.
+     REF: Trayford+2026 MNRAS 545, staf2040 */
   int dust_species_track;
 
-  /* Species-specific growth (accretion) reference timescales [Gyr].
-     Normalized at n_H = 1e3 cm^-3, T = 50 K, S = 0.3, a = 0.1 micron,
-     and solar key-species abundance. Rescaled by dust_grainsize and
-     dust_growth_sticking_coeff.
-     REF: Hirashita 2011 MNRAS 416, 1340 section 2.6; Asano+2013 EP&S 65, 213 */
+  /* COLIBRE-style species growth reference timescales [Myr].
+     Normalized at n_H' = 10 cm^-3, T = 10 K, S = 0.3, a = 0.1 micron,
+     and solar bottleneck abundance. Rescaled by dust_grainsize and
+     dust_growth_sticking_coeff. REF: Trayford+2026 MNRAS 545, staf2040. */
   double dust_growth_tauref_silicate;
   double dust_growth_tauref_carbon;
 
-  /* Species-specific thermal sputtering reference timescales [yr].
-     REF (silicate): Tsai & Mathews 1995 ApJ 448, 84
-     REF (carbon):   Nozawa+2006 ApJ 648, 435 */
-  double dust_sputter_tauref_silicate;
-  double dust_sputter_tauref_carbon;
+  /* COLIBRE-style unresolved-density boost for accretion: C rises from 1 to
+     dust_growth_clumping_factor_max between dust_growth_clumping_nH_min and
+     dust_growth_clumping_nH_max, using log-linear interpolation in n_H. */
+  double dust_growth_clumping_factor_max;
+  double dust_growth_clumping_nH_min;
+  double dust_growth_clumping_nH_max;
 
-  /* Initial/fallback mass fraction of silicate dust in olivine. The live
-     olivine/pyroxene ratio evolves once the split fields are active. */
-  double dust_silicate_olivine_fraction;
+  /* COLIBRE / Tsai-Mathews thermal sputtering reference time [Myr].
+     tau_sp = tau_ref * (a/0.1) * (n_H/1 cm^-3)^-1
+              * [1 + (T/2e6 K)^-2.5]. */
+  double dust_sputter_tauref;
 
-  /* Olivine stoichiometric mass fractions for MgFeSiO4. Sum = 1.000. */
-  double dust_olivine_f_Mg;
-  double dust_olivine_f_Fe;
-  double dust_olivine_f_Si;
-  double dust_olivine_f_O;
+  /* Initial/fallback mass fraction of silicate dust in Mg-rich silicate.
+     COLIBRE seeds equal numbers of Mg2SiO4 and Fe2SiO4 molecules, which
+     corresponds to this mass fraction rather than an equal-mass split. */
+  double dust_silicate_mg_fraction;
 
-  /* Pyroxene stoichiometric mass fractions for MgSiO3. Sum = 1.000.
-     Fe is zero so Fe depletion does not halt pyroxene growth. */
-  double dust_pyroxene_f_Mg;
-  double dust_pyroxene_f_Fe;
-  double dust_pyroxene_f_Si;
-  double dust_pyroxene_f_O;
+  /* Mg-rich silicate endmember stoichiometric mass fractions for Mg2SiO4. */
+  double dust_mg_silicate_f_Mg;
+  double dust_mg_silicate_f_Fe;
+  double dust_mg_silicate_f_Si;
+  double dust_mg_silicate_f_O;
+
+  /* Fe-rich silicate endmember stoichiometric mass fractions for Fe2SiO4. */
+  double dust_fe_silicate_f_Mg;
+  double dust_fe_silicate_f_Fe;
+  double dust_fe_silicate_f_Si;
+  double dust_fe_silicate_f_O;
 
 } chemistry_data;
 

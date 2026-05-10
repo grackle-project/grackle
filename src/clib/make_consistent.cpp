@@ -242,7 +242,7 @@ void make_consistent(
   // from our tracked metal_density_X + dust species fields, overriding the
   // SN-yield-derived computation below. Views are constructed once here.
   grackle::impl::View<const gr_float***> mC_view, mO_view, mMg_view,
-      mSi_view, mFe_view, dust_sil_view, dust_oliv_view, dust_pyro_view,
+      mSi_view, mFe_view, dust_sil_view, dust_mg_sil_view, dust_fe_sil_view,
       dust_carb_view;
   if (my_chemistry->dust_species_track == 1) {
     mC_view = grackle::impl::View<const gr_float***>(
@@ -269,12 +269,12 @@ void make_consistent(
         const_cast<const gr_float*>(my_fields->dust_density_silicate),
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
-    dust_oliv_view = grackle::impl::View<const gr_float***>(
-        const_cast<const gr_float*>(my_fields->dust_density_olivine),
+    dust_mg_sil_view = grackle::impl::View<const gr_float***>(
+        const_cast<const gr_float*>(my_fields->dust_density_mg_silicate),
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
-    dust_pyro_view = grackle::impl::View<const gr_float***>(
-        const_cast<const gr_float*>(my_fields->dust_density_pyroxene),
+    dust_fe_sil_view = grackle::impl::View<const gr_float***>(
+        const_cast<const gr_float*>(my_fields->dust_density_fe_silicate),
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
     dust_carb_view = grackle::impl::View<const gr_float***>(
@@ -431,27 +431,27 @@ void make_consistent(
 
         // Phase F hijack: replace SN-yield-derived per-element arrays with
         // values pulled directly from our tracked fields. Carbonaceous dust
-        // is pure C; olivine and pyroxene contribute Mg/Fe/Si/O at their own
+        // is pure C; Mg- and Fe-silicates contribute Mg/Fe/Si/O at their own
         // stoichiometric mass fractions. Al and S are not part of this
         // architecture, so their per-element arrays are zeroed.
         if (my_chemistry->dust_species_track == 1) {
-          const double f_ol = std::clamp(
-              my_chemistry->dust_silicate_olivine_fraction, 0.0, 1.0);
-          const double f_ol_Mg = my_chemistry->dust_olivine_f_Mg;
-          const double f_ol_Fe = my_chemistry->dust_olivine_f_Fe;
-          const double f_ol_Si = my_chemistry->dust_olivine_f_Si;
-          const double f_ol_O  = my_chemistry->dust_olivine_f_O;
-          const double f_py_Mg = my_chemistry->dust_pyroxene_f_Mg;
-          const double f_py_Fe = my_chemistry->dust_pyroxene_f_Fe;
-          const double f_py_Si = my_chemistry->dust_pyroxene_f_Si;
-          const double f_py_O  = my_chemistry->dust_pyroxene_f_O;
+          const double f_mg_sil = std::clamp(
+              my_chemistry->dust_silicate_mg_fraction, 0.0, 1.0);
+          const double f_mg_sil_Mg = my_chemistry->dust_mg_silicate_f_Mg;
+          const double f_mg_sil_Fe = my_chemistry->dust_mg_silicate_f_Fe;
+          const double f_mg_sil_Si = my_chemistry->dust_mg_silicate_f_Si;
+          const double f_mg_sil_O  = my_chemistry->dust_mg_silicate_f_O;
+          const double f_fe_sil_Mg = my_chemistry->dust_fe_silicate_f_Mg;
+          const double f_fe_sil_Fe = my_chemistry->dust_fe_silicate_f_Fe;
+          const double f_fe_sil_Si = my_chemistry->dust_fe_silicate_f_Si;
+          const double f_fe_sil_O  = my_chemistry->dust_fe_silicate_f_O;
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            double oliv = dust_oliv_view(i, j, k);
-            double pyro = dust_pyro_view(i, j, k);
+            double mg_sil = dust_mg_sil_view(i, j, k);
+            double fe_sil = dust_fe_sil_view(i, j, k);
             const double sil_compat = dust_sil_view(i, j, k);
-            if (oliv + pyro <= 0.0 && sil_compat > 0.0) {
-              oliv = f_ol * sil_compat;
-              pyro = (1.0 - f_ol) * sil_compat;
+            if (mg_sil + fe_sil <= 0.0 && sil_compat > 0.0) {
+              mg_sil = f_mg_sil * sil_compat;
+              fe_sil = (1.0 - f_mg_sil) * sil_compat;
             }
             const double carb = dust_carb_view(i, j, k);
             Cg[i]  = mC_view(i, j, k);
@@ -460,10 +460,10 @@ void make_consistent(
             Sig[i] = mSi_view(i, j, k);
             Feg[i] = mFe_view(i, j, k);
             Cd[i]  = carb;
-            Od[i]  = oliv * f_ol_O  + pyro * f_py_O;
-            Mgd[i] = oliv * f_ol_Mg + pyro * f_py_Mg;
-            Sid[i] = oliv * f_ol_Si + pyro * f_py_Si;
-            Fed[i] = oliv * f_ol_Fe + pyro * f_py_Fe;
+            Od[i]  = mg_sil * f_mg_sil_O  + fe_sil * f_fe_sil_O;
+            Mgd[i] = mg_sil * f_mg_sil_Mg + fe_sil * f_fe_sil_Mg;
+            Sid[i] = mg_sil * f_mg_sil_Si + fe_sil * f_fe_sil_Si;
+            Fed[i] = mg_sil * f_mg_sil_Fe + fe_sil * f_fe_sil_Fe;
             Ct[i]  = Cg[i]  + Cd[i];
             Ot[i]  = Og[i]  + Od[i];
             Mgt[i] = Mgg[i] + Mgd[i];
@@ -1075,15 +1075,15 @@ void make_consistent(
     }
   }
 
-  // Phase E invariant: bulk dust_density = olivine + pyroxene + carbonaceous,
-  // with dust_density_silicate maintained as olivine + pyroxene.
+  // Phase E invariant: bulk dust_density = Mg-silicate + Fe-silicate
+  // + carbonaceous, with dust_density_silicate maintained as the silicate sum.
   // dust_update_species() maintains this per-cell, but external mutations
   // (host injection, inject_pathway writes) can break it before make_consistent.
   // Re-derive here so downstream consumers (calc_tdust_3d.cpp, cooling tables)
   // see a consistent bulk field.
   if (my_chemistry->dust_species_track == 1) {
-    const double f_ol = std::clamp(
-        my_chemistry->dust_silicate_olivine_fraction, 0.0, 1.0);
+    const double f_mg_sil = std::clamp(
+        my_chemistry->dust_silicate_mg_fraction, 0.0, 1.0);
     grackle::impl::View<gr_float***> dust_bulk(
         my_fields->dust_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -1091,12 +1091,12 @@ void make_consistent(
         my_fields->dust_density_silicate,
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> dust_oliv(
-        my_fields->dust_density_olivine,
+    grackle::impl::View<gr_float***> dust_mg_sil(
+        my_fields->dust_density_mg_silicate,
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> dust_pyro(
-        my_fields->dust_density_pyroxene,
+    grackle::impl::View<gr_float***> dust_fe_sil(
+        my_fields->dust_density_fe_silicate,
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
     grackle::impl::View<const gr_float***> dust_carb(
@@ -1106,16 +1106,16 @@ void make_consistent(
     for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
       for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          double oliv = dust_oliv(i, j, k);
-          double pyro = dust_pyro(i, j, k);
+          double mg_sil = dust_mg_sil(i, j, k);
+          double fe_sil = dust_fe_sil(i, j, k);
           const double sil_compat = dust_sil(i, j, k);
-          if (oliv + pyro <= 0.0 && sil_compat > 0.0) {
-            oliv = f_ol * sil_compat;
-            pyro = (1.0 - f_ol) * sil_compat;
-            dust_oliv(i, j, k) = (gr_float)oliv;
-            dust_pyro(i, j, k) = (gr_float)pyro;
+          if (mg_sil + fe_sil <= 0.0 && sil_compat > 0.0) {
+            mg_sil = f_mg_sil * sil_compat;
+            fe_sil = (1.0 - f_mg_sil) * sil_compat;
+            dust_mg_sil(i, j, k) = (gr_float)mg_sil;
+            dust_fe_sil(i, j, k) = (gr_float)fe_sil;
           }
-          const double sil = oliv + pyro;
+          const double sil = mg_sil + fe_sil;
           dust_sil(i, j, k) = (gr_float)sil;
           dust_bulk(i, j, k) = (gr_float)(sil + dust_carb(i, j, k));
         }

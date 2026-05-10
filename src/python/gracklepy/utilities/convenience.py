@@ -31,13 +31,15 @@ _DUST_SPECIES_ELEMENT_FIELDS = {
     "Fe": "metal_density_iron",
 }
 
-# Default olivine / pyroxene / carbonaceous mass split for IC seeding.
+# Default Mg-silicate / Fe-silicate / carbonaceous mass split for IC seeding.
 # REF: Draine 2003 ARA&A 41, 241; Zubko, Dwek & Arendt 2004 ApJS 152, 211 —
 # canonical MW diffuse-ISM split is ~0.6-0.7 silicate, ~0.3-0.4 carbonaceous.
+# The Mg/Fe split follows COLIBRE's equal-number Mg2SiO4/Fe2SiO4 seed, which
+# is not an equal-mass split.
 _DUST_SPECIES_FRACTIONS = {
     "silicate":     0.65,
-    "olivine":      0.50,
-    "pyroxene":     0.50,
+    "mg_silicate":  0.408428,
+    "fe_silicate":  0.591572,
     "carbonaceous": 0.35,
 }
 
@@ -63,9 +65,8 @@ def seed_dust_species_metal_elements(fc):
     Fill metal_density_carbon/oxygen/magnesium/silicon/iron from
     fc['metal_density'] using solar mass fractions. Required when
     dust_species_track==1: dust_update_species() reads these as the
-    gas-phase reservoirs for olivine and pyroxene accretion
-    (Mg/Fe/Si/O via Choban+2022 key-reactant scheme) and feeds shock
-    destruction back into them.
+    gas-phase reservoirs for COLIBRE-style carbonaceous and silicate
+    accretion and feeds destruction back into them.
     """
     fractions = solar_metal_mass_fractions(_DUST_SPECIES_ELEMENT_FIELDS.keys())
     for el, field in _DUST_SPECIES_ELEMENT_FIELDS.items():
@@ -74,20 +75,21 @@ def seed_dust_species_metal_elements(fc):
 
 def seed_dust_species_dust(fc):
     """
-    Split fc['dust_density'] into olivine / pyroxene / carbonaceous
-    reservoirs using canonical MW diffuse-ISM mass fractions (Draine 2003).
+    Split fc['dust_density'] into Mg-silicate / Fe-silicate / carbonaceous
+    reservoirs using canonical MW diffuse-ISM mass fractions (Draine 2003)
+    and the COLIBRE equal-molecule Mg2SiO4/Fe2SiO4 seed split.
     """
     silicate = (
         _DUST_SPECIES_FRACTIONS["silicate"] * fc["dust_density"]
     )
-    fc["dust_density_olivine"][:] = (
-        _DUST_SPECIES_FRACTIONS["olivine"] * silicate
+    fc["dust_density_mg_silicate"][:] = (
+        _DUST_SPECIES_FRACTIONS["mg_silicate"] * silicate
     )
-    fc["dust_density_pyroxene"][:] = (
-        _DUST_SPECIES_FRACTIONS["pyroxene"] * silicate
+    fc["dust_density_fe_silicate"][:] = (
+        _DUST_SPECIES_FRACTIONS["fe_silicate"] * silicate
     )
     fc["dust_density_silicate"][:] = (
-        fc["dust_density_olivine"] + fc["dust_density_pyroxene"]
+        fc["dust_density_mg_silicate"] + fc["dust_density_fe_silicate"]
     )
     fc["dust_density_carbonaceous"][:] = (
         _DUST_SPECIES_FRACTIONS["carbonaceous"] * fc["dust_density"]
