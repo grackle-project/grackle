@@ -33,7 +33,6 @@ OBJS_CONFIG_LIB = \
         dust/grain_species_info.lo \
         dynamic_api.lo \
         api/units.lo \
-	index_helper.lo \
         initialize_chemistry_data.lo \
         initialize_cloudy_data.lo \
         init_misc_species_cool_rates.lo \

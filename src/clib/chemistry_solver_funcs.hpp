@@ -28,7 +28,7 @@
 #include "grackle.h"
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "full_rxn_rate_buf.hpp"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "LUT.hpp"
 

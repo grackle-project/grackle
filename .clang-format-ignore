@@ -27,8 +27,6 @@ src/clib/dynamic_api.cpp
 src/clib/fortran_func_decls.h
 src/clib/fortran_func_wrappers.hpp
 src/clib/grackle_macros.h
-src/clib/index_helper.c
-src/clib/index_helper.h
 src/clib/init_misc_species_cool_rates.cpp
 src/clib/initialize_UVbackground_data.cpp
 src/clib/initialize_chemistry_data.cpp

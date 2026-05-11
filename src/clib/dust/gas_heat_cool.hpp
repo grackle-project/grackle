@@ -14,7 +14,7 @@
 
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "support/status_reporting.hpp"
 #include "support/config.hpp"

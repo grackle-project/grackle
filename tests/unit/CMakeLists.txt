@@ -8,6 +8,10 @@ add_executable(testFrozenKeyIdxBiMap
 target_link_libraries(testFrozenKeyIdxBiMap testdeps)
 gtest_discover_tests(testFrozenKeyIdxBiMap)
 
+add_executable(runIndexHelperTests support/test_index_helper.cpp)
+target_link_libraries(runIndexHelperTests testdeps)
+gtest_discover_tests(runIndexHelperTests)
+
 add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
 target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
