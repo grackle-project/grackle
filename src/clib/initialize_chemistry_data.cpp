@@ -220,6 +220,12 @@ static int local_initialize_chemistry_data_(
 
   }
 
+  if (my_chemistry->primordial_chemistry == 0 &&
+      my_chemistry->dust_recombination_cooling > 0) {
+    fprintf(stderr, "ERROR: dust_recombination_cooling > 0 requires primordial_chemistry > 0.\n");
+    return GR_FAIL;
+  }
+
   if (my_chemistry->dust_species > 0 &&
       my_chemistry->use_dust_density_field == 0) {
     fprintf(stderr, "ERROR: dust_species > 0 requires use_dust_density_field > 0.\n");
