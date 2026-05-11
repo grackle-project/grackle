@@ -83,7 +83,6 @@ add_library(Grackle_Grackle
 
   # C source files
   index_helper.c
-  status_reporting.c status_reporting.h
 
   # auto-generated C++ source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.cpp
@@ -147,6 +146,7 @@ add_library(Grackle_Grackle
   support/FrozenKeyIdxBiMap_detail.hpp
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
+  support/status_reporting.cpp support/status_reporting.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp

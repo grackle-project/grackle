@@ -16,7 +16,7 @@
 #include "grackle.h"
 #include "index_helper.h"
 #include "internal_types.hpp"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 #include "support/config.hpp"
 
 #include <cmath>

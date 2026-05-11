@@ -46,7 +46,7 @@ OBJS_CONFIG_LIB = \
         make_consistent.lo \
         scale_fields.lo \
         solve_rate_cool.lo \
-        status_reporting.lo \
+        support/status_reporting.lo \
         update_UVbackground_rates.lo \
         calc_tdust_1d_g.lo \
         dust/calc_tdust_3d.lo \
