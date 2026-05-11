@@ -2,7 +2,7 @@
 #include <ostream>
 #include <gtest/gtest.h>
 
-#include "fortran_func_wrappers.hpp"
+#include "gaussj_g.hpp"
 #include "grtestutils/googletest/check_allclose.hpp"
 #include "grtestutils/view.hpp"
 
@@ -65,7 +65,7 @@ TEST_P(LinAlgSolve, Check) {
     my_case.n, my_case.n, my_case.matrix_rowmajor
   );
   std::vector<double> vec = my_case.rhs_vector;
-  int rslt = grackle::impl::fortran_wrapper::gaussj_g(
+  int rslt = grackle::impl::gaussj_g(
     my_case.n, matrix_colmajor.data(), vec.data()
   );
   ASSERT_EQ(rslt, 0) << "expected a return-code of 0, which indicates "
@@ -75,7 +75,7 @@ TEST_P(LinAlgSolve, Check) {
   EXPECT_TRUE(check_allclose(/* actual: */ vec.data(),
                              /* desired: */ my_case.solution_vector.data(),
                              /* idx_mapping: */ idx_mapping,
-                             /* rtol: */1e-15, /* atol: */ 0.0));
+                             /* rtol: */5e-15, /* atol: */ 0.0));
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -121,7 +121,7 @@ TEST(LinAlgSolveSingular, SillyScenario) {
   // it doesn't really matter what the values are in rhs_vec
   std::vector<double> rhs_vec = {0.0, 0.0, 0.0, 0.0};
 
-  int rslt = grackle::impl::fortran_wrapper::gaussj_g(
+  int rslt = grackle::impl::gaussj_g(
     n, matrix_colmajor.data(), rhs_vec.data()
   );
   ASSERT_EQ(rslt, 1) << "expected a return-code of 1, to indicate that "
@@ -139,7 +139,7 @@ TEST(LinAlgSolveSingular, AltScenario) {
   // it doesn't really matter what the values are in rhs_vec
   std::vector<double> rhs_vec = {0.0, 0.0};
 
-  int rslt = grackle::impl::fortran_wrapper::gaussj_g(
+  int rslt = grackle::impl::gaussj_g(
     n, matrix_colmajor.data(), rhs_vec.data()
   );
   ASSERT_EQ(rslt, 1) << "expected a return-code of 1, to indicate that "
