@@ -17,6 +17,7 @@
 
 #include "cool1d_multi_g.hpp"
 #include "cool_multi_time.hpp"
+#include "gas_props.hpp"
 #include "grackle.h"
 #include "support/index_helper.hpp"
 #include "inject_model/misc.hpp"
@@ -104,6 +105,12 @@ void cool_multi_time(
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask[i] = MASK_TRUE;
       }
+
+      // calculate the basic gas properties (tgas, mmw, rhoH)
+      GRIMPL_NS::basic_gas_props(tgas.data(), mmw.data(), rhoH.data(), imetal,
+                                 itmask.data(), my_chemistry,
+                                 &my_rates->cloudy_primordial, my_fields,
+                                 internalu, idx_range);
 
       // Compute the cooling rate
       int dummy_iter_arg=1;
