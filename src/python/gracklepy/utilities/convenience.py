@@ -60,19 +60,6 @@ def solar_metal_mass_fractions(elements=("C", "O", "Mg", "Si", "Fe")):
     return {el: solar_abundance[el] * atomic_mass[el] / total for el in elements}
 
 
-def seed_dust_species_metal_elements(fc):
-    """
-    Fill metal_density_carbon/oxygen/magnesium/silicon/iron from
-    fc['metal_density'] using solar mass fractions. Required when
-    dust_species_track==1: dust_update_species() reads these as the
-    gas-phase reservoirs for COLIBRE-style carbonaceous and silicate
-    accretion and feeds destruction back into them.
-    """
-    fractions = solar_metal_mass_fractions(_DUST_SPECIES_ELEMENT_FIELDS.keys())
-    for el, field in _DUST_SPECIES_ELEMENT_FIELDS.items():
-        fc[field][:] = fractions[el] * fc["metal_density"]
-
-
 def seed_dust_species_dust(fc):
     """
     Split fc['dust_density'] into Mg-silicate / Fe-silicate / carbonaceous
@@ -93,6 +80,57 @@ def seed_dust_species_dust(fc):
     )
     fc["dust_density_carbonaceous"][:] = (
         _DUST_SPECIES_FRACTIONS["carbonaceous"] * fc["dust_density"]
+    )
+
+
+def seed_dust_species_metal_elements(fc):
+    """
+    Seed the gas-phase per-element reservoirs so that for each tracked
+    element X in {C, O, Mg, Si, Fe} the total elemental budget is
+    conserved:
+
+        gas_X + dust_X = solar_X_share * metal_density_total
+
+    where ``metal_density_total`` is the input fc['metal_density']
+    (the Z-scaled solar metal share) before any subtraction. Must run
+    AFTER seed_dust_species_dust(): reads the dust species fields and
+    the chemistry_data stoichiometric f_X attributes to compute dust_X.
+
+    Also reduces fc['metal_density'] to its gas-phase-only value
+    (subtracting total dust mass) so the C++ make_consistent invariant
+    ``metal_density = sum(tracked gas X) + untracked metals`` holds.
+
+    Why: prior implementation set gas_X = solar_X_share * metal_density
+    while dust was seeded independently. Total elemental budget exceeded
+    solar by (1 + DGR/metal_mass_fraction) ≈ 1.77x at MW conditions,
+    putting IC DTM at ~0.55 instead of the physically motivated ~0.15.
+    """
+    chem = fc.chemistry_data
+    fractions = solar_metal_mass_fractions(_DUST_SPECIES_ELEMENT_FIELDS.keys())
+
+    metal_density_total = np.asarray(fc["metal_density"]).copy()
+    dust_mg_sil = np.asarray(fc["dust_density_mg_silicate"])
+    dust_fe_sil = np.asarray(fc["dust_density_fe_silicate"])
+    dust_carb = np.asarray(fc["dust_density_carbonaceous"])
+
+    dust_per_element = {
+        "C":  dust_carb,
+        "O":  (chem.dust_mg_silicate_f_O * dust_mg_sil +
+               chem.dust_fe_silicate_f_O * dust_fe_sil),
+        "Mg": chem.dust_mg_silicate_f_Mg * dust_mg_sil,
+        "Si": (chem.dust_mg_silicate_f_Si * dust_mg_sil +
+               chem.dust_fe_silicate_f_Si * dust_fe_sil),
+        "Fe": chem.dust_fe_silicate_f_Fe * dust_fe_sil,
+    }
+
+    total_dust = np.zeros_like(metal_density_total)
+    for el, field in _DUST_SPECIES_ELEMENT_FIELDS.items():
+        total_X = fractions[el] * metal_density_total
+        fc[field][:] = np.maximum(total_X - dust_per_element[el], 0.0)
+        total_dust = total_dust + dust_per_element[el]
+
+    fc["metal_density"][:] = np.maximum(
+        metal_density_total - total_dust, 0.0
     )
 
 def check_convergence(fc1, fc2, fields=None, tol=0.01):
@@ -283,8 +321,11 @@ def setup_fluid_container(my_chemistry,
         fc[field][:] = state_vals.get(field, tiny_density)
 
     if my_chemistry.dust_species_track == 1:
-        seed_dust_species_metal_elements(fc)
+        # Order matters: seed dust species first so that
+        # seed_dust_species_metal_elements can subtract their mass from
+        # the per-element gas-phase budgets (elemental conservation).
         seed_dust_species_dust(fc)
+        seed_dust_species_metal_elements(fc)
 
     fc.calculate_mean_molecular_weight()
     fc["internal_energy"] = temperature / \

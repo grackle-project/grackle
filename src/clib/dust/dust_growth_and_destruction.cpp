@@ -165,6 +165,7 @@ void grackle::impl::dust_growth_species(
   bool use_H2_fields = (my_chemistry->primordial_chemistry > 1);
   bool use_HD_fields = (my_chemistry->primordial_chemistry > 2);
   bool use_HeH_fields = (my_chemistry->primordial_chemistry > 3);
+  bool use_metal_H_fields = (my_chemistry->metal_chemistry == 1);
   grackle::impl::View<gr_float***> HI(
       use_H_fields ? my_fields->HI_density : my_fields->density,
       my_fields->grid_dimension[0], my_fields->grid_dimension[1],
@@ -195,6 +196,34 @@ void grackle::impl::dust_growth_species(
       my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> HeHII(
       use_HeH_fields ? my_fields->HeHII_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> OH(
+      use_metal_H_fields ? my_fields->OH_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> H2O(
+      use_metal_H_fields ? my_fields->H2O_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> CH(
+      use_metal_H_fields ? my_fields->CH_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> CH2(
+      use_metal_H_fields ? my_fields->CH2_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> OHII(
+      use_metal_H_fields ? my_fields->OHII_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> H2OII(
+      use_metal_H_fields ? my_fields->H2OII_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> H3OII(
+      use_metal_H_fields ? my_fields->H3OII_density : my_fields->density,
       my_fields->grid_dimension[0], my_fields->grid_dimension[1],
       my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> mC(
@@ -303,6 +332,16 @@ void grackle::impl::dust_growth_species(
         if (use_HeH_fields) {
           rho_H_nuclei += HDII(i, idx_range.j, idx_range.k) / 3.0 +
                           HeHII(i, idx_range.j, idx_range.k) / 5.0;
+        }
+        if (use_metal_H_fields) {
+          rho_H_nuclei +=
+              OH(i, idx_range.j, idx_range.k) / 17.0 +
+              H2O(i, idx_range.j, idx_range.k) * (2.0 / 18.0) +
+              CH(i, idx_range.j, idx_range.k) / 13.0 +
+              CH2(i, idx_range.j, idx_range.k) * (2.0 / 14.0) +
+              OHII(i, idx_range.j, idx_range.k) / 17.0 +
+              H2OII(i, idx_range.j, idx_range.k) * (2.0 / 18.0) +
+              H3OII(i, idx_range.j, idx_range.k) * (3.0 / 19.0);
         }
       }
       double nH = rho_H_nuclei * dens_proper / mh;
@@ -521,6 +560,7 @@ void grackle::impl::dust_destruction_species(
   bool use_H2_fields = (my_chemistry->primordial_chemistry > 1);
   bool use_HD_fields = (my_chemistry->primordial_chemistry > 2);
   bool use_HeH_fields = (my_chemistry->primordial_chemistry > 3);
+  bool use_metal_H_fields = (my_chemistry->metal_chemistry == 1);
   grackle::impl::View<gr_float***> HI(
       use_H_fields ? my_fields->HI_density : my_fields->density,
       my_fields->grid_dimension[0], my_fields->grid_dimension[1],
@@ -551,6 +591,34 @@ void grackle::impl::dust_destruction_species(
       my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> HeHII(
       use_HeH_fields ? my_fields->HeHII_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> OH(
+      use_metal_H_fields ? my_fields->OH_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> H2O(
+      use_metal_H_fields ? my_fields->H2O_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> CH(
+      use_metal_H_fields ? my_fields->CH_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> CH2(
+      use_metal_H_fields ? my_fields->CH2_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> OHII(
+      use_metal_H_fields ? my_fields->OHII_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> H2OII(
+      use_metal_H_fields ? my_fields->H2OII_density : my_fields->density,
+      my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> H3OII(
+      use_metal_H_fields ? my_fields->H3OII_density : my_fields->density,
       my_fields->grid_dimension[0], my_fields->grid_dimension[1],
       my_fields->grid_dimension[2]);
   bool use_sne = (my_chemistry->use_sne_field > 0);
@@ -627,6 +695,16 @@ void grackle::impl::dust_destruction_species(
         if (use_HeH_fields) {
           rho_H_nuclei += HDII(i, idx_range.j, idx_range.k) / 3.0 +
                           HeHII(i, idx_range.j, idx_range.k) / 5.0;
+        }
+        if (use_metal_H_fields) {
+          rho_H_nuclei +=
+              OH(i, idx_range.j, idx_range.k) / 17.0 +
+              H2O(i, idx_range.j, idx_range.k) * (2.0 / 18.0) +
+              CH(i, idx_range.j, idx_range.k) / 13.0 +
+              CH2(i, idx_range.j, idx_range.k) * (2.0 / 14.0) +
+              OHII(i, idx_range.j, idx_range.k) / 17.0 +
+              H2OII(i, idx_range.j, idx_range.k) * (2.0 / 18.0) +
+              H3OII(i, idx_range.j, idx_range.k) * (3.0 / 19.0);
         }
       }
       double nH = rho_H_nuclei * dens_proper / mh;
