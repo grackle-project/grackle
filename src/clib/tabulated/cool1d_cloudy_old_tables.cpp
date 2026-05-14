@@ -21,6 +21,7 @@
 #include "../fortran_func_decls.h"
 #include "../fortran_func_wrappers.hpp"
 #include "../utils-cpp.hpp"
+#include "./common.hpp"
 
 #include "cool1d_cloudy_old_tables.hpp"
 
@@ -44,7 +45,6 @@ void cool1d_cloudy_old_tables(
 
   int i;
   double inv_log10, log10_tCMB;
-  double dclPar[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION] = {};
 
   // Slice locals
 
@@ -67,35 +67,8 @@ void cool1d_cloudy_old_tables(
   log10_tCMB = std::log10(comp2);
 
   // Calculate parameter value slopes
-
-  dclPar[0] =
-      (cloudy_table.grid_parameters[0][cloudy_table.grid_dimension[0] - 1] -
-       cloudy_table.grid_parameters[0][0]) /
-      (double)(cloudy_table.grid_dimension[0] - 1);
-  if (cloudy_table.grid_rank > 1) {
-    dclPar[1] =
-        (cloudy_table.grid_parameters[1][cloudy_table.grid_dimension[1] - 1] -
-         cloudy_table.grid_parameters[1][0]) /
-        (double)(cloudy_table.grid_dimension[1] - 1);
-  }
-  if (cloudy_table.grid_rank > 2) {
-    dclPar[2] =
-        (cloudy_table.grid_parameters[2][cloudy_table.grid_dimension[2] - 1] -
-         cloudy_table.grid_parameters[2][0]) /
-        (double)(cloudy_table.grid_dimension[2] - 1);
-  }
-  if (cloudy_table.grid_rank > 3) {
-    dclPar[3] =
-        (cloudy_table.grid_parameters[3][cloudy_table.grid_dimension[3] - 1] -
-         cloudy_table.grid_parameters[3][0]) /
-        (double)(cloudy_table.grid_dimension[3] - 1);
-  }
-  if (cloudy_table.grid_rank > 4) {
-    dclPar[4] =
-        (cloudy_table.grid_parameters[4][cloudy_table.grid_dimension[4] - 1] -
-         cloudy_table.grid_parameters[4][0]) /
-        (double)(cloudy_table.grid_dimension[4] - 1);
-  }
+  const std::array<double, tabulated_detail::MAX_RANK> dclPar =
+      tabulated_detail::param_deltas(cloudy_table);
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
