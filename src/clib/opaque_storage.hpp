@@ -18,6 +18,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "ratequery.hpp"
+#include "support/PartMap.hpp"
 
 /// a struct that used to wrap some private storage details
 ///
@@ -46,6 +47,17 @@
 /// state. The gr_opaque_storage struct can be used to help us gradually
 /// transition towards this case
 struct gr_opaque_storage {
+  /// categorizes the kinds of species evolved in the chemical network,
+  /// see @ref SpKind for details (about the kinds and how this is used)
+  ///
+  /// @note
+  /// At the time of writing, @ref SpLUT is a compound lookup table that
+  /// describes species of all kinds while @ref OnlyGrainSpLUT just describes
+  /// grain species. The goal is to transition to a model where @ref SpLUT is
+  /// only used to access indices of chemical species while @ref OnlyGrainSpLUT
+  /// and this instance are used to access indices of grain species
+  GRIMPL_NS::PartMap species_kind_map;
+
   // in the future, we may want refactor the following set of members into
   // a separate datatype that takes full responsibility for "normal"
   // collisional rates
@@ -57,7 +69,7 @@ struct gr_opaque_storage {
   /// by the input parameters (here "ln" stands for natural log)
   ///@{
   /// holds the collision rate tables
-  grackle::impl::CollisionalRxnRateCollection* kcol_rate_tables;
+  GRIMPL_NS::CollisionalRxnRateCollection* kcol_rate_tables;
   /// a list of the indices that are actualy used from kcol_rate_tables in the
   /// current calculation
   int* used_kcol_rate_indices;
@@ -96,14 +108,14 @@ struct gr_opaque_storage {
   /// > contains some extra information that is unnecessary during the
   /// > calculations). An alternative would be to briefly initialize an
   /// > instance during setup and then repack the data.
-  grackle::impl::GrainSpeciesInfo* grain_species_info;
+  GRIMPL_NS::GrainSpeciesInfo* grain_species_info;
 
   /// Tracks metal and grain yields for each modeled injection pathway as well
   /// as other grain properties
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props;
+  GRIMPL_NS::GrainMetalInjectPathways* inject_pathway_props;
 
   /// used to implement the experimental ratequery machinery
-  grackle::impl::ratequery::Registry* registry;
+  GRIMPL_NS::ratequery::Registry* registry;
 };
 
 #endif /* OPAQUE_STORAGE_HPP */
