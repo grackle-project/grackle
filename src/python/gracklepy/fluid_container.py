@@ -229,6 +229,24 @@ _indirectly_calculated_fields.update(
      for field in _dust_temperatures[max(_dust_temperatures.keys())]}
 )
 
+def _required_nuclides(my_chemistry):
+    """
+    Return the names of all the elements that we are following in an atomic
+    state in some form, either as individual ions or as the entire element.
+    """
+    elements = ()
+    if my_chemistry.primordial_chemistry > 0:
+        elements += ("H", "He")
+    if my_chemistry.primordial_chemistry > 2:
+        elements += ("D",)
+    if my_chemistry.metal_chemistry > 0:
+        elements += ("C", "O", "Si")
+    if my_chemistry.dust_species > 0:
+        elements += ("Mg",)
+    if my_chemistry.dust_species > 1:
+        elements += ("Al", "S", "Fe")
+    return elements
+
 def _ordered_inject_pathway_yield_densities(my_chemistry):
     """
     Returns the names of metal yield density field names for each injection
@@ -403,6 +421,10 @@ class FluidContainer(dict):
         return _required_density_fields(self.chemistry_data)
 
     @property
+    def nuclides(self):
+        return _required_nuclides(self.chemistry_data)
+
+    @property
     def inject_pathway_density_yield_fields(self):
         # the order of returned fields is significant
         return _ordered_inject_pathway_yield_densities(self.chemistry_data)
@@ -555,17 +577,17 @@ class FluidContainer(dict):
               _fc_calculated_fields:
 
                 if field in _indirectly_calculated_fields:
-                    fname = _indirectly_calculated_fields[field]
+                    field_name = _indirectly_calculated_fields[field]
                 else:
-                    fname = f"calculate_{field}"
+                    field_name = f"calculate_{field}"
 
-                func = getattr(self, fname, None)
+                func = getattr(self, field_name, None)
                 if func is None:
                     raise RuntimeError(f"No function for calculating {field}.")
 
-                if fname not in called:
+                if field_name not in called:
                     func()
-                    called.append(fname)
+                    called.append(field_name)
 
         else:
             all_fields = data.keys()

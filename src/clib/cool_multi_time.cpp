@@ -19,7 +19,7 @@
 #include "cool_multi_time.hpp"
 #include "gas_props.hpp"
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_units.hpp"
 #include "internal_types.hpp"
@@ -36,7 +36,7 @@ void cool_multi_time(
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates
 )
 {
-  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   // Convert densities from comoving to 'proper'
   if (internalu.extfields_in_comoving == 1)  {
