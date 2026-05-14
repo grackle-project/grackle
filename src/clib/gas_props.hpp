@@ -129,9 +129,9 @@ inline double self_consistent_Tgas(double tgas0, double nH2, double n_other,
 /// @param[in] idx_range Specifies the current index-range
 inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
                             const gr_mask_type* itmask,
-                            chemistry_data* my_chemistry,
-                            cloudy_data* primordial_cloudy_data,
-                            grackle_field_data* my_fields,
+                            const chemistry_data* my_chemistry,
+                            const cloudy_data* primordial_cloudy_data,
+                            const grackle_field_data* my_fields,
                             InternalGrUnits internalu, IndexRange idx_range) {
   // construct 3d views
   View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
