@@ -135,6 +135,7 @@ add_library(Grackle_Grackle
   ratequery.cpp ratequery.hpp
   rate_functions.cpp
   rate_timestep_g.cpp rate_timestep_g.hpp
+  runtime_splut.hpp
   solve_cubic_equation.cpp solve_cubic_equation.hpp
   scale_fields.cpp scale_fields.hpp
   self_shielding_err_check.hpp
