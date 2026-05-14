@@ -12,7 +12,7 @@
 ************************************************************************/
 
 #include <cstdio>
-#include "calc_temp_cloudy.hpp"
+#include "../tabulated/calc_temp_cloudy.hpp"
 #include "grackle.h"
 #include "support/index_helper.hpp"
 #include "internal_units.hpp"

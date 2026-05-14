@@ -17,14 +17,14 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_decls.h"
-#include "support/index_helper.hpp"
-#include "scale_fields.hpp"
-#include "support/config.hpp"
-#include "utils-cpp.hpp"
+#include "../fortran_func_decls.h"
+#include "../scale_fields.hpp"
+#include "../support/config.hpp"
+#include "../support/index_helper.hpp"
+#include "../utils-cpp.hpp"
 
 #include "calc_temp_cloudy.hpp"
-#include "calc_temp1d_cloudy_g.hpp"
+#include "calc_temp1d_cloudy.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -106,9 +106,9 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
       }
 
       // Calculate temperature and mean molecular weight
-      calc_temp1d_cloudy_g(rhoH.data(), tgas.data(), mmw.data(), dom, zr,
-                           imetal, itmask.data(), my_chemistry,
-                           cloudy_primordial, my_fields, internalu, idx_range);
+      calc_temp1d_cloudy(rhoH.data(), tgas.data(), mmw.data(), dom, zr, imetal,
+                         itmask.data(), my_chemistry, cloudy_primordial,
+                         my_fields, internalu, idx_range);
 
       // Record the computed temperature values in the output array
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {

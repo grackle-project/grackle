@@ -95,13 +95,9 @@ add_library(Grackle_Grackle
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
   api/units.cpp
-  calc_temp_cloudy.cpp calc_temp_cloudy.hpp
-  calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
   ceiling_species.hpp
   cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
-  cool1d_cloudy_g.cpp cool1d_cloudy_g.hpp
-  cool1d_cloudy_old_tables_g.cpp cool1d_cloudy_old_tables_g.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time.cpp cool_multi_time.hpp
   dust_props.hpp
@@ -119,7 +115,6 @@ add_library(Grackle_Grackle
   full_rxn_rate_buf.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
-  initialize_cloudy_data.cpp initialize_cloudy_data.hpp
   initialize_rates.cpp initialize_rates.hpp
   initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp
   inject_model/grain_metal_inject_pathways.hpp
@@ -146,6 +141,11 @@ add_library(Grackle_Grackle
   support/h5io.cpp support/h5io.hpp
   support/index_helper.hpp
   support/status_reporting.cpp support/status_reporting.hpp
+  tabulated/calc_temp_cloudy.cpp tabulated/calc_temp_cloudy.hpp
+  tabulated/calc_temp1d_cloudy.cpp tabulated/calc_temp1d_cloudy.hpp
+  tabulated/cool1d_cloudy.cpp tabulated/cool1d_cloudy.hpp
+  tabulated/cool1d_cloudy_old_tables.cpp tabulated/cool1d_cloudy_old_tables.hpp
+  tabulated/initialize_cloudy_data.cpp tabulated/initialize_cloudy_data.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp

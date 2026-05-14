@@ -19,8 +19,6 @@
 #include <cstdio>
 #include <vector>
 
-#include "cool1d_cloudy_g.hpp"
-#include "cool1d_cloudy_old_tables_g.hpp"
 #include "cool1d_multi_g.hpp"
 #include "gas_props.hpp"
 #include "grackle.h"
@@ -29,6 +27,8 @@
 #include "dust_props.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
+#include "tabulated/cool1d_cloudy.hpp"
+#include "tabulated/cool1d_cloudy_old_tables.hpp"
 #include "utils-cpp.hpp"
 
 void grackle::impl::cool1d_multi_g(
@@ -1222,10 +1222,10 @@ void grackle::impl::cool1d_multi_g(
   if (my_chemistry->primordial_chemistry == 0) {
     iZscale = 0;
     mycmbTfloor = 0;
-    grackle::impl::cool1d_cloudy_g(rhoH, metallicity, logTlininterp_buf.logtem,
-                                   edot, comp2, dom, zr, mycmbTfloor,
-                                   my_chemistry->UVbackground, iZscale, itmask,
-                                   my_rates->cloudy_primordial, idx_range);
+    grackle::impl::cool1d_cloudy(rhoH, metallicity, logTlininterp_buf.logtem,
+                                 edot, comp2, dom, zr, mycmbTfloor,
+                                 my_chemistry->UVbackground, iZscale, itmask,
+                                 my_rates->cloudy_primordial, idx_range);
   }
 
   // Store the electron density in a 1d array
@@ -1329,13 +1329,13 @@ void grackle::impl::cool1d_multi_g(
 
     if (my_rates->cloudy_data_new == 1) {
       iZscale = 1;
-      grackle::impl::cool1d_cloudy_g(
+      grackle::impl::cool1d_cloudy(
           rhoH, metallicity, logTlininterp_buf.logtem, edot, comp2, dom, zr,
           my_chemistry->cmb_temperature_floor, my_chemistry->UVbackground,
           iZscale, itmask_tab.data(), my_rates->cloudy_metal, idx_range);
 
     } else {
-      grackle::impl::cool1d_cloudy_old_tables_g(
+      grackle::impl::cool1d_cloudy_old_tables(
           rhoH, metallicity, logTlininterp_buf.logtem, edot, comp2, dom, zr,
           itmask_tab.data(), my_chemistry, my_rates->cloudy_metal,
           my_fields->density, my_fields->e_density, my_fields, idx_range);

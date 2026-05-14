@@ -13,12 +13,12 @@
 // This file was initially generated automatically during conversion of the
 // calc_temp_cloudy_g function from FORTRAN to C++
 
-#ifndef CALC_TEMP_CLOUDY_HPP
-#define CALC_TEMP_CLOUDY_HPP
+#ifndef TABULATED_CALC_TEMP_CLOUDY_HPP
+#define TABULATED_CALC_TEMP_CLOUDY_HPP
 
 #include "grackle.h"  // gr_float
-#include "internal_units.hpp"
-#include "support/config.hpp"
+#include "../internal_units.hpp"
+#include "../support/config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -44,4 +44,4 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* CALC_TEMP_CLOUDY_HPP */
+#endif /* TABULATED_CALC_TEMP_CLOUDY_HPP */
