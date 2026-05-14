@@ -19,7 +19,7 @@
 #include "grackle.h"                // gr_float
 #include "../fortran_func_decls.h"  // gr_mask_int
 #include "../support/config.hpp"
-#include "../support/index_helper.hpp" // IndexRange
+#include "../support/index_helper.hpp"  // IndexRange
 
 namespace GRIMPL_NAMESPACE_DECL {
 
