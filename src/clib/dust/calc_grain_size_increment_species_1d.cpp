@@ -27,7 +27,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
     IndexRange idx_range, const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
     const double* SN_fsp, double* SN_r0sp_data, double bulk_density, double* sigma_per_gas_mass,
-    double* kappa_data, int* gr_N, int gr_Size, double* SN_kp0sp_data) {
+    double* kappa_data, int* gr_N, int gr_Size, double* opac_coef_table_data) {
   // input
   int iSN;
 
@@ -39,7 +39,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
   grackle::impl::View<double**> SN_r0sp(SN_r0sp_data, 3, SN0_N);
 
   // opacity table
-  grackle::impl::View<double**> SN_kp0sp(SN_kp0sp_data, gr_Size, SN0_N);
+  grackle::impl::View<double**> opac_coef_table(opac_coef_table_data, gr_Size, SN0_N);
 
   // output
   grackle::impl::View<double**> kappa(kappa_data, gr_N[1], in);
@@ -230,10 +230,10 @@ void grackle::impl::calc_grain_size_increment_species_1d(
         for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
           if (SN_fsp[iSN] > 0.e0) {
             SN_kpsp = 4.e0 * pi_local_var / 3.e0 * bulk_density *
-                      (SN_kp0sp(iTd0 + 3, iSN) +
-                       3.e0 * SN_kp0sp(iTd0 + 2, iSN) * drsp[i] +
-                       3.e0 * SN_kp0sp(iTd0 + 1, iSN) * std::pow(drsp[i], 2) +
-                       SN_kp0sp(iTd0 + 0, iSN) * std::pow(drsp[i], 3));
+                      (opac_coef_table(iTd0 + 3, iSN) +
+                       3.e0 * opac_coef_table(iTd0 + 2, iSN) * drsp[i] +
+                       3.e0 * opac_coef_table(iTd0 + 1, iSN) * std::pow(drsp[i], 2) +
+                       opac_coef_table(iTd0 + 0, iSN) * std::pow(drsp[i], 3));
           } else {
             SN_kpsp = 0.e0;
           }
