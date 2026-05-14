@@ -86,7 +86,7 @@ grackle::impl::GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
 
 // ugh, I don't like this...
 grackle::impl::GrainSpeciesInfo mk_invalid_GrainSpeciesInfo() {
-  return {-1, nullptr, grackle::impl::mk_invalid_FrozenKeyIdxBiMap()};
+  return {-1, nullptr, -1, grackle::impl::mk_invalid_FrozenKeyIdxBiMap()};
 }
 
 }  // anonymous namespace
@@ -300,7 +300,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
   }
 
   GrainSpeciesInfo out{
-      n_species, species_info,
+      n_species, species_info, dust_species_parameter,
       new_FrozenKeyIdxBiMap(names, n_species, BiMapMode::COPIES_KEYDATA)};
 
   if (FrozenKeyIdxBiMap_is_ok(&out.name_map)) {
