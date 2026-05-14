@@ -20,137 +20,16 @@
 #include "fortran_func_decls.h" // gr_mask_type
 #include "support/status_reporting.hpp"
 
+// for historical reasons, some files that include the current header are
+// looking for macros defined in support/config.hpp
+// -> since most files include that header anyway (for the proper declaration
+//    of the internal namespace), this problem will sort itself out with time
+#include "support/config.hpp"
+
 #include <cmath>
 #include <cstdio> // printf
 #include <type_traits> // std::is_floating_point_v, std::is_same_v
 
-// ---------------------------------------------
-// first, we define some generally useful macros
-// ---------------------------------------------
-/// @def OMP_PRAGMA
-/// Macro used to wrap OpenMP's pragma directives.
-///
-/// When the program:
-///  * is compiled with OpenMP, the pragma contents are honored.
-///  * is NOT compiled with OpenMP, the pragma contents are ignored.
-///
-/// @note
-/// This macro is implemented using the ``_Pragma`` operator, described
-/// [here](https://en.cppreference.com/w/cpp/preprocessor/impl). More details
-/// can be found [here](https://gcc.gnu.org/onlinedocs/cpp/Pragmas.html).
-#ifdef _OPENMP
-#define OMP_PRAGMA(x) _Pragma(#x)
-#else
-#define OMP_PRAGMA(x) /* ... */
-#endif
-
-#ifdef _OPENMP
-#define OMP_PRAGMA_CRITICAL _Pragma("omp critical")
-#else
-#define OMP_PRAGMA_CRITICAL /* ... */
-#endif
-
-/// @macro GRIMPL_FORCE_INLINE
-/// @brief replacement for ``inline`` that forces inlining (on some compilers)
-///
-/// This macro should be used sparingly (if you force inlining of too much, you
-/// will slow down the code. On unsupported macros, this just becomes the
-/// ``inline`` keyword
-///
-/// While the initial purpose of ``inline`` keyword was to encourage optimizers
-/// to inline annotated functions, they are free to ignore this hint.
-/// - In C++, the ``inline`` keyword has come to mean that a single function
-///   can be defined in separate translation units (the definitions must be the
-///   same unless it is also a ``static`` function).
-///   - This behavior is what allows you to put the definition of an ordinary,
-///     ``inline`` function in a header and safely include that file in
-///     multiple source files (function template behave kinda like an
-///     ``inline`` function, even without the keyword).
-///   - Unless you are using link-time-optimization, you **need** to follow
-///     this pattern for defining a given function if you want to the optimizer
-///     to be able to inline calls to that function in multiple source files.
-///     (But, the optimizer is still not to inline).
-/// - Be aware, the semantics of the ``inline`` keyword are slightly different
-///   in C (C actually adopted the keyword from C++).
-///   - The easiest way to achieve roughly the same behavior as C++ (with
-///     putting the definitions of ``inline`` functions in headers that are
-///     included in multiple source files) is to make the function
-///     ``static inline``
-///   - in C, ``inline`` functions, that aren't ``static inline``, also have
-///     special rules/restrictions about using ``static`` local variables
-///     inside of the definition.
-#if defined(__GNUC__)
-#define GRIMPL_FORCE_INLINE __attribute__((always_inline)) inline
-#else
-#define GRIMPL_FORCE_INLINE inline
-#endif
-
-/// @macro GRIMPL_RESTRICT
-/// @brief Equivalent to C99's ``restrict`` qualifier (on supported compilers)
-///
-/// Background
-/// ----------
-/// Fortran's reputation for producing faster numerical code involving arrays
-/// than C/C++ comes from the fact that Fortran forbids (by default) overlap
-/// in the memory regions for arrays that are represented by distinct
-/// variables. that use to store array elements. A C/C++ compiler typically
-/// must be much more conservative about optimizations because pointers are
-/// allowed to freely overlap.
-/// - consider a function that performs loops over pairs of elements in arrays
-///   tracked by pointers ``a`` and ``b`` and write the result to an array
-///   tracked by pointer ``c``.
-/// - Outside of special cases, the compiler commonly has to assume that the
-///   memory locations accessed through pointer ``c`` may overlap with the
-///   elements accessed through ``a`` or ``b``. In that case, the precise order
-///   of the loop evaluation (and the timing of when values are accessed from 
-///   ``a`` or ``b`` or are written to ``c``) matters.
-/// - This significantly inhibits auto-vectorization.
-/// - (There is also overhead with pointers in general)
-///
-/// C99's ``restrict`` qualifier
-/// ----------------------------
-/// To facillitate faster code, the C99 standard introduced the ``restrict``
-/// qualifier that can be attached to a pointer to object-type (e.g. a pointer
-/// to an ``int`` or ``float``)
-/// - When developers add this qualifier to a pointer, ``ptr``, they are making
-///   making a promise to the compiler for a given scope. They essentially
-///   promise that if an object accessible through ``ptr`` is modified in that
-///   scope, all access/modifications to that object are performed with ``ptr``
-/// - This facillitates Fortran-like optimizations (the compiler can also
-///   choose to ignore the information)
-/// - Obviously, violating this promise can obviously produces all manner of
-///   undefined behavior.
-///
-/// C++ does **NOT** provide a ``restrict`` qualifier, but many compilers
-/// support it as an extension (usually called ``__restrict__``). This macro is
-/// intended to expand to ``__restrict__`` where applicable)
-///
-/// > [!note]
-/// > The ``restrict`` qualifier is a lesser known and lesser used feature of
-/// > C. Consequently, machinery in backends of C/C++ compilers that use this
-/// > information to make optimization may not be rigorously tested unless they
-/// > are also used as backends for other languages that more regularly perform
-/// > this kind of optimization.
-/// > - gcc's backend is probably pretty robust since it is also used by
-/// >   gfortran
-/// > - in contrast, bugs were found (they've been fixed) over the last several
-/// >   years in LLVM (clang's backend) by developers of the Rust lanugague.
-/// >
-/// > With that in mind, we currently just use this macro as a placeholder that
-/// > we can always try later.
-/// > - I think it's useful to use this in transcribed code so that we properly
-/// >   retain as much contextual information as possible (it's easy to remove
-/// >   later!). The Fortran code is written in such a way that we can apply
-/// >   this very liberally.
-/// > - To be clear, I have a lot more faith in enabling this feature than
-/// >   passing the ``-ffast-math`` flag to gcc (__restrict__ semantics are
-/// >   well defined and its opt-in)
-#if defined (__GNUC__)
-//#define GRIMPL_RESTRICT __restrict__
-#define GRIMPL_RESTRICT /* ... */
-#else
-#define GRIMPL_RESTRICT /* ... */
-#endif
 
 // ---------------------------------------------
 // define some functions used in the translation
