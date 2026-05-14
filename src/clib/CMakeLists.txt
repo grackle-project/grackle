@@ -102,7 +102,6 @@ add_library(Grackle_Grackle
   cool_multi_time.cpp cool_multi_time.hpp
   dust_props.hpp
   dust/calc_all_tdust_gasgr_1d_g.cpp dust/calc_all_tdust_gasgr_1d_g.hpp
-  dust/calc_grain_size_increment_species_1d.cpp dust/calc_grain_size_increment_species_1d.hpp
   dust/calc_kappa_grain.cpp dust/calc_kappa_grain.hpp
   dust/calc_tdust_1d_g.cpp dust/calc_tdust_1d_g.hpp
   dust/calc_tdust_3d.cpp dust/calc_tdust_3d.hpp
@@ -110,6 +109,7 @@ add_library(Grackle_Grackle
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp
   dust/multi_grain_species/calc_grain_size_increment_1d.hpp
+  dust/multi_grain_species/calc_grain_size_increment_species_1d.cpp dust/multi_grain_species/calc_grain_size_increment_species_1d.hpp
   dust/misc.hpp
   dynamic_api.cpp
   gas_props.hpp
