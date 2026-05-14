@@ -23,7 +23,7 @@
 #include <string>
 #include <utility>  // std::pair
 
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 namespace grtest {
 
