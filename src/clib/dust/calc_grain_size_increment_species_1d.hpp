@@ -66,7 +66,7 @@ void calc_grain_size_increment_species_1d(
     IndexRange idx_range, const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
     const double* SN_fsp, double* SN_r0sp_data, double bulk_density, double* sigma_per_gas_mass,
-    double* kappa_data, int* gr_N, int gr_Size, double* opac_coef_table_data);
+    double* kappa_data, int* gr_N, int gr_Size, const double* opac_coef_table_data);
 
 }  // namespace grackle::impl
 
