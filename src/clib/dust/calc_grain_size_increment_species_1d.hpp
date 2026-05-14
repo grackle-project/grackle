@@ -28,7 +28,7 @@ namespace grackle::impl {
 /// @todo
 /// The subroutine's name should be more descriptive
 ///
-/// @param[in] igrgr Flag to solve grain growth reactions ()
+/// @param[in] igrgr Flag to solve grain growth reactions
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
 /// @param[in] SN0_N Number of modelled injection pathways
@@ -46,7 +46,7 @@ namespace grackle::impl {
 /// @param[in] SN_fsp Pointer to the array of values for the initial fraction of
 /// the injected mass density of a given grain species
 /// @param[in] SN_r0sp_data Pointer to the table of values for the initial size
-/// distribution of a given grain species (1st, 2nd, and 3rd order moments )
+/// distribution of a given grain species (1st, 2nd, and 3rd order moments)
 /// @param[in] ssp The bulk density of the grain species (density of a single
 /// grain in units of g/cm^3)
 /// @param[in] sgsp Pointer to the array geometric cross-section per unit gas
