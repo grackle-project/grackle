@@ -60,8 +60,7 @@ namespace grackle::impl {
 /// @param[in] SN_kp0sp_data Tables of values for opacity calculations
 ///
 /// @par History
-/// modified: February, 2026 by Christopher Bignamini & Matthew Abruzzo; C++
-/// port
+/// modified: February, 2026 by Christopher Bignamini & Matthew Abruzzo; port to C++
 void calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
     IndexRange idx_range, gr_float* density_data, int n_selected_inj_paths,
