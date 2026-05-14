@@ -958,7 +958,8 @@ int solve_rate_cool(
             dtit.data(), idx_range, anydust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
             itmask_metal.data(), my_chemistry, my_fields,
-            spsolvbuf.species_tmpdens, spsolvbuf.rxn_rate_buf
+            spsolvbuf.species_tmpdens, spsolvbuf.rxn_rate_buf,
+            my_rates->opaque_storage->species_kind_map
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel

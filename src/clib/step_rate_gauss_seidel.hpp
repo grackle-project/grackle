@@ -22,7 +22,9 @@
 #include "grackle.h"  // gr_float
 #include "chemistry_solver_funcs.hpp"
 #include "fortran_func_decls.h"  // gr_mask_type
+#include "runtime_splut.hpp"
 #include "support/index_helper.hpp"
+#include "support/PartMap.hpp"
 #include "internal_types.hpp"
 #include "LUT.hpp"
 
@@ -37,7 +39,8 @@ inline void update_fields_from_tmpdens_gauss_seidel(
   double* HIdot_prev, const gr_mask_type* itmask,
   const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
   grackle_field_data* my_fields,
-  grackle::impl::SpeciesCollection species_tmpdens
+  grackle::impl::SpeciesCollection species_tmpdens,
+  const PartMap& species_kind_map
 ) {
 
   // Construct views of various species fields
@@ -202,7 +205,6 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     }
   }
 
-
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
@@ -240,7 +242,8 @@ inline void step_rate_gauss_seidel(
   const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
   grackle_field_data* my_fields,
   grackle::impl::SpeciesCollection species_tmpdens,
-  const FullRxnRateBuf rxn_rate_buf
+  const FullRxnRateBuf rxn_rate_buf,
+  const PartMap& species_kind_map
 ) {
 
   // perform the Gauss-Seidel sweep to compute the species densities at the
@@ -252,7 +255,7 @@ inline void step_rate_gauss_seidel(
   // update the entries from my_fields with the values in species_tmpdens
   update_fields_from_tmpdens_gauss_seidel(
       dtit, idx_range, dedot_prev, HIdot_prev, itmask, itmask_metal,
-      my_chemistry, my_fields, species_tmpdens);
+      my_chemistry, my_fields, species_tmpdens, species_kind_map);
 }
 
 }  // namespace grackle::impl
