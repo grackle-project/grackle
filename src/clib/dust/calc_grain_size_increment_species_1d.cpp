@@ -27,7 +27,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
     IndexRange idx_range, gr_float* density_data, int nSN,
     const gr_float* grain_species_density, gr_float* SN_metal_data,
     const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
-    double* alsp_data, int* gr_N, int gr_Size, double* SN_kp0sp_data) {
+    double* kappa_data, int* gr_N, int gr_Size, double* SN_kp0sp_data) {
   // input
   int iSN;
 
@@ -42,7 +42,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
   grackle::impl::View<double**> SN_kp0sp(SN_kp0sp_data, gr_Size, SN0_N);
 
   // output
-  grackle::impl::View<double**> alsp(alsp_data, gr_N[1], in);
+  grackle::impl::View<double**> kappa(kappa_data, gr_N[1], in);
 
   // local
   int i;
@@ -226,7 +226,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       //    (I think the units are cm^2/g)
       for (iTd = 0; iTd < (gr_N[1]); iTd++) {
         iTd0 = iTd * gr_N[0];
-        alsp(iTd, i) = 0.e0;
+        kappa(iTd, i) = 0.e0;
         for (iSN = 0; iSN < nSN; iSN++) {
           if (SN_fsp[iSN] > 0.e0) {
             SN_kpsp = 4.e0 * pi_local_var / 3.e0 * ssp *
@@ -237,9 +237,9 @@ void grackle::impl::calc_grain_size_increment_species_1d(
           } else {
             SN_kpsp = 0.e0;
           }
-          alsp(iTd, i) = alsp(iTd, i) + SN_nsp0[iSN] * SN_kpsp;
+          kappa(iTd, i) = kappa(iTd, i) + SN_nsp0[iSN] * SN_kpsp;
         }
-        alsp(iTd, i) = alsp(iTd, i) / d(i, idx_range.j, idx_range.k);
+        kappa(iTd, i) = kappa(iTd, i) / d(i, idx_range.j, idx_range.k);
       }
     }
   }

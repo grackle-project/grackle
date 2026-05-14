@@ -48,7 +48,7 @@ namespace grackle::impl {
 /// grain in units of g/cm^3)
 /// @param[in] sgsp Pointer to the array geometric cross-section per unit gas
 /// mass of each grain species
-/// @param[in,out] alsp_data Pointer to the table of values related to opacity
+/// @param[in,out] kappa_data Pointer to the table of values related to opacity
 /// for the current grain species
 /// @param[in] gr_N Bi-dimensional array of the number of tabulated values for
 /// opacity-related quantities for each grain species
@@ -64,7 +64,7 @@ void calc_grain_size_increment_species_1d(
     IndexRange idx_range, gr_float* density_data, int nSN,
     const gr_float* grain_species_density, gr_float* SN_metal_data,
     const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
-    double* alsp_data, int* gr_N, int gr_Size, double* SN_kp0sp_data);
+    double* kappa_data, int* gr_N, int gr_Size, double* SN_kp0sp_data);
 
 }  // namespace grackle::impl
 
