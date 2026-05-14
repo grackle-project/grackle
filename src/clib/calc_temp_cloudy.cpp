@@ -18,7 +18,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "scale_fields.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"
@@ -53,7 +53,7 @@ void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
     scale_fields_table(my_fields, factor);
   }
 
-  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   OMP_PRAGMA("omp parallel") {
     // each OMP thread separately initializes/allocates variables defined in

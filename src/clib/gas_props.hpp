@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implementing logic for computing gas properties.
+/// Implements logic for computing gas properties.
 ///
 //===----------------------------------------------------------------------===//
 #ifndef GRACKLE_GAS_PROPS_HPP
@@ -14,7 +14,7 @@
 
 #include "calc_temp1d_cloudy_g.hpp"
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "internal_units.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"

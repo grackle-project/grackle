@@ -19,7 +19,7 @@
 #include "dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 
 namespace grackle::impl {

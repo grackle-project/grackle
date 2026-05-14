@@ -15,7 +15,7 @@
 #define SCALE_FIELDS_HPP
 
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "utils-cpp.hpp"
 
 namespace grackle::impl {
@@ -121,7 +121,7 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
       my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   OMP_PRAGMA("omp parallel for schedule(runtime)")
   for (int t = 0; t < idx_helper.outer_ind_size; t++) {

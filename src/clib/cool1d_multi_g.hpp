@@ -16,11 +16,11 @@
 #ifndef COOL1D_MULTI_G_HPP
 #define COOL1D_MULTI_G_HPP
 
-#include "grackle.h"             // gr_float
-#include "fortran_func_decls.h"  // gr_mask_int
-#include "internal_units.hpp"    // InternalGrUnits
-#include "internal_types.hpp"    // GrainSpeciesCollection
-#include "index_helper.h"        // IndexRange
+#include "grackle.h"                 // gr_float
+#include "fortran_func_decls.h"      // gr_mask_int
+#include "internal_units.hpp"        // InternalGrUnits
+#include "internal_types.hpp"        // GrainSpeciesCollection
+#include "support/index_helper.hpp"  // IndexRange
 
 namespace grackle::impl {
 

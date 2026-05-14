@@ -18,7 +18,7 @@
 
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "grackle.h"             // gr_float
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 
 namespace grackle::impl {
 

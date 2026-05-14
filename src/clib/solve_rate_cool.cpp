@@ -19,7 +19,9 @@
 #include <vector>
 #include "gas_props.hpp"
 #include "grackle.h"
-#include "index_helper.h"
+
+#include "full_rxn_rate_buf.hpp"
+#include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_types.hpp"
@@ -62,7 +64,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in] my_chemistry holds a number of configuration parameters
 /// @param[in] my_fields specifies the field data
 static void enforce_max_heatcool_subcycle_dt_(
-  double* dtit, IndexRange idx_range, double dt, const double* ttot,
+  double* dtit, GRIMPL_NS::IndexRange idx_range, double dt, const double* ttot,
   const gr_mask_type* itmask, const double* tgas, double* edot,
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields
 ) {
@@ -150,9 +152,9 @@ static void enforce_max_heatcool_subcycle_dt_(
 /// @param[in]  tgas specifies the gas temperatures for the `idx_range`
 /// @param[in]  metallicity specifies the metallicity for the `idx_range`
 static void setup_chem_scheme_masks_(
-  IndexRange idx_range, const gr_mask_type* itmask, gr_mask_type* itmask_gs,
-  gr_mask_type* itmask_nr, int* imp_eng, int mask_len, int imetal,
-  double min_metallicity, const double* ddom, const double* tgas,
+  GRIMPL_NS::IndexRange idx_range, const gr_mask_type* itmask,
+  gr_mask_type* itmask_gs, gr_mask_type* itmask_nr, int* imp_eng, int mask_len,
+  int imetal, double min_metallicity, const double* ddom, const double* tgas,
   const double* metallicity, const chemistry_data* my_chemistry
 ) {
 
@@ -387,7 +389,8 @@ static double calc_Heq_div_dHeqdt_(
 /// logic for Newton-Raphson doesn't care about the chemistry-rates, instead
 /// it sets the timestep based on the energy evolution)
 static void set_subcycle_dt_from_chemistry_scheme_(
-  double* dtit, IndexRange idx_range, int iter, double dt, const double* ttot,
+  double* dtit, GRIMPL_NS::IndexRange idx_range, int iter, double dt,
+  const double* ttot,
   const gr_mask_type* itmask_gs, const gr_mask_type* itmask_nr,
   const int* imp_eng, double* dedot, double* HIdot,
   const double* dedot_prev, const double* HIdot_prev,
@@ -522,7 +525,7 @@ static void set_subcycle_dt_from_chemistry_scheme_(
 
 static inline void coupled_rt_modify_itmask_(
   gr_mask_type* itmask,
-  IndexRange idx_range,
+  GRIMPL_NS::IndexRange idx_range,
   const chemistry_data* my_chemistry,
   grackle_field_data* my_fields
 )
@@ -729,7 +732,7 @@ int solve_rate_cool(
 
   grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
 
-  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   OMP_PRAGMA("omp parallel")
   {
