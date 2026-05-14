@@ -25,7 +25,7 @@
 void grackle::impl::calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
     IndexRange idx_range, gr_float* density_data, int nSN,
-    const gr_float* grain_species_density, gr_float* SN_metal_data,
+    const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
     const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
     double* kappa_data, int* gr_N, int gr_Size, double* SN_kp0sp_data) {
   // input
@@ -33,7 +33,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
 
   grackle::impl::View<gr_float***> d(density_data, in, jn, kn);
   grackle::impl::View<const gr_float***> dsp(grain_species_density, in, jn, kn);
-  grackle::impl::View<gr_float**> SN_metal(SN_metal_data, in, SN0_N);
+  grackle::impl::View<gr_float**> SN_metal(selected_inj_path_metal_densities, in, SN0_N);
 
   // table
   grackle::impl::View<double**> SN_r0sp(SN_r0sp_data, 3, SN0_N);
