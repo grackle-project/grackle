@@ -114,7 +114,7 @@ inline PartMap make_species_kind_map(int primordial_chemistry,
   constexpr int N_KINDS = 3;
   int species_kinds[N_KINDS] = {SpKind::CHEMICAL, SpKind::FILLER, SpKind::DUST};
   int sizes[N_KINDS] = {n_chemical_sp, n_filler, n_grain_sp};
-  return new_PartMap(species_kinds, sizes, N_KINDS);
+  return PartMap(species_kinds, sizes, N_KINDS);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
