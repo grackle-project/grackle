@@ -63,7 +63,7 @@ namespace grackle::impl {
 /// modified: February, 2026 by Christopher Bignamini & Matthew Abruzzo; port to C++
 void calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
-    IndexRange idx_range, gr_float* density_data, int n_selected_inj_paths,
+    IndexRange idx_range, const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
     const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
     double* kappa_data, int* gr_N, int gr_Size, double* SN_kp0sp_data);
