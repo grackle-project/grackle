@@ -19,7 +19,7 @@
 #include "../internal_units.hpp"
 #include "initialize_cloudy_data.hpp"
 #include "../support/h5io.hpp"
-#include "../status_reporting.h"
+#include "../support/status_reporting.hpp"
 
 #define SMALL_LOG_VALUE (-99.0)
 #define MAX_PARAMETER_NAME_LENGTH (512)
