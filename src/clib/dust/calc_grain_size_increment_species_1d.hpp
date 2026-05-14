@@ -16,9 +16,9 @@
 #ifndef CALC_GRAIN_SIZE_INCREMENT_SPECIES_1D_HPP
 #define CALC_GRAIN_SIZE_INCREMENT_SPECIES_1D_HPP
 
-#include "fortran_func_decls.h"  // gr_mask_int
-#include "grackle.h"             // gr_float
-#include "index_helper.h"        // IndexRange
+#include "fortran_func_decls.h"          // gr_mask_int
+#include "grackle.h"                     // gr_float
+#include "support/index_helper.hpp"      // IndexRange
 
 namespace grackle::impl {
 
@@ -35,11 +35,14 @@ namespace grackle::impl {
 /// @param[in] in, jn, kn Dimensions of the computational grid
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] density_data Pointer to the density field data
-/// @param[in] nSN Number of selected injection pathways
+/// @param[in] n_selected_inj_paths Number of selected injection pathways
 /// @param[in] grain_species_density Pointer to the density field data for the
 /// current grain species
-/// @param[in] SN_metal_data Pointer to the field data for the metal densities
-/// for the current injection pathway
+/// @param[in] selected_inj_path_metal_densities Pointer to repacked selected
+///     injection pathway metal densities for the current @p idx_range. This is
+///     a 2d array where the contiguous axis holds @p in elements and the other
+///     axis has space for @p SN0_N entries (in practice only the first
+///     @p n_selected_inj_paths indices along this axis are used).
 /// @param[in] SN_fsp Pointer to the array of values for the initial fraction of
 /// the injected mass density of a given grain species
 /// @param[in] SN_r0sp_data Pointer to the table of values for the initial size
@@ -61,8 +64,8 @@ namespace grackle::impl {
 /// port
 void calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
-    IndexRange idx_range, gr_float* density_data, int nSN,
-    const gr_float* grain_species_density, gr_float* SN_metal_data,
+    IndexRange idx_range, gr_float* density_data, int n_selected_inj_paths,
+    const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
     const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
     double* kappa_data, int* gr_N, int gr_Size, double* SN_kp0sp_data);
 

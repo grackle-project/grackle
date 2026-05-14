@@ -24,7 +24,7 @@
 
 void grackle::impl::calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
-    IndexRange idx_range, gr_float* density_data, int nSN,
+    IndexRange idx_range, gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
     const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
     double* kappa_data, int* gr_N, int gr_Size, double* SN_kp0sp_data) {
@@ -60,7 +60,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       // Step 1: compute the total mass density of the current grain species
       //         that was injected (by summing the amounts injected by each
       //         injection pathway)
-      for (iSN = 0; iSN < nSN; iSN++) {
+      for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
         if (SN_fsp[iSN] > 0.e0) {
           SN_dsp0[iSN] = SN_fsp[iSN] * SN_metal(i, iSN);
         }
@@ -151,7 +151,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
         coef3 = 0.e0;
 
         // Loop over each injection pathway
-        for (iSN = 0; iSN < nSN; iSN++) {
+        for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
           if (SN_fsp[iSN] > 0.e0) {
             // Calculate 4πζnⱼ/3 = ρⱼ/<r³>ⱼ
             // -> recall: that ζ is the mass density of a single grain of the
@@ -192,7 +192,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
 
       // Step 3: calculate number density (code_density / g)
 
-      for (iSN = 0; iSN < nSN; iSN++) {
+      for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
         if (SN_fsp[iSN] > 0.e0) {
           SN_nsp0[iSN] = SN_dsp0[iSN] /
                          (4.e0 * pi_local_var / 3.e0 * ssp * SN_r0sp(2, iSN));
@@ -204,7 +204,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       // Step 4: calculate geometrical cross-section per unit gas mass
       // -> units of cm^2/g
       sgsp[i] = 0.e0;
-      for (iSN = 0; iSN < nSN; iSN++) {
+      for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
         if (SN_fsp[iSN] > 0.e0) {
           SN_sgsp = pi_local_var *
                     (SN_r0sp(1, iSN) + 2.e0 * SN_r0sp(0, iSN) * drsp[i] +
@@ -227,7 +227,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       for (iTd = 0; iTd < (gr_N[1]); iTd++) {
         iTd0 = iTd * gr_N[0];
         kappa(iTd, i) = 0.e0;
-        for (iSN = 0; iSN < nSN; iSN++) {
+        for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
           if (SN_fsp[iSN] > 0.e0) {
             SN_kpsp = 4.e0 * pi_local_var / 3.e0 * ssp *
                       (SN_kp0sp(iTd0 + 3, iSN) +
