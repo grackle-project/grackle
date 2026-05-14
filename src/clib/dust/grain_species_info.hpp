@@ -109,6 +109,9 @@ class GrainSpeciesInfo {
   /// grain species
   GrainSpeciesInfoEntry* species_info_ = nullptr;
 
+  /// a copy of the dust_species parameter used to construct this instance
+  int dust_species_parameter_;
+
   /// maps between grain species names and the associated index. The mapping is
   /// **ALWAYS** consistent with ``OnlyGrainSpLUT``.
   ///
@@ -173,6 +176,7 @@ public:
   void swap(GrainSpeciesInfo& other) noexcept {
     std::swap(n_species_, other.n_species_);
     std::swap(species_info_, other.species_info_);
+    std::swap(dust_species_parameter_, other.dust_species_parameter_);
     name_map_.swap(other.name_map_);
   }
 };
