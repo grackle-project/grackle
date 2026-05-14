@@ -49,8 +49,8 @@ namespace grackle::impl {
 /// distribution of a given grain species (1st, 2nd, and 3rd order moments)
 /// @param[in] ssp The bulk density of the grain species (density of a single
 /// grain in units of g/cm^3)
-/// @param[in] sgsp Pointer to the array geometric cross-section per unit gas
-/// mass of each grain species
+/// @param[in] sigma_per_gas_mass Pointer to the array geometric cross-section 
+/// per unit gas mass of each grain species
 /// @param[in,out] kappa_data Pointer to the table of values related to opacity
 /// for the current grain species
 /// @param[in] gr_N Bi-dimensional array of the number of tabulated values for
@@ -65,7 +65,7 @@ void calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
     IndexRange idx_range, const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
-    const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
+    const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sigma_per_gas_mass,
     double* kappa_data, int* gr_N, int gr_Size, double* SN_kp0sp_data);
 
 }  // namespace grackle::impl

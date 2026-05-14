@@ -26,7 +26,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
     IndexRange idx_range, const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
-    const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
+    const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sigma_per_gas_mass,
     double* kappa_data, int* gr_N, int gr_Size, double* SN_kp0sp_data) {
   // input
   int iSN;
@@ -48,7 +48,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
   int i;
   double coef0, coef1, coef2, coef3;
   double dsp_inject_sum;
-  double SN_sgsp, SN_kpsp;
+  double SN_sigma_per_gas_mass, SN_kpsp;
   std::vector<double> SN_dsp0(SN0_N);
   std::vector<double> SN_nsp0(SN0_N);
   std::vector<double> drsp(in);
@@ -203,18 +203,18 @@ void grackle::impl::calc_grain_size_increment_species_1d(
 
       // Step 4: calculate geometrical cross-section per unit gas mass
       // -> units of cm^2/g
-      sgsp[i] = 0.e0;
+      sigma_per_gas_mass[i] = 0.e0;
       for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
         if (SN_fsp[iSN] > 0.e0) {
-          SN_sgsp = pi_local_var *
+          SN_sigma_per_gas_mass = pi_local_var *
                     (SN_r0sp(1, iSN) + 2.e0 * SN_r0sp(0, iSN) * drsp[i] +
                      std::pow(drsp[i], 2));
         } else {
-          SN_sgsp = 0.e0;
+          SN_sigma_per_gas_mass = 0.e0;
         }
-        sgsp[i] = sgsp[i] + SN_nsp0[iSN] * SN_sgsp;
+        sigma_per_gas_mass[i] = sigma_per_gas_mass[i] + SN_nsp0[iSN] * SN_sigma_per_gas_mass;
       }
-      sgsp[i] = sgsp[i] / d(i, idx_range.j, idx_range.k);
+      sigma_per_gas_mass[i] = sigma_per_gas_mass[i] / d(i, idx_range.j, idx_range.k);
 
       // Step 5: calculate optical opacity related quantities
       // -> we are effectively constructing a 1d table of values, at various
