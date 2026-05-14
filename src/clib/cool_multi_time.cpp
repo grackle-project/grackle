@@ -17,8 +17,9 @@
 
 #include "cool1d_multi_g.hpp"
 #include "cool_multi_time.hpp"
+#include "gas_props.hpp"
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_units.hpp"
 #include "internal_types.hpp"
@@ -34,7 +35,7 @@ void cool_multi_time(
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates
 )
 {
-  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   // Convert densities from comoving to 'proper'
   if (internalu.extfields_in_comoving == 1)  {
@@ -104,6 +105,12 @@ void cool_multi_time(
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask[i] = MASK_TRUE;
       }
+
+      // calculate the basic gas properties (tgas, mmw, rhoH)
+      GRIMPL_NS::basic_gas_props(tgas.data(), mmw.data(), rhoH.data(), imetal,
+                                 itmask.data(), my_chemistry,
+                                 &my_rates->cloudy_primordial, my_fields,
+                                 internalu, idx_range);
 
       // Compute the cooling rate
       int dummy_iter_arg=1;

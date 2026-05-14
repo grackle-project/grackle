@@ -5,7 +5,7 @@
 #include <string>
 
 #include "grackle.h"  // GR_FAIL
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 #include "grtestutils/os.hpp"
 

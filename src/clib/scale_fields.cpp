@@ -13,7 +13,7 @@
 #include <cstdio>
 
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "inject_model/misc.hpp"
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
@@ -38,7 +38,7 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
 
   // parallelize the k and j loops with OpenMP
   // flat j and k loops for better parallelism
-  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
   OMP_PRAGMA("omp parallel for schedule(runtime)")
   for (int t = 0; t < idx_helper.outer_ind_size; t++) {
     const IndexRange idx_range = make_idx_range_(t, &idx_helper);

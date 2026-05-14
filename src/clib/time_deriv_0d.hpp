@@ -9,11 +9,12 @@
 #include "cool1d_multi_g.hpp"
 #include "chemistry_solver_funcs.hpp"
 #include "dust_props.hpp"
+#include "gas_props.hpp"
 #include "fortran_func_wrappers.hpp"
 #include "full_rxn_rate_buf.hpp"
 #include "grackle.h"
 #include "grackle_macros.h" // GRACKLE_FREE
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "rate_timestep_g.hpp"
 #include "lookup_cool_rates1d.hpp"
@@ -214,7 +215,7 @@ inline ContextPack new_ContextPack(
   // - we explicitly follow the standard idiom for constructing an IndexRange
   //   and avoid directly constructing it (if the internals change we don't
   //   want to fix it here).
-  const grackle_index_helper idx_helper = build_index_helper_(&pack.fields);
+  const IndexHelper idx_helper = build_index_helper_(&pack.fields);
   pack.idx_range_1_element = make_idx_range_(0, &idx_helper);
 
   // initialize other members
@@ -462,10 +463,16 @@ void derivatives(
   copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rhosp, 1);
   pack.fields.internal_energy = &eint[0];
 
-  // Compute the cooling rate, tgas, tdust, and metallicity for this row
-
   if (pack.local_edot_handling == 1) {
 
+    // calculate the basic gas properties (tgas, mmw, rhoH)
+    basic_gas_props(pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
+                    pack.other_scratch_buf.rhoH, pack.fwd_args.imetal,
+                    pack.other_scratch_buf.itmask, my_chemistry,
+                    &my_rates->cloudy_primordial, &pack.fields, internalu,
+                    pack.idx_range_1_element);
+
+    // compute cooling rate, tdust, and metallicity for this row
     cool1d_multi_g(
       pack.fwd_args.imetal, pack.fwd_args.iter,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
