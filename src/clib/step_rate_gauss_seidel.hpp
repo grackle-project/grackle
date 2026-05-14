@@ -191,7 +191,20 @@ inline void update_fields_from_tmpdens_gauss_seidel(
           }
         }
       }
+    }
 
+    if (HI(i,j,k) != HI(i,j,k))  {
+      OMP_PRAGMA_CRITICAL
+      {
+        std::printf("HUGE HI! ::  %d %d %d %g\n",
+                    i, j, k, HI ( i, j, k ));
+      }
+    }
+  }
+
+
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE)  {
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 0)  {
           MgSiO3(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::MgSiO3_dust][i]  ), tiny_fortran_val);
@@ -212,16 +225,6 @@ inline void update_fields_from_tmpdens_gauss_seidel(
           volorg(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::vol_org_dust][i]   ), tiny_fortran_val);
           H2Oice(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2O_ice_dust][i]   ), tiny_fortran_val);
         }
-      }
-
-    }
-    // 
-
-    if (HI(i,j,k) != HI(i,j,k))  {
-      OMP_PRAGMA_CRITICAL
-      {
-        std::printf("HUGE HI! ::  %d %d %d %g\n",
-                    i, j, k, HI ( i, j, k ));
       }
     }
   }
