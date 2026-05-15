@@ -32,25 +32,26 @@ namespace grackle::impl {
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
 /// @param[in] n_inj_pathways Number of modelled injection pathways
-/// @param[in] in, jn, kn Dimensions of the computational grid
+/// @param[in] grid_dimensions 3-element array containing the dimensions of
+///     the computational grid
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] density_data Pointer to the density field data
 /// @param[in] n_selected_inj_paths Number of selected injection pathways
 /// @param[in] grain_species_density Pointer to the density field data for the
-/// current grain species
+///     current grain species
 /// @param[in] selected_inj_path_metal_densities Pointer to repacked selected
 ///     injection pathway metal densities for the current @p idx_range. This is
-///     a 2d array where the contiguous axis holds @p in elements and the other
-///     axis has space for @p n_inj_pathways entries (in practice only the first
-///     @p n_selected_inj_paths indices along this axis are used).
+///     a 2d array where the contiguous axis holds @p grid_dimensions[0] elements
+///     and the other axis has space for @p n_inj_pathways entries (in practice
+///     only the first @p n_selected_inj_paths indices along this axis are used).
 /// @param[in] SN_fsp Pointer to the array of values for the initial fraction of
 /// the injected mass density of a given grain species
 /// @param[in] SN_r0sp_data Pointer to the table of values for the initial size
 /// distribution of a given grain species (1st, 2nd, and 3rd order moments)
 /// @param[in] bulk_density The bulk density of the grain species (density of a
 /// single grain in units of g/cm^3)
-/// @param[in] sigma_per_gas_mass Pointer to the array geometric cross-section 
-/// per unit gas mass of each grain species
+/// @param[out] sigma_per_gas_mass 1D buffer to hold the computed geometric
+///     cross-section of the current grain species per unit gas mass
 /// @param[in,out] kappa_data Pointer to the table of values related to opacity
 /// for the current grain species
 /// @param[in] gr_N Bi-dimensional array of the number of tabulated values for
@@ -62,7 +63,7 @@ namespace grackle::impl {
 /// @par History
 /// modified: February, 2026 by Christopher Bignamini & Matthew Abruzzo; port to C++
 void calc_grain_size_increment_species_1d(
-    int igrgr, const gr_mask_type* itmask, int n_inj_pathways, int in, int jn, int kn,
+    int igrgr, const gr_mask_type* itmask, int n_inj_pathways, const int* grid_dimensions,
     IndexRange idx_range, const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
     const double* SN_fsp, double* SN_r0sp_data, double bulk_density, double* sigma_per_gas_mass,
