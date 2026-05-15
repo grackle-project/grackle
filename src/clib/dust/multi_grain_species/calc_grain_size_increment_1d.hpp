@@ -232,8 +232,7 @@ inline void calc_grain_size_increment_1d(
 
     grackle::impl::calc_grain_size_increment_species_1d(
         my_chemistry->grain_growth, itmask, inject_pathway_props->n_pathways,
-        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-        my_fields->grid_dimension[2], idx_range, my_fields->density,
+        my_fields->grid_dimension, idx_range, my_fields->density,
         n_selected_inj_paths, grsp_density,
         repacked_inj_path_metal_densities.data(), repacked_yields.data(),
         repacked_size_moments.data(), bulk_density,
