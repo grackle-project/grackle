@@ -16,9 +16,9 @@
 #ifndef CALC_GRAIN_SIZE_INCREMENT_SPECIES_1D_HPP
 #define CALC_GRAIN_SIZE_INCREMENT_SPECIES_1D_HPP
 
-#include "fortran_func_decls.h"          // gr_mask_int
-#include "grackle.h"                     // gr_float
-#include "support/index_helper.hpp"      // IndexRange
+#include "fortran_func_decls.h"      // gr_mask_int
+#include "grackle.h"                 // gr_float
+#include "support/index_helper.hpp"  // IndexRange
 
 namespace grackle::impl {
 
@@ -41,9 +41,10 @@ namespace grackle::impl {
 ///     current grain species
 /// @param[in] selected_inj_path_metal_densities Pointer to repacked selected
 ///     injection pathway metal densities for the current @p idx_range. This is
-///     a 2d array where the contiguous axis holds @p grid_dimensions[0] elements
-///     and the other axis has space for @p n_inj_pathways entries (in practice
-///     only the first @p n_selected_inj_paths indices along this axis are used).
+///     a 2d array where the contiguous axis holds @p grid_dimensions[0]
+///     elements and the other axis has space for @p n_inj_pathways entries (in
+///     practice only the first @p n_selected_inj_paths indices along this axis
+///     are used).
 /// @param[in] SN_fsp Pointer to the array of values for the initial fraction of
 /// the injected mass density of a given grain species
 /// @param[in] SN_r0sp_data Pointer to the table of values for the initial size
@@ -59,12 +60,15 @@ namespace grackle::impl {
 /// @param[in] opac_coef_table_data Tables of values for opacity calculations
 ///
 /// @par History
-/// modified: February, 2026 by Christopher Bignamini & Matthew Abruzzo; port to C++
+/// modified: February, 2026 by Christopher Bignamini & Matthew Abruzzo; port to
+/// C++
 void calc_grain_size_increment_species_1d(
-    int igrgr, const gr_mask_type* itmask, int n_inj_pathways, const int* grid_dimensions,
-    IndexRange idx_range, const gr_float* density_data, int n_selected_inj_paths,
-    const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
-    const double* SN_fsp, double* SN_r0sp_data, double bulk_density, double* sigma_per_gas_mass,
+    int igrgr, const gr_mask_type* itmask, int n_inj_pathways,
+    const int* grid_dimensions, IndexRange idx_range,
+    const gr_float* density_data, int n_selected_inj_paths,
+    const gr_float* grain_species_density,
+    gr_float* selected_inj_path_metal_densities, const double* SN_fsp,
+    double* SN_r0sp_data, double bulk_density, double* sigma_per_gas_mass,
     double* kappa_data, int* gr_N, const double* opac_coef_table_data);
 
 }  // namespace grackle::impl
