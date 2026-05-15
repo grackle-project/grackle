@@ -45,6 +45,25 @@ TEST(View, Simple1D) {
   EXPECT_EQ(v(2), 6);
 }
 
+TEST(View, Simple1DConstCast) {
+  int arr[3] = {8, -3, 6};
+  GRIMPL_NS::View<int*> v(arr, 3);
+
+  GRIMPL_NS::View<const int*> v_const = v;
+
+  EXPECT_EQ(arr, v_const.data());
+  EXPECT_EQ(v_const.extent(0), 3);
+  EXPECT_EQ(v_const(0), 8);
+  EXPECT_EQ(v_const(1), -3);
+  EXPECT_EQ(v_const(2), 6);
+
+  arr[0] = 0;
+  v(2) = -6;
+  EXPECT_EQ(v_const(0), 0);
+  EXPECT_EQ(v_const(1), -3);
+  EXPECT_EQ(v_const(2), -6);
+}
+
 TEST(View, Simple2D) {
   // clang-format off:  formatter knows nothing about shape
   double arr[20] = {
@@ -63,6 +82,27 @@ TEST(View, Simple2D) {
   EXPECT_EQ(v(3, 0), 8);
   EXPECT_EQ(v(1, 2), 1);
   EXPECT_EQ(v(4, 3), 17);
+}
+
+TEST(View, Simple2DConstCast) {
+  // clang-format off:  formatter knows nothing about shape
+  double arr[20] = {
+    0, 0, 0, 8, 0,
+    0, 0, 0, 0, 0,
+    0, 1, 0, 0, 0,
+    0, 0, 0, 0, 17
+  };
+  // clang-format on
+
+  GRIMPL_NS::View<double**> v(arr, 5, 4);
+  GRIMPL_NS::View<const double**> v_const = v;
+
+  EXPECT_EQ(arr, v_const.data());
+  EXPECT_EQ(v_const.extent(0), 5);
+  EXPECT_EQ(v_const.extent(1), 4);
+  EXPECT_EQ(v_const(3, 0), 8);
+  EXPECT_EQ(v_const(1, 2), 1);
+  EXPECT_EQ(v_const(4, 3), 17);
 }
 
 TEST(View, Simple3D) {
@@ -94,6 +134,38 @@ TEST(View, Simple3D) {
   EXPECT_EQ(v(3, 1, 0), 9);
   EXPECT_EQ(v(0, 2, 1), -3);
   EXPECT_EQ(v(4, 3, 2), 1);
+}
+
+TEST(View, Simple3DConstCast) {
+  // clang-format off:  formatter knows nothing about shape
+  float arr[60] = {
+    0, 0, 0, 0, 0,
+    0, 0, 0, 9, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    -3, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 1
+  };
+  // clang-format on
+
+  GRIMPL_NS::View<float***> v(arr, 5, 4, 3);
+  GRIMPL_NS::View<const float***> v_const = v;
+
+  EXPECT_EQ(arr, v_const.data());
+  EXPECT_EQ(v_const.extent(0), 5);
+  EXPECT_EQ(v_const.extent(1), 4);
+  EXPECT_EQ(v_const.extent(2), 3);
+  EXPECT_EQ(v_const(3, 1, 0), 9);
+  EXPECT_EQ(v_const(0, 2, 1), -3);
+  EXPECT_EQ(v_const(4, 3, 2), 1);
 }
 
 //===----------------------------------------------------------------------===//

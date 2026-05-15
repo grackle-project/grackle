@@ -21,6 +21,32 @@
 namespace GRIMPL_NAMESPACE_DECL {
 
 namespace view_detail {
+
+// define template and some partial specializations to implement MkPtr_t
+template <typename value_type, int Rank>
+struct MkPtr_ {
+  static_assert(0 < Rank && Rank < 4, "rank isn't 1, 2 or 3");
+  using type = value_type*;
+};
+
+template <typename value_type>
+struct MkPtr_<value_type, 2> {
+  using type = value_type**;
+};
+
+template <typename value_type>
+struct MkPtr_<value_type, 3> {
+  using type = value_type***;
+};
+
+/// machinery that provides the appropriate pointer to ``value_type``
+///
+/// Examples: ``MkPtr_t<double, 3>::type`` is ``double***``
+///           ``MkPtr_t<const int, 2>::type`` is ``const int**``
+///           ``MkPtr_t<const int, 1>::type`` is ``const int*``
+template <typename value_type, int Rank>
+using MkPtr_t = typename MkPtr_<value_type, Rank>::type;
+
 /// this simply helps us implement the View class template
 template <typename T>
 struct MDPtrProps_ {
@@ -112,9 +138,8 @@ struct MDPtrProps_ {
 ///   as a 1D View (it depends on our thoughts about self-shielding)
 ///
 template <typename T>
-struct View {
+class View {
   // first, we define useful types used by instances of the class template
-private:
   using ptrprops_ = view_detail::MDPtrProps_<T>;
 
 public:
@@ -124,7 +149,15 @@ public:
   using size_type = int;  // maybe revisit this?
   static constexpr int rank = ptrprops_::rank;
 
-private:  // attributes
+private:
+  // these entries exist to help us support implicit casts of views of mutable
+  // data to the corresponding view of const data
+  using non_const_ptr_ =
+      view_detail::MkPtr_t<std::remove_const_t<element_type>, rank>;
+  using const_ptr_ = view_detail::MkPtr_t<std::add_const_t<element_type>, rank>;
+  friend class View<const_ptr_>;
+
+  // attributes:
   element_type* data_;
   size_type extent_[rank];
   size_type strides_[rank];
@@ -169,6 +202,25 @@ public:
     check_invariants_();
   }
   ///@}
+
+  /// conversion constructor that facilitates implicit casts from views of
+  /// non-constant values to views of constant values
+  ///
+  /// For example, this allows implicit creation of ``View<const double**>``
+  /// from ``View<double**>``
+  ///
+  /// @note
+  /// This is only defined for instances of View for which T is a pointer to a
+  /// a const (e.g. `const int*`, `const double**`). If it were defined when
+  /// T is not a pointer-to-const, then it would duplicate the copy-constructor.
+  template <class = std::enable_if<std::is_same<T, const_ptr_>::value>>
+  View(const View<non_const_ptr_>& other) {
+    data_ = other.data_;
+    for (int i = 0; i < rank; i++) {
+      extent_[i] = other.extent_[i];
+      strides_[i] = other.strides_[i];
+    }
+  }
 
   // explicitly use defaults for a handful of cases
   ~View() = default;
