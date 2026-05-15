@@ -23,7 +23,7 @@
 #include "calc_grain_size_increment_species_1d.hpp"
 
 void grackle::impl::calc_grain_size_increment_species_1d(
-    int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
+    int igrgr, const gr_mask_type* itmask, int n_inj_pathways, int in, int jn, int kn,
     IndexRange idx_range, const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
     const double* SN_fsp, double* SN_r0sp_data, double bulk_density, double* sigma_per_gas_mass,
@@ -33,13 +33,13 @@ void grackle::impl::calc_grain_size_increment_species_1d(
 
   grackle::impl::View<const gr_float***> d(density_data, in, jn, kn);
   grackle::impl::View<const gr_float***> dsp(grain_species_density, in, jn, kn);
-  grackle::impl::View<gr_float**> SN_metal(selected_inj_path_metal_densities, in, SN0_N);
+  grackle::impl::View<gr_float**> SN_metal(selected_inj_path_metal_densities, in, n_inj_pathways);
 
   // table
-  grackle::impl::View<double**> SN_r0sp(SN_r0sp_data, 3, SN0_N);
+  grackle::impl::View<double**> SN_r0sp(SN_r0sp_data, 3, n_inj_pathways);
 
   // opacity table
-  grackle::impl::View<const double**> opac_coef_table(opac_coef_table_data, gr_Size, SN0_N);
+  grackle::impl::View<const double**> opac_coef_table(opac_coef_table_data, gr_Size, n_inj_pathways);
 
   // output
   grackle::impl::View<double**> kappa(kappa_data, gr_N[1], in);
@@ -49,8 +49,8 @@ void grackle::impl::calc_grain_size_increment_species_1d(
   double coef0, coef1, coef2, coef3;
   double dsp_inject_sum;
   double SN_sigma_per_gas_mass, SN_kpsp;
-  std::vector<double> SN_dsp0(SN0_N);
-  std::vector<double> SN_nsp0(SN0_N);
+  std::vector<double> SN_dsp0(n_inj_pathways);
+  std::vector<double> SN_nsp0(n_inj_pathways);
   std::vector<double> drsp(in);
   const double pi_local_var = pi_fortran_val;
   int iTd, iTd0;
