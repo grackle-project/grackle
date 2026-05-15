@@ -56,8 +56,6 @@ namespace grackle::impl {
 /// for the current grain species
 /// @param[in] gr_N Bi-dimensional array of the number of tabulated values for
 /// opacity-related quantities for each grain species
-/// @param[in] gr_Size Total data size deriving from tabulated values for
-/// opacity-related quantities
 /// @param[in] opac_coef_table_data Tables of values for opacity calculations
 ///
 /// @par History
@@ -67,7 +65,7 @@ void calc_grain_size_increment_species_1d(
     IndexRange idx_range, const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density, gr_float* selected_inj_path_metal_densities,
     const double* SN_fsp, double* SN_r0sp_data, double bulk_density, double* sigma_per_gas_mass,
-    double* kappa_data, int* gr_N, int gr_Size, const double* opac_coef_table_data);
+    double* kappa_data, int* gr_N, const double* opac_coef_table_data);
 
 }  // namespace grackle::impl
 
