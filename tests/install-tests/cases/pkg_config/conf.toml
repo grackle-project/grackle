@@ -1,0 +1,49 @@
+[shared]
+# specify options common to all tests
+
+# the file from GRACKLE_ROOT/src/example to copy
+src_file = "c_example.c"
+
+# the path to the example binary relative to the sample project directory
+output_binary = "example_app"
+
+
+# enumerate each of the test cases
+[test.simple]
+# in this case, we have installed just a shared lib or just a static lib
+parametrize = [
+  {image = "shared_install", uses_shared = true},
+  {image = "static_install", uses_shared = false},
+  {image = "static_install_conftimeprefix", uses_shared = false},
+]
+image.use-param = "image"
+cmds = ["PKG_CONFIG_PATH=/home/gr-user/local/lib/pkgconfig make"]
+# specify whether LD_LIBRARY_PATH must be modified (to run the executable)
+override_LD_LIBRARY_PATH.use-param = "uses_shared"
+
+[test.SelectSharedLib]
+
+# in this case both the shared and static libraries were both installed in the
+# local installation directory. pkg-config always prefers linking against the shared
+# library
+
+# the only difference between the images is the order of installing the shared
+# and static variants
+#
+# TODO: instead of running this test twice, it would be better if we:
+#   - ran this test with just one of these images
+#   - wrote a separate test that explicitly checked that the layout and
+#     contents of the local install directories are identical regardless of
+#     installation order
+#   - fundamentally, we're only really worried about
+#     - missing files
+#     - the meta installation files (i.e. the CMake Package Configuration file
+#       and the pkg-config file) being messed up. Doing a direct comparison
+#       would be FAR more robust
+
+parametrize = [{image = "shared_static_install"}, {image = "static_shared_install"}]
+image.use-param = "image"
+cmds = ["PKG_CONFIG_PATH=/home/gr-user/local/lib/pkgconfig make"]
+# specify whether LD_LIBRARY_PATH must be modified
+override_LD_LIBRARY_PATH = true
+
