@@ -21,6 +21,7 @@
 #include "grackle.h"
 #include "support/index_helper.hpp"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
 
 namespace grackle::impl {
 
@@ -72,7 +73,7 @@ void calc_all_tdust_gasgr_1d_g(
     IndexRange idx_range,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_buf,
     grackle::impl::GrainSpeciesCollection grain_kappa);
 

@@ -20,6 +20,7 @@
 #include "fortran_func_decls.h"      // gr_mask_int
 #include "internal_units.hpp"        // InternalGrUnits
 #include "internal_types.hpp"        // GrainSpeciesCollection
+#include "lnT_prep.hpp"              // LnTLinInterpBuf
 #include "support/index_helper.hpp"  // IndexRange
 
 namespace grackle::impl {
@@ -84,7 +85,7 @@ void cool1d_multi_g(int imetal, double* edot, const double* tgas,
                     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
                     IndexRange idx_range,
                     grackle::impl::GrainSpeciesCollection grain_temperatures,
-                    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+                    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
                     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
                     grackle::impl::CoolHeatScratchBuf coolingheating_buf);
 

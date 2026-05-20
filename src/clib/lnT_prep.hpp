@@ -6,8 +6,8 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Defines logic for precomputing ln(T) and filling associated buffers with
-/// values pertaining to 1D interpolation
+/// Declare/Define logic for precomputing ln(T) and filling associated buffers
+/// with values pertaining to 1D interpolation
 ///
 //===----------------------------------------------------------------------===//
 
@@ -22,8 +22,75 @@
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
 #include "utils-cpp.hpp"  // GRIMPL_NS::clamp
+#include "visitor/common.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
+
+/// @brief Holds precomputed 1D arrays used for linearly interpolating rates
+/// with respect to a commonly shared gas temperature grid
+///
+/// A common idiom within Grackle is to construct 1D tables of different
+/// quantities sampled at various ln(T) values during setup.
+/// - when performing calculations on simulation data, Grackle will compute
+///   values from these tables.
+/// - Since these tables are all sampled at the same log-temperature values, we
+///   can reuse information about the current location in the table between
+///   different interpolations to speed up the calculation
+/// - the values of the buffers in this data structure at a given location are
+///   used encode this information about logT table location.
+///
+/// See @ref LnTPreparer for the logic that is used fill these buffers
+///
+/// @note
+/// If we are willing to more fully embrace C++, we might want to attach a
+/// method that actually does the interpolation. We may also want to make
+/// adustments to prevent mutations of the members of a ``const`` instance
+struct LnTLinInterpBuf {
+  long long* indixe = nullptr;  // <- todo make this int64_t*
+  double* t1 = nullptr;
+  double* t2 = nullptr;
+  double* logtem = nullptr;
+  double* tdef = nullptr;
+};
+
+/// used to help implement the visitor design pattern
+///
+/// (avoid using this unless you really have to)
+template <class BinaryFn>
+void visit_member_pair(LnTLinInterpBuf& obj0, LnTLinInterpBuf& obj1,
+                       BinaryFn f) {
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("LnTLinInterpBuf", f);
+  f(VIS_MEMBER_NAME("indixe"), obj0.indixe, obj1.indixe,
+    vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("t1"), obj0.t1, obj1.t1, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("t2"), obj0.t2, obj1.t2, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("logtem"), obj0.logtem, obj1.logtem,
+    vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("tdef"), obj0.tdef, obj1.tdef,
+    vis::idx_range_len_multiple(1));
+  vis::end_visit(f);
+}
+
+/// implements the visitor design pattern
+///
+/// @param ptr[in,out] Members of the specified object will be visited
+/// @param fn[in] Calls function that will be applied to each function
+template <class UnaryVisitor>
+inline void visit_member(LnTLinInterpBuf* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, LnTLinInterpBuf, ptr, fn);
+}
+
+/// allocates the contents of a new LnTLinInterpBuf
+///
+/// @param nelem The number of elements in each buffer
+LnTLinInterpBuf new_LnTLinInterpBuf(int nelem);
+
+/// performs cleanup of the contents of LnTLinInterpBuf
+///
+/// This effectively invokes the destructor
+void drop_LnTLinInterpBuf(LnTLinInterpBuf*);
 
 /// returns the step in ln(T) of the gas temperature grid commonly shared for
 /// interpolating rates
@@ -45,7 +112,7 @@ namespace detail {
 
 template <class UnaryFn>
 [[gnu::always_inline]] inline void prep_lnT_lininterp_bufs_(
-    LogTLinInterpScratchBuf& logTlininterp_buf, IndexRange idx_range,
+    LnTLinInterpBuf& logTlininterp_buf, IndexRange idx_range,
     const chemistry_data& my_chemistry, const gr_mask_type* itmask,
     UnaryFn get_T_fn) {
   // Get properties of the table
@@ -88,7 +155,7 @@ template <class UnaryFn>
 ///   because log calculations are computationally expensive and most of
 ///   Grackle's rates are interpolated from grids where ln(T) or log10(T)
 ///   varies along an axis
-/// - it also fills buffers within a @ref LogTLinInterpScratchBuf instance with
+/// - it also fills buffers within a @ref LnTLinInterpBuf instance with
 ///   interpolation variable values that are used with the gas temperature grid
 ///   commonly shared for interpolating rates
 ///
@@ -235,7 +302,7 @@ public:
   /// The provided temperature values are used directly (there is no damping,
   /// but clamping is still performed)
   static void prep_undamped_lnT_lininterp_bufs(
-      LogTLinInterpScratchBuf& logTlininterp_buf, IndexRange idx_range,
+      LnTLinInterpBuf& logTlininterp_buf, IndexRange idx_range,
       const chemistry_data& my_chemistry, const gr_mask_type* itmask,
       const double* temperature) {
     auto get_T = [temperature](int i) -> double { return temperature[i]; };
@@ -247,10 +314,11 @@ public:
   ///
   /// It compute the natural log of the damped temperature value (i.e. the
   /// arithmetic mean of @p cur_T and the previously recorded value)
-  void prep_damped_lnT_lininterp_bufs(
-      LogTLinInterpScratchBuf& logTlininterp_buf, IndexRange idx_range,
-      const chemistry_data& my_chemistry, const gr_mask_type* itmask,
-      const double* cur_T) const {
+  void prep_damped_lnT_lininterp_bufs(LnTLinInterpBuf& logTlininterp_buf,
+                                      IndexRange idx_range,
+                                      const chemistry_data& my_chemistry,
+                                      const gr_mask_type* itmask,
+                                      const double* cur_T) const {
     const double* old_T = old_T_;
     auto get_T = [cur_T, old_T](int i) -> double {
       return 0.5 * (cur_T[i] + old_T[i]);

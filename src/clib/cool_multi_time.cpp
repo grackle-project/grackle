@@ -57,8 +57,8 @@ void cool_multi_time(
     GrainSpeciesCollection grain_temperatures =
       new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
-    LogTLinInterpScratchBuf logTlininterp_buf =
-      new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+    LnTLinInterpBuf logTlininterp_buf =
+      new_LnTLinInterpBuf(my_fields->grid_dimension[0]);
 
     Cool1DMultiScratchBuf cool1dmulti_buf =
       new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
@@ -82,13 +82,6 @@ void cool_multi_time(
     // Iteration mask for multi_cool
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
-
-    // construct object to computes log temperature and interpolation indices
-    // -> tgasold_ is reserved exclusive use by lnT_preparer (it retains
-    //    values between cycles)
-    // -> see docstring of LnTPreparer for extended discussion
-    std::vector<double> tgasold_(my_fields->grid_dimension[0]);
-    LnTPreparer lnT_preparer(tgasold_.data());
 
     // create views of density and internal energy fields to support 3D access
     grackle::impl::View<gr_float***> d(my_fields->density,
@@ -121,15 +114,9 @@ void cool_multi_time(
                                  internalu, idx_range);
 
       // precompute natural log of T and related interpolation info
-      // -> the calculation encodes damping logic used with an integrator that
-      //    adjusts ln(T) based on the temperature from the prior subcycle.
-      //    We act as if there was prev iter where temperature was the same
-      lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
-        // technically, we could skip indices info if prim_chem == 0 AND
-        // dust_chemistry == 0. But we leave that for the future
-        lnT_preparer.prep_damped_lnT_lininterp_bufs(
-            logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
-            tgas.data());
+      LnTPreparer::prep_undamped_lnT_lininterp_bufs(
+          logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
+          tgas.data());
 
       cool1d_multi_g(
         imetal, edot.data(), tgas.data(),
@@ -158,7 +145,7 @@ void cool_multi_time(
 
     // cleanup temporaries
     drop_GrainSpeciesCollection(&grain_temperatures);
-    drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    drop_LnTLinInterpBuf(&logTlininterp_buf);
     drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
 

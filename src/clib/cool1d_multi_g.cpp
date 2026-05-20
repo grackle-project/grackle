@@ -39,7 +39,7 @@ void grackle::impl::cool1d_multi_g(
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
     InternalGrUnits internalu, IndexRange idx_range,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
     grackle::impl::CoolHeatScratchBuf coolingheating_buf) {
   grackle::impl::View<gr_float***> d(

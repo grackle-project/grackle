@@ -55,7 +55,7 @@ struct FrozenSimpleArgs {
 /// preallocated buffers.
 struct MainScratchBuf {
   GrainSpeciesCollection grain_temperatures;
-  LogTLinInterpScratchBuf logTlininterp_buf;
+  LnTLinInterpBuf logTlininterp_buf;
   Cool1DMultiScratchBuf cool1dmulti_buf;
   CoolHeatScratchBuf coolingheating_buf;
   ChemHeatingRates chemheatrates_buf;
@@ -73,7 +73,7 @@ MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
   int nelem = 1;
   MainScratchBuf out;
   out.grain_temperatures = new_GrainSpeciesCollection(nelem);
-  out.logTlininterp_buf = new_LogTLinInterpScratchBuf(nelem);
+  out.logTlininterp_buf = new_LnTLinInterpBuf(nelem);
   out.cool1dmulti_buf = new_Cool1DMultiScratchBuf(nelem);
   out.coolingheating_buf = new_CoolHeatScratchBuf(nelem);
   out.chemheatrates_buf = new_ChemHeatingRates(nelem);
@@ -87,7 +87,7 @@ MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
 
 void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_GrainSpeciesCollection(&ptr->grain_temperatures);
-  drop_LogTLinInterpScratchBuf(&ptr->logTlininterp_buf);
+  drop_LnTLinInterpBuf(&ptr->logTlininterp_buf);
   drop_Cool1DMultiScratchBuf(&ptr->cool1dmulti_buf);
   drop_CoolHeatScratchBuf(&ptr->coolingheating_buf);
   drop_ChemHeatingRates(&ptr->chemheatrates_buf);
@@ -270,7 +270,7 @@ inline void scratchbufs_copy_into_pack(
   const double* tdust, const double* metallicity, const double* dust2gas,
   const double* rhoH, const double* mmw,
   const double* edot, grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
   grackle::impl::CoolHeatScratchBuf coolingheating_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf
@@ -347,7 +347,7 @@ inline void scratchbufs_copy_from_pack(
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
   double* mmw, double* edot,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
   grackle::impl::CoolHeatScratchBuf coolingheating_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf
@@ -456,10 +456,6 @@ void derivatives(
 
   pack.other_scratch_buf.itmask[0] = MASK_TRUE;
 
-  // construct object to computes log temperature and interpolation indices
-  double tgasold_buf_[1] = {-1.0};  // <- use a dummy value
-  LnTPreparer lnT_preparer(tgasold_buf_);
-
   // configure the relevant members of `pack.fields` to point to the buffers
   // specified by the rhosp and eint argument.
   // -> the "Future Performance Considerations" section of the docstring has
@@ -467,8 +463,18 @@ void derivatives(
   copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rhosp, 1);
   pack.fields.internal_energy = &eint[0];
 
-  if (pack.local_edot_handling == 1) {
+  if (pack.local_edot_handling != 1) {
+    // in this branch, we're effectively ignoring the dependence of temperature
+    // on species number density.
+    // -> strictly speaking, this is false since gamma and the mean molecular
+    //    weight vary with respect to species densities
 
+    // precompute natural log of T and related interpolation info
+    LnTPreparer::prep_undamped_lnT_lininterp_bufs(
+        pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
+        *my_chemistry, pack.other_scratch_buf.itmask,
+        pack.other_scratch_buf.tgas);
+  } else {
     // calculate the basic gas properties (tgas, mmw, rhoH)
     basic_gas_props(pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
                     pack.other_scratch_buf.rhoH, pack.fwd_args.imetal,
@@ -477,12 +483,7 @@ void derivatives(
                     pack.idx_range_1_element);
 
     // precompute natural log of T and related interpolation info
-    // -> act as if there was prev iter where temperature was the same
-    lnT_preparer.record_T(
-        pack.idx_range_1_element, pack.other_scratch_buf.itmask,
-        pack.other_scratch_buf.tgas);
-    // -> actually compute the values
-    lnT_preparer.prep_damped_lnT_lininterp_bufs(
+    LnTPreparer::prep_undamped_lnT_lininterp_bufs(
         pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
         *my_chemistry, pack.other_scratch_buf.itmask,
         pack.other_scratch_buf.tgas);
@@ -501,14 +502,6 @@ void derivatives(
       pack.main_scratch_buf.coolingheating_buf
     );
   }
-
-  // overwrite the log temperature and interpolation indices
-  // -> when pack.local_edot_handling == 1, this is mathematically equivalent to
-  //    the earlier calculation, but may have slightly different numerical vals
-  LnTPreparer::prep_undamped_lnT_lininterp_bufs(
-      pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
-      *my_chemistry, pack.other_scratch_buf.itmask,
-      pack.other_scratch_buf.tgas);
 
   // uses the temperature to look up the chemical rates (they are interpolated
   // with respect to log temperature from input tables)

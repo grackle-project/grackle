@@ -283,7 +283,7 @@ static double calc_Heq_div_dHeqdt_(
   const chemistry_data* my_chemistry,
   const chemistry_data_storage* my_rates,
   double dlogtem,
-  const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  const grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   const double* k13,
   const double* k22,
   double local_rho,
@@ -397,7 +397,7 @@ static void set_subcycle_dt_from_chemistry_scheme_(
   const double* ddom, const double* tgas, const double* edot,
   const chemistry_data* my_chemistry, const chemistry_data_storage* my_rates,
   double dlogtem,
-  const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  const grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle_field_data* my_fields,
   grackle::impl::FullRxnRateBuf rxn_rate_buf
 ) {
@@ -743,8 +743,8 @@ int solve_rate_cool(
     grackle::impl::GrainSpeciesCollection grain_temperatures =
       grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
-      grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf =
+      grackle::impl::new_LnTLinInterpBuf(my_fields->grid_dimension[0]);
 
     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf =
       grackle::impl::new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
@@ -866,15 +866,18 @@ int solve_rate_cool(
                         idx_range);
 
         // Compute log temperature and interpolation indices
+        // (technically, we could skip indices info if prim_chem == 0 AND
+        //  dust_chemistry == 0. But we leave that for the future)
         if (iter == 1) {
           // act as if there was prev iter where temperature was the same
-          lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
+          LnTPreparer::prep_undamped_lnT_lininterp_bufs(
+              logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
+              tgas.data());
+        } else {
+          lnT_preparer.prep_damped_lnT_lininterp_bufs(
+              logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
+              tgas.data());
         }
-        // technically, we could skip indices info if prim_chem == 0 AND
-        // dust_chemistry == 0. But we leave that for the future
-        lnT_preparer.prep_damped_lnT_lininterp_bufs(
-            logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
-            tgas.data());
         // record the current temperature (used for "damping" next iter)
         lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
 
@@ -893,14 +896,6 @@ int solve_rate_cool(
         );
 
         if (my_chemistry->primordial_chemistry > 0)  {
-
-          // overwrite the log temperature and interpolation indices
-          // (this time we don't use damping)
-          //
-          // TODO(breaks-gold-standard): stop overwriting these values
-          LnTPreparer::prep_undamped_lnT_lininterp_bufs(
-              logTlininterp_buf, idx_range, *my_chemistry, itmask.data(),
-              tgas.data());
 
           // Look-up rates as a function of temperature for 1D set of zones
           //  (maybe should add itmask to this call)
@@ -1064,7 +1059,7 @@ int solve_rate_cool(
 
     // cleanup manually allocated temporaries
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
-    grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    grackle::impl::drop_LnTLinInterpBuf(&logTlininterp_buf);
     grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
     grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_scratch_buf);

@@ -110,7 +110,7 @@ inline void lookup_dust_rates1d(
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
     grackle_field_data* my_fields,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
