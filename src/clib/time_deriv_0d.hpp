@@ -16,6 +16,7 @@
 #include "grackle_macros.h" // GRACKLE_FREE
 #include "support/index_helper.hpp"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
 #include "rate_timestep_g.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "utils-field.hpp"
@@ -455,6 +456,9 @@ void derivatives(
 
   pack.other_scratch_buf.itmask[0] = MASK_TRUE;
 
+  // construct object to computes log temperature and interpolation indices
+  double tgasold_buf_[1] = {-1.0};  // <- use a dummy value
+  LnTPreparer lnT_preparer(tgasold_buf_);
 
   // configure the relevant members of `pack.fields` to point to the buffers
   // specified by the rhosp and eint argument.
@@ -472,9 +476,20 @@ void derivatives(
                     &my_rates->cloudy_primordial, &pack.fields, internalu,
                     pack.idx_range_1_element);
 
+    // precompute natural log of T and related interpolation info
+    // -> act as if there was prev iter where temperature was the same
+    lnT_preparer.record_T(
+        pack.idx_range_1_element, pack.other_scratch_buf.itmask,
+        pack.other_scratch_buf.tgas);
+    // -> actually compute the values
+    lnT_preparer.prep_damped_lnT_lininterp_bufs(
+        pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
+        *my_chemistry, pack.other_scratch_buf.itmask,
+        pack.other_scratch_buf.tgas);
+
     // compute cooling rate, tdust, and metallicity for this row
     cool1d_multi_g(
-      pack.fwd_args.imetal, pack.fwd_args.iter,
+      pack.fwd_args.imetal,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
       pack.other_scratch_buf.mmw,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
@@ -486,6 +501,14 @@ void derivatives(
       pack.main_scratch_buf.coolingheating_buf
     );
   }
+
+  // overwrite the log temperature and interpolation indices
+  // -> when pack.local_edot_handling == 1, this is mathematically equivalent to
+  //    the earlier calculation, but may have slightly different numerical vals
+  LnTPreparer::prep_undamped_lnT_lininterp_bufs(
+      pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
+      *my_chemistry, pack.other_scratch_buf.itmask,
+      pack.other_scratch_buf.tgas);
 
   // uses the temperature to look up the chemical rates (they are interpolated
   // with respect to log temperature from input tables)

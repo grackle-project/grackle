@@ -32,7 +32,7 @@
 #include "utils-cpp.hpp"
 
 void grackle::impl::cool1d_multi_g(
-    int imetal, int iter, double* edot, const double* tgas, const double* mmw,
+    int imetal, double* edot, const double* tgas, const double* mmw,
     double* tdust, double* metallicity, double* dust2gas, const double* rhoH,
     gr_mask_type* itmask, gr_mask_type* itmask_metal,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
@@ -117,9 +117,9 @@ void grackle::impl::cool1d_multi_g(
 
   // Locals
   int i, iZscale, mycmbTfloor;
-  double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, fudge,
-      gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nSSh, nratio, nssh_he,
-      nratio_he, fSShHI, fSShHeI, ih2cox, min_metallicity;
+  double dom, qq, vibl, zr, hdlte1, hdlow1, fudge, gphdl1, dom_inv, tau,
+      ciefudge, coolunit, tbase1, nSSh, nratio, nssh_he, nratio_he, fSShHI,
+      fSShHeI, ih2cox, min_metallicity;
   double comp1, comp2;
 
   // Performing heap allocations for all of the subsequent buffers within this
@@ -197,7 +197,7 @@ void grackle::impl::cool1d_multi_g(
 
   // Iteration mask
 
-  gr_mask_type anydust, interp;
+  gr_mask_type anydust;
   std::vector<gr_mask_type> itmask_tab(my_fields->grid_dimension[0]);
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -211,22 +211,6 @@ void grackle::impl::cool1d_multi_g(
   } else {
     anydust = MASK_FALSE;
   }
-
-  // Set flag for needing interpolation variables
-
-  if ((my_chemistry->primordial_chemistry > 0) ||
-      (my_chemistry->dust_chemistry > 0)) {
-    interp = MASK_TRUE;
-  } else {
-    interp = MASK_FALSE;
-  }
-  // Set log values of start and end of lookup tables
-
-  logtem0 = std::log(my_chemistry->TemperatureStart);
-  logtem9 = std::log(my_chemistry->TemperatureEnd);
-  dlogtem = (std::log(my_chemistry->TemperatureEnd) -
-             std::log(my_chemistry->TemperatureStart)) /
-            (double)(my_chemistry->NumberOfTemperatureBins - 1);
 
   // Set units
 
@@ -303,16 +287,6 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  // If this is the first time through, just set tgasold to tgas
-
-  if (iter == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        cool1dmulti_buf.tgasold[i] = tgas[i];
-      }
-    }
-  }
-
   // Compute log densities
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -351,42 +325,6 @@ void grackle::impl::cool1d_multi_g(
           (my_chemistry->Gamma * pi_fortran_val * kboltz_grflt * tgas[i]) /
           (GravConst_grflt * mmw[i] * mh_local_var *
            d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
-    }
-  }
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      // Compute log temperature and truncate if above/below table max/min
-
-      logTlininterp_buf.logtem[i] =
-          std::log(0.5 * (tgas[i] + cool1dmulti_buf.tgasold[i]));
-      logTlininterp_buf.logtem[i] =
-          std::fmax(logTlininterp_buf.logtem[i], logtem0);
-      logTlininterp_buf.logtem[i] =
-          std::fmin(logTlininterp_buf.logtem[i], logtem9);
-    }
-  }
-
-  // Compute interpolation indices
-
-  if (interp != MASK_FALSE) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        // Compute index into the table and precompute parts of linear interp
-
-        logTlininterp_buf.indixe[i] = std::fmin(
-            my_chemistry->NumberOfTemperatureBins - 1,
-            std::fmax(1, (long long)((logTlininterp_buf.logtem[i] - logtem0) /
-                                     dlogtem) +
-                             1));
-        logTlininterp_buf.t1[i] =
-            (logtem0 + (logTlininterp_buf.indixe[i] - 1) * dlogtem);
-        logTlininterp_buf.t2[i] =
-            (logtem0 + (logTlininterp_buf.indixe[i]) * dlogtem);
-        logTlininterp_buf.tdef[i] =
-            (logTlininterp_buf.logtem[i] - logTlininterp_buf.t1[i]) /
-            (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
-      }
     }
   }
 
@@ -1599,14 +1537,6 @@ void grackle::impl::cool1d_multi_g(
           edot[i] = 0.e0;
         }
       }
-    }
-  }
-
-  // Set tgasold
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      cool1dmulti_buf.tgasold[i] = tgas[i];
     }
   }
 

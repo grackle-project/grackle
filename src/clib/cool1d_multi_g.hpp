@@ -30,7 +30,6 @@ namespace grackle::impl {
 /// the functionality.
 ///
 /// @param[in] imetal Indicates whether metals are evolved
-/// @param[in] iter The current iteration (the first iteration is `1`)
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range
 /// @param[in] tgas 1D array of gas temperatures for the @p idx_range
@@ -60,10 +59,9 @@ namespace grackle::impl {
 /// @param[in] grain_temperatures buffers to hold individual grain species
 ///     temperatures. This is only used in certain configurations (i.e. when we
 ///     aren't using the tdust argument)
-/// @param[in] logTlininterp_buf Scratch space used to temporarily hold values
-///     for each location in @p idx_range with values that are used to linearly
-///     interpolate tables with respect to the natural log of @p tgas1d. (Any
-///     values previously stored here will be overwritten)
+/// @param[in] logTlininterp_buf Hold values for each location in @p idx_range
+///     that are used to linearly interpolate tables with respect to the natural
+///     log of @p tgas1d.
 /// @param[in] cool1dmulti_buf Pre-allocated buffers that are used by this
 ///     function for scratch space (to hold a variety of quantities)
 /// @param[in] coolingheating_buf Pre-allocated buffers that are used by this
@@ -77,7 +75,7 @@ namespace grackle::impl {
 /// modified3: February, 2003 by Robert Harkness; iteration mask
 /// modified4: September, 2009 by BDS to include cloudy cooling
 /// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void cool1d_multi_g(int imetal, int iter, double* edot, const double* tgas,
+void cool1d_multi_g(int imetal, double* edot, const double* tgas,
                     const double* mmw, double* tdust, double* metallicity,
                     double* dust2gas, const double* rhoH, gr_mask_type* itmask,
                     gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
