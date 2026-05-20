@@ -20,8 +20,8 @@
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "internal_units.hpp"    // InternalGrUnits
 #include "internal_types.hpp"    // GrainSpeciesCollection
-#include "index_helper.h"        // IndexRange
 #include "lnT_prep.hpp"          // LnTLinInterpBuf
+#include "support/index_helper.hpp"  // IndexRange
 
 namespace grackle::impl {
 

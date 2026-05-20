@@ -182,11 +182,11 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-nccv7"
+        default: "gold-standard-nccv9"
       cache-tag:
         description: "A unique tag to append to the cache name"
         type: string
-        default: "1"
+        default: "2"
     steps:
       - run:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
@@ -239,6 +239,24 @@ executors:
     resource_class: << parameters.resource_class >>
 
 jobs:
+  generate-gold-standard:
+    parameters:
+      tag:
+        type: string
+        default: latest
+    executor:
+      name: python
+      tag: << parameters.tag >>
+      resource_class: small  # <- 1 core
+
+    working_directory: ~/grackle
+
+    steps:
+      - checkout
+      - setup-system-for-pytest
+      - download-test-data
+      - store-gracklepy-suite-gold-standard-answers
+
   test-suite:
     parameters:
       tag:
@@ -363,16 +381,22 @@ workflows:
 
    tests:
      jobs:
+       - generate-gold-standard:
+           name: "Generate the gold standard."
+           tag: "3.10.14"
+
        - test-suite:
+           requires:
+             - "Generate the gold standard.": success
            name: "Pygrackle test suite - Python 3.10"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
    weekly:
      triggers:
@@ -383,13 +407,19 @@ workflows:
               only:
                 - main
      jobs:
+       - generate-gold-standard:
+           name: "Generate the gold standard."
+           tag: "3.10.14"
+
        - test-suite:
+           requires:
+             - "Generate the gold standard.": success
            name: "Pygrackle test suite - Python 3.10"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.10.3"
+           tag: "3.10.14"

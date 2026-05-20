@@ -28,7 +28,7 @@
 
 #include "grackle.h"
 #include "inject_model/raw_data.hpp"  // grackle::impl::inj_model_input::N_Injection_Pathways
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 using SimpleRateQueryTest =
     grtest::ConfigPresetFixture<grtest::ChemPreset::primchem4_dustspecies3,
