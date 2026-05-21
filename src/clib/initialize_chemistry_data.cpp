@@ -26,8 +26,9 @@
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
 #include "interp_table_utils.hpp" // free_interp_grid_
 #include "opaque_storage.hpp" // gr_opaque_storage
-#include "phys_constants.h"
 #include "ratequery.hpp"
+#include "runtime_splut.hpp"
+#include "support/PartMap.hpp"
 #include "support/status_reporting.hpp"
 #include "tabulated/initialize_cloudy_data.hpp"
 
@@ -331,16 +332,44 @@ static int local_initialize_chemistry_data_(
     }
   }
 
+    // reminder: my_rates->opaque_storage->grain_species_info will be
+    //           initialized before entering this function if we need it
+
+  // it's time to figure out the species are involved in the network
+
+  // the choice to initialize GrainSpeciesInfo right here and now, may seem a
+  // a little strange, but it directly encodes information about the
+  // grain-species involved in the calculation
+  GRIMPL_NS::GrainSpeciesInfo* grain_species_info = nullptr;
+  if (my_chemistry->dust_species > 0) {
+    grain_species_info = new grackle::impl::GrainSpeciesInfo{
+      grackle::impl::new_GrainSpeciesInfo(my_chemistry->dust_species)};
+  }
+
+  GRIMPL_NS::PartMap species_kind_map = GRIMPL_NS::make_species_kind_map(
+    my_chemistry->primordial_chemistry,
+    my_chemistry->metal_cooling,
+    grain_species_info);
+
+  if (!GRIMPL_NS::PartMap_is_ok(&species_kind_map)) {
+    if (grain_species_info != nullptr) {
+      GRIMPL_NS::drop_GrainSpeciesInfo(grain_species_info);
+      delete grain_species_info;
+      return GR_FAIL;
+    }
+  }
+
   // it's time to start initializing values in my_rates
 
   // perform some basic allocations
   my_rates->opaque_storage = new gr_opaque_storage;
+  my_rates->opaque_storage->species_kind_map = species_kind_map;
   my_rates->opaque_storage->kcol_rate_tables = nullptr;
   my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
   my_rates->opaque_storage->n_kcol_rate_indices = 0;
   grackle::impl::init_empty_interp_grid_props_(
     &my_rates->opaque_storage->h2dust_grain_interp_props);
-  my_rates->opaque_storage->grain_species_info = nullptr;
+  my_rates->opaque_storage->grain_species_info = grain_species_info;
   my_rates->opaque_storage->inject_pathway_props = nullptr;
   my_rates->opaque_storage->registry = nullptr;
 
@@ -588,6 +617,8 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
 
   // start freeing memory associated with opaque storage
   // ---------------------------------------------------
+  GRIMPL_NS::drop_PartMap(&my_rates->opaque_storage->species_kind_map);
+
   if (my_rates->opaque_storage->kcol_rate_tables != nullptr) {
     // delete contents of kcol_rate_tables
     drop_CollisionalRxnRateCollection(my_rates->opaque_storage->kcol_rate_tables);
