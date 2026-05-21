@@ -17,7 +17,7 @@
 
 #include "grackle.h"
 #include "utils-cpp.hpp"  // GRIMPL_FORCE_INLINE
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 #include "support/config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL::ratequery {

@@ -24,7 +24,7 @@
 #include "dust_props.hpp"
 #include "dust/grain_species_info.hpp"
 #include "fortran_func_decls.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "LUT.hpp"

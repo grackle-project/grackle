@@ -81,12 +81,6 @@ configure_file(auto_general.cpp.in auto_general.cpp @ONLY)
 
 add_library(Grackle_Grackle
 
-  # C source files
-  grackle_units.c
-  index_helper.c
-  rate_functions.c
-  status_reporting.c status_reporting.h
-
   # auto-generated C++ source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.cpp
   # here is the companion header file (not generated)
@@ -100,12 +94,10 @@ add_library(Grackle_Grackle
   api/calculate_temperature.cpp
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
-  calc_temp_cloudy.cpp calc_temp_cloudy.hpp
-  calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
+  api/units.cpp
   ceiling_species.hpp
+  cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
-  cool1d_cloudy_g.cpp cool1d_cloudy_g.hpp
-  cool1d_cloudy_old_tables_g.cpp cool1d_cloudy_old_tables_g.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time.cpp cool_multi_time.hpp
   dust_props.hpp
@@ -120,10 +112,10 @@ add_library(Grackle_Grackle
   dust/multi_grain_species/calc_grain_size_increment_1d.hpp
   dust/misc.hpp
   dynamic_api.cpp
+  gas_props.hpp
   full_rxn_rate_buf.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
-  initialize_cloudy_data.cpp initialize_cloudy_data.hpp
   initialize_rates.cpp initialize_rates.hpp
   initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp
   inject_model/grain_metal_inject_pathways.hpp
@@ -133,10 +125,12 @@ add_library(Grackle_Grackle
   internal_types.cpp internal_types.hpp
   internal_units.hpp
   interp_table_utils.hpp
+  lnT_prep.cpp lnT_prep.hpp
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
   ratequery.cpp ratequery.hpp
+  rate_functions.cpp
   rate_timestep_g.cpp rate_timestep_g.hpp
   scale_fields.cpp scale_fields.hpp
   self_shielding_err_check.hpp
@@ -147,6 +141,13 @@ add_library(Grackle_Grackle
   support/FrozenKeyIdxBiMap_detail.hpp
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
+  support/index_helper.hpp
+  support/status_reporting.cpp support/status_reporting.hpp
+  tabulated/calc_temp1d_cloudy.cpp tabulated/calc_temp1d_cloudy.hpp
+  tabulated/common.hpp
+  tabulated/cool1d_cloudy.cpp tabulated/cool1d_cloudy.hpp
+  tabulated/cool1d_cloudy_old_tables.cpp tabulated/cool1d_cloudy_old_tables.hpp
+  tabulated/initialize_cloudy_data.cpp tabulated/initialize_cloudy_data.hpp
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
@@ -186,13 +187,11 @@ add_library(Grackle_Grackle
   ../include/grackle_types.h
 
   # private headers
-  cie_thin_cooling_rate_tables.h
   fortran_func_decls.h
   field_data_evolved_species.def    # <-- acts as a C header
   field_data_misc_fdatamembers.def  # <-- acts as a C header
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
-  index_helper.h
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
 

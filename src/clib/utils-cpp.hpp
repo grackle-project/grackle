@@ -18,7 +18,7 @@
 #endif
 
 #include "fortran_func_decls.h" // gr_mask_type
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 #include <cmath>
 #include <cstdio> // printf

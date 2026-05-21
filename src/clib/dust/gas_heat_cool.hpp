@@ -14,9 +14,9 @@
 
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "internal_types.hpp"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 #include "support/config.hpp"
 
 #include <cmath>
@@ -154,8 +154,8 @@ inline void update_edot_dust_recombination(
     double* edot, const double* tgas, const double* dust2gas,
     const double* rhoH, const double* e_density, const double* isrf,
     const gr_mask_type* itmask, double local_dust_to_gas_ratio,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-    const double* regr, IndexRange idx_range, double dom_inv) {
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf, const double* regr,
+    IndexRange idx_range, double dom_inv) {
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       double cur_regr =
