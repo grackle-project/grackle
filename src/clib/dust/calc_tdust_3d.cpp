@@ -20,7 +20,7 @@
 #include "dust_props.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_types.hpp"
@@ -47,7 +47,7 @@ void calc_tdust_3d(
   const double trad = (gr_float)(2.73) * ((gr_float)(1.) + zr);
 
   // Loop over zones, and do an entire i-column in one go
-  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {

@@ -81,12 +81,6 @@ configure_file(auto_general.cpp.in auto_general.cpp @ONLY)
 
 add_library(Grackle_Grackle
 
-  # C source files
-  grackle_units.c
-  index_helper.c
-  rate_functions.c
-  status_reporting.c status_reporting.h
-
   # auto-generated C++ source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.cpp
   # here is the companion header file (not generated)
@@ -100,7 +94,9 @@ add_library(Grackle_Grackle
   api/calculate_temperature.cpp
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
+  api/units.cpp
   ceiling_species.hpp
+  cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time.cpp cool_multi_time.hpp
@@ -134,6 +130,7 @@ add_library(Grackle_Grackle
   mask.hpp
   opaque_storage.hpp
   ratequery.cpp ratequery.hpp
+  rate_functions.cpp
   rate_timestep_g.cpp rate_timestep_g.hpp
   scale_fields.cpp scale_fields.hpp
   self_shielding_err_check.hpp
@@ -144,8 +141,10 @@ add_library(Grackle_Grackle
   support/FrozenKeyIdxBiMap_detail.hpp
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
-  tabulated/calc_temp_cloudy.cpp tabulated/calc_temp_cloudy.hpp
+  support/index_helper.hpp
+  support/status_reporting.cpp support/status_reporting.hpp
   tabulated/calc_temp1d_cloudy.cpp tabulated/calc_temp1d_cloudy.hpp
+  tabulated/common.hpp
   tabulated/cool1d_cloudy.cpp tabulated/cool1d_cloudy.hpp
   tabulated/cool1d_cloudy_old_tables.cpp tabulated/cool1d_cloudy_old_tables.hpp
   tabulated/initialize_cloudy_data.cpp tabulated/initialize_cloudy_data.hpp
@@ -188,13 +187,11 @@ add_library(Grackle_Grackle
   ../include/grackle_types.h
 
   # private headers
-  cie_thin_cooling_rate_tables.h
   fortran_func_decls.h
   field_data_evolved_species.def    # <-- acts as a C header
   field_data_misc_fdatamembers.def  # <-- acts as a C header
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
-  index_helper.h
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
 
