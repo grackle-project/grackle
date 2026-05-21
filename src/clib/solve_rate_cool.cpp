@@ -283,7 +283,7 @@ static double calc_Heq_div_dHeqdt_(
   const chemistry_data* my_chemistry,
   const chemistry_data_storage* my_rates,
   double dlogtem,
-  const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  const grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   const double* k13,
   const double* k22,
   double local_rho,
@@ -397,7 +397,7 @@ static void set_subcycle_dt_from_chemistry_scheme_(
   const double* ddom, const double* tgas, const double* edot,
   const chemistry_data* my_chemistry, const chemistry_data_storage* my_rates,
   double dlogtem,
-  const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  const grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle_field_data* my_fields,
   grackle::impl::FullRxnRateBuf rxn_rate_buf
 ) {
@@ -743,8 +743,8 @@ int solve_rate_cool(
     grackle::impl::GrainSpeciesCollection grain_temperatures =
       grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
-      grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf =
+      grackle::impl::new_LnTLinInterpBuf(my_fields->grid_dimension[0]);
 
     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf =
       grackle::impl::new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
@@ -785,11 +785,21 @@ int solve_rate_cool(
     std::vector<double> dust2gas(my_fields->grid_dimension[0]);
     std::vector<double> rhoH(my_fields->grid_dimension[0]);
     std::vector<double> mmw(my_fields->grid_dimension[0]);
+    // when primordial_chemistry > 0, this buffer simply holds copies of
+    // of the e_density field
+    std::vector<double> nelec_times_mH(my_fields->grid_dimension[0]);
     std::vector<double> edot(my_fields->grid_dimension[0]);
 
     // iteration masks
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
+
+    // construct object to computes log temperature and interpolation indices
+    // -> tgasold_ is reserved exclusive use by lnT_preparer (it retains
+    //    values between cycles)
+    // -> see docstring of LnTPreparer for extended discussion
+    std::vector<double> tgasold_(my_fields->grid_dimension[0]);
+    LnTPreparer lnT_preparer(tgasold_.data());
 
     // create views of density and internal energy fields to support 3D access
     grackle::impl::View<gr_float***> d(my_fields->density,
@@ -852,18 +862,30 @@ int solve_rate_cool(
           }
         }
 
-        // calculate the basic gas properties (tgas, mmw, rhoH)
-        basic_gas_props(tgas.data(), mmw.data(), rhoH.data(), imetal,
-                        itmask.data(), my_chemistry,
-                        &my_rates->cloudy_primordial, my_fields, internalu,
-                        idx_range);
+        // compute gas properties (tgas, mmw, rhoH, metallicity, nelec_times_mH)
+        // and fill up logTlinterp_buf
+        extended_gas_props(tgas.data(), mmw.data(), rhoH.data(),
+                           metallicity.data(), nelec_times_mH.data(),
+                           logTlininterp_buf, imetal, itmask.data(),
+                           my_chemistry, &my_rates->cloudy_primordial,
+                           my_fields, internalu, idx_range,
+                           // if (iter == 1), we act as if there was a previous
+                           // iteration where temperature was the same
+                           (iter == 1) ? nullptr : &lnT_preparer);
 
-        // Compute the cooling rate, tgas, tdust, and metallicity for this row
+        // record the current temperature (next iteration, these are used for
+        // "damping" when we fill up logTlininterp_buf)
+        lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
+
+        // Compute the edot values (so we can get the cooling time)
+        // -> at this time the function also fillls dust2gas and tdust. It can
+        //    also modify itmask and itmask_metal
+        // -> (we plan to factor out the extra calculations)
         cool1d_multi_g(
-          imetal, iter,
+          imetal,
           edot.data(),
           tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
-          dust2gas.data(), rhoH.data(), itmask.data(),
+          dust2gas.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry,
           my_rates, my_fields,
           *my_uvb_rates, internalu,
@@ -968,7 +990,7 @@ int solve_rate_cool(
             imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
             dtit.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
-            edot.data(), anydust, spsolvbuf.itmask_nr,
+            nelec_times_mH.data(), edot.data(), anydust, spsolvbuf.itmask_nr,
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
             my_fields, *my_uvb_rates, internalu, grain_temperatures,
             logTlininterp_buf, cool1dmulti_buf, coolingheating_buf,
@@ -1036,7 +1058,7 @@ int solve_rate_cool(
 
     // cleanup manually allocated temporaries
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
-    grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    grackle::impl::drop_LnTLinInterpBuf(&logTlininterp_buf);
     grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
     grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_scratch_buf);

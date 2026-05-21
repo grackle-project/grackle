@@ -150,13 +150,13 @@ inline void step_rate_newton_raphson(
   int imetal, IndexRange idx_range, int iter, double dom, double chunit,
   double dx_cgs, double c_ljeans, double* dtit, double* tgas,
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
-  double* mmw, double* edot, gr_mask_type anydust,
+  double* mmw, double* nelec_times_mH, double* edot, gr_mask_type anydust,
   gr_mask_type* itmask_nr, gr_mask_type* itmask_metal, int* imp_eng,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
   InternalGrUnits internalu,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
   grackle::impl::CoolHeatScratchBuf coolingheating_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf
@@ -507,7 +507,7 @@ inline void step_rate_newton_raphson(
       //    copying is the value of cool1dmulti_buf.tgasold -- and that doesn't
       //    currently get used)
       t_deriv::scratchbufs_copy_into_pack(
-        i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw,
+        i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw, nelec_times_mH,
         edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf, chemheatrates_buf
       );
@@ -665,7 +665,7 @@ label_9996:
       // -> we should totally delete this function (we may already be able to
       //    do so)
       t_deriv::scratchbufs_copy_from_pack(
-        i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw,
+        i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw, nelec_times_mH,
         edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf, chemheatrates_buf
       );

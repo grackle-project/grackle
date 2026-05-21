@@ -20,6 +20,7 @@
 #include "fortran_func_decls.h"      // gr_mask_int
 #include "internal_units.hpp"        // InternalGrUnits
 #include "internal_types.hpp"        // GrainSpeciesCollection
+#include "lnT_prep.hpp"              // LnTLinInterpBuf
 #include "support/index_helper.hpp"  // IndexRange
 
 namespace grackle::impl {
@@ -30,7 +31,6 @@ namespace grackle::impl {
 /// the functionality.
 ///
 /// @param[in] imetal Indicates whether metals are evolved
-/// @param[in] iter The current iteration (the first iteration is `1`)
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range
 /// @param[in] tgas 1D array of gas temperatures for the @p idx_range
@@ -40,12 +40,13 @@ namespace grackle::impl {
 ///     variants of the classic 1-field dust-model or using the variant of the
 ///     multi-grain-species model where all grains are configured to share a
 ///     single temperature.
-/// @param[in]  metallicity 1D array to hold the computed metallicity for the
-///     @p idx_range
+/// @param[in]  metallicity 1D array of metallicities for the @p idx_range
 /// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
 ///     location in the index range. In other words, this holds the dust mass
 ///     per unit gas mass (only used in certain configuration)
 /// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
+/// @param[in] nelec_times_mH 1D array holding the number density of electrons
+///     (multiplied by the Hydrogen mass) for the @p idx_range
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
 /// @param[out] itmask_metal
@@ -60,10 +61,9 @@ namespace grackle::impl {
 /// @param[in] grain_temperatures buffers to hold individual grain species
 ///     temperatures. This is only used in certain configurations (i.e. when we
 ///     aren't using the tdust argument)
-/// @param[in] logTlininterp_buf Scratch space used to temporarily hold values
-///     for each location in @p idx_range with values that are used to linearly
-///     interpolate tables with respect to the natural log of @p tgas1d. (Any
-///     values previously stored here will be overwritten)
+/// @param[in] logTlininterp_buf Hold values for each location in @p idx_range
+///     that are used to linearly interpolate tables with respect to the natural
+///     log of @p tgas1d.
 /// @param[in] cool1dmulti_buf Pre-allocated buffers that are used by this
 ///     function for scratch space (to hold a variety of quantities)
 /// @param[in] coolingheating_buf Pre-allocated buffers that are used by this
@@ -77,16 +77,17 @@ namespace grackle::impl {
 /// modified3: February, 2003 by Robert Harkness; iteration mask
 /// modified4: September, 2009 by BDS to include cloudy cooling
 /// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void cool1d_multi_g(int imetal, int iter, double* edot, const double* tgas,
-                    const double* mmw, double* tdust, double* metallicity,
-                    double* dust2gas, const double* rhoH, gr_mask_type* itmask,
+void cool1d_multi_g(int imetal, double* edot, const double* tgas,
+                    const double* mmw, double* tdust, const double* metallicity,
+                    double* dust2gas, const double* rhoH,
+                    const double* nelec_times_mH, gr_mask_type* itmask,
                     gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
                     chemistry_data_storage* my_rates,
                     grackle_field_data* my_fields,
                     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
                     IndexRange idx_range,
                     grackle::impl::GrainSpeciesCollection grain_temperatures,
-                    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+                    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
                     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
                     grackle::impl::CoolHeatScratchBuf coolingheating_buf);
 
