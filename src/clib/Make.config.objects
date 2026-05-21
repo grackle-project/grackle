@@ -20,11 +20,10 @@ OBJS_CONFIG_LIB = \
         api/calculate_temperature.lo \
         api/set_default_chemistry_parameters.lo \
         api/solve_chemistry.lo \
-        calc_temp1d_cloudy_g.lo \
-        calc_temp_cloudy.lo \
+        tabulated/calc_temp1d_cloudy.lo \
         collisional_rate_props.lo \
-        cool1d_cloudy_g.lo \
-        cool1d_cloudy_old_tables_g.lo \
+        tabulated/cool1d_cloudy.lo \
+        tabulated/cool1d_cloudy_old_tables.lo \
         cool1d_multi_g.lo \
         cool_multi_time.lo \
         dust/calc_all_tdust_gasgr_1d_g.lo \
@@ -33,21 +32,21 @@ OBJS_CONFIG_LIB = \
         dust/calc_tdust_1d_g.lo \
         dust/grain_species_info.lo \
         dynamic_api.lo \
-        grackle_units.lo \
-	index_helper.lo \
+        api/units.lo \
         initialize_chemistry_data.lo \
-        initialize_cloudy_data.lo \
+        tabulated/initialize_cloudy_data.lo \
         init_misc_species_cool_rates.lo \
         initialize_rates.lo \
         initialize_UVbackground_data.lo \
         inject_model/load_data.lo \
         inject_model/raw_data.lo \
         interpolators_g.lo \
+        lnT_prep.lo \
         rate_timestep_g.lo \
         make_consistent.lo \
         scale_fields.lo \
         solve_rate_cool.lo \
-        status_reporting.lo \
+        support/status_reporting.lo \
         update_UVbackground_rates.lo \
         calc_tdust_1d_g.lo \
         dust/calc_tdust_3d.lo \

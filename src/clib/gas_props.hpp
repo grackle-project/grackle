@@ -1,0 +1,516 @@
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements logic for computing gas properties.
+///
+//===----------------------------------------------------------------------===//
+#ifndef GRACKLE_GAS_PROPS_HPP
+#define GRACKLE_GAS_PROPS_HPP
+
+#include "fortran_func_decls.h"
+#include "grackle.h"
+#include "support/index_helper.hpp"
+#include "internal_units.hpp"
+#include "lnT_prep.hpp"
+#include "support/config.hpp"
+#include "tabulated/calc_temp1d_cloudy.hpp"
+#include "utils-cpp.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
+
+/// Approximate mean molecular weight of metals
+///
+/// @todo
+/// Consider moving this to phys_constants.h. It may not be necessary since
+/// this may only ultimately get used in 2 places.
+inline constexpr double MU_METAL = 16.;
+
+/// Calculate thermal pressure
+///
+/// @todo find a better home for this function
+inline double calc_pressure(double gamma, double density,
+                            double specific_eint) {
+  return (gamma - 1.) * density * specific_eint;
+}
+
+namespace chemistry_T_detail {
+
+/// computes temperature dependent `1 / (γ_H₂ - 1)`
+///
+/// This is based on equation 6 from Omukai & Nishi (1998)
+/// https://ui.adsabs.harvard.edu/abs/1998ApJ...508..141O/abstract
+///
+/// @param x the value of `(6100 K / Tgas)`
+inline double inverse_gm1_for_H2(double x) {
+  return 0.5 * (5. + 2. * std::pow(x, 2) * std::exp(x) /
+                         std::pow((std::exp(x) - 1), 2));
+}
+
+/// calculate the adiabatic index for gas at a given temperature
+///
+/// This is based on equation 5 from Omukai & Nishi (1998)
+/// https://ui.adsabs.harvard.edu/abs/1998ApJ...508..141O/abstract
+///
+/// @param tgas temperature of the gas
+/// @param nH2, n_other number densities of H2 and of all other species. In
+///     practice, these can both be multiplied by a constant (typically the
+///     Hydrogen mass)
+/// @param gamma_other The adiabatic index of all material other than H2
+inline double variable_gamma(double tgas, double nH2, double n_other,
+                             double gamma_other) {
+  bool exceed_min_T = tgas >= 610.0;  // aka x<=10.0
+  bool use_formula = (nH2 > (1.0e-3 * n_other)) && exceed_min_T;
+  double inv_gm1_for_H2 = use_formula ? inverse_gm1_for_H2(6100. / tgas) : 2.5;
+  return 1. + (nH2 + n_other) /
+                  (nH2 * inv_gm1_for_H2 + n_other / (gamma_other - 1.));
+}
+
+/// use "fixed point iteration" to solve for a self-consistent gas temperature
+///
+/// For the uninitiated, "fixed point iteration" is a scheme where we solve for
+/// a so-called "fixed-point" of a function `f(x)`. This scheme produces a
+/// sequence of values `x₀, x₁, x₂, ...`, where `xₙ₊₁ = f(xₙ)`. Essentially, we
+/// "hope" that the sequence converges to a fixed point `xfix` (i.e. where
+/// `xfix == f(xfix)`).
+///
+/// In the context, we try to iterate to a self-consistent gas temperature
+/// using the variable adiabatic index implemented in @ref variable_gamma.
+///
+/// @param tgas0 Initial guess of the gas temperature
+/// @param nH2, n_other number densities of H2 and of all other species. In
+///     practice, these can both be multiplied by a constant (typically the
+///     Hydrogen mass)
+/// @param gamma_other The adiabatic index of all material other than H2
+/// @param tgas_div_gm1 The gas temperature divided by `(gamma - 1)`. This is
+///     always exactly known.
+/// @param tgas_floor The floor to apply to the gas temperature
+/// @param n_iter Number of iterations
+inline double self_consistent_Tgas(double tgas0, double nH2, double n_other,
+                                   double gamma_other, double tgas_div_gm1,
+                                   double tgas_floor, unsigned int n_iter) {
+  double tgas = tgas0;
+
+  for (unsigned int n = 0; n < n_iter; n++) {
+    double gamma = variable_gamma(tgas0, nH2, n_other, gamma_other);
+    tgas = std::fmax((gamma - 1.) * tgas_div_gm1, tgas_floor);
+    if (std::fabs(tgas0 - tgas) <= tgas0 * 1.0e-3) {
+      break;
+    };
+    tgas0 = tgas;
+  }
+  return tgas;
+}
+
+}  // namespace chemistry_T_detail
+
+/// calculate basic gas properties for the specified @p idx_range
+///
+/// Basic properties include @p tgas, @p mmw, and @p rhoH. For some context,
+/// we effectively compute @p tgas and @p mmw at the same time, and @p rhoH is
+/// required for the calculation along some execution pathways.
+///
+/// @param[out] tgas 1D array to hold the computed gas temperatures in the
+///     @p idx_range
+/// @param[out] mmw 1D array to hold the computed mean molecular weight
+///     in the @p idx_range
+/// @param[out] rhoH 1D array to hold the computed Hydrogen mass density
+///     for the @p idx_range
+/// @param[in] imetal Indicates whether metals are evolved
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] primordial_cloudy_data Cloudy cooling table data for primordial
+///     species. (Only used when my_chemistry->primordial_chemistry is 0)
+/// @param[in] my_fields Specifies the field data.
+/// @param[in] internalu Specifies Grackle's internal unit-system
+/// @param[in] idx_range Specifies the current index-range
+inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
+                            const gr_mask_type* itmask,
+                            const chemistry_data* my_chemistry,
+                            const cloudy_data* primordial_cloudy_data,
+                            const grackle_field_data* my_fields,
+                            InternalGrUnits internalu, IndexRange idx_range) {
+  // construct 3d views
+  View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                            my_fields->grid_dimension[1],
+                            my_fields->grid_dimension[2]);
+  View<const gr_float***> e(
+      my_fields->internal_energy, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  View<const gr_float***> metal(
+      my_fields->metal_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  // get the appropriate constant
+  const double dom = internalu_calc_dom_(internalu);
+  const double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;
+
+  // If no chemistry, use a tabulated mean molecular weight
+  // and iterate to convergence.
+
+  if (my_chemistry->primordial_chemistry == 0) {
+    if (imetal == 1) {
+      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          rhoH[i] = my_chemistry->HydrogenFractionByMass *
+                    (d(i, idx_range.j, idx_range.k) -
+                     metal(i, idx_range.j, idx_range.k));
+        }
+      }
+    } else {
+      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          rhoH[i] = my_chemistry->HydrogenFractionByMass *
+                    d(i, idx_range.j, idx_range.k);
+        }
+      }
+    }
+
+    grackle::impl::calc_temp1d_cloudy(rhoH, tgas, mmw, dom, zr, imetal, itmask,
+                                      my_chemistry, *primordial_cloudy_data,
+                                      my_fields, internalu, idx_range);
+
+  } else {
+    // get 3D views
+    View<const gr_float***> de(
+        my_fields->e_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HI(
+        my_fields->HI_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HII(
+        my_fields->HII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HeI(
+        my_fields->HeI_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HeII(
+        my_fields->HeII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HeIII(
+        my_fields->HeIII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> HM(
+        my_fields->HM_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> H2I(
+        my_fields->H2I_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    View<const gr_float***> H2II(
+        my_fields->H2II_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+    // Compute mean molecular weight (and temperature) directly
+
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        mmw[i] = (HeI(i, idx_range.j, idx_range.k) +
+                  HeII(i, idx_range.j, idx_range.k) +
+                  HeIII(i, idx_range.j, idx_range.k)) /
+                     4. +
+                 HI(i, idx_range.j, idx_range.k) +
+                 HII(i, idx_range.j, idx_range.k) +
+                 de(i, idx_range.j, idx_range.k);
+        rhoH[i] =
+            HI(i, idx_range.j, idx_range.k) + HII(i, idx_range.j, idx_range.k);
+      }
+    }
+
+    // (include molecular hydrogen, but ignore deuterium)
+
+    if (my_chemistry->primordial_chemistry > 1) {
+      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          mmw[i] = mmw[i] + HM(i, idx_range.j, idx_range.k) +
+                   (H2I(i, idx_range.j, idx_range.k) +
+                    H2II(i, idx_range.j, idx_range.k)) /
+                       2.;
+          rhoH[i] = rhoH[i] + H2I(i, idx_range.j, idx_range.k) +
+                    H2II(i, idx_range.j, idx_range.k);
+        }
+      }
+    }
+
+    // Include metal species
+
+    if (imetal == 1) {
+      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          mmw[i] = mmw[i] + metal(i, idx_range.j, idx_range.k) / MU_METAL;
+        }
+      }
+    }
+
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        double fixed_adiabat_pressure =
+            calc_pressure(my_chemistry->Gamma, d(i, idx_range.j, idx_range.k),
+                          e(i, idx_range.j, idx_range.k));
+        tgas[i] = std::fmax(fixed_adiabat_pressure * internalu.utem / mmw[i],
+                            my_chemistry->TemperatureStart);
+        mmw[i] = d(i, idx_range.j, idx_range.k) / mmw[i];
+      }
+    }
+
+    // If the chemical network includes H2, adjust tgas to account for the fact
+    // that adiabatic index actually depends on H2 abundance & on tgas
+    //
+    // IDEA for the future if we eventually decide that the accuracy of this
+    // quantity needs to be improved. We should adjust the initial guess for
+    // tgas (in cases where the `Gamma` parameter is 5/3):
+    // - the new initial guess should assume that gamma=7/5 for H2 (accounting
+    //   for rotational degrees of freedom). Then the adjustment only adjusts
+    //   for the relevance of the single vibrational degree of freedom
+    // - the current initial guess implicitly assumes H2's gamma is the same
+    //   as monatomic species (so it's initially less accurate)
+    if (my_chemistry->primordial_chemistry > 1) {
+      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          // compute number densities of H2 and all other primordial species
+          // -> technically, we're computing number density time Hydrogen mass,
+          //    but that's ok for our purposes
+          double nH2 = 0.5 * (H2I(i, idx_range.j, idx_range.k) +
+                              H2II(i, idx_range.j, idx_range.k));
+          double nother = (HeI(i, idx_range.j, idx_range.k) +
+                           HeII(i, idx_range.j, idx_range.k) +
+                           HeIII(i, idx_range.j, idx_range.k)) /
+                              4. +
+                          HI(i, idx_range.j, idx_range.k) +
+                          HII(i, idx_range.j, idx_range.k) +
+                          de(i, idx_range.j, idx_range.k);
+
+          // the quality of the adjustment varies between branches
+#ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
+          // iteratively solve for a self-consistent gas temperature
+          // -> the current strategy uses fixed point iteration. This isn't
+          //    practical (and it's not totally obvious that it converges)
+          constexpr unsigned int n_iter = 100u;
+          const double tgas_div_gm1 =
+              mmw[i] * e(i, idx_range.j, idx_range.k) * internalu.utem;
+          const double tgas_floor = my_chemistry->TemperatureStart;
+          tgas[i] = chemistry_T_detail::self_consistent_Tgas(
+              tgas[i], nH2, nother, my_chemistry->Gamma, tgas_div_gm1,
+              tgas_floor, n_iter);
+#else
+          // in this branch, we roughly approximate the adjustment
+          // -> it's equivalent to a single iteration of fixed point iteration
+          // -> the resulting tgas is technically not self-consistent (i.e.
+          //    applying the adjustment again would yield a different answer)
+          double adjusted_gamma = chemistry_T_detail::variable_gamma(
+              tgas[i], nH2, nother, my_chemistry->Gamma);
+          tgas[i] =
+              tgas[i] * (adjusted_gamma - 1.) / (my_chemistry->Gamma - 1.);
+#endif
+        }
+      }
+    }
+  }
+}
+
+/// fill metallicity and electron density buffers for specified @p idx_range
+///
+/// @note This function was primarily created to help move the enclosed logic
+/// out of @ref cool1d_multi_g.
+///
+/// @param[out] metallicity 1D array to hold the computed metallicity for the
+///     @p idx_range
+/// @param[out] nelec_times_mH 1D array to hold the number density of electrons
+///     (multiplied by the Hydrogen mass) for the @p idx_range
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] imetal Indicates whether metals are evolved
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] mmw 1D array of mean molecular weights for the @p idx_range
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] my_fields Specifies the field data.
+inline void calc_metallicity_and_electron_density(
+    double* metallicity, double* nelec_times_mH, IndexRange idx_range,
+    int imetal, const gr_mask_type* itmask, const double* mmw,
+    const chemistry_data* my_chemistry, const grackle_field_data* my_fields) {
+  View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                            my_fields->grid_dimension[1],
+                            my_fields->grid_dimension[2]);
+  View<const gr_float***> metal(
+      my_fields->metal_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  // calculate metallicity
+  if (imetal == 1) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        metallicity[i] = metal(i, idx_range.j, idx_range.k) /
+                         d(i, idx_range.j, idx_range.k) /
+                         my_chemistry->SolarMetalFractionByMass;
+      }
+    }
+  } else {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        metallicity[i] = tiny_fortran_val;
+      }
+    }
+  }
+
+  // fill the nelec_times_mH buffer
+  if (my_chemistry->primordial_chemistry == 0) {
+    // Calculate electron density from mean molecular weight
+
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        nelec_times_mH[i] =
+            1 -
+            mmw[i] * (3.0 * my_chemistry->HydrogenFractionByMass + 1.0) / 4.0;
+        if (imetal == 1) {
+          nelec_times_mH[i] = nelec_times_mH[i] -
+                              mmw[i] * metal(i, idx_range.j, idx_range.k) /
+                                  (d(i, idx_range.j, idx_range.k) * MU_METAL);
+        }
+        nelec_times_mH[i] =
+            d(i, idx_range.j, idx_range.k) * nelec_times_mH[i] / mmw[i];
+        nelec_times_mH[i] = std::fmax(nelec_times_mH[i], 0.);
+      }
+    }
+  } else {  // my_chemistry->primordial_chemistry > 0
+    // directly copy the already known electron density
+
+    View<const gr_float***> de(
+        my_fields->e_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      nelec_times_mH[i] = de(i, idx_range.j, idx_range.k);
+    }
+  }
+}
+
+/// @brief calculate gas property-related quantities for the @p idx_range
+///
+/// Internally, this calls @ref basic_gas_props (filling @p tgas, @p mmw, and
+/// @p rhoH) and @ref calc_metallicity_and_electron_density (filling
+/// @p metallicity and @p nelec_times_mH). It also fills buffers within
+/// @p lnT_lininterp_buf.
+///
+/// Purpose
+/// -------
+/// The impetus for creating this function was that the sequence of wrapped
+/// function calls occurred 3 separate times in the codebase. Essentially, the
+/// computed quantities are all prerequisites for computing cooling or reaction
+/// rates.
+///
+/// From a purely conceptual perspective, the choice to fill the
+/// @p lnT_lininterp_buf buffers as part of this function certainly feel
+/// inelegant. Whereas the other quantities are inherently gas properties based
+/// on the physics model, these buffers inherently depend on a purely numerical
+/// choice: the spacing of the commonly used ln(T) grid.
+///
+/// With that said, there are multiple (somewhat related) pragmatic reasons to
+/// fill these buffers as part of this function:
+/// 1. These quantities are always calculated in proximity to one another
+///    since they are all prerequisites for computing rates (we've already
+///    touched upon this)
+/// 2. As we reconcile some of the inconsistencies highlighted within the
+///    docstring of @ref LnTPreparer, there's a reasonable chance that the
+///    choices of damping/undamping may be uncoupled from the
+///    @p lnT_lininterp_buf buffers and more directly tied to the computed
+///    temperatures
+/// 3. Relatedly, we will probably want to compute partial derivatives of most
+///    (all?) of the computed quantities (to make the newton-raphson solver more
+///    robust) with respect to specific internal energy and chemistry species.
+///    It may make sense to handle that together (we probably need to refactor
+///    in order to accomplish that).
+///
+/// Future Thoughts
+/// ===============
+///
+/// Addressing mmw
+/// --------------
+/// At the time of writing, the @p mmw buffer is **ONLY** used outside this to
+/// function to compute the adiabatic sound speed in order to get the Jeans
+/// length (which is used as a length scale for estimating for optical depth).
+/// It's worth noting that we can replace the presently used formula
+/// > ``adiabatic_sound_speed = sqrt(gamma * kboltz * T / (mmw * mH))``
+/// with
+/// > ``adiabatic_sound_speed = sqrt(gamma * (gamma - 1) * specific_eint)``
+///
+/// Thus, we can stop tracking @p mmw outside of this function (with some
+/// clever refactoring we can reduce the number of scratch buffers that are
+/// internally used).
+///
+/// Before undertaking this change, it's worth asking
+/// > Is the current choice to estimate gamma with @ref chemistry_data::Gamma
+/// > accurate enough for us?
+/// If there are indeed concerns about accuracy, we should probably refactor
+/// this function to fill a 1D buffer of @p gamma values that can be used for
+/// this purpose. The relative cost compared to returning a @p mmw is just a
+/// couple extra assignment operations.
+///
+/// Scratch Buffers
+/// ---------------
+/// In the future, we should really pass in some scratch space for computing
+/// temperature when primordial_chemistry == 0
+///
+/// @param[out] tgas 1D array to hold the computed gas temperatures in the
+///     @p idx_range
+/// @param[out] mmw 1D array to hold the computed mean molecular weight
+///     in the @p idx_range
+/// @param[out] rhoH 1D array to hold the computed Hydrogen mass density
+///     for the @p idx_range
+/// @param[out] metallicity 1D array to hold the computed metallicity for the
+///     @p idx_range
+/// @param[out] nelec_times_mH 1D array to hold the number density of electrons
+///     (multiplied by the Hydrogen mass) for the @p idx_range
+/// @param[out] lnT_lininterp_buf Buffers for each location in @p idx_range that
+///     are used to hold precomputed values that help linearly interpolate
+///     tables with respect to the natural log of @p tgas. The strategy for
+///     filling these buffers depends on the value passed to @p lnT_preparer
+/// @param[in] imetal Indicates whether metals are evolved
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] primordial_cloudy_data Cloudy cooling table data for primordial
+///     species. (Only used when my_chemistry->primordial_chemistry is 0)
+/// @param[in] my_fields Specifies the field data.
+/// @param[in] internalu Specifies Grackle's internal unit-system
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] lnT_preparer When provided, this is used to fill
+///     @p lnT_lininterp_buf (the calculation includes the effect of damping).
+///     Otherwise (i.e. when its a ``nullptr``), the filling of lnT_linterp_buf
+///     uses undamped values
+inline void extended_gas_props(double* tgas, double* mmw, double* rhoH,
+                               double* metallicity, double* nelec_times_mH,
+                               LnTLinInterpBuf& lnT_lininterp_buf, int imetal,
+                               const gr_mask_type* itmask,
+                               const chemistry_data* my_chemistry,
+                               const cloudy_data* primordial_cloudy_data,
+                               const grackle_field_data* my_fields,
+                               InternalGrUnits internalu, IndexRange idx_range,
+                               const LnTPreparer* lnT_preparer) {
+  basic_gas_props(tgas, mmw, rhoH, imetal, itmask, my_chemistry,
+                  primordial_cloudy_data, my_fields, internalu, idx_range);
+  calc_metallicity_and_electron_density(metallicity, nelec_times_mH, idx_range,
+                                        imetal, itmask, mmw, my_chemistry,
+                                        my_fields);
+
+  // technically, we could skip the filling of lnT_lininterp_bufs if
+  // primordial_chemistry == 0 AND dust_chemistry == 0.
+  //
+  // If we decide that provides an important performance gain, it probably
+  // makes sense to make lnT_interp_buf expect a pointer and pass a nullptr in
+  // that scenario (i.e. we should explicitly handle that condition outside of
+  // this function rather than handling it implicitly)
+  if (lnT_preparer == nullptr) {
+    LnTPreparer::prep_undamped_lnT_lininterp_bufs(lnT_lininterp_buf, idx_range,
+                                                  *my_chemistry, itmask, tgas);
+  } else {
+    lnT_preparer->prep_damped_lnT_lininterp_bufs(lnT_lininterp_buf, idx_range,
+                                                 *my_chemistry, itmask, tgas);
+  }
+}
+
+}  // namespace GRIMPL_NAMESPACE_DECL
+
+#endif  // GRACKLE_GAS_PROPS_HPP

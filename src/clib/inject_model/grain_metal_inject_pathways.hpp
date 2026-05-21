@@ -16,7 +16,7 @@
 #include "../LUT.hpp"
 #include "../internal_types.hpp"
 #include "../interp_table_utils.hpp"
-#include "../status_reporting.h"
+#include "../support/status_reporting.hpp"
 #include "../visitor/common.hpp"
 
 // this is a separate namespace because we are probably going to delete the

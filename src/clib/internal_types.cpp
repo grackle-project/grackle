@@ -56,23 +56,6 @@ void grackle::impl::drop_Cool1DMultiScratchBuf(
 
 // -----------------------------------------------------------------
 
-grackle::impl::LogTLinInterpScratchBuf
-grackle::impl::new_LogTLinInterpScratchBuf(int nelem) {
-  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
-  grackle::impl::LogTLinInterpScratchBuf out;
-  grackle::impl::visitor::VisitorCtx ctx{static_cast<unsigned int>(nelem)};
-  grackle::impl::visit_member(&out,
-                              grackle::impl::visitor::AllocateMembers{ctx});
-  return out;
-}
-
-void grackle::impl::drop_LogTLinInterpScratchBuf(
-    grackle::impl::LogTLinInterpScratchBuf* ptr) {
-  grackle::impl::visit_member(ptr, grackle::impl::visitor::FreeMembers{});
-}
-
-// -----------------------------------------------------------------
-
 grackle::impl::GrainSpeciesCollection grackle::impl::new_GrainSpeciesCollection(
     int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");

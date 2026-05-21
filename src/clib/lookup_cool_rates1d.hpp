@@ -104,7 +104,7 @@ void secondary_ionization_adjustments(IndexRange idx_range,
 inline void interpolate_h2_heating_terms_(
     grackle::impl::ChemHeatingRates chemheatrates_buf, IndexRange idx_range,
     chemistry_data_storage* my_rates, const gr_mask_type* itmask,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf) {
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       chemheatrates_buf.n_cr_n[i] =
@@ -145,7 +145,7 @@ inline void interpolate_kcol_rate_tables_(
     FullRxnRateBuf rxn_rate_buf, IndexRange idx_range,
     grackle::impl::CollisionalRxnRateCollection kcol_rate_tables,
     int* kcol_lut_indices, int n_rates, const gr_mask_type* itmask,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf) {
   // TODO: make this more efficient
   // -> to accomplish this, we probably need to account for the fact that all
   //    of the buffers within grackle::impl::CollisionalRxnRateCollection are
@@ -189,7 +189,7 @@ inline void interpolate_collisional_rxn_rates_(
     FullRxnRateBuf rxn_rate_buf, IndexRange idx_range, const double* tgas1d,
     const gr_mask_type* itmask, double dom, chemistry_data* my_chemistry,
     grackle_field_data* my_fields, chemistry_data_storage* my_rates,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf) {
   // There are 2 parts to this function
   // ----------------------------------
 
@@ -764,9 +764,9 @@ inline void apply_misc_shield_factors(
 /// @param[in] grain_temperatures individual grain species temperatures. This
 ///     is only used in certain configurations (i.e. when we aren't using the
 ///     tdust argument)
-/// @param[out] logTlininterp_buf Buffers that are filled with values for each
-///     location in @p idx_range with valuea that are used to linearly
-///     interpolate tables with respect to the natural log of @p tgas1d
+/// @param[in] logTlininterp_buf Hold values for each location in @p idx_range
+///     that are used to linearly interpolate tables with respect to the natural
+///     log of @p tgas1d.
 /// @param[out] rxn_rate_buf output buffers to be filled with computed reaction
 ///    rates for @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
@@ -785,7 +785,7 @@ inline void lookup_cool_rates1d(
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
     grackle::impl::ChemHeatingRates chemheatrates_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
@@ -793,38 +793,6 @@ inline void lookup_cool_rates1d(
 
   // Linearly Interpolate the Collisional Rxn Rates
   // ----------------------------------------------
-
-  // Set log values of start and end of lookup tables
-  const double logtem_start = std::log(my_chemistry->TemperatureStart);
-  const double logtem_end = std::log(my_chemistry->TemperatureEnd);
-  const double dlogtem = (std::log(my_chemistry->TemperatureEnd) -
-                          std::log(my_chemistry->TemperatureStart)) /
-                         (double)(my_chemistry->NumberOfTemperatureBins - 1);
-
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      // Compute temp-centered temperature (and log)
-
-      // logtem(i) = log(0.5_DKIND*(tgas(i)+tgasold(i)))
-      logTlininterp_buf.logtem[i] = std::log(tgas1d[i]);
-      logTlininterp_buf.logtem[i] = grackle::impl::clamp(
-          logTlininterp_buf.logtem[i], logtem_start, logtem_end);
-
-      // Find index into tble and precompute interpolation values
-
-      logTlininterp_buf.indixe[i] = grackle::impl::clamp(
-          (long long)((logTlininterp_buf.logtem[i] - logtem_start) / dlogtem) +
-              1LL,
-          1LL, (long long)my_chemistry->NumberOfTemperatureBins - 1LL);
-      logTlininterp_buf.t1[i] =
-          (logtem_start + (logTlininterp_buf.indixe[i] - 1) * dlogtem);
-      logTlininterp_buf.t2[i] =
-          (logtem_start + (logTlininterp_buf.indixe[i]) * dlogtem);
-      logTlininterp_buf.tdef[i] =
-          (logTlininterp_buf.logtem[i] - logTlininterp_buf.t1[i]) /
-          (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
-    }
-  }
 
   // interpolate all collisional reaction rates
   interpolate_collisional_rxn_rates_(rxn_rate_buf, idx_range, tgas1d, itmask,
@@ -841,9 +809,9 @@ inline void lookup_cool_rates1d(
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
-    lookup_dust_rates1d(idx_range, dlogtem, tdust, dust2gas, dom, itmask_metal,
-                        dt, my_chemistry, my_rates, my_fields,
-                        grain_temperatures, logTlininterp_buf, rxn_rate_buf,
+    lookup_dust_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal, dt,
+                        my_chemistry, my_rates, my_fields, grain_temperatures,
+                        logTlininterp_buf, rxn_rate_buf,
                         internal_dust_prop_scratch_buf);
   }
 
