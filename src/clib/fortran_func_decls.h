@@ -19,10 +19,6 @@ typedef long long gr_i64;
 #define MASK_TRUE 1
 #define MASK_FALSE 0
 
-void FORTRAN_NAME(solve_cubic_equation)(
-  double* a, double* b, double* c, double* root
-);
-
 void FORTRAN_NAME(gaussj_g)(
   int* n, double* a_data_ptr, double* b, int* ierr
 );
