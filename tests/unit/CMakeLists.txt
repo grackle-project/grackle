@@ -32,6 +32,10 @@ add_executable(runStatusReporting support/test_status_reporting.cpp)
 target_link_libraries(runStatusReporting testdeps)
 gtest_discover_tests(runStatusReporting)
 
+add_executable(testView support/test_View.cpp)
+target_link_libraries(testView testdeps)
+gtest_discover_tests(testView)
+
 # these may be slightly more of an integration test than a unit test
 add_executable(runVisitorTests test_visitor.cpp)
 target_link_libraries(runVisitorTests testdeps)
