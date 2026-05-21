@@ -15,8 +15,8 @@
 
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "grackle.h"
-#include "index_helper.h"
 #include "support/config.hpp"
+#include "support/index_helper.hpp"
 #include "utils-cpp.hpp"  // View
 
 namespace GRIMPL_NAMESPACE_DECL {
