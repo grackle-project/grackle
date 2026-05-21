@@ -55,13 +55,19 @@ namespace grackle::impl {
 ///     cross-section of the current grain species per unit gas mass
 /// @param[in,out] kappa_data Pointer to the table of values related to opacity
 /// for the current grain species
-/// @param[in] gr_N Bi-dimensional array of the number of tabulated values for
-/// opacity-related quantities for each grain species
+/// @param[in] gr_N A 2-element array that helps describe the shape of
+///     \p opac_coef_table_data. The first element specifies the number of opacity
+///     polynomial coefficients provided at every dust Temperature and the
+///     second element specifies the number of dust Temperatures.
 /// @param[in] opac_coef_table_data Tables of values for opacity calculations
 ///
 /// @par History
 /// modified: February, 2026 by Christopher Bignamini & Matthew Abruzzo; port to
 /// C++
+/// TODO:  replace gr_N with 2 arguments: the number of opacity coefficients and
+/// the number of grain temperatures. In fact, the number of opacity coefficients
+/// could probably be a non-type template parameter and add a static_assert to document
+/// that the function currently assumes that it is always 4.
 void calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int n_inj_pathways,
     const int* grid_dimensions, IndexRange idx_range,
