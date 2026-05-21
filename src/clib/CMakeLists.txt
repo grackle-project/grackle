@@ -127,6 +127,7 @@ add_library(Grackle_Grackle
   lnT_prep.cpp lnT_prep.hpp
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
+  mask.hpp
   opaque_storage.hpp
   ratequery.cpp ratequery.hpp
   rate_functions.cpp

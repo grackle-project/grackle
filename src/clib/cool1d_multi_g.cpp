@@ -32,10 +32,10 @@
 #include "utils-cpp.hpp"
 
 void grackle::impl::cool1d_multi_g(
-    int imetal, double* edot, const double* tgas, const double* mmw,
-    double* tdust, const double* metallicity, double* dust2gas,
-    const double* rhoH, const double* nelec_times_mH, gr_mask_type* itmask,
-    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    double* edot, const double* tgas, const double* mmw, double* tdust,
+    const double* metallicity, double* dust2gas, const double* rhoH,
+    const double* nelec_times_mH, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     IndexRange idx_range,
@@ -88,9 +88,6 @@ void grackle::impl::cool1d_multi_g(
   grackle::impl::View<gr_float***> Mheat(
       my_fields->specific_heating_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Tfloor(
-      my_fields->temperature_floor, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> photogamma(
       my_fields->RT_heating_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -120,7 +117,7 @@ void grackle::impl::cool1d_multi_g(
   int i, iZscale, mycmbTfloor;
   double dom, qq, vibl, zr, hdlte1, hdlow1, fudge, gphdl1, dom_inv, tau,
       ciefudge, coolunit, tbase1, nSSh, nratio, nssh_he, nratio_he, fSShHI,
-      fSShHeI, ih2cox, min_metallicity;
+      fSShHeI, ih2cox;
   double comp1, comp2;
 
   // Performing heap allocations for all of the subsequent buffers within this
@@ -230,39 +227,6 @@ void grackle::impl::cool1d_multi_g(
 
   // multiplicative factor for including/excluding H2 cooling
   ih2cox = (double)(my_chemistry->ih2co);
-
-  // ignore metal chemistry/cooling below this metallicity
-  min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
-
-  // Initialize edot
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      edot[i] = 0.;
-    }
-  }
-
-  // Skip if below the temperature floor
-
-  if (my_chemistry->use_temperature_floor == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] <= my_chemistry->temperature_floor_scalar) {
-          edot[i] = tiny_fortran_val;
-          itmask[i] = MASK_FALSE;
-        }
-      }
-    }
-  } else if (my_chemistry->use_temperature_floor == 2) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] <= Tfloor(i, idx_range.j, idx_range.k)) {
-          edot[i] = tiny_fortran_val;
-          itmask[i] = MASK_FALSE;
-        }
-      }
-    }
-  }
 
   // Calculate H number density
   // TODO: get rid of this buffer
@@ -864,21 +828,6 @@ void grackle::impl::cool1d_multi_g(
                         (3. * dom);
         }
       }
-    }
-  }
-
-  // Iteration mask for metal-rich cells
-  if (imetal == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (metallicity[i] >= min_metallicity) {
-        itmask_metal[i] = itmask[i];
-      } else {
-        itmask_metal[i] = MASK_FALSE;
-      }
-    }
-  } else {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      itmask_metal[i] = MASK_FALSE;
     }
   }
 
