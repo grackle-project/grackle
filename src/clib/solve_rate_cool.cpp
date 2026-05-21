@@ -28,6 +28,7 @@
 #include "internal_units.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "make_consistent.hpp"
+#include "mask.hpp"
 #include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "support/config.hpp"
@@ -877,12 +878,30 @@ int solve_rate_cool(
         // "damping" when we fill up logTlininterp_buf)
         lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
 
+        // Adjust itmask based on Tfloor and fill itmask_metal
+        mask::adjust_from_Tfloor(itmask.data(), tgas.data(), idx_range,
+                                 my_chemistry, my_fields);
+        mask::fill_itmask_metal(itmask_metal.data(), itmask.data(),
+                                metallicity.data(), imetal, idx_range,
+                                my_chemistry);
+
+        // Initialize edot
+        // -> we primarily set edot to tiny_fortran_val for historical
+        //    consistency with the behavior of Tfloor.
+        // -> it would be better to set it to 0 and modify the subcycle timestep
+        //    to explicitly work around an edot of 0. This makes Grackle more
+        //    robust for simulations where the initial conditions are in
+        //    thermal equilibrium (edot = 0) by construction
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          edot[i] = (itmask[i] == MASK_FALSE) * tiny_fortran_val;
+          // the above line is a branchless version of
+          // edot[i] = (itmask[i] == MASK_FALSE) ? tiny_fortran_val : 0.0;
+        }
+
         // Compute the edot values (so we can get the cooling time)
-        // -> at this time the function also fillls dust2gas and tdust. It can
-        //    also modify itmask and itmask_metal
+        // -> at this time the function also fillls dust2gas and tdust.
         // -> (we plan to factor out the extra calculations)
         cool1d_multi_g(
-          imetal,
           edot.data(),
           tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),

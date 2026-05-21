@@ -71,7 +71,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 inline void dust_related_props(
     gr_mask_type anydust, const double* tgas, double* nH,
     const double* metallicity, const gr_mask_type* itmask,
-    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range,
     LnTLinInterpBuf logTlininterp_buf, double trad, double* dust2gas,
@@ -151,10 +151,10 @@ inline void dust_related_props(
     grackle::impl::calc_all_tdust_gasgr_1d_g(
         trad, const_cast<double*>(tgas), tdust,
         const_cast<double*>(metallicity), dust2gas, nH, gasgr_tdust,
-        itmask_metal, coolunit, gasgr, myisrf, kappa_tot, my_chemistry,
-        my_rates, my_fields, idx_range, grain_temperatures,
-        gas_grainsp_heatrate, logTlininterp_buf, internal_dust_prop_buf,
-        grain_kappa);
+        const_cast<gr_mask_type*>(itmask_metal), coolunit, gasgr, myisrf,
+        kappa_tot, my_chemistry, my_rates, my_fields, idx_range,
+        grain_temperatures, gas_grainsp_heatrate, logTlininterp_buf,
+        internal_dust_prop_buf, grain_kappa);
   }
 }
 }  // namespace GRIMPL_NAMESPACE_DECL
