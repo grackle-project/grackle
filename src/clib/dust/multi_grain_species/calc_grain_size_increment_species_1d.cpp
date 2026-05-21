@@ -17,7 +17,6 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_decls.h"
 #include "solve_cubic_equation.hpp"
 #include "utils-cpp.hpp"
 
