@@ -24,35 +24,43 @@
 #include "calc_grain_size_increment_species_1d.hpp"
 
 void grackle::impl::calc_grain_size_increment_species_1d(
-    int igrgr, const gr_mask_type* itmask, int SN0_N, int in, int jn, int kn,
-    IndexRange idx_range, gr_float* density_data, int nSN,
-    const gr_float* grain_species_density, gr_float* SN_metal_data,
-    const double* SN_fsp, double* SN_r0sp_data, double ssp, double* sgsp,
-    double* alsp_data, int* gr_N, int gr_Size, double* SN_kp0sp_data) {
+    int igrgr, const gr_mask_type* itmask, int n_inj_pathways,
+    const int* grid_dimensions, IndexRange idx_range,
+    const gr_float* density_data, int n_selected_inj_paths,
+    const gr_float* grain_species_density,
+    gr_float* selected_inj_path_metal_densities, const double* SN_fsp,
+    double* SN_r0sp_data, double bulk_density, double* sigma_per_gas_mass,
+    double* kappa_data, int* gr_N, const double* opac_coef_table_data) {
   // input
   int iSN;
+  int gr_Size = gr_N[0] * gr_N[1];
 
-  grackle::impl::View<gr_float***> d(density_data, in, jn, kn);
-  grackle::impl::View<const gr_float***> dsp(grain_species_density, in, jn, kn);
-  grackle::impl::View<gr_float**> SN_metal(SN_metal_data, in, SN0_N);
+  grackle::impl::View<const gr_float***> d(
+      density_data, grid_dimensions[0], grid_dimensions[1], grid_dimensions[2]);
+  grackle::impl::View<const gr_float***> dsp(
+      grain_species_density, grid_dimensions[0], grid_dimensions[1],
+      grid_dimensions[2]);
+  grackle::impl::View<gr_float**> SN_metal(selected_inj_path_metal_densities,
+                                           grid_dimensions[0], n_inj_pathways);
 
   // table
-  grackle::impl::View<double**> SN_r0sp(SN_r0sp_data, 3, SN0_N);
+  grackle::impl::View<double**> SN_r0sp(SN_r0sp_data, 3, n_inj_pathways);
 
   // opacity table
-  grackle::impl::View<double**> SN_kp0sp(SN_kp0sp_data, gr_Size, SN0_N);
+  grackle::impl::View<const double**> opac_coef_table(opac_coef_table_data,
+                                                      gr_Size, n_inj_pathways);
 
   // output
-  grackle::impl::View<double**> alsp(alsp_data, gr_N[1], in);
+  grackle::impl::View<double**> kappa(kappa_data, gr_N[1], grid_dimensions[0]);
 
   // local
   int i;
   double coef0, coef1, coef2, coef3;
   double dsp_inject_sum;
-  double SN_sgsp, SN_kpsp;
-  std::vector<double> SN_dsp0(SN0_N);
-  std::vector<double> SN_nsp0(SN0_N);
-  std::vector<double> drsp(in);
+  double SN_sigma_per_gas_mass, SN_kpsp;
+  std::vector<double> SN_dsp0(n_inj_pathways);
+  std::vector<double> SN_nsp0(n_inj_pathways);
+  std::vector<double> drsp(grid_dimensions[0]);
   const double pi_local_var = pi_fortran_val;
   int iTd, iTd0;
 
@@ -61,7 +69,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       // Step 1: compute the total mass density of the current grain species
       //         that was injected (by summing the amounts injected by each
       //         injection pathway)
-      for (iSN = 0; iSN < nSN; iSN++) {
+      for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
         if (SN_fsp[iSN] > 0.e0) {
           SN_dsp0[iSN] = SN_fsp[iSN] * SN_metal(i, iSN);
         }
@@ -152,7 +160,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
         coef3 = 0.e0;
 
         // Loop over each injection pathway
-        for (iSN = 0; iSN < nSN; iSN++) {
+        for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
           if (SN_fsp[iSN] > 0.e0) {
             // Calculate 4πζnⱼ/3 = ρⱼ/<r³>ⱼ
             // -> recall: that ζ is the mass density of a single grain of the
@@ -186,21 +194,16 @@ void grackle::impl::calc_grain_size_increment_species_1d(
           GRIMPL_ERROR(
               "Failed to solve cubic equation for grain size increment");
         }
-        // TODO: to be removed after fixing the numerical issue with i=0 and
-        // idx_range.j=idx_range.k=0
-        if (i == 0 && idx_range.j == 0 && idx_range.k == 0) {
-          drsp[i] = 0.e0;
-        }
 
         drsp[i] = std::fmax(drsp[i], 0.e0);
       }
 
       // Step 3: calculate number density (code_density / g)
 
-      for (iSN = 0; iSN < nSN; iSN++) {
+      for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
         if (SN_fsp[iSN] > 0.e0) {
-          SN_nsp0[iSN] = SN_dsp0[iSN] /
-                         (4.e0 * pi_local_var / 3.e0 * ssp * SN_r0sp(2, iSN));
+          SN_nsp0[iSN] = SN_dsp0[iSN] / (4.e0 * pi_local_var / 3.e0 *
+                                         bulk_density * SN_r0sp(2, iSN));
         } else {
           SN_nsp0[iSN] = 0.e0;
         }
@@ -208,18 +211,21 @@ void grackle::impl::calc_grain_size_increment_species_1d(
 
       // Step 4: calculate geometrical cross-section per unit gas mass
       // -> units of cm^2/g
-      sgsp[i] = 0.e0;
-      for (iSN = 0; iSN < nSN; iSN++) {
+      sigma_per_gas_mass[i] = 0.e0;
+      for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
         if (SN_fsp[iSN] > 0.e0) {
-          SN_sgsp = pi_local_var *
-                    (SN_r0sp(1, iSN) + 2.e0 * SN_r0sp(0, iSN) * drsp[i] +
-                     std::pow(drsp[i], 2));
+          SN_sigma_per_gas_mass =
+              pi_local_var *
+              (SN_r0sp(1, iSN) + 2.e0 * SN_r0sp(0, iSN) * drsp[i] +
+               std::pow(drsp[i], 2));
         } else {
-          SN_sgsp = 0.e0;
+          SN_sigma_per_gas_mass = 0.e0;
         }
-        sgsp[i] = sgsp[i] + SN_nsp0[iSN] * SN_sgsp;
+        sigma_per_gas_mass[i] =
+            sigma_per_gas_mass[i] + SN_nsp0[iSN] * SN_sigma_per_gas_mass;
       }
-      sgsp[i] = sgsp[i] / d(i, idx_range.j, idx_range.k);
+      sigma_per_gas_mass[i] =
+          sigma_per_gas_mass[i] / d(i, idx_range.j, idx_range.k);
 
       // Step 5: calculate optical opacity related quantities
       // -> we are effectively constructing a 1d table of values, at various
@@ -231,20 +237,21 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       //    (I think the units are cm^2/g)
       for (iTd = 0; iTd < (gr_N[1]); iTd++) {
         iTd0 = iTd * gr_N[0];
-        alsp(iTd, i) = 0.e0;
-        for (iSN = 0; iSN < nSN; iSN++) {
+        kappa(iTd, i) = 0.e0;
+        for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
           if (SN_fsp[iSN] > 0.e0) {
-            SN_kpsp = 4.e0 * pi_local_var / 3.e0 * ssp *
-                      (SN_kp0sp(iTd0 + 3, iSN) +
-                       3.e0 * SN_kp0sp(iTd0 + 2, iSN) * drsp[i] +
-                       3.e0 * SN_kp0sp(iTd0 + 1, iSN) * std::pow(drsp[i], 2) +
-                       SN_kp0sp(iTd0 + 0, iSN) * std::pow(drsp[i], 3));
+            SN_kpsp =
+                4.e0 * pi_local_var / 3.e0 * bulk_density *
+                (opac_coef_table(iTd0 + 3, iSN) +
+                 3.e0 * opac_coef_table(iTd0 + 2, iSN) * drsp[i] +
+                 3.e0 * opac_coef_table(iTd0 + 1, iSN) * std::pow(drsp[i], 2) +
+                 opac_coef_table(iTd0 + 0, iSN) * std::pow(drsp[i], 3));
           } else {
             SN_kpsp = 0.e0;
           }
-          alsp(iTd, i) = alsp(iTd, i) + SN_nsp0[iSN] * SN_kpsp;
+          kappa(iTd, i) = kappa(iTd, i) + SN_nsp0[iSN] * SN_kpsp;
         }
-        alsp(iTd, i) = alsp(iTd, i) / d(i, idx_range.j, idx_range.k);
+        kappa(iTd, i) = kappa(iTd, i) / d(i, idx_range.j, idx_range.k);
       }
     }
   }
