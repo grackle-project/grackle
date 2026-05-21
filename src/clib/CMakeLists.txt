@@ -162,7 +162,6 @@ add_library(Grackle_Grackle
   visitor/printer.hpp
 
   # Fortran Source Files
-  calc_tdust_1d_g.F
   interpolators_g.F
   calc_grain_size_increment_1d.F
   gaussj_g.F
