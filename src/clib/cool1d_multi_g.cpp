@@ -33,11 +33,12 @@
 
 void grackle::impl::cool1d_multi_g(
     int imetal, double* edot, const double* tgas, const double* mmw,
-    double* tdust, double* metallicity, double* dust2gas, const double* rhoH,
-    gr_mask_type* itmask, gr_mask_type* itmask_metal,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-    InternalGrUnits internalu, IndexRange idx_range,
+    double* tdust, const double* metallicity, double* dust2gas,
+    const double* rhoH, const double* nelec_times_mH, gr_mask_type* itmask,
+    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+    IndexRange idx_range,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
@@ -263,23 +264,11 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  // Calculate metallicity and H number density
-
-  if (imetal == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        metallicity[i] = metal(i, idx_range.j, idx_range.k) /
-                         d(i, idx_range.j, idx_range.k) /
-                         my_chemistry->SolarMetalFractionByMass;
-      }
-    }
-  } else {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        metallicity[i] = tiny_fortran_val;
-      }
-    }
-  }
+  // Calculate H number density
+  // TODO: get rid of this buffer
+  // -> the difference between accessing cool1dmulti_buf.mynh and recomputing
+  //    the value each time we need it is very small.
+  // -> Getting rid of the buffer reduces cache complexity and simplifies logic
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -1166,43 +1155,16 @@ void grackle::impl::cool1d_multi_g(
                                  my_rates->cloudy_primordial, idx_range);
   }
 
-  // Store the electron density in a 1d array
-  if (my_chemistry->primordial_chemistry == 0) {
-    // Calculate electron density from mean molecular weight
-
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        cool1dmulti_buf.myde[i] =
-            1 -
-            mmw[i] * (3.0 * my_chemistry->HydrogenFractionByMass + 1.0) / 4.0;
-        if (imetal == 1) {
-          cool1dmulti_buf.myde[i] =
-              cool1dmulti_buf.myde[i] -
-              mmw[i] * metal(i, idx_range.j, idx_range.k) /
-                  (d(i, idx_range.j, idx_range.k) * MU_METAL);
-        }
-        cool1dmulti_buf.myde[i] =
-            d(i, idx_range.j, idx_range.k) * cool1dmulti_buf.myde[i] / mmw[i];
-        cool1dmulti_buf.myde[i] = std::fmax(cool1dmulti_buf.myde[i], 0.);
-      }
-    }
-  } else {  // my_chemistry->primordial_chemistry > 0
-    // directly copy the already known electron density
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      cool1dmulti_buf.myde[i] = de(i, idx_range.j, idx_range.k);
-    }
-  }
-
   // Photo-electric heating by UV-irradiated dust
   dust_gas_edot::update_edot_photoelectric_heat(
-      edot, tgas, dust2gas, rhoH, cool1dmulti_buf.myde, myisrf.data(), itmask,
+      edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
       my_chemistry, my_rates->gammah, idx_range, dom_inv);
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
   if ((my_chemistry->dust_chemistry > 0) ||
       (my_chemistry->dust_recombination_cooling > 0)) {
     dust_gas_edot::update_edot_dust_recombination(
-        edot, tgas, dust2gas, rhoH, cool1dmulti_buf.myde, myisrf.data(), itmask,
+        edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
         my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
         my_rates->regr, idx_range, dom_inv);
   }
@@ -1215,12 +1177,12 @@ void grackle::impl::cool1d_multi_g(
 
                 // Compton cooling or heating
 
-                - comp1 * (tgas[i] - comp2) * cool1dmulti_buf.myde[i] * dom_inv
+                - comp1 * (tgas[i] - comp2) * nelec_times_mH[i] * dom_inv
 
                 // X-ray compton heating
 
                 - my_uvb_rates.comp_xray * (tgas[i] - my_uvb_rates.temp_xray) *
-                      cool1dmulti_buf.myde[i] * dom_inv;
+                      nelec_times_mH[i] * dom_inv;
     }
   }
 

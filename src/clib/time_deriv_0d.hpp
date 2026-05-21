@@ -111,6 +111,7 @@ struct Assorted1ElemBuf {
   double dust2gas[1];
   double rhoH[1];
   double mmw[1];
+  double nelec_times_mH[1];
   double edot[1];
 
   // the remaining buffers were originally reallocated (on the stack)
@@ -268,7 +269,7 @@ inline void configure_ContextPack(
 inline void scratchbufs_copy_into_pack(
   int index, ContextPack* pack, const double* tgas,
   const double* tdust, const double* metallicity, const double* dust2gas,
-  const double* rhoH, const double* mmw,
+  const double* rhoH, const double* mmw, const double* nelec_times_mH,
   const double* edot, grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
@@ -331,6 +332,7 @@ inline void scratchbufs_copy_into_pack(
   pack->other_scratch_buf.dust2gas[0] = dust2gas[index];
   pack->other_scratch_buf.rhoH[0] = rhoH[index];
   pack->other_scratch_buf.mmw[0] = mmw[index];
+  pack->other_scratch_buf.nelec_times_mH[0] = nelec_times_mH[index];
   pack->other_scratch_buf.edot[0] = edot[index];
 }
 
@@ -345,7 +347,7 @@ inline void scratchbufs_copy_into_pack(
 inline void scratchbufs_copy_from_pack(
   int index, ContextPack* pack, double* tgas,
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
-  double* mmw, double* edot,
+  double* mmw, double* nelec_times_mH, double* edot,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
@@ -385,6 +387,7 @@ inline void scratchbufs_copy_from_pack(
   dust2gas[index] = pack->other_scratch_buf.dust2gas[0];
   rhoH[index] = pack->other_scratch_buf.rhoH[0];
   mmw[index] = pack->other_scratch_buf.mmw[0];
+  nelec_times_mH[index] = pack->other_scratch_buf.nelec_times_mH[0];
   edot[index] = pack->other_scratch_buf.edot[0];
 
 }
@@ -475,26 +478,32 @@ void derivatives(
         *my_chemistry, pack.other_scratch_buf.itmask,
         pack.other_scratch_buf.tgas);
   } else {
-    // calculate the basic gas properties (tgas, mmw, rhoH)
-    basic_gas_props(pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
-                    pack.other_scratch_buf.rhoH, pack.fwd_args.imetal,
-                    pack.other_scratch_buf.itmask, my_chemistry,
-                    &my_rates->cloudy_primordial, &pack.fields, internalu,
-                    pack.idx_range_1_element);
+    // compute gas properties (tgas, mmw, rhoH, metallicity, nelec_times_mH)
+    // and fill up logTlinterp_buf
+    extended_gas_props(pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
+                       pack.other_scratch_buf.rhoH,
+                       pack.other_scratch_buf.metallicity,
+                       pack.other_scratch_buf.nelec_times_mH,
+                       pack.main_scratch_buf.logTlininterp_buf,
+                       pack.fwd_args.imetal, pack.other_scratch_buf.itmask,
+                       my_chemistry, &my_rates->cloudy_primordial, &pack.fields,
+                       internalu, pack.idx_range_1_element,
+                       // passing nullptr means that values in
+                       // pack.main_scratch_buf.logTlininterp_buf
+                       // are filled with the undamped version of the algorithm
+                       nullptr);
 
-    // precompute natural log of T and related interpolation info
-    LnTPreparer::prep_undamped_lnT_lininterp_bufs(
-        pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
-        *my_chemistry, pack.other_scratch_buf.itmask,
-        pack.other_scratch_buf.tgas);
-
-    // compute cooling rate, tdust, and metallicity for this row
+    // Compute the edot values (so we can get the cooling time)
+    // -> at this time the function also fillls dust2gas and tdust. It can
+    //    also modify itmask and itmask_metal
+    // -> (we plan to factor out the extra calculations)
     cool1d_multi_g(
       pack.fwd_args.imetal,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
       pack.other_scratch_buf.mmw,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
       pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
+      pack.other_scratch_buf.nelec_times_mH,
       pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
       my_uvb_rates, internalu, pack.idx_range_1_element, pack.main_scratch_buf.grain_temperatures,
       pack.main_scratch_buf.logTlininterp_buf,
