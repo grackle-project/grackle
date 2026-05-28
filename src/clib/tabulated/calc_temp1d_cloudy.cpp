@@ -56,9 +56,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   //       log10(T) we can drop this entirely
   const double inv_log10 = 1. / std::log(10.);
 
-  // Locals
-  double muold, munew;
-
   // Slice locals
 
   std::vector<double> log_n_h(my_fields->grid_dimension[0]);
@@ -84,7 +81,8 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      munew = 1.;
+      double munew = 1.;
+      double muold;
       bool skip_mmw_update = true;
       for (int ti = 1; ti <= ti_max; ti++) {
         muold = munew;
