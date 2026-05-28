@@ -58,7 +58,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
 
   // Locals
 
-  int i, ti;
+  int ti;
   double muold, munew;
 
   // Slice locals
@@ -77,14 +77,14 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   const tabulated_detail::FindZIndexRslt zindex_pair =
       tabulated_detail::find_zindex(zr, cloudy_table);
 
-  for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       // Calculate proper log(n_H)
       log_n_h[i] = std::log10(rhoH[i] * dom);
     }
   }
 
-  for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       munew = 1.;
       bool skip_mmw_update = true;
