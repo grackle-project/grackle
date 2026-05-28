@@ -18,9 +18,10 @@
 
 #include "fortran_func_decls.h"      // gr_mask_int
 #include "grackle.h"                 // gr_float
+#include "support/config.hpp"
 #include "support/index_helper.hpp"  // IndexRange
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Calculates properties that are derived from the grain size increment
 /// for a single grain species.
@@ -78,6 +79,6 @@ void calc_grain_size_increment_species_1d(
     double* SN_r0sp_data, double bulk_density, double* sigma_per_gas_mass,
     double* kappa_data, int* gr_N, const double* opac_coef_table_data);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* CALC_GRAIN_SIZE_INCREMENT_SPECIES_1D_HPP */

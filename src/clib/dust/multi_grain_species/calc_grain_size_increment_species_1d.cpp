@@ -22,7 +22,7 @@
 
 #include "calc_grain_size_increment_species_1d.hpp"
 
-void grackle::impl::calc_grain_size_increment_species_1d(
+void GRIMPL_NAMESPACE_DECL::calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int n_inj_pathways,
     const int* grid_dimensions, IndexRange idx_range,
     const gr_float* density_data, int n_selected_inj_paths,
@@ -256,4 +256,4 @@ void grackle::impl::calc_grain_size_increment_species_1d(
   }
 
   return;
-}
+} // namespace GRIMPL_NAMESPACE_DECL
