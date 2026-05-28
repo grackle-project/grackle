@@ -44,7 +44,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   View<const gr_float***> e(
       my_fields->internal_energy, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  std::vector<double> logtem(my_fields->grid_dimension[0]);
 
   // Parameters
 
@@ -88,9 +87,9 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
                                 e(i, idx_range.j, idx_range.k) * munew *
                                 internalu.utem,
                             my_chemistry->TemperatureStart);
-        logtem[i] = std::log(tgas[i]);
+        double ln_T = std::log(tgas[i]);
 
-        log10tem[i] = logtem[i] * inv_log10;
+        log10tem[i] = ln_T * inv_log10;
 
         // Call interpolation functions to get mmw
 
