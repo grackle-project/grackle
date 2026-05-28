@@ -30,14 +30,12 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-void calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
-                    double* gasgr, const double* gamma_isrfa,
-                    const double* isrf,
-                    const gr_mask_type* itmask, double trad,
-                    int buf_len, int gr_N, double gr_dT,
-                    const double* gr_Td,
-                    const double* alsp_data_, double* kgr,
-                    int idspecies, IndexRange idx_range) {
+void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
+                     const double* gamma_isrfa, const double* isrf,
+                     const gr_mask_type* itmask, double trad, int buf_len,
+                     int gr_N, double gr_dT, const double* gr_Td,
+                     const double* alsp_data_, double* kgr, int idspecies,
+                     IndexRange idx_range) {
   // opacity table of a grain species
   //
   // In some configurations gr_N can be 0 while the backing buffer may still be
@@ -165,23 +163,23 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
     }
 
     // Calculate grain opacities
-    calc_kappa_grain(tdustnow.data(), kgr, nm_itmask.data(),
-                    buf_len, idx_range, t_subl, Td_N, Td_Size,
-                    gr_dT, gr_Td, logalsp.data(), idspecies);
+    calc_kappa_grain(tdustnow.data(), kgr, nm_itmask.data(), buf_len, idx_range,
+                     t_subl, Td_N, Td_Size, gr_dT, gr_Td, logalsp.data(),
+                     idspecies);
 
-    calc_kappa_grain(
-        tdplus.data(), kgrplus.data(), nm_itmask.data(), buf_len, idx_range,
-        t_subl, Td_N, Td_Size, gr_dT, gr_Td, logalsp.data(), idspecies);
+    calc_kappa_grain(tdplus.data(), kgrplus.data(), nm_itmask.data(), buf_len,
+                     idx_range, t_subl, Td_N, Td_Size, gr_dT, gr_Td,
+                     logalsp.data(), idspecies);
 
     // Calculate heating/cooling balance
 
-    calc_gr_balance_g(tdustnow.data(), tgas, kgr, floored_trad4,
-                      gasgr, gamma_isrf.data(), nh,
-                      nm_itmask.data(), sol.data(), idx_range);
+    calc_gr_balance_g(tdustnow.data(), tgas, kgr, floored_trad4, gasgr,
+                      gamma_isrf.data(), nh, nm_itmask.data(), sol.data(),
+                      idx_range);
 
-    calc_gr_balance_g(
-        tdplus.data(), tgas, kgrplus.data(), floored_trad4, gasgr,
-        gamma_isrf.data(), nh, nm_itmask.data(), solplus.data(), idx_range);
+    calc_gr_balance_g(tdplus.data(), tgas, kgrplus.data(), floored_trad4, gasgr,
+                      gamma_isrf.data(), nh, nm_itmask.data(), solplus.data(),
+                      idx_range);
 
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (nm_itmask[i] != MASK_FALSE) {
@@ -250,13 +248,13 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
         }
       }
 
-      calc_kappa_grain(bi_t_mid.data(), kgr, bi_itmask.data(),
-                      buf_len, idx_range, t_subl, Td_N, Td_Size,
-                      gr_dT, gr_Td, logalsp.data(), idspecies);
+      calc_kappa_grain(bi_t_mid.data(), kgr, bi_itmask.data(), buf_len,
+                       idx_range, t_subl, Td_N, Td_Size, gr_dT, gr_Td,
+                       logalsp.data(), idspecies);
 
-      calc_gr_balance_g(
-          bi_t_mid.data(), tgas, kgr, floored_trad4, gasgr, gamma_isrf.data(),
-          nh, bi_itmask.data(), sol.data(), idx_range);
+      calc_gr_balance_g(bi_t_mid.data(), tgas, kgr, floored_trad4, gasgr,
+                        gamma_isrf.data(), nh, bi_itmask.data(), sol.data(),
+                        idx_range);
 
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
