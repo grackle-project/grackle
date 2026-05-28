@@ -57,8 +57,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   const double inv_log10 = 1. / std::log(10.);
 
   // Slice locals
-
-  std::vector<double> log_n_h(my_fields->grid_dimension[0]);
   std::vector<double> log10tem(my_fields->grid_dimension[0]);
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -74,13 +72,12 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      // Calculate proper log(n_H)
-      log_n_h[i] = std::log10(rhoH[i] * dom);
-    }
-  }
+      // Calculate proper log10(n_H)
+      // -> we **may** want to precompute log(rhoH) and log(dom) since it seems
+      //    like log(rhoH) is used in a fair number of places
+      double log10_nH = std::log10(rhoH[i] * dom);
 
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
+      // begin the iterative solve for tgas and munew
       double munew = 1.;
       double muold;
       bool skip_mmw_update = true;
@@ -107,7 +104,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
           // Interpolate over density and temperature.
         } else if (cloudy_table.grid_rank == 2) {
           munew = grackle::impl::fortran_wrapper::interpolate_2d_g(
-              log_n_h[i], log10tem[i], cloudy_table.grid_dimension,
+              log10_nH, log10tem[i], cloudy_table.grid_dimension,
               cloudy_table.grid_parameters[0], dclPar[0],
               cloudy_table.grid_parameters[1], dclPar[1],
               cloudy_table.data_size, cloudy_table.mmw_data);
@@ -115,7 +112,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
           // Interpolate over density, redshift, and temperature.
         } else if (cloudy_table.grid_rank == 3) {
           munew = grackle::impl::fortran_wrapper::interpolate_3dz_g(
-              log_n_h[i], zr, log10tem[i],
+              log10_nH, zr, log10tem[i],
               cloudy_table.grid_dimension,  // 3 elements
               cloudy_table.grid_parameters[0], dclPar[0],
               cloudy_table.grid_parameters[1], zindex_pair.zindex,
