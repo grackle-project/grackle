@@ -16,7 +16,7 @@
 #ifndef SOLVE_CUBIC_EQUATION_HPP
 #define SOLVE_CUBIC_EQUATION_HPP
 
-#include "support/config.hpp"        // GRIMPL_NAMESPACE_DECL
+#include "support/config.hpp"  // GRIMPL_NAMESPACE_DECL
 
 namespace GRIMPL_NAMESPACE_DECL {
 

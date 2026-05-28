@@ -21,8 +21,7 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-int solve_cubic_equation_cpp(double a, double b, double c,
-                            double& root) {
+int solve_cubic_equation_cpp(double a, double b, double c, double& root) {
   double root1, root2, root3;
   double q, r, m;
   double th;
