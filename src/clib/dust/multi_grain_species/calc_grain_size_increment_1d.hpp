@@ -29,10 +29,11 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "LUT.hpp"
+#include "support/config.hpp"        // GRIMPL_NAMESPACE_DECL
 #include "utils-cpp.hpp"
 #include "utils-field.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// For each grain species, compute quantities pertaining to the size
 /// distribution along the specified index range.
@@ -73,7 +74,7 @@ inline void calc_grain_size_increment_1d(
     const GrainSpeciesInfo* grain_species_info,
     const GrainMetalInjectPathways* inject_pathway_props,
     grackle_field_data* my_fields,
-    grackle::impl::InternalDustPropBuf internal_dust_prop_buf) {
+    InternalDustPropBuf internal_dust_prop_buf) {
   const int n_pathways = inject_pathway_props->n_pathways;
   const int n_log10Tdust_vals = static_cast<int>(
       inject_pathway_props->log10Tdust_interp_props.dimension[0]);
@@ -128,11 +129,11 @@ inline void calc_grain_size_increment_1d(
 
   // do the work
   {
-    grackle::impl::View<gr_float**> SN_metal(
+    View<gr_float**> SN_metal(
         repacked_inj_path_metal_densities.data(), my_fields->grid_dimension[0],
         inject_pathway_props->n_pathways);
 
-    grackle::impl::View<const gr_float***> metal(
+    View<const gr_float***> metal(
         const_cast<const gr_float*>(my_fields->metal_density),
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
@@ -145,7 +146,7 @@ inline void calc_grain_size_increment_1d(
       // when my_chemistry->multi_metals == 0, inj_path_metal_dens wraps
       // the same pointer as `metal`
 
-      grackle::impl::View<const gr_float***> inj_path_metal_dens(
+      View<const gr_float***> inj_path_metal_dens(
           inject_pathway_metal_densities[count], my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -178,21 +179,21 @@ inline void calc_grain_size_increment_1d(
   std::vector<double> repacked_yields(n_pathways);
 
   std::vector<double> repacked_size_moments_data_(n_pathways * 3);
-  grackle::impl::View<double**> repacked_size_moments(
+  View<double**> repacked_size_moments(
       repacked_size_moments_data_.data(), 3, n_pathways);
 
   std::vector<double> repacked_opac_table_data_(n_pathways * gr_Size);
-  grackle::impl::View<double**> repacked_opac_table(
+  View<double**> repacked_opac_table(
       repacked_opac_table_data_.data(), gr_Size, n_pathways);
 
-  grackle::impl::SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
+  SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
 
   // loop over grain species
   for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
     // repack the selected injection pathways for the current grain species
-    grackle::impl::View<double**> orig_size_moments(
+    View<double**> orig_size_moments(
         inject_pathway_props->size_moments.data[grsp_i], 3, n_pathways);
-    grackle::impl::View<double**> orig_opac_table(
+    View<double**> orig_opac_table(
         inject_pathway_props->opacity_coef_table.data[grsp_i], gr_Size,
         n_pathways);
 
@@ -215,7 +216,7 @@ inline void calc_grain_size_increment_1d(
     const gr_float* grsp_density =
         field_data_adaptor.get_ptr_dynamic(cur_grsp_info.species_idx);
 
-    grackle::impl::calc_grain_size_increment_species_1d(
+    calc_grain_size_increment_species_1d(
         my_chemistry->grain_growth, itmask, inject_pathway_props->n_pathways,
         my_fields->grid_dimension, idx_range, my_fields->density,
         n_selected_inj_paths, grsp_density,
@@ -270,6 +271,6 @@ inline void calc_grain_size_increment_1d(
   }
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // CALC_GRAIN_SIZE_INCREMENT_1D_HPP
