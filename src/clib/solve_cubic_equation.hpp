@@ -16,7 +16,9 @@
 #ifndef SOLVE_CUBIC_EQUATION_HPP
 #define SOLVE_CUBIC_EQUATION_HPP
 
-namespace grackle::impl {
+#include "support/config.hpp"        // GRIMPL_NAMESPACE_DECL
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 ///  Find the real root of a cubic equation of the form
 ///   x^3 + a x^2 + b x + c = 0
@@ -31,6 +33,6 @@ namespace grackle::impl {
 /// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
 int solve_cubic_equation_cpp(double a, double b, double c, double& root);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* SOLVE_CUBIC_EQUATION_HPP */
