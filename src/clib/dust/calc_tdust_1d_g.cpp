@@ -175,32 +175,10 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
 
     // Calculate heating/cooling balance
 
-    // TODO: to be removed when transcription is done
-    // FORTRAN_NAME(calc_gr_balance_g)(tdustnow.data(), tgas, kgr,
-    // &floored_trad4, gasgr,
-    //                                 gamma_isrf.data(), nh, nm_itmask.data(),
-    //                                 sol.data(), &in, &idx_range.i_start,
-    //                                 &idx_range.i_end);
-    // grackle::impl::fortran_wrapper::calc_gr_balance_g(tdustnow.data(), tgas,
-    // kgr, &floored_trad4,
-    //                                 gasgr, gamma_isrf.data(), nh,
-    //                                 nm_itmask.data(), sol.data(), &in,
-    //                                 &idx_range.i_start, &idx_range.i_end);
     calc_gr_balance_g(tdustnow.data(), tgas, kgr, floored_trad4,
                       gasgr, gamma_isrf.data(), nh,
                       nm_itmask.data(), sol.data(), idx_range);
 
-    // TODO: to be removed when transcription is done
-    // FORTRAN_NAME(calc_gr_balance_g)(tdplus.data(), tgas, kgrplus.data(),
-    // &floored_trad4,
-    //                                 gasgr, gamma_isrf.data(), nh,
-    //                                 nm_itmask.data(), solplus.data(), &in,
-    //                                 &idx_range.i_start, &idx_range.i_end);
-    // grackle::impl::fortran_wrapper::calc_gr_balance_g(tdplus.data(), tgas,
-    // kgrplus.data(), &floored_trad4,
-    //                                 gasgr, gamma_isrf.data(), nh,
-    //                                 nm_itmask.data(), solplus.data(), &in,
-    //                                 &idx_range.i_start, &idx_range.i_end);
     calc_gr_balance_g(
         tdplus.data(), tgas, kgrplus.data(), floored_trad4, gasgr,
         gamma_isrf.data(), nh, nm_itmask.data(), solplus.data(), idx_range);
@@ -276,17 +254,6 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
                       buf_len, idx_range, t_subl, Td_N, Td_Size,
                       gr_dT, gr_Td, logalsp.data(), idspecies);
 
-      // TODO: to be removed when transcription is done
-      // FORTRAN_NAME(calc_gr_balance_g)(bi_t_mid.data(), tgas, kgr, &trad4,
-      // gasgr,
-      //                                 gamma_isrf.data(), nh,
-      //                                 bi_itmask.data(), sol.data(), &in,
-      //                                 &idx_range.i_start, &idx_range.i_end);
-      // grackle::impl::fortran_wrapper::calc_gr_balance_g(bi_t_mid.data(),
-      // tgas, kgr, &trad4, gasgr,
-      //                                 gamma_isrf.data(), nh,
-      //                                 bi_itmask.data(), sol.data(), &in,
-      //                                 &idx_range.i_start, &idx_range.i_end);
       calc_gr_balance_g(
           bi_t_mid.data(), tgas, kgr, floored_trad4, gasgr, gamma_isrf.data(),
           nh, bi_itmask.data(), sol.data(), idx_range);
