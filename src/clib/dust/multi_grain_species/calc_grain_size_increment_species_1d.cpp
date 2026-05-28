@@ -22,35 +22,37 @@
 
 #include "calc_grain_size_increment_species_1d.hpp"
 
-void grackle::impl::calc_grain_size_increment_species_1d(
+namespace GRIMPL_NAMESPACE_DECL {
+
+void calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int n_inj_pathways,
     const int* grid_dimensions, IndexRange idx_range,
     const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density,
-    gr_float* selected_inj_path_metal_densities, const double* SN_fsp,
-    double* SN_r0sp_data, double bulk_density, double* sigma_per_gas_mass,
+    gr_float* selected_inj_path_metal_densities, const double* initial_species_yield,
+    const double* initial_size_distribution_moments, double bulk_density, double* sigma_per_gas_mass,
     double* kappa_data, int* gr_N, const double* opac_coef_table_data) {
   // input
   int iSN;
   int gr_Size = gr_N[0] * gr_N[1];
 
-  grackle::impl::View<const gr_float***> d(
+  View<const gr_float***> d(
       density_data, grid_dimensions[0], grid_dimensions[1], grid_dimensions[2]);
-  grackle::impl::View<const gr_float***> dsp(
+  View<const gr_float***> dsp(
       grain_species_density, grid_dimensions[0], grid_dimensions[1],
       grid_dimensions[2]);
-  grackle::impl::View<gr_float**> SN_metal(selected_inj_path_metal_densities,
-                                           grid_dimensions[0], n_inj_pathways);
+  View<gr_float**> SN_metal(selected_inj_path_metal_densities,
+                           grid_dimensions[0], n_inj_pathways);
 
   // table
-  grackle::impl::View<double**> SN_r0sp(SN_r0sp_data, 3, n_inj_pathways);
+  View<const double**> SN_r0sp(initial_size_distribution_moments, 3, n_inj_pathways);
 
   // opacity table
-  grackle::impl::View<const double**> opac_coef_table(opac_coef_table_data,
-                                                      gr_Size, n_inj_pathways);
+  View<const double**> opac_coef_table(opac_coef_table_data,
+                                      gr_Size, n_inj_pathways);
 
   // output
-  grackle::impl::View<double**> kappa(kappa_data, gr_N[1], grid_dimensions[0]);
+  View<double**> kappa(kappa_data, gr_N[1], grid_dimensions[0]);
 
   // local
   int i;
@@ -69,8 +71,8 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       //         that was injected (by summing the amounts injected by each
       //         injection pathway)
       for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
-        if (SN_fsp[iSN] > 0.e0) {
-          SN_dsp0[iSN] = SN_fsp[iSN] * SN_metal(i, iSN);
+        if (initial_species_yield[iSN] > 0.e0) {
+          SN_dsp0[iSN] = initial_species_yield[iSN] * SN_metal(i, iSN);
         }
       }
 
@@ -160,7 +162,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
 
         // Loop over each injection pathway
         for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
-          if (SN_fsp[iSN] > 0.e0) {
+          if (initial_species_yield[iSN] > 0.e0) {
             // Calculate 4πζnⱼ/3 = ρⱼ/<r³>ⱼ
             // -> recall: that ζ is the mass density of a single grain of the
             //    current grain species (i.e. it's a constant)
@@ -201,7 +203,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       // Step 3: calculate number density (code_density / g)
 
       for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
-        if (SN_fsp[iSN] > 0.e0) {
+        if (initial_species_yield[iSN] > 0.e0) {
           SN_nsp0[iSN] = SN_dsp0[iSN] / (4.e0 * pi_local_var / 3.e0 *
                                          bulk_density * SN_r0sp(2, iSN));
         } else {
@@ -213,7 +215,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
       // -> units of cm^2/g
       sigma_per_gas_mass[i] = 0.e0;
       for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
-        if (SN_fsp[iSN] > 0.e0) {
+        if (initial_species_yield[iSN] > 0.e0) {
           SN_sigma_per_gas_mass =
               pi_local_var *
               (SN_r0sp(1, iSN) + 2.e0 * SN_r0sp(0, iSN) * drsp[i] +
@@ -239,7 +241,7 @@ void grackle::impl::calc_grain_size_increment_species_1d(
         iTd0 = iTd * gr_N[0];
         kappa(iTd, i) = 0.e0;
         for (iSN = 0; iSN < n_selected_inj_paths; iSN++) {
-          if (SN_fsp[iSN] > 0.e0) {
+          if (initial_species_yield[iSN] > 0.e0) {
             SN_kpsp =
                 4.e0 * pi_local_var / 3.e0 * bulk_density *
                 (opac_coef_table(iTd0 + 3, iSN) +
@@ -258,3 +260,5 @@ void grackle::impl::calc_grain_size_increment_species_1d(
 
   return;
 }
+
+} // namespace GRIMPL_NAMESPACE_DECL
