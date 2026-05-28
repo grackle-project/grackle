@@ -55,9 +55,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   //       log10(T) we can drop this entirely
   const double inv_log10 = 1. / std::log(10.);
 
-  // Slice locals
-  std::vector<double> log10tem(my_fields->grid_dimension[0]);
-
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
 
@@ -87,23 +84,24 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
                                 e(i, idx_range.j, idx_range.k) * munew *
                                 internalu.utem,
                             my_chemistry->TemperatureStart);
-        double ln_T = std::log(tgas[i]);
 
-        log10tem[i] = ln_T * inv_log10;
+        // is it ok for us to just write log10_T = std::log10(tgas[i])?
+        double ln_T = std::log(tgas[i]);
+        double log10_T = ln_T * inv_log10;
 
         // Call interpolation functions to get mmw
 
         // Interpolate over temperature.
         if (cloudy_table.grid_rank == 1) {
           munew = grackle::impl::fortran_wrapper::interpolate_1d_g(
-              log10tem[i], cloudy_table.grid_dimension,
+              log10_T, cloudy_table.grid_dimension,
               cloudy_table.grid_parameters[0], dclPar[0],
               cloudy_table.data_size, cloudy_table.mmw_data);
 
           // Interpolate over density and temperature.
         } else if (cloudy_table.grid_rank == 2) {
           munew = grackle::impl::fortran_wrapper::interpolate_2d_g(
-              log10_nH, log10tem[i], cloudy_table.grid_dimension,
+              log10_nH, log10_T, cloudy_table.grid_dimension,
               cloudy_table.grid_parameters[0], dclPar[0],
               cloudy_table.grid_parameters[1], dclPar[1],
               cloudy_table.data_size, cloudy_table.mmw_data);
@@ -111,7 +109,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
           // Interpolate over density, redshift, and temperature.
         } else if (cloudy_table.grid_rank == 3) {
           munew = grackle::impl::fortran_wrapper::interpolate_3dz_g(
-              log10_nH, zr, log10tem[i],
+              log10_nH, zr, log10_T,
               cloudy_table.grid_dimension,  // 3 elements
               cloudy_table.grid_parameters[0], dclPar[0],
               cloudy_table.grid_parameters[1], zindex_pair.zindex,
