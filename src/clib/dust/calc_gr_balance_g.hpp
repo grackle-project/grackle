@@ -18,9 +18,10 @@
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
+#include "support/config.hpp"
 #include "support/index_helper.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 ///  Calculate grain heating/cooling balance
 ///
@@ -55,6 +56,6 @@ void calc_gr_balance_g(double* tdust, const double* tgas, const double* kgr,
                        const gr_mask_type* itmask, double* sol,
                        IndexRange idx_range);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* CALC_GR_BALANCE_G_HPP */

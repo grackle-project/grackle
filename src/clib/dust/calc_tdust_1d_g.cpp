@@ -23,28 +23,31 @@
 // TODO: to be removed when transcription is done
 #include "fortran_func_wrappers.hpp"
 #include "phys_constants.h"
+#include "support/config.hpp"
 #include "utils-cpp.hpp"
 
 #include "calc_tdust_1d_g.hpp"
 
-void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
-                                    double* gasgr, const double* gamma_isrfa,
-                                    const double* isrf,
-                                    const gr_mask_type* itmask, double trad,
-                                    int buf_len, int gr_N, double gr_dT,
-                                    const double* gr_Td,
-                                    const double* alsp_data_, double* kgr,
-                                    int idspecies, IndexRange idx_range) {
+namespace GRIMPL_NAMESPACE_DECL {
+
+void calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
+                    double* gasgr, const double* gamma_isrfa,
+                    const double* isrf,
+                    const gr_mask_type* itmask, double trad,
+                    int buf_len, int gr_N, double gr_dT,
+                    const double* gr_Td,
+                    const double* alsp_data_, double* kgr,
+                    int idspecies, IndexRange idx_range) {
   // opacity table of a grain species
   //
   // In some configurations gr_N can be 0 while the backing buffer may still be
   // non-null. The View invariant disallows non-null data with a zero leading
   // extent, so pass nullptr for the zero-length case.
   const double* alsp_ptr = (gr_N > 0) ? alsp_data_ : nullptr;
-  grackle::impl::View<const double**> alsp(alsp_ptr, gr_N, buf_len);
+  View<const double**> alsp(alsp_ptr, gr_N, buf_len);
   std::vector<double> logalsp_data_(gr_N * buf_len);
   double* logalsp_ptr = (gr_N > 0) ? logalsp_data_.data() : nullptr;
-  grackle::impl::View<double**> logalsp(logalsp_ptr, gr_N, buf_len);
+  View<double**> logalsp(logalsp_ptr, gr_N, buf_len);
   int Td_Size;
   int Td_N;
 
@@ -162,11 +165,11 @@ void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
     }
 
     // Calculate grain opacities
-    grackle::impl::calc_kappa_grain(tdustnow.data(), kgr, nm_itmask.data(),
-                                    buf_len, idx_range, t_subl, Td_N, Td_Size,
-                                    gr_dT, gr_Td, logalsp.data(), idspecies);
+    calc_kappa_grain(tdustnow.data(), kgr, nm_itmask.data(),
+                    buf_len, idx_range, t_subl, Td_N, Td_Size,
+                    gr_dT, gr_Td, logalsp.data(), idspecies);
 
-    grackle::impl::calc_kappa_grain(
+    calc_kappa_grain(
         tdplus.data(), kgrplus.data(), nm_itmask.data(), buf_len, idx_range,
         t_subl, Td_N, Td_Size, gr_dT, gr_Td, logalsp.data(), idspecies);
 
@@ -183,9 +186,9 @@ void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
     //                                 gasgr, gamma_isrf.data(), nh,
     //                                 nm_itmask.data(), sol.data(), &in,
     //                                 &idx_range.i_start, &idx_range.i_end);
-    grackle::impl::calc_gr_balance_g(tdustnow.data(), tgas, kgr, floored_trad4,
-                                     gasgr, gamma_isrf.data(), nh,
-                                     nm_itmask.data(), sol.data(), idx_range);
+    calc_gr_balance_g(tdustnow.data(), tgas, kgr, floored_trad4,
+                      gasgr, gamma_isrf.data(), nh,
+                      nm_itmask.data(), sol.data(), idx_range);
 
     // TODO: to be removed when transcription is done
     // FORTRAN_NAME(calc_gr_balance_g)(tdplus.data(), tgas, kgrplus.data(),
@@ -198,7 +201,7 @@ void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
     //                                 gasgr, gamma_isrf.data(), nh,
     //                                 nm_itmask.data(), solplus.data(), &in,
     //                                 &idx_range.i_start, &idx_range.i_end);
-    grackle::impl::calc_gr_balance_g(
+    calc_gr_balance_g(
         tdplus.data(), tgas, kgrplus.data(), floored_trad4, gasgr,
         gamma_isrf.data(), nh, nm_itmask.data(), solplus.data(), idx_range);
 
@@ -269,9 +272,9 @@ void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
         }
       }
 
-      grackle::impl::calc_kappa_grain(bi_t_mid.data(), kgr, bi_itmask.data(),
-                                      buf_len, idx_range, t_subl, Td_N, Td_Size,
-                                      gr_dT, gr_Td, logalsp.data(), idspecies);
+      calc_kappa_grain(bi_t_mid.data(), kgr, bi_itmask.data(),
+                      buf_len, idx_range, t_subl, Td_N, Td_Size,
+                      gr_dT, gr_Td, logalsp.data(), idspecies);
 
       // TODO: to be removed when transcription is done
       // FORTRAN_NAME(calc_gr_balance_g)(bi_t_mid.data(), tgas, kgr, &trad4,
@@ -284,7 +287,7 @@ void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
       //                                 gamma_isrf.data(), nh,
       //                                 bi_itmask.data(), sol.data(), &in,
       //                                 &idx_range.i_start, &idx_range.i_end);
-      grackle::impl::calc_gr_balance_g(
+      calc_gr_balance_g(
           bi_t_mid.data(), tgas, kgr, floored_trad4, gasgr, gamma_isrf.data(),
           nh, bi_itmask.data(), sol.data(), idx_range);
 
@@ -352,3 +355,5 @@ void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
 
   return;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL
