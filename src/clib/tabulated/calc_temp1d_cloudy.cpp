@@ -56,7 +56,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
 
   int i, ti;
   double inv_log10, muold, munew;
-  long long end_int;
 
   // Slice locals
 
@@ -66,8 +65,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
 
-  end_int = 0;
-
   inv_log10 = 1. / std::log(10.);
 
   // Calculate parameter value slopes
@@ -75,7 +72,8 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
       tabulated_detail::param_deltas(cloudy_table);
 
   // Calculate index for redshift dimension
-  const long long zindex = tabulated_detail::find_zindex(zr, cloudy_table);
+  const tabulated_detail::FindZIndexRslt zindex_pair =
+      tabulated_detail::find_zindex(zr, cloudy_table);
 
   for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -122,9 +120,10 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
               log_n_h[i], zr, log10tem[i],
               cloudy_table.grid_dimension,  // 3 elements
               cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.grid_parameters[1], zindex,
+              cloudy_table.grid_parameters[1], zindex_pair.zindex,
               cloudy_table.grid_parameters[2], dclPar[2],
-              cloudy_table.data_size, cloudy_table.mmw_data, end_int);
+              cloudy_table.data_size, cloudy_table.mmw_data,
+              zindex_pair.end_int);
         } else {
           printf("Maximum mmw data grid rank is 3!\n");
           return;

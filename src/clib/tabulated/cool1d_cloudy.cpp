@@ -35,7 +35,6 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
 
   int i, get_heat;
   double inv_log10, log10_tCMB;
-  long long end_int;
 
   // Slice locals
 
@@ -49,7 +48,6 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
 
-  end_int = 0;
   get_heat = iClHeat;
 
   inv_log10 = 1. / std::log(10.);
@@ -61,7 +59,8 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
       tabulated_detail::param_deltas(cloudy_table);
 
   // Calculate index for redshift dimension
-  const long long zindex = tabulated_detail::find_zindex(zr, cloudy_table);
+  const tabulated_detail::FindZIndexRslt zindex_pair =
+      tabulated_detail::find_zindex(zr, cloudy_table);
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -131,9 +130,9 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
         log_cool[i] = grackle::impl::fortran_wrapper::interpolate_3dz_g(
             log_n_h[i], zr, log10tem[i], cloudy_table.grid_dimension,
             cloudy_table.grid_parameters[0], dclPar[0],
-            cloudy_table.grid_parameters[1], zindex,
+            cloudy_table.grid_parameters[1], zindex_pair.zindex,
             cloudy_table.grid_parameters[2], dclPar[2], cloudy_table.data_size,
-            cloudy_table.cooling_data, end_int);
+            cloudy_table.cooling_data, zindex_pair.end_int);
         edot_met[i] = -std::pow(10., log_cool[i]);
 
         // Ignore CMB term if T >> T_CMB
@@ -141,9 +140,10 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
           log_cool_cmb[i] = grackle::impl::fortran_wrapper::interpolate_3dz_g(
               log_n_h[i], zr, log10_tCMB, cloudy_table.grid_dimension,
               cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.grid_parameters[1], zindex,
+              cloudy_table.grid_parameters[1], zindex_pair.zindex,
               cloudy_table.grid_parameters[2], dclPar[2],
-              cloudy_table.data_size, cloudy_table.cooling_data, end_int);
+              cloudy_table.data_size, cloudy_table.cooling_data,
+              zindex_pair.end_int);
           edot_met[i] = edot_met[i] + std::pow(10., log_cool_cmb[i]);
         }
 
@@ -151,9 +151,10 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
           log_heat[i] = grackle::impl::fortran_wrapper::interpolate_3dz_g(
               log_n_h[i], zr, log10tem[i], cloudy_table.grid_dimension,
               cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.grid_parameters[1], zindex,
+              cloudy_table.grid_parameters[1], zindex_pair.zindex,
               cloudy_table.grid_parameters[2], dclPar[2],
-              cloudy_table.data_size, cloudy_table.heating_data, end_int);
+              cloudy_table.data_size, cloudy_table.heating_data,
+              zindex_pair.end_int);
           edot_met[i] = edot_met[i] + std::pow(10., log_heat[i]);
         }
 

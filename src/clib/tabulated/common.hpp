@@ -36,6 +36,21 @@ inline std::array<double, MAX_RANK> param_deltas(const cloudy_data& table) {
   return out;
 }
 
+/// @brief Encodes the result of @ref find_zindex
+///
+/// @todo After PR #384 has been merged, we should try to adjust the redshift
+///       index so that it is now zero-indexed. I feel pretty strongly that we
+///       should also transition from using `long long` values to `int64_t`
+struct FindZIndexRslt {
+  /// The one-indexed redshift index
+  long long zindex;
+  /// Denotes whether the redshift is at the edge of the interpolation grid
+  ///
+  /// A value of 1 indicates that we should just interpolate from just the last
+  /// redshift slice in the datacube
+  long long end_int;
+};
+
 /// retrieve the index along the redshift dimension, most closely associated
 /// with @p z from a cloudy table, \p table (using bisection)
 ///
@@ -45,14 +60,10 @@ inline std::array<double, MAX_RANK> param_deltas(const cloudy_data& table) {
 /// @param table the cloudy table
 ///
 /// @returns The one-indexed redshift index
-///
-/// @todo After PR #394 has been merged, we should try to adjust the redshift
-///       index so that it is now zero-indexed. I fell pretty strongly that we
-///       should also transition from using `long long` values to `int64_t`
-[[gnu::always_inline]] inline long long find_zindex(double z,
-                                                    const cloudy_data& table) {
+[[gnu::always_inline]] inline FindZIndexRslt find_zindex(
+    double z, const cloudy_data& table) {
   if (table.grid_rank <= 2) {
-    return 1LL;
+    return {1LL, 0LL};
   }
 
   // reminder (since this looks wrong at a quick glance):
@@ -63,11 +74,11 @@ inline std::array<double, MAX_RANK> param_deltas(const cloudy_data& table) {
   const double* z_vals = table.grid_parameters[1];
   const long long n_vals = table.grid_dimension[1];
   if (z <= z_vals[0]) {
-    return 1LL;
+    return {1LL, 0LL};
   } else if (z >= z_vals[n_vals - 2]) {
-    return n_vals;
+    return {n_vals, 1LL};
   } else if (z >= z_vals[n_vals - 3]) {
-    return n_vals - 2;
+    return {n_vals - 2, 0LL};
   } else {
     long long zindex = 1;
     long long zhighpt = n_vals - 2;
@@ -79,7 +90,7 @@ inline std::array<double, MAX_RANK> param_deltas(const cloudy_data& table) {
         zhighpt = zmidpt;
       }
     }
-    return zindex;
+    return {zindex, 0LL};
   }
 }
 
