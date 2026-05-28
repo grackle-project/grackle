@@ -51,11 +51,15 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   // approx. mean molecular weight of metals
   const double mu_metal = 16.;
   const int ti_max = 20;
+  // todo: maybe factor this constant out and have it be precomputed
+  //       (and rename it to INV_LN10). Alternatively, if we directly compute
+  //       log10(T) we can drop this entirely
+  const double inv_log10 = 1. / std::log(10.);
 
   // Locals
 
   int i, ti;
-  double inv_log10, muold, munew;
+  double muold, munew;
 
   // Slice locals
 
@@ -64,8 +68,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
-
-  inv_log10 = 1. / std::log(10.);
 
   // Calculate parameter value slopes
   const std::array<double, tabulated_detail::MAX_RANK> dclPar =

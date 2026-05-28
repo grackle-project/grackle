@@ -31,10 +31,13 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
                    double zr, int icmbTfloor, int iClHeat, int iZscale,
                    const gr_mask_type* itmask, cloudy_data cloudy_table,
                    IndexRange idx_range) {
-  // Locals
+  // todo: maybe factor this constant out and have it be precomputed
+  //       (and rename it to INV_LN10)
+  const double inv_log10 = 1. / std::log(10.);
 
+  // Locals
   int i, get_heat;
-  double inv_log10, log10_tCMB;
+  double log10_tCMB;
 
   // Slice locals
 
@@ -49,8 +52,6 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
   // =======================================================================
 
   get_heat = iClHeat;
-
-  inv_log10 = 1. / std::log(10.);
   log10_tCMB = std::log10(comp2);
 
   // Calculate parameter value slopes
