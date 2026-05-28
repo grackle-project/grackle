@@ -46,11 +46,11 @@ namespace GRIMPL_NAMESPACE_DECL {
 ///     elements and the other axis has space for @p n_inj_pathways entries (in
 ///     practice only the first @p n_selected_inj_paths indices along this axis
 ///     are used).
-/// @param[in] initial_species_yield Pointer to the array of values for the initial
-/// fraction of the injected mass density of a given grain species
+/// @param[in] initial_species_yield Pointer to the array of values for the
+/// initial fraction of the injected mass density of a given grain species
 /// @param[in] initial_size_distribution_moments Pointer to the table of values
-/// for the initial size distribution of a given grain species (1st, 2nd, and 3rd
-/// order moments)
+/// for the initial size distribution of a given grain species (1st, 2nd, and
+/// 3rd order moments)
 /// @param[in] bulk_density The bulk density of the grain species (density of a
 /// single grain in units of g/cm^3)
 /// @param[out] sigma_per_gas_mass 1D buffer to hold the computed geometric
@@ -72,16 +72,18 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// coefficients could probably be a non-type template parameter and add a
 /// static_assert to document that the function currently assumes that it is
 /// always 4.
-/// TODO: directly pass in the entire struct of size moment data rather than needing
-/// to repack it.
+/// TODO: directly pass in the entire struct of size moment data rather than
+/// needing to repack it.
 void calc_grain_size_increment_species_1d(
     int igrgr, const gr_mask_type* itmask, int n_inj_pathways,
     const int* grid_dimensions, IndexRange idx_range,
     const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density,
-    gr_float* selected_inj_path_metal_densities, const double* initial_species_yield,
-    const double* initial_size_distribution_moments, double bulk_density, double* sigma_per_gas_mass,
-    double* kappa_data, int* gr_N, const double* opac_coef_table_data);
+    gr_float* selected_inj_path_metal_densities,
+    const double* initial_species_yield,
+    const double* initial_size_distribution_moments, double bulk_density,
+    double* sigma_per_gas_mass, double* kappa_data, int* gr_N,
+    const double* opac_coef_table_data);
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 

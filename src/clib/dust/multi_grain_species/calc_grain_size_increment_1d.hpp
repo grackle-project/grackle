@@ -29,7 +29,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "LUT.hpp"
-#include "support/config.hpp"        // GRIMPL_NAMESPACE_DECL
+#include "support/config.hpp"  // GRIMPL_NAMESPACE_DECL
 #include "utils-cpp.hpp"
 #include "utils-field.hpp"
 
@@ -73,8 +73,7 @@ inline void calc_grain_size_increment_1d(
     const chemistry_data* my_chemistry,
     const GrainSpeciesInfo* grain_species_info,
     const GrainMetalInjectPathways* inject_pathway_props,
-    grackle_field_data* my_fields,
-    InternalDustPropBuf internal_dust_prop_buf) {
+    grackle_field_data* my_fields, InternalDustPropBuf internal_dust_prop_buf) {
   const int n_pathways = inject_pathway_props->n_pathways;
   const int n_log10Tdust_vals = static_cast<int>(
       inject_pathway_props->log10Tdust_interp_props.dimension[0]);
@@ -129,9 +128,9 @@ inline void calc_grain_size_increment_1d(
 
   // do the work
   {
-    View<gr_float**> SN_metal(
-        repacked_inj_path_metal_densities.data(), my_fields->grid_dimension[0],
-        inject_pathway_props->n_pathways);
+    View<gr_float**> SN_metal(repacked_inj_path_metal_densities.data(),
+                              my_fields->grid_dimension[0],
+                              inject_pathway_props->n_pathways);
 
     View<const gr_float***> metal(
         const_cast<const gr_float*>(my_fields->metal_density),
@@ -179,12 +178,12 @@ inline void calc_grain_size_increment_1d(
   std::vector<double> repacked_yields(n_pathways);
 
   std::vector<double> repacked_size_moments_data_(n_pathways * 3);
-  View<double**> repacked_size_moments(
-      repacked_size_moments_data_.data(), 3, n_pathways);
+  View<double**> repacked_size_moments(repacked_size_moments_data_.data(), 3,
+                                       n_pathways);
 
   std::vector<double> repacked_opac_table_data_(n_pathways * gr_Size);
-  View<double**> repacked_opac_table(
-      repacked_opac_table_data_.data(), gr_Size, n_pathways);
+  View<double**> repacked_opac_table(repacked_opac_table_data_.data(), gr_Size,
+                                     n_pathways);
 
   SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
 

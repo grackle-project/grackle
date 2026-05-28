@@ -29,27 +29,29 @@ void calc_grain_size_increment_species_1d(
     const int* grid_dimensions, IndexRange idx_range,
     const gr_float* density_data, int n_selected_inj_paths,
     const gr_float* grain_species_density,
-    gr_float* selected_inj_path_metal_densities, const double* initial_species_yield,
-    const double* initial_size_distribution_moments, double bulk_density, double* sigma_per_gas_mass,
-    double* kappa_data, int* gr_N, const double* opac_coef_table_data) {
+    gr_float* selected_inj_path_metal_densities,
+    const double* initial_species_yield,
+    const double* initial_size_distribution_moments, double bulk_density,
+    double* sigma_per_gas_mass, double* kappa_data, int* gr_N,
+    const double* opac_coef_table_data) {
   // input
   int iSN;
   int gr_Size = gr_N[0] * gr_N[1];
 
-  View<const gr_float***> d(
-      density_data, grid_dimensions[0], grid_dimensions[1], grid_dimensions[2]);
-  View<const gr_float***> dsp(
-      grain_species_density, grid_dimensions[0], grid_dimensions[1],
-      grid_dimensions[2]);
+  View<const gr_float***> d(density_data, grid_dimensions[0],
+                            grid_dimensions[1], grid_dimensions[2]);
+  View<const gr_float***> dsp(grain_species_density, grid_dimensions[0],
+                              grid_dimensions[1], grid_dimensions[2]);
   View<gr_float**> SN_metal(selected_inj_path_metal_densities,
-                           grid_dimensions[0], n_inj_pathways);
+                            grid_dimensions[0], n_inj_pathways);
 
   // table
-  View<const double**> SN_r0sp(initial_size_distribution_moments, 3, n_inj_pathways);
+  View<const double**> SN_r0sp(initial_size_distribution_moments, 3,
+                               n_inj_pathways);
 
   // opacity table
-  View<const double**> opac_coef_table(opac_coef_table_data,
-                                      gr_Size, n_inj_pathways);
+  View<const double**> opac_coef_table(opac_coef_table_data, gr_Size,
+                                       n_inj_pathways);
 
   // output
   View<double**> kappa(kappa_data, gr_N[1], grid_dimensions[0]);
@@ -261,4 +263,4 @@ void calc_grain_size_increment_species_1d(
   return;
 }
 
-} // namespace GRIMPL_NAMESPACE_DECL
+}  // namespace GRIMPL_NAMESPACE_DECL
