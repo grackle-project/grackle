@@ -57,8 +57,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   const double inv_log10 = 1. / std::log(10.);
 
   // Locals
-
-  int ti;
   double muold, munew;
 
   // Slice locals
@@ -88,7 +86,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
     if (itmask[i] != MASK_FALSE) {
       munew = 1.;
       bool skip_mmw_update = true;
-      for (ti = 1; ti <= (ti_max); ti++) {
+      for (int ti = 1; ti <= ti_max; ti++) {
         muold = munew;
 
         tgas[i] = std::fmax((my_chemistry->Gamma - 1.) *
