@@ -16,7 +16,7 @@
 #include "LUT.hpp"             // PhotoRxnLUT
 #include "opaque_storage.hpp"  // gr_opaque_storage
 #include "ratequery.hpp"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 #include "support/config.hpp"
 
 #include <algorithm>

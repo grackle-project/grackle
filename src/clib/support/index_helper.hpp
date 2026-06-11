@@ -1,41 +1,33 @@
-/***********************************************************************
-/
-/ Declare Grackle's index_helper type and associated functions. This is only
-/ intended to be used internally.
-/
-/
-/ Copyright (c) 2013, Enzo/Grackle Development Team.
-/
-/ Distributed under the terms of the Enzo Public Licence.
-/
-/ The full license is in the file LICENSE, distributed with this 
-/ software.
-************************************************************************/
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Define internal logic to help with indexing
+///
+//===----------------------------------------------------------------------===//
 
-#ifndef __GRACKLE_PRIVATE_H_
-#define __GRACKLE_PRIVATE_H_
+#ifndef SUPPORT_INDEX_HELPER_HPP
+#define SUPPORT_INDEX_HELPER_HPP
 
-#include "grackle_types.h" // grackle_field_data
+#include "grackle.h"  // grackle_field_data
+#include "config.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+namespace GRIMPL_NAMESPACE_DECL {
 
-/***********************************************************************
-/  
-/ VARIABLE TYPES
-/
-************************************************************************/
-
-/// internal type to assist with iterating over 3D index-space.
+/// @brief internal type to assist with iterating over 3D index-space.
 ///
 /// An instance, `obj`, is commonly used in a 2-level nested for-loop:
 /// - the outer loop iterates over index `t` for `0 <= t < obj.outer_ind_size`.
 ///   In 3D, this loop corresponds to `j`,`k` index pairs.
 /// - the inner loop iterate over the "index-range" (constructed from `obj`
 ///   and `t`). In 3D, this loop corresponds to the `i` axis.
-typedef struct
-{
+///
+/// To create an instance, you should use @ref build_index_helper_
+struct IndexHelper {
   int i_start;
   int i_end;
   int i_dim;
@@ -49,16 +41,16 @@ typedef struct
 
   int num_j_inds;
   int outer_ind_size;
+};
 
-} grackle_index_helper;
-
-/// Specifies a range of indices for grackle's 3D fields, for use when you 
-/// treat the fields as flattened 1d arrays
-typedef struct
-{
+/// @brief Specifies a range of indices for grackle's 3D fields, for use when
+/// you treat the fields as flattened 1d arrays
+///
+/// To create an instance, you should use @ref build_index_helper_
+struct FieldFlatIndexRange {
   int start;
   int end;
-} field_flat_index_range;
+};
 
 /// Specifies the range of indices for grackle's 3D fields.
 ///
@@ -71,7 +63,7 @@ typedef struct
 ///   in the underlying flat 1d buffer that holds a field's data. In some cases
 ///   (e.g. Fortran Arrays) the remapping is done behind the scenes and in
 ///   cases, it is more explicit (but the logic is always somewhere)
-/// - For context, the `field_flat_index_range` can be used to specify the same
+/// - For context, the `FieldFlatIndexRange` can be used to specify the same
 ///   range for 3D fields, but the remapping logic is pre-applied (this makes
 ///   it much less useful when you have these custom buffers)
 ///
@@ -112,8 +104,7 @@ typedef struct
 /// @par Future Usage
 /// If we continue using this type after we complete transcription, we can have
 /// it take on a prominent role in adding GPU-support.
-typedef struct IndexRange
-{
+struct IndexRange {
   // specifies the fixed (0-based) j and k indices to be used with the range
   int j;
   int k;
@@ -129,50 +120,69 @@ typedef struct IndexRange
 
   // holds the value of `i_stop-1` (remove when transcription is done)
   int i_end;
-} IndexRange;
+};
 
-/***********************************************************************
-/  
-/ FUNCTION DECLARATIONS
-/
-************************************************************************/
-
-// to help the compiler optimize the associated for-loops, this function:
-//   - is implemented inline
-//   - returns results as a struct rather than by modifying pointer arguments
-static inline field_flat_index_range inner_flat_range_(
-  int outer_index, const grackle_index_helper* ind_helper
-)
-{
+/// @brief Construct a @ref FieldFlatIndexRange from a @ref IndexHelper
+///
+/// @ref
+/// to help the compiler optimize the associated for-loops, this function:
+/// - is implemented inline (to allow the compiler to inline this function)
+/// - returns results as a struct rather than by modifying pointer arguments
+inline FieldFlatIndexRange inner_flat_range_(int outer_index,
+                                             const IndexHelper* ind_helper) {
   int k = (outer_index / ind_helper->num_j_inds) + ind_helper->k_start;
   int j = (outer_index % ind_helper->num_j_inds) + ind_helper->j_start;
   int outer_offset = ind_helper->i_dim * (j + ind_helper->j_dim * k);
-  field_flat_index_range out = {ind_helper->i_start + outer_offset,
-                                ind_helper->i_end + outer_offset};
+  FieldFlatIndexRange out = {ind_helper->i_start + outer_offset,
+                             ind_helper->i_end + outer_offset};
   return out;
 }
 
-/// constructs an IndexRange, which holds the 3D index information for an
+/// @brief constructs an IndexRange, which holds the 3D index information for an
 /// "islice."
-static inline IndexRange make_idx_range_(
-  int outer_index, const grackle_index_helper* idx_helper
-)
-{
+inline IndexRange make_idx_range_(int outer_index,
+                                  const IndexHelper* idx_helper) {
   IndexRange out;
   out.k = (outer_index / idx_helper->num_j_inds) + idx_helper->k_start;
   out.j = (outer_index % idx_helper->num_j_inds) + idx_helper->j_start;
-  out.jp1 = out.j+1;
-  out.kp1 = out.k+1;
+  out.jp1 = out.j + 1;
+  out.kp1 = out.k + 1;
   out.i_start = idx_helper->i_start;
   out.i_end = idx_helper->i_end;
-  out.i_stop = idx_helper->i_end+1;
+  out.i_stop = idx_helper->i_end + 1;
   return out;
 }
 
-grackle_index_helper build_index_helper_(const grackle_field_data *my_fields);
+/// @brief Construct a new @ref IndexHelper
+///
+/// @note
+/// This function is only declared `inline` as a matter of convenience. If it
+/// would help compile-times, we could always move the definition to a source
+/// file
+inline IndexHelper build_index_helper_(const grackle_field_data* my_fields) {
+  IndexHelper out;
+  const int rank = my_fields->grid_rank;
 
-#ifdef __cplusplus
-} // extern "C"
-#endif /* __cplusplus */
+  // handle i indices
+  out.i_dim = my_fields->grid_dimension[0];
+  out.i_start = my_fields->grid_start[0];
+  out.i_end = my_fields->grid_end[0];
 
-#endif
+  // handle j indices (j_end isn't tracked by IndexHelper)
+  out.j_dim = (rank >= 2) ? my_fields->grid_dimension[1] : 1;
+  out.j_start = (rank >= 2) ? my_fields->grid_start[1] : 0;
+  int j_end = (rank >= 2) ? my_fields->grid_end[1] : 0;
+  out.num_j_inds = (j_end - out.j_start) + 1;
+
+  // handle k indices (k_end & k_dim aren't tracked by IndexHelper)
+  out.k_start = (rank >= 3) ? my_fields->grid_start[2] : 0;
+  int k_end = (rank >= 3) ? my_fields->grid_end[2] : 0;
+  int num_k_inds = (k_end - out.k_start) + 1;
+
+  out.outer_ind_size = num_k_inds * out.num_j_inds;
+  return out;
+}
+
+}  // namespace GRIMPL_NAMESPACE_DECL
+
+#endif  // SUPPORT_INDEX_HELPER_HPP

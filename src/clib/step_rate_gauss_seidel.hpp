@@ -22,7 +22,7 @@
 #include "grackle.h"  // gr_float
 #include "chemistry_solver_funcs.hpp"
 #include "fortran_func_decls.h"  // gr_mask_type
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "LUT.hpp"
 

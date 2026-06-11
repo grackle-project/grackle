@@ -20,7 +20,6 @@
 #include "grackle_macros.h"
 #include "auto_general.hpp"
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
-#include "initialize_cloudy_data.hpp"
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -29,7 +28,8 @@
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 #include "ratequery.hpp"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
+#include "tabulated/initialize_cloudy_data.hpp"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -218,6 +218,12 @@ static int local_initialize_chemistry_data_(
       }
     }
 
+  }
+
+  if (my_chemistry->primordial_chemistry == 0 &&
+      my_chemistry->dust_recombination_cooling > 0) {
+    fprintf(stderr, "ERROR: dust_recombination_cooling > 0 requires primordial_chemistry > 0.\n");
+    return GR_FAIL;
   }
 
   if (my_chemistry->dust_species > 0 &&

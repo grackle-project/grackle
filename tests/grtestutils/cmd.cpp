@@ -1,7 +1,7 @@
 #include "cmd.hpp"
 
 // internal Grackle routine:
-#include "status_reporting.h"  // GR_INTERNAL_ERROR, GR_INTERNAL_REQUIRE
+#include "support/status_reporting.hpp"  // GR_INTERNAL_ERROR, GR_INTERNAL_REQUIRE
 
 #include <stdio.h>  // FILE, fgets, fprintf, stderr, (popen/pclose on POSIX)
 

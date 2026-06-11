@@ -15,7 +15,7 @@
 
 #include "opaque_storage.hpp"
 #include "raw_data.hpp"  // grackle::impl::inj_model_input::N_Injection_Pathways
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 namespace grackle::impl {
 

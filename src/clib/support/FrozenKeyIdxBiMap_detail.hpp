@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <cstring>  // std::memcmp
 #include <limits>
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 #include "config.hpp"
 #include "fnv1a_hash.hpp"

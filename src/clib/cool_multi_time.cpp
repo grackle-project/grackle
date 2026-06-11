@@ -17,12 +17,15 @@
 
 #include "cool1d_multi_g.hpp"
 #include "cool_multi_time.hpp"
+#include "gas_props.hpp"
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "inject_model/misc.hpp"
 #include "internal_units.hpp"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
 #include "scale_fields.hpp"
+#include "support/config.hpp"
 #include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -33,7 +36,7 @@ void cool_multi_time(
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates
 )
 {
-  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   // Convert densities from comoving to 'proper'
   if (internalu.extfields_in_comoving == 1)  {
@@ -54,8 +57,8 @@ void cool_multi_time(
     GrainSpeciesCollection grain_temperatures =
       new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
-    LogTLinInterpScratchBuf logTlininterp_buf =
-      new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+    LnTLinInterpBuf logTlininterp_buf =
+      new_LnTLinInterpBuf(my_fields->grid_dimension[0]);
 
     Cool1DMultiScratchBuf cool1dmulti_buf =
       new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
@@ -67,18 +70,29 @@ void cool_multi_time(
     // used in a number of different internal routines. Sorting these into
     // additional structs (or leaving them free-standing) will become more
     // obvious as we transcribe more routines.
-    std::vector<double> p2d(my_fields->grid_dimension[0]);
+
     std::vector<double> tgas(my_fields->grid_dimension[0]);
     std::vector<double> mmw(my_fields->grid_dimension[0]);
     std::vector<double> tdust(my_fields->grid_dimension[0]);
     std::vector<double> metallicity(my_fields->grid_dimension[0]);
     std::vector<double> dust2gas(my_fields->grid_dimension[0]);
     std::vector<double> rhoH(my_fields->grid_dimension[0]);
+    std::vector<double> nelec_times_mH(my_fields->grid_dimension[0]);
     std::vector<double> edot(my_fields->grid_dimension[0]);
 
     // Iteration mask for multi_cool
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
+
+    // create views of density and internal energy fields to support 3D access
+    grackle::impl::View<gr_float***> d(my_fields->density,
+                                       my_fields->grid_dimension[0],
+                                       my_fields->grid_dimension[1],
+                                       my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> specific_eint(
+        my_fields->internal_energy, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
 
     // The following for-loop is a flattened loop over every k,j combination.
     // OpenMP divides this loop between all threads. Within the loop, we
@@ -94,13 +108,20 @@ void cool_multi_time(
         itmask[i] = MASK_TRUE;
       }
 
-      // Compute the cooling rate
-      int dummy_iter_arg=1;
+      // compute gas properties (tgas, mmw, rhoH, metallicity, nelec_times_mH)
+      // and fill up logTlinterp_buf
+      extended_gas_props(tgas.data(), mmw.data(), rhoH.data(),
+                         metallicity.data(), nelec_times_mH.data(),
+                         logTlininterp_buf, imetal, itmask.data(),
+                         my_chemistry, &my_rates->cloudy_primordial,
+                         my_fields, internalu, idx_range, nullptr);
 
+      // compute edot
       cool1d_multi_g(
-        imetal, dummy_iter_arg, edot.data(), tgas.data(),
-        mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
-        dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
+        imetal, edot.data(), tgas.data(),
+        mmw.data(), tdust.data(), metallicity.data(),
+        dust2gas.data(), rhoH.data(), nelec_times_mH.data(), 
+        itmask.data(), itmask_metal.data(),
         my_chemistry, my_rates, my_fields, my_uvb_rates, internalu, idx_range,
         grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf
@@ -111,7 +132,11 @@ void cool_multi_time(
       //    in cool1d_multi_g)
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.),
+        // todo: directly compute energy density (may break gold standard)
+        double p = GRIMPL_NS::calc_pressure(my_chemistry->Gamma,
+                                            d(i, j, k),
+                                            specific_eint(i, j, k));
+        double energy = std::fmax(p/(my_chemistry->Gamma-1.),
                                   tiny_fortran_val);
         cooltime(i,j,k) = (gr_float)(energy/edot[i]);
       }
@@ -120,7 +145,7 @@ void cool_multi_time(
 
     // cleanup temporaries
     drop_GrainSpeciesCollection(&grain_temperatures);
-    drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    drop_LnTLinInterpBuf(&logTlininterp_buf);
     drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
 

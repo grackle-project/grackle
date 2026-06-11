@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the cool1d_cloudy_g function
+/// Implements the cool1d_cloudy function
 ///
 //===----------------------------------------------------------------------===//
 
@@ -18,22 +18,23 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_wrappers.hpp"
-#include "utils-cpp.hpp"
+#include "../fortran_func_wrappers.hpp"
+#include "../utils-cpp.hpp"
+#include "./common.hpp"
 
-#include "cool1d_cloudy_g.hpp"
+#include "cool1d_cloudy.hpp"
 
-void grackle::impl::cool1d_cloudy_g(
-    const double* rhoH, const double* metallicity, const double* logtem,
-    double* edot, double comp2, double dom, double zr, int icmbTfloor,
-    int iClHeat, int iZscale, const gr_mask_type* itmask,
-    cloudy_data cloudy_table, IndexRange idx_range) {
+namespace GRIMPL_NAMESPACE_DECL {
+
+void cool1d_cloudy(const double* rhoH, const double* metallicity,
+                   const double* logtem, double* edot, double comp2, double dom,
+                   double zr, int icmbTfloor, int iClHeat, int iZscale,
+                   const gr_mask_type* itmask, cloudy_data cloudy_table,
+                   IndexRange idx_range) {
   // Locals
 
   int i, get_heat;
-  long long zindex, zmidpt, zhighpt;
   double inv_log10, log10_tCMB;
-  double dclPar[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION] = {};
   long long end_int;
 
   // Slice locals
@@ -55,23 +56,12 @@ void grackle::impl::cool1d_cloudy_g(
   log10_tCMB = std::log10(comp2);
 
   // Calculate parameter value slopes
+  // Calculate parameter value slopes
+  const std::array<double, tabulated_detail::MAX_RANK> dclPar =
+      tabulated_detail::param_deltas(cloudy_table);
 
-  dclPar[0] =
-      (cloudy_table.grid_parameters[0][cloudy_table.grid_dimension[0] - 1] -
-       cloudy_table.grid_parameters[0][0]) /
-      (double)(cloudy_table.grid_dimension[0] - 1);
-  if (cloudy_table.grid_rank > 1) {
-    dclPar[1] =
-        (cloudy_table.grid_parameters[1][cloudy_table.grid_dimension[1] - 1] -
-         cloudy_table.grid_parameters[1][0]) /
-        (double)(cloudy_table.grid_dimension[1] - 1);
-  }
-  if (cloudy_table.grid_rank > 2) {
-    dclPar[2] =
-        (cloudy_table.grid_parameters[2][cloudy_table.grid_dimension[2] - 1] -
-         cloudy_table.grid_parameters[2][0]) /
-        (double)(cloudy_table.grid_dimension[2] - 1);
-  }
+  // Calculate index for redshift dimension
+  const long long zindex = tabulated_detail::find_zindex(zr, cloudy_table);
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -80,39 +70,6 @@ void grackle::impl::cool1d_cloudy_g(
       // Calculate proper log(n_H)
 
       log_n_h[i] = std::log10(rhoH[i] * dom);
-
-      // Calculate index for redshift dimension
-
-      if (cloudy_table.grid_rank > 2) {
-        // Get index for redshift dimension via bisection
-
-        if (zr <= cloudy_table.grid_parameters[1][0]) {
-          zindex = 1;
-        } else if (zr >=
-                   cloudy_table
-                       .grid_parameters[1][cloudy_table.grid_dimension[1] - 1 -
-                                           1]) {
-          zindex = cloudy_table.grid_dimension[1];
-          end_int = 1;
-          get_heat = 0;
-        } else if (zr >=
-                   cloudy_table
-                       .grid_parameters[1][cloudy_table.grid_dimension[1] - 2 -
-                                           1]) {
-          zindex = cloudy_table.grid_dimension[1] - 2;
-        } else {
-          zindex = 1;
-          zhighpt = cloudy_table.grid_dimension[1] - 2;
-          while ((zhighpt - zindex) > 1) {
-            zmidpt = int((zhighpt + zindex) / 2);
-            if (zr >= cloudy_table.grid_parameters[1][zmidpt - 1]) {
-              zindex = zmidpt;
-            } else {
-              zhighpt = zmidpt;
-            }
-          }
-        }
-      }
 
       // Call interpolation functions to get heating/cooling
 
@@ -219,3 +176,5 @@ void grackle::impl::cool1d_cloudy_g(
 
   return;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL
