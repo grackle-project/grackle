@@ -1,7 +1,16 @@
-// See LICENSE file for license and copyright information
-
-/// @file status_reporting.h
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
 /// @brief Declares the tools used for result-reporting
+///
+//===----------------------------------------------------------------------===//
+
+/// @defgroup statusreportgrp Status Reporting Machinery and Utilties
 ///
 /// Purpose
 /// =======
@@ -115,51 +124,25 @@
 /// An issue will be created that describes various strategies for improved
 /// reporting. A common strategy for dealing with simple errors involves exit
 /// codes...
+/** @{ */
 
-#ifndef STATUS_REPORTING_H
-#define STATUS_REPORTING_H
+#ifndef SUPPORT_STATUS_REPORTING_HPP
+#define SUPPORT_STATUS_REPORTING_HPP
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "config.hpp"
 
-// define attributes to annotate functionsA:
-// 1. ERRFMT_ATTR_(fmt_pos) tells the compiler argument number `fmt_pos`
-//    expects a printf-style format-string. Compilers supporting this will
-//    know to check consistency between arg-types and the string @ compile-time
-// 2. suppress warnings that may arise about not returning in control-flows
-//    where an internal error aborts the program with NORETURN_ATTR_
-// 3. compiler raises warnings when the value returned by a function annotated
-//    with NODISCARD_ATTR_ isn't used. We use this for a function where this is
-//    almost certainly indicative of programming error
-
-#if 0
-  // this branch will be used once we transition to compiling all non-fortran
-  // files with C++17. (We use the official syntax for specifying attributes)
-  // - starting in C++17, implementations know to ignore attributes that they
-  //   don't recognize
-  #define ERRFMT_ATTR_(fmt_pos) [[gnu::format(__printf__, fmt_pos, fmt_pos+1)]]
-  #define NORETURN_ATTR_ [[noreturn]]
-  #define NODISCARD_ATTR_ [[nodiscard]]
-
-#elif defined(__GNUG__)
-  #define ERRFMT_ATTR_(fmt_pos)                                               \
-    __attribute__((format(__printf__, fmt_pos, fmt_pos+1)))
-  #define NORETURN_ATTR_ __attribute__((noreturn))
-  // unlike [[nodiscard]], warnings associated with the following might not be
-  // suppressed by casting the result to (void). (this is ok for this file)
-  #define NODISCARD_ATTR_ __attribute__((warn_unused_result))
-
-#else
-  #define NORETURN_ATTR_ /* ... */
-  #define ERRFMT_ATTR_(fmt_pos) /* ... */
-  #define NODISCARD_ATTR_ /* ... */
-
-#endif
+// ERRFMT_ATTR_(fmt_pos) expands to an attribute for annotating a function:
+// - it tells the compiler that argument number `fmt_pos` of a function expects
+//   a printf-style format-string. Compilers supporting this will know to check
+//   consistency between the types of subsequent arguments and the format
+//   syntax in the format string (the check occurs at compile-time)
+// - reminder: starting in C++17, implementations know to ignore attributes
+//   that they don't recognize
+#define ERRFMT_ATTR_(fmt_pos) [[gnu::format(__printf__, fmt_pos, fmt_pos+1)]]
 
 // ---------------------------------------
 
-/// @def      __GRIMPL_PRETTY_FUNC__
+/// @def      GRIMPL_PRETTY_FUNC_MAGIC_CONST
 /// @brief    a magic contant like __LINE__ or __FILE__ used to specify the
 ///           name of the current function
 ///
@@ -173,41 +156,45 @@ extern "C" {
 ///   more information about the function (like the scope of the function, the
 ///   the function signature, any template specialization, etc.).
 #ifdef __GNUG__
-  #define __GRIMPL_PRETTY_FUNC__ __PRETTY_FUNCTION__
+  #define GRIMPL_PRETTY_FUNC_MAGIC_CONST __PRETTY_FUNCTION__
 #else
-  #define __GRIMPL_PRETTY_FUNC__ __func__
+  #define GRIMPL_PRETTY_FUNC_MAGIC_CONST __func__
 #endif
 
-struct grimpl_source_location_{
+namespace GRIMPL_NAMESPACE_DECL {
+
+struct SourceLocation{
   const char* file;
   int lineno;
   const char* fn_name;
 };
 
-/// This is a helper function used to help implement __GRIMPL_SRCLOC__
-///
-/// @note
-/// static is required to use inline with C
-static inline struct grimpl_source_location_ get_src_location_(
-  const char* file, int lineno, const char* fn_name
-) {
-  struct grimpl_source_location_ out;
+/// This is a helper function used to help implement GRIMPL_SRCLOC_INFO
+inline SourceLocation get_SourceLocation(const char* file, int lineno,
+                                         const char* fn_name) {
+  SourceLocation out;
   out.file = file;
   out.lineno = lineno;
   out.fn_name = fn_name;
   return out;
 }
 
-/// @def __GRIMPL_SRCLOC__
+}  // namespace GRIMPL_NAMESPACE_DECL
+
+/// @def GRIMPL_SRCLOC_INFO
 /// @brief Roughly equivalent to __FILE__, __LINE__, etc. But, it gathers the
 ///        info for us in a very concise manner
-#define __GRIMPL_SRCLOC__                                                   \
-  get_src_location_(__FILE__, __LINE__, __GRIMPL_PRETTY_FUNC__)
+#define GRIMPL_SRCLOC_INFO                                                   \
+  ::GRIMPL_NS::get_SourceLocation(__FILE__, __LINE__, GRIMPL_PRETTY_FUNC_MAGIC_CONST)
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// helper function that helps implement GR_INTERNAL_ERROR and
-ERRFMT_ATTR_(2) NORETURN_ATTR_ void grimpl_abort_with_internal_err_(
-  const struct grimpl_source_location_ locinfo, const char* msg, ...
-);
+/// GR_INTERNAL_REQUIRE
+ERRFMT_ATTR_(2) [[noreturn]] void abort_with_internal_err_(
+    SourceLocation locinfo, const char* msg, ...);
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 /// @def GR_INTERNAL_ERROR
 /// @brief function-like macro that handles a (lethal) error message
@@ -224,11 +211,11 @@ ERRFMT_ATTR_(2) NORETURN_ATTR_ void grimpl_abort_with_internal_err_(
 /// at least 1 variadic argument (even in cases when ``msg`` doesn't format
 /// any arguments). There is no portable way around this until C++ 20.
 #define GR_INTERNAL_ERROR(...)                                            \
-  { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
+  { ::GRIMPL_NS::abort_with_internal_err_(GRIMPL_SRCLOC_INFO, __VA_ARGS__); }
 // we define GRIMPL_ERROR to avoid merge conflicts. The plan is to remove it in
 // the future (after avoiding merge conflicts)
 #define GRIMPL_ERROR(...)                                                 \
-  { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
+  { ::GRIMPL_NS::abort_with_internal_err_(GRIMPL_SRCLOC_INFO, __VA_ARGS__); }
 
 
 /// @def GR_INTERNAL_REQUIRE
@@ -247,37 +234,30 @@ ERRFMT_ATTR_(2) NORETURN_ATTR_ void grimpl_abort_with_internal_err_(
 ///
 /// @note
 /// The behavior is independent of the ``NDEBUG`` macro
-#define GR_INTERNAL_REQUIRE(cond, ...)                                     \
-  {  if (!(cond))                                                              \
-      { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); } }
+#define GR_INTERNAL_REQUIRE(cond, ...)                                        \
+  {                                                                           \
+    if (!(cond)) {                                                            \
+      ::GRIMPL_NS::abort_with_internal_err_(GRIMPL_SRCLOC_INFO,                \
+                                            __VA_ARGS__);                     \
+    }                                                                         \
+  }
 // we define GRIMPL_REQUIRE to avoid merge conflicts. The plan is to remove it
 // in the future (after avoiding merge conflicts)
 #define GRIMPL_REQUIRE(cond, ...)                                             \
-  {  if (!(cond))                                                             \
-      { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); } }
+  {                                                                           \
+    if (!(cond)) {                                                            \
+      ::GRIMPL_NS::abort_with_internal_err_(GRIMPL_SRCLOC_INFO,               \
+                                            __VA_ARGS__);                     \
+    }                                                                         \
+  }
 
 
-/// @def GR_INTERNAL_UNREACHABLE_ERROR()
-/// @brief function-like macro that aborts with a (lethal) error message
-///     indicating that 
-///
-/// This macro should be treated as a function with the signature:
-///
-///   [[noreturn]] void GR_INTERNAL_UNREACHABLE_ERROR();
-///
-/// @note
-/// Unlike gcc/clang's __builtin_unreachable or C++23's std::unreachable, this
-/// aborts the program with an error if its executed (the other cases produce
-/// undefined behavior). (An argument could be made for conditionally compiling
-/// this macro into the alternatives to test speed)
-#define GR_INTERNAL_UNREACHABLE_ERROR()                                    \
-  { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__,                     \
-                                    "location shouldn't be reachable"); }
-
+namespace GRIMPL_NAMESPACE_DECL {
 // helper function
-ERRFMT_ATTR_(2) NODISCARD_ATTR_ int grimpl_print_and_return_err_(
-  const struct grimpl_source_location_ locinfo, const char* msg, ...
-);
+ERRFMT_ATTR_(2) [[nodiscard]] int print_and_return_err_(SourceLocation locinfo,
+                                                        const char* msg, ...);
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 /// @def GrPrintAndReturnErr
 /// @brief prints the error message & returns the appropriate status-value
@@ -314,13 +294,14 @@ ERRFMT_ATTR_(2) NODISCARD_ATTR_ int grimpl_print_and_return_err_(
 /// interface that we can easily replace in the future if/when we improve error
 /// reporting
 #define GrPrintAndReturnErr(...)                                             \
-  grimpl_print_and_return_err_(__GRIMPL_SRCLOC__, __VA_ARGS__);
+  ::GRIMPL_NS::print_and_return_err_(GRIMPL_SRCLOC_INFO, __VA_ARGS__);
 
 
+namespace GRIMPL_NAMESPACE_DECL {
 // helper function
-ERRFMT_ATTR_(2) void grimpl_print_err_msg_(
-  const struct grimpl_source_location_ locinfo, const char* msg, ...
-);
+ERRFMT_ATTR_(2) void print_err_msg_(SourceLocation locinfo, const char* msg,
+                                    ...);
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 /// @def GrPrintErrMsg
 /// @brief prints the appropriate error message.
@@ -336,8 +317,8 @@ ERRFMT_ATTR_(2) void grimpl_print_err_msg_(
 ///
 /// The ``fmt`` arg is a printf-style format argument specifying the error
 /// message. The remaining args arguments are used to format error message
-#define GrPrintErrMsg(...)                              \
-  grimpl_print_err_msg_(__GRIMPL_SRCLOC__, __VA_ARGS__);
+#define GrPrintErrMsg(...)                                      \
+  ::GRIMPL_NS::print_err_msg_(GRIMPL_SRCLOC_INFO, __VA_ARGS__);
 
 /// @def GR_INTERNAL_UNREACHABLE_ERROR()
 /// @brief function-like macro that aborts with a (lethal) error message
@@ -352,20 +333,17 @@ ERRFMT_ATTR_(2) void grimpl_print_err_msg_(
 /// aborts the program with an error if its executed (the other cases produce
 /// undefined behavior). (An argument could be made for conditionally compiling
 /// this macro into the alternatives to test speed)
-#define GR_INTERNAL_UNREACHABLE_ERROR()                                    \
-{ grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__,                     \
-"location shouldn't be reachable"); }
+#define GR_INTERNAL_UNREACHABLE_ERROR()                                       \
+{ ::GRIMPL_NS::abort_with_internal_err_(GRIMPL_SRCLOC_INFO,                   \
+                                        "location shouldn't be reachable"); }
 
 // undefine the attributes so we avoid leaking them
 // ------------------------------------------------
 #undef ERRFMT_ATTR_
-#undef NORETURN_ATTR_
-#undef NODISCARD_ATTR_
 
-// I don't think we can undef __GRIMPL_PRETTY_FUNC__ without causing issues
+// I don't think we can undef GRIMPL_PRETTY_FUNC_MAGIC_CONST or
+// GRIMPL_SRCLOC_INFO without causing issues
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+/** @}*/ // end of doxygen documentation group
 
-#endif /* STATUS_REPORTING */
+#endif  // SUPPORT_STATUS_REPORTING_HPP

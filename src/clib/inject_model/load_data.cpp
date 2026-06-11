@@ -18,7 +18,7 @@
 #include "../LUT.hpp"
 #include "../opaque_storage.hpp"
 #include "../ratequery.hpp"
-#include "../status_reporting.h"  // GrPrintAndReturnErr
+#include "../support/status_reporting.hpp"  // GrPrintAndReturnErr
 #include "../support/FrozenKeyIdxBiMap.hpp"
 
 namespace {  // stuff inside an anonymous namespace is local to this file

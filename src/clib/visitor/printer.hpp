@@ -7,8 +7,8 @@
 #define VISITOR_PRINTER_HPP
 
 #include "common.hpp"
-#include "status_reporting.h"  // GR_INTERNAL_REQUIRE
-#include <cstdio>              // printf
+#include "support/status_reporting.hpp"  // GR_INTERNAL_REQUIRE
+#include <cstdio>                        // printf
 
 namespace grackle::impl::visitor {
 

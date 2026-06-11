@@ -47,7 +47,7 @@ Although many systems already have them installed, both build systems have addit
 
 * the :ref:`CMake build system <cmake_build>` requires cmake to be installed.
   It's easiest to download a binary distribution from the `CMake website <https://cmake.org/download/>`_ or use your system's package manager.
-  We require version 3.16 or newer.
+  We require version 3.22 or newer.
 
 * the :ref:`classic build system <classic_build>`, employs the ``makedepend`` and the `libtool <https://www.gnu.org/software/libtool/>`_ utilities.
   It's often easiest to download these dependencies through your system's package manager.

@@ -53,7 +53,7 @@
 #include "LUT.hpp" // CollisionalRxnLUT
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 // this function pointer type is defined inside an extern "C" block because all
 // described functions have C linkage

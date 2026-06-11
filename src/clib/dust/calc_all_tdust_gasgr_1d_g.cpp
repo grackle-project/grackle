@@ -33,7 +33,7 @@ void grackle::impl::calc_all_tdust_gasgr_1d_g(
     IndexRange idx_range,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_buf,
     grackle::impl::GrainSpeciesCollection grain_kappa) {
   const double mh_local_var = mh_grflt;
