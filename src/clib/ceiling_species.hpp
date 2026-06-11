@@ -69,7 +69,7 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
   GRIMPL_NS::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> dust(
+  grackle::impl::View<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   GRIMPL_NS::View<gr_float***> DM(

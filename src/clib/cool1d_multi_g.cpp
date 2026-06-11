@@ -31,6 +31,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
+#include "dust/dust_growth_and_destruction.hpp"
 
 void grackle::impl::cool1d_multi_g(
     int imetal, int iter, double* edot, double* tgas, double* mmw, double* p2d,
@@ -281,8 +282,7 @@ void grackle::impl::cool1d_multi_g(
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
           rhoH[i] = my_chemistry->HydrogenFractionByMass *
-                    (d(i, idx_range.j, idx_range.k) -
-                     metal(i, idx_range.j, idx_range.k));
+                    (d(i, idx_range.j, idx_range.k) - metal(i, idx_range.j, idx_range.k));
         }
       }
     } else {
@@ -1097,7 +1097,6 @@ void grackle::impl::cool1d_multi_g(
       itmask_metal[i] = MASK_FALSE;
     }
   }
-
   dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
                      itmask_metal, my_chemistry, my_rates, my_fields, internalu,
                      idx_range, logTlininterp_buf, comp2, dust2gas, tdust,

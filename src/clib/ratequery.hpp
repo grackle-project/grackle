@@ -12,12 +12,15 @@
 #ifndef RATEQUERY_HPP
 #define RATEQUERY_HPP
 
+#include <cstddef>
+#include <vector>
+
 #include "grackle.h"
 #include "utils-cpp.hpp"  // GRIMPL_FORCE_INLINE
 #include "status_reporting.h"
-#include "support/SimpleVec.hpp"
+#include "support/config.hpp"
 
-namespace grackle::impl::ratequery {
+namespace GRIMPL_NAMESPACE_DECL::ratequery {
 
 /// @defgroup Dynamic Rate Query Machinery
 ///
@@ -243,8 +246,65 @@ inline Entry new_Entry(double* rate, const char* name) {
 /// satisfies `0 <= index <= (N-1)`
 typedef Entry fetch_Entry_recipe_fn(chemistry_data_storage*, int);
 
-// temporary forward declaration
-struct EntrySet;
+/// Describes a set of entries
+///
+/// This can operate in 2 modes:
+/// 1. Embedded-List-mode:
+///    - the EntrySet directly holds a list of Entry instances that **ONLY**
+///      exist for querying purposes and should **NEVER** be mutated by
+///      external code.
+///    - importantly, the EntrySet is responsible for managing the memory the
+///      pointers to string each string and pointer referenced by a pointer in
+///      this list.
+/// 2. Recipe-mode:
+///    - In this case, the EntrySet provides access to Entry instances that
+///      directly reference data managed by `chemistry_data_storage`
+struct EntrySet {
+  /// number of entries in the current set
+  int len;
+
+  /// an embedded list of entries, where the allocation are directly owned and
+  /// managed by this instance.
+  ///
+  /// @important
+  /// this **must** be empty if operating in Recipe-mode
+  std::vector<Entry> embedded_list;
+
+  /// a function pointer that can be used to access entries through a recipe
+  fetch_Entry_recipe_fn* recipe_fn;
+
+  /// properties used by all entries accessed through a recipe
+  ///
+  /// In more detail, an entry returned by `recipe_fn` has its `props` member
+  /// overwritten by this value
+  ///
+  /// @note
+  /// only used in Recipe-mode
+  EntryProps common_recipe_props;
+};
+
+/// deallocate the contents of an EntrySet
+void drop_EntrySet(EntrySet* ptr);
+
+/// get the number of @ref Entry in the @ref EntrySet
+inline int EntrySet_size(const EntrySet* ptr) {
+  if (ptr->embedded_list.empty()) {
+    return ptr->len;
+  } else {
+    return static_cast<int>(ptr->embedded_list.size());
+  }
+}
+
+/// look up an Entry in an EntrySet
+///
+/// @param[in] entry_set The container object being queried
+/// @param[in] my_rates Used for looking up Entry in recipe-mode
+/// @param[in] i The index to query
+///
+/// @returns An instance that references memory owned by either my_rates or by
+///     the entry_set, itself.
+Entry EntrySet_access(const EntrySet* entry_set,
+                      chemistry_data_storage* my_rates, int i);
 
 /// Describes a registry of queryable entries
 ///
@@ -252,12 +312,15 @@ struct EntrySet;
 struct Registry {
   /// number of entries
   int n_entries;
-  /// number of contained EntrySets
-  int n_sets;
   /// stores the minimum rate_id for each EntrySet
   int* id_offsets;
   /// stores sets of entries
-  EntrySet* sets;
+  std::vector<EntrySet> sets;
+
+  // forbid copy-construction & copy assignment (if we want these, then we
+  // should make EntrySet a full-blown class with a destructor)
+  Registry(const Registry&) = delete;
+  Registry& operator=(const Registry&) = delete;
 };
 
 /// deallocate the contents of a registry
@@ -294,20 +357,25 @@ void drop_Registry(Registry* ptr);
 /// of this function (i.e. they should only use the associated methods)
 struct RegBuilder {
   /// a growable array that records recipies for accessing sets of entries
-  SimpleVec<EntrySet>* recipe_sets;
+  std::vector<EntrySet> recipe_sets;
   /// a growable array of owned Entry instances
   ///
   /// The basic premise is that these Entry instances **ONLY** exist for the
   /// purpose of supporting queries. Cleaning up each instance involves extra
   /// effort. When a Registry instance is constructed, this pointer will be
   /// transferred to an EntrySet.
-  SimpleVec<Entry>* owned_entries;
+  std::vector<Entry> owned_entries;
+
+  // forbid copy-construction & copy assignment (if we want these, then we
+  // should make EntrySet & Entry full-blown classes with destructors)
+  RegBuilder(const RegBuilder&) = delete;
+  RegBuilder& operator=(const RegBuilder&) = delete;
 };
 
 /// initialize a new instance
 inline RegBuilder new_RegBuilder() {
-  // by default SimpleVec<T> is automatically initialized
-  return {new SimpleVec<EntrySet>, new SimpleVec<Entry>};
+  // by default it is automatically initialized
+  return RegBuilder{};
 }
 
 /// deallocates all storage within a RegBuilder instance
@@ -396,6 +464,6 @@ Registry RegBuilder_consume_and_build(RegBuilder* ptr);
 
 /** @}*/  // end of group
 
-}  // namespace grackle::impl::ratequery
+}  // namespace GRIMPL_NAMESPACE_DECL::ratequery
 
 #endif  // RATEQUERY_HPP

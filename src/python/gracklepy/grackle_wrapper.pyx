@@ -655,7 +655,16 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
         my_fields.z_velocity = get_field(fc, "z_velocity")
 
     my_fields.metal_density = get_field(fc, "metal_density")
+    my_fields.metal_density_carbon = get_field(fc, "metal_density_carbon")
+    my_fields.metal_density_oxygen = get_field(fc, "metal_density_oxygen")
+    my_fields.metal_density_magnesium = get_field(fc, "metal_density_magnesium")
+    my_fields.metal_density_silicon = get_field(fc, "metal_density_silicon")
+    my_fields.metal_density_iron = get_field(fc, "metal_density_iron")
     my_fields.dust_density = get_field(fc, "dust_density")
+    my_fields.dust_density_silicate = get_field(fc, "dust_density_silicate")
+    my_fields.dust_density_mg_silicate = get_field(fc, "dust_density_mg_silicate")
+    my_fields.dust_density_fe_silicate = get_field(fc, "dust_density_fe_silicate")
+    my_fields.dust_density_carbonaceous = get_field(fc, "dust_density_carbonaceous")
 
     my_fields.e_density = get_field(fc, "e_density")
     my_fields.HI_density = get_field(fc, "HI_density")
@@ -765,6 +774,7 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.H2O_ice_dust_temperature = get_field(fc, "H2O_ice_dust_temperature")
 
     my_fields.sne_rate = get_field(fc, "sne_rate")
+    my_fields.tau_dest = get_field(fc, "tau_dest")
 
     return my_fields
 

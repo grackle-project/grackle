@@ -72,8 +72,30 @@ typedef struct
   // metal_cooling = 1
   gr_float *metal_density;
 
+  // dust_species_track = 1
+  // These are *subsets* of metal_density (not separate fields).
+  gr_float *metal_density_carbon;   // gas-phase C (subset of metal_density)
+  gr_float *metal_density_oxygen;   // gas-phase O (subset of metal_density)
+
+  // dust_species_track = 1
+  // 5-element gas tracking adds Mg, Si, Fe alongside C, O above.
+  // Subsets of metal_density.
+  gr_float *metal_density_magnesium;
+  gr_float *metal_density_silicon;
+  gr_float *metal_density_iron;
+
   // use_dust_density_field = 1
   gr_float *dust_density;
+
+  // dust_species_track = 1
+  // Three-species dust: bulk dust_density = Mg-silicate + Fe-silicate +
+  // carbonaceous. dust_density_silicate is kept as the derived
+  // Mg-silicate + Fe-silicate sum for compatibility.
+  // REF: Trayford+2026 MNRAS 545, staf2040.
+  gr_float *dust_density_silicate;
+  gr_float *dust_density_mg_silicate;
+  gr_float *dust_density_fe_silicate;
+  gr_float *dust_density_carbonaceous;
 
   // primordial_chemistry = 1
   gr_float *e_density;
@@ -205,6 +227,9 @@ typedef struct
 
   // use_snetimestep = 1
   gr_float *sne_rate;
+
+  // use_tau_dest_field = 1
+  gr_float *tau_dest;
 } grackle_field_data;
 
 

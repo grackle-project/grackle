@@ -343,6 +343,9 @@ ENTRY(dust_model, INT, 0)
 /* Flag to use snetimestep */
 ENTRY(use_sne_field, INT, 0)
 
+/* Flag to use user-provided dust destruction timescale */
+ENTRY(use_tau_dest_field, INT, 0)
+
 /* Li et al 2019 dust model parameters*/
 ENTRY(dust_destruction_eff, DOUBLE, 3.0e-1)
 ENTRY(sne_coeff, DOUBLE, 1.0)
@@ -350,3 +353,51 @@ ENTRY(sne_shockspeed, DOUBLE, 1.0e2)
 ENTRY(dust_grainsize, DOUBLE, 1.0e-1)
 ENTRY(dust_growth_densref, DOUBLE, 2.3e-22)
 ENTRY(dust_growth_tauref, DOUBLE, 0.004)
+ENTRY(dust_growth_sticking_coeff, DOUBLE, 3.0e-1)
+
+/* Dust creation by stellar feedback parameters */
+ENTRY(dust_condensation_eff, DOUBLE, 1.5e-1)
+ENTRY(sne_metal_yield, DOUBLE, 3.0)
+
+/* Species-resolved dust tracking.
+   Requires dust_model=1.
+   0) off (default — bulk dust_density)
+   1) on  — evolves dust_density_mg_silicate, dust_density_fe_silicate,
+            dust_density_carbonaceous and 5-element gas tracking
+            (C, O, Mg, Si, Fe). dust_density_silicate is maintained as
+            Mg-silicate + Fe-silicate for compatibility.
+   REF: Trayford+2026 MNRAS 545, staf2040 */
+ENTRY(dust_species_track, INT, 0)
+
+/* COLIBRE-style growth reference timescales [Myr].
+   Normalized at n_H' = 10 cm^-3, T = 10 K, S = 0.3, a = 0.1 micron,
+   and solar bottleneck abundance. REF: Trayford+2026 Table 2, eq. 4. */
+ENTRY(dust_growth_tauref_silicate, DOUBLE, 99.3)
+ENTRY(dust_growth_tauref_carbon,   DOUBLE, 180.0)
+
+/* COLIBRE-style unresolved-density boost for grain growth.
+   C rises from 1 to 100 between n_H = 0.1 and 100 cm^-3, clipped outside. */
+ENTRY(dust_growth_clumping_factor_max, DOUBLE, 100.0)
+ENTRY(dust_growth_clumping_nH_min, DOUBLE, 1.0e-1)
+ENTRY(dust_growth_clumping_nH_max, DOUBLE, 1.0e2)
+
+/* COLIBRE / Tsai-Mathews common thermal sputtering reference time [Myr].
+   tau_sp = tau_ref * (a/0.1) * (n_H/1 cm^-3)^-1
+            * [1 + (T/2e6 K)^-2.5]. */
+ENTRY(dust_sputter_tauref, DOUBLE, 0.85)
+
+/* Initial/fallback mass fraction of silicate dust in Mg-silicate. COLIBRE
+   seeds equal numbers of Mg2SiO4 and Fe2SiO4 molecules, not equal masses. */
+ENTRY(dust_silicate_mg_fraction, DOUBLE, 0.408428)
+
+/* Mg-rich silicate endmember stoichiometric mass fractions for Mg2SiO4. */
+ENTRY(dust_mg_silicate_f_Mg, DOUBLE, 0.345521)
+ENTRY(dust_mg_silicate_f_Fe, DOUBLE, 0.0)
+ENTRY(dust_mg_silicate_f_Si, DOUBLE, 0.199630)
+ENTRY(dust_mg_silicate_f_O,  DOUBLE, 0.454849)
+
+/* Fe-rich silicate endmember stoichiometric mass fractions for Fe2SiO4. */
+ENTRY(dust_fe_silicate_f_Mg, DOUBLE, 0.0)
+ENTRY(dust_fe_silicate_f_Fe, DOUBLE, 0.548111)
+ENTRY(dust_fe_silicate_f_Si, DOUBLE, 0.137825)
+ENTRY(dust_fe_silicate_f_O,  DOUBLE, 0.314064)

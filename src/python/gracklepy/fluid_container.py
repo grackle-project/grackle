@@ -266,6 +266,28 @@ def _required_density_fields(my_chemistry):
         my_fields.append("metal_density")
     if my_chemistry.dust_chemistry == 1:
         my_fields.append("dust_density")
+    if my_chemistry.dust_species_track == 1:
+        # Species-resolved dust (Mg-silicate + Fe-silicate + carbonaceous)
+        # with 5-element gas tracking. dust_density_silicate is a compatibility
+        # sum of Mg-silicate + Fe-silicate.
+        # REF: Trayford+2026 MNRAS 545, staf2040.
+        # Bulk metal_density and dust_density are required invariants for this
+        # path, even when cooling itself is disabled.
+        if "metal_density" not in my_fields:
+            my_fields.append("metal_density")
+        if "dust_density" not in my_fields:
+            my_fields.append("dust_density")
+        my_fields.extend([
+            "metal_density_carbon",
+            "metal_density_oxygen",
+            "metal_density_magnesium",
+            "metal_density_silicon",
+            "metal_density_iron",
+            "dust_density_silicate",
+            "dust_density_mg_silicate",
+            "dust_density_fe_silicate",
+            "dust_density_carbonaceous",
+        ])
     if my_chemistry.metal_chemistry > 0:
         my_fields.extend(_dust_metal_densities[my_chemistry.dust_species])
         my_fields.extend(_dust_densities[my_chemistry.dust_species])
@@ -303,6 +325,8 @@ def _required_extra_fields(my_chemistry):
         my_fields.append("isrf_habing")
     if my_chemistry.use_sne_field == 1:
         my_fields.append("sne_rate")
+    if my_chemistry.use_tau_dest_field == 1:
+        my_fields.append("tau_dest")
     return my_fields
 
 def _required_calculated_fields(my_chemistry):

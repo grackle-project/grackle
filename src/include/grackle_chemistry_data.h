@@ -321,6 +321,9 @@ typedef struct
   /* Flag to use snetimestep */
   int use_sne_field;
 
+  /* Flag to use user-provided dust destruction timescale field */
+  int use_tau_dest_field;
+
   /* flag and parameters for Li+ 2019 dust growth and destruction */
   double dust_destruction_eff;
   double sne_coeff;
@@ -328,6 +331,59 @@ typedef struct
   double dust_grainsize;
   double dust_growth_densref;
   double dust_growth_tauref;
+  /* Sticking coefficient S for species-specific dust growth.
+     dust_growth_species rescales tau_ref by 0.3 / S. */
+  double dust_growth_sticking_coeff;
+
+  /* parameters for dust creation*/
+  double dust_condensation_eff;
+  double sne_metal_yield;
+
+  /* Species-resolved dust tracking.
+     Requires dust_model=1.
+     0) off — bulk dust_density (default)
+     1) on  — evolves dust_density_mg_silicate, dust_density_fe_silicate,
+              dust_density_carbonaceous and 5-element gas tracking
+              (C, O, Mg, Si, Fe). dust_density_silicate is maintained as
+              Mg-silicate + Fe-silicate for compatibility.
+     REF: Trayford+2026 MNRAS 545, staf2040 */
+  int dust_species_track;
+
+  /* COLIBRE-style species growth reference timescales [Myr].
+     Normalized at n_H' = 10 cm^-3, T = 10 K, S = 0.3, a = 0.1 micron,
+     and solar bottleneck abundance. Rescaled by dust_grainsize and
+     dust_growth_sticking_coeff. REF: Trayford+2026 MNRAS 545, staf2040. */
+  double dust_growth_tauref_silicate;
+  double dust_growth_tauref_carbon;
+
+  /* COLIBRE-style unresolved-density boost for accretion: C rises from 1 to
+     dust_growth_clumping_factor_max between dust_growth_clumping_nH_min and
+     dust_growth_clumping_nH_max, using log-linear interpolation in n_H. */
+  double dust_growth_clumping_factor_max;
+  double dust_growth_clumping_nH_min;
+  double dust_growth_clumping_nH_max;
+
+  /* COLIBRE / Tsai-Mathews thermal sputtering reference time [Myr].
+     tau_sp = tau_ref * (a/0.1) * (n_H/1 cm^-3)^-1
+              * [1 + (T/2e6 K)^-2.5]. */
+  double dust_sputter_tauref;
+
+  /* Initial/fallback mass fraction of silicate dust in Mg-rich silicate.
+     COLIBRE seeds equal numbers of Mg2SiO4 and Fe2SiO4 molecules, which
+     corresponds to this mass fraction rather than an equal-mass split. */
+  double dust_silicate_mg_fraction;
+
+  /* Mg-rich silicate endmember stoichiometric mass fractions for Mg2SiO4. */
+  double dust_mg_silicate_f_Mg;
+  double dust_mg_silicate_f_Fe;
+  double dust_mg_silicate_f_Si;
+  double dust_mg_silicate_f_O;
+
+  /* Fe-rich silicate endmember stoichiometric mass fractions for Fe2SiO4. */
+  double dust_fe_silicate_f_Mg;
+  double dust_fe_silicate_f_Fe;
+  double dust_fe_silicate_f_Si;
+  double dust_fe_silicate_f_O;
 
 } chemistry_data;
 

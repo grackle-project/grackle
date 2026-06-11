@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <vector>
 
+#include "dust/calc_kappa_grain.hpp"
 #include "grackle.h"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
@@ -24,21 +25,24 @@
 
 #include "calc_tdust_1d_g.hpp"
 
-void grackle::impl::calc_tdust_1d_g(
-    double* tdust, double* tgas, double* nh, double* gasgr,
-    const double* gamma_isrfa, const double* isrf, const gr_mask_type* itmask,
-    double trad, int buf_len, int gr_N, double* gr_dT, double* gr_Td,
-    gr_float* alsp_data_, double* kgr, int* idspecies, IndexRange idx_range) {
+void grackle::impl::calc_tdust_1d_g(double* tdust, double* tgas, double* nh,
+                                    double* gasgr, const double* gamma_isrfa,
+                                    const double* isrf,
+                                    const gr_mask_type* itmask, double trad,
+                                    int buf_len, int gr_N, double gr_dT,
+                                    const double* gr_Td,
+                                    const double* alsp_data_, double* kgr,
+                                    int idspecies, IndexRange idx_range) {
   // opacity table of a grain species
   //
   // In some configurations gr_N can be 0 while the backing buffer may still be
   // non-null. The View invariant disallows non-null data with a zero leading
   // extent, so pass nullptr for the zero-length case.
-  gr_float* alsp_ptr = (gr_N > 0) ? alsp_data_ : nullptr;
-  grackle::impl::View<gr_float**> alsp(alsp_ptr, gr_N, buf_len);
-  std::vector<gr_float> logalsp_data_(gr_N * buf_len);
-  gr_float* logalsp_ptr = (gr_N > 0) ? logalsp_data_.data() : nullptr;
-  grackle::impl::View<gr_float**> logalsp(logalsp_ptr, gr_N, buf_len);
+  const double* alsp_ptr = (gr_N > 0) ? alsp_data_ : nullptr;
+  grackle::impl::View<const double**> alsp(alsp_ptr, gr_N, buf_len);
+  std::vector<double> logalsp_data_(gr_N * buf_len);
+  double* logalsp_ptr = (gr_N > 0) ? logalsp_data_.data() : nullptr;
+  grackle::impl::View<double**> logalsp(logalsp_ptr, gr_N, buf_len);
   int Td_Size;
   int Td_N;
 
@@ -89,9 +93,7 @@ void grackle::impl::calc_tdust_1d_g(
 
   pert_i = 1.e-3;
 
-  floored_trad = std::fmax(
-      1.,
-      trad);  // TODO: do we really want to write in a passed by copy input par?
+  floored_trad = std::fmax(1., trad);
   floored_trad4 = std::pow(floored_trad, 4);
 
   // \sum rho_SN kappa_SN / \sum rho_SN ndust_SN
@@ -158,16 +160,13 @@ void grackle::impl::calc_tdust_1d_g(
     }
 
     // Calculate grain opacities
+    grackle::impl::calc_kappa_grain(tdustnow.data(), kgr, nm_itmask.data(),
+                                    buf_len, idx_range, t_subl, Td_N, Td_Size,
+                                    gr_dT, gr_Td, logalsp.data(), idspecies);
 
-    FORTRAN_NAME(calc_kappa_gr_g)(tdustnow.data(), kgr, nm_itmask.data(),
-                                  &buf_len, &idx_range.i_start,
-                                  &idx_range.i_end, &t_subl, &Td_N, &Td_Size,
-                                  gr_dT, gr_Td, logalsp.data(), idspecies);
-
-    FORTRAN_NAME(calc_kappa_gr_g)(
-        tdplus.data(), kgrplus.data(), nm_itmask.data(), &buf_len,
-        &idx_range.i_start, &idx_range.i_end, &t_subl, &Td_N, &Td_Size, gr_dT,
-        gr_Td, logalsp.data(), idspecies);
+    grackle::impl::calc_kappa_grain(
+        tdplus.data(), kgrplus.data(), nm_itmask.data(), buf_len, idx_range,
+        t_subl, Td_N, Td_Size, gr_dT, gr_Td, logalsp.data(), idspecies);
 
     // Calculate heating/cooling balance
 
@@ -248,10 +247,9 @@ void grackle::impl::calc_tdust_1d_g(
         }
       }
 
-      FORTRAN_NAME(calc_kappa_gr_g)(bi_t_mid.data(), kgr, bi_itmask.data(),
-                                    &buf_len, &idx_range.i_start,
-                                    &idx_range.i_end, &t_subl, &Td_N, &Td_Size,
-                                    gr_dT, gr_Td, logalsp.data(), idspecies);
+      grackle::impl::calc_kappa_grain(bi_t_mid.data(), kgr, bi_itmask.data(),
+                                      buf_len, idx_range, t_subl, Td_N, Td_Size,
+                                      gr_dT, gr_Td, logalsp.data(), idspecies);
 
       FORTRAN_NAME(calc_gr_balance_g)(
           bi_t_mid.data(), tgas, kgr, &floored_trad4, gasgr, gamma_isrf.data(),

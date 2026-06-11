@@ -21,6 +21,7 @@
 #include "dust/lookup_dust_rates1d.hpp"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
+#include "full_rxn_rate_buf.hpp"
 #include "internal_types.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
@@ -40,17 +41,18 @@ namespace grackle::impl {
 /// If they have energy, photoelectrons and secondary electrons may produce
 /// collisional ionization, which are called secondary ionization.
 ///
-/// Cecondary ionization is most relevant in high-energy radiation fields.
+/// Secondary ionization is most relevant in high-energy radiation fields.
 ///
 /// @note
 /// The impetus for factoring out this logic is that it existed behind an ifdef
 /// statement that was not being used. By placing the logic in a function, we
 /// can confirm that the logic is valid C++ even if the logic isn't used.
-void secondary_ionization_adjustments(
-    IndexRange idx_range, const gr_mask_type* itmask,
-    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-    InternalGrUnits internalu,
-    grackle::impl::PhotoRxnRateCollection kshield_buf) {
+void secondary_ionization_adjustments(IndexRange idx_range,
+                                      const gr_mask_type* itmask,
+                                      grackle_field_data* my_fields,
+                                      photo_rate_storage my_uvb_rates,
+                                      InternalGrUnits internalu,
+                                      double* const* kph_buf) {
   // construct views of HI_density & HII_density fields
   grackle::impl::View<gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
@@ -70,13 +72,13 @@ void secondary_ionization_adjustments(
                                               HII(i, idx_range.j, idx_range.k)),
           1.0e-4);
       double factor = 0.3908 * std::pow((1. - std::pow(x, 0.4092)), 1.7592);
-      kshield_buf.k24[i] =
-          kshield_buf.k24[i] +
+      kph_buf[PhotoRxnLUT::k24][i] =
+          kph_buf[PhotoRxnLUT::k24][i] +
           factor * (my_uvb_rates.piHI + 0.08 * my_uvb_rates.piHeI) /
               (e24 * everg) * internalu.coolunit * internalu.tbase1;
       factor = 0.0554 * std::pow((1. - std::pow(x, 0.4614)), 1.6660);
-      kshield_buf.k26[i] =
-          kshield_buf.k26[i] +
+      kph_buf[PhotoRxnLUT::k26][i] =
+          kph_buf[PhotoRxnLUT::k26][i] +
           factor * (my_uvb_rates.piHI / 0.08 + my_uvb_rates.piHeI) /
               (e26 * everg) * internalu.coolunit * internalu.tbase1;
     }
@@ -127,7 +129,7 @@ inline void interpolate_h2_heating_terms_(
 /// interpolate the "standard" collisional reaction rates for each each index
 /// in the index-range that is also selected by the given itmask
 ///
-/// @param[out] kcol_buf A struct containing the buffers that are filled by
+/// @param[out] rxn_rate_buf A struct containing the buffers that are filled by
 ///    this function
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] kcol_rate_tables The 1D tables of "standard" collisional
@@ -140,7 +142,7 @@ inline void interpolate_h2_heating_terms_(
 /// @param[in] logTlininterp_buf Specifies the information related to the
 ///    position in the logT interpolations (for a number of chemistry zones)
 inline void interpolate_kcol_rate_tables_(
-    grackle::impl::CollisionalRxnRateCollection kcol_buf, IndexRange idx_range,
+    FullRxnRateBuf rxn_rate_buf, IndexRange idx_range,
     grackle::impl::CollisionalRxnRateCollection kcol_rate_tables,
     int* kcol_lut_indices, int n_rates, const gr_mask_type* itmask,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
@@ -152,6 +154,7 @@ inline void interpolate_kcol_rate_tables_(
   // -> to maximize performance, we may want to change order of values in the
   //    tables and possibly change transpose the data layout. But, we may want
   //    to get GPU support working before we head down this path
+  double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -159,10 +162,10 @@ inline void interpolate_kcol_rate_tables_(
         int idx = kcol_lut_indices[counter];
         const double* table = kcol_rate_tables.data[idx];
 
-        kcol_buf.data[idx][i] = table[logTlininterp_buf.indixe[i] - 1] +
-                                (table[logTlininterp_buf.indixe[i]] -
-                                 table[logTlininterp_buf.indixe[i] - 1]) *
-                                    logTlininterp_buf.tdef[i];
+        kcol_buf[idx][i] = table[logTlininterp_buf.indixe[i] - 1] +
+                           (table[logTlininterp_buf.indixe[i]] -
+                            table[logTlininterp_buf.indixe[i] - 1]) *
+                               logTlininterp_buf.tdef[i];
       }
     }
   }
@@ -171,7 +174,7 @@ inline void interpolate_kcol_rate_tables_(
 /// interpolate collisional reaction rates for each each index in the
 /// index-range that is also selected by the given itmask
 ///
-/// @param[out] kcol_buf A struct containing the buffers that are filled by
+/// @param[out] rxn_rate_buf A struct containing the buffers that are filled by
 ///    this function
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] tgas1d specifies the gas temperatures for the `idx_range`
@@ -183,17 +186,16 @@ inline void interpolate_kcol_rate_tables_(
 /// @param[in] logTlininterp_buf Specifies the information related to the
 ///    position in the logT interpolations (for a number of chemistry zones)
 inline void interpolate_collisional_rxn_rates_(
-    grackle::impl::CollisionalRxnRateCollection kcol_buf, IndexRange idx_range,
-    const double* tgas1d, const gr_mask_type* itmask, double dom,
-    chemistry_data* my_chemistry, grackle_field_data* my_fields,
-    chemistry_data_storage* my_rates,
+    FullRxnRateBuf rxn_rate_buf, IndexRange idx_range, const double* tgas1d,
+    const gr_mask_type* itmask, double dom, chemistry_data* my_chemistry,
+    grackle_field_data* my_fields, chemistry_data_storage* my_rates,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
   // There are 2 parts to this function
   // ----------------------------------
 
   // Part 1: Handle interpolations for most collisional rxn rates
   interpolate_kcol_rate_tables_(
-      kcol_buf, idx_range, *(my_rates->opaque_storage->kcol_rate_tables),
+      rxn_rate_buf, idx_range, *(my_rates->opaque_storage->kcol_rate_tables),
       my_rates->opaque_storage->used_kcol_rate_indices,
       my_rates->opaque_storage->n_kcol_rate_indices, itmask, logTlininterp_buf);
 
@@ -228,11 +230,12 @@ inline void interpolate_collisional_rxn_rates_(
 
 #define USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE
 #ifdef USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE
+    double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
     if (my_chemistry->three_body_rate == 0) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           double nh = std::fmin(HI(i, idx_range.j, idx_range.k) * dom, 1.0e9);
-          kcol_buf.data[CollisionalRxnLUT::k13][i] = tiny8;
+          kcol_buf[CollisionalRxnLUT::k13][i] = tiny8;
           if (tgas1d[i] >= 500. && tgas1d[i] < 1.0e6) {
             // define a local buffer and fill it with values
             double k13dd[14];
@@ -253,7 +256,7 @@ inline void interpolate_collisional_rxn_rates_(
                 k13dd[10] / (1. + std::pow((nh / k13dd[12]), k13dd[13]));
             k13_DT = std::fmax(std::pow(10., k13_DT), tiny8);
             //
-            kcol_buf.data[CollisionalRxnLUT::k13][i] = k13_DT + k13_CID;
+            kcol_buf[CollisionalRxnLUT::k13][i] = k13_DT + k13_CID;
           }
         }
       }
@@ -276,11 +279,11 @@ inline void interpolate_collisional_rxn_rates_(
   }
 }
 
-/// adjust the rate of neutral H2 photodissoication by modelling self-shielding
+/// adjust the rate of neutral H2 photodissociation by modeling self-shielding
 inline void model_H2I_dissociation_shielding(
-    grackle::impl::PhotoRxnRateCollection kshield_buf, IndexRange idx_range,
-    const double* tgas1d, const double* mmw, double dom, double dx_cgs,
-    double c_ljeans, const gr_mask_type* itmask, chemistry_data* my_chemistry,
+    double* const* kph_buf, IndexRange idx_range, const double* tgas1d,
+    const double* mmw, double dom, double dx_cgs, double c_ljeans,
+    const gr_mask_type* itmask, chemistry_data* my_chemistry,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
     InternalGrUnits internalu) {
   if (my_chemistry->primordial_chemistry <= 1) {
@@ -314,13 +317,13 @@ inline void model_H2I_dissociation_shielding(
       my_chemistry->radiative_transfer_use_H2_shielding == 1) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kshield_buf.k31[i] = my_uvb_rates.k31;
+        kph_buf[PhotoRxnLUT::k31][i] = my_uvb_rates.k31;
       }
     }
   } else {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kshield_buf.k31[i] =
+        kph_buf[PhotoRxnLUT::k31][i] =
             my_uvb_rates.k31 + kdissH2I(i, idx_range.j, idx_range.k);
       }
     }
@@ -396,7 +399,7 @@ inline void model_H2I_dissociation_shielding(
         // avoid f>1
         f_shield = std::fmin(f_shield, 1.);
 
-        kshield_buf.k31[i] = f_shield * kshield_buf.k31[i];
+        kph_buf[PhotoRxnLUT::k31][i] = f_shield * kph_buf[PhotoRxnLUT::k31][i];
       }
     }
   }
@@ -407,8 +410,8 @@ inline void model_H2I_dissociation_shielding(
     // write(*,*) 'kdissH2I included'
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kshield_buf.k31[i] =
-            kshield_buf.k31[i] + kdissH2I(i, idx_range.j, idx_range.k);
+        kph_buf[PhotoRxnLUT::k31][i] = kph_buf[PhotoRxnLUT::k31][i] +
+                                       kdissH2I(i, idx_range.j, idx_range.k);
       }
     }
   }
@@ -422,8 +425,9 @@ inline void model_H2I_dissociation_shielding(
 
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kshield_buf.k31[i] =
-            f_shield_custom(i, idx_range.j, idx_range.k) * kshield_buf.k31[i];
+        kph_buf[PhotoRxnLUT::k31][i] =
+            f_shield_custom(i, idx_range.j, idx_range.k) *
+            kph_buf[PhotoRxnLUT::k31][i];
       }
     }
   }
@@ -572,9 +576,9 @@ inline ShieldFactor calc_shield_factor(const ShieldFactorCalculator* calc,
 /// The caller should ensure that the value of `idx_range` passed to this
 /// function matches the value that was used to construct `calculator`
 inline void apply_misc_shield_factors(
-    grackle::impl::PhotoRxnRateCollection kshield_buf, IndexRange idx_range,
-    const gr_mask_type* itmask, int self_shielding_method,
-    photo_rate_storage my_uvb_rates, const ShieldFactorCalculator* calculator) {
+    double* const* kph_buf, IndexRange idx_range, const gr_mask_type* itmask,
+    int self_shielding_method, photo_rate_storage my_uvb_rates,
+    const ShieldFactorCalculator* calculator) {
   if (self_shielding_method == 1) {
     // approximate self shielding using Eq. 13 and 14 from
     // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
@@ -586,20 +590,22 @@ inline void apply_misc_shield_factors(
       if (itmask[i] != MASK_FALSE) {
         ShieldFactor tmp = calc_shield_factor(calculator, i);
         if (my_uvb_rates.k24 < tiny8) {
-          kshield_buf.k24[i] = 0.;
+          kph_buf[PhotoRxnLUT::k24][i] = 0.;
         } else {
-          kshield_buf.k24[i] = kshield_buf.k24[i] * tmp.f_shield_H;
+          kph_buf[PhotoRxnLUT::k24][i] =
+              kph_buf[PhotoRxnLUT::k24][i] * tmp.f_shield_H;
         }
 
         // Scale H2 direct ionization radiation
         if (my_uvb_rates.k29 < tiny8) {
-          kshield_buf.k29[i] = 0.;
+          kph_buf[PhotoRxnLUT::k29][i] = 0.;
         } else {
-          kshield_buf.k29[i] = kshield_buf.k29[i] * tmp.f_shield_H;
+          kph_buf[PhotoRxnLUT::k29][i] =
+              kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
         }
 
-        kshield_buf.k25[i] = my_uvb_rates.k25;
-        kshield_buf.k26[i] = my_uvb_rates.k26;
+        kph_buf[PhotoRxnLUT::k25][i] = my_uvb_rates.k25;
+        kph_buf[PhotoRxnLUT::k26][i] = my_uvb_rates.k26;
       }
     }
 
@@ -618,40 +624,45 @@ inline void apply_misc_shield_factors(
       if (itmask[i] != MASK_FALSE) {
         ShieldFactor tmp = calc_shield_factor(calculator, i);
         if (my_uvb_rates.k24 < tiny8) {
-          kshield_buf.k24[i] = 0.;
+          kph_buf[PhotoRxnLUT::k24][i] = 0.;
         } else {
-          kshield_buf.k24[i] = kshield_buf.k24[i] * tmp.f_shield_H;
+          kph_buf[PhotoRxnLUT::k24][i] =
+              kph_buf[PhotoRxnLUT::k24][i] * tmp.f_shield_H;
         }
 
         // Scale H2 direct ionization radiation
         if (my_uvb_rates.k29 < tiny8) {
-          kshield_buf.k29[i] = 0.;
+          kph_buf[PhotoRxnLUT::k29][i] = 0.;
         } else {
-          kshield_buf.k29[i] = kshield_buf.k29[i] * tmp.f_shield_H;
+          kph_buf[PhotoRxnLUT::k29][i] =
+              kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
         }
 
         // Apply same equations to HeI (assumes HeI closely follows HI)
 
         if (my_uvb_rates.k26 < tiny8) {
-          kshield_buf.k26[i] = 0.;
+          kph_buf[PhotoRxnLUT::k26][i] = 0.;
         } else {
-          kshield_buf.k26[i] = kshield_buf.k26[i] * tmp.f_shield_He;
+          kph_buf[PhotoRxnLUT::k26][i] =
+              kph_buf[PhotoRxnLUT::k26][i] * tmp.f_shield_He;
         }
 
         // Scale H2+ dissociation radiation
         if (my_uvb_rates.k28 < tiny8) {
-          kshield_buf.k28[i] = 0.0;
+          kph_buf[PhotoRxnLUT::k28][i] = 0.0;
         } else {
-          kshield_buf.k28[i] = kshield_buf.k28[i] * tmp.f_shield_He;
+          kph_buf[PhotoRxnLUT::k28][i] =
+              kph_buf[PhotoRxnLUT::k28][i] * tmp.f_shield_He;
         }
 
         if (my_uvb_rates.k30 < tiny8) {
-          kshield_buf.k30[i] = 0.0;
+          kph_buf[PhotoRxnLUT::k30][i] = 0.0;
         } else {
-          kshield_buf.k30[i] = kshield_buf.k30[i] * tmp.f_shield_He;
+          kph_buf[PhotoRxnLUT::k30][i] =
+              kph_buf[PhotoRxnLUT::k30][i] * tmp.f_shield_He;
         }
 
-        kshield_buf.k25[i] = my_uvb_rates.k25;
+        kph_buf[PhotoRxnLUT::k25][i] = my_uvb_rates.k25;
       }
     }
 
@@ -663,40 +674,45 @@ inline void apply_misc_shield_factors(
       if (itmask[i] != MASK_FALSE) {
         ShieldFactor tmp = calc_shield_factor(calculator, i);
         if (my_uvb_rates.k24 < tiny8) {
-          kshield_buf.k24[i] = 0.;
+          kph_buf[PhotoRxnLUT::k24][i] = 0.;
         } else {
-          kshield_buf.k24[i] = kshield_buf.k24[i] * tmp.f_shield_H;
+          kph_buf[PhotoRxnLUT::k24][i] =
+              kph_buf[PhotoRxnLUT::k24][i] * tmp.f_shield_H;
         }
 
         // Scale H2 direct ionization radiation
         if (my_uvb_rates.k29 < tiny8) {
-          kshield_buf.k29[i] = 0.;
+          kph_buf[PhotoRxnLUT::k29][i] = 0.;
         } else {
-          kshield_buf.k29[i] = kshield_buf.k29[i] * tmp.f_shield_H;
+          kph_buf[PhotoRxnLUT::k29][i] =
+              kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
         }
 
         // Apply same equations to HeI (assumes HeI closely follows HI)
 
         if (my_uvb_rates.k26 < tiny8) {
-          kshield_buf.k26[i] = 0.;
+          kph_buf[PhotoRxnLUT::k26][i] = 0.;
         } else {
-          kshield_buf.k26[i] = kshield_buf.k26[i] * tmp.f_shield_He;
+          kph_buf[PhotoRxnLUT::k26][i] =
+              kph_buf[PhotoRxnLUT::k26][i] * tmp.f_shield_He;
         }
 
         // Scale H2+ dissociation radiation
         if (my_uvb_rates.k28 < tiny8) {
-          kshield_buf.k28[i] = 0.0;
+          kph_buf[PhotoRxnLUT::k28][i] = 0.0;
         } else {
-          kshield_buf.k28[i] = kshield_buf.k28[i] * tmp.f_shield_He;
+          kph_buf[PhotoRxnLUT::k28][i] =
+              kph_buf[PhotoRxnLUT::k28][i] * tmp.f_shield_He;
         }
 
         if (my_uvb_rates.k30 < tiny8) {
-          kshield_buf.k30[i] = 0.0;
+          kph_buf[PhotoRxnLUT::k30][i] = 0.0;
         } else {
-          kshield_buf.k30[i] = kshield_buf.k30[i] * tmp.f_shield_He;
+          kph_buf[PhotoRxnLUT::k30][i] =
+              kph_buf[PhotoRxnLUT::k30][i] * tmp.f_shield_He;
         }
 
-        kshield_buf.k25[i] = 0.0;
+        kph_buf[PhotoRxnLUT::k25][i] = 0.0;
       }
     }
   }
@@ -729,9 +745,6 @@ inline void apply_misc_shield_factors(
 /// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
 ///     index range. In other words, this holds the dust mass per unit gas mass
 ///     (only used in certain configuration)
-/// @param[out] h2dust Buffer that gets filled with the rate for forming
-///     molecular hydrogen on dust grains. (This is filled whenever @p anydust
-///     holds `MASK_TRUE`.
 /// @param[in] dom a standard quantity used throughout the codebase
 /// @param[in] dx_cgs The width of a cell in comoving cm (I think). Used in
 ///     certain self-shielding calculations.
@@ -748,19 +761,14 @@ inline void apply_misc_shield_factors(
 /// @param[in] my_uvb_rates Holds precomputed photorates that depend on the UV
 ///     background. These rates do not include the effects of self-shielding.
 /// @param[in] internalu Specifies Grackle's internal unit-system
-/// @param[out] grain_growth_rates output buffers that are used to hold the
-///     net grain growth rates at each @p idx_range (only used in certain
-///     configurations)
 /// @param[in] grain_temperatures individual grain species temperatures. This
 ///     is only used in certain configurations (i.e. when we aren't using the
 ///     tdust argument)
 /// @param[out] logTlininterp_buf Buffers that are filled with values for each
 ///     location in @p idx_range with valuea that are used to linearly
 ///     interpolate tables with respect to the natural log of @p tgas1d
-/// @param[out] kcol_buf Buffers filled with the collisional reaction rates for
-///     each location in @p idx_range
-/// @param[out] kshield_buf Buffers filled with shielding-adjusted photo
-///     reaction rates for @p idx_range
+/// @param[out] rxn_rate_buf output buffers to be filled with computed reaction
+///    rates for @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
 ///     values that are used to compute heating from certain chemical reactions.
 /// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
@@ -771,17 +779,14 @@ inline void apply_misc_shield_factors(
 /// > docstring of @ref grackle::impl::lookup_dust_rates1d for more details
 inline void lookup_cool_rates1d(
     IndexRange idx_range, gr_mask_type anydust, const double* tgas1d,
-    const double* mmw, const double* tdust, const double* dust2gas,
-    double* h2dust, double dom, double dx_cgs, double c_ljeans,
-    const gr_mask_type* itmask, const gr_mask_type* itmask_metal, double dt,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-    InternalGrUnits internalu,
-    grackle::impl::GrainSpeciesCollection grain_growth_rates,
+    const double* mmw, const double* tdust, const double* dust2gas, double dom,
+    double dx_cgs, double c_ljeans, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-    grackle::impl::CollisionalRxnRateCollection kcol_buf,
-    grackle::impl::PhotoRxnRateCollection kshield_buf,
+    FullRxnRateBuf rxn_rate_buf,
     grackle::impl::ChemHeatingRates chemheatrates_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
   // Construct views of fields referenced in several parts of this function.
@@ -822,8 +827,8 @@ inline void lookup_cool_rates1d(
   }
 
   // interpolate all collisional reaction rates
-  interpolate_collisional_rxn_rates_(kcol_buf, idx_range, tgas1d, itmask, dom,
-                                     my_chemistry, my_fields, my_rates,
+  interpolate_collisional_rxn_rates_(rxn_rate_buf, idx_range, tgas1d, itmask,
+                                     dom, my_chemistry, my_fields, my_rates,
                                      logTlininterp_buf);
 
   // interpolate terms used to compute H2 formation heating terms.
@@ -836,10 +841,10 @@ inline void lookup_cool_rates1d(
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
-    lookup_dust_rates1d(idx_range, dlogtem, tdust, dust2gas, h2dust, dom,
-                        itmask_metal, dt, my_chemistry, my_rates, my_fields,
-                        grain_growth_rates, grain_temperatures,
-                        logTlininterp_buf, internal_dust_prop_scratch_buf);
+    lookup_dust_rates1d(idx_range, dlogtem, tdust, dust2gas, dom, itmask_metal,
+                        dt, my_chemistry, my_rates, my_fields,
+                        grain_temperatures, logTlininterp_buf, rxn_rate_buf,
+                        internal_dust_prop_scratch_buf);
   }
 
   // Deal with the photo reaction rates
@@ -847,21 +852,33 @@ inline void lookup_cool_rates1d(
   // In the simplest configuration, these rates are same everywhere. Things get
   // messier if Grackle is configured to approximate self-shielding or use
   // custom external radiation fields.
+  double* const* kph_buf = FullRxnRateBuf_kph_bufs(&rxn_rate_buf);
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      kshield_buf.k24[i] = my_uvb_rates.k24;
-      kshield_buf.k25[i] = my_uvb_rates.k25;
-      kshield_buf.k26[i] = my_uvb_rates.k26;
-      kshield_buf.k28[i] = my_uvb_rates.k28;
-      kshield_buf.k29[i] = my_uvb_rates.k29;
-      kshield_buf.k30[i] = my_uvb_rates.k30;
+      // historically, k27 was treated as a special case:
+      // - At this time, k27 is always the same everywhere. So we could pass the
+      //   unmodified scalar value rather than use a 1D array
+      // - For simpler bookkeeping & clarity, we choose to handle k27 using a 1D
+      //   array all other reaction rates (radiative & otherwise).
+      // - For now, the performance benefits from special treatment would be
+      //   marginal (it is always used with at least ~30 other rates)
+      kph_buf[PhotoRxnLUT::k27][i] = my_uvb_rates.k27;
+
+      // handle cases that may be corrected
+      kph_buf[PhotoRxnLUT::k24][i] = my_uvb_rates.k24;
+      kph_buf[PhotoRxnLUT::k25][i] = my_uvb_rates.k25;
+      kph_buf[PhotoRxnLUT::k26][i] = my_uvb_rates.k26;
+      kph_buf[PhotoRxnLUT::k28][i] = my_uvb_rates.k28;
+      kph_buf[PhotoRxnLUT::k29][i] = my_uvb_rates.k29;
+      kph_buf[PhotoRxnLUT::k30][i] = my_uvb_rates.k30;
+      // k31 is handled separately
     }
   }
 
   // model the effects of H2 self-shielding
   if (my_chemistry->primordial_chemistry > 1) {
-    model_H2I_dissociation_shielding(kshield_buf, idx_range, tgas1d, mmw, dom,
+    model_H2I_dissociation_shielding(kph_buf, idx_range, tgas1d, mmw, dom,
                                      dx_cgs, c_ljeans, itmask, my_chemistry,
                                      my_fields, my_uvb_rates, internalu);
   }
@@ -871,7 +888,7 @@ inline void lookup_cool_rates1d(
     ShieldFactorCalculator calculator =
         setup_shield_factor_calculator(tgas1d, idx_range, dom, my_chemistry,
                                        my_fields, my_uvb_rates, internalu);
-    apply_misc_shield_factors(kshield_buf, idx_range, itmask,
+    apply_misc_shield_factors(kph_buf, idx_range, itmask,
                               my_chemistry->self_shielding_method, my_uvb_rates,
                               &calculator);
   }
@@ -881,7 +898,7 @@ inline void lookup_cool_rates1d(
   //   effects of secondary electrons (Shull * Steenberg 1985)
   //   (see calc_rate.src)
   secondary_ionization_adjustments(idx_range, itmask, my_fields, my_uvb_rates,
-                                   internalu, kshield_buf);
+                                   internalu, rxn_rate_buf.radiative);
 #endif
 }
 

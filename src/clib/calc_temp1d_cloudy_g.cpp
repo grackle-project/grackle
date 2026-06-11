@@ -36,6 +36,7 @@ void grackle::impl::calc_temp1d_cloudy_g(
   grackle::impl::View<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
   grackle::impl::View<gr_float***> e(
       my_fields->internal_energy, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -178,11 +179,12 @@ void grackle::impl::calc_temp1d_cloudy_g(
           // Add metal species to mean molecular weight
 
           if (imetal == 1) {
+            double total_metal_1d = metal(i, idx_range.j, idx_range.k);
             munew = d(i, idx_range.j, idx_range.k) /
                     ((d(i, idx_range.j, idx_range.k) -
-                      metal(i, idx_range.j, idx_range.k)) /
+                      total_metal_1d) /
                          munew +
-                     metal(i, idx_range.j, idx_range.k) / mu_metal);
+                     total_metal_1d / mu_metal);
             tgas[i] = tgas[i] * munew / muold;
           }
 

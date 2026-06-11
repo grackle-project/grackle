@@ -19,7 +19,7 @@
 #include "grackle_macros.h"
 #include "interp_table_utils.hpp" // free_interp_grid_
 #include "init_misc_species_cool_rates.hpp"  // forward declarations
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "phys_constants.h"
 #include "grackle_rate_functions.h" // forward declarations of some funcs
 

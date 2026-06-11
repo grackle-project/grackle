@@ -16,7 +16,7 @@
 #include <cstring> // std::strcmp
 #include "hdf5.h"
 #include "grackle.h"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "initialize_cloudy_data.hpp"
 #include "support/h5io.hpp"
 #include "status_reporting.h"

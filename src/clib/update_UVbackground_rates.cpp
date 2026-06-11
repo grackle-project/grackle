@@ -14,7 +14,7 @@
 #include "update_UVbackground_rates.hpp"
 #include <cmath>
 #include "grackle.h"
-#include "internal_units.h"
+#include "internal_units.hpp"
 
 int grackle::impl::update_UVbackground_rates(const chemistry_data *my_chemistry,
                                              const chemistry_data_storage *my_rates,

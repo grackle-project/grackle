@@ -109,7 +109,16 @@ cdef extern from "grackle.h":
       gr_float *y_velocity;
       gr_float *z_velocity;
       gr_float *metal_density;
+      gr_float *metal_density_carbon;
+      gr_float *metal_density_oxygen;
+      gr_float *metal_density_magnesium;
+      gr_float *metal_density_silicon;
+      gr_float *metal_density_iron;
       gr_float *dust_density;
+      gr_float *dust_density_silicate;
+      gr_float *dust_density_mg_silicate;
+      gr_float *dust_density_fe_silicate;
+      gr_float *dust_density_carbonaceous;
       gr_float *e_density;
       gr_float *HI_density;
       gr_float *HII_density;
@@ -201,6 +210,7 @@ cdef extern from "grackle.h":
       gr_float *vol_org_dust_temperature;
       gr_float *H2O_ice_dust_temperature;
       gr_float *sne_rate;
+      gr_float *tau_dest;
 
     ctypedef struct c_grackle_version "grackle_version":
       const char* version;

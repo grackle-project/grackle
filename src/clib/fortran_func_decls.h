@@ -32,12 +32,6 @@ void FORTRAN_NAME(solve_cubic_equation)(
   double* a, double* b, double* c, double* root
 );
 
-void FORTRAN_NAME(calc_kappa_gr_g)(
-  double* tdust, double* kgr, gr_mask_type* itmask, int* in, int* is, int* ie,
-  double* t_subl, int* gr_N, int* gr_Size, double* gr_dT, double* gr_Td,
-  gr_float* logalsp_data_ptr, int* idspecies
-);
-
 void FORTRAN_NAME(calc_gr_balance_g)(
   double* tdust, double* tgas, double* kgr, double* trad4, double* gasgr,
   double* gamma_isrf, double* nh, gr_mask_type* itmask, double* sol, int* in,

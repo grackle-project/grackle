@@ -19,7 +19,7 @@
 #include "index_helper.h"  // IndexHelper
 #include "utils-cpp.hpp"   // View
 #include "internal_types.hpp"
-#include "internal_units.h"
+#include "internal_units.hpp"
 #include "dust_props.hpp"
 #include "support/config.hpp"
 
@@ -85,7 +85,7 @@ inline void dust_related_props(
 
   // Compute grain size increment
   if ((my_chemistry->use_dust_density_field > 0) &&
-      (my_chemistry->dust_species > 0) && (my_chemistry->dust_model == 0)) {
+      (my_chemistry->dust_species > 0)) {
     grackle::impl::calc_grain_size_increment_1d(
         dom, idx_range, itmask_metal, my_chemistry,
         my_rates->opaque_storage->grain_species_info,

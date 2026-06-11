@@ -232,6 +232,34 @@ static int local_initialize_chemistry_data_(
     return GR_FAIL;
   }
 
+  // dust_species_track=1 is the new species path (Mg-silicate + Fe-silicate
+  // + carbonaceous) and is mutually exclusive with the legacy grain_growth /
+  // dust_sublimation correction loop in make_consistent — that block scales
+  // legacy dust fields (MgSiO3, AC, Mg2SiO4, Fe3O4, SiO2D, MgO, FeS, Al2O3,
+  // SiM, FeM) against per-element ratios that the Phase F hijack has just
+  // overwritten with values derived from the new species fields. Running
+  // both paths simultaneously silently corrupts both reservoirs.
+  if (my_chemistry->dust_species_track == 1 &&
+      my_chemistry->grain_growth == 1) {
+    fprintf(stderr,
+            "ERROR: dust_species_track = 1 is mutually exclusive with "
+            "grain_growth = 1 (set grain_growth = 0).\n");
+    return GR_FAIL;
+  }
+  if (my_chemistry->dust_species_track == 1 &&
+      my_chemistry->dust_sublimation == 1) {
+    fprintf(stderr,
+            "ERROR: dust_species_track = 1 is mutually exclusive with "
+            "dust_sublimation = 1 (set dust_sublimation = 0).\n");
+    return GR_FAIL;
+  }
+  if (my_chemistry->dust_species_track == 1 &&
+      my_chemistry->dust_model != 1) {
+    fprintf(stderr,
+            "ERROR: dust_species_track = 1 requires dust_model = 1.\n");
+    return GR_FAIL;
+  }
+
   // Default photo-electric heating to off if unset.
   if (my_chemistry->photoelectric_heating < 0) {
     my_chemistry->photoelectric_heating = 0;
@@ -347,7 +375,7 @@ static int local_initialize_chemistry_data_(
     co_length_units = my_units->length_units *
       my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
-      POW(my_units->a_value * my_units->a_units, 3);
+      std::pow(my_units->a_value * my_units->a_units, 3.0);
   }
 
   // Compute rate tables.

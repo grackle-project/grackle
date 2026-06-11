@@ -12,7 +12,7 @@
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "index_helper.h"
-#include "internal_units.h"
+#include "internal_units.hpp"
 
 namespace grackle::impl {
 

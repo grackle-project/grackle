@@ -28,8 +28,23 @@ ENTRY(z_velocity)
   // metal_cooling = 1
 ENTRY(metal_density)
 
+  // dust_species_track = 1
+ENTRY(metal_density_carbon)
+ENTRY(metal_density_oxygen)
+
+  // dust_species_track = 1 (5-element gas tracking)
+ENTRY(metal_density_magnesium)
+ENTRY(metal_density_silicon)
+ENTRY(metal_density_iron)
+
   // use_dust_density_field = 1
 ENTRY(dust_density)
+
+  // dust_species_track = 1 (Mg-silicate + Fe-silicate + carbonaceous dust)
+ENTRY(dust_density_silicate)
+ENTRY(dust_density_mg_silicate)
+ENTRY(dust_density_fe_silicate)
+ENTRY(dust_density_carbonaceous)
 
   // use_volumetric_heating_rate = 1
 ENTRY(volumetric_heating_rate)
