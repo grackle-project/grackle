@@ -48,7 +48,7 @@ def main(args=None):
 
     grackle_pars = {'grackle_data_file': grackle_data_file,
                     'UVbackground': 1,
-                    'h2_on_dust': 1}
+                    'dust_chemistry': 1}
 
     add_grackle_fields(ds, parameters=grackle_pars)
 

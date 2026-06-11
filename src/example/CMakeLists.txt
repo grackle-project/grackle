@@ -11,12 +11,15 @@
 #    should ensure that the paths to the datafiles are correct
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../examples)
 
+get_property(_languages GLOBAL PROPERTY ENABLED_LANGUAGES)
 
-add_executable(c_example c_example.c)
-target_link_libraries(c_example Grackle::Grackle)
-
-add_executable(c_local_example c_local_example.c)
-target_link_libraries(c_local_example Grackle::Grackle)
+if("C" IN_LIST _languages)
+  add_executable(c_example c_example.c)
+  target_link_libraries(c_example Grackle::Grackle)
+  
+  add_executable(c_local_example c_local_example.c)
+  target_link_libraries(c_local_example Grackle::Grackle)
+endif()
 
 set(CMAKE_CXX_STANDARD 11) # needed by apple-clang compiler for some examples
 
@@ -28,7 +31,7 @@ if (GRACKLE_USE_OPENMP)
   target_link_libraries(cxx_omp_example Grackle::Grackle OpenMP::OpenMP_CXX)
 endif()
 
-if (GRACKLE_USE_DOUBLE)
+if (GRACKLE_USE_DOUBLE AND "Fortran" IN_LIST _languages)
   # we don't really have a good reason for why this disabled. This should
   # really be fixed to work in single precision
 

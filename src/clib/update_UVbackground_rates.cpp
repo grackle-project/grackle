@@ -169,10 +169,10 @@ int grackle::impl::update_UVbackground_rates(const chemistry_data *my_chemistry,
   // Now convert the rates to code units.
 
   InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
-  double ev2erg = 1.60217653e-12;
+
   /* compared to Enzo source, there's an additional factor of
      1/ev2erg here, because the heating rates are stored as eV/s. */
-  double CoolingUnits = internalu.coolunit / ev2erg;
+  double CoolingUnits = internalu.coolunit / constants::ev2erg;
 
   my_uvb_rates->k24 *= my_units->time_units;
   my_uvb_rates->k25 *= my_units->time_units;

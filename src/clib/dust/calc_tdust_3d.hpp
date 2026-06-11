@@ -26,8 +26,8 @@ namespace GRIMPL_NAMESPACE_DECL {
 ///
 /// @par History
 /// written by: Britton Smith July 2011
-void calc_tdust_3d(gr_float* gas_temp_data_, gr_float* dust_temp_data_,
-                   int imetal, chemistry_data* my_chemistry,
+void calc_tdust_3d(gr_float* dust_temp_data_, int imetal,
+                   chemistry_data* my_chemistry,
                    chemistry_data_storage* my_rates,
                    grackle_field_data* my_fields, InternalGrUnits internalu);
 

@@ -1,3 +1,5 @@
+from libc.stdint cimport int64_t
+
 cdef extern from "grackle.h":
 
     # This does not need to be exactly correct, only of the right basic type
@@ -342,7 +344,7 @@ cdef extern from "grackle.h":
         const c_chemistry_data_storage* my_rates,
         grunstable_rateid_type rate_id,
         grunstable_ratequery_prop_kind prop_kind,
-        long long* ptr)
+        int64_t* ptr)
 
     const char* grunstable_ith_rate(
         const c_chemistry_data_storage* my_rates,

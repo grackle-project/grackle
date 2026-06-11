@@ -7,12 +7,11 @@
 / This list is intended to be used with X-Macros in *.c files (to reduce
 / the amount of code required to interact with these fields)
 /
-/ Currently, we just specify the name of each species.
-/  - The corresponding entry in the grackle_field_data struct has an
-/    "_density" suffix
-/  - In the future, we will probably add other metadata such as the kind
-/    of species (e.g. primordial, metal, dust-grain, etc) and a description
-/    of the context when we expect the field to be used.
+/ Currently, we specify:
+/  - The name of each species. The corresponding entry in the grackle_field_data
+/    struct has an "_density" suffix
+/  - We also track whether the category of the species (i.e. is it Primordial,
+/    Metal, or (Dust)).
 /
 / Copyright (c) 2013, Enzo/Grackle Development Team.
 /
@@ -23,72 +22,72 @@
 ************************************************************************/
 
   // primordial_chemistry = 1
-ENTRY(e) // free-electrons
-ENTRY(HI)
-ENTRY(HII)
-ENTRY(HeI)
-ENTRY(HeII)
-ENTRY(HeIII)
+ENTRY(e, Primordial) // free-electrons
+ENTRY(HI, Primordial)
+ENTRY(HII, Primordial)
+ENTRY(HeI, Primordial)
+ENTRY(HeII, Primordial)
+ENTRY(HeIII, Primordial)
 
   // primordial_chemistry = 2
-ENTRY(HM)
-ENTRY(H2I)
-ENTRY(H2II)
+ENTRY(HM, Primordial)
+ENTRY(H2I, Primordial)
+ENTRY(H2II, Primordial)
 
   // primordial_chemistry = 3
-ENTRY(DI)
-ENTRY(DII)
-ENTRY(HDI)
+ENTRY(DI, Primordial)
+ENTRY(DII, Primordial)
+ENTRY(HDI, Primordial)
 
   // primordial_chemistry = 4
-ENTRY(DM)
-ENTRY(HDII)
-ENTRY(HeHII)
+ENTRY(DM, Primordial)
+ENTRY(HDII, Primordial)
+ENTRY(HeHII, Primordial)
 
   // metal_chemistry = 1
-ENTRY(CI)
-ENTRY(CII)
-ENTRY(CO)
-ENTRY(CO2)
-ENTRY(OI)
-ENTRY(OH)
-ENTRY(H2O)
-ENTRY(O2)
-ENTRY(SiI)
-ENTRY(SiOI)
-ENTRY(SiO2I)
-ENTRY(CH)
-ENTRY(CH2)
-ENTRY(COII)
-ENTRY(OII)
-ENTRY(OHII)
-ENTRY(H2OII)
-ENTRY(H3OII)
-ENTRY(O2II)
+ENTRY(CI, Metal)
+ENTRY(CII, Metal)
+ENTRY(CO, Metal)
+ENTRY(CO2, Metal)
+ENTRY(OI, Metal)
+ENTRY(OH, Metal)
+ENTRY(H2O, Metal)
+ENTRY(O2, Metal)
+ENTRY(SiI, Metal)
+ENTRY(SiOI, Metal)
+ENTRY(SiO2I, Metal)
+ENTRY(CH, Metal)
+ENTRY(CH2, Metal)
+ENTRY(COII, Metal)
+ENTRY(OII, Metal)
+ENTRY(OHII, Metal)
+ENTRY(H2OII, Metal)
+ENTRY(H3OII, Metal)
+ENTRY(O2II, Metal)
 
   // dust_species = 1
-ENTRY(Mg)
+ENTRY(Mg, Metal)
 
   // dust_species = 2
-ENTRY(Al)
-ENTRY(S)
-ENTRY(Fe)
+ENTRY(Al, Metal)
+ENTRY(S, Metal)
+ENTRY(Fe, Metal)
 
   // dust_species = 1
-ENTRY(MgSiO3_dust) // enstatite
-ENTRY(AC_dust) // amorphous carbon
+ENTRY(MgSiO3_dust, Dust) // enstatite
+ENTRY(AC_dust, Dust) // amorphous carbon
 
   // dust_species = 2
-ENTRY(SiM_dust) // metallic silicon
-ENTRY(FeM_dust) // metallic iron
-ENTRY(Mg2SiO4_dust) // forsterite
-ENTRY(Fe3O4_dust) // magnetite
-ENTRY(SiO2_dust) // silica
-ENTRY(MgO_dust) // magnesia
-ENTRY(FeS_dust) // troilite
-ENTRY(Al2O3_dust) // alumina
+ENTRY(SiM_dust, Dust) // metallic silicon
+ENTRY(FeM_dust, Dust) // metallic iron
+ENTRY(Mg2SiO4_dust, Dust) // forsterite
+ENTRY(Fe3O4_dust, Dust) // magnetite
+ENTRY(SiO2_dust, Dust) // silica
+ENTRY(MgO_dust, Dust) // magnesia
+ENTRY(FeS_dust, Dust) // troilite
+ENTRY(Al2O3_dust, Dust) // alumina
 
   // dust_species = 3
-ENTRY(ref_org_dust) // refractory organics
-ENTRY(vol_org_dust) // volatile organics
-ENTRY(H2O_ice_dust) // water ice
+ENTRY(ref_org_dust, Dust) // refractory organics
+ENTRY(vol_org_dust, Dust) // volatile organics
+ENTRY(H2O_ice_dust, Dust) // water ice

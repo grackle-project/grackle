@@ -59,6 +59,7 @@ Checks: >
   misc-*,
   -misc-use-anonymous-namespace,
   -misc-include-cleaner,
+  -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
   -misc-redundant-expression,
   -misc-unused-parameters,
@@ -66,7 +67,7 @@ Checks: >
 
   modernize-avoid-setjmp-longjmp,
   modernize-avoid-variadic-functions,
-  modernize-concat-nested-namespaces,
+  -modernize-concat-nested-namespaces,
   modernize-use-bool-literals,
   modernize-use-override,
 

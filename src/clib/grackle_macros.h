@@ -14,6 +14,8 @@
 #ifndef __GRACKLE_MACROS_H_
 #define __GRACKLE_MACROS_H_
 
+#include <cstdlib>
+
 #include "grackle_float.h"
 
 /***********************************************************************
@@ -36,50 +38,6 @@
 #else
 #define GRACKLE_FAIL(A) throw(GrackleFatalException(A, __FILE__, __LINE__));
 #define GRACKLE_VFAIL(format, ...) {snprintf(current_error, 254, format, ##__VA_ARGS__); throw(GrackleFatalException(current_error, __FILE__, __LINE__));}
-#endif
-
-/* Fortran name generator (cpp blues) */
-
-#if defined(SUN_OLD)
-#define FORTRAN_NAME(NAME) NAME/**/_
-#endif
-
-#if defined(IRIS4) || defined(CONVEX) || defined(COMPAQ) || defined(SUN) || defined(LINUX) || defined(IA64) || defined(CRAYX1) || defined(XT3)
-#define FORTRAN_NAME(NAME) NAME##_
-#endif
-
-#if defined(SPP) || defined(SP2) || defined(BGL)
-#define FORTRAN_NAME(NAME) NAME
-#endif
-
-#ifdef CONFIG_PFLOAT_16
-#define PFORTRAN_NAME(NAME) NAME##_c
-#else
-#define PFORTRAN_NAME(NAME) FORTRAN_NAME(NAME)
-#endif
-
-/* Function macro for gr_float literal */
-
-/// @def GRFLOAT_C(DBL_LITERAL)
-/// @brief expands to a a floating point literal having the value specified by
-///     it argument and the type `gr_float`. The argument must be a literal
-///     with the type `double`
-///
-/// @par More details
-/// This is directly analogous to the `INT32_C(ARG)` or `INTMAX_C(ARG)` macros
-/// defined by the standard <stdint.h> header, but it is designed for
-/// `gr_float` than rather fixed-size integer types. In more detail:
-/// - if `sizeof(gr_float) == sizeof(float)` the macro expands to the input
-///   argument with the `f` suffix.
-/// - otherwise, the macro expands to the input argument
-///
-/// @par Concrete Example
-/// The snippet, `GRFLOAT_C(1.0)` expands to either `1.0f` or `1.0`.
-#ifdef GRACKLE_FLOAT_4
-  #define INNER_CONCAT_(A, B) A ## B
-  #define GRFLOAT_C(DBL_LITERAL) ( INNER_CONCAT_(DBL_LITERAL, f) )
-#elif defined(GRACKLE_FLOAT_8)
-  #define GRFLOAT_C(DBL_LITERAL) ( DBL_LITERAL )
 #endif
 
 /* Standard definitions (well, fairly standard) */
@@ -106,10 +64,16 @@
 #define huge 1.0e20
 #endif
 
-// the following 4 are explicitly defined to always match the values used by
-// the fortran layer (in the future, maybe we can consolidate?)
-#define tiny_fortran_val GRFLOAT_C(1.0e-20)
-#define huge_fortran_val GRFLOAT_C(1.0e20)
+// the following constants are explicitly defined to always match the values
+// historically used in the fortran layer (maybe we can consolidate?)
+#ifdef GRACKLE_FLOAT_4
+#define tiny_fortran_val 1.0e-20f
+#define huge_fortran_val 1.0e20f
+#elif defined(GRACKLE_FLOAT_8)
+#define tiny_fortran_val 1.0e-20
+#define huge_fortran_val 1.0e20
+#endif
+
 #define tiny8 1.0e-40
 #define huge8 1.0e40
 
