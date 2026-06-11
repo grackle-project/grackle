@@ -50,7 +50,6 @@ OBJS_CONFIG_LIB = \
         solve_rate_cool.lo \
         support/status_reporting.lo \
         update_UVbackground_rates.lo \
-        calc_tdust_1d_g.lo \
         dust/calc_tdust_3d.lo \
         calc_grain_size_increment_1d.lo \
         rate_functions.lo \
