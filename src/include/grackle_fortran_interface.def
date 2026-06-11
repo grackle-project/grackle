@@ -167,8 +167,6 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: multi_metals
          INTEGER(C_INT) :: metal_abundances
          INTEGER(C_INT) :: dust_species
-         INTEGER(C_INT) :: use_multiple_dust_temperatures
-         INTEGER(C_INT) :: dust_sublimation
          INTEGER(C_INT) :: photoelectric_heating
          REAL(C_DOUBLE) :: photoelectric_heating_rate
          INTEGER(C_INT) :: use_isrf_field
@@ -224,7 +222,6 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: use_primordial_continuum_opacity
          INTEGER(C_INT) :: hd_reaction_rates
          INTEGER(C_INT) :: gas_grain_cooling_rate
-         INTEGER(C_INT) :: uniform_grain_isrf_heating_rate
          INTEGER(C_INT) :: max_iterations
          INTEGER(C_INT) :: exit_after_iterations_exceeded
          INTEGER(C_INT) :: omp_nthreads

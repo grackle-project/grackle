@@ -12,7 +12,7 @@
 #ifndef SUPPORT_PARTMAP_HPP
 #define SUPPORT_PARTMAP_HPP
 #include "support/config.hpp"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 namespace partmap_detail {
@@ -244,7 +244,7 @@ inline int PartMap_n_idx(const PartMap* m) {
   return (m->n_parts == 0) ? 0 : m->right_idx_bounds[m->n_parts - 1];
 }
 
-/// @todo Perhaps we should reconcile with field_flat_index_range?
+/// @todo Perhaps we should reconcile with FieldFlatIndexRange?
 struct IdxInterval {
   int start;
   int stop;

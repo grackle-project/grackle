@@ -251,30 +251,46 @@ if (${_GRACKLE_LIBKIND} STREQUAL "static")
 
   unset(_FIND_H5_ARGS)
 
-  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
-    list(APPEND _EXTRA_ARGS QUIET)
-  endif()
-
-  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED)
-    list(APPEND _EXTRA_ARGS REQUIRED)
-  endif()
+  # the order in which we build up _FIND_H5_ARGS matters!
 
   # if we know the HDF5 version used to build to build Grackle as a static
-  # library, we really need to make sure the version number of the hdf5 library
-  # match the version number of the hdf5-headers (the documentation for the
-  # H5check_version function makes it clear a mismatch is bad!)
+  # library, we really should try to request it
   set(_DESIRED_HDF5_VERSION "@HDF5_VERSION@")
   if(NOT "${_DESIRED_HDF5_VERSION}" STREQUAL "")
-    list(APPEND _EXTRA_ARGS "${_DESIRED_HDF5_VERSION}" EXACT)
+    list(APPEND _FIND_H5_ARGS "${_DESIRED_HDF5_VERSION}")
+    if ("${_DESIRED_HDF5_VERSION}" VERSION_LESS "2.0.0")
+      # prior to version 2.0, HDF5 did not adhere to semver
+      # -> in this case, we REALLY need to make sure the version number of the
+      #    hdf5 library matches the version number of the hdf5-headers (the
+      #    documentation for the H5check_version function makes it clear a
+      #    mismatch is bad!)
+      list(APPEND _FIND_H5_ARGS EXACT)
+    else()
+      # do NOT append EXACT
+      # -> starting with HDF5 2.0, HDF5 is only ever built with CMake and we
+      #    can rely upon the version compatability checks provided in HDF5's
+      #    Config Package File
+    endif()
   endif()
   unset(_DESIRED_HDF5_VERSION)
 
+  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+    list(APPEND _FIND_H5_ARGS QUIET)
+  endif()
+
+  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED)
+    list(APPEND _FIND_H5_ARGS REQUIRED)
+  endif()
+
+  set(_FIND_H5_ARGS "${_FIND_H5_ARGS};COMPONENTS;C")
+
   # now we actually find the dependencies
-  find_package(HDF5 COMPONENTS C ${_EXTRA_ARGS})
+  find_package(HDF5 ${_FIND_H5_ARGS})
   if(NOT HDF5_FOUND)
     _FIND_GRACKLE_FAIL(
       "Grackle couldn't be found because dependency HDF5 couldn't be found")
   endif()
+  unset(_FIND_H5_ARGS)
   # declare HDF5 target (details are omitted that aren't needed for linking)
   add_library(GRACKLE_HDF5_C INTERFACE IMPORTED)
   set_target_properties(GRACKLE_HDF5_C PROPERTIES
@@ -302,14 +318,29 @@ if (${_GRACKLE_LIBKIND} STREQUAL "static")
     unset(_GRACKLE_OpenMP_LIBS)
   endif()
 
-  # _GRACKLE_TOOLCHAIN_LINK_LIBS holds (toolchain-specific) runtime libs. The
-  # idea here is to ensure that a static Grackle library can be properly linked
-  # against pure-C projects
-  set(_GRACKLE_TOOLCHAIN_LINK_LIBS "@_TOOLCHAIN_LINK_LIBS@")
 
   add_library(GRACKLE_TOOLCHAIN_RUNTIME_DEPS INTERFACE IMPORTED)
-  set_target_properties(GRACKLE_TOOLCHAIN_RUNTIME_DEPS PROPERTIES
-    INTERFACE_LINK_LIBRARIES "${_GRACKLE_TOOLCHAIN_LINK_LIBS}")
+  get_property(_GR_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+
+  # if we add HIP/CUDA support, the following check is going to need to change
+  if (NOT ("CXX" IN_LIST _GR_ENABLED_LANGUAGES))
+    message(WARNING [=[
+Projects using Grackle as a static library are STRONGLY encouraged to either
+add CXX to the language list specified in the top-level project command OR call
+enable_language(CXX) before searching for the library.
+  Currently falling back to a best-effort inference of implicit dependencies
+  Fall-back approach may not be possible in the future (with GPU acceleration)
+]=])
+
+    # _GRACKLE_TOOLCHAIN_LINK_LIBS holds (toolchain-specific) runtime libs. The
+    # idea here is to attempt to support linking of a project configured
+    # without a C++ toolchain against a static Grackle library
+    set(_GRACKLE_TOOLCHAIN_LINK_LIBS "@_TOOLCHAIN_LINK_LIBS@")
+    set_target_properties(GRACKLE_TOOLCHAIN_RUNTIME_DEPS PROPERTIES
+      INTERFACE_LINK_LIBRARIES "${_GRACKLE_TOOLCHAIN_LINK_LIBS}")
+    unset(_GRACKLE_TOOLCHAIN_LINK_LIBS)
+  endif()
+  unset(_GR_ENABLED_LANGUAGES)
 
 endif()
 

@@ -19,7 +19,7 @@
 #include <cstddef>
 #include <cstring>
 #include "grackle_chemistry_data.h"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 namespace {  // stuff in an anonymous namespace is only visible to this file
 

@@ -3,9 +3,9 @@
 
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "internal_units.hpp"
-#include "phys_constants.h"
+#include "phys_constants.hpp"
 #include "fortran_func_decls.h"
 
 namespace grackle::impl {

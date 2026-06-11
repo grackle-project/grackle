@@ -6,20 +6,13 @@
 #ifndef LUT_HPP
 #define LUT_HPP
 
+#include "support/config.hpp"
+
 #ifndef __cplusplus
 #error "This file can only be read by a c++ compiler"
 #endif
 
-// once we have transcribed more code, we should really put this header's
-// contents inside of the grackle::impl namespace
-// - if a lookup-table is called {name}, then its fully qualified name will be
-//   `grackle::impl::{name}`.
-// - when using the LUT in a function, we can shorten its name, within the
-//   function to just {name} by inserting `using grackle::impl::{name};` near
-//   the start of the function
-// - we should hold off on doing this until more code is transcribed (since it
-//   will be hard for the transcription tools to automatically handle the
-//   shortenning of the fully qualified name)
+// todo: put this header's contents inside the GRIMPL_NS namespace
 
 /// This is collection of enumerators (localized to the `SpLUT::` scope), with
 /// an enumerator named for EVERY species (primordial-species, metal-species,
@@ -84,7 +77,7 @@ struct SpLUT {
   // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
   // slightly revise the system?)
   enum {
-#define ENTRY(NAME) NAME,
+#define ENTRY(NAME, DUMMY_ARG) NAME,
 #include "field_data_evolved_species.def"
 #undef ENTRY
 
@@ -93,29 +86,65 @@ struct SpLUT {
 
 };  // SpLUT struct
 
-/// Define a LUT that ONLY contains grain species
-struct OnlyGrainSpLUT {
-  // in the future, we may want to reimplement the following in terms of the
-  // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
-  // slightly revise the system?)
+/// @brief Define a LUT that ONLY contains primordial species
+struct PrimordialSpLUT {
   enum {
-    MgSiO3_dust,
-    AC_dust,
-    SiM_dust,
-    FeM_dust,
-    Mg2SiO4_dust,
-    Fe3O4_dust,
-    SiO2_dust,
-    MgO_dust,
-    FeS_dust,
-    Al2O3_dust,
-    ref_org_dust,
-    vol_org_dust,
-    H2O_ice_dust,
+#define ENUMERATOR_Primordial(NAME) NAME,
+#define ENUMERATOR_Metal(NAME) /* ... */
+#define ENUMERATOR_Dust(NAME)  /* ... */
+#define ENTRY(NAME, KIND) ENUMERATOR_##KIND(NAME)
+
+#include "field_data_evolved_species.def"
+
+#undef ENUMERATOR_Primordial
+#undef ENUMERATOR_Metal
+#undef ENUMERATOR_Dust
+#undef ENTRY
 
     NUM_ENTRIES  // <- always last (so it specifies the number of species)
   };
-};  // struct OnlyGrainSpLUT
+};
+
+/// @brief Define a LUT that ONLY contains metal species
+struct MetalSpLUT {
+  enum {
+#define ENUMERATOR_Primordial(NAME) /* ... */
+#define ENUMERATOR_Metal(NAME) NAME,
+#define ENUMERATOR_Dust(NAME) /* ... */
+#define ENTRY(NAME, KIND) ENUMERATOR_##KIND(NAME)
+
+#include "field_data_evolved_species.def"
+
+#undef ENUMERATOR_Primordial
+#undef ENUMERATOR_Metal
+#undef ENUMERATOR_Dust
+#undef ENTRY
+
+    NUM_ENTRIES  // <- always last (so it specifies the number of species)
+  };
+};
+
+/// @brief Define a LUT that ONLY contains evolved dust grain species
+struct DustSpLUT {
+  enum {
+#define ENUMERATOR_Primordial(NAME) /* ... */
+#define ENUMERATOR_Metal(NAME)      /* ... */
+#define ENUMERATOR_Dust(NAME) NAME,
+#define ENTRY(NAME, KIND) ENUMERATOR_##KIND(NAME)
+
+#include "field_data_evolved_species.def"
+
+#undef ENUMERATOR_Primordial
+#undef ENUMERATOR_Metal
+#undef ENUMERATOR_Dust
+#undef ENTRY
+
+    NUM_ENTRIES  // <- always last (so it specifies the number of species)
+  };
+};
+
+/// This alias exists for historical consistency
+using OnlyGrainSpLUT = DustSpLUT;
 
 /// Defines the LUT for Standard Collisional reaction rates
 ///
@@ -156,5 +185,21 @@ struct PhotoRxnLUT {
     NUM_ENTRIES  // <- (specifies the number of shieldable radiative reactions)
   };  // enum
 };  // PhotoRxnLUT struct
+
+namespace GRIMPL_NAMESPACE_DECL {
+
+///@brief Specifies the upper bound on the number of dynamically evolved
+///       species fields that Grackle evolves.
+///
+/// It's better to use this constant than @ref SpLUT::NUM_ENTRIES because we
+/// change the way SpLUT precisely works in the future (e.g. it could stop
+/// directly tracking grain species or even metal species fields)
+///
+/// @note
+/// If we ever move to a system where we want to support a fully dynamic list
+/// of fields, we may want to phase out this type
+inline constexpr int MAX_EVOLVED_SPECIES_FIELDS = SpLUT::NUM_ENTRIES;
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* LUT_HPP */

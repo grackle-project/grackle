@@ -51,7 +51,7 @@ LOCAL_COMPILER_DIR    = /nasa/intel/Compiler/2020.2.254/
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-MACH_DEFINES = -DLINUX -DH5_USE_16_API -fPIC
+MACH_DEFINES = -DH5_USE_16_API -fPIC
 
 #-----------------------------------------------------------------------
 # Compiler flag settings

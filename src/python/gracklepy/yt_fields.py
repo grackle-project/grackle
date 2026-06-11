@@ -16,7 +16,6 @@ _parameter_map[EnzoDataset] = {
     "Gamma": "Gamma",
     "primordial_chemistry": "MultiSpecies",
     "metal_cooling": "MetalCooling",
-    "h2_on_dust": "H2FormationOnDust",
     "cmb_temperature_floor": "CMBTemperatureFloor",
     "three_body_rate": "ThreeBodyRate",
     "cie_cooling": "CIECooling",

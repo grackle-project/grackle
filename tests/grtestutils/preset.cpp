@@ -14,7 +14,7 @@
 #include "./utils.hpp"
 
 #include "grackle.h"
-#include "status_reporting.h"  // GR_INTERNAL_UNREACHABLE_ERROR
+#include "support/status_reporting.hpp"  // GR_INTERNAL_UNREACHABLE_ERROR
 
 namespace grtest {
 static std::string to_string(const grtest::ChemPreset& preset) {

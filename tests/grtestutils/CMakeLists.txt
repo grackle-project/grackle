@@ -10,8 +10,6 @@ target_link_libraries(_grackle_internals INTERFACE Grackle::Grackle)
 
 # short-term macro definitions (both will become unnecessary in the near future)
 target_compile_definitions(_grackle_internals
-  # currently required for functions declared by fortran_func_wrappers.hpp
-  INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>"
   # TODO: see what we can do to stop defining the following
   INTERFACE GRIMPL_COMPILING_CORE_LIB=1
 )
@@ -114,6 +112,7 @@ add_library(grtestutils_core
   # - only includes files outside of the googletest subdirectory
   # - these shouldn't reference any headers from the googletest subdirectory
   cmd.hpp cmd.cpp
+  coord_grid.hpp
   iterator_adaptor.hpp
   os.hpp os.cpp
   preset.hpp preset.cpp
@@ -127,7 +126,7 @@ target_link_libraries(grtestutils_core
   PUBLIC Grackle::Grackle
 )
 
-target_compile_features(grtestutils_core PUBLIC cxx_std_17)
+target_compile_features(grtestutils_core PUBLIC cxx_std_20)
 
 # when a file outside of this directory includes a header from within this
 # library, the include directive looks something like:
@@ -180,8 +179,8 @@ if (TARGET GTest::gtest)
     INTERFACE Grackle::Grackle grtestutils_googletest _grackle_internals
               GTest::gtest_main GTest::gmock
   )
-  # indicates that all consumers are written in C++17 or newer
-  target_compile_features(testdeps INTERFACE cxx_std_17)
+  # indicates that all consumers are written in C++20 or newer
+  target_compile_features(testdeps INTERFACE cxx_std_20)
 endif()
 
 

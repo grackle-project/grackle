@@ -19,7 +19,7 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "h5io.hpp"
-#include "../status_reporting.h"
+#include "status_reporting.hpp"
 
 // HDF5 definitions
 // -> these were moved out of the grackle_macros.h header

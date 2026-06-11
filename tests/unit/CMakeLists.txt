@@ -1,3 +1,6 @@
+# declare unit and integration tests
+# ==================================
+
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
 add_executable(testFrozenKeyIdxBiMap
@@ -5,13 +8,21 @@ add_executable(testFrozenKeyIdxBiMap
 target_link_libraries(testFrozenKeyIdxBiMap testdeps)
 gtest_discover_tests(testFrozenKeyIdxBiMap)
 
-add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
+add_executable(runIndexHelperTests support/test_index_helper.cpp)
+target_link_libraries(runIndexHelperTests testdeps)
+gtest_discover_tests(runIndexHelperTests)
+
+add_executable(runInterpolationTests
+  test_unit_interpolators.cpp test_interp_grid.cpp)
 target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
 
-add_executable(runLinAlgTests test_linalg.cpp)
-target_link_libraries(runLinAlgTests testdeps)
-gtest_discover_tests(runLinAlgTests)
+add_executable(runMathTests
+  math/test_integrate.cpp
+  math/test_linalg.cpp
+  math/test_solve_cubic_equation.cpp)
+target_link_libraries(runMathTests testdeps)
+gtest_discover_tests(runMathTests)
 
 add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
 target_link_libraries(runGrainSpeciesIntoTests testdeps)
@@ -21,21 +32,26 @@ add_executable(testPartMap support/test_unit_PartMap.cpp)
 target_link_libraries(testPartMap testdeps)
 gtest_discover_tests(testPartMap)
 
-add_executable(runStatusReporting test_status_reporting.cpp)
+add_executable(runStatusReporting support/test_status_reporting.cpp)
 target_link_libraries(runStatusReporting testdeps)
 gtest_discover_tests(runStatusReporting)
 
-# one might argue that the following is more of an integration or end-to-end
-# test than a unit-test
+add_executable(testView support/test_View.cpp)
+target_link_libraries(testView testdeps)
+gtest_discover_tests(testView)
+
+# these may be slightly more of an integration test than a unit test
 add_executable(runVisitorTests test_visitor.cpp)
 target_link_libraries(runVisitorTests testdeps)
 gtest_discover_tests(runVisitorTests)
 
 # tests of the API functions
 # -> one might argue that these are better classified as integration or
-#    end-to-end tests than as unit-test
+#    system tests tests than as unit-test.
+# -> the line is a little blurry because these are the most minimal tests of
+#    the API
 add_executable(runApiTests
-  test_ghost_zone.cpp test_api_ratequery.cpp test_dynamic_chem_param_api.cpp test_inject_pathway.cpp)
+  test_api_ratequery.cpp test_dynamic_chem_param_api.cpp test_inject_pathway.cpp)
 target_link_libraries(runApiTests testdeps)
 gtest_discover_tests(runApiTests)
 
