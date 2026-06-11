@@ -731,8 +731,7 @@ int solve_rate_cool(
     // Arrays to store dust growth and destruction mass changes
     std::vector<double> growth_dM(my_fields->grid_dimension[0]);
     std::vector<double> destruction_dM(my_fields->grid_dimension[0]);
-    // Phase B/C: species-specific growth & destruction outputs (used when
-    // dust_species_track == 1; Phase D wires them into dust_update())
+    // species-specific growth & destruction outputs (dust_species_track == 1)
     std::vector<double> growth_dM_mg_silicate(my_fields->grid_dimension[0]);
     std::vector<double> growth_dM_fe_silicate(my_fields->grid_dimension[0]);
     std::vector<double> growth_dM_carbon(my_fields->grid_dimension[0]);
@@ -932,7 +931,7 @@ int solve_rate_cool(
         // will be restructured once that integration lands.
         if (my_chemistry->dust_model == 1){
           if (my_chemistry->dust_species_track == 1) {
-            // Calculate and apply the Mg-silicate + Fe-silicate + carbonaceous rates.
+            // Compute and apply Mg-silicate + Fe-silicate + carbonaceous rates
             grackle::impl::dust_growth_species(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(),
               dtit.data(), tgas.data(),
@@ -940,7 +939,7 @@ int solve_rate_cool(
               growth_dM_carbon.data());
             grackle::impl::dust_destruction_species(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(),
-              dtit.data(), tgas.data(),
+              dtit.data(), dt, tgas.data(),
               destruction_dM_mg_silicate.data(), destruction_dM_fe_silicate.data(),
               destruction_dM_carbon.data());
             grackle::impl::dust_update_species(
@@ -957,7 +956,7 @@ int solve_rate_cool(
               dtit.data(), tgas.data(), growth_dM.data());
             grackle::impl::dust_destruction(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(),
-              dtit.data(), tgas.data(), destruction_dM.data());
+              dtit.data(), dt, tgas.data(), destruction_dM.data());
             grackle::impl::dust_update(
               my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
               growth_dM.data(), destruction_dM.data(), false);
