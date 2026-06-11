@@ -102,6 +102,7 @@ add_library(Grackle_Grackle
   cool_multi_time.cpp cool_multi_time.hpp
   dust_props.hpp
   dust/calc_all_tdust_gasgr_1d_g.cpp dust/calc_all_tdust_gasgr_1d_g.hpp
+  dust/calc_gr_balance_g.cpp dust/calc_gr_balance_g.hpp
   dust/calc_kappa_grain.cpp dust/calc_kappa_grain.hpp
   dust/calc_tdust_1d_g.cpp dust/calc_tdust_1d_g.hpp
   dust/calc_tdust_3d.cpp dust/calc_tdust_3d.hpp
@@ -161,7 +162,6 @@ add_library(Grackle_Grackle
   visitor/printer.hpp
 
   # Fortran Source Files
-  calc_tdust_1d_g.F
   interpolators_g.F
   calc_grain_size_increment_1d.F
   gaussj_g.F

@@ -23,12 +23,6 @@ void FORTRAN_NAME(solve_cubic_equation)(
   double* a, double* b, double* c, double* root
 );
 
-void FORTRAN_NAME(calc_gr_balance_g)(
-  double* tdust, double* tgas, double* kgr, double* trad4, double* gasgr,
-  double* gamma_isrf, double* nh, gr_mask_type* itmask, double* sol, int* in,
-  int* is, int* ie
-);
-
 void FORTRAN_NAME(gaussj_g)(
   int* n, double* a_data_ptr, double* b, int* ierr
 );
