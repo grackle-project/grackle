@@ -22,8 +22,8 @@ const double colibre_growth_t_ref = 10.0;    // K
 const double colibre_growth_nH_ref = 10.0;   // cm^-3
 const double colibre_sputter_t_ref = 2.0e6;  // K
 
-const double atomic_C  = 12.01;
-const double atomic_O  = 16.00;
+const double atomic_C = 12.01;
+const double atomic_O = 16.00;
 const double atomic_Mg = 24.31;
 const double atomic_Si = 28.09;
 const double atomic_Fe = 55.85;
@@ -49,8 +49,8 @@ double e_fold_loss_rate(double rho_dust, double dt, double inv_tau) {
 // Solar metal mass fractions for the tracked dust-forming elements, relative
 // to total solar metals. These match gracklepy.utilities.convenience, which
 // seeds the dust_species_track gas reservoirs from metal_density.
-const double solar_frac_C  = 0.15925782394660776;
-const double solar_frac_O  = 0.4242932765702842;
+const double solar_frac_C = 0.15925782394660776;
+const double solar_frac_O = 0.4242932765702842;
 const double solar_frac_Mg = 0.045644817372018066;
 const double solar_frac_Si = 0.052744600629574714;
 const double solar_frac_Fe = 0.08523143041944482;
@@ -131,7 +131,7 @@ struct HNucleiCensus {
     return rho;
   }
 
- private:
+private:
   static grackle::impl::View<gr_float***> view_(
       const grackle_field_data* my_fields, gr_float* ptr, bool active) {
     return grackle::impl::View<gr_float***>(
@@ -217,11 +217,9 @@ void grackle::impl::dust_growth(chemistry_data* my_chemistry,
 // equivalent per-time rate for dust_update_species().
 void grackle::impl::dust_growth_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
-    InternalGrUnits internalu, IndexRange idx_range,
-    const gr_mask_type* itmask, const double* dt_value, const double* t_gas,
-    double* growth_dM_mg_silicate, double* growth_dM_fe_silicate,
-    double* growth_dM_carbon) {
-
+    InternalGrUnits internalu, IndexRange idx_range, const gr_mask_type* itmask,
+    const double* dt_value, const double* t_gas, double* growth_dM_mg_silicate,
+    double* growth_dM_fe_silicate, double* growth_dM_carbon) {
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -259,31 +257,29 @@ void grackle::impl::dust_growth_species(
                         sec_per_Myr_local / internalu.tbase1;
   // COLIBRE reference values S_ref = 0.3, a_ref = 0.1 micron; non-positive
   // parameters disable growth via an effectively infinite timescale.
-  double sticking_factor =
-      (my_chemistry->dust_growth_sticking_coeff > 0.0)
-          ? 0.3 / my_chemistry->dust_growth_sticking_coeff
-          : huge_value;
-  double grain_size_factor =
-      (my_chemistry->dust_grainsize > 0.0)
-          ? my_chemistry->dust_grainsize / 0.1
-          : huge_value;
+  double sticking_factor = (my_chemistry->dust_growth_sticking_coeff > 0.0)
+                               ? 0.3 / my_chemistry->dust_growth_sticking_coeff
+                               : huge_value;
+  double grain_size_factor = (my_chemistry->dust_grainsize > 0.0)
+                                 ? my_chemistry->dust_grainsize / 0.1
+                                 : huge_value;
 
   // Solar abundances (per H mass, then per H nucleus) of the tracked
   // elements, used as the depletion reference in the tau scalings.
   double solar_nonmetal =
       std::max(1.0 - my_chemistry->SolarMetalFractionByMass, tiny_value);
-  double solar_H = std::max(my_chemistry->HydrogenFractionByMass *
-                            solar_nonmetal, tiny_value);
-  double solar_mass_C  = my_chemistry->SolarMetalFractionByMass *
-                         solar_frac_C / solar_H;
-  double solar_mass_O  = my_chemistry->SolarMetalFractionByMass *
-                         solar_frac_O / solar_H;
-  double solar_mass_Mg = my_chemistry->SolarMetalFractionByMass *
-                         solar_frac_Mg / solar_H;
-  double solar_mass_Si = my_chemistry->SolarMetalFractionByMass *
-                         solar_frac_Si / solar_H;
-  double solar_mass_Fe = my_chemistry->SolarMetalFractionByMass *
-                         solar_frac_Fe / solar_H;
+  double solar_H = std::max(
+      my_chemistry->HydrogenFractionByMass * solar_nonmetal, tiny_value);
+  double solar_mass_C =
+      my_chemistry->SolarMetalFractionByMass * solar_frac_C / solar_H;
+  double solar_mass_O =
+      my_chemistry->SolarMetalFractionByMass * solar_frac_O / solar_H;
+  double solar_mass_Mg =
+      my_chemistry->SolarMetalFractionByMass * solar_frac_Mg / solar_H;
+  double solar_mass_Si =
+      my_chemistry->SolarMetalFractionByMass * solar_frac_Si / solar_H;
+  double solar_mass_Fe =
+      my_chemistry->SolarMetalFractionByMass * solar_frac_Fe / solar_H;
   double solar_eps_C = solar_mass_C / atomic_C;
   double solar_eps_O = solar_mass_O / atomic_O;
   double solar_eps_Mg = solar_mass_Mg / atomic_Mg;
@@ -295,8 +291,8 @@ void grackle::impl::dust_growth_species(
   // factor_max at nH_max.
   auto clumping_factor = [&](double nH) -> double {
     double cmax = std::max(my_chemistry->dust_growth_clumping_factor_max, 1.0);
-    double nmin = std::max(my_chemistry->dust_growth_clumping_nH_min,
-                           tiny_value);
+    double nmin =
+        std::max(my_chemistry->dust_growth_clumping_nH_min, tiny_value);
     double nmax = std::max(my_chemistry->dust_growth_clumping_nH_max,
                            nmin * (1.0 + 1.0e-12));
     if (nH <= nmin || cmax <= 1.0) return 1.0;
@@ -317,13 +313,13 @@ void grackle::impl::dust_growth_species(
       double rho_dust_fe_sil_i = dust_fe_sil(i, idx_range.j, idx_range.k);
       double rho_dust_carb_i = dust_carb(i, idx_range.j, idx_range.k);
 
-      double rho_C  = mC(i, idx_range.j, idx_range.k);
-      double rho_O  = mO(i, idx_range.j, idx_range.k);
+      double rho_C = mC(i, idx_range.j, idx_range.k);
+      double rho_O = mO(i, idx_range.j, idx_range.k);
       double rho_Mg = mMg(i, idx_range.j, idx_range.k);
       double rho_Si = mSi(i, idx_range.j, idx_range.k);
       double rho_Fe = mFe(i, idx_range.j, idx_range.k);
 
-      double T  = std::max(t_gas[i], tiny_value);
+      double T = std::max(t_gas[i], tiny_value);
       double dt = dt_value[i];
 
       double rho_H_nuclei = h_census.rho_H(i, idx_range.j, idx_range.k);
@@ -340,32 +336,31 @@ void grackle::impl::dust_growth_species(
                            std::pow(colibre_growth_t_ref / T, 0.5) *
                            grain_size_factor * sticking_factor;
       double inv_rho_H = 1.0 / rho_H_nuclei;
-      double eps_C  = rho_C  * inv_rho_H / atomic_C;
-      double eps_O  = rho_O  * inv_rho_H / atomic_O;
+      double eps_C = rho_C * inv_rho_H / atomic_C;
+      double eps_O = rho_O * inv_rho_H / atomic_O;
       double eps_Mg = rho_Mg * inv_rho_H / atomic_Mg;
       double eps_Si = rho_Si * inv_rho_H / atomic_Si;
       double eps_Fe = rho_Fe * inv_rho_H / atomic_Fe;
       double eps_MgFe = eps_Mg + eps_Fe;
 
       // ---------- Carbonaceous: rate-limited by gas-phase C ----------
-      if (rho_C >= metal_gate_threshold * rho_gas &&
-          rho_dust_carb_i > 0.0 && dt > 0.0) {
-        double tau_accr_carb = tau_ref_carb * accr_struct *
-                               abundance_ratio(solar_eps_C, eps_C);
+      if (rho_C >= metal_gate_threshold * rho_gas && rho_dust_carb_i > 0.0 &&
+          dt > 0.0) {
+        double tau_accr_carb =
+            tau_ref_carb * accr_struct * abundance_ratio(solar_eps_C, eps_C);
         tau_accr_carb = std::clamp(tau_accr_carb, tiny_value, huge_value);
-        double rate = e_fold_growth_rate(rho_dust_carb_i, dt,
-                                         tau_accr_carb);
+        double rate = e_fold_growth_rate(rho_dust_carb_i, dt, tau_accr_carb);
         growth_dM_carbon[i] = std::min(rate, rho_C / dt);
       }
 
       // ---------- Silicate: COLIBRE Mg+Fe composite bottleneck ----------
       double rho_dust_sil_i = rho_dust_mg_sil_i + rho_dust_fe_sil_i;
-      if (rho_dust_sil_i > 0.0 && dt > 0.0 &&
-          eps_O > 0.0 && eps_Si > 0.0 && eps_MgFe > 0.0) {
-        double sil_ratio = std::max({
-            abundance_ratio(solar_eps_O, eps_O),
-            abundance_ratio(solar_eps_Si, eps_Si),
-            abundance_ratio(solar_eps_MgFe, eps_MgFe)});
+      if (rho_dust_sil_i > 0.0 && dt > 0.0 && eps_O > 0.0 && eps_Si > 0.0 &&
+          eps_MgFe > 0.0) {
+        double sil_ratio =
+            std::max({abundance_ratio(solar_eps_O, eps_O),
+                      abundance_ratio(solar_eps_Si, eps_Si),
+                      abundance_ratio(solar_eps_MgFe, eps_MgFe)});
         double tau_accr = tau_ref_sil * accr_struct * sil_ratio;
         tau_accr = std::clamp(tau_accr, tiny_value, huge_value);
         double sil_rate = e_fold_growth_rate(rho_dust_sil_i, dt, tau_accr);
@@ -374,10 +369,10 @@ void grackle::impl::dust_growth_species(
         // Mass fractions include the different Mg2SiO4 / Fe2SiO4 molecule
         // weights, so equal Mg and Fe number abundance reproduces the
         // COLIBRE equal-molecule seed split.
-        double mg_weight = eps_Mg * (
-            2.0 * atomic_Mg + atomic_Si + 4.0 * atomic_O);
-        double fe_weight = eps_Fe * (
-            2.0 * atomic_Fe + atomic_Si + 4.0 * atomic_O);
+        double mg_weight =
+            eps_Mg * (2.0 * atomic_Mg + atomic_Si + 4.0 * atomic_O);
+        double fe_weight =
+            eps_Fe * (2.0 * atomic_Fe + atomic_Si + 4.0 * atomic_O);
         double endmember_weight = mg_weight + fe_weight;
         if (endmember_weight > 0.0) {
           double mg_frac = std::clamp(mg_weight / endmember_weight, 0.0, 1.0);
@@ -454,8 +449,8 @@ void grackle::impl::dust_destruction(
         // Ms100 * sne_this / dt_full is the shocked-gas mass rate and
         // tau_dest the time to shock all gas in the cell.
         double tau_dest =
-            rho_gas /
-            (Ms100 * sne_this * my_chemistry->dust_destruction_eff) * dt_full;
+            rho_gas / (Ms100 * sne_this * my_chemistry->dust_destruction_eff) *
+            dt_full;
         dM_shock = std::min(rho_dust / tau_dest, rho_dust / dt);
       }
 
@@ -468,8 +463,8 @@ void grackle::impl::dust_destruction(
                           (my_chemistry->dust_grainsize / 0.1) *
                           (1.0e-27 / (dens_proper * rho_gas)) *
                           (std::pow((2.0e6 / temp), 2.5) + 1.0);
-        dM_shock = std::min(dM_shock + 3.0 * rho_dust / tau_sput,
-                            rho_dust / dt);
+        dM_shock =
+            std::min(dM_shock + 3.0 * rho_dust / tau_sput, rho_dust / dt);
       }
 
       if (std::isnan(dM_shock)) {
@@ -498,12 +493,10 @@ void grackle::impl::dust_destruction(
 // per-time rate for dust_update_species().
 void grackle::impl::dust_destruction_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
-    InternalGrUnits internalu, IndexRange idx_range,
-    const gr_mask_type* itmask, const double* dt_value, double dt_full,
-    const double* t_gas,
+    InternalGrUnits internalu, IndexRange idx_range, const gr_mask_type* itmask,
+    const double* dt_value, double dt_full, const double* t_gas,
     double* destruction_dM_mg_silicate, double* destruction_dM_fe_silicate,
     double* destruction_dM_carbon) {
-
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -540,12 +533,12 @@ void grackle::impl::dust_destruction_species(
   // Species-specific shock-vulnerability multipliers. Graphite is the
   // baseline (1.0); silicate follows the Slavin+2015 SNR gas-cleared mass
   // ratio, 990/600 = 1.65.
-  const double shock_factor_carbon   = 1.0;
+  const double shock_factor_carbon = 1.0;
   const double shock_factor_silicate = 1.65;
 
   // COLIBRE/Tsai-Mathews thermal sputtering tau_ref (stored in Myr).
-  double tau_sput_ref = my_chemistry->dust_sputter_tauref *
-                        sec_per_Myr_local / internalu.tbase1;
+  double tau_sput_ref =
+      my_chemistry->dust_sputter_tauref * sec_per_Myr_local / internalu.tbase1;
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     destruction_dM_mg_silicate[i] = 0.0;
@@ -558,10 +551,8 @@ void grackle::impl::dust_destruction_species(
       double rho_dust_fe_sil_i = dust_fe_sil(i, idx_range.j, idx_range.k);
       double rho_dust_carb_i = dust_carb(i, idx_range.j, idx_range.k);
 
-      bool mg_sil_active =
-          (rho_dust_mg_sil_i >= dust_gate_threshold * rho_gas);
-      bool fe_sil_active =
-          (rho_dust_fe_sil_i >= dust_gate_threshold * rho_gas);
+      bool mg_sil_active = (rho_dust_mg_sil_i >= dust_gate_threshold * rho_gas);
+      bool fe_sil_active = (rho_dust_fe_sil_i >= dust_gate_threshold * rho_gas);
       bool carb_active = (rho_dust_carb_i >= dust_gate_threshold * rho_gas);
       if (!mg_sil_active && !fe_sil_active && !carb_active) continue;
       if (rho_gas <= 0.0) continue;
@@ -577,10 +568,8 @@ void grackle::impl::dust_destruction_species(
       if (nH <= 0.0) continue;
 
       // Common (species-independent) sputtering structural factor.
-      double sput_struct = (my_chemistry->dust_grainsize / 0.1) *
-                           (1.0 / nH) *
-                           (1.0 + std::pow(temp / colibre_sputter_t_ref,
-                                           -2.5));
+      double sput_struct = (my_chemistry->dust_grainsize / 0.1) * (1.0 / nH) *
+                           (1.0 + std::pow(temp / colibre_sputter_t_ref, -2.5));
 
       // Equivalent per-time destruction rate for one species; its product
       // with dt is an exponential e-folding mass loss.
@@ -602,9 +591,9 @@ void grackle::impl::dust_destruction_species(
           // shocked-gas mass per volume in dt_full, and dividing by
           // (rho_gas * dt_full) gives the inverse shock-destruction
           // timescale. The exponential update supplies the dt dependence.
-          double inv_tau_shock =
-              Ms100 * shock_factor * sne_this *
-              my_chemistry->dust_destruction_eff / (rho_gas * dt_full);
+          double inv_tau_shock = Ms100 * shock_factor * sne_this *
+                                 my_chemistry->dust_destruction_eff /
+                                 (rho_gas * dt_full);
           if (inv_tau_shock > 0.0 && std::isfinite(inv_tau_shock)) {
             inv_tau_loss += inv_tau_shock;
           }
@@ -624,16 +613,16 @@ void grackle::impl::dust_destruction_species(
       };
 
       if (carb_active) {
-        destruction_dM_carbon[i] = compute_dM(
-            rho_dust_carb_i, shock_factor_carbon);
+        destruction_dM_carbon[i] =
+            compute_dM(rho_dust_carb_i, shock_factor_carbon);
       }
       if (mg_sil_active) {
-        destruction_dM_mg_silicate[i] = compute_dM(
-            rho_dust_mg_sil_i, shock_factor_silicate);
+        destruction_dM_mg_silicate[i] =
+            compute_dM(rho_dust_mg_sil_i, shock_factor_silicate);
       }
       if (fe_sil_active) {
-        destruction_dM_fe_silicate[i] = compute_dM(
-            rho_dust_fe_sil_i, shock_factor_silicate);
+        destruction_dM_fe_silicate[i] =
+            compute_dM(rho_dust_fe_sil_i, shock_factor_silicate);
       }
     }
   }
@@ -700,11 +689,11 @@ void grackle::impl::dust_update_species(
   const double f_mg_sil_Mg = my_chemistry->dust_mg_silicate_f_Mg;
   const double f_mg_sil_Fe = my_chemistry->dust_mg_silicate_f_Fe;
   const double f_mg_sil_Si = my_chemistry->dust_mg_silicate_f_Si;
-  const double f_mg_sil_O  = my_chemistry->dust_mg_silicate_f_O;
+  const double f_mg_sil_O = my_chemistry->dust_mg_silicate_f_O;
   const double f_fe_sil_Mg = my_chemistry->dust_fe_silicate_f_Mg;
   const double f_fe_sil_Fe = my_chemistry->dust_fe_silicate_f_Fe;
   const double f_fe_sil_Si = my_chemistry->dust_fe_silicate_f_Si;
-  const double f_fe_sil_O  = my_chemistry->dust_fe_silicate_f_O;
+  const double f_fe_sil_O = my_chemistry->dust_fe_silicate_f_O;
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] == MASK_FALSE) continue;
@@ -714,8 +703,8 @@ void grackle::impl::dust_update_species(
     double rho_dust_fe_sil_i = dust_fe_sil(i, idx_range.j, idx_range.k);
     double rho_dust_carb_i = dust_carb(i, idx_range.j, idx_range.k);
     double rho_metal_total = metal(i, idx_range.j, idx_range.k);
-    double rho_C  = mC(i, idx_range.j, idx_range.k);
-    double rho_O  = mO(i, idx_range.j, idx_range.k);
+    double rho_C = mC(i, idx_range.j, idx_range.k);
+    double rho_O = mO(i, idx_range.j, idx_range.k);
     double rho_Mg = mMg(i, idx_range.j, idx_range.k);
     double rho_Si = mSi(i, idx_range.j, idx_range.k);
     double rho_Fe = mFe(i, idx_range.j, idx_range.k);
@@ -733,10 +722,10 @@ void grackle::impl::dust_update_species(
     // dM > 0 means net growth (gas reactants -> dust);
     // dM < 0 means net destruction (dust -> gas reactants).
     double dM_carb = (growth_dM_carbon[i] + destruction_dM_carbon[i]) * dt;
-    double dM_mg_sil = (growth_dM_mg_silicate[i] +
-                      destruction_dM_mg_silicate[i]) * dt;
-    double dM_fe_sil = (growth_dM_fe_silicate[i] +
-                      destruction_dM_fe_silicate[i]) * dt;
+    double dM_mg_sil =
+        (growth_dM_mg_silicate[i] + destruction_dM_mg_silicate[i]) * dt;
+    double dM_fe_sil =
+        (growth_dM_fe_silicate[i] + destruction_dM_fe_silicate[i]) * dt;
 
     // ---------- Per-channel caps ----------
     // Carbon channel: bounded by rho_C (growth) or rho_dust_carb
@@ -775,8 +764,7 @@ void grackle::impl::dust_update_species(
       int limiter = -1;  // 0=Mg, 1=Fe, 2=Si, 3=O
       auto consider_element = [&](double rho_X, double c_mg_sil,
                                   double c_fe_sil, int element_id) {
-        double need = dM_mg_sil_grow * c_mg_sil +
-                      dM_fe_sil_grow * c_fe_sil;
+        double need = dM_mg_sil_grow * c_mg_sil + dM_fe_sil_grow * c_fe_sil;
         double budget = sil_grow_safety * rho_X;
         if (need > budget && need > 0.0) {
           double trial = std::max(0.0, budget / need);
@@ -789,7 +777,7 @@ void grackle::impl::dust_update_species(
       consider_element(rho_Mg, f_mg_sil_Mg, f_fe_sil_Mg, 0);
       consider_element(rho_Fe, f_mg_sil_Fe, f_fe_sil_Fe, 1);
       consider_element(rho_Si, f_mg_sil_Si, f_fe_sil_Si, 2);
-      consider_element(rho_O,  f_mg_sil_O,  f_fe_sil_O,  3);
+      consider_element(rho_O, f_mg_sil_O, f_fe_sil_O, 3);
       if (limiter < 0 || scale >= 1.0) break;
 
       if (limiter == 0) {
@@ -815,21 +803,21 @@ void grackle::impl::dust_update_species(
 
     // ---------- Apply ----------
     rho_dust_carb_i += dM_carb;
-    rho_C           -= dM_carb;
+    rho_C -= dM_carb;
 
     rho_dust_mg_sil_i += dM_mg_sil;
     rho_dust_fe_sil_i += dM_fe_sil;
     rho_Mg -= dM_mg_sil * f_mg_sil_Mg + dM_fe_sil * f_fe_sil_Mg;
     rho_Fe -= dM_mg_sil * f_mg_sil_Fe + dM_fe_sil * f_fe_sil_Fe;
     rho_Si -= dM_mg_sil * f_mg_sil_Si + dM_fe_sil * f_fe_sil_Si;
-    rho_O  -= dM_mg_sil * f_mg_sil_O  + dM_fe_sil * f_fe_sil_O;
+    rho_O -= dM_mg_sil * f_mg_sil_O + dM_fe_sil * f_fe_sil_O;
 
     // Floors / NaN guard
     rho_dust_carb_i = std::max(0.0, rho_dust_carb_i);
     rho_dust_mg_sil_i = std::max(0.0, rho_dust_mg_sil_i);
     rho_dust_fe_sil_i = std::max(0.0, rho_dust_fe_sil_i);
-    rho_C  = std::max(0.0, rho_C);
-    rho_O  = std::max(0.0, rho_O);
+    rho_C = std::max(0.0, rho_C);
+    rho_O = std::max(0.0, rho_O);
     rho_Mg = std::max(0.0, rho_Mg);
     rho_Si = std::max(0.0, rho_Si);
     rho_Fe = std::max(0.0, rho_Fe);
@@ -843,8 +831,7 @@ void grackle::impl::dust_update_species(
     // untracked remainder; this stays consistent even if user-edited silicate
     // fractions do not sum to exactly one.
     double rho_tracked_after = rho_C + rho_O + rho_Mg + rho_Si + rho_Fe;
-    double rho_metal_new =
-        std::max(rho_metal_other + rho_tracked_after, 0.0);
+    double rho_metal_new = std::max(rho_metal_other + rho_tracked_after, 0.0);
     double delta_metal_total = rho_metal_new - rho_metal_total;
 
     // Gas density tracks metals as a subset (dust is not part of `density`).
@@ -853,25 +840,24 @@ void grackle::impl::dust_update_species(
     if (std::isnan(rho_dust_new) || std::isnan(rho_metal_new) ||
         std::isnan(rho_gas)) {
       std::cout << "dust_update_species: NaN at cell " << i
-                << " dM_carb=" << dM_carb
-                << " dM_mg_sil=" << dM_mg_sil
+                << " dM_carb=" << dM_carb << " dM_mg_sil=" << dM_mg_sil
                 << " dM_fe_sil=" << dM_fe_sil << std::endl;
       continue;
     }
 
     if (!dryrun) {
-      dust(i, idx_range.j, idx_range.k)      = (gr_float)rho_dust_new;
-      dust_sil(i, idx_range.j, idx_range.k)  = (gr_float)rho_dust_sil_i;
+      dust(i, idx_range.j, idx_range.k) = (gr_float)rho_dust_new;
+      dust_sil(i, idx_range.j, idx_range.k) = (gr_float)rho_dust_sil_i;
       dust_mg_sil(i, idx_range.j, idx_range.k) = (gr_float)rho_dust_mg_sil_i;
       dust_fe_sil(i, idx_range.j, idx_range.k) = (gr_float)rho_dust_fe_sil_i;
       dust_carb(i, idx_range.j, idx_range.k) = (gr_float)rho_dust_carb_i;
-      metal(i, idx_range.j, idx_range.k)     = (gr_float)rho_metal_new;
-      mC(i, idx_range.j, idx_range.k)        = (gr_float)rho_C;
-      mO(i, idx_range.j, idx_range.k)        = (gr_float)rho_O;
-      mMg(i, idx_range.j, idx_range.k)       = (gr_float)rho_Mg;
-      mSi(i, idx_range.j, idx_range.k)       = (gr_float)rho_Si;
-      mFe(i, idx_range.j, idx_range.k)       = (gr_float)rho_Fe;
-      d(i, idx_range.j, idx_range.k)         = (gr_float)rho_gas;
+      metal(i, idx_range.j, idx_range.k) = (gr_float)rho_metal_new;
+      mC(i, idx_range.j, idx_range.k) = (gr_float)rho_C;
+      mO(i, idx_range.j, idx_range.k) = (gr_float)rho_O;
+      mMg(i, idx_range.j, idx_range.k) = (gr_float)rho_Mg;
+      mSi(i, idx_range.j, idx_range.k) = (gr_float)rho_Si;
+      mFe(i, idx_range.j, idx_range.k) = (gr_float)rho_Fe;
+      d(i, idx_range.j, idx_range.k) = (gr_float)rho_gas;
     }
   }
 }
@@ -910,17 +896,17 @@ void grackle::impl::dust_update(chemistry_data* my_chemistry,
     dM_exchange = std::max(-rho_dust, dM_exchange);
     dM_exchange = std::min(0.9 * rho_metal_total, dM_exchange);
 
-    rho_dust         += dM_exchange;
-    rho_metal_total  -= dM_exchange;
-    rho_gas          -= dM_exchange;  // gas tracks metals as a subset
+    rho_dust += dM_exchange;
+    rho_metal_total -= dM_exchange;
+    rho_gas -= dM_exchange;  // gas tracks metals as a subset
 
-    rho_dust        = std::max(0.0, rho_dust);
+    rho_dust = std::max(0.0, rho_dust);
     rho_metal_total = std::max(0.0, rho_metal_total);
 
     if (!dryrun) {
-      dust(i, idx_range.j, idx_range.k)  = (gr_float)rho_dust;
+      dust(i, idx_range.j, idx_range.k) = (gr_float)rho_dust;
       metal(i, idx_range.j, idx_range.k) = (gr_float)rho_metal_total;
-      d(i, idx_range.j, idx_range.k)     = (gr_float)rho_gas;
+      d(i, idx_range.j, idx_range.k) = (gr_float)rho_gas;
     }
   }
 }

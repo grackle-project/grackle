@@ -141,9 +141,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
           if (imetal == 1) {
             double total_metal_1d = metal(i, idx_range.j, idx_range.k);
             munew = d(i, idx_range.j, idx_range.k) /
-                    ((d(i, idx_range.j, idx_range.k) -
-                      total_metal_1d) /
-                         munew +
+                    ((d(i, idx_range.j, idx_range.k) - total_metal_1d) / munew +
                      total_metal_1d / mu_metal);
             tgas[i] = tgas[i] * munew / muold;
           }

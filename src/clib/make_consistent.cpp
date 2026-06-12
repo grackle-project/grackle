@@ -241,8 +241,8 @@ void make_consistent(
   // gas/dust/total nuclide arrays (Cg/Cd/Ct etc.) are populated directly
   // from our tracked metal_density_X + dust species fields, overriding the
   // SN-yield-derived computation below. Views are constructed once here.
-  grackle::impl::View<const gr_float***> mC_view, mO_view, mMg_view,
-      mSi_view, mFe_view, dust_sil_view, dust_mg_sil_view, dust_fe_sil_view,
+  grackle::impl::View<const gr_float***> mC_view, mO_view, mMg_view, mSi_view,
+      mFe_view, dust_sil_view, dust_mg_sil_view, dust_fe_sil_view,
       dust_carb_view;
   if (my_chemistry->dust_species_track == 1) {
     mC_view = grackle::impl::View<const gr_float***>(
@@ -416,7 +416,6 @@ void make_consistent(
             Sg[i] = Sg[i] + onlygas_metal_yields.S[iSN] * cur_val;
             Feg[i] = Feg[i] + onlygas_metal_yields.Fe[iSN] * cur_val;
           }
-
         }
 
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
@@ -435,16 +434,16 @@ void make_consistent(
         // stoichiometric mass fractions. Al and S are not part of this
         // architecture, so their per-element arrays are zeroed.
         if (my_chemistry->dust_species_track == 1) {
-          const double f_mg_sil = std::clamp(
-              my_chemistry->dust_silicate_mg_fraction, 0.0, 1.0);
+          const double f_mg_sil =
+              std::clamp(my_chemistry->dust_silicate_mg_fraction, 0.0, 1.0);
           const double f_mg_sil_Mg = my_chemistry->dust_mg_silicate_f_Mg;
           const double f_mg_sil_Fe = my_chemistry->dust_mg_silicate_f_Fe;
           const double f_mg_sil_Si = my_chemistry->dust_mg_silicate_f_Si;
-          const double f_mg_sil_O  = my_chemistry->dust_mg_silicate_f_O;
+          const double f_mg_sil_O = my_chemistry->dust_mg_silicate_f_O;
           const double f_fe_sil_Mg = my_chemistry->dust_fe_silicate_f_Mg;
           const double f_fe_sil_Fe = my_chemistry->dust_fe_silicate_f_Fe;
           const double f_fe_sil_Si = my_chemistry->dust_fe_silicate_f_Si;
-          const double f_fe_sil_O  = my_chemistry->dust_fe_silicate_f_O;
+          const double f_fe_sil_O = my_chemistry->dust_fe_silicate_f_O;
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
             double mg_sil = dust_mg_sil_view(i, j, k);
             double fe_sil = dust_fe_sil_view(i, j, k);
@@ -454,23 +453,27 @@ void make_consistent(
               fe_sil = (1.0 - f_mg_sil) * sil_compat;
             }
             const double carb = dust_carb_view(i, j, k);
-            Cg[i]  = mC_view(i, j, k);
-            Og[i]  = mO_view(i, j, k);
+            Cg[i] = mC_view(i, j, k);
+            Og[i] = mO_view(i, j, k);
             Mgg[i] = mMg_view(i, j, k);
             Sig[i] = mSi_view(i, j, k);
             Feg[i] = mFe_view(i, j, k);
-            Cd[i]  = carb;
-            Od[i]  = mg_sil * f_mg_sil_O  + fe_sil * f_fe_sil_O;
+            Cd[i] = carb;
+            Od[i] = mg_sil * f_mg_sil_O + fe_sil * f_fe_sil_O;
             Mgd[i] = mg_sil * f_mg_sil_Mg + fe_sil * f_fe_sil_Mg;
             Sid[i] = mg_sil * f_mg_sil_Si + fe_sil * f_fe_sil_Si;
             Fed[i] = mg_sil * f_mg_sil_Fe + fe_sil * f_fe_sil_Fe;
-            Ct[i]  = Cg[i]  + Cd[i];
-            Ot[i]  = Og[i]  + Od[i];
+            Ct[i] = Cg[i] + Cd[i];
+            Ot[i] = Og[i] + Od[i];
             Mgt[i] = Mgg[i] + Mgd[i];
             Sit[i] = Sig[i] + Sid[i];
             Fet[i] = Feg[i] + Fed[i];
-            Alt[i] = 0.; Alg[i] = 0.; Ald[i] = 0.;
-            St[i]  = 0.; Sg[i]  = 0.; Sd[i]  = 0.;
+            Alt[i] = 0.;
+            Alg[i] = 0.;
+            Ald[i] = 0.;
+            St[i] = 0.;
+            Sg[i] = 0.;
+            Sd[i] = 0.;
           }
         }
 
@@ -618,7 +621,7 @@ void make_consistent(
           // !   &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
           // !   &       ,1.e6_DKIND)) then
           if (my_chemistry->dust_species_track ||
-            ((imetal == 0) && (d(i, j, k) * dom < 1.e8)) ||
+              ((imetal == 0) && (d(i, j, k) * dom < 1.e8)) ||
               ((imetal == 1) && (((metal(i, j, k) <= 1.e-9 * d(i, j, k)) &&
                                   (d(i, j, k) * dom < 1.e8)) ||
                                  ((metal(i, j, k) > 1.e-9 * d(i, j, k)) &&
@@ -1078,27 +1081,24 @@ void make_consistent(
   // Phase E invariant: bulk dust_density = Mg-silicate + Fe-silicate
   // + carbonaceous, with dust_density_silicate maintained as the silicate sum.
   // dust_update_species() maintains this per-cell, but external mutations
-  // (host injection, inject_pathway writes) can break it before make_consistent.
-  // Re-derive here so downstream consumers (calc_tdust_3d.cpp, cooling tables)
-  // see a consistent bulk field.
+  // (host injection, inject_pathway writes) can break it before
+  // make_consistent. Re-derive here so downstream consumers (calc_tdust_3d.cpp,
+  // cooling tables) see a consistent bulk field.
   if (my_chemistry->dust_species_track == 1) {
-    const double f_mg_sil = std::clamp(
-        my_chemistry->dust_silicate_mg_fraction, 0.0, 1.0);
+    const double f_mg_sil =
+        std::clamp(my_chemistry->dust_silicate_mg_fraction, 0.0, 1.0);
     grackle::impl::View<gr_float***> dust_bulk(
         my_fields->dust_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     grackle::impl::View<gr_float***> dust_sil(
-        my_fields->dust_density_silicate,
-        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-        my_fields->grid_dimension[2]);
+        my_fields->dust_density_silicate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     grackle::impl::View<gr_float***> dust_mg_sil(
-        my_fields->dust_density_mg_silicate,
-        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-        my_fields->grid_dimension[2]);
+        my_fields->dust_density_mg_silicate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     grackle::impl::View<gr_float***> dust_fe_sil(
-        my_fields->dust_density_fe_silicate,
-        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-        my_fields->grid_dimension[2]);
+        my_fields->dust_density_fe_silicate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     grackle::impl::View<const gr_float***> dust_carb(
         const_cast<const gr_float*>(my_fields->dust_density_carbonaceous),
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
