@@ -33,8 +33,8 @@ void dust_growth(chemistry_data* my_chemistry, grackle_field_data* my_fields,
 // exponential e-folding mass update.
 void dust_growth_species(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
-    InternalGrUnits internalu, IndexRange idx_range,
-    const gr_mask_type* itmask, const double* dt_value, const double* t_gas,
+    InternalGrUnits internalu, IndexRange idx_range, const gr_mask_type* itmask,
+    const double* dt_value, const double* t_gas,
     double* growth_dM_mg_silicate,  // output: Mg-silicate accretion rate
     double* growth_dM_fe_silicate,  // output: Fe-silicate accretion rate
     double* growth_dM_carbon        // output: carbonaceous accretion rate
@@ -68,7 +68,7 @@ void dust_destruction_species(
     const double* dt_value, double dt_full, const double* t_gas,
     double* destruction_dM_mg_silicate,  // output: Mg-silicate destruction rate
     double* destruction_dM_fe_silicate,  // output: Fe-silicate destruction rate
-    double* destruction_dM_carbon        // output: carbonaceous destruction rate
+    double* destruction_dM_carbon  // output: carbonaceous destruction rate
 );
 
 // Update the density fields using calculated mass changes.
@@ -76,8 +76,8 @@ void dust_update(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range, const gr_mask_type* itmask,
     const double* dt_value,
-    const double* growth_dM,         // input: mass change from growth
-    const double* destruction_dM,    // input: mass change from destruction
+    const double* growth_dM,       // input: mass change from growth
+    const double* destruction_dM,  // input: mass change from destruction
     bool dryrun);
 
 // Species-specific field update for the split-silicate path
@@ -95,9 +95,12 @@ void dust_update_species(
     const double* growth_dM_mg_silicate,  // input: Mg-silicate accretion rate
     const double* growth_dM_fe_silicate,  // input: Fe-silicate accretion rate
     const double* growth_dM_carbon,       // input: carbonaceous accretion rate
-    const double* destruction_dM_mg_silicate,  // input: Mg-silicate destruction rate (<=0)
-    const double* destruction_dM_fe_silicate,  // input: Fe-silicate destruction rate (<=0)
-    const double* destruction_dM_carbon,       // input: carbonaceous destruction rate (<=0)
+    const double* destruction_dM_mg_silicate,  // input: Mg-silicate destruction
+                                               // rate (<=0)
+    const double* destruction_dM_fe_silicate,  // input: Fe-silicate destruction
+                                               // rate (<=0)
+    const double*
+        destruction_dM_carbon,  // input: carbonaceous destruction rate (<=0)
     bool dryrun);
 
 }  // namespace grackle::impl
