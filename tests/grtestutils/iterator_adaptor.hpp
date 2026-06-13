@@ -20,7 +20,7 @@
 #include "preset.hpp"
 
 namespace grtest {
-/// the standard value-type that an IteratorAdaptor instantiation refers to
+/// a common value-type that an @ref IteratorAdaptor instantiation refers to
 struct NameIdPair {
   std::string name;
   long long id;
@@ -35,12 +35,42 @@ inline std::ostream& operator<<(std::ostream& os, const NameIdPair& pair) {
 }
 
 /// implements a C++ style InputIterator by adapting a simple Plugin type
-/// that wraps a set of Grackle functions
+/// that wraps random-access functionality.
+///
+/// A plugin type should look something like the following
+/// @code{cpp}
+/// struct MyPlugin {
+///   // define the "ValueType". The is the type returned by the function call
+///   // method. (for an instance of ``MyPlugin`` called  ``obj``,
+///   // ``obj(index)`` will return an instance of the ValueType)
+///   using ValueType = /* my_value_type */;
+///
+///   // This overloads the function call operator (its directly analogous to
+///   // pythons __call__ method). It returns the value corresponding to the
+///   // provided index ``i``
+///   ValueType operator()(unsigned long long i) const;
+///
+///   // overloads the equality check operation (it's invoked when you write
+///   // `objA == objB`)
+///   bool operator==(const RateQueryPlugin& other) const;
+/// };
+/// @endcode
 ///
 /// This is useful for making use of C++ standard library algorithms and
 /// (arguably more importantly) making use of range-based for-loops
 template <class Plugin>
 class IteratorAdaptor {
+public:
+  // define the type aliases that make up the common interface expected by C++
+  // function templates in the standard library for conveying properties about
+  // the iterator.
+  using iterator_category = std::input_iterator_tag;
+  using value_type = typename Plugin::ValueType;
+  using difference_type = std::ptrdiff_t;
+  using pointer = const value_type*;
+  using reference = const value_type;
+
+private:
   unsigned long long counter_;
   unsigned long long n_rates_;
   Plugin plugin_;
@@ -55,12 +85,6 @@ class IteratorAdaptor {
   }
 
 public:
-  using iterator_category = std::input_iterator_tag;
-  using value_type = NameIdPair;
-  using difference_type = std::ptrdiff_t;
-  using pointer = const NameIdPair*;
-  using reference = const NameIdPair;
-
   /// construct a new instance
   IteratorAdaptor(unsigned long long counter, unsigned long long n_rates,
                   Plugin plugin)
@@ -104,6 +128,7 @@ public:
 // accessible through the ratequery api
 
 struct RateQueryPlugin {
+  using ValueType = NameIdPair;
   chemistry_data_storage* my_rates;
 
   NameIdPair operator()(unsigned long long i) const {
@@ -143,6 +168,7 @@ typedef const char* param_name_fn(unsigned int);
 namespace grtest {
 
 struct ParamItrPlugin {
+  using ValueType = NameIdPair;
   param_name_fn* fn;
 
   NameIdPair operator()(unsigned long long i) const {
