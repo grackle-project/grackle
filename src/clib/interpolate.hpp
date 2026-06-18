@@ -16,9 +16,9 @@
 
 #include <cmath>                 // log
 #include "fortran_func_decls.h"  // gr_i64
-#include "utils-cpp.hpp"         // GRIMPL_RESTRICT
+#include "support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// helper function that determines the 1-indexed interpolation index
 ///
@@ -46,7 +46,7 @@ static inline double interp_(double x, double xref0, double xref1, double yref0,
   return (x - xref0) * slope + yref0;
 }
 
-inline double interpolate_1d_g(
+inline double interpolate_1d(
     double input1,
     const gr_i64* GRIMPL_RESTRICT gridDim,  // 1 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1, gr_i64 dataSize,
@@ -58,7 +58,7 @@ inline double interpolate_1d_g(
                  dataField[index1 - 1], dataField[index1]);
 }
 
-inline double interpolate_2d_g(
+inline double interpolate_2d(
     double input1, double input2,
     const gr_i64* GRIMPL_RESTRICT gridDim,  // 2 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
@@ -81,7 +81,7 @@ inline double interpolate_2d_g(
                  value2[1]);
 }
 
-inline double interpolate_3d_g(
+inline double interpolate_3d(
     double input1, double input2, double input3,
     const gr_i64* GRIMPL_RESTRICT gridDim,  // 3 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
@@ -115,7 +115,7 @@ inline double interpolate_3d_g(
                  value2[1]);
 }
 
-inline double interpolate_4d_g(
+inline double interpolate_4d(
     double input1, double input2, double input3, double input4,
     const gr_i64* GRIMPL_RESTRICT gridDim,  // 4 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
@@ -159,7 +159,7 @@ inline double interpolate_4d_g(
                  value2[1]);
 }
 
-double interpolate_5d_g(
+inline double interpolate_5d(
     double input1, double input2, double input3, double input4, double input5,
     const gr_i64* GRIMPL_RESTRICT gridDim,  // 5 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
@@ -240,7 +240,7 @@ double interpolate_5d_g(
 // This is used for interpolating from just the last
 // slice in the datacube before the redshift where
 // the UV background turns on.
-static inline double interpolate_2Df3D_g(
+static inline double interpolate_2Df3D(
     double input1, double input3,
     const gr_i64* GRIMPL_RESTRICT gridDim,  // 3 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1, gr_i64 index2,
@@ -266,7 +266,7 @@ static inline double interpolate_2Df3D_g(
                  value3[1]);
 }
 
-inline double interpolate_3dz_g(
+inline double interpolate_3dz(
     double input1, double input2, double input3,
     const gr_i64* GRIMPL_RESTRICT gridDim,  // 3 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
@@ -274,9 +274,8 @@ inline double interpolate_3dz_g(
     const double* GRIMPL_RESTRICT gridPar3, double dgridPar3, gr_i64 dataSize,
     const double* GRIMPL_RESTRICT dataField, gr_i64 end_int) {
   if (end_int == 1) {
-    return interpolate_2Df3D_g(input1, input3, gridDim, gridPar1, dgridPar1,
-                               index2, gridPar3, dgridPar3, dataSize,
-                               dataField);
+    return interpolate_2Df3D(input1, input3, gridDim, gridPar1, dgridPar1,
+                             index2, gridPar3, dgridPar3, dataSize, dataField);
   }
 
   double value3[2], value2[2];
@@ -316,6 +315,6 @@ inline double interpolate_3dz_g(
                  value2[1]);
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* INTERPOLATE_HPP */
