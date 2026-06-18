@@ -49,14 +49,11 @@ void calc_kappa_grain(const double* tdust, double* kgr,
   int i;
   double logkgr;
   std::vector<double> logalsp1(gr_Size);
-  long long gr_N_i64;
   double log10tdust;
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
-  if (idspecies != 0) {
-    gr_N_i64 = (long long)(gr_N);
-  }
+  long long gr_N_i64 = (idspecies == 0) ? 0 : static_cast<long long>(gr_N);
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
