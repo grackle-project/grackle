@@ -36,6 +36,7 @@ Grackle Documentation
    Parameters.rst
    RateFunctions.rst
    Reference.rst
+   Network.rst
 
 .. toctree::
    :caption: Project Details
@@ -59,5 +60,6 @@ Grackle Documentation
    :hidden:
 
    GitHub <https://github.com/grackle-project/grackle>
+   Gracklepy @ PyPI <https://pypi.org/project/gracklepy/>
    Tracker <https://github.com/grackle-project/grackle/issues>
 

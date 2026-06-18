@@ -31,24 +31,6 @@ ENTRY(metal_density)
   // use_dust_density_field = 1
 ENTRY(dust_density)
 
-// the following are included in this list because we don't evolve these species
-
-  // metal_chemistry = 1
-  // multi_metals = 0, metal_abundances = 0-11 selects one of below
-  // multi_metals = 1, all of below
-ENTRY(local_ISM_metal_density)
-ENTRY(ccsn13_metal_density)
-ENTRY(ccsn20_metal_density)
-ENTRY(ccsn25_metal_density)
-ENTRY(ccsn30_metal_density)
-ENTRY(fsn13_metal_density)
-ENTRY(fsn15_metal_density)
-ENTRY(fsn50_metal_density)
-ENTRY(fsn80_metal_density)
-ENTRY(pisn170_metal_density)
-ENTRY(pisn200_metal_density)
-ENTRY(y19_metal_density)
-
   // use_volumetric_heating_rate = 1
 ENTRY(volumetric_heating_rate)
   // use_specific_heating_rate = 1

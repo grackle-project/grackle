@@ -188,7 +188,7 @@ int gr_initialize_field_data(grackle_field_data *my_fields);
 /// >   anyways to support any variant of this API for dynamic rates)
 ///
 /// > [!note]
-/// > There are a number of considerations before stablization. Some are
+/// > There are a number of considerations before stabilization. Some are
 /// > discussed in docstrings. Below we summarize more generic considerations:
 /// > 1. Do we want to be able to use this API to eventually support a dynamic
 /// >    set of rates? If so, then:
@@ -198,22 +198,54 @@ int gr_initialize_field_data(grackle_field_data *my_fields);
 /// >    - we should probably update all of the function signatures so that a
 /// >      pointer to chemistry_data_storage* is passed as an argument to each
 /// >      of the functions.
-/// > 2. Should we prevent direct access to the underlying data pointers?
-/// >    Instead we would provide getter and setters. We discuss this further
-/// >    down below (in the relevant function's API). This is important for
-/// >    different backends.
-/// > 3. We should generally consider whether the API is consistent enough with
+/// > 2. We should generally consider whether the API is consistent enough with
 /// >    APIs for accessing other data structures.
 /// >    - currently the dynamic parameter API is grackle's only other
 /// >      data-access API, but we could imagine creating an API for the fields
 /// >      (in order to achieve ABI stability)
+/// > 3. I think it may be beneficial to follow the example of yt and make keys
+/// >    2 element strings (rather than just a single string).
+/// >    - this is attractive because it would let us group things together
+/// >    - for example, we could group k1, k2, k3, ... under a group of
+/// >      collisional reaction rates. It might be useful to list yields for
+/// >      different injection pathways (e.g. used in the multi-dust grain
+/// >      species model) under a separate group.
+/// > 4. We should consider improving "ergonomics" of this API
+/// >    - accessing arrays of strings are currently very clunky.
+/// >      - Maybe we should avoid requiring a deep-copy? And just require the
+/// >        user to allocate a buffer to hold pointers to internal strings? I
+/// >        don't love this.
+/// >      - There's a piece of me that wonders if we could entirely eliminate
+/// >        arrays of strings (while still supporting single strings) by
+/// >        adopting keys composed of 2 strings and refactoring
+/// >        grackle_field_data to only provide access to strings through keys
+/// >        (as in PR 271)
+/// >    - property-querying also feels a little clunky... See the note
+/// >      attached to that docstring for more details
+/// > 5. We need to come up with a consistent strategy when rates are not
+/// >    defined.
+/// >    - In a lot of cases, I think it's ok to simply "not" define the rate.
+/// >      For example, when primordial_chemistry=0, I don't think we should
+/// >      define rates like k1, k2, k3, ... If we ever want to support a
+/// >      dynamic API, I think this approach makes a lot of sense in a lot of
+/// >      cases.
+/// >    - There's a separate, related question of whether we should support the
+/// >      idea of an empty entry (i.e. a 1D array with 0 entries). This may
+/// >      come up in the context of arrays of strings
+/// >      - for example, if we normally list the names of all dust grain
+/// >        species, we may want an empty string when there are no dust grain
+/// >        grain species
+/// >      - but does it make sense to support an empty scalar?
+/// >      - as we discuss earlier in this list, it's plausible certain changes
+/// >        could make string-datasets unnecessary. In that case, this point
+/// >        may become moot.
 /** @{ */
 
 /// @typedef grunstable_rateid_type
 /// @brief Type of rate-ids returned to the user
 ///
 /// > [!note]
-/// > Before stablizing, we should consider:
+/// > Before stabilizing, we should consider:
 /// > - if we should use `int64_t` rather than `long long`
 /// > - if we want to make this a more generic name like `gr_idtype` (i.e. if
 /// >   we plan to use rates in other parts of the code)
@@ -231,54 +263,152 @@ typedef long long grunstable_rateid_type;
 /// > [!note]
 /// > While this is unstable, not all rates may be known yet (but, the number
 /// > rates are all accessible).
-grunstable_rateid_type grunstable_ratequery_id(const char* name);
+grunstable_rateid_type grunstable_ratequery_id(
+    const chemistry_data_storage* my_rates, const char* name);
 
-/// Access the pointer associated with the rateid from myrates
+/// Copy data associated with the @p rate_id in @p my_rates into buf
 ///
-/// The behavior is **NOT** currently defined if the `my_rates` struct isn't
-/// configured to use the specified rate.
+/// The behavior is currently undefined if:
+/// - the @p my_rates argument is a NULL pointer
+/// - the @p my_rates argument isn't configured to use the specified rate
+/// - the @p buf argument is NULL
+/// - the @p buf isn't large enough to store the copied rates
 ///
-/// @return The pointer to the accessed data (whether the rate data corresponds
-///    to an array or scalar). If an invalid `rate_id` is specified, this
-///    returns NULL.
+/// @param[in] my_rates The object from which data is retrieved
+/// @param[in] rate_id The id of the rate for which the data is retrieved
+/// @param[out] buf The buffer that the function writes to
+///
+/// @return Returns GR_SUCCESS if successful. If an invalid @p rate_id is
+///    specified, this returns a different value
 ///
 /// > [!note]
-/// > Before stablizing, we should consider whether we actually want this
-/// > function. It may be better to replace it with a getter (that copies the
-/// > rate data to the supplied buffer) and a setter (that copies the provided
-/// > data out of the provided buffer). This may be appealing for a number of
-/// > reasons:
-/// > 1. When we add GPU support, the rate data may live permanently on the GPU
-/// >    (or some data may live on the GPU while other data lives on the CPU).
-/// >    With dedicated setters/getters, we could always require that the
-/// >    provided buffer data is on the CPU.
-/// > 2. We have the option to conditionally disable the setter. For example,
-/// >    if we choose to support custom rates, I assume we will want to specify
-/// >    all custom choices as part of initialization (for simplicity) and then
-/// >    we may want to deprecate/remove the setter. (One could also imagine,
-/// >    disabling the setter when using GPUs).
-/// > 3. It eliminates a certain class of memory-lifetime bugs (People could
-/// >    try use the pointer returned by the incarnation of this function after
-/// >    destroying Grackle. This problem can't happen with the proposed
-/// >    getter/setter)
-double* grunstable_ratequery_get_ptr(
-  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id
+/// > Before stablizing, we should consider whether we want to add an argument
+/// > that specifies the supplied size of `buf` (and provide well-defined
+/// > behavior when `buf` is too small
+int grunstable_ratequery_get_f64(
+  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
+  double* buf
 );
+
+
+/// Overwrite the data associated with @p rate_id in @p my_rates with the
+/// values provided by @p buf
+///
+/// The behavior is currently undefined if:
+/// - the @p my_rates argument is a NULL pointer
+/// - the @p my_rates argument isn't configured to use the specified rate
+/// - the @p buf argument is NULL
+/// - the @p buf isn't large enough to store the copied rates
+///
+/// @param[out] my_rates The object from which data is retrieved
+/// @param[in] rate_id The id of the rate for which the data is retrieved
+/// @param[in] buf The buffer that the function writes to
+///
+/// @return Returns GR_SUCCESS if successful. If an invalid @p rate_id is
+///    specified, this returns a different value
+///
+/// > [!note]
+/// > Before stabilizing, we should consider whether we want to add an argument
+/// > that specifies the supplied size of `buf` (and provide well-defined
+/// > behavior when `buf` is too small
+int grunstable_ratequery_set_f64(
+  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
+  const double* buf
+);
+
+int grunstable_ratequery_get_str(
+  chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
+  char* const * buf
+);
+
+
+/// Describe types known to grackle
+///
+/// > [!note]
+/// > Before stabilizing, we should consider:
+/// > 1. whether this is general enough to be useful throughout grackle.
+/// >    - For example, we could imagine adding a function in the future to the
+/// >      chemistry_data dynamic-access API that generically tries to query
+/// >      datatype.
+/// >    - In that case, we would want to reuse these macros
+/// > 2. if these should actually be defined as macros (that may make it easier
+/// >    to support them from Fortran
+enum grunstable_types {
+  GRUNSTABLE_TYPE_F64 = 1,
+  GRUNSTABLE_TYPE_STR = 2,
+};
+
+/// Describe Rate-Query Property Types
+///
+/// > [!note]
+/// > It may make more sense to use macros if we want to support these from
+/// > Fortran
+///
+/// > [!important]
+/// > Users should obviously avoid hardcoding values in their codebase.
+enum grunstable_ratequery_prop_kind {
+  GRUNSTABLE_QPROP_NDIM = 1,
+  GRUNSTABLE_QPROP_SHAPE = 2,
+  GRUNSTABLE_QPROP_MAXITEMSIZE = 3,
+  GRUNSTABLE_QPROP_WRITABLE = 4,
+  GRUNSTABLE_QPROP_DTYPE = 5,
+};
+
+/// Query a property of the specified rate
+///
+/// @param[in]  my_rates The object being queried
+/// @param[in]  rate_id The id of the rate for which the property is queried
+/// @param[in]  prop_kind The property to query
+/// @param[out] ptr The pointer where the property is recorded
+///
+/// @returns GR_SUCCESS if successful. Otherwise, a different value is returned.
+///
+/// The behavior is undefined when @p my_rates is a `nullptr`, @p ptr is a
+/// nullptr or @p ptr doesn't have enough space to store the queried property
+///
+/// @note
+/// It turns out that using this interface is a little clunky...
+/// - before stabilization, it may be better to change this function so that
+///   - it accepts an additional argument specifying the total size of the
+///     provided buffer (and report an error if the buffer isn't long enough)
+///   - it would also be great (but not essential) to change the return-value
+///     to specify:
+///     - the number of entries that were filled written to ptr by this
+///       function
+///     - aside: we need to return 0 for GRUNSTABLE_QPROP_SHAPE when
+///       querying a scalar quantity
+///     - a negative value would denote an error
+///   - optionally, when ptr is a nullptr, we could have the function return
+///     the number of required ptr needs (similar to the interface for
+///     snprintf), but this isn't necessary
+/// - Doing this would allow users to write extra code to handle queries of
+///   GRUNSTABLE_QPROP_SHAPE in a special way (i.e. currently you **NEED** to
+///   query GRUNSTABLE_QPROP_NDIM, first to make sure you allocate enough space)
+int grunstable_ratequery_prop(const chemistry_data_storage* my_rates,
+                              grunstable_rateid_type rate_id,
+                              enum grunstable_ratequery_prop_kind prop_kind,
+                              long long* ptr);
 
 /// Query the name (and optionally the rate_id) of the ith registered rate
 ///
 /// > [!warning]
 /// > The order of parameters may change between different versions of Grackle
 ///
-/// @param[in]  i the index of the access rate
+/// @param[in]  my_rates The object being queried
+/// @param[in]  i the index of the accessed rate
 /// @param[out] out_rate_id A pointer to store the rate of the queried rate_id.
 ///    The behavior is **NOT** currently well defined when there are `i` or
 ///    fewer registered rates.
 /// @result Pointer to the string-literal specifying the rate's name. This is
 ///    `NULL`, if there are `i` or fewer registered rates.
 const char* grunstable_ith_rate(
-  unsigned long long i, grunstable_rateid_type* out_rate_id
+  const chemistry_data_storage* my_rates, unsigned long long i,
+  grunstable_rateid_type* out_rate_id
 );
+
+/// Query the number of rates accessible through the ratequery API
+unsigned long long grunstable_ratequery_nrates(
+    const chemistry_data_storage* my_rates);
 
 /** @}*/ // end of group
 
@@ -286,6 +416,17 @@ const char* grunstable_ith_rate(
 } /* extern "C" */
 #endif /* __cplusplus */
 
+#if !defined(GRIMPL_COMPILING_CORE_LIB)
+// avoid leaking these macros used for defining implementation details out of
+// the core library
+// -> while this not essential, it's considered a good practice to do this
+//    (people can't use the macros if they aren't defined)
+// -> note: these definitions will leak if external codes include deprecated
+//    (but that's probably ok)
+
+#undef GRACKLE_CLOUDY_TABLE_MAX_DIMENSION
+#undef GRIMPL_MAX_INJ_PATHWAYS
+#endif
 
 // this is important for letting us diagnose improper use of private headrs
 #if GRIMPL_PUBLIC_INCLUDE == 0

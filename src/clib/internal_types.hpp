@@ -120,14 +120,8 @@ void drop_CoolHeatScratchBuf(CoolHeatScratchBuf*);
 /// distinction has been preserved during transcription, but it is not clear
 /// how real the distinction truly is.
 struct Cool1DMultiScratchBuf {
-  /// unlike the other members in this struct, tgasold is retained between
-  /// iterations. Thus, it may be better to remove it from this struct
-  double* tgasold = nullptr;
   double* mynh = nullptr;
-  double* myde = nullptr;
-  double* gammaha_eff = nullptr;
   double* gasgr_tdust = nullptr;
-  double* regr = nullptr;
 };
 
 /// used to help implement the visitor design pattern
@@ -140,12 +134,8 @@ void visit_member_pair(
   namespace vis = ::grackle::impl::visitor;
 
   vis::begin_visit("Cool1DMultiScratchBuf", f);
-  f(VIS_MEMBER_NAME("tgasold"), obj0.tgasold, obj1.tgasold, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("mynh"), obj0.mynh, obj1.mynh, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("myde"), obj0.myde, obj1.myde, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("gammaha_eff"), obj0.gammaha_eff, obj1.gammaha_eff, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("gasgr_tdust"), obj0.gasgr_tdust, obj1.gasgr_tdust, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("regr"), obj0.regr, obj1.regr, vis::idx_range_len_multiple(1));
   vis::end_visit(f);
 }
 
@@ -170,133 +160,6 @@ void drop_Cool1DMultiScratchBuf(Cool1DMultiScratchBuf*);
 
 // -----------------------------------------------------------------
 
-/// Holds 1D arrays used for linear interpolation
-///
-/// A common idiom within Grackle is to construct 1D tables of different
-/// quantities (I think its mostly different types of rates) sampled at various
-/// log temperature values during setup.
-/// - when performing calculations on simulation data, Grackle will compute
-///   values from these tables.
-/// - Since these tables are all sampled at the same log-temperature values, we
-///   can reuse information about the current location in the table between
-///   different interpolations to speed up the calculation
-/// - the values of the buffers in this data structure at a given location are
-///   used encode this information about logT table location.
-///
-/// @note
-/// Logic related to this struct is a prime candidate for logic that we probably
-/// want to refactor after we complete transcription from Fortran
-///
-/// @todo
-/// Once we finish transcribing, we may want to make the naming a little more
-/// generic since it can be used for more than just temperature
-struct LogTLinInterpScratchBuf{
-  long long* indixe = nullptr;
-  double* t1 = nullptr;
-  double* t2 = nullptr;
-  double* logtem = nullptr;
-  double* tdef = nullptr;
-};
-
-/// used to help implement the visitor design pattern
-///
-/// (avoid using this unless you really have to)
-template<class BinaryFn>
-void visit_member_pair(
-  LogTLinInterpScratchBuf& obj0, LogTLinInterpScratchBuf& obj1, BinaryFn f
-) {
-  namespace vis = ::grackle::impl::visitor;
-
-  vis::begin_visit("LogTLinInterpScratchBuf", f);
-  f(VIS_MEMBER_NAME("indixe"), obj0.indixe, obj1.indixe, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("t1"), obj0.t1, obj1.t1, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("t2"), obj0.t2, obj1.t2, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("logtem"), obj0.logtem, obj1.logtem, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("tdef"), obj0.tdef, obj1.tdef, vis::idx_range_len_multiple(1));
-  vis::end_visit(f);
-}
-
-/// implements the visitor design pattern
-///
-/// @param ptr[in,out] Members of the specified object will be visited
-/// @param fn[in] Calls function that will be applied to each function
-template <class UnaryVisitor>
-inline void visit_member(LogTLinInterpScratchBuf* ptr, UnaryVisitor fn) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, LogTLinInterpScratchBuf, ptr, fn);
-}
-
-/// allocates the contents of a new LogTLinInterpScratchBuf
-///
-/// @param nelem The number of elements in each buffer
-LogTLinInterpScratchBuf new_LogTLinInterpScratchBuf(int nelem);
-
-/// performs cleanup of the contents of LogTLinInterpScratchBuf
-///
-/// This effectively invokes the destructor
-void drop_LogTLinInterpScratchBuf(LogTLinInterpScratchBuf*);
-
-// -----------------------------------------------------------------
-
-/// holds radiative reaction rate buffers
-///
-/// @note
-/// In the future, it would be nice to use this within the general rate
-/// storage struct (and maybe also within the photo_rate_storage struct).
-/// Since the storage struct only needs to store these rates as scalars we
-/// would need to adopt the LUT strategy (or templates)
-struct PhotoRxnRateCollection {
-  /* Radiative rates for 6-species. */
-  double* k24;
-  double* k25;
-  double* k26;
-
-  /* Radiative rates for 6-species. */
-  double* k27;
-  double* k28;
-  double* k29;
-  double* k30;
-  double* k31;
-};
-
-/// used to help implement the visitor design pattern
-///
-/// (avoid using this unless you really have to)
-template<class BinaryFn>
-void visit_member_pair(
-  PhotoRxnRateCollection& obj0, PhotoRxnRateCollection& obj1, BinaryFn f
-) {
-  namespace vis = ::grackle::impl::visitor;
-
-  vis::begin_visit("PhotoRxnRateCollection", f);
-  f(VIS_MEMBER_NAME("k24"), obj0.k24, obj1.k24, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k25"), obj0.k25, obj1.k25, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k26"), obj0.k26, obj1.k26, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k27"), obj0.k27, obj1.k27, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k28"), obj0.k28, obj1.k28, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k29"), obj0.k29, obj1.k29, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k30"), obj0.k30, obj1.k30, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("k31"), obj0.k31, obj1.k31, vis::idx_range_len_multiple(1));
-  vis::end_visit(f);
-}
-
-/// implements the visitor design pattern
-///
-/// @param ptr[in,out] Members of the specified object will be visited
-/// @param fn[in] Calls function that will be applied to each function
-template <class UnaryVisitor>
-inline void visit_member(PhotoRxnRateCollection* ptr, UnaryVisitor fn) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, PhotoRxnRateCollection, ptr, fn)
-}
-
-/// allocates the contents of a new PhotoRxnRateCollection
-///
-/// @param nelem The number of elements in each buffer
-PhotoRxnRateCollection new_PhotoRxnRateCollection(int nelem);
-
-/// performs cleanup of the contents of PhotoRxnRateCollection
-///
-/// This effectively invokes a destructor
-void drop_PhotoRxnRateCollection(PhotoRxnRateCollection*);
 
 // -----------------------------------------------------------------
 
@@ -440,6 +303,14 @@ void drop_SpeciesCollection(SpeciesCollection*);
 /// @note
 /// This is something we may want to reuse. If we are willing to embrace C++,
 /// then we may want to use templates
+///
+/// @important
+/// In the near-term to mid-term, we want to refactor to move away from using
+/// @ref OnlyGrainSpLUT and instead start relying upon the order of grain
+/// species tracked by @ref grackle::impl::GrainSpeciesInfo (at the moment
+/// grains have the same order). This is possible because every block of logic
+/// using this struct applies the same logic to each grain species (in other
+/// words, the logic can be replaced with a for-loop over the grain species)
 struct GrainSpeciesCollection {
   double* data[OnlyGrainSpLUT::NUM_ENTRIES];
 };

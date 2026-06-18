@@ -4,7 +4,6 @@
 
 #include <math.h>
 
-#include "utest_helpers.hpp"
 #include "interpolate.hpp"
 #include "fortran_func_wrappers.hpp"
 

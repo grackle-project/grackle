@@ -1,11 +1,11 @@
 version: 2.1
 
 commands:
-  set-env:
-    description: "Set environment variables."
+  setup-system-for-pytest:
+    description: "Set up the system for pytest."
     steps:
       - run:
-          name: "Set environment variables."
+          name: "Setup System"
           command: |
             echo "backend : Agg" > $HOME/matplotlibrc
             echo 'export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH' >> $BASH_ENV
@@ -17,43 +17,15 @@ commands:
               git fetch --tags https://github.com/$CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME
             fi
 
-  install-cmake-dependencies:
-    description: "Install minimal dependencies needed for a CMake build"
-    steps:
-      - run:
-          name: "Install minimal dependencies needed for a CMake build"
-          command: |
             git submodule update --init --remote
-            sudo apt update
-            sudo apt install -y libhdf5-serial-dev gfortran ninja-build cmake
+            ./scripts/ci/install_dependencies.py --color \
+              --preset classic-build --preset cmake-build
 
-  install-dependencies:
-    description: "Install dependencies."
-    steps:
-      - install-cmake-dependencies
-      - run:
-          name: "Install all other dependencies."
-          command: |
-            source $BASH_ENV
-            # libtool-bin is a requirement of the classic build-system
-            # castxml is a requirement of the gracklepy test-suite
-            sudo apt install -y libtool-bin castxml
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
             pip install --group test
-            pip install flake8
 
-  lint:
-    description: "Lint."
-    steps:
-      - run:
-          name: "Lint."
-          command: |
-            source $BASH_ENV
-            source $HOME/venv/bin/activate
-            cd src/python
-            flake8 gracklepy examples tests
 
   install-grackle:
     description: "Install the core Grackle Library & Pygrackle."
@@ -198,7 +170,9 @@ commands:
                   echo "Answers already exist; skipping."
                 fi
               else
-                py.test --answer-dir=${ANSWER_DIR}
+                # we pass -vv, so that each test gets its own line of output
+                # (this can be helpful if we encounter a segfault)
+                py.test -vv --answer-dir=${ANSWER_DIR}
               fi
             fi
 
@@ -208,11 +182,11 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-nccv4"
+        default: "gold-standard-nccv12"
       cache-tag:
         description: "A unique tag to append to the cache name"
         type: string
-        default: "1"
+        default: "2"
     steps:
       - run:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
@@ -265,6 +239,24 @@ executors:
     resource_class: << parameters.resource_class >>
 
 jobs:
+  generate-gold-standard:
+    parameters:
+      tag:
+        type: string
+        default: latest
+    executor:
+      name: python
+      tag: << parameters.tag >>
+      resource_class: small  # <- 1 core
+
+    working_directory: ~/grackle
+
+    steps:
+      - checkout
+      - setup-system-for-pytest
+      - download-test-data
+      - store-gracklepy-suite-gold-standard-answers
+
   test-suite:
     parameters:
       tag:
@@ -279,9 +271,7 @@ jobs:
 
     steps:
       - checkout
-      - set-env
-      - install-dependencies
-      - lint
+      - setup-system-for-pytest
       - download-test-data
       - store-gracklepy-suite-gold-standard-answers
 
@@ -326,20 +316,20 @@ jobs:
 
     steps:
       - checkout
-      - install-cmake-dependencies
-      - run:
-          name: "update CMake to newer version"
-          command: |
-            sudo apt remove cmake -y
-            sudo apt install python3-pip
-            # this is a hack to install a newer version of CMake (through PyPI)
-            pip3 install cmake
+      # we pinned cmake to an arbitrarily new version
+      - run: |
+          git submodule update --init --remote
+          ./scripts/ci/install_dependencies.py --color \
+              --preset corelib-tests --preset static-analysis \
+              --software cmake=4.2 --software clang-tidy=20 \
+              --manual-install-dir ~/local_deps
 
       - run:
           name: "Build libgrackle and all of the core library's tests"
           command: |
             cmake --preset ci-linux
             cmake --build build_ci-linux
+
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
           command: ctest --test-dir build_ci-linux --output-on-failure
@@ -357,6 +347,17 @@ jobs:
       #    working_directory: build_ci-linux-omp/examples
       #    environment:
       #      OMP_NUM_THREADS: 4
+
+      - run:
+          name: "Run clang-tidy"
+          command: |
+            # ci-linux-nowarn preset is designed to work with static analysis
+            # (it disables compiler warnings)
+            cmake \
+              --preset ci-linux-nowarn \
+              -D 'GRACKLE_DEV_CLANG_TIDY=clang-tidy;-warnings-as-errors=*'
+            cmake --build build_ci-linux-nowarn
+
 
   docs-build:
     parameters:
@@ -380,16 +381,22 @@ workflows:
 
    tests:
      jobs:
+       - generate-gold-standard:
+           name: "Generate the gold standard."
+           tag: "3.10.14"
+
        - test-suite:
+           requires:
+             - "Generate the gold standard.": success
            name: "Pygrackle test suite - Python 3.10"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
    weekly:
      triggers:
@@ -400,13 +407,19 @@ workflows:
               only:
                 - main
      jobs:
+       - generate-gold-standard:
+           name: "Generate the gold standard."
+           tag: "3.10.14"
+
        - test-suite:
+           requires:
+             - "Generate the gold standard.": success
            name: "Pygrackle test suite - Python 3.10"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.10.3"
+           tag: "3.10.14"

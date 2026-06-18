@@ -99,12 +99,12 @@ struct OnlyGrainSpLUT {
   // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
   // slightly revise the system?)
   enum {
+    MgSiO3_dust,
+    AC_dust,
     SiM_dust,
     FeM_dust,
     Mg2SiO4_dust,
-    MgSiO3_dust,
     Fe3O4_dust,
-    AC_dust,
     SiO2_dust,
     MgO_dust,
     FeS_dust,
@@ -118,6 +118,11 @@ struct OnlyGrainSpLUT {
 };  // struct OnlyGrainSpLUT
 
 /// Defines the LUT for Standard Collisional reaction rates
+///
+/// @note
+/// If we ever make changes, we should consider how the changes will affect
+/// `get_CollisionalRxn_rateprop_`. If necessary, we could always refactor
+/// `get_CollisionalRxn_rateprop_` to not use this enum
 struct CollisionalRxnLUT {
   enum {
 #define ENTRY(NAME) NAME,
@@ -128,5 +133,28 @@ struct CollisionalRxnLUT {
   };  // enum
 
 };  // CollisionalRxnLUT struct
+
+/// Defines the LUT for Standard radiative reaction rates
+///
+/// @note
+/// If we ever make changes, we should consider how the changes will affect
+/// @ref grackle::impl::ratequery::get_PhotoRxn_Entry. If necessary, we could
+/// always refactor that function to not use this enum
+struct PhotoRxnLUT {
+  enum {
+    // Radiative rates for 6-species network
+    k24,
+    k25,
+    k26,
+    // Radiative rates for 9-species network
+    k27,
+    k28,
+    k29,
+    k30,
+    k31,
+
+    NUM_ENTRIES  // <- (specifies the number of shieldable radiative reactions)
+  };  // enum
+};  // PhotoRxnLUT struct
 
 #endif /* LUT_HPP */

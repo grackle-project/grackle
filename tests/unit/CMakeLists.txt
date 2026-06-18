@@ -1,75 +1,58 @@
-# declare testdeps to bundle together dependencies used by all tests
-# ------------------------------------------------------------------
-add_library(testdeps INTERFACE)
-target_link_libraries(testdeps INTERFACE Grackle::Grackle GTest::gtest_main)
+# declare unit and integration tests
+# ==================================
 
-# compiler defs are short-term hacks to help tests invoke internal functions
-# from Grackle (both of these will become unnecessary in the near future)
-target_compile_definitions(testdeps
-  # needed to invoke Fortran functions from C
-  INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>"
-  # suppresses warnings about C internal headers using our deprecated public
-  # headers (the files should include grackle.h instead). We're currently
-  # holding off on properly fixing this to minimize conflicts with pending PRs
-  # on the newchem-cpp branch
-  INTERFACE GRIMPL_PUBLIC_INCLUDE=1
-)
+# NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
 
-# needed to let tests call internal functions from C
-target_include_directories(testdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
-target_compile_features(testdeps INTERFACE cxx_std_17)
+add_executable(testFrozenKeyIdxBiMap
+  support/test_unit_hash.cpp support/test_unit_FrozenKeyIdxBiMap.cpp)
+target_link_libraries(testFrozenKeyIdxBiMap testdeps)
+gtest_discover_tests(testFrozenKeyIdxBiMap)
 
-# declare the grtest utility library
-# ----------------------------------
-# -> this is an internal library that defines reusable testing utilities
-# -> if we add more files to this library, we should consider relocating the
-#    library to a different directory
+add_executable(runIndexHelperTests support/test_index_helper.cpp)
+target_link_libraries(runIndexHelperTests testdeps)
+gtest_discover_tests(runIndexHelperTests)
 
-add_library(grtest_utils
-  grtest_cmd.hpp grtest_cmd.cpp
-  grtest_utils.hpp grtest_utils.cpp
-  grtest_os.hpp grtest_os.cpp
-)
-# we are being a little lazy with our usage of testdeps right here
-target_link_libraries(grtest_utils PUBLIC testdeps)
-target_compile_features(grtest_utils PUBLIC cxx_std_17)
-
-# these compile-definitions act as short-term hacks
-target_compile_definitions(grtest_utils
-  # this hack helps us get path input-file directory (we can remove it once we
-  # introduce automatic file management in PR 235, PR 237, and PR 246)
-  PRIVATE GR_DATADIR=${CMAKE_CURRENT_SOURCE_DIR}/../../grackle_data_files/input/
-
-  # this hack lets us use Operating-system specific functionality (Once PR #237
-  # is merged, we should make use of the machinery introduced by that PR for
-  # enabling/disabling os-specific features)
-  PRIVATE "$<$<PLATFORM_ID:Linux,Darwin>:PLATFORM_GENERIC_UNIX>"
-)
-
-# start declaring targets for tests
-# ---------------------------------
 add_executable(runInterpolationTests
-  test_unit_interpolators_g.cpp test_interpolators_comparisons.cpp
+  test_unit_interpolators_g.cpp
+  #test_interpolators_comparisons.cpp
 )
-target_link_libraries(runInterpolationTests grtest_utils)
-
+target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
 
-add_executable(runStatusReporting test_status_reporting.cpp)
-target_link_libraries(runStatusReporting grtest_utils)
+add_executable(runLinAlgTests test_linalg.cpp)
+target_link_libraries(runLinAlgTests testdeps)
+gtest_discover_tests(runLinAlgTests)
+
+add_executable(runSolveCubicEquationTests test_solve_cubic_equation.cpp)
+target_link_libraries(runSolveCubicEquationTests testdeps)
+gtest_discover_tests(runSolveCubicEquationTests)
+
+add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
+target_link_libraries(runGrainSpeciesIntoTests testdeps)
+gtest_discover_tests(runGrainSpeciesIntoTests)
+
+add_executable(testPartMap support/test_unit_PartMap.cpp)
+target_link_libraries(testPartMap testdeps)
+gtest_discover_tests(testPartMap)
+
+add_executable(runStatusReporting support/test_status_reporting.cpp)
+target_link_libraries(runStatusReporting testdeps)
 gtest_discover_tests(runStatusReporting)
 
-# one might argue that the following is more of an integration or end-to-end
-# test than a unit-test
+# these may be slightly more of an integration test than a unit test
 add_executable(runVisitorTests test_visitor.cpp)
 target_link_libraries(runVisitorTests testdeps)
 gtest_discover_tests(runVisitorTests)
 
-# one might argue that the following is more of an integration or end-to-end
-# test than a unit-test
-add_executable(runGhostZoneTests test_ghost_zone.cpp)
-target_link_libraries(runGhostZoneTests grtest_utils testdeps)
-gtest_discover_tests(runGhostZoneTests)
+# tests of the API functions
+# -> one might argue that these are better classified as integration or
+#    system tests tests than as unit-test.
+# -> the line is a little blurry because these are the most minimal tests of
+#    the API
+add_executable(runApiTests
+  test_api_ratequery.cpp test_dynamic_chem_param_api.cpp test_inject_pathway.cpp)
+target_link_libraries(runApiTests testdeps)
+gtest_discover_tests(runApiTests)
 
 # this target tests that the members of the chemistry_data struct can be
 # accessed through the "dynamic api." The test cases in this target are
@@ -78,7 +61,7 @@ gtest_discover_tests(runGhostZoneTests)
 # problems for "death-tests", so these test-cases should remain separate from
 # the rest of the gtest framework
 add_executable(runSyncedChemistryData test_chemistry_struct_synced.cpp)
-target_link_libraries(runSyncedChemistryData grtest_utils testdeps)
+target_link_libraries(runSyncedChemistryData testdeps)
 target_compile_definitions(runSyncedChemistryData
   PRIVATE
     READER_PATH=${PROJECT_SOURCE_DIR}/tests/scripts/castxml_output_reader.py

@@ -20,11 +20,11 @@ target_link_libraries(c_local_example Grackle::Grackle)
 
 set(CMAKE_CXX_STANDARD 11) # needed by apple-clang compiler for some examples
 
-add_executable(cxx_example cxx_example.C)
+add_executable(cxx_example cxx_example.cpp)
 target_link_libraries(cxx_example Grackle::Grackle)
 
 if (GRACKLE_USE_OPENMP)
-  add_executable(cxx_omp_example cxx_omp_example.C)
+  add_executable(cxx_omp_example cxx_omp_example.cpp)
   target_link_libraries(cxx_omp_example Grackle::Grackle OpenMP::OpenMP_CXX)
 endif()
 
