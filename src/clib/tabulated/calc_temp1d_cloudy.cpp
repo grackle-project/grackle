@@ -16,11 +16,10 @@
 #include <cstdio>
 #include <vector>
 
-#include "../fortran_func_decls.h"
-#include "../fortran_func_wrappers.hpp"
 #include "grackle.h"
-#include "../utils-cpp.hpp"
 #include "./common.hpp"
+#include "../interpolate.hpp"
+#include "../support/View.hpp"
 
 #include "calc_temp1d_cloudy.hpp"
 
@@ -103,28 +102,27 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
 
         // Interpolate over temperature.
         if (cloudy_table.grid_rank == 1) {
-          munew = grackle::impl::fortran_wrapper::interpolate_1d_g(
-              log10tem[i], cloudy_table.grid_dimension,
-              cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.data_size, cloudy_table.mmw_data);
+          munew = interpolate_1d(log10tem[i], cloudy_table.grid_dimension,
+                                 cloudy_table.grid_parameters[0], dclPar[0],
+                                 cloudy_table.data_size, cloudy_table.mmw_data);
 
           // Interpolate over density and temperature.
         } else if (cloudy_table.grid_rank == 2) {
-          munew = grackle::impl::fortran_wrapper::interpolate_2d_g(
-              log_n_h[i], log10tem[i], cloudy_table.grid_dimension,
-              cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.grid_parameters[1], dclPar[1],
-              cloudy_table.data_size, cloudy_table.mmw_data);
+          munew = interpolate_2d(log_n_h[i], log10tem[i],
+                                 cloudy_table.grid_dimension,
+                                 cloudy_table.grid_parameters[0], dclPar[0],
+                                 cloudy_table.grid_parameters[1], dclPar[1],
+                                 cloudy_table.data_size, cloudy_table.mmw_data);
 
           // Interpolate over density, redshift, and temperature.
         } else if (cloudy_table.grid_rank == 3) {
-          munew = grackle::impl::fortran_wrapper::interpolate_3dz_g(
-              log_n_h[i], zr, log10tem[i],
-              cloudy_table.grid_dimension,  // 3 elements
-              cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.grid_parameters[1], zindex,
-              cloudy_table.grid_parameters[2], dclPar[2],
-              cloudy_table.data_size, cloudy_table.mmw_data, end_int);
+          munew = interpolate_3dz(log_n_h[i], zr, log10tem[i],
+                                  cloudy_table.grid_dimension,  // 3 elements
+                                  cloudy_table.grid_parameters[0], dclPar[0],
+                                  cloudy_table.grid_parameters[1], zindex,
+                                  cloudy_table.grid_parameters[2], dclPar[2],
+                                  cloudy_table.data_size, cloudy_table.mmw_data,
+                                  end_int);
         } else {
           printf("Maximum mmw data grid rank is 3!\n");
           return;
