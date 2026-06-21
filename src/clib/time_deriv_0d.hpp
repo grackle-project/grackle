@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file time_deriv_0d.hpp
-/// @brief Defines machinery to calculate the time derivative for a single zone
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Defines machinery to calculate the time derivative for a single zone
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef TIME_DERIV_0D_HPP
 #define TIME_DERIV_0D_HPP
