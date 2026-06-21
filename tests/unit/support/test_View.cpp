@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <gtest/gtest.h>
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <utility>  // std::move
@@ -22,22 +23,26 @@
 TEST(View, Empty1D) {
   GRIMPL_NS::View<double*> empty_view;
   EXPECT_EQ(empty_view.data(), nullptr);
+  EXPECT_FALSE(bool(empty_view));
 }
 
 TEST(View, Empty2D) {
   GRIMPL_NS::View<float**> empty_view;
   EXPECT_EQ(empty_view.data(), nullptr);
+  EXPECT_FALSE(bool(empty_view));
 }
 
 TEST(View, Empty3D) {
   GRIMPL_NS::View<const int***> empty_view;
   EXPECT_EQ(empty_view.data(), nullptr);
+  EXPECT_FALSE(bool(empty_view));
 }
 
 TEST(View, Simple1D) {
   int arr[3] = {8, -3, 6};
   GRIMPL_NS::View<int*> v(arr, 3);
 
+  EXPECT_TRUE(bool(v));
   EXPECT_EQ(arr, v.data());
   EXPECT_EQ(v.extent(0), 3);
   EXPECT_EQ(v(0), 8);
@@ -94,6 +99,54 @@ TEST(View, Simple3D) {
   EXPECT_EQ(v(3, 1, 0), 9);
   EXPECT_EQ(v(0, 2, 1), -3);
   EXPECT_EQ(v(4, 3, 2), 1);
+}
+
+//===----------------------------------------------------------------------===//
+
+TEST(Multi1DView, Empty) {
+  GRIMPL_NS::Multi1DView<float> empty_view;
+  EXPECT_FALSE(bool(empty_view));
+}
+
+TEST(Multi1DView, Simple) {
+  double row_0[5] = {0, 0, 0, 8, 0};
+  double row_1[5] = {0, 0, 0, 0, 0};
+  double row_2[5] = {0, 1, 0, 0, 0};
+  double row_3[5] = {0, 0, 0, 0, 17};
+
+  double* arr_of_ptr[4] = {row_0, row_1, row_2, row_3};
+
+  GRIMPL_NS::Multi1DView<double> v(arr_of_ptr, 5, 4);
+
+  EXPECT_TRUE(bool(v));
+  EXPECT_EQ(v.extent(0), 5);
+  EXPECT_EQ(v.extent(1), 4);
+  EXPECT_EQ(v(3, 0), 8);
+  EXPECT_EQ(v(1, 2), 1);
+  EXPECT_EQ(v(4, 3), 17);
+}
+
+TEST(Multi1DView, PtrOffset) {
+  int64_t row_0[6] = {0, 0, 0, 8, 0, 73};
+  int64_t row_1[6] = {0, 1, 0, 0, 0, 0};
+  int64_t row_2[6] = {0, 0, 0, 0, 17, 0};
+
+  int64_t* arr_of_ptr[4] = {row_0, row_1, row_2};
+
+  GRIMPL_NS::Multi1DView<int64_t> v(arr_of_ptr, 6, 3);
+  EXPECT_TRUE(bool(v));
+  EXPECT_EQ(v.extent(0), 6);
+  EXPECT_EQ(v.extent(1), 3);
+
+  // now adjust the pointer-offset and shrink ilen
+  v.override_ptr_offset_and_ilen(1, 4);
+  EXPECT_TRUE(bool(v));
+  EXPECT_EQ(v.extent(0), 4);
+  EXPECT_EQ(v.extent(1), 3);
+
+  EXPECT_EQ(v(2, 0), 8);
+  EXPECT_EQ(v(0, 1), 1);
+  EXPECT_EQ(v(3, 2), 17);
 }
 
 //===----------------------------------------------------------------------===//
