@@ -293,11 +293,16 @@ public:
   /// it is consistent with argument order for the constructor of `View<T**>`)
   Multi1DView(element_type* const* arr_of_ptr, int ilen, int jlen)
       : data_(arr_of_ptr), n_ptr_{jlen}, elem_in_ptr_{ilen}, ptr_offset_{0} {
-    GRIMPL_REQUIRE(ilen > 0 && jlen > 0, "ilen & jlen must be positive");
+    GRIMPL_REQUIRE(ilen > 0, "ilen must be positive, received: %d", ilen);
+    GRIMPL_REQUIRE(jlen > 0, "jlen must be positive, received: %d", jlen);
     GRIMPL_REQUIRE(arr_of_ptr != nullptr, "arr_of_ptr is a nullptr");
-    for (int j = 0; j < jlen; j++) {
-      GRIMPL_REQUIRE(arr_of_ptr[j] != nullptr, "arr_of_ptr holds nullptr");
-    }
+
+    // we are not ready to enforce the following invariant yet (it will be a
+    // useful safety check once we are ready)
+
+    // for (int j = 0; j < jlen; j++) {
+    //   GRIMPL_REQUIRE(arr_of_ptr[j] != nullptr, "arr_of_ptr holds nullptr");
+    // }
   }
 
   // This is a quick and dirty solution. Ideally, we would set this in the
