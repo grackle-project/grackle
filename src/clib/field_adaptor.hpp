@@ -6,12 +6,13 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares utility routines related to grackle_field_data
+/// Declares/Defines logic pertaining to adapting grackle_field_data to a more
+/// convenient internal format
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef UTILS_FIELD_HPP
-#define UTILS_FIELD_HPP
+#ifndef FIELD_ADAPTOR_HPP
+#define FIELD_ADAPTOR_HPP
 
 #include <cstddef>
 #include <vector>
@@ -259,4 +260,4 @@ public:
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* UTILS_FIELD_HPP */
+#endif  // FIELD_ADAPTOR_HPP

@@ -18,12 +18,12 @@
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+#include "field_adaptor.hpp"
 #include "fortran_func_wrappers.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
-#include "utils-field.hpp"
 
 namespace grackle::impl {
 

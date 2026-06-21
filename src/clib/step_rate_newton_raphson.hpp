@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "grackle.h"             // gr_float
+#include "field_adaptor.hpp"
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -29,7 +30,6 @@
 #include "support/index_helper.hpp"
 #include "time_deriv_0d.hpp"
 #include "utils-cpp.hpp"
-#include "utils-field.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
