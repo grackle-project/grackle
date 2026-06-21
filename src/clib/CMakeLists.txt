@@ -113,6 +113,7 @@ add_library(Grackle_Grackle
   dust/multi_grain_species/calc_grain_size_increment_species_1d.cpp dust/multi_grain_species/calc_grain_size_increment_species_1d.hpp
   dust/misc.hpp
   dynamic_api.cpp
+  field_adaptor.hpp
   fortran_func_wrappers.hpp
   full_rxn_rate_buf.hpp
   gas_props.hpp
@@ -157,7 +158,6 @@ add_library(Grackle_Grackle
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
-  utils-field.hpp
   visitor/common.hpp
   visitor/copy.hpp
   visitor/memory.hpp
