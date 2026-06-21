@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <gtest/gtest.h>
+#include <algorithm>  // std::fill, std::for_each
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -383,11 +384,47 @@ public:
   }
 };
 
+// this acts like a "plugin" for View2DInterfaceTest
+// - this deals with managing the creation and allocations of MultiViews
+struct MultiViewManager {
+  using element_type = double;
+  using ViewType = GRIMPL_NS::Multi1DView<element_type>;
+
+private:
+  // This is the allocation
+  class Alloc {
+    std::vector<element_type*> v_;
+
+  public:
+    element_type** data() { return v_.data(); }
+
+    Alloc(int n_ptr, int elem_in_ptr) {
+      for (int row_ind = 0; row_ind < n_ptr; row_ind++) {
+        element_type* p = v_.emplace_back(new element_type[elem_in_ptr]);
+        std::fill(p, p + elem_in_ptr, element_type{0});
+      }
+    }
+
+    ~Alloc() {
+      std::for_each(v_.begin(), v_.end(), [](element_type* p) { delete[] p; });
+    }
+  };
+
+  std::vector<std::unique_ptr<Alloc>> allocs_;
+  std::vector<std::unique_ptr<ViewType>> views_;
+
+public:
+  ViewType& make_zero_filled(int extent0, int extent1) {
+    Alloc& a = *allocs_.emplace_back(std::make_unique<Alloc>(extent0, extent1));
+    return *views_.emplace_back(
+        std::make_unique<ViewType>(a.data(), extent0, extent1));
+  }
+};
+
 // this is a generic test of the interface for a 2D view
-// -> I decided to make this a type-parameterized test for reasons that will
-//    become apparent in a followup PR
 // -> ManagerT constructs an instance of the ViewType and ensures that all
 //    associated memory allocations will be freed when we go out of scope
+// -> At this time, we use this test with a regular ``View`` and ``Multi1DView``
 template <typename ManagerT>
 class View2DInterfaceTest : public testing::Test {
 protected:
@@ -442,7 +479,8 @@ protected:
 
 using MyManagerTypes =
     ::testing::Types<View2DManager<GRIMPL_NS::DataLayout::LEFT>,
-                     View2DManager<GRIMPL_NS::DataLayout::RIGHT>>;
+                     View2DManager<GRIMPL_NS::DataLayout::RIGHT>,
+                     MultiViewManager>;
 // until we adopt C++20, we need to insert a trailing comma in order to suppress
 // warnings about legacy C++20 variadic macro behavior
 // https://github.com/google/googletest/issues/2271#issuecomment-665742471
@@ -512,7 +550,7 @@ TYPED_TEST(View2DInterfaceTest, CopyConstructEmpty) {
 
   ViewType empty_view;
   ViewType v2(empty_view);
-  EXPECT_EQ(v2.data(), nullptr);
+  EXPECT_FALSE(bool(v2));
 }
 
 TYPED_TEST(View2DInterfaceTest, MoveConstruct) {
@@ -539,7 +577,7 @@ TYPED_TEST(View2DInterfaceTest, MoveConstructEmpty) {
 
   ViewType empty_view;
   ViewType v2(std::move(empty_view));
-  EXPECT_EQ(v2.data(), nullptr);
+  EXPECT_FALSE(bool(v2));
 }
 
 TYPED_TEST(View2DInterfaceTest, CopyAssign) {
@@ -593,7 +631,7 @@ TYPED_TEST(View2DInterfaceTest, CopyAssignEmpty) {
   v = empty_view;
 
   // check that v is now like empty_view
-  EXPECT_EQ(v.data(), nullptr);
+  EXPECT_FALSE(bool(v));
 
   // confirm that v_copy_of_orig was totally unaffected by all of this
   EXPECT_TRUE(this->is_unchanged_sample_view(v_copy_of_orig));
@@ -656,7 +694,7 @@ TYPED_TEST(View2DInterfaceTest, MoveAssignEmpty) {
   v = std::move(empty_view);
 
   // check that v is now like empty_view
-  EXPECT_EQ(v.data(), nullptr);
+  EXPECT_FALSE(bool(v));
 
   // confirm that v_copy_of_orig was totally unaffected by all of this
   EXPECT_TRUE(this->is_unchanged_sample_view(v_copy_of_orig));
