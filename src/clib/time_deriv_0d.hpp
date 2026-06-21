@@ -10,10 +10,8 @@
 #include "chemistry_solver_funcs.hpp"
 #include "dust_props.hpp"
 #include "gas_props.hpp"
-#include "fortran_func_wrappers.hpp"
 #include "full_rxn_rate_buf.hpp"
 #include "grackle.h"
-#include "grackle_macros.h" // GRACKLE_FREE
 #include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
@@ -69,7 +67,7 @@ struct MainScratchBuf {
 
 /// @param[in] opacity_table_size The number of elements in a dynamically
 ///    computed dust grain opacity table
-MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
+inline MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
   int nelem = 1;
   MainScratchBuf out;
   out.grain_temperatures = new_GrainSpeciesCollection(nelem);
@@ -85,7 +83,7 @@ MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
   return out;
 }
 
-void drop_MainScratchBuf(MainScratchBuf* ptr) {
+inline void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_GrainSpeciesCollection(&ptr->grain_temperatures);
   drop_LnTLinInterpBuf(&ptr->logTlininterp_buf);
   drop_Cool1DMultiScratchBuf(&ptr->cool1dmulti_buf);
@@ -443,13 +441,12 @@ inline void scratchbufs_copy_from_pack(
 /// as a universal data-structure for passing around any/all kinds of field
 /// data. And, we should work on coming up with a superior alternative for
 /// use within Grackle
-void derivatives(
+inline void derivatives(
   double dt_FIXME, gr_float* rhosp, grackle::impl::SpeciesCollection rhosp_dot,
   gr_float* eint, double* eint_dot_specific, ContextPack& pack
 ) {
 
   // introduce some namespace abbreviations for use within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
   namespace gr_chem = ::grackle::impl::chemistry;
 
   chemistry_data* my_chemistry = pack.fwd_args.my_chemistry;
