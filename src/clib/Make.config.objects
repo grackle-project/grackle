@@ -46,6 +46,7 @@ OBJS_CONFIG_LIB = \
         rate_timestep_g.lo \
         make_consistent.lo \
         scale_fields.lo \
+        solve_cubic_equation.lo \
         solve_rate_cool.lo \
         support/status_reporting.lo \
         update_UVbackground_rates.lo \
