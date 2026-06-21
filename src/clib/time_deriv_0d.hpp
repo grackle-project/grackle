@@ -39,8 +39,6 @@ namespace time_deriv_0d {
 struct FrozenSimpleArgs {
   // the following batch of args are all forwarded
   int imetal;
-  // todo: we can delete `iter`. This is only here for historical reasons
-  int iter;
   double dom;
   double chunit;
   double dx_cgs;
