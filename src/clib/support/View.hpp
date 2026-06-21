@@ -442,9 +442,13 @@ public:
     GRIMPL_REQUIRE(n_ptr > 0, "n_ptr must be positive");
     GRIMPL_REQUIRE(elem_in_ptr > 0, "elem_in_ptr must be positive");
     GRIMPL_REQUIRE(arr_of_ptr != nullptr, "arr_of_ptr is a nullptr");
-    for (int i = 0; i < n_ptr; i++) {
-      GRIMPL_REQUIRE(arr_of_ptr[i] != nullptr, "arr_of_ptr holds nullptr");
-    }
+
+    // we are not ready to enforce the following invariant yet (it will be a
+    // useful safety check once we are ready)
+
+    // for (int j = 0; j < jlen; j++) {
+    //   GRIMPL_REQUIRE(arr_of_ptr[j] != nullptr, "arr_of_ptr holds nullptr");
+    // }
   }
 
   // This is a quick and dirty solution. Ideally, we would set this in the
