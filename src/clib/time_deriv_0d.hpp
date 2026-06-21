@@ -13,6 +13,7 @@
 #ifndef TIME_DERIV_0D_HPP
 #define TIME_DERIV_0D_HPP
 
+#include "LUT.hpp"
 #include "cool1d_multi_g.hpp"
 #include "chemistry_solver_funcs.hpp"
 #include "dust_props.hpp"
@@ -166,6 +167,14 @@ struct ContextPack {
   int grid_end[3];
   /** @} */
 
+  /// @defgroup dynamic_field_bufs
+  /// The arrays in this group provide storage for the various 1-element buffers
+  /// used with the dynamically evolved `fields`
+  /** @{ */
+  gr_float eint_field_buf[1];
+  gr_float sp_density_buf[MAX_EVOLVED_SPECIES_FIELDS];
+  /** @} */
+
   /// @defgroup general_time_deriv_packs
   /// The members in this group store packs of data that are used within the
   /// time derivative calculation. There are usually analogues to the data used
@@ -250,10 +259,13 @@ inline void configure_ContextPack(
   pack->local_edot_handling = local_edot_handling;
   pack->fields.grid_dx = my_fields->grid_dx;
 
-  // here, we overwrite each field in pack.fields_1zone with pointers from
-  // each field in my_fields corresponding to the current location (i,j,k)
+  // here, we overwrite each field in pack.fields with pointers from each field
+  // in my_fields corresponding to the current location (i,j,k)
   copy_offset_fieldmember_ptrs_(&pack->fields, my_fields, field_idx1d);
-
+  // now we overwrite each field corresponding to a dynamically evolved quantity
+  // to point to a pre-allocated quantity
+  copy_contigSpTable_fieldmember_ptrs_(&pack->fields, pack->sp_density_buf, 1);
+  pack->fields.internal_energy = pack->eint_field_buf;
 }
 
 /// here we copy the values from the scratch buffers (used by grackle's main
@@ -429,28 +441,9 @@ inline void scratchbufs_copy_from_pack(
 /// @note
 /// If we ever redefine `SpeciesCollection` to be a class template, it would be
 /// natural to represent `rhosp` with `SpeciesCollection<gr_float>`
-///
-/// @par Future Performance Considerations:
-/// From a performance perspective, a compelling case could be made that we
-/// should be wiring up the members of the `grackle_field_data` struct to point
-/// to the entries of `rhosp` and `eint` ahead of time (before we call this
-/// function). In that scenario, it would probably make the most sense:
-/// - to replace `rhosp` and `eint` arguments with an argument passing the
-///   struct AND to manage the struct entirely outside of the logic in the
-///   time_deriv_0d namespace (this could make a lot of sense if we transition
-///   this function to operating on arrays of inputs)
-/// - Alternatively, we could organize all of the routines in this namespace so
-///   that they represent a single well-defined data-structure with explicitly
-///   documented semantics for the order of invoking commands. Essentially, it
-///   would need to be a state-machine.
-/// - (no matter what, we should try to avoid a bunch of implicit "magic")
-/// In reality, `grackle_field_data` is very poorly suited for its current role
-/// as a universal data-structure for passing around any/all kinds of field
-/// data. And, we should work on coming up with a superior alternative for
-/// use within Grackle
 inline void derivatives(
-  double dt_FIXME, gr_float* rhosp, grackle::impl::SpeciesCollection rhosp_dot,
-  gr_float* eint, double* eint_dot_specific, ContextPack& pack
+  double dt_FIXME, const gr_float* rhosp, SpeciesCollection rhosp_dot,
+  const gr_float* eint, double* eint_dot_specific, ContextPack& pack
 ) {
 
   // introduce some namespace abbreviations for use within this function
@@ -463,12 +456,11 @@ inline void derivatives(
 
   pack.other_scratch_buf.itmask[0] = MASK_TRUE;
 
-  // configure the relevant members of `pack.fields` to point to the buffers
-  // specified by the rhosp and eint argument.
-  // -> the "Future Performance Considerations" section of the docstring has
-  //    a relevant discussion about this operation
-  copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rhosp, 1);
-  pack.fields.internal_energy = &eint[0];
+  // copy values in eint & rhosp arguments into buffers tracked by pack.fields
+  pack.eint_field_buf[0] = eint[0];
+  for (int i=0; i < MAX_EVOLVED_SPECIES_FIELDS; i++) {
+    pack.sp_density_buf[i] = rhosp[i];
+  }
 
   if (pack.local_edot_handling != 1) {
     // in this branch, we're effectively ignoring the dependence of temperature
