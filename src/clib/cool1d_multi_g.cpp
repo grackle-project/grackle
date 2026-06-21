@@ -37,6 +37,7 @@ void grackle::impl::cool1d_multi_g(
     const double* rhoH, const double* nelec_times_mH, gr_mask_type* itmask,
     gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    SpeciesMultiView<const gr_float> sp_densities,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     IndexRange idx_range,
     grackle::impl::GrainSpeciesCollection grain_temperatures,

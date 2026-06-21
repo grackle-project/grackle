@@ -17,6 +17,7 @@
 #define COOL1D_MULTI_G_HPP
 
 #include "grackle.h"                 // gr_float
+#include "field_adaptor.hpp"         // SpeciesMultiView
 #include "fortran_func_decls.h"      // gr_mask_int
 #include "internal_units.hpp"        // InternalGrUnits
 #include "internal_types.hpp"        // GrainSpeciesCollection
@@ -54,6 +55,10 @@ namespace grackle::impl {
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
 /// @param[in] my_fields Specifies the field data.
+/// @param[in] sp_densities Specifies the densities of the various species
+///     that Grackle evolves (if any) in a format that allows the values to be
+///     accessed with the index lookup table. Wherever possible, data should be
+///     be accessed through this argument, rather than with @p my_fields
 /// @param[in] my_uvb_rates Holds precomputed photorates that depend on the UV
 ///     background. These rates do not include the effects of self-shielding.
 /// @param[in] internalu Specifies Grackle's internal unit-system
@@ -84,6 +89,7 @@ void cool1d_multi_g(int imetal, double* edot, const double* tgas,
                     gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
                     chemistry_data_storage* my_rates,
                     grackle_field_data* my_fields,
+                    SpeciesMultiView<const gr_float> sp_densities,
                     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
                     IndexRange idx_range,
                     grackle::impl::GrainSpeciesCollection grain_temperatures,
