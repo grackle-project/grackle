@@ -13,6 +13,8 @@
 #ifndef UTILS_FIELD_HPP
 #define UTILS_FIELD_HPP
 
+#include <cstddef>
+#include <vector>
 #include "grackle.h"
 #include "LUT.hpp"
 #include "support/index_helper.hpp"
@@ -200,17 +202,35 @@ class FieldAdaptorManager {
   std::vector<gr_float*> sp_arr_of_ptrs_;
 
 public:
-  FieldAdaptorManager(const grackle_field_data* field_data)
-      : field_data_(field_data) {
-    // we're going to need my_chemistry in the near future
+  /// Override the wrapped @ref grackle_field_data pointer
+  ///
+  /// This is pretty dangerous to use:
+  /// - challenging, difficult-to-understand bugs will arise if you try to
+  ///   access a @ref SpeciesMultiView that was created before you called this
+  ///   method.
+  /// - this **ONLY** exists as an optimization for the case where you would
+  ///   overwrite one instance with a new instance (i.e. it lets avoid a heap
+  ///   allocation). We should remove this (or make it private) when we stop
+  ///   tracking an instance within @ref time_deriv_0d::ContextPack.
+  void unsafe_reset_wrapped_ptr(const grackle_field_data* field_data) {
+    // we are going to need to use a chemistry_data* pointer to carry out this
+    // work in the near future
     GRIMPL_REQUIRE(field_data != nullptr, "field_data is a nullptr");
+    field_data_ = field_data;
 
-    sp_arr_of_ptrs_.resize(SpLUT::NUM_ENTRIES);
+    // the following call does nothing if the size doesn't change
+    sp_arr_of_ptrs_.resize(MAX_EVOLVED_SPECIES_FIELDS);
 
 #define ENTRY(SPECIES_NAME)                                                    \
   sp_arr_of_ptrs_[SpLUT::SPECIES_NAME] = field_data->SPECIES_NAME##_density;
 #include "field_data_evolved_species.def"
 #undef ENTRY
+  }
+
+  /// @brief Construct a new instance
+  explicit FieldAdaptorManager(const grackle_field_data* field_data)
+      : field_data_(nullptr) {
+    unsafe_reset_wrapped_ptr(field_data);
   }
 
   FieldAdaptorManager() = default;  // this exists to support move-operations
