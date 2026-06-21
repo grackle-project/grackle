@@ -126,6 +126,25 @@ TEST(Multi1DView, Simple) {
   EXPECT_EQ(v(4, 3), 17);
 }
 
+TEST(Multi1DView, SimpleConstCast) {
+  double row_0[5] = {0, 0, 0, 8, 0};
+  double row_1[5] = {0, 0, 0, 0, 0};
+  double row_2[5] = {0, 1, 0, 0, 0};
+  double row_3[5] = {0, 0, 0, 0, 17};
+
+  double* arr_of_ptr[4] = {row_0, row_1, row_2, row_3};
+
+  GRIMPL_NS::Multi1DView<double> v(arr_of_ptr, 5, 4);
+  GRIMPL_NS::Multi1DView<const double> v_const = v;
+
+  EXPECT_TRUE(bool(v_const));
+  EXPECT_EQ(v_const.extent(0), 5);
+  EXPECT_EQ(v_const.extent(1), 4);
+  EXPECT_EQ(v_const(3, 0), 8);
+  EXPECT_EQ(v_const(1, 2), 1);
+  EXPECT_EQ(v_const(4, 3), 17);
+}
+
 TEST(Multi1DView, PtrOffset) {
   int64_t row_0[6] = {0, 0, 0, 8, 0, 73};
   int64_t row_1[6] = {0, 1, 0, 0, 0, 0};

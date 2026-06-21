@@ -328,6 +328,10 @@ public:
   static constexpr int rank = 2;
 
 private:
+  using non_const_elem_type_ = typename std::remove_const_t<element_type>;
+  using const_elem_type_ = typename std::add_const_t<element_type>;
+  friend class Multi1DView<const_elem_type_>;
+
   // the choice to declare `data_` as `element_type*const*`, rather than
   // `element_type**` is intended to make sure that we never accidently mutate
   // a pointer address
@@ -388,6 +392,23 @@ public:
     ptr_offset_ = ptr_offset;
     elem_in_ptr_ = ilen;
   }
+
+  /// conversion constructor that facilitates implicit casts from views of
+  /// non-constant values to views of constant values
+  ///
+  /// For example, this allows implicit creation of ``View<const double**>``
+  /// from ``View<double**>``
+  ///
+  /// @note
+  /// This is only defined for instances of View for which T is const-qualified.
+  /// If it were defined when
+  /// T is not a pointer-to-const, then it would duplicate the copy-constructor.
+  template <class = std::enable_if<std::is_same<T, const_elem_type_>::value>>
+  Multi1DView(const Multi1DView<non_const_elem_type_>& other)
+      : data_{other.data_},
+        n_ptr_{other.n_ptr_},
+        ptr_offset_{other.ptr_offset_},
+        elem_in_ptr_{other.elem_in_ptr_} {}
 
   // explicitly use defaults for a handful of cases
   ~Multi1DView() = default;
