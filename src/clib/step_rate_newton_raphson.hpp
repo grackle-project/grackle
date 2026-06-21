@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file step_rate_newton_raphson.hpp
-/// @brief Defines the step_rate_newton_raphson function
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Defines/declares the step_rate_newton_raphson function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // step_rate_newton_raphson function from FORTRAN to C++
