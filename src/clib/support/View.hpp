@@ -307,6 +307,9 @@ public:
   GeneralView& operator=(const GeneralView&) = default;  // copy assignment
   GeneralView& operator=(GeneralView&&) = default;       // move assignment
 
+  /// returns whether `*this` has associated data (it doesn't wrap a nullptr)
+  explicit operator bool() const noexcept { return data_ != nullptr; }
+
   element_type* data() const noexcept { return data_; }
   size_type extent(int i) const {
     GRIMPL_REQUIRE(i >= 0 && i <= rank,
@@ -351,6 +354,152 @@ using FortranView = GeneralView<T, DataLayout::LEFT>;
 /// @brief a multidimensional view with C++'s "natural" data layout
 template <typename T>
 using View = GeneralView<T, DataLayout::RIGHT>;
+
+/// @brief Represents a sequence of pointers.
+///
+/// At this time, instances never own the underlying memory (those allocations
+/// are managed outside of this type). A primary feature of this type is that
+/// it implements the interface of a `View<T**>`. If you have an instance
+/// called `mview`, then you can invoke `mview(i,j)` to access an element.
+///
+/// - Just like for `View<T**>`, the last argument in the call to
+///   `mvivew(i,j)` is the contiguous index.
+/// - in practice, you may want to avoid using `mview(i,j)` within a tight
+///   loop for the aliasing-related reasons discussed down below. With that
+///   said, this interface is quite useuf in certain contexts
+/// - the initial impetus for providing this interface will be for setting up
+///   the vector used in the Newton-Rapshon solver
+///
+/// Array of Pointers vs Pointer of Pointers
+/// ========================================
+/// An important implementation question is whether we should declare this
+/// type's `data_` member as a
+/// 1. a fixed size array of pointers  (i.e. `T* data_[BIG_NUM]` where
+///    `BIG_NUM` is a compile-time constant)
+/// 2. OR a pointer of pointers (i.e. `T** data_`)
+///
+/// For less experienced developers, the former choice would embed space for
+/// `BIG_NUM` pointers directly as part of the memory allocation for this type
+/// (in practice, it makes an instance many times larger -- which could make a
+/// significant difference in how many threads are usable on GPUs). In contrast,
+/// an extra pointer dereference is needed for the latter approach.
+///
+/// The big question pertains to a for-loop when we we call `mview(i,j)`. We
+/// have taken steps to ensure that the underlying `data_[j][idx]` access is
+/// always inlined. Generally, a C/C++ compiler would insert extra instructions
+/// to check whether `data_[j]` is changes between accesses. I suspect, that
+/// first approach may make it easier to conclude at compile time that the
+/// value won't change (but I don't actually know -- it almost certainly
+/// depends on whether there are other function calls inside the loop and what
+/// assumptions the compiler can make about them).
+///
+/// We defer this point to the future since
+/// 1. this construct will be at least as performant as the code it replaces
+/// 2. If we really want to treat the data as 2D view in a tight loop, we
+///    should really be copying the data into a contiguous array so we can
+///    track it directly in a `View<T**>`
+template <typename T>
+class Multi1DView {
+public:
+  // define type-aliases consistent with View<T**>
+  using element_type = T;
+  using reference_type = element_type&;
+  using size_type = int;
+  static constexpr int rank = 2;
+  static constexpr DataLayout layout = DataLayout::RIGHT;
+
+private:
+  // the choice to declare `data_` as `element_type*const*`, rather than
+  // `element_type**` is intended to make sure that we never accidently mutate
+  // a pointer address
+  element_type* const* data_;
+  size_type n_ptr_;
+  size_type elem_in_ptr_;
+  size_type ptr_offset_;
+
+public:
+  /// Default constructor
+  ///
+  /// @note
+  /// The syntax ensures that the contents of extent_ are all initialized to
+  /// zero since extent_ is an array of non-class types
+  Multi1DView() : data_{nullptr}, n_ptr_{0}, elem_in_ptr_{0}, ptr_offset_{0} {}
+
+  /// Construct an instance a from an array of pointers, @p arr_of_ptr. Every
+  /// subsequent arg specifies the extent of an axis (from the slowest axis to
+  /// the fastest axis)
+  ///
+  /// The provided @p arr_of_ptr should not be a nullptr or hold a nullptr.
+  /// Furthermore, undefined behavior may arise if the constructed object
+  /// outlives the memory associated associated with the argument (it is of
+  /// course ok for the arg's memory to be freed before the object's destructor
+  /// is called)
+  Multi1DView(element_type* const* arr_of_ptr, int n_ptr, int elem_in_ptr)
+      : data_(arr_of_ptr),
+        n_ptr_{n_ptr},
+        elem_in_ptr_{elem_in_ptr},
+        ptr_offset_{0} {
+    GRIMPL_REQUIRE(n_ptr > 0, "n_ptr must be positive");
+    GRIMPL_REQUIRE(elem_in_ptr > 0, "elem_in_ptr must be positive");
+    GRIMPL_REQUIRE(arr_of_ptr != nullptr, "arr_of_ptr is a nullptr");
+    for (int i = 0; i < n_ptr; i++) {
+      GRIMPL_REQUIRE(arr_of_ptr[i] != nullptr, "arr_of_ptr holds nullptr");
+    }
+  }
+
+  // This is a quick and dirty solution. Ideally, we would set this in the
+  // constructor (I'm just not clear on the best way to differentiate the
+  // ptr_offset from the extents)
+  void override_ptr_offset_and_ilen(int ptr_offset, int jlen) {
+    GRIMPL_REQUIRE(ptr_offset >= 0, "ptr_offset can't be negative");
+    GRIMPL_REQUIRE(jlen > 0, "jlen must be positive");
+    ptr_offset_ = ptr_offset;
+    elem_in_ptr_ = jlen;
+  }
+
+  // explicitly use defaults for a handful of cases
+  ~Multi1DView() = default;
+  Multi1DView(const Multi1DView&) = default;             // copy constructor
+  Multi1DView(Multi1DView&&) = default;                  // move constructor
+  Multi1DView& operator=(const Multi1DView&) = default;  // copy assignment
+  Multi1DView& operator=(Multi1DView&&) = default;       // move assignment
+
+  /// returns whether `*this` has associated data (it doesn't wrap a nullptr)
+  explicit operator bool() const noexcept { return data_ != nullptr; }
+
+  size_type extent(int i) const {
+    switch (i) {
+      case 0:
+        return n_ptr_;
+      case 1:
+        return elem_in_ptr_;  // <- contiguous axis
+      default:
+        GRIMPL_ERROR("i must be 0 or 1");
+    }
+  }
+
+  /// Implements multi-dimensional indexing. The last argument corresponds
+  /// to the contiguous axis
+  GRIMPL_FORCE_INLINE element_type& operator()(int i, int j) const {
+    return data_[i][j + ptr_offset_];
+  }
+
+  /// This method should be used to help avoid overhead of treating this
+  /// index like a View<T**> in a tight loop
+  ///
+  /// @note
+  /// Ideally, this method wouldn't exist (since it's a departure from the
+  /// interface of `View<T**>`), but it's a necessary evil)
+  GRIMPL_FORCE_INLINE element_type* get_row_ptr(int i) const {
+    return data_[i] + ptr_offset_;
+  }
+
+  // This is an analogue for get_row_ptr that may or may not be useful (we can
+  // always delete it later)
+  GRIMPL_FORCE_INLINE View<element_type> get_row_view(int i) const {
+    return View<element_type>(data_[i] + ptr_offset_, elem_in_ptr_);
+  }
+};
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
