@@ -21,19 +21,19 @@
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
-#include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "internal_units.hpp"
 #include "opaque_storage.hpp"
-#include "utils-cpp.hpp"
-
-#include "utils-field.hpp"
+#include "support/config.hpp"
+#include "support/index_helper.hpp"
 #include "time_deriv_0d.hpp"
+#include "utils-cpp.hpp"
+#include "utils-field.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
-int sanity_check_() {
+int inline sanity_check_() {
   GRIMPL_REQUIRE(((1+SpLUT::e)== 1), "index of e is %d", SpLUT::e);
   GRIMPL_REQUIRE(((1+SpLUT::HI)== 2), "index of HI is %d", SpLUT::HI);
   GRIMPL_REQUIRE(((1+SpLUT::HII)== 3), "index of HII is %d", SpLUT::HII);
@@ -776,7 +776,7 @@ label_9996:
 }
 
 
-} // namespace grackle::impl
+} // namespace GRIMPL_NAMESPACE_DECL
 
 
 #endif /* STEP_RATE_NEWTON_RAPHSON_HPP */
