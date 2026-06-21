@@ -122,10 +122,10 @@ inline void wrapped_calc_derivatives(
   // 1. copy values out of dsp into rhosp_grflt and local_eint
   //    - at some point, we need to add some logic to deal with edge cases
   //      that can arise when `sizeof(gr_float) < sizeof(double)
-  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
     rhosp_grflt[sp_idx] = static_cast<gr_float>(dsp[sp_idx]);
   }
-  local_eint[0] = static_cast<gr_float>(dsp[SpLUT::NUM_ENTRIES]);
+  local_eint[0] = static_cast<gr_float>(dsp[MAX_EVOLVED_SPECIES_FIELDS]);
 
   // 2. call the wrapped function
   grackle::impl::time_deriv_0d::derivatives(
@@ -133,10 +133,10 @@ inline void wrapped_calc_derivatives(
   );
 
   // 3. copy the computed derivatives into dspdot
-  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
     dspdot[sp_idx] = rhosp_dot.data[sp_idx][0];
   }
-  dspdot[SpLUT::NUM_ENTRIES] = eint_dot_specific[0];
+  dspdot[MAX_EVOLVED_SPECIES_FIELDS] = eint_dot_specific[0];
 }
 
 /// An alternative to step_rate_g for evolving the species rate equations that
@@ -195,7 +195,7 @@ inline void step_rate_newton_raphson(
   double dspj, err, err_max;
   // the following specifies the historical 1-based index that we would use to
   // hold energy
-  const int i_eng = SpLUT::NUM_ENTRIES + 1;
+  const int i_eng = MAX_EVOLVED_SPECIES_FIELDS + 1;
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
   std::vector<double> dsp(i_eng);
@@ -239,7 +239,7 @@ inline void step_rate_newton_raphson(
     frozen_tderiv_args, main_scratch_buf
   );
 
-  std::vector<gr_float> rhosp_grflt(SpLUT::NUM_ENTRIES);
+  std::vector<gr_float> rhosp_grflt(MAX_EVOLVED_SPECIES_FIELDS);
   grackle::impl::SpeciesCollection rhosp_dot =
     grackle::impl::new_SpeciesCollection(1);
 
@@ -383,7 +383,7 @@ inline void step_rate_newton_raphson(
       // here, we fill in the idsp array
       // -> the idsp array is used for mapping between the compressed vector
       //    form (that only has nsp elements) and dsp (that always has
-      //    `SpLUT::NUM_ENTRIES + 1` entries)
+      //    `MAX_EVOLVED_SPECIES_FIELDS + 1` entries)
       // -> in the future, we should construct this array first (before doing
       //    anything else):
       //    -> it gives us the value of nsp for free!
