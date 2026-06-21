@@ -12,18 +12,20 @@
 #include "gas_props.hpp"
 #include "full_rxn_rate_buf.hpp"
 #include "grackle.h"
-#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
 #include "rate_timestep_g.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "utils-field.hpp"
+#include "support/config.hpp"
+#include "support/index_helper.hpp"
 
 // we choose to adopt a longer, more descriptive namespace here so that the
 // handful of functions defined in this file can have shorter names (in the
 // future, if we are willing to define methods on a struct, we can definitely
 // shorten the namespace name)
-namespace grackle::impl::time_deriv_0d {
+namespace GRIMPL_NAMESPACE_DECL {
+namespace time_deriv_0d {
 
 /// this is a collection of the arguments that won't change between successive
 /// time derivative calculations
@@ -566,6 +568,7 @@ inline void derivatives(
 }
 
 
-} // namespace grackle::impl::time_deriv_0d
+} // namespace time_deriv_0d
+} // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* TIME_DERIV_0D_HPP */
