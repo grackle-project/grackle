@@ -24,8 +24,9 @@
 #include "lnT_prep.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
+#include "support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 // Some ideas for refactoring
 // - we probably want to break the following function up into its constituent
@@ -427,6 +428,6 @@ inline void lookup_dust_rates1d(
   }
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // DUST_LOOKUP_DUST_RATES1D_HPP
