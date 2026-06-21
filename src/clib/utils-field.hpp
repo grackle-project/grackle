@@ -1,15 +1,23 @@
-// See LICENSE file for license and copyright information
-
-/// @file utils-field.hpp
-/// @brief Declares utility routines related to grackle_field_data
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares utility routines related to grackle_field_data
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef UTILS_FIELD_HPP
 #define UTILS_FIELD_HPP
 
 #include "grackle.h"
-#include "utils-cpp.hpp"
+#include "LUT.hpp"
+#include "support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// maps a 3D index to the underlying 1D index of a contiguous memory buffer
 /// "using a layout_left mapping policy." We assume 0-based indexing
@@ -127,6 +135,6 @@ struct SpeciesLUTFieldAdaptor {
   }
 };
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* UTILS_FIELD_HPP */
