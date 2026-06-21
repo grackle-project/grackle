@@ -174,11 +174,45 @@ public:
   }
 };
 
+// this acts like a "plugin" for View2DInterfaceTest
+// - this deals with managing the creation and allocations of MultiViews
+struct MultiViewManager {
+  using element_type = double;
+  using ViewType = GRIMPL_NS::Multi1DView<element_type>;
+
+private:
+  std::vector<std::unique_ptr<element_type[]>> row_ptrs_;
+  std::vector<std::unique_ptr<element_type*[]>> row_groups_;
+  std::vector<std::unique_ptr<ViewType>> views_;
+
+public:
+  ViewType& make_zero_filled(int extent0, int extent1) {
+    // allocate an array of rows
+    element_type** arr_of_ptr =
+        row_groups_.emplace_back(std::make_unique<element_type*[]>(extent1))
+            .get();
+
+    // allocate a pointer for each row
+    for (int row_ind = 0; row_ind < extent1; row_ind++) {
+      element_type* p =
+          row_ptrs_.emplace_back(std::make_unique<element_type[]>(extent0))
+              .get();
+      // I think this loop is unnecessary
+      for (int i = 0; i < extent0; i++) {
+        p[i] = element_type{0};
+      }
+      arr_of_ptr[row_ind] = p;
+    }
+
+    return *views_.emplace_back(
+        std::make_unique<ViewType>(arr_of_ptr, extent0, extent1));
+  }
+};
+
 // this is a generic test of the interface for a 2D view
-// -> I decided to make this a type-parameterized test for reasons that will
-//    become apparent in a followup PR
 // -> ManagerT constructs an instance of the ViewType and ensures that all
 //    associated memory allocations will be freed when we go out of scope
+// -> At this time, we use this test with a regular ``View`` and ``Multi1DView``
 template <typename ManagerT>
 class View2DInterfaceTest : public testing::Test {
 protected:
@@ -231,7 +265,7 @@ protected:
   }
 };
 
-using MyManagerTypes = ::testing::Types<View2DManager>;
+using MyManagerTypes = ::testing::Types<View2DManager, MultiViewManager>;
 // until we adopt C++20, we need to insert a trailing comma in order to suppress
 // warnings about legacy C++20 variadic macro behavior
 // https://github.com/google/googletest/issues/2271#issuecomment-665742471
@@ -301,7 +335,7 @@ TYPED_TEST(View2DInterfaceTest, CopyConstructEmpty) {
 
   ViewType empty_view;
   ViewType v2(empty_view);
-  EXPECT_EQ(v2.data(), nullptr);
+  EXPECT_FALSE(bool(v2));
 }
 
 TYPED_TEST(View2DInterfaceTest, MoveConstruct) {
@@ -328,7 +362,7 @@ TYPED_TEST(View2DInterfaceTest, MoveConstructEmpty) {
 
   ViewType empty_view;
   ViewType v2(std::move(empty_view));
-  EXPECT_EQ(v2.data(), nullptr);
+  EXPECT_FALSE(bool(v2));
 }
 
 TYPED_TEST(View2DInterfaceTest, CopyAssign) {
@@ -382,7 +416,7 @@ TYPED_TEST(View2DInterfaceTest, CopyAssignEmpty) {
   v = empty_view;
 
   // check that v is now like empty_view
-  EXPECT_EQ(v.data(), nullptr);
+  EXPECT_FALSE(bool(v));
 
   // confirm that v_copy_of_orig was totally unaffected by all of this
   EXPECT_TRUE(this->is_unchanged_sample_view(v_copy_of_orig));
@@ -445,7 +479,7 @@ TYPED_TEST(View2DInterfaceTest, MoveAssignEmpty) {
   v = std::move(empty_view);
 
   // check that v is now like empty_view
-  EXPECT_EQ(v.data(), nullptr);
+  EXPECT_FALSE(bool(v));
 
   // confirm that v_copy_of_orig was totally unaffected by all of this
   EXPECT_TRUE(this->is_unchanged_sample_view(v_copy_of_orig));
