@@ -910,7 +910,7 @@ int solve_rate_cool(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
             dust2gas.data(), dom, dx_cgs, c_ljeans, itmask.data(),
             itmask_metal.data(), dt, my_chemistry,
-            my_rates, my_fields, *my_uvb_rates, internalu,
+            my_rates, my_fields,sp_densities, *my_uvb_rates, internalu,
             grain_temperatures, logTlininterp_buf,
             spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
             internal_dust_prop_scratch_buf
