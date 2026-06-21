@@ -15,7 +15,10 @@
 
 #include "grackle.h"
 #include "LUT.hpp"
+#include "support/index_helper.hpp"
 #include "support/config.hpp"
+#include "support/status_reporting.hpp"
+#include "support/View.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -132,6 +135,105 @@ struct SpeciesLUTFieldAdaptor {
     } else {
       GRIMPL_ERROR("lut_idx must be smaller than %s", SpLUT::NUM_ENTRIES);
     }
+  }
+};
+
+/// @brief Acts as 2D view of all dynamically evolved species data.
+///
+/// In more detail:
+/// - The first axis (i.e. the contiguous, fast axis), corresponds to the
+///   spatial i index from an associated @ref IndexRange object. In grackle
+///   configurations that handling multidimensional grids, the index offset for
+///   the other axes (i.e. the j-axis and k-axis) should already be baked into
+///   an object.
+/// - The second axis (i.e. the slow axis) has an index for each dynamically
+///   evolved Species.
+///
+/// Motivation
+/// ----------
+/// The plan is to transition to accessing dynamically evolved species data in
+/// Grackle's core calculation routines through instances of this type (rather
+/// than directly using @ref grackle_field_data).
+///
+/// We have explicitly chosen to create a type alias, rather than use
+/// @brief Multi1DView to make it easier to update the underlying type in the
+/// future. This might happen if we decide to copy the species data into a
+/// contiguous 2D array (there are tradeoffs to such a choice, but it seeks
+/// like a net positive).
+///
+/// Other Thoughts
+/// --------------
+/// In the future we may want to consider renaming this type-alias and consider
+/// tracking other dynamically evolved quantities within instances of this
+/// type. At this time, specific internal energy is the only other quantity
+/// (in the near future, it may contain density as we add better dust networks)
+template <typename T>
+using SpeciesMultiView = Multi1DView<T>;
+
+/// @brief This manages logic (and data) associated with adapting the
+///        information within @ref grackle_field_data to a more convenient
+///        format
+///
+/// Right now, a @ref FieldAdaptorManager instance is constructed so that it
+/// tracks a pointer to a @ref grackle_field_data pointer. For the duration of
+/// the instance's lifetime, that pointer must remain valid and none of its
+/// data should be directly mutated (other than values within the pointers of
+/// dynamically evolved fields). For that reason, instances of this type can't
+/// persist between Grackle API calls (i.e. if we create an instance during an
+/// API call, we destroy the instance after completing the associated work).
+///
+/// The impetus for creating this type was to have a single place where we
+/// could stick the memory management associated with and the logic for
+/// creating a @ref SpeciesMultiView.
+///
+/// The role of this type will probably evolve with time. For example, one
+/// could imagine creating a @ref Multi1DView dedicated to tracking RT fields
+/// or perhaps a @ref Multi1DView dedicated to any/all non-dynamically evolved
+/// fields. In the future, (e.g. in a 4.0 release) we might restructure the
+/// internals of @ref grackle_field_data and this type may need to do less work
+class FieldAdaptorManager {
+  // the field_data that is wrapped
+  const grackle_field_data* field_data_;
+
+  // we'll probably need to tailor the precise memory management strategies to
+  // the backend, so we'll start out simple
+  std::vector<gr_float*> sp_arr_of_ptrs_;
+
+public:
+  FieldAdaptorManager(const grackle_field_data* field_data)
+      : field_data_(field_data) {
+    // we're going to need my_chemistry in the near future
+    GRIMPL_REQUIRE(field_data != nullptr, "field_data is a nullptr");
+
+    sp_arr_of_ptrs_.resize(SpLUT::NUM_ENTRIES);
+
+#define ENTRY(SPECIES_NAME)                                                    \
+  sp_arr_of_ptrs_[SpLUT::SPECIES_NAME] = field_data->SPECIES_NAME##_density;
+#include "field_data_evolved_species.def"
+#undef ENTRY
+  }
+
+  FieldAdaptorManager() = default;  // this exists to support move-operations
+  FieldAdaptorManager(FieldAdaptorManager&&) = default;
+  FieldAdaptorManager& operator=(FieldAdaptorManager&&) = default;
+
+  // use of copy-constructor or copy-assignment is probably out of error
+  // (we can always define them later)
+  FieldAdaptorManager(const FieldAdaptorManager&) = delete;
+  FieldAdaptorManager& operator=(const FieldAdaptorManager&) = delete;
+
+  /// @brief retrieve views of the dynamically evolved species data
+  SpeciesMultiView<gr_float> get_species_data(IndexRange idx_range) const {
+    int i_extent = field_data_->grid_dimension[0];
+    SpeciesMultiView<gr_float> out(sp_arr_of_ptrs_.data(), i_extent,
+                                   sp_arr_of_ptrs_.size());
+
+    // we intentionally use i = 0 so that we properly support loops from
+    // idx_range.i_start to idx_range.i_stop
+    int ptr_offset = layoutleft_3D_index_to_1D_(field_data_->grid_dimension, 0,
+                                                idx_range.j, idx_range.k);
+    out.override_ptr_offset_and_ilen(ptr_offset, i_extent);
+    return out;
   }
 };
 
