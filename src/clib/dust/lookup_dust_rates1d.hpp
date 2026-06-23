@@ -211,14 +211,6 @@ inline void lookup_dust_rates1d(
         my_fields->density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-    // the use of SpeciesLUTFieldAdaptor with dynamic indices is suboptimal
-    // (it triggers indices). But, I think its ok here for 2 reasons:
-    // 1. we aren't using it deep in a loop
-    // 2. it makes the code significantly easier to manage! Plus, if somebody
-    //    is using this configuration, speed is clearly not a huge priority
-    //    (given all of the extra passive scalars that must be tracked)
-    grackle::impl::SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
-
     grackle::impl::GrainSpeciesInfo* gsp_info =
         my_rates->opaque_storage->grain_species_info;
     GRIMPL_REQUIRE(gsp_info != nullptr, "sanity check!");
@@ -343,8 +335,8 @@ inline void lookup_dust_rates1d(
         double ingred_divisor[grackle::impl::max_ingredients_per_grain_species];
 
         for (int ingred_idx = 0; ingred_idx < n_ingred; ingred_idx++) {
-          const gr_float* ptr = field_data_adaptor.get_ptr_dynamic(
-              ingredient_l[ingred_idx].species_idx);
+          const gr_float* ptr =
+              sp_densities.contig1d_ptr(ingredient_l[ingred_idx].species_idx);
           ingred_view[ingred_idx] = grackle::impl::View<const gr_float***>(
               ptr, my_fields->grid_dimension[0], my_fields->grid_dimension[1],
               my_fields->grid_dimension[2]);
@@ -407,7 +399,7 @@ inline void lookup_dust_rates1d(
                 : grain_temperatures.data[gsp_idx];
 
         // get the view of the grain species's current mass density
-        const gr_float* rho_gsp_ptr = field_data_adaptor.get_ptr_dynamic(
+        const gr_float* rho_gsp_ptr = sp_densities.contig1d_ptr(
             gsp_info->species_info[gsp_idx].species_idx);
         grackle::impl::View<const gr_float***> rho_gsp(
             rho_gsp_ptr, my_fields->grid_dimension[0],
