@@ -13,13 +13,15 @@
 #ifndef OPAQUE_STORAGE_HPP
 #define OPAQUE_STORAGE_HPP
 
+#include <cstddef>
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "ratequery.hpp"
+#include "support/config.hpp"
 
-/// a struct that used to wrap some private storage details
+/// @brief a struct-like class that is used to wrap some private storage details
 ///
 /// The short-term goal is to have @ref chemistry_data_storage struct hold an
 /// opaque pointer to an instance of this struct. In more detail:
@@ -57,12 +59,12 @@ struct gr_opaque_storage {
   /// by the input parameters (here "ln" stands for natural log)
   ///@{
   /// holds the collision rate tables
-  grackle::impl::CollisionalRxnRateCollection* kcol_rate_tables;
+  GRIMPL_NS::CollisionalRxnRateCollection* kcol_rate_tables = nullptr;
   /// a list of the indices that are actualy used from kcol_rate_tables in the
   /// current calculation
-  int* used_kcol_rate_indices;
+  int* used_kcol_rate_indices = nullptr;
   /// length of used_kcol_rate_indices
-  int n_kcol_rate_indices;
+  int n_kcol_rate_indices = 0;
   ///@}
 
   /// tracks the grid of values used for interpolating grain-species specific
@@ -96,14 +98,29 @@ struct gr_opaque_storage {
   /// > contains some extra information that is unnecessary during the
   /// > calculations). An alternative would be to briefly initialize an
   /// > instance during setup and then repack the data.
-  grackle::impl::GrainSpeciesInfo* grain_species_info;
+  GRIMPL_NS::GrainSpeciesInfo* grain_species_info = nullptr;
 
   /// Tracks metal and grain yields for each modeled injection pathway as well
   /// as other grain properties
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props;
+  GRIMPL_NS::GrainMetalInjectPathways* inject_pathway_props = nullptr;
 
   /// used to implement the experimental ratequery machinery
-  grackle::impl::ratequery::Registry* registry;
+  GRIMPL_NS::ratequery::Registry* registry = nullptr;
+
+  // define basic constructor/assignement/destructor methods
+  // -------------------------------------------------------
+
+  gr_opaque_storage() = default;
+
+  // we delete the copy/move constructor and assignment the default
+  // implementations introduce dangling pointers
+  gr_opaque_storage(const gr_opaque_storage&) = delete;
+  gr_opaque_storage& operator=(const gr_opaque_storage&) = delete;
+  gr_opaque_storage(gr_opaque_storage&&) = delete;
+  gr_opaque_storage& operator=(gr_opaque_storage&&) = delete;
+
+  /// destroy an instance
+  ~gr_opaque_storage();
 };
 
 #endif /* OPAQUE_STORAGE_HPP */
