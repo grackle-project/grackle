@@ -579,32 +579,6 @@ typedef struct
   /* CIE cooling rate (Yoshida et al. 2006) */
   double *cieY06;
 
-  /* The next 8 attributes hold interpolation grids representing collision
-   * rates of a species with HI or H2I. The parameters along each axis are:
-   *   grid.parameter[0]: log10( ndens_{species} / (dv/dr) )
-   *   grid.parameter[1]: log10( T )
-   *   grid.parameter[2]: log10( ndens_HI ) OR log10( ndens_H2I )
-   */
-
-  /* H2 and HD cooling rates (collision with HI; Hollenbach & McKee 1979) */
-  gr_interp_grid LH2;
-  gr_interp_grid LHD;
-
-  /* Fine-structure cooling rates (collision with HI; Maio et al. 2007) */
-  gr_interp_grid LCI;
-  gr_interp_grid LCII;
-  gr_interp_grid LOI;
-
-  /* metal molecular cooling rates (collision with H2I; UMIST table) */
-  gr_interp_grid LCO;
-  gr_interp_grid LOH;
-  gr_interp_grid LH2O;
-
-  /* primordial opacity table
-   * -> alphap.parameters[0] is log10(mass density)
-   * -> alphap.parameters[1] is log10(temperature) */
-  gr_interp_grid alphap;
-
   /* UV background data */
   UVBtable UVbackground_table;
 

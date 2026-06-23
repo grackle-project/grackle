@@ -11,6 +11,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "opaque_storage.hpp"
+#include "support/config.hpp"
+
+gr_opaque_storage::gr_opaque_storage() {
+  GRIMPL_NS::initialize_empty_interp_grid_(&LH2);
+  GRIMPL_NS::initialize_empty_interp_grid_(&LHD);
+
+  GRIMPL_NS::initialize_empty_interp_grid_(&LCI);
+  GRIMPL_NS::initialize_empty_interp_grid_(&LCII);
+  GRIMPL_NS::initialize_empty_interp_grid_(&LOI);
+
+  GRIMPL_NS::initialize_empty_interp_grid_(&LCO);
+  GRIMPL_NS::initialize_empty_interp_grid_(&LOH);
+  GRIMPL_NS::initialize_empty_interp_grid_(&LH2O);
+
+  GRIMPL_NS::initialize_empty_interp_grid_(&alphap);
+}
 
 gr_opaque_storage::~gr_opaque_storage() {
   if (kcol_rate_tables != nullptr) {
@@ -32,6 +48,14 @@ gr_opaque_storage::~gr_opaque_storage() {
                                          /* use_delete = */ false);
   // since h2dust_grain_interp_props isn't a pointer, there is nothing more to
   // allocate right here
+
+  GRIMPL_NS::free_interp_grid_(&LH2);
+  GRIMPL_NS::free_interp_grid_(&LHD);
+
+  // we deal with freeing other interp grids inside of
+  // free_misc_species_cool_rates
+
+  GRIMPL_NS::free_interp_grid_(&alphap);
 
   if (grain_species_info != nullptr) {
     // delete contents of grain_species_info

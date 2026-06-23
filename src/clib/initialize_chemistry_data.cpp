@@ -137,19 +137,6 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
 
   my_rates->cieY06 = NULL;
 
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LHD);
-
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCI);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCII);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOI);
-
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCO);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOH);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2O);
-
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->alphap);
-
   my_rates->cloudy_data_new = -1;
 
   my_rates->opaque_storage = NULL;
@@ -551,14 +538,6 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->H2LTE);
     GRACKLE_FREE(my_rates->gas_grain);
     GRACKLE_FREE(my_rates->gas_grain2);
-
-    grackle::impl::free_interp_grid_(&my_rates->LH2);
-    grackle::impl::free_interp_grid_(&my_rates->LHD);
-
-    // we deal with freeing other interp grids inside of
-    // free_misc_species_cool_rates
-
-    grackle::impl::free_interp_grid_(&my_rates->alphap);
 
     GRACKLE_FREE(my_rates->k13dd);
     GRACKLE_FREE(my_rates->h2dust);
