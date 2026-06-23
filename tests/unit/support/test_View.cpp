@@ -313,6 +313,31 @@ TYPED_TEST(View2DInterfaceTest, SampleSanityCheck) {
   EXPECT_TRUE(this->is_unchanged_sample_view(v));
 }
 
+TYPED_TEST(View2DInterfaceTest, Contig1dPtrMethod) {
+  using ManagerT = TypeParam;
+  using ViewType = typename ManagerT::ViewType;
+  using element_type = typename ManagerT::element_type;
+
+  ViewType& v = this->make_sample();
+
+  const int extent_contig_axis = v.extent(0);
+  const int extent_slow_axis = v.extent(1);
+
+  // confirm that using contig1d_ptr to access elements produces the same
+  // results as regular indexing
+  for (int idx_slow = 0; idx_slow < extent_slow_axis; idx_slow++) {
+    element_type* ptr = v.contig1d_ptr(idx_slow);
+    for (int idx_contig = 0; idx_contig < extent_contig_axis; idx_contig++) {
+      EXPECT_EQ(v(idx_contig, idx_slow), ptr[idx_contig]);
+    }
+  }
+
+  // demonstrate that the referenced memory locations are the same (rather
+  // than pointing to different locations with identical values)
+  v(2, 1) = -932526533;
+  EXPECT_EQ(v.contig1d_ptr(1)[2], -932526533);
+}
+
 TYPED_TEST(View2DInterfaceTest, CopyConstruct) {
   using ManagerT = TypeParam;
   using ViewType = typename ManagerT::ViewType;
