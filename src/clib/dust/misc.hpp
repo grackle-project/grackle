@@ -14,6 +14,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"  // gr_mask_type
+#include "field_adaptor.hpp"
 #include "dust/calc_all_tdust_gasgr_1d_g.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
 #include "support/index_helper.hpp"  // IndexHelper
@@ -47,6 +48,10 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
 /// @param[in] my_fields Specifies the field data.
+/// @param[in] sp_densities Specifies the densities of the various species
+///     that Grackle evolves (if any) in a format that allows the values to be
+///     accessed with the index lookup table. Wherever possible, data should be
+///     be accessed through this argument, rather than with @p my_fields
 /// @param[in] internalu Specifies Grackle's internal unit-system
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] logTlininterp_buf hold values for each location in @p idx_range
@@ -73,6 +78,7 @@ inline void dust_related_props(
     const double* metallicity, const gr_mask_type* itmask,
     gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    const SpeciesMultiView<const gr_float> sp_densities,
     InternalGrUnits internalu, IndexRange idx_range,
     LnTLinInterpBuf logTlininterp_buf, double trad, double* dust2gas,
     double* tdust, GrainSpeciesCollection grain_temperatures, double* gasgr,
@@ -89,7 +95,7 @@ inline void dust_related_props(
     grackle::impl::calc_grain_size_increment_1d(
         dom, idx_range, itmask_metal, my_chemistry,
         my_rates->opaque_storage->grain_species_info,
-        my_rates->opaque_storage->inject_pathway_props, my_fields,
+        my_rates->opaque_storage->inject_pathway_props, my_fields, sp_densities,
         internal_dust_prop_buf);
   }
 

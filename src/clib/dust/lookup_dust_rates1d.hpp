@@ -205,7 +205,8 @@ inline void lookup_dust_rates1d(
     calc_grain_size_increment_1d(dom, idx_range, itmask_metal, my_chemistry,
                                  my_rates->opaque_storage->grain_species_info,
                                  my_rates->opaque_storage->inject_pathway_props,
-                                 my_fields, internal_dust_prop_scratch_buf);
+                                 my_fields, sp_densities,
+                                 internal_dust_prop_scratch_buf);
 
     grackle::impl::View<const gr_float***> d(
         my_fields->density, my_fields->grid_dimension[0],

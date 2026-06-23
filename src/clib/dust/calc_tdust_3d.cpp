@@ -19,6 +19,7 @@
 #include "calc_tdust_3d.hpp"
 #include "dust_props.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+#include "field_adaptor.hpp"
 #include "grackle.h"
 #include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -61,6 +62,8 @@ void calc_tdust_3d(
   {
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
+
+    FieldAdaptorManager field_adaptor_mgr(my_fields);
 
     View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     View<gr_float***> HI(my_fields->HI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -139,6 +142,8 @@ void calc_tdust_3d(
       const int k = idx_range.k;
       const int j = idx_range.j;
 
+      SpeciesMultiView<gr_float> sp_densities
+          = field_adaptor_mgr.get_species_data(idx_range);
 
       // Set itmask to true for entire idx_range
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
@@ -162,7 +167,7 @@ void calc_tdust_3d(
           dom, idx_range, itmask_metal.data(), my_chemistry,
           my_rates->opaque_storage->grain_species_info,
           my_rates->opaque_storage->inject_pathway_props,
-          my_fields, internal_dust_prop_buf
+          my_fields, sp_densities, internal_dust_prop_buf
         );
 
       }
