@@ -343,6 +343,26 @@ public:
     }
   }
   ///@}
+
+  /// Return the pointer to the start of the ``i``th contiguous 1d span.
+  ///
+  /// This method exists purely to provide feature parity with @ref Multi1DView.
+  /// This is useful if you want to change the underlying type of the data
+  /// that is being passed to a function. For that reason, this method only
+  /// supports view with a rank of 2.
+  ///
+  /// Performance
+  /// -----------
+  /// Using "normal" multidimensional indexing (i.e. not this method) to access
+  /// elements generally produces instructions with comparable or better
+  /// performance than using this method. This directly constrasts the advise
+  /// given for the methods of @ref Multi1DView.
+  GRIMPL_FORCE_INLINE element_type* contig1d_ptr(int i) const {
+    static_assert(rank == 2, "This method is only provided for 2D views");
+    static_assert(layout == DataLayout::RIGHT,
+                  "This method currently requires a right data layout");
+    return data_ + (i * strides_[0]);
+  }
 };
 
 /// @brief a multidimensional view with a data layout equivalent to fortran
@@ -358,31 +378,81 @@ using View = GeneralView<T, DataLayout::RIGHT>;
 /// @brief Represents a sequence of pointers.
 ///
 /// At this time, instances never own the underlying memory (those allocations
-/// are managed outside of this type). A primary feature of this type is that
+/// are managed outside of this type). The primary feature of this type is that
 /// it implements the interface of a `View<T**>`. If you have an instance
 /// called `mview`, then you can invoke `mview(i,j)` to access an element.
 ///
-/// - Just like for `View<T**>`, the last argument in the call to
-///   `mvivew(i,j)` is the contiguous index.
+/// - (Just like for `View<T**>`) in the expression `mview(i,j)`:
+///   - `i` specifies the index along the non-contiguous axis
+///   - `j` specifies the index along the contiguous axis
 /// - in practice, you may want to avoid using `mview(i,j)` within a tight
 ///   loop for the aliasing-related reasons discussed down below. With that
 ///   said, this interface is quite useuf in certain contexts
 /// - the initial impetus for providing this interface will be for setting up
 ///   the vector used in the Newton-Rapshon solver
 ///
+/// Data Layout Considerations
+/// ==========================
+/// While it may be obvious, it's worth emphasizing that under this type
+/// effectively remaps the "natural data layout" of an array of pointers in
+/// C/C++ in order to be consistent with the data layout of `View<T**>`.
+///
+/// Let's elaborate and consider a variable ``a`` that represents a 2D matrix
+/// with shape ``(m,n)``. It's useful to recall that the mathematical notation
+/// for specifying a matrix element is ``aᵢⱼ`` (where ``i`` increases as you go
+/// down a column and ``j`` increases as you move along a row).
+///
+/// Suppose ``a`` is represented by a type ``T**``:
+/// - To access an element, you would write an ``a[i][j]``.
+/// - Because this expression is equivalent to ``(a[i])[j]``, it's easy to see
+///   that incrementing the ``j`` index points to an adjacent memory location.
+/// - This has row-major ordering or right-layout (i.e. data is contiguous
+///   along the rightmost extent).
+///
+/// Now, instead suppose ``a`` is represented by ``Multi1DView<T>``:
+/// - To access an element, you would write ``a(i,j)``.
+/// - The type is designed such that incrementing the ``i`` index will point
+///   to an adjacent memory location.
+/// - This has column-major ordering or left-layout (i.e. data is contiguous
+///   along the leftmost extent)
+///
+/// All of this is to say that you should think of individual 1d views in this
+/// type as if they are filling different columns of data.
+///
+/// @note
+/// If we were willing to make View<T**> use the natural right-layout,
+///
 /// Array of Pointers vs Pointer of Pointers
 /// ========================================
 /// An important implementation question is whether we should declare this
-/// type's `data_` member as a
-/// 1. a fixed size array of pointers  (i.e. `T* data_[BIG_NUM]` where
-///    `BIG_NUM` is a compile-time constant)
-/// 2. OR a pointer of pointers (i.e. `T** data_`)
+/// type's `data_` member as a fixed size c-style array of pointers or a
+/// pointer to pointers
 ///
-/// For less experienced developers, the former choice would embed space for
-/// `BIG_NUM` pointers directly as part of the memory allocation for this type
-/// (in practice, it makes an instance many times larger -- which could make a
-/// significant difference in how many threads are usable on GPUs). In contrast,
-/// an extra pointer dereference is needed for the latter approach.
+/// 1. a fixed size c-style array of pointers.
+///    - the declaration of the `data_` data-member would look like
+///      `T* data_[BIG_NUM]`, where `BIG_NUM` is a compile-time constant (we
+///      *could* instead make it a template-parameter of the type)
+///    - currently, ``BIG_NUM`` needs to be ~50 to be able to track pointers for
+///      all known species densities
+///    - in this case, the `data_` data-member would take up approximately
+///      ``BIG_NUM * sizeof(void*)`` bytes (the amount of memory associated
+///      with each stored pointer is irrelevant to this discussion)
+/// 2. OR a pointer of pointers
+///    - the declaration of the `data_` data-member would look like `T** data_`
+///    - in this case, the `data_` data-member would take up approximately
+///      ``sizeof(void*)`` bytes (the amount of memory associated
+///      with each stored pointer is irrelevant to this discussion)
+///
+/// The main tradeoff:
+/// - For a stack-allocated ``Multi1DView<T>`` instance called ``mview``,
+///   accessing a value with ``mview(i, j)`` under the first approach involves
+///   1 fewer pointer dereferences
+/// - the size of the ``data_`` member is significantly larger for the first
+///   approach. Thus, a stack-allocated ``Multi1DView`` instance requires much
+///   more stack-space. This *might* be important on GPUs (per-thread stack
+///   usage can limit the number of usable GPU threads). This may encourage
+///   passing views around by reference (which effectively adds another pointer
+///   dereference).
 ///
 /// The big question pertains to a for-loop when we we call `mview(i,j)`. We
 /// have taken steps to ensure that the underlying `data_[j][idx]` access is
@@ -413,9 +483,15 @@ private:
   // `element_type**` is intended to make sure that we never accidently mutate
   // a pointer address
   element_type* const* data_;
+  /// number of pointers tracked by data_
   size_type n_ptr_;
-  size_type elem_in_ptr_;
+  /// a constant offset applied to each pointer in data_
   size_type ptr_offset_;
+  /// number of elements accessible through each pointer
+  ///
+  /// For a pointer in `data_` called `ptr`, a `Multi1DView` instance provides
+  /// access to values at `ptr[ptr_offset_ + i]` for `0 <= i < elem_in_ptr_`.
+  size_type elem_in_ptr_;
 
 public:
   /// Default constructor
@@ -423,7 +499,7 @@ public:
   /// @note
   /// The syntax ensures that the contents of extent_ are all initialized to
   /// zero since extent_ is an array of non-class types
-  Multi1DView() : data_{nullptr}, n_ptr_{0}, elem_in_ptr_{0}, ptr_offset_{0} {}
+  Multi1DView() : data_{nullptr}, n_ptr_{0}, ptr_offset_{0}, elem_in_ptr_{0} {}
 
   /// Construct an instance a from an array of pointers, @p arr_of_ptr. Every
   /// subsequent arg specifies the extent of an axis (from the slowest axis to
@@ -437,8 +513,8 @@ public:
   Multi1DView(element_type* const* arr_of_ptr, int n_ptr, int elem_in_ptr)
       : data_(arr_of_ptr),
         n_ptr_{n_ptr},
-        elem_in_ptr_{elem_in_ptr},
-        ptr_offset_{0} {
+        ptr_offset_{0},
+        elem_in_ptr_{elem_in_ptr} {
     GRIMPL_REQUIRE(n_ptr > 0, "n_ptr must be positive");
     GRIMPL_REQUIRE(elem_in_ptr > 0, "elem_in_ptr must be positive");
     GRIMPL_REQUIRE(arr_of_ptr != nullptr, "arr_of_ptr is a nullptr");
@@ -482,26 +558,68 @@ public:
     }
   }
 
-  /// Implements multi-dimensional indexing. The last argument corresponds
-  /// to the contiguous axis
+  /// Access the element corresponding to the provided multidimensional index
+  ///
+  /// @note
+  /// For consistency with the element-access method provided by View<T**>, the
+  /// the second argument corresponds to the contiguous axis.
   GRIMPL_FORCE_INLINE element_type& operator()(int i, int j) const {
     return data_[i][j + ptr_offset_];
   }
 
-  /// This method should be used to help avoid overhead of treating this
-  /// index like a View<T**> in a tight loop
+  /// Return the pointer to the start of the ``i``th contiguous 1d span
   ///
   /// @note
-  /// Ideally, this method wouldn't exist (since it's a departure from the
-  /// interface of `View<T**>`), but it's a necessary evil)
-  GRIMPL_FORCE_INLINE element_type* get_row_ptr(int i) const {
+  /// Ideally, this method wouldn't exist since it's a departure from the
+  /// basic interface of a 2d array (i.e. its a leaky abstraction). But, for
+  /// performance purposes, it's a necessary evil
+  ///
+  /// Purpose
+  /// -------
+  /// This method serves as an alternative mechanism for accessing values when
+  /// iterating over a multiview, as opposed to direct multidimensional
+  /// indexing.
+  ///
+  /// Consider the following code snippets how you might loop over 2 contiguous
+  /// slices at `idxA` and `idxB` from an instance called `mview`. For the sake
+  /// of this discussion, we use `OP` to denote the operations using these
+  /// values (it could represent a function call or multiple operations directly
+  /// inscribed into the loop that may or may not involve function calls).
+  /// Suppose we store the results in an output buffer, `buf`.
+  ///
+  /// Using normal multidimensional-array access:
+  /// @code{cpp}
+  /// for (int i = i_start; i < i_stop; i++) {
+  ///   buf[i] = OP(mview(idxA, i), mview(idxB, i) /* , <other args...> */);
+  /// }
+  /// @endcode
+  ///
+  /// Using this method:
+  /// @code{cpp}
+  /// double* ptr_A = mview.contig1d_ptr(idxA);
+  /// double* ptr_B = mview.contig1d_ptr(idxB);
+  /// for (int i = i_start; i < i_stop; i++) {
+  ///   buf[i] = OP(ptr_A[i], ptr_B[i] /* , <other args...> */);
+  /// }
+  /// @endcode
+  ///
+  /// The second approach will generally compile to instructions with
+  /// perfomance that is comparable or superior to the former.
+  /// - This is fundamentally a consequence of the fact that each occurence of
+  ///   `mview(idxA,i)` corresponds to 2 levels of pointer-dereferences. In the
+  ///   second approach, we are manually caching one-level of dereferences
+  /// - While a compiler *may* be able to automatically cache one level of the
+  ///   pointer dereferences, but that depends on the precise details of the
+  ///   operations performed in the loop. For example, the presence of a
+  ///   non-inlined function-call may prevent such an optimization.
+  GRIMPL_FORCE_INLINE element_type* contig1d_ptr(int i) const {
+    // I don't love the name of this method (I'm open to alternatives).
+    // Relevant requirements:
+    // -> we want to be able to add it to the View<T**> method.
+    // -> while we could call it something like get_column, I think referring to
+    //    rows/columns may be confusing since this type remaps mapping compared
+    //    to the natural data mapping
     return data_[i] + ptr_offset_;
-  }
-
-  // This is an analogue for get_row_ptr that may or may not be useful (we can
-  // always delete it later)
-  GRIMPL_FORCE_INLINE View<element_type> get_row_view(int i) const {
-    return View<element_type>(data_[i] + ptr_offset_, elem_in_ptr_);
   }
 };
 
