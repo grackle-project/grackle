@@ -287,7 +287,6 @@ inline GrainMetalInjectPathways new_GrainMetalInjectPathways(
   out.grain_yields = new_GrainSpeciesCollection(n_pathways);
   out.size_moments = new_GrainSpeciesCollection(3 * n_pathways);
 
-  init_empty_interp_grid_props_(&out.log10Tdust_interp_props);
   out.log10Tdust_interp_props.rank = 1LL;
   long long n_log10Tdust_vals_LL = static_cast<long long>(n_log10Tdust_vals);
   out.log10Tdust_interp_props.dimension[0] = n_log10Tdust_vals_LL;

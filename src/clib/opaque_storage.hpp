@@ -135,7 +135,7 @@ struct gr_opaque_storage {
   // define basic constructor/assignement/destructor methods
   // -------------------------------------------------------
 
-  gr_opaque_storage();
+  gr_opaque_storage() = default;
 
   // we delete the copy/move constructor and assignment the default
   // implementations introduce dangling pointers

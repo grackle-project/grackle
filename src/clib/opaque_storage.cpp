@@ -13,21 +13,6 @@
 #include "opaque_storage.hpp"
 #include "support/config.hpp"
 
-gr_opaque_storage::gr_opaque_storage() {
-  GRIMPL_NS::initialize_empty_interp_grid_(&LH2);
-  GRIMPL_NS::initialize_empty_interp_grid_(&LHD);
-
-  GRIMPL_NS::initialize_empty_interp_grid_(&LCI);
-  GRIMPL_NS::initialize_empty_interp_grid_(&LCII);
-  GRIMPL_NS::initialize_empty_interp_grid_(&LOI);
-
-  GRIMPL_NS::initialize_empty_interp_grid_(&LCO);
-  GRIMPL_NS::initialize_empty_interp_grid_(&LOH);
-  GRIMPL_NS::initialize_empty_interp_grid_(&LH2O);
-
-  GRIMPL_NS::initialize_empty_interp_grid_(&alphap);
-}
-
 gr_opaque_storage::~gr_opaque_storage() {
   if (kcol_rate_tables != nullptr) {
     // delete contents of kcol_rate_tables

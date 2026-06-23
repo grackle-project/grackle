@@ -322,9 +322,6 @@ static int local_initialize_chemistry_data_(
 
   // perform some basic allocations
   my_rates->opaque_storage = new gr_opaque_storage;
-  // the following line will be made unnecessary after PR #564 is merged
-  grackle::impl::init_empty_interp_grid_props_(
-    &my_rates->opaque_storage->h2dust_grain_interp_props);
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
