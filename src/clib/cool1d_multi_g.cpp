@@ -31,6 +31,16 @@
 #include "tabulated/cool1d_cloudy_old_tables.hpp"
 #include "utils-cpp.hpp"
 
+static double interp_from_3D_grid(double input1, double input2, double input3,
+                                  const gr_interp_grid& interp_grid) {
+  return grackle::impl::fortran_wrapper::interpolate_3d_g(
+      input1, input2, input3, interp_grid.props.dimension,
+      interp_grid.props.parameters[0], interp_grid.props.parameter_spacing[0],
+      interp_grid.props.parameters[1], interp_grid.props.parameter_spacing[1],
+      interp_grid.props.parameters[2], interp_grid.props.parameter_spacing[2],
+      interp_grid.props.data_size, interp_grid.data);
+}
+
 void grackle::impl::cool1d_multi_g(
     int imetal, double* edot, const double* tgas, const double* mmw,
     double* tdust, const double* metallicity, double* dust2gas,
@@ -466,27 +476,13 @@ void grackle::impl::cool1d_multi_g(
         if (itmask[i] != MASK_FALSE) {
           lognhat = logH2I[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH[i], my_rates->LH2.props.dimension,
-              my_rates->LH2.props.parameters[0],
-              my_rates->LH2.props.parameter_spacing[0],
-              my_rates->LH2.props.parameters[1],
-              my_rates->LH2.props.parameter_spacing[1],
-              my_rates->LH2.props.parameters[2],
-              my_rates->LH2.props.parameter_spacing[2],
-              my_rates->LH2.props.data_size, my_rates->LH2.data);
+          log_Linv =
+              interp_from_3D_grid(lognhat, logT[i], logH[i], my_rates->LH2);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH[i], my_rates->LH2.props.dimension,
-                my_rates->LH2.props.parameters[0],
-                my_rates->LH2.props.parameter_spacing[0],
-                my_rates->LH2.props.parameters[1],
-                my_rates->LH2.props.parameter_spacing[1],
-                my_rates->LH2.props.parameters[2],
-                my_rates->LH2.props.parameter_spacing[2],
-                my_rates->LH2.props.data_size, my_rates->LH2.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                           my_rates->LH2);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -787,28 +783,13 @@ void grackle::impl::cool1d_multi_g(
         if (itmask[i] != MASK_FALSE) {
           lognhat = logHDI[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH[i], my_rates->LHD.props.dimension,
-              my_rates->LHD.props.parameters[0],
-              my_rates->LHD.props.parameter_spacing[0],
-              my_rates->LHD.props.parameters[1],
-              my_rates->LHD.props.parameter_spacing[1],
-              my_rates->LHD.props.parameters[2],
-              my_rates->LHD.props.parameter_spacing[2],
-              my_rates->LHD.props.data_size, my_rates->LHD.data);
+          log_Linv =
+              interp_from_3D_grid(lognhat, logT[i], logH[i], my_rates->LHD);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH[i], my_rates->LHD.props.dimension,
-                my_rates->LHD.props.parameters[0],
-                my_rates->LHD.props.parameter_spacing[0],
-                my_rates->LHD.props.parameters[1],
-                my_rates->LHD.props.parameter_spacing[1],
-                my_rates->LHD.props.parameters[2],
-                my_rates->LHD.props.parameter_spacing[2],
-                my_rates->LHD.props.data_size, my_rates->LHD.data);
-
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                           my_rates->LHD);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1251,29 +1232,13 @@ void grackle::impl::cool1d_multi_g(
           // CI
           lognhat = logCI[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH[i], my_rates->LCI.props.dimension,
-              my_rates->LCI.props.parameters[0],
-              my_rates->LCI.props.parameter_spacing[0],
-              my_rates->LCI.props.parameters[1],
-              my_rates->LCI.props.parameter_spacing[1],
-              my_rates->LCI.props.parameters[2],
-              my_rates->LCI.props.parameter_spacing[2],
-              my_rates->LCI.props.data_size, my_rates->LCI.data);
-
+          log_Linv =
+              interp_from_3D_grid(lognhat, logT[i], logH[i], my_rates->LCI);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH[i], my_rates->LCI.props.dimension,
-                my_rates->LCI.props.parameters[0],
-                my_rates->LCI.props.parameter_spacing[0],
-                my_rates->LCI.props.parameters[1],
-                my_rates->LCI.props.parameter_spacing[1],
-                my_rates->LCI.props.parameters[2],
-                my_rates->LCI.props.parameter_spacing[2],
-                my_rates->LCI.props.data_size, my_rates->LCI.data);
-
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                           my_rates->LCI);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1288,28 +1253,13 @@ void grackle::impl::cool1d_multi_g(
           // CII
           lognhat = logCII[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH[i], my_rates->LCII.props.dimension,
-              my_rates->LCII.props.parameters[0],
-              my_rates->LCII.props.parameter_spacing[0],
-              my_rates->LCII.props.parameters[1],
-              my_rates->LCII.props.parameter_spacing[1],
-              my_rates->LCII.props.parameters[2],
-              my_rates->LCII.props.parameter_spacing[2],
-              my_rates->LCII.props.data_size, my_rates->LCII.data);
-
+          log_Linv =
+              interp_from_3D_grid(lognhat, logT[i], logH[i], my_rates->LCII);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH[i], my_rates->LCII.props.dimension,
-                my_rates->LCII.props.parameters[0],
-                my_rates->LCII.props.parameter_spacing[0],
-                my_rates->LCII.props.parameters[1],
-                my_rates->LCII.props.parameter_spacing[1],
-                my_rates->LCII.props.parameters[2],
-                my_rates->LCII.props.parameter_spacing[2],
-                my_rates->LCII.props.data_size, my_rates->LCII.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                           my_rates->LCII);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1324,27 +1274,13 @@ void grackle::impl::cool1d_multi_g(
           // OI
           lognhat = logOI[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH[i], my_rates->LOI.props.dimension,
-              my_rates->LOI.props.parameters[0],
-              my_rates->LOI.props.parameter_spacing[0],
-              my_rates->LOI.props.parameters[1],
-              my_rates->LOI.props.parameter_spacing[1],
-              my_rates->LOI.props.parameters[2],
-              my_rates->LOI.props.parameter_spacing[2],
-              my_rates->LOI.props.data_size, my_rates->LOI.data);
+          log_Linv =
+              interp_from_3D_grid(lognhat, logT[i], logH[i], my_rates->LOI);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH[i], my_rates->LOI.props.dimension,
-                my_rates->LOI.props.parameters[0],
-                my_rates->LOI.props.parameter_spacing[0],
-                my_rates->LOI.props.parameters[1],
-                my_rates->LOI.props.parameter_spacing[1],
-                my_rates->LOI.props.parameters[2],
-                my_rates->LOI.props.parameter_spacing[2],
-                my_rates->LOI.props.data_size, my_rates->LOI.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                           my_rates->LOI);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1361,27 +1297,13 @@ void grackle::impl::cool1d_multi_g(
           // CO
           lognhat = logCO[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH2[i], my_rates->LCO.props.dimension,
-              my_rates->LCO.props.parameters[0],
-              my_rates->LCO.props.parameter_spacing[0],
-              my_rates->LCO.props.parameters[1],
-              my_rates->LCO.props.parameter_spacing[1],
-              my_rates->LCO.props.parameters[2],
-              my_rates->LCO.props.parameter_spacing[2],
-              my_rates->LCO.props.data_size, my_rates->LCO.data);
+          log_Linv =
+              interp_from_3D_grid(lognhat, logT[i], logH2[i], my_rates->LCO);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH2[i], my_rates->LCO.props.dimension,
-                my_rates->LCO.props.parameters[0],
-                my_rates->LCO.props.parameter_spacing[0],
-                my_rates->LCO.props.parameters[1],
-                my_rates->LCO.props.parameter_spacing[1],
-                my_rates->LCO.props.parameters[2],
-                my_rates->LCO.props.parameter_spacing[2],
-                my_rates->LCO.props.data_size, my_rates->LCO.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
+                                           my_rates->LCO);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1396,27 +1318,13 @@ void grackle::impl::cool1d_multi_g(
           // OH
           lognhat = logOH[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH2[i], my_rates->LOH.props.dimension,
-              my_rates->LOH.props.parameters[0],
-              my_rates->LOH.props.parameter_spacing[0],
-              my_rates->LOH.props.parameters[1],
-              my_rates->LOH.props.parameter_spacing[1],
-              my_rates->LOH.props.parameters[2],
-              my_rates->LOH.props.parameter_spacing[2],
-              my_rates->LOH.props.data_size, my_rates->LOH.data);
+          log_Linv =
+              interp_from_3D_grid(lognhat, logT[i], logH2[i], my_rates->LOH);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH2[i], my_rates->LOH.props.dimension,
-                my_rates->LOH.props.parameters[0],
-                my_rates->LOH.props.parameter_spacing[0],
-                my_rates->LOH.props.parameters[1],
-                my_rates->LOH.props.parameter_spacing[1],
-                my_rates->LOH.props.parameters[2],
-                my_rates->LOH.props.parameter_spacing[2],
-                my_rates->LOH.props.data_size, my_rates->LOH.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
+                                           my_rates->LOH);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1431,27 +1339,13 @@ void grackle::impl::cool1d_multi_g(
           // H2O
           lognhat = logH2O[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH2[i], my_rates->LH2O.props.dimension,
-              my_rates->LH2O.props.parameters[0],
-              my_rates->LH2O.props.parameter_spacing[0],
-              my_rates->LH2O.props.parameters[1],
-              my_rates->LH2O.props.parameter_spacing[1],
-              my_rates->LH2O.props.parameters[2],
-              my_rates->LH2O.props.parameter_spacing[2],
-              my_rates->LH2O.props.data_size, my_rates->LH2O.data);
+          log_Linv =
+              interp_from_3D_grid(lognhat, logT[i], logH2[i], my_rates->LH2O);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH2[i], my_rates->LH2O.props.dimension,
-                my_rates->LH2O.props.parameters[0],
-                my_rates->LH2O.props.parameter_spacing[0],
-                my_rates->LH2O.props.parameters[1],
-                my_rates->LH2O.props.parameter_spacing[1],
-                my_rates->LH2O.props.parameters[2],
-                my_rates->LH2O.props.parameter_spacing[2],
-                my_rates->LH2O.props.data_size, my_rates->LH2O.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
+                                           my_rates->LH2O);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
