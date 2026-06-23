@@ -102,45 +102,6 @@ inline void copy_contigSpTable_fieldmember_ptrs_(grackle_field_data* my_fields,
 #undef ENTRY
 }
 
-/// this is an adaptor to support using SpLUT with grackle_field_data
-struct SpeciesLUTFieldAdaptor {
-  grackle_field_data data;
-
-  /// lookup the pointer corresponding to the field-index
-  gr_float* get_ptr_dynamic(int lut_idx) {
-    switch (lut_idx) {
-#define ENTRY(SPECIES_NAME)                                                    \
-  case SpLUT::SPECIES_NAME:                                                    \
-    return data.SPECIES_NAME##_density;
-#include "field_data_evolved_species.def"
-#undef ENTRY
-
-      default:
-        GRIMPL_ERROR("%d is not a valid SpLUT index", lut_idx);
-    }
-  }
-
-  /// an alternative version of get_ptr_dynamic that has no runtime branching
-  ///
-  /// @note
-  /// we are able to perform all branching at compile-time thanks to use of a
-  /// template and if-constexpr
-  template <int lut_idx>
-  gr_float* get_ptr_static() {
-    if constexpr (lut_idx < 0) {
-      GRIMPL_ERROR("lut_idx can't be negative");
-#define ENTRY(SPECIES_NAME)                                                    \
-  }                                                                            \
-  else if constexpr (lut_idx == SpLUT::SPECIES_NAME) {                         \
-    return data.SPECIES_NAME##_density;
-#include "field_data_evolved_species.def"
-#undef ENTRY
-    } else {
-      GRIMPL_ERROR("lut_idx must be smaller than %s", SpLUT::NUM_ENTRIES);
-    }
-  }
-};
-
 /// @brief Acts as 2D view of all dynamically evolved species data.
 ///
 /// In more detail:
