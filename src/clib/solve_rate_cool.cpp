@@ -998,7 +998,8 @@ int solve_rate_cool(
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
             nelec_times_mH.data(), edot.data(), anydust, spsolvbuf.itmask_nr,
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
-            my_fields, *my_uvb_rates, internalu, grain_temperatures,
+            my_fields, sp_densities, *my_uvb_rates, internalu,
+            grain_temperatures,
             logTlininterp_buf, cool1dmulti_buf, coolingheating_buf,
             spsolvbuf.chemheatrates_buf
           );

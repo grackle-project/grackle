@@ -103,6 +103,7 @@ inline void step_rate_newton_raphson(
   const gr_mask_type* itmask_nr, const gr_mask_type* itmask_metal,
   const int* imp_eng, chemistry_data* my_chemistry,
   chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+  SpeciesMultiView<gr_float> sp_densities,
   photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LnTLinInterpBuf logTlininterp_buf,
@@ -180,6 +181,9 @@ inline void step_rate_newton_raphson(
   std::vector<gr_float> rhosp_grflt(MAX_EVOLVED_SPECIES_FIELDS);
   grackle::impl::SpeciesCollection rhosp_dot =
     grackle::impl::new_SpeciesCollection(1);
+
+  const PartMap& species_kind_map = my_rates->opaque_storage->species_kind_map;
+  const IdxInterval dustsp_idx_bounds = species_kind_map.part_bounds(SpKind::DUST);
 
   // the following check was inspired by a compiler warning indicating that
   // nsp won't be initialized if this condition isn't met
@@ -294,26 +298,9 @@ inline void step_rate_newton_raphson(
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) ) {
-          if (my_chemistry->dust_species > 0)  {
-            dsp[SpLUT::MgSiO3_dust] = my_fields->MgSiO3_dust_density[field_idx1d];
-            dsp[SpLUT::AC_dust] = my_fields->AC_dust_density[field_idx1d];
-          }
-          if (my_chemistry->dust_species > 1)  {
-            dsp[SpLUT::SiM_dust] = my_fields->SiM_dust_density[field_idx1d];
-            dsp[SpLUT::FeM_dust] = my_fields->FeM_dust_density[field_idx1d];
-            dsp[SpLUT::Mg2SiO4_dust] = my_fields->Mg2SiO4_dust_density[field_idx1d];
-            dsp[SpLUT::Fe3O4_dust] = my_fields->Fe3O4_dust_density[field_idx1d];
-            dsp[SpLUT::SiO2_dust] = my_fields->SiO2_dust_density[field_idx1d];
-            dsp[SpLUT::MgO_dust] = my_fields->MgO_dust_density[field_idx1d];
-            dsp[SpLUT::FeS_dust] = my_fields->FeS_dust_density[field_idx1d];
-            dsp[SpLUT::Al2O3_dust] = my_fields->Al2O3_dust_density[field_idx1d];
-          }
-          if (my_chemistry->dust_species > 2)  {
-            dsp[SpLUT::ref_org_dust] = my_fields->ref_org_dust_density[field_idx1d];
-            dsp[SpLUT::vol_org_dust] = my_fields->vol_org_dust_density[field_idx1d];
-            dsp[SpLUT::H2O_ice_dust] = my_fields->H2O_ice_dust_density[field_idx1d];
-          }
+
+        for (int sp_idx = dustsp_idx_bounds.start; sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+          dsp[sp_idx] = sp_densities(i, sp_idx);
         }
       }
       dsp[i_eng-1] = e(i,j,k);
@@ -675,26 +662,8 @@ label_9996:
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
-          if (my_chemistry->dust_species > 0)  {
-            my_fields->MgSiO3_dust_density[field_idx1d]  = dsp[SpLUT::MgSiO3_dust];
-            my_fields->AC_dust_density[field_idx1d]      = dsp[SpLUT::AC_dust];
-          }
-          if (my_chemistry->dust_species > 1)  {
-            my_fields->SiM_dust_density[field_idx1d]     = dsp[SpLUT::SiM_dust];
-            my_fields->FeM_dust_density[field_idx1d]     = dsp[SpLUT::FeM_dust];
-            my_fields->Mg2SiO4_dust_density[field_idx1d] = dsp[SpLUT::Mg2SiO4_dust];
-            my_fields->Fe3O4_dust_density[field_idx1d]   = dsp[SpLUT::Fe3O4_dust];
-            my_fields->SiO2_dust_density[field_idx1d]   = dsp[SpLUT::SiO2_dust];
-            my_fields->MgO_dust_density[field_idx1d]     = dsp[SpLUT::MgO_dust];
-            my_fields->FeS_dust_density[field_idx1d]     = dsp[SpLUT::FeS_dust];
-            my_fields->Al2O3_dust_density[field_idx1d]   = dsp[SpLUT::Al2O3_dust];
-          }
-          if (my_chemistry->dust_species > 2)  {
-            my_fields->ref_org_dust_density[field_idx1d]  = dsp[SpLUT::ref_org_dust];
-            my_fields->vol_org_dust_density[field_idx1d]  = dsp[SpLUT::vol_org_dust];
-            my_fields->H2O_ice_dust_density[field_idx1d]  = dsp[SpLUT::H2O_ice_dust];
-          }
+        for (int sp_idx = dustsp_idx_bounds.start; sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+          sp_densities(i, sp_idx) = dsp[sp_idx];
         }
       }
 
