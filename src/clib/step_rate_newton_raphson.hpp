@@ -18,6 +18,7 @@
 
 #include <vector>
 
+#include "LUT.hpp"
 #include "grackle.h"             // gr_float
 #include "field_adaptor.hpp"
 #include "fortran_func_decls.h"  // gr_mask_int
@@ -371,26 +372,9 @@ inline void step_rate_newton_raphson(
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
-          if (my_chemistry->dust_species > 0)  {
-            idsp[id++] = SpLUT::MgSiO3_dust;
-            idsp[id++] = SpLUT::AC_dust;
-          }
-          if (my_chemistry->dust_species > 1)  {
-            idsp[id++] = SpLUT::SiM_dust;
-            idsp[id++] = SpLUT::FeM_dust;
-            idsp[id++] = SpLUT::Mg2SiO4_dust;
-            idsp[id++] = SpLUT::Fe3O4_dust;
-            idsp[id++] = SpLUT::SiO2_dust;
-            idsp[id++] = SpLUT::MgO_dust;
-            idsp[id++] = SpLUT::FeS_dust;
-            idsp[id++] = SpLUT::Al2O3_dust;
-          }
-          if (my_chemistry->dust_species > 2)  {
-            idsp[id++] = SpLUT::ref_org_dust;
-            idsp[id++] = SpLUT::vol_org_dust;
-            idsp[id++] = SpLUT::H2O_ice_dust;
-          }
+        // copy over the indices of all grain species
+        for (int sp_idx = dustsp_idx_bounds.start; sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+          idsp[id++] = sp_idx;
         }
       }
 
