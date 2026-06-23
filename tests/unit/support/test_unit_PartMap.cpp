@@ -36,19 +36,19 @@ using ::testing::Lt;
 
 // this is a simple case
 TEST(PartSeq, Empty) {
-  GRIMPL_NS::PartMap m = GRIMPL_NS::new_PartMap(nullptr, nullptr, 0);
-  ASSERT_TRUE(grackle::impl::PartMap_is_ok(&m));
+  GRIMPL_NS::PartMap m(nullptr, nullptr, 0);
+  ASSERT_TRUE(m.is_ok());
 
-  EXPECT_EQ(GRIMPL_NS::PartMap_n_partitions(&m), 0);
-  EXPECT_EQ(GRIMPL_NS::PartMap_n_idx(&m), 0);
+  EXPECT_EQ(m.n_partitions(), 0);
+  EXPECT_EQ(m.n_idx(), 0);
 
   EXPECT_THAT(
-      GRIMPL_NS::PartMap_part_bounds(&m, 0),
+      m.part_bounds(0),
       ::testing::AllOf(Field("start", &GRIMPL_NS::IdxInterval::start, Lt(0)),
                        Field("stop", &GRIMPL_NS::IdxInterval::stop, Lt(0))));
 
   using GRIMPL_NS::partmap::IdxSearch;
-  EXPECT_THAT(GRIMPL_NS::PartMap_search_idx(&m, 0),
+  EXPECT_THAT(m.search_idx(0),
               Field("has_val", &IdxSearch::has_val, Eq(false)));
 }
 
@@ -67,28 +67,28 @@ TEST(PartSeq, DocString) {
   const int pds[3] = {PartitionName::A, PartitionName::C, PartitionName::B};
   const int sizes[3] = {4, 2, 3};
 
-  GRIMPL_NS::PartMap m = GRIMPL_NS::new_PartMap(pds, sizes, 3);
-  ASSERT_TRUE(grackle::impl::PartMap_is_ok(&m));
+  GRIMPL_NS::PartMap m(pds, sizes, 3);
+  ASSERT_TRUE(m.is_ok());
 
-  EXPECT_EQ(GRIMPL_NS::PartMap_n_partitions(&m), 3);
-  EXPECT_EQ(GRIMPL_NS::PartMap_n_idx(&m), 9);
+  EXPECT_EQ(m.n_partitions(), 3);
+  EXPECT_EQ(m.n_idx(), 9);
 
   EXPECT_THAT(
-      GRIMPL_NS::PartMap_part_bounds(&m, PartitionName::A),
+      m.part_bounds(PartitionName::A),
       ::testing::AllOf(Field("start", &GRIMPL_NS::IdxInterval::start, Eq(0)),
                        Field("stop", &GRIMPL_NS::IdxInterval::stop, Eq(4))));
   EXPECT_THAT(
-      GRIMPL_NS::PartMap_part_bounds(&m, PartitionName::C),
+      m.part_bounds(PartitionName::C),
       ::testing::AllOf(Field("start", &GRIMPL_NS::IdxInterval::start, Eq(4)),
                        Field("stop", &GRIMPL_NS::IdxInterval::stop, Eq(6))));
   EXPECT_THAT(
-      GRIMPL_NS::PartMap_part_bounds(&m, PartitionName::B),
+      m.part_bounds(PartitionName::B),
       ::testing::AllOf(Field("start", &GRIMPL_NS::IdxInterval::start, Eq(6)),
                        Field("stop", &GRIMPL_NS::IdxInterval::stop, Eq(9))));
 
   using GRIMPL_NS::partmap::IdxSearch;
   EXPECT_THAT(
-      GRIMPL_NS::PartMap_search_idx(&m, 2),
+      m.search_idx(2),
       ::testing::AllOf(Field("has_val", &IdxSearch::has_val, Eq(true)),
                        Field("index", &IdxSearch::index, Eq(2)),
                        Field("pd", &IdxSearch::pd, Eq(PartitionName::A)),
@@ -98,7 +98,7 @@ TEST(PartSeq, DocString) {
       << "should be 2";
 
   EXPECT_THAT(
-      GRIMPL_NS::PartMap_search_idx(&m, 5),
+      m.search_idx(5),
       ::testing::AllOf(Field("has_val", &IdxSearch::has_val, Eq(true)),
                        Field("index", &IdxSearch::index, Eq(5)),
                        Field("pd", &IdxSearch::pd, Eq(PartitionName::C)),
@@ -108,7 +108,7 @@ TEST(PartSeq, DocString) {
       << "should be 1";
 
   EXPECT_THAT(
-      GRIMPL_NS::PartMap_search_idx(&m, 6),
+      m.search_idx(6),
       ::testing::AllOf(Field("has_val", &IdxSearch::has_val, Eq(true)),
                        Field("index", &IdxSearch::index, Eq(6)),
                        Field("pd", &IdxSearch::pd, Eq(PartitionName::B)),
@@ -118,6 +118,6 @@ TEST(PartSeq, DocString) {
       << "should be 0";
 
   // extra sanity check!
-  EXPECT_THAT(GRIMPL_NS::PartMap_search_idx(&m, 9999),
+  EXPECT_THAT(m.search_idx(9999),
               Field("is_valid", &IdxSearch::has_val, Eq(false)));
 }

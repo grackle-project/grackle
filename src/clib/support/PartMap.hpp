@@ -22,6 +22,33 @@ inline constexpr int MAX_LEN = 4;
 
 using partition_descr_type = int;
 
+/// @todo Perhaps we should reconcile with FieldFlatIndexRange?
+struct IdxInterval {
+  int start;
+  int stop;
+};
+
+namespace partmap {
+/// holds info pertaining to the partition holding an index
+struct IdxSearch {
+  /// indicates whether the index was found
+  bool has_val;
+
+  /// The index being searched
+  ///
+  /// @note
+  /// This is primarily tracked in order to make the key_partition_search
+  /// convenience function provide more useful results
+  int index;
+
+  /// the partition descriptor
+  partition_descr_type pd;
+
+  /// offset of the index relative to the start of the partition
+  int start_offset;
+};
+}  // namespace partmap
+
 /// This type encodes a table of partitions
 ///
 /// The premise of this type is extremely simple:
@@ -133,176 +160,122 @@ using partition_descr_type = int;
 ///      in a bunch of places and performance is a demonstrated issue (I'm a
 ///      little skeptical, since this probably won't be used deep within any
 ///      nested loops)
-///
-/// @note
-/// The contents of this struct should be considered an implementation
-/// detail! Always prefer the associated functions (they are defined in such
-/// a way that they should be inlined)
-struct PartMap {
+class PartMap {
   /// number of partitions
-  int n_parts;
+  int n_parts_;
   /// the list of partition descriptors associated with each partition
-  partition_descr_type pd_array[partmap_detail::MAX_LEN];
+  partition_descr_type pd_array_[partmap_detail::MAX_LEN];
   /// the upper bounds on each partition
-  int right_idx_bounds[partmap_detail::MAX_LEN];
-};
+  int right_idx_bounds_[partmap_detail::MAX_LEN];
 
-namespace partmap_detail {
-// helper function (that I wish didn't exist)
-inline PartMap mk_invalid() {
-  PartMap out;
-  out.n_parts = -1;
-  for (int i = 0; i < partmap_detail::MAX_LEN; i++) {
-    out.pd_array[i] = 0;
-    out.right_idx_bounds[i] = 0;
-  }
-  return out;
-}
-}  // namespace partmap_detail
-
-/// Construct a PartMap from the sizes of each partition.
-///
-/// @param[in] pds Array of unique partition descriptors
-/// @param[in] sizes Holds the number of indices for each partition.
-/// @param[in] n_parts The number of partitions
-///
-/// @note
-/// Callers should pass the returned value to @ref PartMap_isok
-/// to check whether there was an error during creation. This is pretty
-/// ugly/clunky, but it's the only practical way to achieve comparable behavior
-/// to other internal data types. The best alternatives involve things like
-/// std::optional or converting this type to a simple C++ class.
-inline PartMap new_PartMap(const partition_descr_type* pds, const int* sizes,
-                           int n_parts) {
-  if (n_parts == 0) {
-    PartMap out = partmap_detail::mk_invalid();
-    out.n_parts = n_parts;
-    out.pd_array[0] = -1;
-    out.right_idx_bounds[0] = 0;
-    return out;
-  }
-
-  // (in reality, any error here points to an internal logic-error)
-  if (pds == nullptr || sizes == nullptr) {
-    GrPrintErrMsg("pds and sizes can only be a nullptr when n_parts is 0");
-    return partmap_detail::mk_invalid();
-  } else if (n_parts < 0 || n_parts > partmap_detail::MAX_LEN) {
-    GrPrintErrMsg("n_parts doesn't satisfy 0 <= n_parts <= %d",
-                  partmap_detail::MAX_LEN);
-  }
-
-  PartMap out = partmap_detail::mk_invalid();
-  out.n_parts = n_parts;
-  int running_sum = 0;
-  for (int i = 0; i < n_parts; i++) {
-    // error checks:
-    for (int j = 0; j < i; j++) {
-      if (pds[i] == pds[j]) {
-        GrPrintErrMsg("pds[%d] and pds[%d] hold the same descriptor", i, j);
-        return partmap_detail::mk_invalid();
-      }
-    }
-    if (sizes[i] < 0) {
-      GrPrintErrMsg("sizes[%d] is negative", i);
-      return partmap_detail::mk_invalid();
-    }
-
-    out.pd_array[i] = pds[i];
-    running_sum += sizes[i];
-    out.right_idx_bounds[i] = running_sum;
-  }
-  return out;
-}
-
-/// checks whether a creational function produced a valid partition map
-///
-/// @param[in] ptr Points to the partition map being checked
-/// @return true if the value is ok or false if the value is invalid
-///
-/// @important
-/// The interface of @ref PartMap sets values in a very particular way to
-/// signal that an instance is in an invalid state. This function @b ONLY
-/// checks for that particular signature.
-inline bool PartMap_is_ok(const PartMap* ptr) { return (ptr->n_parts >= 0); }
-
-/// Destroys the internal data tracked by an instance
-///
-/// @param[in] ptr A non-null pointer to a valid partition map
-///
-/// @note
-/// The @b ONLY exists for consistency with other data types. (It's
-/// unnecessary to call this function)
-inline void drop_PartMap(PartMap* ptr) {
-  return;  // NO-OP
-}
-
-/// number of partitions in the partition map
-inline int PartMap_n_partitions(const PartMap* m) { return m->n_parts; }
-
-/// number of indices bounded by the partition map
-inline int PartMap_n_idx(const PartMap* m) {
-  return (m->n_parts == 0) ? 0 : m->right_idx_bounds[m->n_parts - 1];
-}
-
-/// @todo Perhaps we should reconcile with FieldFlatIndexRange?
-struct IdxInterval {
-  int start;
-  int stop;
-};
-
-/// Query the interval of indices that bound a partition
-///
-/// @param[in] m Valid pointer to a partition map
-/// @param[in] pd The partition descriptor to query
-inline IdxInterval PartMap_part_bounds(const PartMap* m,
-                                       partition_descr_type pd) {
-  // simple, stupid, linear search
-  for (int i = 0; i < m->n_parts; i++) {
-    if (pd == m->pd_array[i]) {
-      return IdxInterval{/*start=*/(i == 0) ? 0 : m->right_idx_bounds[i - 1],
-                         /*stop=*/m->right_idx_bounds[i]};
+public:
+  /// default constructor
+  ///
+  /// The instance is in an invalid "null state" this is a necessary evil
+  /// unless we want to add constructors to all structs that own a PartMap
+  /// (overall, this would be a good thing, but let's take it one step at a
+  /// time)
+  PartMap() {
+    n_parts_ = -1;
+    for (int i = 0; i < partmap_detail::MAX_LEN; i++) {
+      pd_array_[i] = 0;
+      right_idx_bounds_[i] = 0;
     }
   }
-  return IdxInterval{-1, -1};
-}
 
-namespace partmap {
-/// holds info pertaining to the partition holding an index
-struct IdxSearch {
-  /// indicates whether the index was found
-  bool has_val;
-
-  /// The index being searched
+  /// Construct a PartMap from the sizes of each partition.
+  ///
+  /// @param[in] pds Array of unique partition descriptors
+  /// @param[in] sizes Holds the number of indices for each partition.
+  /// @param[in] n_parts The number of partitions
   ///
   /// @note
-  /// This is primarily tracked in order to make the key_partition_search
-  /// convenience function provide more useful results
-  int index;
+  /// Use the @ref is_ok method to check whether the constructor faced an error
+  PartMap(const partition_descr_type* pds, const int* sizes, int n_parts)
+      : PartMap() {
+    // (in reality, any error here points to an internal logic-error)
+    if (n_parts != 0 && (pds == nullptr || sizes == nullptr)) {
+      GrPrintErrMsg("pds and sizes can only be a nullptr when n_parts is 0");
+      return;  // constructed object is invalid since n_parts_ isn't changed
+    } else if (n_parts < 0 || n_parts > partmap_detail::MAX_LEN) {
+      GrPrintErrMsg("n_parts doesn't satisfy 0 <= n_parts <= %d",
+                    partmap_detail::MAX_LEN);
+      return;  // constructed object is invalid since n_parts_ isn't changed
+    }
 
-  /// the partition descriptor
-  partition_descr_type pd;
+    int running_sum = 0;
+    for (int i = 0; i < n_parts; i++) {
+      // error checks:
+      for (int j = 0; j < i; j++) {
+        if (pds[i] == pds[j]) {
+          GrPrintErrMsg("pds[%d] and pds[%d] hold the same descriptor", i, j);
+          return;  // constructed object is invalid since n_parts_ isn't changed
+        }
+      }
+      if (sizes[i] < 0) {
+        GrPrintErrMsg("sizes[%d] is negative", i);
+        return;  // constructed object is invalid since n_parts_ isn't changed
+      }
 
-  /// offset of the index relative to the start of the partition
-  int start_offset;
-};
-}  // namespace partmap
+      pd_array_[i] = pds[i];
+      running_sum += sizes[i];
+      right_idx_bounds_[i] = running_sum;
+    }
 
-/// search for the partition containing an index
-///
-/// @param[in] m Valid pointer to a partition map
-/// @param[in] idx The index to search for
-inline partmap::IdxSearch PartMap_search_idx(const PartMap* m, int idx) {
-  if (idx >= 0) {
+    if (n_parts == 0) {
+      pd_array_[0] = -1;
+    }
+
+    n_parts_ = n_parts;  // <- this signals that the constructed object is valid
+  }
+
+  // use default move/copy constructors & assignment operations
+  PartMap(const PartMap&) = default;
+  PartMap(PartMap&&) = default;
+  PartMap& operator=(const PartMap&) = default;
+  PartMap& operator=(PartMap&&) = default;
+
+  /// checks whether the constructor produced a valid partition map
+  bool is_ok() const { return (n_parts_ >= 0); }
+
+  /// number of partitions in the partition map
+  int n_partitions() const { return n_parts_; }
+
+  /// number of indices bounded by the partition map
+  int n_idx() const {
+    return (n_parts_ == 0) ? 0 : right_idx_bounds_[n_parts_ - 1];
+  }
+
+  /// Query the interval of indices that bound a partition
+  ///
+  /// @param[in] pd The partition descriptor to query
+  IdxInterval part_bounds(partition_descr_type pd) const {
     // simple, stupid, linear search
-    for (int i = 0; i < m->n_parts; i++) {
-      if (idx < m->right_idx_bounds[i]) {
-        int part_start = (i == 0) ? 0 : m->right_idx_bounds[i - 1];
-        return partmap::IdxSearch{true, idx, m->pd_array[i], idx - part_start};
+    for (int i = 0; i < n_parts_; i++) {
+      if (pd == pd_array_[i]) {
+        return IdxInterval{/*start=*/(i == 0) ? 0 : right_idx_bounds_[i - 1],
+                           /*stop=*/right_idx_bounds_[i]};
       }
     }
+    return IdxInterval{-1, -1};
   }
-  return {false, idx, m->pd_array[0], -1};
-}
+
+  /// search for the partition containing an index
+  ///
+  /// @param[in] idx The index to search for
+  inline partmap::IdxSearch search_idx(int idx) {
+    if (idx >= 0) {
+      // simple, stupid, linear search
+      for (int i = 0; i < n_parts_; i++) {
+        if (idx < right_idx_bounds_[i]) {
+          int part_start = (i == 0) ? 0 : right_idx_bounds_[i - 1];
+          return partmap::IdxSearch{true, idx, pd_array_[i], idx - part_start};
+        }
+      }
+    }
+    return {false, idx, pd_array_[0], -1};
+  }
+};
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
