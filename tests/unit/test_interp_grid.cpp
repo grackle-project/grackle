@@ -29,21 +29,6 @@ void PrintTo(const InterpDimScale& ids, std::ostream* os) {
       << ids.step << ')';
 }
 
-void PrintTo(const InterpGridProps& grid_props, std::ostream* os) {
-  *os << "InterpGridProps(";
-  if (grid_props) {
-    *os << '{';
-    for (int i = 0; i < grid_props.rank; i++) {
-      if (i > 0) *os << ", ";
-      PrintTo(InterpDimScale::Linear(grid_props.dimension[i],
-                                     grid_props.parameters[i][0],
-                                     grid_props.parameter_spacing[i]),
-              os);
-    }
-    *os << '}';
-  }
-  *os << ')';
-}
 }  // namespace GRIMPL_NAMESPACE_DECL
 
 static std::string matcher_descr_(
@@ -182,4 +167,53 @@ TEST(InterpGridProps, MoveAssign) {
 
   EXPECT_EQ(grid_props.data_size, 40);
   EXPECT_THAT(grid_props, HoldsDimScales(dim_scales));
+}
+
+// InterpGrid is less widely used than InterpGridProps
+
+TEST(InterpGrid, Empty) {
+  GRIMPL_NS::InterpGridProps interp_grid;
+  EXPECT_FALSE(interp_grid);
+}
+
+TEST(InterpGrid, NonNullButNoProps) {
+  double* data = new double[2];
+  data[0] = 1;
+  data[1] = 1;
+  GRIMPL_NS::InterpGridProps empty_grid_props;
+  GRIMPL_NS::InterpGrid interp_grid(std::move(empty_grid_props), data);
+  EXPECT_FALSE(interp_grid);
+}
+
+TEST(InterpGrid, Simple1D) {
+  // create grid_props
+  std::vector<GRIMPL_NS::InterpDimScale> dim_scales{
+      GRIMPL_NS::InterpDimScale::Linear(2, 0.0, 1.0)};
+  GRIMPL_NS::InterpGridProps grid_props(1, dim_scales.data());
+
+  // create pointer with values
+  double* data = new double[2];
+  data[0] = 1.0;
+  data[1] = -1.0;
+
+  // construct the interp_grid
+  GRIMPL_NS::InterpGrid interp_grid(std::move(grid_props), data);
+  ASSERT_TRUE(interp_grid);
+  EXPECT_EQ(interp_grid.data[0], 1.0);
+  EXPECT_EQ(interp_grid.data[1], -1.0);
+  EXPECT_THAT(interp_grid.props, HoldsDimScales(dim_scales));
+
+  EXPECT_FALSE(grid_props)
+      << "the grid_props variable should be in a null-state since it was "
+      << "\"consumed\" to create interp_grid";
+
+  // the following should probably be moved to a different test-case
+  GRIMPL_NS::InterpGrid interp_grid2(std::move(interp_grid));
+  EXPECT_TRUE(interp_grid2);
+  EXPECT_FALSE(interp_grid);
+
+  GRIMPL_NS::InterpGrid interp_grid3;
+  interp_grid3 = std::move(interp_grid2);
+  EXPECT_TRUE(interp_grid3);
+  EXPECT_FALSE(interp_grid);
 }

@@ -45,10 +45,33 @@ struct InterpDimScale {
   }
 };
 
-/// @brief Encodes the grid properties of an interpolation grid (other than the
-///        values being interpolated.
+/// @brief Encodes the properties of an interpolation grid (but not the actual
+///        grid of values that are interpolated.
 ///
-/// Ideally, we will reuse this struct to help implement the cloudy_data struct
+/// This class has a "null" state. An object in this state doesn't specify a
+/// valid grid of values. A default-constructed object, or an object where the
+/// constructor fails will be in this state. To check whether an object is in
+/// this state, you can write `if (obj)` or `bool(obj)` (just like you can do
+/// to check if a pointer is a nullptr).
+///
+/// Ideally, we will eventually adjust @ref cloudy_data so that its implemented
+/// in terms of this class
+///
+/// Ideas For Future Improvement
+/// ----------------------------
+/// - replace all occurrences of ``long long`` with int64_t (this will be a
+///   little invasive and affect some other parts of the code base)
+/// - stop allowing direct access to data members (have accessor methods
+///   mediate access)
+/// - we could probably get rid of the data_size member and provide an accessor
+///   method that computes it on demand
+/// - the actual approach for representing data could be improved. If nothing
+///   else, it would be nice to encode a way to determine if parameters along
+///   a dimension have constant spacing.
+/// - It would be more elegant if this class didn't have a "null-state" (i.e.,
+///   any instance of this class is in a fully valid state). To accomplish that
+///   without exceptions, we would probably need to convert the constructor
+///   to a factory method that returns std::optional or std::expected.
 struct InterpGridProps {
   /// Rank of dataset
   long long rank;
