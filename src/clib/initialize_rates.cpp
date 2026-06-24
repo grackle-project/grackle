@@ -51,8 +51,10 @@
 #include "initialize_rates.hpp"
 #include "internal_types.hpp" // new_CollisionalRxnRateCollection
 #include "LUT.hpp" // CollisionalRxnLUT
+#include "interp_table_utils.hpp"
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
+#include "support/config.hpp"
 #include "support/status_reporting.hpp"
 
 // this function pointer type is defined inside an extern "C" block because all
@@ -269,8 +271,6 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
   // initialize my_rates->opaque_storage->h2dust_grain_interp_props
   long long n_Tdust = (long long)(my_chemistry->NumberOfDustTemperatureBins);
   long long n_Tgas = (long long)(my_chemistry->NumberOfTemperatureBins);
-  double* d_Td = (double*)malloc(n_Tdust * sizeof(double));
-  double* d_Tg = (double*)malloc(n_Tgas * sizeof(double));
 
   const double logtem_start = std::log(my_chemistry->TemperatureStart);
   const double dlogtem = (std::log(my_chemistry->TemperatureEnd) -
@@ -282,23 +282,17 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
                             std::log(my_chemistry->DustTemperatureStart)) /
                            (double)(my_chemistry->NumberOfDustTemperatureBins - 1);
 
-  for (long long idx = 0; idx < n_Tdust; idx++) {
-    d_Td[idx] = logTdust_start + (double)idx * dlogTdust;
-  }
-  for (long long idx = 0; idx < n_Tgas; idx++) {
-    d_Tg[idx] = logtem_start + (double)idx * dlogtem;
-  }
+  using GRIMPL_NS::InterpDimScale;
+  const InterpDimScale params[2] = {
+    InterpDimScale::Linear(n_Tdust, logTdust_start, dlogTdust),
+    InterpDimScale::Linear(n_Tgas, logtem_start, dlogtem),
+  };
 
-  gr_interp_grid_props* interp_props
-    = &(my_rates->opaque_storage->h2dust_grain_interp_props);
-  interp_props->rank = 2ll;
-  interp_props->dimension[0] = n_Tdust;
-  interp_props->dimension[1] = n_Tgas;
-  interp_props->parameters[0] = d_Td;
-  interp_props->parameters[1] = d_Tg;
-  interp_props->parameter_spacing[0] = dlogTdust;
-  interp_props->parameter_spacing[1] = dlogtem;
-  interp_props->data_size = n_Tdust*n_Tgas;
+  gr_interp_grid_props& grid_props = my_rates->opaque_storage->h2dust_grain_interp_props;
+  grid_props = gr_interp_grid_props(2, params);
+  if (!grid_props) {
+    return GR_FAIL;
+  }
 
   return GR_SUCCESS;
 }

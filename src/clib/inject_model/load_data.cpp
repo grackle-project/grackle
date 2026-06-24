@@ -14,6 +14,7 @@
 #include "../dust/grain_species_info.hpp"
 #include "grackle_chemistry_data.h"
 #include "load_data.hpp"  // forward declarations
+#include "interp_table_utils.hpp"
 #include "raw_data.hpp"
 #include "../LUT.hpp"
 #include "../opaque_storage.hpp"
@@ -480,12 +481,13 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   double log10Tdust_lo = 0.0;
   double log10Tdust_step = 0.1;
 
-  inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0] =
-      log10Tdust_step;
-  double* log10Tdust_vals =
-      inject_pathway_props->log10Tdust_interp_props.parameters[0];
-  for (int iTd = 0; iTd < n_log10Tdust_vals; iTd++) {
-    log10Tdust_vals[iTd] = log10Tdust_lo + (double)iTd * log10Tdust_step;
+  InterpDimScale dim_scale =
+      InterpDimScale::Linear(n_log10Tdust_vals, log10Tdust_lo, log10Tdust_step);
+  inject_pathway_props->log10Tdust_interp_props =
+      gr_interp_grid_props(1, &dim_scale);
+  if (!inject_pathway_props->log10Tdust_interp_props) {
+    drop_FrozenKeyIdxBiMap(&inj_path_names);
+    return GR_FAIL;
   }
 
   // zero-out all metal injection yield fractions and dust grain properties

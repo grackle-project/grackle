@@ -17,6 +17,31 @@
 
 #include "grackle.h"  // gr_interp_grid, GRACKLE_CLOUDY_TABLE_MAX_DIMENSION
 #include "grackle_macros.h"  // GRACKLE_FREE
+#include "support/config.hpp"
+#include "support/status_reporting.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
+
+/// @brief encodes the scaling of a single dimension of an interpolation grid
+///
+/// This exists primarily to make it easy to convey to the constructor of
+/// @ref gr_interp_grid_props what the dimensions of a grid are.
+///
+/// Right now, we only need to support grids with linear spacing, but we'll
+/// need to add support for irregular spacing in the future in order to support
+/// redshift grids
+struct InterpDimScale {
+  int count;
+  double start;
+  double step;
+
+  /// @brief a factory method to explicitly construct linear spacing
+  static InterpDimScale Linear(int count, double start, double step) {
+    return {count, start, step};
+  }
+};
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 /// @brief Encodes the grid properties of an interpolation grid (other than the
 ///        values being interpolated.
@@ -52,6 +77,60 @@ public:  // interface methods
     }
   }
 
+  /// @brief primary constructor
+  ///
+  /// The caller should use ``if (obj)`` on the returned object to check if
+  /// there were any issues (for better error-handling, we should probably move
+  /// to static factory methods)
+  gr_interp_grid_props(int n_dim, const GRIMPL_NS::InterpDimScale* dim_scales)
+      : gr_interp_grid_props() {
+    if (n_dim > GRACKLE_CLOUDY_TABLE_MAX_DIMENSION) {
+      GrPrintErrMsg("n_dim exceeds %d",
+                    static_cast<int>(GRACKLE_CLOUDY_TABLE_MAX_DIMENSION));
+      return;
+    } else if (n_dim <= 0) {
+      GrPrintErrMsg("n_dim must be positive");
+      return;
+    } else if (dim_scales == nullptr) {
+      GrPrintErrMsg("dim_scales must not be a nullptr");
+      return;
+    }
+
+    long long tmp_data_size = (rank > 0) ? 1ll : 0ll;
+    for (int i = 0; i < rank; i++) {
+      const GRIMPL_NS::InterpDimScale& dim_scale = dim_scales[i];
+
+      if (dim_scale.count > 2) {
+        GrPrintErrMsg("dim_scales[%d] has less than 2 elements", i);
+        *this = gr_interp_grid_props();  // <- indicates a failure
+        return;
+      } else if (dim_scale.step == 0) {
+        GrPrintErrMsg("dim_scales[%d] has a step size of exactly 0", i);
+        *this = gr_interp_grid_props();  // <- indicates a failure
+        return;
+      }
+
+      double* arr = new double[dim_scale.count];
+      for (int j = 0; j < dim_scale.count; j++) {
+        arr[j] = dim_scale.start + (double)j * dim_scale.step;
+      }
+
+      dimension[i] = dim_scale.count;
+      parameters[i] = arr;
+      parameter_spacing[i] = dim_scale.step;
+
+      tmp_data_size *= (long long)dim_scale.count;
+    }
+    data_size = tmp_data_size;
+    rank = n_dim;
+  }
+
+  /// returns whether the instance is valid
+  ///
+  /// This lets you write `if (obj)`. You should generally do this after
+  /// calling the constructor
+  explicit operator bool() const noexcept { return rank != 0; }
+
   // delete copy constructor and assignment (these lead to dangling pointers)
   gr_interp_grid_props(const gr_interp_grid_props&) = delete;
   gr_interp_grid_props& operator=(const gr_interp_grid_props&) = delete;
@@ -71,6 +150,14 @@ public:  // interface methods
     std::swap(parameter_spacing, other.parameter_spacing);
     std::swap(data_size, other.data_size);
     return *this;
+  }
+
+  ~gr_interp_grid_props() {
+    for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
+      if (parameters[i] != nullptr) {
+        delete[] parameters[i];
+      }
+    }
   }
 };
 
@@ -104,24 +191,8 @@ public:  // interface methods
 
 namespace grackle::impl {
 
-/// Free memory associated with a #gr_interp_grid_props instance
-inline void free_interp_grid_props_(gr_interp_grid_props* props,
-                                    bool use_delete) {
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
-    if (use_delete) {
-      if (props->parameters[i] != nullptr) {
-        delete[] props->parameters[i];
-        props->parameters[i] = nullptr;
-      }
-    } else {
-      GRACKLE_FREE(props->parameters[i]);
-    }
-  }
-}
-
 /// Free memory associated with a #gr_interp_grid
 inline void free_interp_grid_(gr_interp_grid* grid) {
-  free_interp_grid_props_(&(grid->props), /* use_delete = */ false);
   GRACKLE_FREE(grid->data);
 }
 

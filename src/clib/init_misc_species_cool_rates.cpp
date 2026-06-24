@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <stdlib.h> 
-#include <string.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -21,8 +20,8 @@
 #include "init_misc_species_cool_rates.hpp"  // forward declarations
 #include "internal_units.hpp"
 #include "opaque_storage.hpp"
-#include "phys_constants.h"
 #include "grackle_rate_functions.h" // forward declarations of some funcs
+#include "support/config.hpp"
 
 /// calculate CIE H2 cooling rate from Yoshida et al. (2006)
 ///
@@ -115,46 +114,14 @@ int grackle::impl::free_misc_species_cool_rates(chemistry_data *my_chemistry,
   return GR_SUCCESS;
 }
 
-struct regular_range_{
-  int count;
-  double start;
-  double step;
-};
-
-/// helper function to assist with setting up a generic interp_grid_props
-static void setup_generic_grid_props_(gr_interp_grid_props* grid_props,
-                                      int rank,
-                                      const struct regular_range_* parameters)
-{
-  grid_props->rank = rank;
-
-  long long data_size = (rank > 0) ? 1ll : 0ll;
-  for (int i = 0; i < rank; i++) {
-    const struct regular_range_ par_range = parameters[i];
-
-    double* arr = (double*)malloc(par_range.count * sizeof(double));
-    for(int j = 0; j < par_range.count; j++) {
-      arr[j] = par_range.start + (double)j * par_range.step;
-    }
-
-    grid_props->dimension[i] = par_range.count;
-    grid_props->parameters[i] = arr;
-    grid_props->parameter_spacing[i] = par_range.step;
-
-    data_size *= (long long)par_range.count;
-  }
-  grid_props->data_size = data_size;
-}
-
-
 /// helper function to assist with setting up a interp_grid for cooling
 static void setup_cool_interp_grid_(gr_interp_grid* grid,
                                     int rank,
-                                    const struct regular_range_* parameters,
+                                    const GRIMPL_NS::InterpDimScale* parameters,
                                     const double* data,
                                     double log_coolrate)
 {
-  setup_generic_grid_props_(&grid->props, rank, parameters);
+  grid->props = gr_interp_grid_props(rank, parameters);
   const long long data_size = grid->props.data_size;
   grid->data = (double*)malloc(data_size * sizeof(double));
   for(long long i = 0; i < data_size; i++) {
@@ -167,11 +134,12 @@ static void setup_cool_interp_grid_(gr_interp_grid* grid,
 
 extern "C" void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
+  using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
-  const struct regular_range_ params[3] = {
-    {16,  20.0, 1.0}, // log10(number-density like)
-    {11,   1.6, 0.2}, // log10(temperature)
-    {21, -10.0, 1.0}  // log10(H2 number density)
+  const InterpDimScale params[3] = {
+    InterpDimScale::Linear(16,  20.0, 1.0), // log10(number-density like)
+    InterpDimScale::Linear(11,   1.6, 0.2), // log10(temperature)
+    InterpDimScale::Linear(21, -10.0, 1.0)  // log10(H2 number density)
   };
 
   double L[] = 
@@ -358,11 +326,12 @@ extern "C" void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemist
 
 extern "C" void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
+  using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
-  const struct regular_range_ params[3] = {
-    {16,  16.0, 1.0}, // log10(number-density like)
-    {11,   1.6, 0.2}, // log10(temperature)
-    {21, -12.0, 1.0} // log10(H2 number density)
+  const InterpDimScale params[3] = {
+    InterpDimScale::Linear(16,  16.0, 1.0), // log10(number-density like)
+    InterpDimScale::Linear(11,   1.6, 0.2), // log10(temperature)
+    InterpDimScale::Linear(21, -12.0, 1.0) // log10(H2 number density)
   };
 
   double L[] =
@@ -549,11 +518,12 @@ extern "C" void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemist
 
 extern "C" void initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
+  using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
-  const struct regular_range_ params[3] = {
-    {13,  15.0, 1.0}, // log10(number-density like)
-    {16,   0.6, 0.2}, // log10(temperature)
-    {17, -10.0, 1.0}  // log10(H2 number density)
+  const InterpDimScale params[3] = {
+    InterpDimScale::Linear(13,  15.0, 1.0), // log10(number-density like)
+    InterpDimScale::Linear(16,   0.6, 0.2), // log10(temperature)
+    InterpDimScale::Linear(17, -10.0, 1.0)  // log10(H2 number density)
   };
 
   double L[] =
@@ -772,11 +742,12 @@ extern "C" void initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemist
 
 extern "C" void initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
+  using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
-  const struct regular_range_ params[3] = {
-    {13,  15.0, 1.0}, // log10(number-density like)
-    {16,   0.6, 0.2}, // log10(temperature)
-    {17, -10.0, 1.0}  // log10(H2 number density)
+  const InterpDimScale params[3] = {
+    InterpDimScale::Linear(13,  15.0, 1.0), // log10(number-density like)
+    InterpDimScale::Linear(16,   0.6, 0.2), // log10(temperature)
+    InterpDimScale::Linear(17, -10.0, 1.0)  // log10(H2 number density)
   };
 
   double L[] =
@@ -996,11 +967,12 @@ extern "C" void initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemis
 
 extern "C" void initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
+  using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
-  const struct regular_range_ params[3] = {
-    {13, 15.0, 1.0}, // log10(number-density like)
-    {16,  0.8, 0.2}, // log10(temperature)
-    {16, -5.0, 1.0}  // log10(H2 number density)
+  const InterpDimScale params[3] = {
+    InterpDimScale::Linear(13, 15.0, 1.0), // log10(number-density like)
+    InterpDimScale::Linear(16,  0.8, 0.2), // log10(temperature)
+    InterpDimScale::Linear(16, -5.0, 1.0)  // log10(H2 number density)
   };
 
   double L[] =
@@ -1219,11 +1191,12 @@ extern "C" void initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemist
 
 extern "C" void initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
+  using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
-  const struct regular_range_ params[3] = {
-    {11, 14.0, 0.5}, // log10(number-density like)
-    {11,  1.0, 0.2}, // log10(temperature)
-    {14, -3.0, 1.0}  // log10(H2I number density)
+  const InterpDimScale params[3] = {
+    InterpDimScale::Linear(11, 14.0, 0.5), // log10(number-density like)
+    InterpDimScale::Linear(11,  1.0, 0.2), // log10(temperature)
+    InterpDimScale::Linear(14, -3.0, 1.0)  // log10(H2I number density)
   };
 
   double L[] =
@@ -1355,11 +1328,12 @@ extern "C" void initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemist
 
 extern "C" void initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
+  using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
-  const struct regular_range_ params[3] = {
-    {9, 10.0, 1.0}, // log10(number-density like)
-    {6, 1.6, 0.2}, // log10(temperature)
-    {14, 1.0, 1.0} // log10(H2I number density)
+  const InterpDimScale params[3] = {
+    InterpDimScale::Linear(9, 10.0, 1.0), // log10(number-density like)
+    InterpDimScale::Linear(6, 1.6, 0.2), // log10(temperature)
+    InterpDimScale::Linear(14, 1.0, 1.0) // log10(H2I number density)
   };
 
   double L[] =
@@ -1424,11 +1398,12 @@ extern "C" void initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemist
 
 extern "C" void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
+  using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
-  const struct regular_range_ params[3] = {
-    {10, 10.0, 1.0}, // log10(number-density like)
-    {12, 1.0, 0.2}, // log10(temperature)
-    {16, -1.0, 1.0} // log10(H2I number density)
+  const InterpDimScale params[3] = {
+    InterpDimScale::Linear(10, 10.0, 1.0), // log10(number-density like)
+    InterpDimScale::Linear(12, 1.0, 0.2), // log10(temperature)
+    InterpDimScale::Linear(16, -1.0, 1.0) // log10(H2I number density)
   };
 
   double L[] =
@@ -1559,10 +1534,11 @@ extern "C" void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemis
 
 extern "C" void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
+  using GRIMPL_NS::InterpDimScale;
   const int rank = 2;
-  const struct regular_range_ params[2] = {
-    {15, -16.0, 1.0}, // log10(mass-density)
-    {29,   1.8, 0.1}  // log10(temperature)
+  const InterpDimScale params[2] = {
+    InterpDimScale::Linear(15, -16.0, 1.0), // log10(mass-density)
+    InterpDimScale::Linear(29,   1.8, 0.1)  // log10(temperature)
   };
 
   double kp[29][15] =
@@ -1596,7 +1572,7 @@ extern "C" void initialize_primordial_opacity(chemistry_data *my_chemistry, chem
    ,{ -6.13,  -5.13,  -4.13,  -3.13,  -2.13, -1.15, -0.25,  0.68,   1.67,   2.67,   3.66,  10.00,  10.00,  10.00,  10.00}
    ,{ -6.45,  -5.45,  -4.45,  -3.45,  -2.45, -1.45, -0.45,  0.53,   1.46,   2.42,   3.41,  10.00,  10.00,  10.00,  10.00}};
 
-  setup_generic_grid_props_(&my_rates->opaque_storage->alphap.props, rank, params);
+  my_rates->opaque_storage->alphap.props = gr_interp_grid_props(rank, params);
 
   gr_interp_grid& alphap = my_rates->opaque_storage->alphap;
   alphap.data = (double*)malloc(alphap.props.data_size * sizeof(double));
