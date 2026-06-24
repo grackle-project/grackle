@@ -484,7 +484,7 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   InterpDimScale dim_scale =
       InterpDimScale::Linear(n_log10Tdust_vals, log10Tdust_lo, log10Tdust_step);
   inject_pathway_props->log10Tdust_interp_props =
-      gr_interp_grid_props(1, &dim_scale);
+      InterpGridProps(1, &dim_scale);
   if (!inject_pathway_props->log10Tdust_interp_props) {
     drop_FrozenKeyIdxBiMap(&inj_path_names);
     return GR_FAIL;

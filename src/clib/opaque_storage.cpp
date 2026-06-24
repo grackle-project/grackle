@@ -27,7 +27,7 @@ gr_opaque_storage::~gr_opaque_storage() {
     delete[] used_kcol_rate_indices;
   }
 
-  // all of the gr_interp_grid and gr_interp_grid_props have destructors that
+  // all of the InterpGrid & InterpGridProps data members have destructors that
   // handle their deallocation
 
   if (grain_species_info != nullptr) {

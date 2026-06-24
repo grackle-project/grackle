@@ -12,10 +12,9 @@
 #ifndef GRAIN_METAL_INJECT_PATHWAYS_HPP
 #define GRAIN_METAL_INJECT_PATHWAYS_HPP
 
-#include "grackle.h"  // gr_interp_grid_props
 #include "../LUT.hpp"
 #include "../internal_types.hpp"
-#include "../interp_table_utils.hpp"
+#include "../interp_table_utils.hpp"  // InterpGridProps
 #include "../support/status_reporting.hpp"
 #include "../visitor/common.hpp"
 
@@ -176,11 +175,11 @@ struct GrainMetalInjectPathways {
   /// in opacity calculations.
   ///
   /// @note
-  /// Using a full #gr_interp_grid_props seems like it's a little overkill for
+  /// Using a full #InterpGridProps seems like it's a little overkill for
   /// holding values for 1D interpolation, but it may be worthwhile that this
   /// datatype is **ONLY** used for interpolation. Maybe in the future, we
   /// should make a specialized version for 1D data?
-  gr_interp_grid_props log10Tdust_interp_props;
+  InterpGridProps log10Tdust_interp_props;
 
   /// the number of polynomial coefficients that will be computed from the
   /// opacity_coef_table. They are used in a polynomial of degree

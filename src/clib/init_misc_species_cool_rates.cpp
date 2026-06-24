@@ -131,13 +131,13 @@ int grackle::impl::free_misc_species_cool_rates(chemistry_data *my_chemistry,
 }
 
 /// helper function to assist with setting up a interp_grid for cooling
-static int setup_cool_interp_grid_(gr_interp_grid* grid,
+static int setup_cool_interp_grid_(GRIMPL_NS::InterpGrid* grid,
                                    int rank,
                                    const GRIMPL_NS::InterpDimScale* parameters,
                                    const double* data,
                                    double log_coolrate)
 {
-  *grid = gr_interp_grid(gr_interp_grid_props(rank, parameters));
+  *grid = GRIMPL_NS::InterpGrid(GRIMPL_NS::InterpGridProps(rank, parameters));
   if (!grid->props) {
     return GR_FAIL;
   }
@@ -1590,8 +1590,8 @@ extern "C" int initialize_primordial_opacity(chemistry_data *my_chemistry, chemi
    ,{ -6.13,  -5.13,  -4.13,  -3.13,  -2.13, -1.15, -0.25,  0.68,   1.67,   2.67,   3.66,  10.00,  10.00,  10.00,  10.00}
    ,{ -6.45,  -5.45,  -4.45,  -3.45,  -2.45, -1.45, -0.45,  0.53,   1.46,   2.42,   3.41,  10.00,  10.00,  10.00,  10.00}};
 
-  gr_interp_grid& alphap = my_rates->opaque_storage->alphap;
-  alphap = gr_interp_grid(gr_interp_grid_props(rank, params));
+  GRIMPL_NS::InterpGrid& alphap = my_rates->opaque_storage->alphap;
+  alphap = GRIMPL_NS::InterpGrid(GRIMPL_NS::InterpGridProps(rank, params));
   if (!alphap.props) {
     return GR_FAIL;
   }

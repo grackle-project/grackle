@@ -288,8 +288,8 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
     InterpDimScale::Linear(n_Tgas, logtem_start, dlogtem),
   };
 
-  gr_interp_grid_props& grid_props = my_rates->opaque_storage->h2dust_grain_interp_props;
-  grid_props = gr_interp_grid_props(2, params);
+  GRIMPL_NS::InterpGridProps& grid_props = my_rates->opaque_storage->h2dust_grain_interp_props;
+  grid_props = GRIMPL_NS::InterpGridProps(2, params);
   if (!grid_props) {
     return GR_FAIL;
   }

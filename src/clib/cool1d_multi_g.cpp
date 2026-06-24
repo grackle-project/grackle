@@ -27,13 +27,14 @@
 #include "dust_props.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
+#include "interp_table_utils.hpp"
 #include "opaque_storage.hpp"
 #include "tabulated/cool1d_cloudy.hpp"
 #include "tabulated/cool1d_cloudy_old_tables.hpp"
 #include "utils-cpp.hpp"
 
 static double interp_from_3D_grid(double input1, double input2, double input3,
-                                  const gr_interp_grid& interp_grid) {
+                                  const GRIMPL_NS::InterpGrid& interp_grid) {
   return grackle::impl::fortran_wrapper::interpolate_3d_g(
       input1, input2, input3, interp_grid.props.dimension,
       interp_grid.props.parameters[0], interp_grid.props.parameter_spacing[0],
@@ -883,7 +884,7 @@ void grackle::impl::cool1d_multi_g(
   // Compute continuum opacity
 
   if (my_chemistry->use_primordial_continuum_opacity == 1) {
-    const gr_interp_grid& interp_grid = opaque_storage.alphap;
+    const InterpGrid& interp_grid = opaque_storage.alphap;
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         // ! primordial continuum opacity !!

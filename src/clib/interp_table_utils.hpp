@@ -15,8 +15,7 @@
 
 #include <utility>  // std::swap, std::move, std::exchange
 
-#include "grackle.h"  // gr_interp_grid, GRACKLE_CLOUDY_TABLE_MAX_DIMENSION
-#include "grackle_macros.h"  // GRACKLE_FREE
+#include "grackle.h"  // GRACKLE_CLOUDY_TABLE_MAX_DIMENSION
 #include "support/config.hpp"
 #include "support/status_reporting.hpp"
 
@@ -25,7 +24,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @brief encodes the scaling of a single dimension of an interpolation grid
 ///
 /// This exists primarily to make it easy to convey to the constructor of
-/// @ref gr_interp_grid_props what the dimensions of a grid are.
+/// @ref InterpGridProps what the dimensions of a grid are.
 ///
 /// Right now, we only need to support grids with linear spacing, but we'll
 /// need to add support for irregular spacing in the future in order to support
@@ -41,17 +40,12 @@ struct InterpDimScale {
   }
 };
 
-}  // namespace GRIMPL_NAMESPACE_DECL
-
 /// @brief Encodes the grid properties of an interpolation grid (other than the
 ///        values being interpolated.
 ///
 /// Ideally, we will reuse this struct to help implement the cloudy_data struct
-struct gr_interp_grid_props {
+struct InterpGridProps {
   /// Rank of dataset
-  ///
-  /// TODO: do we need this attribute? In most cases, we know the rank
-  ///       of a table ahead of time
   long long rank;
 
   /// Dimension of dataset.
@@ -69,7 +63,7 @@ struct gr_interp_grid_props {
 
 public:  // interface methods
   /// @brief default constructor (makes an empty instance)
-  gr_interp_grid_props() : rank{0}, data_size(0) {
+  InterpGridProps() : rank{0}, data_size(0) {
     for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
       dimension[i] = 0;
       parameters[i] = nullptr;
@@ -82,8 +76,8 @@ public:  // interface methods
   /// The caller should use ``if (obj)`` on the returned object to check if
   /// there were any issues (for better error-handling, we should probably move
   /// to static factory methods)
-  gr_interp_grid_props(int n_dim, const GRIMPL_NS::InterpDimScale* dim_scales)
-      : gr_interp_grid_props() {
+  InterpGridProps(int n_dim, const GRIMPL_NS::InterpDimScale* dim_scales)
+      : InterpGridProps() {
     if (n_dim > GRACKLE_CLOUDY_TABLE_MAX_DIMENSION) {
       GrPrintErrMsg("n_dim exceeds %d",
                     static_cast<int>(GRACKLE_CLOUDY_TABLE_MAX_DIMENSION));
@@ -102,11 +96,11 @@ public:  // interface methods
 
       if (dim_scale.count > 2) {
         GrPrintErrMsg("dim_scales[%d] has less than 2 elements", i);
-        *this = gr_interp_grid_props();  // <- indicates a failure
+        *this = InterpGridProps();  // <- indicates a failure
         return;
       } else if (dim_scale.step == 0) {
         GrPrintErrMsg("dim_scales[%d] has a step size of exactly 0", i);
-        *this = gr_interp_grid_props();  // <- indicates a failure
+        *this = InterpGridProps();  // <- indicates a failure
         return;
       }
 
@@ -132,17 +126,16 @@ public:  // interface methods
   explicit operator bool() const noexcept { return rank != 0; }
 
   // delete copy constructor and assignment (these lead to dangling pointers)
-  gr_interp_grid_props(const gr_interp_grid_props&) = delete;
-  gr_interp_grid_props& operator=(const gr_interp_grid_props&) = delete;
+  InterpGridProps(const InterpGridProps&) = delete;
+  InterpGridProps& operator=(const InterpGridProps&) = delete;
 
   /// @brief Move constructor
-  gr_interp_grid_props(gr_interp_grid_props&& other) noexcept
-      : gr_interp_grid_props() {
+  InterpGridProps(InterpGridProps&& other) noexcept : InterpGridProps() {
     *this = std::move(other);  // <- use the move assigment
   }
 
   /// @brief Move assignment
-  gr_interp_grid_props& operator=(gr_interp_grid_props&& other) noexcept {
+  InterpGridProps& operator=(InterpGridProps&& other) noexcept {
     // swapping contents is a fairly standard idiom
     std::swap(rank, other.rank);
     std::swap(dimension, other.dimension);
@@ -152,7 +145,7 @@ public:  // interface methods
     return *this;
   }
 
-  ~gr_interp_grid_props() {
+  ~InterpGridProps() {
     for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
       if (parameters[i] != nullptr) {
         delete[] parameters[i];
@@ -162,15 +155,15 @@ public:  // interface methods
 };
 
 /// Encodes a full interpolation table
-struct gr_interp_grid {
+struct InterpGrid {
   /// properties of the interpolation grid
-  gr_interp_grid_props props;
+  InterpGridProps props;
   /// the actual data that gets interpolated
   double* data;
 
 public:  // interface methods
   /// @brief default constructor (makes an empty instance)
-  gr_interp_grid() : props(), data{nullptr} {}
+  InterpGrid() : props(), data{nullptr} {}
 
   /// Constructs an instance by consuming the supplied grid properties
   ///
@@ -182,7 +175,7 @@ public:  // interface methods
   /// The caller is responsible for filling in `data` data-member afterwards.
   /// While I'm NOT fond of this (ideally, a constructor should produce a
   /// fully initialized object), this is better than what came before.
-  explicit gr_interp_grid(gr_interp_grid_props&& grid_props)
+  explicit InterpGrid(InterpGridProps&& grid_props)
       : props(std::move(grid_props)) {
     if (!grid_props) {
       // in this case, the grid_properties correspond to an array of shape 0
@@ -193,26 +186,28 @@ public:  // interface methods
   }
 
   // delete copy constructor and assignment (these lead to dangling pointers)
-  gr_interp_grid(const gr_interp_grid&) = delete;
-  gr_interp_grid& operator=(const gr_interp_grid&) = delete;
+  InterpGrid(const InterpGrid&) = delete;
+  InterpGrid& operator=(const InterpGrid&) = delete;
 
   /// @brief Move constructor
-  gr_interp_grid(gr_interp_grid&& other) noexcept
+  InterpGrid(InterpGrid&& other) noexcept
       : props(std::move(other.props)),
         data{std::exchange(other.data, nullptr)} {}
 
   /// @brief Move assignment
-  gr_interp_grid& operator=(gr_interp_grid&& other) noexcept {
+  InterpGrid& operator=(InterpGrid&& other) noexcept {
     props = std::move(other.props);
     std::swap(data, other.data);
     return *this;
   }
 
-  ~gr_interp_grid() {
+  ~InterpGrid() {
     if (data != nullptr) {
       delete[] data;
     }
   }
 };
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* INTERP_TABLE_UTILS_HPP */
