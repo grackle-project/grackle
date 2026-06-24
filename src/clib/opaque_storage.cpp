@@ -27,16 +27,8 @@ gr_opaque_storage::~gr_opaque_storage() {
     delete[] used_kcol_rate_indices;
   }
 
-  // since h2dust_grain_interp_props isn't a pointer, there is nothing more to
-  // allocate right here
-
-  GRIMPL_NS::free_interp_grid_(&LH2);
-  GRIMPL_NS::free_interp_grid_(&LHD);
-
-  // we deal with freeing other interp grids inside of
-  // free_misc_species_cool_rates
-
-  GRIMPL_NS::free_interp_grid_(&alphap);
+  // all of the gr_interp_grid and gr_interp_grid_props have destructors that
+  // handle their deallocation
 
   if (grain_species_info != nullptr) {
     // delete contents of grain_species_info

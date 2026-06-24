@@ -161,7 +161,7 @@ public:  // interface methods
   }
 };
 
-/// Encodes a full interpolation grid
+/// Encodes a full interpolation table
 struct gr_interp_grid {
   /// properties of the interpolation grid
   gr_interp_grid_props props;
@@ -171,6 +171,26 @@ struct gr_interp_grid {
 public:  // interface methods
   /// @brief default constructor (makes an empty instance)
   gr_interp_grid() : props(), data{nullptr} {}
+
+  /// Constructs an instance by consuming the supplied grid properties
+  ///
+  /// After calling this function, the @p grid_props object is left in an
+  /// unspecified state (since the contents were "moved" into the instance
+  /// tracked as part of this class)
+  ///
+  /// @note
+  /// The caller is responsible for filling in `data` data-member afterwards.
+  /// While I'm NOT fond of this (ideally, a constructor should produce a
+  /// fully initialized object), this is better than what came before.
+  explicit gr_interp_grid(gr_interp_grid_props&& grid_props)
+      : props(std::move(grid_props)) {
+    if (!grid_props) {
+      // in this case, the grid_properties correspond to an array of shape 0
+      data = nullptr;
+    } else {
+      data = new double[props.data_size];
+    }
+  }
 
   // delete copy constructor and assignment (these lead to dangling pointers)
   gr_interp_grid(const gr_interp_grid&) = delete;
@@ -187,15 +207,12 @@ public:  // interface methods
     std::swap(data, other.data);
     return *this;
   }
+
+  ~gr_interp_grid() {
+    if (data != nullptr) {
+      delete[] data;
+    }
+  }
 };
-
-namespace grackle::impl {
-
-/// Free memory associated with a #gr_interp_grid
-inline void free_interp_grid_(gr_interp_grid* grid) {
-  GRACKLE_FREE(grid->data);
-}
-
-}  // namespace grackle::impl
 
 #endif /* INTERP_TABLE_UTILS_HPP */

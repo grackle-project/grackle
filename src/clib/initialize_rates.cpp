@@ -534,7 +534,9 @@ int grackle::impl::initialize_rates(
                           / (densityBase1 * pow(timeBase1, 3));
 
     if (my_chemistry->use_primordial_continuum_opacity == 1) {
-      initialize_primordial_opacity(my_chemistry, my_rates);
+      if (GR_SUCCESS != initialize_primordial_opacity(my_chemistry, my_rates)) {
+        return GrPrintAndReturnErr("err in initialize_primordial_opacity");
+      }
     }
 
     //* 3) Units for radiative transfer coefficients are 1/[time].
@@ -659,8 +661,14 @@ int grackle::impl::initialize_rates(
         // Chiaki & Wise 2019 rates
         // Note: these are still defined in initialize_metal_chemistry_rates.c.
         // They should be moved someday.
-        initialize_cooling_rate_H2(my_chemistry, my_rates, coolingUnits);
-        initialize_cooling_rate_HD(my_chemistry, my_rates, coolingUnits);
+        if (GR_SUCCESS != initialize_cooling_rate_H2(my_chemistry, my_rates,
+                                                     coolingUnits)) {
+          return GrPrintAndReturnErr("err in initialize_cooling_rate_H2");
+        }
+        if (GR_SUCCESS != initialize_cooling_rate_HD(my_chemistry, my_rates,
+                                                      coolingUnits)){
+          return GrPrintAndReturnErr("err in initialize_cooling_rate_HD");
+        }
 
         //* f) HD cooling.
 
