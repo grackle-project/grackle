@@ -138,7 +138,7 @@ static int setup_cool_interp_grid_(GRIMPL_NS::InterpGrid* grid,
                                    double log_coolrate)
 {
   *grid = GRIMPL_NS::InterpGrid(GRIMPL_NS::InterpGridProps(rank, parameters));
-  if (!grid->props) {
+  if (!grid) {
     return GR_FAIL;
   }
   const long long data_size = grid->props.data_size;
@@ -1592,7 +1592,7 @@ extern "C" int initialize_primordial_opacity(chemistry_data *my_chemistry, chemi
 
   GRIMPL_NS::InterpGrid& alphap = my_rates->opaque_storage->alphap;
   alphap = GRIMPL_NS::InterpGrid(GRIMPL_NS::InterpGridProps(rank, params));
-  if (!alphap.props) {
+  if (!alphap) {
     return GR_FAIL;
   }
 

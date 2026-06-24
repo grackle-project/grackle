@@ -185,6 +185,14 @@ public:  // interface methods
     }
   }
 
+  /// returns whether the instance is valid
+  ///
+  /// This lets you write `if (obj)`. You should generally do this after
+  /// calling the constructor
+  explicit operator bool() const noexcept {
+    return (data != nullptr) && bool(props);
+  }
+
   // delete copy constructor and assignment (these lead to dangling pointers)
   InterpGrid(const InterpGrid&) = delete;
   InterpGrid& operator=(const InterpGrid&) = delete;
