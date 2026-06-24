@@ -19,8 +19,8 @@
 #include "grackle.h"
 #include "dust_props.hpp"
 #include "dust/lookup_dust_rates1d.hpp"
+#include "field_adaptor.hpp"
 #include "fortran_func_decls.h"
-#include "fortran_func_wrappers.hpp"
 #include "full_rxn_rate_buf.hpp"
 #include "internal_types.hpp"
 #include "opaque_storage.hpp"
@@ -758,6 +758,10 @@ inline void apply_misc_shield_factors(
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
 /// @param[in] my_fields Specifies the field data.
+/// @param[in] species_densities Specifies the densities of the various species
+///     that Grackle evolves (if any) in a format that allows the values to be
+///     accessed with the index lookup table. Wherever possible, data should be
+///     be accessed through this argument, rather than with @p my_fields
 /// @param[in] my_uvb_rates Holds precomputed photorates that depend on the UV
 ///     background. These rates do not include the effects of self-shielding.
 /// @param[in] internalu Specifies Grackle's internal unit-system
@@ -783,6 +787,7 @@ inline void lookup_cool_rates1d(
     double dx_cgs, double c_ljeans, const gr_mask_type* itmask,
     const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    SpeciesMultiView<const gr_float> species_densities,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
@@ -810,8 +815,8 @@ inline void lookup_cool_rates1d(
 
   if (anydust != MASK_FALSE) {
     lookup_dust_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal, dt,
-                        my_chemistry, my_rates, my_fields, grain_temperatures,
-                        logTlininterp_buf, rxn_rate_buf,
+                        my_chemistry, my_rates, my_fields, species_densities,
+                        grain_temperatures, logTlininterp_buf, rxn_rate_buf,
                         internal_dust_prop_scratch_buf);
   }
 

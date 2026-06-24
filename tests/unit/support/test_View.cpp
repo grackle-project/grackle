@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <gtest/gtest.h>
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <utility>  // std::move
@@ -22,22 +23,26 @@
 TEST(View, Empty1D) {
   GRIMPL_NS::View<double*> empty_view;
   EXPECT_EQ(empty_view.data(), nullptr);
+  EXPECT_FALSE(bool(empty_view));
 }
 
 TEST(View, Empty2D) {
   GRIMPL_NS::View<float**> empty_view;
   EXPECT_EQ(empty_view.data(), nullptr);
+  EXPECT_FALSE(bool(empty_view));
 }
 
 TEST(View, Empty3D) {
   GRIMPL_NS::View<const int***> empty_view;
   EXPECT_EQ(empty_view.data(), nullptr);
+  EXPECT_FALSE(bool(empty_view));
 }
 
 TEST(View, Simple1D) {
   int arr[3] = {8, -3, 6};
   GRIMPL_NS::View<int*> v(arr, 3);
 
+  EXPECT_TRUE(bool(v));
   EXPECT_EQ(arr, v.data());
   EXPECT_EQ(v.extent(0), 3);
   EXPECT_EQ(v(0), 8);
@@ -170,6 +175,73 @@ TEST(View, Simple3DConstCast) {
 
 //===----------------------------------------------------------------------===//
 
+TEST(Multi1DView, Empty) {
+  GRIMPL_NS::Multi1DView<float> empty_view;
+  EXPECT_FALSE(bool(empty_view));
+}
+
+TEST(Multi1DView, Simple) {
+  double row_0[5] = {0, 0, 0, 8, 0};
+  double row_1[5] = {0, 0, 0, 0, 0};
+  double row_2[5] = {0, 1, 0, 0, 0};
+  double row_3[5] = {0, 0, 0, 0, 17};
+
+  double* arr_of_ptr[4] = {row_0, row_1, row_2, row_3};
+
+  GRIMPL_NS::Multi1DView<double> v(arr_of_ptr, 5, 4);
+
+  EXPECT_TRUE(bool(v));
+  EXPECT_EQ(v.extent(0), 5);
+  EXPECT_EQ(v.extent(1), 4);
+  EXPECT_EQ(v(3, 0), 8);
+  EXPECT_EQ(v(1, 2), 1);
+  EXPECT_EQ(v(4, 3), 17);
+}
+
+TEST(Multi1DView, SimpleConstCast) {
+  double row_0[5] = {0, 0, 0, 8, 0};
+  double row_1[5] = {0, 0, 0, 0, 0};
+  double row_2[5] = {0, 1, 0, 0, 0};
+  double row_3[5] = {0, 0, 0, 0, 17};
+
+  double* arr_of_ptr[4] = {row_0, row_1, row_2, row_3};
+
+  GRIMPL_NS::Multi1DView<double> v(arr_of_ptr, 5, 4);
+  GRIMPL_NS::Multi1DView<const double> v_const = v;
+
+  EXPECT_TRUE(bool(v_const));
+  EXPECT_EQ(v_const.extent(0), 5);
+  EXPECT_EQ(v_const.extent(1), 4);
+  EXPECT_EQ(v_const(3, 0), 8);
+  EXPECT_EQ(v_const(1, 2), 1);
+  EXPECT_EQ(v_const(4, 3), 17);
+}
+
+TEST(Multi1DView, PtrOffset) {
+  int64_t row_0[6] = {0, 0, 0, 8, 0, 73};
+  int64_t row_1[6] = {0, 1, 0, 0, 0, 0};
+  int64_t row_2[6] = {0, 0, 0, 0, 17, 0};
+
+  int64_t* arr_of_ptr[4] = {row_0, row_1, row_2};
+
+  GRIMPL_NS::Multi1DView<int64_t> v(arr_of_ptr, 6, 3);
+  EXPECT_TRUE(bool(v));
+  EXPECT_EQ(v.extent(0), 6);
+  EXPECT_EQ(v.extent(1), 3);
+
+  // now adjust the pointer-offset and shrink ilen
+  v.override_ptr_offset_and_ilen(1, 4);
+  EXPECT_TRUE(bool(v));
+  EXPECT_EQ(v.extent(0), 4);
+  EXPECT_EQ(v.extent(1), 3);
+
+  EXPECT_EQ(v(2, 0), 8);
+  EXPECT_EQ(v(0, 1), 1);
+  EXPECT_EQ(v(3, 2), 17);
+}
+
+//===----------------------------------------------------------------------===//
+
 // this acts like a "plugin" for View2DInterfaceTest
 struct View2DManager {
   using element_type = double;
@@ -193,11 +265,45 @@ public:
   }
 };
 
+// this acts like a "plugin" for View2DInterfaceTest
+// - this deals with managing the creation and allocations of MultiViews
+struct MultiViewManager {
+  using element_type = double;
+  using ViewType = GRIMPL_NS::Multi1DView<element_type>;
+
+private:
+  std::vector<std::unique_ptr<element_type[]>> row_ptrs_;
+  std::vector<std::unique_ptr<element_type*[]>> row_groups_;
+  std::vector<std::unique_ptr<ViewType>> views_;
+
+public:
+  ViewType& make_zero_filled(int extent0, int extent1) {
+    // allocate an array of rows
+    element_type** arr_of_ptr =
+        row_groups_.emplace_back(std::make_unique<element_type*[]>(extent1))
+            .get();
+
+    // allocate a pointer for each row
+    for (int row_ind = 0; row_ind < extent1; row_ind++) {
+      element_type* p =
+          row_ptrs_.emplace_back(std::make_unique<element_type[]>(extent0))
+              .get();
+      // I think this loop is unnecessary
+      for (int i = 0; i < extent0; i++) {
+        p[i] = element_type{0};
+      }
+      arr_of_ptr[row_ind] = p;
+    }
+
+    return *views_.emplace_back(
+        std::make_unique<ViewType>(arr_of_ptr, extent0, extent1));
+  }
+};
+
 // this is a generic test of the interface for a 2D view
-// -> I decided to make this a type-parameterized test for reasons that will
-//    become apparent in a followup PR
 // -> ManagerT constructs an instance of the ViewType and ensures that all
 //    associated memory allocations will be freed when we go out of scope
+// -> At this time, we use this test with a regular ``View`` and ``Multi1DView``
 template <typename ManagerT>
 class View2DInterfaceTest : public testing::Test {
 protected:
@@ -250,7 +356,7 @@ protected:
   }
 };
 
-using MyManagerTypes = ::testing::Types<View2DManager>;
+using MyManagerTypes = ::testing::Types<View2DManager, MultiViewManager>;
 // until we adopt C++20, we need to insert a trailing comma in order to suppress
 // warnings about legacy C++20 variadic macro behavior
 // https://github.com/google/googletest/issues/2271#issuecomment-665742471
@@ -298,6 +404,31 @@ TYPED_TEST(View2DInterfaceTest, SampleSanityCheck) {
   EXPECT_TRUE(this->is_unchanged_sample_view(v));
 }
 
+TYPED_TEST(View2DInterfaceTest, Contig1dPtrMethod) {
+  using ManagerT = TypeParam;
+  using ViewType = typename ManagerT::ViewType;
+  using element_type = typename ManagerT::element_type;
+
+  ViewType& v = this->make_sample();
+
+  const int extent_contig_axis = v.extent(0);
+  const int extent_slow_axis = v.extent(1);
+
+  // confirm that using contig1d_ptr to access elements produces the same
+  // results as regular indexing
+  for (int idx_slow = 0; idx_slow < extent_slow_axis; idx_slow++) {
+    element_type* ptr = v.contig1d_ptr(idx_slow);
+    for (int idx_contig = 0; idx_contig < extent_contig_axis; idx_contig++) {
+      EXPECT_EQ(v(idx_contig, idx_slow), ptr[idx_contig]);
+    }
+  }
+
+  // demonstrate that the referenced memory locations are the same (rather
+  // than pointing to different locations with identical values)
+  v(2, 1) = -932526533;
+  EXPECT_EQ(v.contig1d_ptr(1)[2], -932526533);
+}
+
 TYPED_TEST(View2DInterfaceTest, CopyConstruct) {
   using ManagerT = TypeParam;
   using ViewType = typename ManagerT::ViewType;
@@ -320,7 +451,7 @@ TYPED_TEST(View2DInterfaceTest, CopyConstructEmpty) {
 
   ViewType empty_view;
   ViewType v2(empty_view);
-  EXPECT_EQ(v2.data(), nullptr);
+  EXPECT_FALSE(bool(v2));
 }
 
 TYPED_TEST(View2DInterfaceTest, MoveConstruct) {
@@ -347,7 +478,7 @@ TYPED_TEST(View2DInterfaceTest, MoveConstructEmpty) {
 
   ViewType empty_view;
   ViewType v2(std::move(empty_view));
-  EXPECT_EQ(v2.data(), nullptr);
+  EXPECT_FALSE(bool(v2));
 }
 
 TYPED_TEST(View2DInterfaceTest, CopyAssign) {
@@ -401,7 +532,7 @@ TYPED_TEST(View2DInterfaceTest, CopyAssignEmpty) {
   v = empty_view;
 
   // check that v is now like empty_view
-  EXPECT_EQ(v.data(), nullptr);
+  EXPECT_FALSE(bool(v));
 
   // confirm that v_copy_of_orig was totally unaffected by all of this
   EXPECT_TRUE(this->is_unchanged_sample_view(v_copy_of_orig));
@@ -464,7 +595,7 @@ TYPED_TEST(View2DInterfaceTest, MoveAssignEmpty) {
   v = std::move(empty_view);
 
   // check that v is now like empty_view
-  EXPECT_EQ(v.data(), nullptr);
+  EXPECT_FALSE(bool(v));
 
   // confirm that v_copy_of_orig was totally unaffected by all of this
   EXPECT_TRUE(this->is_unchanged_sample_view(v_copy_of_orig));

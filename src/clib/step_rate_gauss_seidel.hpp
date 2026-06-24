@@ -21,10 +21,13 @@
 
 #include "grackle.h"  // gr_float
 #include "chemistry_solver_funcs.hpp"
+#include "field_adaptor.hpp"
 #include "fortran_func_decls.h"  // gr_mask_type
-#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "LUT.hpp"
+#include "runtime_splut.hpp"
+#include "support/index_helper.hpp"
+#include "support/PartMap.hpp"
 
 namespace grackle::impl {
 
@@ -37,11 +40,14 @@ inline void update_fields_from_tmpdens_gauss_seidel(
   double* HIdot_prev, const gr_mask_type* itmask,
   const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
   grackle_field_data* my_fields,
-  grackle::impl::SpeciesCollection species_tmpdens
+  SpeciesMultiView<gr_float> sp_densities,
+  grackle::impl::SpeciesCollection species_tmpdens,
+  const PartMap& species_kind_map
 ) {
 
   // Construct views of various species fields
-  // -> TODO: stop doing this!
+  // -> TODO: stop doing this! We should do something a little more like what
+  //          we're doing for the dynamically evolved dust species
 
   grackle::impl::View<gr_float***> de(my_fields->e_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> HI(my_fields->HI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -81,19 +87,6 @@ inline void update_fields_from_tmpdens_gauss_seidel(
   grackle::impl::View<gr_float***> Al(my_fields->Al_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> S(my_fields->S_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> Fe(my_fields->Fe_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiM(my_fields->SiM_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeM(my_fields->FeM_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mg2SiO4(my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgSiO3(my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Fe3O4(my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> AC(my_fields->AC_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiO2D(my_fields->SiO2_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgO(my_fields->MgO_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeS(my_fields->FeS_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Al2O3(my_fields->Al2O3_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> reforg(my_fields->ref_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> volorg(my_fields->vol_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2Oice(my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // --- (E) Set densities from 1D temps to 3D fields ---
 
@@ -191,37 +184,29 @@ inline void update_fields_from_tmpdens_gauss_seidel(
           }
         }
       }
-
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
-        if (my_chemistry->dust_species > 0)  {
-          MgSiO3(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::MgSiO3_dust][i]  ), tiny_fortran_val);
-          AC(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::AC_dust][i]      ), tiny_fortran_val);
-        }
-        if (my_chemistry->dust_species > 1)  {
-          SiM(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiM_dust][i]     ), tiny_fortran_val);
-          FeM(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::FeM_dust][i]     ), tiny_fortran_val);
-          Mg2SiO4(i,j,k) = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Mg2SiO4_dust][i] ), tiny_fortran_val);
-          Fe3O4(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Fe3O4_dust][i]   ), tiny_fortran_val);
-          SiO2D(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiO2_dust][i]   ), tiny_fortran_val);
-          MgO(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::MgO_dust][i]     ), tiny_fortran_val);
-          FeS(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::FeS_dust][i]     ), tiny_fortran_val);
-          Al2O3(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Al2O3_dust][i]   ), tiny_fortran_val);
-        }
-        if (my_chemistry->dust_species > 2)  {
-          reforg(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::ref_org_dust][i]   ), tiny_fortran_val);
-          volorg(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::vol_org_dust][i]   ), tiny_fortran_val);
-          H2Oice(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2O_ice_dust][i]   ), tiny_fortran_val);
-        }
-      }
-
     }
-    // 
 
-    if (HI(i,j,k) != HI(i,j,k))  {
+    if (HI(i,j,k) != HI(i,j,k))  {  // perhaps use std::isnan?
       OMP_PRAGMA_CRITICAL
       {
         std::printf("HUGE HI! ::  %d %d %d %g\n",
                     i, j, k, HI ( i, j, k ));
+      }
+    }
+  }
+
+  // get the range of indices corresponding to grain-species
+  // -> reminder: even if we don't explicitly evolve any dust grain species,
+  //              species_kind_map should still track a partition corresponding
+  //              to SpKind::Dust (that partition just has 0 elements)
+  const IdxInterval dustsp_idx_bounds = species_kind_map.part_bounds(SpKind::DUST);
+  for (int sp_idx = dustsp_idx_bounds.start; sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+    gr_float* ptr = sp_densities.contig1d_ptr(sp_idx);
+    const double* new_vals = species_tmpdens.data[sp_idx];
+
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        ptr[i] = std::fmax((gr_float)(new_vals[i]), tiny_fortran_val);
       }
     }
   }
@@ -236,8 +221,10 @@ inline void step_rate_gauss_seidel(
   double* HIdot_prev, const gr_mask_type* itmask,
   const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
   grackle_field_data* my_fields,
+  SpeciesMultiView<gr_float> sp_densities,
   grackle::impl::SpeciesCollection species_tmpdens,
-  const FullRxnRateBuf rxn_rate_buf
+  const FullRxnRateBuf rxn_rate_buf,
+  const PartMap& species_kind_map
 ) {
 
   // perform the Gauss-Seidel sweep to compute the species densities at the
@@ -249,7 +236,7 @@ inline void step_rate_gauss_seidel(
   // update the entries from my_fields with the values in species_tmpdens
   update_fields_from_tmpdens_gauss_seidel(
       dtit, idx_range, dedot_prev, HIdot_prev, itmask, itmask_metal,
-      my_chemistry, my_fields, species_tmpdens);
+      my_chemistry, my_fields, sp_densities, species_tmpdens, species_kind_map);
 }
 
 }  // namespace grackle::impl

@@ -18,7 +18,9 @@
 
 #include <vector>
 
+#include "LUT.hpp"
 #include "grackle.h"             // gr_float
+#include "field_adaptor.hpp"
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -29,67 +31,8 @@
 #include "support/index_helper.hpp"
 #include "time_deriv_0d.hpp"
 #include "utils-cpp.hpp"
-#include "utils-field.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
-
-int inline sanity_check_() {
-  GRIMPL_REQUIRE(((1+SpLUT::e)== 1), "index of e is %d", SpLUT::e);
-  GRIMPL_REQUIRE(((1+SpLUT::HI)== 2), "index of HI is %d", SpLUT::HI);
-  GRIMPL_REQUIRE(((1+SpLUT::HII)== 3), "index of HII is %d", SpLUT::HII);
-  GRIMPL_REQUIRE(((1+SpLUT::HeI)== 4), "index of HeI is %d", SpLUT::HeI);
-  GRIMPL_REQUIRE(((1+SpLUT::HeII)== 5), "index of HeII is %d", SpLUT::HeII);
-  GRIMPL_REQUIRE(((1+SpLUT::HeIII)== 6), "index of HeIII is %d", SpLUT::HeIII);
-  GRIMPL_REQUIRE(((1+SpLUT::HM)== 7), "index of HM is %d", SpLUT::HM);
-  GRIMPL_REQUIRE(((1+SpLUT::H2I)== 8), "index of H2I is %d", SpLUT::H2I);
-  GRIMPL_REQUIRE(((1+SpLUT::H2II)== 9), "index of H2II is %d", SpLUT::H2II);
-  GRIMPL_REQUIRE(((1+SpLUT::DI)==10), "index of DI is %d", SpLUT::DI);
-  GRIMPL_REQUIRE(((1+SpLUT::DII)==11), "index of DII is %d", SpLUT::DII);
-  GRIMPL_REQUIRE(((1+SpLUT::HDI)==12), "index of HDI is %d", SpLUT::HDI);
-  GRIMPL_REQUIRE(((1+SpLUT::DM)==13), "index of DM is %d", SpLUT::DM);
-  GRIMPL_REQUIRE(((1+SpLUT::HDII)==14), "index of HDII is %d", SpLUT::HDII);
-  GRIMPL_REQUIRE(((1+SpLUT::HeHII)==15), "index of HeHII is %d", SpLUT::HeHII);
-  GRIMPL_REQUIRE(((1+SpLUT::CI)==16), "index of CI is %d", SpLUT::CI);
-  GRIMPL_REQUIRE(((1+SpLUT::CII)==17), "index of CII is %d", SpLUT::CII);
-  GRIMPL_REQUIRE(((1+SpLUT::CO)==18), "index of CO is %d", SpLUT::CO);
-  GRIMPL_REQUIRE(((1+SpLUT::CO2)==19), "index of CO2 is %d", SpLUT::CO2);
-  GRIMPL_REQUIRE(((1+SpLUT::OI)==20), "index of OI is %d", SpLUT::OI);
-  GRIMPL_REQUIRE(((1+SpLUT::OH)==21), "index of OH is %d", SpLUT::OH);
-  GRIMPL_REQUIRE(((1+SpLUT::H2O)==22), "index of H2O is %d", SpLUT::H2O);
-  GRIMPL_REQUIRE(((1+SpLUT::O2)==23), "index of O2 is %d", SpLUT::O2);
-  GRIMPL_REQUIRE(((1+SpLUT::SiI)==24), "index of SiI is %d", SpLUT::SiI);
-  GRIMPL_REQUIRE(((1+SpLUT::SiOI)==25), "index of SiOI is %d", SpLUT::SiOI);
-  GRIMPL_REQUIRE(((1+SpLUT::SiO2I)==26), "index of SiO2I is %d", SpLUT::SiO2I);
-  GRIMPL_REQUIRE(((1+SpLUT::CH)==27), "index of CH is %d", SpLUT::CH);
-  GRIMPL_REQUIRE(((1+SpLUT::CH2)==28), "index of CH2 is %d", SpLUT::CH2);
-  GRIMPL_REQUIRE(((1+SpLUT::COII)==29), "index of COII is %d", SpLUT::COII);
-  GRIMPL_REQUIRE(((1+SpLUT::OII)==30), "index of OII is %d", SpLUT::OII);
-  GRIMPL_REQUIRE(((1+SpLUT::OHII)==31), "index of OHII is %d", SpLUT::OHII);
-  GRIMPL_REQUIRE(((1+SpLUT::H2OII)==32), "index of H2OII is %d", SpLUT::H2OII);
-  GRIMPL_REQUIRE(((1+SpLUT::H3OII)==33), "index of H3OII is %d", SpLUT::H3OII);
-  GRIMPL_REQUIRE(((1+SpLUT::O2II)==34), "index of O2II is %d", SpLUT::O2II);
-  GRIMPL_REQUIRE(((1+SpLUT::Mg)==35), "index of Mg is %d", SpLUT::Mg);
-  GRIMPL_REQUIRE(((1+SpLUT::Al)==36), "index of Al is %d", SpLUT::Al);
-  GRIMPL_REQUIRE(((1+SpLUT::S)==37), "index of S is %d", SpLUT::S);
-  GRIMPL_REQUIRE(((1+SpLUT::Fe)==38), "index of Fe is %d", SpLUT::Fe);
-  GRIMPL_REQUIRE(((1+SpLUT::MgSiO3_dust)==39), "index of MgSiO3 is %d", SpLUT::MgSiO3_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::AC_dust)==40), "index of AC is %d", SpLUT::AC_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::SiM_dust)==41), "index of SiM is %d", SpLUT::SiM_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::FeM_dust)==42), "index of FeM is %d", SpLUT::FeM_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::Mg2SiO4_dust)==43), "index of Mg2SiO4 is %d", SpLUT::Mg2SiO4_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::Fe3O4_dust)==44), "index of Fe3O4 is %d", SpLUT::Fe3O4_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::SiO2_dust)==45), "index of SiO2_dust is %d", SpLUT::SiO2_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::MgO_dust)==46), "index of MgO is %d", SpLUT::MgO_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::FeS_dust)==47), "index of FeS is %d", SpLUT::FeS_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::Al2O3_dust)==48), "index of Al2O3 is %d", SpLUT::Al2O3_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::ref_org_dust)==49), "index of reforg is %d", SpLUT::ref_org_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::vol_org_dust)==50), "index of volorg is %d", SpLUT::vol_org_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::H2O_ice_dust)==51), "index of H2Oice is %d", SpLUT::H2O_ice_dust);
-
-  //GRIMPL_REQUIRE(false, "early abort");
-
-  return 1;
-}
 
 /// acts as a temporary adaptor layer for time_deriv_0d::derivatives:
 ///
@@ -161,6 +104,7 @@ inline void step_rate_newton_raphson(
   const gr_mask_type* itmask_nr, const gr_mask_type* itmask_metal,
   const int* imp_eng, chemistry_data* my_chemistry,
   chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+  SpeciesMultiView<gr_float> sp_densities,
   photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LnTLinInterpBuf logTlininterp_buf,
@@ -173,10 +117,6 @@ inline void step_rate_newton_raphson(
   namespace t_deriv = ::grackle::impl::time_deriv_0d;
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
-  // the following is a quick sanity check
-  // -> we can remove this once we finish transcribing lookup_cool_rate0d
-  sanity_check_();
 
   // Density, energy and velocity fields fields
 
@@ -243,6 +183,9 @@ inline void step_rate_newton_raphson(
   grackle::impl::SpeciesCollection rhosp_dot =
     grackle::impl::new_SpeciesCollection(1);
 
+  const PartMap& species_kind_map = my_rates->opaque_storage->species_kind_map;
+  const IdxInterval dustsp_idx_bounds = species_kind_map.part_bounds(SpKind::DUST);
+
   // the following check was inspired by a compiler warning indicating that
   // nsp won't be initialized if this condition isn't met
   GRIMPL_REQUIRE((my_chemistry->primordial_chemistry > 0),
@@ -299,7 +242,7 @@ inline void step_rate_newton_raphson(
       // copy values into dsp from my_fields
       // -> in the future, we will be able write the next ~80 lines as
       //    a concise 4-line for-loop when we start to use the
-      //    SpeciesLUTFieldAdaptor type
+      //    SpeciesMultiView type
 
       if ( my_chemistry->primordial_chemistry > 0 )  {
         dsp[SpLUT::e] = my_fields->e_density[field_idx1d];
@@ -356,26 +299,9 @@ inline void step_rate_newton_raphson(
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) ) {
-          if (my_chemistry->dust_species > 0)  {
-            dsp[SpLUT::MgSiO3_dust] = my_fields->MgSiO3_dust_density[field_idx1d];
-            dsp[SpLUT::AC_dust] = my_fields->AC_dust_density[field_idx1d];
-          }
-          if (my_chemistry->dust_species > 1)  {
-            dsp[SpLUT::SiM_dust] = my_fields->SiM_dust_density[field_idx1d];
-            dsp[SpLUT::FeM_dust] = my_fields->FeM_dust_density[field_idx1d];
-            dsp[SpLUT::Mg2SiO4_dust] = my_fields->Mg2SiO4_dust_density[field_idx1d];
-            dsp[SpLUT::Fe3O4_dust] = my_fields->Fe3O4_dust_density[field_idx1d];
-            dsp[SpLUT::SiO2_dust] = my_fields->SiO2_dust_density[field_idx1d];
-            dsp[SpLUT::MgO_dust] = my_fields->MgO_dust_density[field_idx1d];
-            dsp[SpLUT::FeS_dust] = my_fields->FeS_dust_density[field_idx1d];
-            dsp[SpLUT::Al2O3_dust] = my_fields->Al2O3_dust_density[field_idx1d];
-          }
-          if (my_chemistry->dust_species > 2)  {
-            dsp[SpLUT::ref_org_dust] = my_fields->ref_org_dust_density[field_idx1d];
-            dsp[SpLUT::vol_org_dust] = my_fields->vol_org_dust_density[field_idx1d];
-            dsp[SpLUT::H2O_ice_dust] = my_fields->H2O_ice_dust_density[field_idx1d];
-          }
+
+        for (int sp_idx = dustsp_idx_bounds.start; sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+          dsp[sp_idx] = sp_densities(i, sp_idx);
         }
       }
       dsp[i_eng-1] = e(i,j,k);
@@ -387,7 +313,7 @@ inline void step_rate_newton_raphson(
       // -> in the future, we should construct this array first (before doing
       //    anything else):
       //    -> it gives us the value of nsp for free!
-      //    -> using this array with SpeciesLUTFieldAdaptor lets us cut out
+      //    -> using this array with SpeciesMultiView lets us cut out
       //       (duplicated) logic when we copy values from my_fields to dsp and
       //       the reverse (we can cut ~70 lines in each place)
       id = 0;
@@ -446,26 +372,9 @@ inline void step_rate_newton_raphson(
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
-          if (my_chemistry->dust_species > 0)  {
-            idsp[id++] = SpLUT::MgSiO3_dust;
-            idsp[id++] = SpLUT::AC_dust;
-          }
-          if (my_chemistry->dust_species > 1)  {
-            idsp[id++] = SpLUT::SiM_dust;
-            idsp[id++] = SpLUT::FeM_dust;
-            idsp[id++] = SpLUT::Mg2SiO4_dust;
-            idsp[id++] = SpLUT::Fe3O4_dust;
-            idsp[id++] = SpLUT::SiO2_dust;
-            idsp[id++] = SpLUT::MgO_dust;
-            idsp[id++] = SpLUT::FeS_dust;
-            idsp[id++] = SpLUT::Al2O3_dust;
-          }
-          if (my_chemistry->dust_species > 2)  {
-            idsp[id++] = SpLUT::ref_org_dust;
-            idsp[id++] = SpLUT::vol_org_dust;
-            idsp[id++] = SpLUT::H2O_ice_dust;
-          }
+        // copy over the indices of all grain species
+        for (int sp_idx = dustsp_idx_bounds.start; sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+          idsp[id++] = sp_idx;
         }
       }
 
@@ -680,7 +589,7 @@ label_9996:
       // overwrite the fields tracked by my_fields with the evolved values
       // -> in the future, we will be able write the next ~80 lines as
       //    a concise 4-line for-loop when we start to use the
-      //    SpeciesLUTFieldAdaptor type
+      //    SpeciesMultiView type
 
       if ( my_chemistry->primordial_chemistry > 0 )  {
         my_fields->e_density[field_idx1d]       = dsp[SpLUT::e];
@@ -737,26 +646,8 @@ label_9996:
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
-          if (my_chemistry->dust_species > 0)  {
-            my_fields->MgSiO3_dust_density[field_idx1d]  = dsp[SpLUT::MgSiO3_dust];
-            my_fields->AC_dust_density[field_idx1d]      = dsp[SpLUT::AC_dust];
-          }
-          if (my_chemistry->dust_species > 1)  {
-            my_fields->SiM_dust_density[field_idx1d]     = dsp[SpLUT::SiM_dust];
-            my_fields->FeM_dust_density[field_idx1d]     = dsp[SpLUT::FeM_dust];
-            my_fields->Mg2SiO4_dust_density[field_idx1d] = dsp[SpLUT::Mg2SiO4_dust];
-            my_fields->Fe3O4_dust_density[field_idx1d]   = dsp[SpLUT::Fe3O4_dust];
-            my_fields->SiO2_dust_density[field_idx1d]   = dsp[SpLUT::SiO2_dust];
-            my_fields->MgO_dust_density[field_idx1d]     = dsp[SpLUT::MgO_dust];
-            my_fields->FeS_dust_density[field_idx1d]     = dsp[SpLUT::FeS_dust];
-            my_fields->Al2O3_dust_density[field_idx1d]   = dsp[SpLUT::Al2O3_dust];
-          }
-          if (my_chemistry->dust_species > 2)  {
-            my_fields->ref_org_dust_density[field_idx1d]  = dsp[SpLUT::ref_org_dust];
-            my_fields->vol_org_dust_density[field_idx1d]  = dsp[SpLUT::vol_org_dust];
-            my_fields->H2O_ice_dust_density[field_idx1d]  = dsp[SpLUT::H2O_ice_dust];
-          }
+        for (int sp_idx = dustsp_idx_bounds.start; sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+          sp_densities(i, sp_idx) = dsp[sp_idx];
         }
       }
 

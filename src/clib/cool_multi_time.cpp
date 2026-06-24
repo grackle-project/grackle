@@ -17,6 +17,7 @@
 
 #include "cool1d_multi_g.hpp"
 #include "cool_multi_time.hpp"
+#include "field_adaptor.hpp"
 #include "gas_props.hpp"
 #include "grackle.h"
 #include "support/index_helper.hpp"
@@ -51,6 +52,8 @@ void cool_multi_time(
   {
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
+
+    FieldAdaptorManager field_adaptor_mgr(my_fields);
 
     View<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -104,6 +107,9 @@ void cool_multi_time(
       const int k = idx_range.k; // use 0-based index
       const int j = idx_range.j; // use 0-based index
 
+      SpeciesMultiView<const gr_float> species_densities
+          = field_adaptor_mgr.get_species_data(idx_range);
+
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask[i] = MASK_TRUE;
       }
@@ -122,7 +128,8 @@ void cool_multi_time(
         mmw.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), rhoH.data(), nelec_times_mH.data(), 
         itmask.data(), itmask_metal.data(),
-        my_chemistry, my_rates, my_fields, my_uvb_rates, internalu, idx_range,
+        my_chemistry, my_rates, my_fields, species_densities,
+        my_uvb_rates, internalu, idx_range,
         grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf
       );

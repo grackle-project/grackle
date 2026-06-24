@@ -18,14 +18,15 @@
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+#include "field_adaptor.hpp"
 #include "fortran_func_wrappers.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
-#include "utils-field.hpp"
+#include "support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 // Some ideas for refactoring
 // - we probably want to break the following function up into its constituent
@@ -61,6 +62,10 @@ namespace grackle::impl {
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
 /// @param[in] my_fields Specifies the field data.
+/// @param[in] sp_densities Specifies the densities of the various species
+///     that Grackle evolves (if any) in a format that allows the values to be
+///     accessed with the index lookup table. Wherever possible, data should be
+///     be accessed through this argument, rather than with @p my_fields
 /// @param[in] grain_temperatures individual grain species temperatures. This
 ///     is only used in certain configurations (i.e. when we aren't using the
 ///     tdust argument)
@@ -109,6 +114,7 @@ inline void lookup_dust_rates1d(
     double dom, const gr_mask_type* itmask_metal, double dt,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
     grackle_field_data* my_fields,
+    SpeciesMultiView<const gr_float> sp_densities,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
@@ -199,19 +205,12 @@ inline void lookup_dust_rates1d(
     calc_grain_size_increment_1d(dom, idx_range, itmask_metal, my_chemistry,
                                  my_rates->opaque_storage->grain_species_info,
                                  my_rates->opaque_storage->inject_pathway_props,
-                                 my_fields, internal_dust_prop_scratch_buf);
+                                 my_fields, sp_densities,
+                                 internal_dust_prop_scratch_buf);
 
     grackle::impl::View<const gr_float***> d(
         my_fields->density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-    // the use of SpeciesLUTFieldAdaptor with dynamic indices is suboptimal
-    // (it triggers indices). But, I think its ok here for 2 reasons:
-    // 1. we aren't using it deep in a loop
-    // 2. it makes the code significantly easier to manage! Plus, if somebody
-    //    is using this configuration, speed is clearly not a huge priority
-    //    (given all of the extra passive scalars that must be tracked)
-    grackle::impl::SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
 
     grackle::impl::GrainSpeciesInfo* gsp_info =
         my_rates->opaque_storage->grain_species_info;
@@ -337,8 +336,8 @@ inline void lookup_dust_rates1d(
         double ingred_divisor[grackle::impl::max_ingredients_per_grain_species];
 
         for (int ingred_idx = 0; ingred_idx < n_ingred; ingred_idx++) {
-          const gr_float* ptr = field_data_adaptor.get_ptr_dynamic(
-              ingredient_l[ingred_idx].species_idx);
+          const gr_float* ptr =
+              sp_densities.contig1d_ptr(ingredient_l[ingred_idx].species_idx);
           ingred_view[ingred_idx] = grackle::impl::View<const gr_float***>(
               ptr, my_fields->grid_dimension[0], my_fields->grid_dimension[1],
               my_fields->grid_dimension[2]);
@@ -401,7 +400,7 @@ inline void lookup_dust_rates1d(
                 : grain_temperatures.data[gsp_idx];
 
         // get the view of the grain species's current mass density
-        const gr_float* rho_gsp_ptr = field_data_adaptor.get_ptr_dynamic(
+        const gr_float* rho_gsp_ptr = sp_densities.contig1d_ptr(
             gsp_info->species_info[gsp_idx].species_idx);
         grackle::impl::View<const gr_float***> rho_gsp(
             rho_gsp_ptr, my_fields->grid_dimension[0],
@@ -427,6 +426,6 @@ inline void lookup_dust_rates1d(
   }
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // DUST_LOOKUP_DUST_RATES1D_HPP

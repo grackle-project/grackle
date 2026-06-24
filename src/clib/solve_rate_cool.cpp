@@ -739,6 +739,8 @@ int solve_rate_cool(
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
 
+    FieldAdaptorManager field_adaptor_mgr(my_fields);
+
     // holds computed grain temperatures:
     grackle::impl::GrainSpeciesCollection grain_temperatures =
       grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
@@ -822,6 +824,9 @@ int solve_rate_cool(
       const int k = idx_range.k; // use 0-based index
       const int j = idx_range.j; // use 0-based index
 
+      SpeciesMultiView<gr_float> sp_densities
+          = field_adaptor_mgr.get_species_data(idx_range);
+
       // `tolerance = 1.0e-06_DKIND * dt` was some commented logic in the
       // original fortran subroutine in this location
 
@@ -887,7 +892,7 @@ int solve_rate_cool(
           tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry,
-          my_rates, my_fields,
+          my_rates, my_fields, sp_densities,
           *my_uvb_rates, internalu,
           idx_range,
           grain_temperatures, logTlininterp_buf,
@@ -905,7 +910,7 @@ int solve_rate_cool(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
             dust2gas.data(), dom, dx_cgs, c_ljeans, itmask.data(),
             itmask_metal.data(), dt, my_chemistry,
-            my_rates, my_fields, *my_uvb_rates, internalu,
+            my_rates, my_fields,sp_densities, *my_uvb_rates, internalu,
             grain_temperatures, logTlininterp_buf,
             spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
             internal_dust_prop_scratch_buf
@@ -979,8 +984,9 @@ int solve_rate_cool(
           grackle::impl::step_rate_gauss_seidel(
             dtit.data(), idx_range, anydust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
-            itmask_metal.data(), my_chemistry, my_fields,
-            spsolvbuf.species_tmpdens, spsolvbuf.rxn_rate_buf
+            itmask_metal.data(), my_chemistry, my_fields, sp_densities,
+            spsolvbuf.species_tmpdens, spsolvbuf.rxn_rate_buf,
+            my_rates->opaque_storage->species_kind_map
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel
@@ -992,7 +998,8 @@ int solve_rate_cool(
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
             nelec_times_mH.data(), edot.data(), anydust, spsolvbuf.itmask_nr,
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
-            my_fields, *my_uvb_rates, internalu, grain_temperatures,
+            my_fields, sp_densities, *my_uvb_rates, internalu,
+            grain_temperatures,
             logTlininterp_buf, cool1dmulti_buf, coolingheating_buf,
             spsolvbuf.chemheatrates_buf
           );

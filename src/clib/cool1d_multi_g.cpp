@@ -37,6 +37,7 @@ void grackle::impl::cool1d_multi_g(
     const double* rhoH, const double* nelec_times_mH, gr_mask_type* itmask,
     gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    SpeciesMultiView<const gr_float> sp_densities,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     IndexRange idx_range,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
@@ -882,12 +883,12 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
-                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
-                     idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
-                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
-                     kappa_tot.data(), grain_kappa, cool1dmulti_buf.gasgr_tdust,
-                     myisrf.data(), internal_dust_prop_buf);
+  dust_related_props(
+      anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask, itmask_metal,
+      my_chemistry, my_rates, my_fields, sp_densities, internalu, idx_range,
+      logTlininterp_buf, comp2, dust2gas, tdust, grain_temperatures,
+      gasgr.data(), gas_grainsp_heatrate, kappa_tot.data(), grain_kappa,
+      cool1dmulti_buf.gasgr_tdust, myisrf.data(), internal_dust_prop_buf);
 
   // Calculate dust cooling rate
   if (anydust != MASK_FALSE) {
