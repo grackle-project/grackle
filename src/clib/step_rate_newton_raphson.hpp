@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file step_rate_newton_raphson.hpp
-/// @brief Defines the step_rate_newton_raphson function
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Defines/declares the step_rate_newton_raphson function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // step_rate_newton_raphson function from FORTRAN to C++
@@ -14,19 +21,19 @@
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
-#include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "internal_units.hpp"
 #include "opaque_storage.hpp"
-#include "utils-cpp.hpp"
-
-#include "utils-field.hpp"
+#include "support/config.hpp"
+#include "support/index_helper.hpp"
 #include "time_deriv_0d.hpp"
+#include "utils-cpp.hpp"
+#include "utils-field.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
-int sanity_check_() {
+int inline sanity_check_() {
   GRIMPL_REQUIRE(((1+SpLUT::e)== 1), "index of e is %d", SpLUT::e);
   GRIMPL_REQUIRE(((1+SpLUT::HI)== 2), "index of HI is %d", SpLUT::HI);
   GRIMPL_REQUIRE(((1+SpLUT::HII)== 3), "index of HII is %d", SpLUT::HII);
@@ -115,10 +122,10 @@ inline void wrapped_calc_derivatives(
   // 1. copy values out of dsp into rhosp_grflt and local_eint
   //    - at some point, we need to add some logic to deal with edge cases
   //      that can arise when `sizeof(gr_float) < sizeof(double)
-  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
     rhosp_grflt[sp_idx] = static_cast<gr_float>(dsp[sp_idx]);
   }
-  local_eint[0] = static_cast<gr_float>(dsp[SpLUT::NUM_ENTRIES]);
+  local_eint[0] = static_cast<gr_float>(dsp[MAX_EVOLVED_SPECIES_FIELDS]);
 
   // 2. call the wrapped function
   grackle::impl::time_deriv_0d::derivatives(
@@ -126,10 +133,10 @@ inline void wrapped_calc_derivatives(
   );
 
   // 3. copy the computed derivatives into dspdot
-  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
     dspdot[sp_idx] = rhosp_dot.data[sp_idx][0];
   }
-  dspdot[SpLUT::NUM_ENTRIES] = eint_dot_specific[0];
+  dspdot[MAX_EVOLVED_SPECIES_FIELDS] = eint_dot_specific[0];
 }
 
 /// An alternative to step_rate_g for evolving the species rate equations that
@@ -147,14 +154,14 @@ inline void wrapped_calc_derivatives(
 /// - this has **ALWAYS** been the case. Historically these buffers have been
 ///   reused when computing finite differences
 inline void step_rate_newton_raphson(
-  int imetal, IndexRange idx_range, int iter, double dom, double chunit,
+  int imetal, IndexRange idx_range, double dom, double chunit,
   double dx_cgs, double c_ljeans, double* dtit, double* tgas,
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
   double* mmw, double* nelec_times_mH, double* edot, gr_mask_type anydust,
-  gr_mask_type* itmask_nr, gr_mask_type* itmask_metal, int* imp_eng,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-  InternalGrUnits internalu,
+  const gr_mask_type* itmask_nr, const gr_mask_type* itmask_metal,
+  const int* imp_eng, chemistry_data* my_chemistry,
+  chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
@@ -188,7 +195,7 @@ inline void step_rate_newton_raphson(
   double dspj, err, err_max;
   // the following specifies the historical 1-based index that we would use to
   // hold energy
-  const int i_eng = SpLUT::NUM_ENTRIES + 1;
+  const int i_eng = MAX_EVOLVED_SPECIES_FIELDS + 1;
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
   std::vector<double> dsp(i_eng);
@@ -223,7 +230,7 @@ inline void step_rate_newton_raphson(
   // collect args that are forwarded to the time-derivative calculation and are
   // effectively frozen between various calls
   t_deriv::FrozenSimpleArgs frozen_tderiv_args = {
-    imetal, iter, dom, chunit, dx_cgs, c_ljeans, anydust, my_chemistry,
+    imetal, dom, chunit, dx_cgs, c_ljeans, anydust, my_chemistry,
     my_rates, my_uvb_rates, internalu
   };
 
@@ -232,7 +239,7 @@ inline void step_rate_newton_raphson(
     frozen_tderiv_args, main_scratch_buf
   );
 
-  std::vector<gr_float> rhosp_grflt(SpLUT::NUM_ENTRIES);
+  std::vector<gr_float> rhosp_grflt(MAX_EVOLVED_SPECIES_FIELDS);
   grackle::impl::SpeciesCollection rhosp_dot =
     grackle::impl::new_SpeciesCollection(1);
 
@@ -376,7 +383,7 @@ inline void step_rate_newton_raphson(
       // here, we fill in the idsp array
       // -> the idsp array is used for mapping between the compressed vector
       //    form (that only has nsp elements) and dsp (that always has
-      //    `SpLUT::NUM_ENTRIES + 1` entries)
+      //    `MAX_EVOLVED_SPECIES_FIELDS + 1` entries)
       // -> in the future, we should construct this array first (before doing
       //    anything else):
       //    -> it gives us the value of nsp for free!
@@ -769,7 +776,7 @@ label_9996:
 }
 
 
-} // namespace grackle::impl
+} // namespace GRIMPL_NAMESPACE_DECL
 
 
 #endif /* STEP_RATE_NEWTON_RAPHSON_HPP */
