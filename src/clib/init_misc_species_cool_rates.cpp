@@ -137,14 +137,17 @@ static int setup_cool_interp_grid_(GRIMPL_NS::InterpGrid* grid,
                                    const double* data,
                                    double log_coolrate)
 {
-  *grid = GRIMPL_NS::InterpGrid(GRIMPL_NS::InterpGridProps(rank, parameters));
-  if (!grid) {
+  GRIMPL_NS::InterpGridProps grid_props(rank, parameters);
+  if (!grid_props) {
     return GR_FAIL;
   }
-  const long long data_size = grid->props.data_size;
+  const long long data_size = grid_props.data_size;
+  double* grid_data = new double[data_size];
   for(long long i = 0; i < data_size; i++) {
-    grid->data[i] = data[i] + log_coolrate;
+    grid_data[i] = data[i] + log_coolrate;
   }
+  *grid = GRIMPL_NS::InterpGrid(std::move(grid_props), grid_data);
+
   return GR_SUCCESS;
 }
 
@@ -1590,20 +1593,22 @@ extern "C" int initialize_primordial_opacity(chemistry_data *my_chemistry, chemi
    ,{ -6.13,  -5.13,  -4.13,  -3.13,  -2.13, -1.15, -0.25,  0.68,   1.67,   2.67,   3.66,  10.00,  10.00,  10.00,  10.00}
    ,{ -6.45,  -5.45,  -4.45,  -3.45,  -2.45, -1.45, -0.45,  0.53,   1.46,   2.42,   3.41,  10.00,  10.00,  10.00,  10.00}};
 
-  GRIMPL_NS::InterpGrid& alphap = my_rates->opaque_storage->alphap;
-  alphap = GRIMPL_NS::InterpGrid(GRIMPL_NS::InterpGridProps(rank, params));
-  if (!alphap) {
+  GRIMPL_NS::InterpGridProps grid_props(rank, params);
+  if (grid_props) {
+    double* grid_data = new double[grid_props.data_size];
+    for(int iD=0; iD<params[0].count; iD++) {
+      double log_rho = params[0].start + iD*params[0].step;
+      for(int iT=0; iT<params[1].count; iT++) {
+        int itab = iD * params[1].count + iT;
+        grid_data[itab] = kp[iT][iD] + log_rho;
+      }
+    }
+    my_rates->opaque_storage->alphap =
+        GRIMPL_NS::InterpGrid(std::move(grid_props), grid_data);
+
+    return GR_SUCCESS;
+  } else {
     return GR_FAIL;
   }
-
-  alphap.data = (double*)malloc(alphap.props.data_size * sizeof(double));
-  for(int iD=0; iD<params[0].count; iD++) {
-    double log_rho = params[0].start + iD*params[0].step;
-    for(int iT=0; iT<params[1].count; iT++) {
-      int itab = iD * params[1].count + iT;
-      alphap.data[itab] = kp[iT][iD] + log_rho;
-    }
-  }
-  return GR_SUCCESS;
 }
 

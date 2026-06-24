@@ -90,7 +90,7 @@ public:  // interface methods
       return;
     }
 
-    long long tmp_data_size = (rank > 0) ? 1ll : 0ll;
+    long long tmp_data_size = 1ll;
     for (int i = 0; i < rank; i++) {
       const GRIMPL_NS::InterpDimScale& dim_scale = dim_scales[i];
 
@@ -154,7 +154,7 @@ public:  // interface methods
   }
 };
 
-/// Encodes a full interpolation table
+/// @brief Encodes a full interpolation table
 struct InterpGrid {
   /// properties of the interpolation grid
   InterpGridProps props;
@@ -165,25 +165,33 @@ public:  // interface methods
   /// @brief default constructor (makes an empty instance)
   InterpGrid() : props(), data{nullptr} {}
 
-  /// Constructs an instance by consuming the supplied grid properties
+  /// Primary constructor that consumes/takes ownership of the arguments
   ///
-  /// After calling this function, the @p grid_props object is left in an
-  /// unspecified state (since the contents were "moved" into the instance
-  /// tracked as part of this class)
+  /// @param grid_props Specifies the grid properties. This object passed to
+  ///     this argument is "consumed" and the constructed instance takes
+  ///     ownership of the underlying data. In other words, the passed object
+  ///     will be in an unspecified state after calling this constructor
+  /// @param data A pointer of where the number of entries is specified by
+  ///     the data_size member of @p grid_props. The constructed object takes
+  ///     ownership of this pointer (in other words, do not try to deallocate
+  ///     this pointer after calling this function). **IMPORTANTLY:** this
+  ///     pointer must have been allocated with ``new double[]`` (if this isn't
+  ///     the case, the destructor will produce undefined behavior)
+  ///
+  /// To check whether a constructed object `obj` is valid, you can write
+  /// either `if (obj) ...` or directly cast to bool (e.g. `bool(obj)`).
+  ///
+  /// @important
+  /// The constructed object **ALWAYS** takes ownership of the arguments, even
+  /// if the resulting object is not fully valid (the object's destructor will
+  /// always cleanup the resources after the fact).
   ///
   /// @note
-  /// The caller is responsible for filling in `data` data-member afterwards.
-  /// While I'm NOT fond of this (ideally, a constructor should produce a
-  /// fully initialized object), this is better than what came before.
-  explicit InterpGrid(InterpGridProps&& grid_props)
-      : props(std::move(grid_props)) {
-    if (!grid_props) {
-      // in this case, the grid_properties correspond to an array of shape 0
-      data = nullptr;
-    } else {
-      data = new double[props.data_size];
-    }
-  }
+  /// In the future, we may want to consider taking a custom deleter callback
+  /// (just like std::shared_ptr or std::unique_ptr) in order accept pointers
+  /// that were allocated using something other than ``new double[]``
+  InterpGrid(InterpGridProps&& grid_props, double* data)
+      : props(std::move(grid_props)), data(data) {}
 
   /// returns whether the instance is valid
   ///
