@@ -38,6 +38,11 @@ struct InterpDimScale {
   static InterpDimScale Linear(int count, double start, double step) {
     return {count, start, step};
   }
+
+  // this is a method for testing-purposes
+  GRIMPL_FORCE_INLINE double access_value(int i) const {
+    return start + (double)i * step;
+  }
 };
 
 /// @brief Encodes the grid properties of an interpolation grid (other than the
@@ -91,10 +96,10 @@ public:  // interface methods
     }
 
     long long tmp_data_size = 1ll;
-    for (int i = 0; i < rank; i++) {
+    for (int i = 0; i < n_dim; i++) {
       const GRIMPL_NS::InterpDimScale& dim_scale = dim_scales[i];
 
-      if (dim_scale.count > 2) {
+      if (dim_scale.count < 2) {
         GrPrintErrMsg("dim_scales[%d] has less than 2 elements", i);
         *this = InterpGridProps();  // <- indicates a failure
         return;
@@ -106,6 +111,8 @@ public:  // interface methods
 
       double* arr = new double[dim_scale.count];
       for (int j = 0; j < dim_scale.count; j++) {
+        // the commented out version is slightly better for testing
+        // arr[j] = dim_scale.access_value(j);
         arr[j] = dim_scale.start + (double)j * dim_scale.step;
       }
 
