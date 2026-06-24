@@ -16,7 +16,7 @@
 
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "interp_table_utils.hpp" // free_interp_grid_
+#include "interp_grid.hpp"
 #include "init_misc_species_cool_rates.hpp"  // forward declarations
 #include "internal_units.hpp"
 #include "opaque_storage.hpp"

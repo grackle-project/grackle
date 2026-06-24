@@ -14,7 +14,7 @@
 
 #include "../LUT.hpp"
 #include "../internal_types.hpp"
-#include "../interp_table_utils.hpp"  // InterpGridProps
+#include "../interp_grid.hpp"  // InterpGridProps
 #include "../support/status_reporting.hpp"
 #include "../visitor/common.hpp"
 

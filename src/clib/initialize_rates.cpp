@@ -51,7 +51,7 @@
 #include "initialize_rates.hpp"
 #include "internal_types.hpp" // new_CollisionalRxnRateCollection
 #include "LUT.hpp" // CollisionalRxnLUT
-#include "interp_table_utils.hpp"
+#include "interp_grid.hpp"
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 #include "support/config.hpp"

@@ -18,6 +18,7 @@
 #include "dust/grain_species_info.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
+#include "interp_grid.hpp"
 #include "ratequery.hpp"
 #include "support/config.hpp"
 

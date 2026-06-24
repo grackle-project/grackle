@@ -14,7 +14,7 @@
 #include "../dust/grain_species_info.hpp"
 #include "grackle_chemistry_data.h"
 #include "load_data.hpp"  // forward declarations
-#include "interp_table_utils.hpp"
+#include "interp_grid.hpp"
 #include "raw_data.hpp"
 #include "../LUT.hpp"
 #include "../opaque_storage.hpp"
