@@ -74,7 +74,7 @@ private:
   unsigned long long counter_;
   unsigned long long n_rates_;
   Plugin plugin_;
-  NameIdPair current_pair_;
+  value_type current_pair_;
 
   /// Updates current_pair_ and returns `*this`
   IteratorAdaptor& update_pair_and_ret_(unsigned long long current_count) {

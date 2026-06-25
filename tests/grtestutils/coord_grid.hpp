@@ -12,6 +12,7 @@
 #ifndef GRTESTUTILS_COORD_GRID_HPP
 #define GRTESTUTILS_COORD_GRID_HPP
 
+#include <iostream>  // needed to teach googletest how to print Coordinate
 #include <vector>
 
 #include "support/status_reporting.hpp"
@@ -19,66 +20,20 @@
 
 namespace grtest {
 
-/// represents numbers evenly spaced on a geometric scale
-///
-/// @note
-/// I feel like I've written this exact functionality more times than I
-/// can count.
-class LinSpaced {
-  double first_;
-  double last_;
-  int n_entries_;
-  double step_;
-
-public:
-  LinSpaced() = delete;
-  LinSpaced(const LinSpaced&) = default;
-  LinSpaced(double first, double last, int n_entries)
-      : first_{first}, last_{last}, n_entries_{n_entries} {
-    GRIMPL_REQUIRE(n_entries >= 2, "must hold at least 2 entries");
-    step_ = (last_ - first_) / n_entries_;
-  }
-
-  bool is_increasing() const { return last_ > first_; }
-  int size() const { return n_entries_; }
-
-  // overloads the elementwise array access operation
-  // -> if an instance is called `obj`, this method is invoked by `obj[3]`
-  [[gnu::always_inline]] inline double operator[](int idx) const noexcept {
-    bool is_last = idx + 1 == n_entries_;
-    double tmp = first_ + step_ * idx;
-    return (!is_last) * tmp + is_last * last_;
-  }
-
-  /// writes values in the sequence to the range specified by [`start`, `stop`)
-  void fill_buf(double* start, double* stop) const {
-    GRIMPL_REQUIRE(start + n_entries_ == stop, "buffer has incorrect size");
-    for (int i = 0; i < n_entries_; i++) {
-      start[i] = first_ + step_ * i;
-    }
-    start[n_entries_ - 1] = last_;  // avoid round-off errors
-  }
-
-  // this is a convenience
-  std::vector<double> to_vec() const {
-    std::vector<double> out(n_entries_);
-    fill_buf(out.data(), out.data() + n_entries_);
-    return out;
-  }
-
-  bool operator==(const LinSpaced& other) const {
-    return (
-        (first_ == other.first_) && (last_ == other.last_) &&
-        (n_entries_ == other.n_entries_) &&
-        (step_ == other.step_)  // <- the last comparison shouldn't be needed...
-    );
-  }
-};
-
 /// @brief Represents a single coordinate on a grid modelled by a @ref CoordGrid
 struct Coordinate {
   double components[5];
+  int rank;
 };
+
+// teach GoogleTest how to print grtest::Coordinate
+inline void PrintTo(const Coordinate& c, std::ostream* os) {
+  *os << '{' << c.components[0];
+  for (int i = 1; i < c.rank; i++) {
+    *os << ", " << c.components[i];
+  }
+  *os << '}';
+}
 
 namespace gridcoord_detail {
 
@@ -123,8 +78,8 @@ struct IdxCycle {
 /// Represents a coordinate grid
 ///
 /// @note
-/// this class assumes that the very first coordinate component is the "fast
-/// axis" and the very last component is the "slow axis". When iterating over
+/// this class assumes that the very first coordinate component is the "slow
+/// axis" and the very last component is the "fast axis". When iterating over
 /// the coordinates, the component along the "slow axis" changes with the least
 /// frequency. This convention is based on the convention currently used for
 /// Grackle's interpolation tables
@@ -132,7 +87,7 @@ class CoordGrid {
   using iterator =
       IteratorAdaptor<gridcoord_detail::CoordGridItrPlugin<CoordGrid>>;
 
-  std::vector<LinSpaced> coords_;
+  std::vector<std::vector<double>> coords_;
   gridcoord_detail::IdxCycle cycle_info_[gridcoord_detail::MAX_RANK];
   int rank_;
 
@@ -143,18 +98,16 @@ class CoordGrid {
   }
 
 public:
-  CoordGrid(int rank, const LinSpaced* coords) : rank_{rank} {
-    GRIMPL_REQUIRE(rank >= 1 && rank <= gridcoord_detail::MAX_RANK,
+  explicit CoordGrid(std::vector<std::vector<double>> coords)
+      : coords_(coords), rank_(coords.size()) {
+    GRIMPL_REQUIRE(rank_ >= 1 && rank_ <= gridcoord_detail::MAX_RANK,
                    "passed an invalid rank");
-    GRIMPL_REQUIRE(coords != nullptr, "passed a nullptr");
 
     int running_product = 1;
-    for (int i = 0; i < rank; i++) {
-      coords_.push_back(coords[i]);
-
+    for (int i = rank_ - 1; i >= 0; i--) {
       // setup cycle_info_[i]
-      if (i > 0) {
-        running_product *= cycle_info_[i - 1].cycle_len;
+      if (i + 1 < rank_) {
+        running_product *= cycle_info_[i + 1].cycle_len;
       }
       int extent = coords[i].size();
       int element_reps = running_product;
@@ -188,8 +141,9 @@ public:
   }
 
   /// @note Returns the appropriate
-  Coordinate from_flatidx(int flat_idx) {
+  Coordinate from_flatidx(int flat_idx) const {
     Coordinate out;
+    out.rank = rank_;
     for (int axis = 0; axis < rank_; axis++) {
       const gridcoord_detail::IdxCycle& tmp = cycle_info_[axis];
       out.components[axis] =
