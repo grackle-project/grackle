@@ -168,37 +168,31 @@ various parameters.
      - k19
      - `Dalgarno & Lepp (1985) <https://ui.adsabs.harvard.edu/abs/1987IAUS..120..109D/abstract>`__
      - :c:data:`primordial_chemistry` > 1
-
    * - 2H + H\ :sub:`2`
      - 2\ |H2I|
      - k21
      - `Cohen & Westberg (1983) <https://ui.adsabs.harvard.edu/abs/1983JPCRD..12..531C/abstract>`__
      - :c:data:`primordial_chemistry` > 1
-
    * - 3H
      - |H2I| + H
      - k22
      - see table below
      - :c:data:`primordial_chemistry` > 1
-
    * - H + :math:`{\gamma}`
      - |HII| + |e-|
      - k24
      - none
      - :c:data:`primordial_chemistry` > 0
-
    * - |HeII| + :math:`{\gamma}`
      - |HeIII| + |e-|
      - k25
      - none
      - :c:data:`primordial_chemistry` > 0
-
    * - |HeI| + :math:`{\gamma}`
      - |HeII| + |e-|
      - k26
      - none
      - :c:data:`primordial_chemistry` > 0
-
    * - H\ :sup:`-` + :math:`{\gamma}`
      - H + e\ :sup:`-`
      - k27
@@ -264,31 +258,26 @@ various parameters.
      - k56
      - `Kreckel et al. (2010) <https://ui.adsabs.harvard.edu/abs/2010Sci...329...69K/abstract>`__
      - :c:data:`primordial_chemistry` > 2
-
    * - HD\ :sup:`+` + H
      - H\ :sup:`+` + HD
      - k125
      - `Karpas et al. (1979) <https://ui.adsabs.harvard.edu/abs/1979JChPh..70.2877K/abstract>`__
      - :c:data:`primordial_chemistry` > 3
-
    * - D + H\ :sup:`+`
      - HD\ :sup:`+` + :math:`{\gamma}`
      - k129
      - `Raymaker & Peek (1976) <https://ui.adsabs.harvard.edu/abs/1976PhRvA..13...58R/abstract>`__ & `Frommhold & Pickett. (1978) <https://ui.adsabs.harvard.edu/abs/1978CP.....28..441F/abstract>`__
      - :c:data:`primordial_chemistry` > 3
-
    * - D\ :sup:`+` + H
      - HD\ :sup:`+` + :math:`{\gamma}`
      - k130
      - `Raymaker & Peek (1976) <https://ui.adsabs.harvard.edu/abs/1976PhRvA..13...58R/abstract>`__ & `Frommhold & Pickett. (1978) <https://ui.adsabs.harvard.edu/abs/1978CP.....28..441F/abstract>`__
      - :c:data:`primordial_chemistry` > 3
-
    * - HD\ :sup:`+` + e\ :sup:`-`
      - H + D
      - k131
      - `Stromholm (1995) <https://ui.adsabs.harvard.edu/abs/1995PhRvA..52.4320S/abstract>`__
      - :c:data:`primordial_chemistry` > 3
-
    * - D + e\ :sup:`-`
      - D\ :sup:`-` + :math:`{\gamma}`
      - k132
