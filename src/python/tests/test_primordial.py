@@ -15,18 +15,18 @@ import numpy as np
 
 from matplotlib import pyplot
 
-from pygrackle.utilities.testing import \
+from gracklepy.utilities.testing import \
     assert_rel_equal
 
-from pygrackle import \
+from gracklepy import \
     chemistry_data, \
     setup_fluid_container
 
-from pygrackle.utilities.primordial_equilibrium import \
+from gracklepy.utilities.primordial_equilibrium import \
     total_cooling, \
     nHI, nHII, nHeI, nHeII, nHeIII
 
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs
 
 def test_equilibrium():

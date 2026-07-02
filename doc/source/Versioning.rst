@@ -16,7 +16,7 @@ A release serves 2 purposes:
 1. It's way to designate a development milestone (whether it's new functionality, changes in the public API, bugfixes) at a snapshot in the project's development.
 2. It's a way to announce the latest changes to the library since the last milestone.
 
-Currently, the repository tracks 2 separate version numbers: the primary version number (used by the documentation and the shared/static library) **and** the pygrackle version number.
+Currently, the repository tracks 2 separate version numbers: the primary version number (used by the documentation and the shared/static library) **and** the gracklepy version number.
 
 .. _primary-version-number:
 
@@ -88,7 +88,7 @@ Under the premise that releases always correspond to a single commit on the main
 Prior, to the ``3.3`` release, development versions could violate the ordering requirements. [#f1]_ 
 That versioning strategy was better suited for the alternative development-approach where bugfix releases corresponded to commits that on a branch separated from the main development branch.
 
-pygrackle Version Number
+gracklepy Version Number
 ------------------------
 
 This is the version number associated with the python bindings.

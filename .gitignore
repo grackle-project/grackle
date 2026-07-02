@@ -1,6 +1,3 @@
-# use glob syntax.
-syntax: glob
-
 *.a
 *.la
 *.lai
@@ -12,6 +9,8 @@ syntax: glob
 *.exe
 *.so
 *.dylib
+
+__pycache__/
 
 bin/freefall
 TAGS
@@ -42,6 +41,9 @@ src/example/flake8.out
 src/example/*.png
 src/python/build/*
 src/python/*.png
+# these images will be written to whatever directory you run the tests from
+cooling.png
+fractions.png
 src/python/flake8.out
 src/python/.cache/*
 src/python/pygrackle.egg-info/*
@@ -52,3 +54,38 @@ src/python/tests/test_answers
 doc/build
 # the following is created if you follow commands in .circleci/config.yml
 doc/source/_build/*
+
+# Used by lots of tools (e.g. pyenv, uv)
+.python-version
+
+# UV
+# People can put custom config options in here (any options we want to distribute
+# will go into pyproject.toml
+uv.toml
+#   This is commonly ignored for libraries.
+uv.lock
+
+# IDE stuff
+.idea/
+
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+
+# Ruff stuff:
+.ruff_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# from MacOS
+.DS_Store

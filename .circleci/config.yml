@@ -1,11 +1,11 @@
 version: 2.1
 
 commands:
-  set-env:
-    description: "Set environment variables."
+  setup-system-for-pytest:
+    description: "Set up the system for pytest."
     steps:
       - run:
-          name: "Set environment variables."
+          name: "Setup System"
           command: |
             echo "backend : Agg" > $HOME/matplotlibrc
             echo 'export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH' >> $BASH_ENV
@@ -17,43 +17,15 @@ commands:
               git fetch --tags https://github.com/$CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME
             fi
 
-  install-cmake-dependencies:
-    description: "Install minimal dependencies needed for a CMake build"
-    steps:
-      - run:
-          name: "Install minimal dependencies needed for a CMake build"
-          command: |
             git submodule update --init --remote
-            sudo apt update
-            sudo apt install -y libhdf5-serial-dev gfortran ninja-build cmake
+            ./scripts/ci/install_dependencies.py --color \
+              --preset classic-build --preset cmake-build
 
-  install-dependencies:
-    description: "Install dependencies."
-    steps:
-      - install-cmake-dependencies
-      - run:
-          name: "Install all other dependencies."
-          command: |
-            source $BASH_ENV
-            # libtool-bin is a requirement of the classic build-system
-            # castxml is a requirement of the pygrackle test-suite
-            sudo apt install -y libtool-bin castxml
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
             pip install --group test
-            pip install flake8
 
-  lint:
-    description: "Lint."
-    steps:
-      - run:
-          name: "Lint."
-          command: |
-            source $BASH_ENV
-            source $HOME/venv/bin/activate
-            cd src/python
-            flake8 pygrackle examples tests
 
   install-grackle:
     description: "Install the core Grackle Library & Pygrackle."
@@ -120,15 +92,15 @@ commands:
               Grackle_DIR=${PWD}/build pip install -v -e .
             fi
 
-  install-standalone-pygrackle:
-    description: "Install pygrackle without explicitly building the grackle library."
+  install-standalone-gracklepy:
+    description: "Install gracklepy without explicitly building the grackle library."
     parameters:
       tag:
         type: string
         default: $CIRCLE_BRANCH
     steps:
       - run:
-          name: "Install pygrackle."
+          name: "Install gracklepy."
           command: |
             source $HOME/venv/bin/activate
             git checkout << parameters.tag >>
@@ -151,16 +123,11 @@ commands:
       - run:
           name: "Download test data."
           command: |
-            source $BASH_ENV
-            source $HOME/venv/bin/activate
-            mkdir -p $YT_DATA_DIR
-            cd $YT_DATA_DIR
-            wget --quiet http://yt-project.org/data/IsolatedGalaxy.tar.gz
-            tar xzf IsolatedGalaxy.tar.gz
-            rm IsolatedGalaxy.tar.gz
+            source $BASH_ENV  # sets up YT_DATA_DIR, env variable
+            ./scripts/ci/fetch_test_data.py
 
-  run-pygrackle-tests:
-    description: "Run the pytest test-suite. This suite includes a mix of general tests and pygrackle-specific tests."
+  run-gracklepy-tests:
+    description: "Run the pytest test-suite. This suite includes a mix of general tests and gracklepy-specific tests."
     parameters:
       omp:
         type: enum
@@ -169,7 +136,7 @@ commands:
       build_kind:
         type: enum
         default: 'classic'
-        enum: ['classic', 'cmake', 'standalone-pygrackle']
+        enum: ['classic', 'cmake', 'standalone-gracklepy']
       generate:
         type: enum
         default: 'true'
@@ -188,7 +155,7 @@ commands:
             # actually execute the tests
             if [[ '<< parameters.build_kind >>' == 'classic' &&
                   '<< parameters.omp >>' == 'true' ]]; then
-              echo "ERROR: pygrackle tests can't be run in this configuration"
+              echo "ERROR: gracklepy tests can't be run in this configuration"
               exit 1
 
             else
@@ -203,36 +170,38 @@ commands:
                   echo "Answers already exist; skipping."
                 fi
               else
-                py.test --answer-dir=${ANSWER_DIR}
+                # we pass -vv, so that each test gets its own line of output
+                # (this can be helpful if we encounter a segfault)
+                py.test -vv --answer-dir=${ANSWER_DIR}
               fi
             fi
 
-  store-pygrackle-suite-gold-standard-answers:
-    description: "Store the pygrackle test answers"
+  store-gracklepy-suite-gold-standard-answers:
+    description: "Store the gracklepy test answers"
     parameters:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-nccv3"
+        default: "gold-standard-nccv12"
       cache-tag:
         description: "A unique tag to append to the cache name"
         type: string
-        default: "1"
+        default: "2"
     steps:
       - run:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
           command: |
             source $HOME/venv/bin/activate
-            pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
+            pip uninstall --yes gracklepy # it's ok if gracklepy wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
             pip install -e .
             rm -rf ./my-test_answers # in case answers have already been generated
       - restore_cache:
           name: "Restore gold standard answers from cache."
           key: << parameters.gold-standard-tag >>-cache<< parameters.cache-tag >>
-      - run-pygrackle-tests:
+      - run-gracklepy-tests:
           omp: 'false'
-          build_kind: 'standalone-pygrackle'
+          build_kind: 'standalone-gracklepy'
           generate: 'true'
           overwrite: 'false'
       - save_cache:
@@ -243,7 +212,7 @@ commands:
       - run:
           command: |
             source $HOME/venv/bin/activate
-            pip uninstall --yes pygrackle
+            pip uninstall --yes gracklepy
 
 
   build-docs:
@@ -270,6 +239,24 @@ executors:
     resource_class: << parameters.resource_class >>
 
 jobs:
+  generate-gold-standard:
+    parameters:
+      tag:
+        type: string
+        default: latest
+    executor:
+      name: python
+      tag: << parameters.tag >>
+      resource_class: small  # <- 1 core
+
+    working_directory: ~/grackle
+
+    steps:
+      - checkout
+      - setup-system-for-pytest
+      - download-test-data
+      - store-gracklepy-suite-gold-standard-answers
+
   test-suite:
     parameters:
       tag:
@@ -284,11 +271,9 @@ jobs:
 
     steps:
       - checkout
-      - set-env
-      - install-dependencies
-      - lint
+      - setup-system-for-pytest
       - download-test-data
-      - store-pygrackle-suite-gold-standard-answers
+      - store-gracklepy-suite-gold-standard-answers
 
       - run:
           name: "Build Standalone Pygrackle from the commit that triggered CI."
@@ -296,27 +281,27 @@ jobs:
             source $HOME/venv/bin/activate
             git checkout $CIRCLE_BRANCH
             pip install -e .
-      - run-pygrackle-tests:
+      - run-gracklepy-tests:
           omp: 'false'
-          build_kind: 'standalone-pygrackle'
+          build_kind: 'standalone-gracklepy'
           generate: 'false'
 
-      # run pygrackle-test (without answer-tests) on latest commit (CMake-build)
+      # run gracklepy-test (without answer-tests) on latest commit (CMake-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
           tag: $CIRCLE_BRANCH
       - run:
-          name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually built with CMake)"
+          name: "gracklepy-tests (no answer-tests) on latest commit (corelib manually built with CMake)"
           command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
 
-      # run full pygrackle test-suite on latest commit (classic-build)
+      # run full gracklepy test-suite on latest commit (classic-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'true'
           tag: $CIRCLE_BRANCH
       - run:
-          name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually created with classic-build)"
+          name: "gracklepy-tests (no answer-tests) on latest commit (corelib manually created with classic-build)"
           command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
 
   corelib-tests:
@@ -331,20 +316,20 @@ jobs:
 
     steps:
       - checkout
-      - install-cmake-dependencies
-      - run:
-          name: "update CMake to newer version"
-          command: |
-            sudo apt remove cmake -y
-            sudo apt install python3-pip
-            # this is a hack to install a newer version of CMake (through PyPI)
-            pip3 install cmake
+      # we pinned cmake to an arbitrarily new version
+      - run: |
+          git submodule update --init --remote
+          ./scripts/ci/install_dependencies.py --color \
+              --preset corelib-tests --preset static-analysis \
+              --software cmake=4.2 --software clang-tidy=20 \
+              --manual-install-dir ~/local_deps
 
       - run:
           name: "Build libgrackle and all of the core library's tests"
           command: |
             cmake --preset ci-linux
             cmake --build build_ci-linux
+
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
           command: ctest --test-dir build_ci-linux --output-on-failure
@@ -362,6 +347,17 @@ jobs:
       #    working_directory: build_ci-linux-omp/examples
       #    environment:
       #      OMP_NUM_THREADS: 4
+
+      - run:
+          name: "Run clang-tidy"
+          command: |
+            # ci-linux-nowarn preset is designed to work with static analysis
+            # (it disables compiler warnings)
+            cmake \
+              --preset ci-linux-nowarn \
+              -D 'GRACKLE_DEV_CLANG_TIDY=clang-tidy;-warnings-as-errors=*'
+            cmake --build build_ci-linux-nowarn
+
 
   docs-build:
     parameters:
@@ -385,16 +381,22 @@ workflows:
 
    tests:
      jobs:
+       - generate-gold-standard:
+           name: "Generate the gold standard."
+           tag: "3.10.14"
+
        - test-suite:
+           requires:
+             - "Generate the gold standard.": success
            name: "Pygrackle test suite - Python 3.10"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
    weekly:
      triggers:
@@ -405,13 +407,19 @@ workflows:
               only:
                 - main
      jobs:
+       - generate-gold-standard:
+           name: "Generate the gold standard."
+           tag: "3.10.14"
+
        - test-suite:
+           requires:
+             - "Generate the gold standard.": success
            name: "Pygrackle test suite - Python 3.10"
-           tag: "3.10.3"
+           tag: "3.10.14"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.10.3"
+           tag: "3.10.14"

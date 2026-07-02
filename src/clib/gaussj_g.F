@@ -1,3 +1,8 @@
+!> Performs Gauss-Jordan elimination to solve the specified system
+!! of linear equations and inverts the coefficient matrix.
+!!
+!! See the C++ wrapper docstring for more info
+
       subroutine gaussj_g(n,a,b,ierr)
       integer m,n
       real*8 a(n,n),b(n)

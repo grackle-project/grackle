@@ -20,16 +20,17 @@ import os
 import sys
 import yt
 
-from pygrackle import \
+from gracklepy import \
     chemistry_data, \
     evolve_constant_density, \
     setup_fluid_container
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
-from pygrackle.utilities.data_path import grackle_data_dir
-from pygrackle.utilities.model_tests import \
+
+from gracklepy.utilities.data_path import grackle_data_dir
+from gracklepy.utilities.model_tests import \
     get_test_variables
 
 _MODEL_NAME = os.path.basename(__file__[:-3]) # strip off ".py"

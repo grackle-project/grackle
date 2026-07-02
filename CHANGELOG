@@ -1,3 +1,69 @@
+== Version 3.4.1 ==
+_Release date - Aug 22, 2025_
+
+* Bugfix: Fix a significant oversight in **GrackleConfig.cmake**
+  https://github.com/grackle-project/grackle/pull/330
+* Bugfix: H2 self shielding length scale factor fix
+  https://github.com/grackle-project/grackle/pull/325
+* Bugfix: address a bug in calc_temp_cloudy_g.F
+  https://github.com/grackle-project/grackle/pull/367
+* Enhancement: Standard Status Reporting Machinery
+  https://github.com/grackle-project/grackle/pull/269
+* Enhancement: Remove pygrackle/api.py & pygrackle/utilities/api.py
+  https://github.com/grackle-project/grackle/pull/352
+* Enhancement: Rename pygrackle -> gracklepy (so we can upload to PyPI)
+  https://github.com/grackle-project/grackle/pull/371 
+* Build-System: (core lib) introduce CMakePresets.json to enable compiler warnings in a CI job https://github.com/grackle-project/grackle/pull/334
+* Build-System: (core lib) Relocated all CMake dependency information into dependencies.cmake https://github.com/grackle-project/grackle/pull/296
+* Build-System: (core lib) assorted tweaks: https://github.com/grackle-project/grackle/pull/326 https://github.com/grackle-project/grackle/pull/329 https://github.com/grackle-project/grackle/pull/337 
+* Build-System: (gracklepy) tweak cython handling https://github.com/grackle-project/grackle/pull/319 https://github.com/grackle-project/grackle/pull/328
+* Build-System: (gracklepy) Introduce dependency groups https://github.com/grackle-project/grackle/pull/347
+* Testing: Support running subset of gracklepy test without an editable install
+  https://github.com/grackle-project/grackle/pull/335
+* Testing: Move `test_chemistry_struct_synched` between test suites
+  https://github.com/grackle-project/grackle/pull/327
+* Documentation: gracklepy test instruction tweaks
+  https://github.com/grackle-project/grackle/pull/309
+* Assorted tweaks to appearance of doc website
+  https://github.com/grackle-project/grackle/pull/285
+  https://github.com/grackle-project/grackle/pull/291
+  https://github.com/grackle-project/grackle/pull/346
+* Documentation: Fix spacing issues in docs
+  https://github.com/grackle-project/grackle/pull/340
+* Documentation: Simplify GitHub hyperlinks for repository locations in docs
+  https://github.com/grackle-project/grackle/pull/300
+* Documentation: Add more detail to gracklepy build documentation
+  https://github.com/grackle-project/grackle/pull/294
+* Documentation: Added missing He
+  https://github.com/grackle-project/grackle/pull/362
+* Documentation: Added chemistry network table
+  https://github.com/grackle-project/grackle/pull/361
+* Infrastructure: Optimize circleci workflows
+  https://github.com/grackle-project/grackle/pull/338
+* Infrastructure: Introduce an extremely simplistic `.pre-commit-config.yaml` file
+  https://github.com/grackle-project/grackle/pull/348
+* Infrastructure: Introduce GHA to upload Gracklepy wheels to PyPI
+  https://github.com/grackle-project/grackle/pull/320
+  https://github.com/grackle-project/grackle/pull/355
+  https://github.com/grackle-project/grackle/pull/356
+* Infrastructure: Bump pypa/cibuildwheel version
+  https://github.com/grackle-project/grackle/pull/360
+  https://github.com/grackle-project/grackle/pull/363
+  https://github.com/grackle-project/grackle/pull/365
+  https://github.com/grackle-project/grackle/pull/372
+* Infrastructure: Move test-data retrieval logic into ``scripts/ci/fetch-test-data.py``
+  https://github.com/grackle-project/grackle/pull/307
+* Address flake8 warnings (in files that it previously ignored)
+  https://github.com/grackle-project/grackle/pull/368
+  https://github.com/grackle-project/grackle/pull/369
+* Infrastructure: Use builtin GitHub feature to nicely redirect to Code of
+  Conduct
+  https://github.com/grackle-project/grackle/pull/342
+* Infrastructure: Convert README.md to README.rst (and deduplicate content on
+  the website landing page)
+  https://github.com/grackle-project/grackle/pull/350
+  https://github.com/grackle-project/grackle/pull/351
+
 == Version 3.4 ==
 _Release date - May 14, 2025_
 

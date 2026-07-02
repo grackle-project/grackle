@@ -12,7 +12,7 @@
 ************************************************************************/
 
 // this should go before the header-guard
-#ifndef GRIMPL_PUBLIC_INCLUDE
+#if !defined(GRIMPL_PUBLIC_INCLUDE) && !defined(GRIMPL_COMPILING_CORE_LIB)
   #include "grackle_misc.h"
   GRIMPL_COMPTIME_WARNING(
     "You are using a deprecated header file; include the public \"grackle.h\" "
@@ -305,6 +305,13 @@ typedef struct
   /* number of OpenMP threads, if supported */
   int omp_nthreads;
 
+   /* solver to be used 
+   * 1: Gauss-Seidel-Newton-Raphson
+   * 2: Gauss-Seidel-only
+   * 3: Newton-Raphson-only
+   */
+  int solver_method;
+
 } chemistry_data;
 
 /*****************************
@@ -437,6 +444,16 @@ typedef struct gr_interp_grid
   double* data;
 } gr_interp_grid;
 
+
+/******************************************
+ ********** Forward declarations **********
+ ******************************************/
+
+// the following is an opaque type. The definition is intentionally opaque to
+// consumers of the Grackle library. Ideally, the entire chemistry_data_storage
+// struct will become opaque in the future
+struct gr_opaque_storage;
+
 /******************************************
  *** Chemistry and cooling data storage ***
  ******************************************/
@@ -447,32 +464,9 @@ typedef struct
    * primordial chemistry rate data *
    **********************************/
 
-  /* 6 species rates */
-  double *k1;
-  double *k2;
-  double *k3;
-  double *k4;
-  double *k5;
-  double *k6;
+  // the (non-radiative) collisional rates, that are handled in a standard
+  // manner, are now tracked within opaque_storage
 
-  /* 9 species rates (including H2) */
-  double *k7;
-  double *k8;
-  double *k9;
-  double *k10;
-  double *k11;
-  double *k12;
-  double *k13;
-  double *k14;
-  double *k15;
-  double *k16;
-  double *k17;
-  double *k18;
-  double *k19;
-  double *k20;  /* currently not used */
-  double *k21;  /* currently not used */
-  double *k22;  /* 3-body H2 formation */
-  double *k23;  /* H2-H2 dissociation */
   double *k13dd;  /* density dependent version of k13 (collisional H2
                     dissociation); actually 7 functions instead of 1. */
 
@@ -487,79 +481,6 @@ typedef struct
   double k29;
   double k30;
   double k31;
-
-  /* 12 species rates (with Deuterium). */
-  double *k50;
-  double *k51;
-  double *k52;
-  double *k53;
-  double *k54;
-  double *k55;
-  double *k56;
-
-  /* New H-ionizing reactions, used for 6, 9 & 12 species chemistry */
-  double *k57;
-  double *k58;
-
-  /* 15 species rates (with DM, HDII, HeHII) */
-  double *k125;
-  double *k129;
-  double *k130;
-  double *k131;
-  double *k132;
-  double *k133;
-  double *k134;
-  double *k135;
-  double *k136;
-  double *k137;
-  double *k148;
-  double *k149;
-  double *k150;
-  double *k151;
-  double *k152;
-  double *k153;
-
-  /* Metal species */
-  double *kz15;
-  double *kz16;
-  double *kz17;
-  double *kz18;
-  double *kz19;
-  double *kz20;
-  double *kz21;
-  double *kz22;
-  double *kz23;
-  double *kz24;
-  double *kz25;
-  double *kz26;
-  double *kz27;
-  double *kz28;
-  double *kz29;
-  double *kz30;
-  double *kz31;
-  double *kz32;
-  double *kz33;
-  double *kz34;
-  double *kz35;
-  double *kz36;
-  double *kz37;
-  double *kz38;
-  double *kz39;
-  double *kz40;
-  double *kz41;
-  double *kz42;
-  double *kz43;
-  double *kz44;
-  double *kz45;
-  double *kz46;
-  double *kz47;
-  double *kz48;
-  double *kz49;
-  double *kz50;
-  double *kz51;
-  double *kz52;
-  double *kz53;
-  double *kz54;
 
   /* H2 formation on dust grains */
   double *h2dust;
@@ -684,22 +605,6 @@ typedef struct
    * -> alphap.parameters[1] is log10(temperature) */
   gr_interp_grid alphap;
 
-  /* metal/dust abundance */
-  int    *gr_N, gr_Size;
-  double gr_dT, *gr_Td;
-  int     SN0_N;
-  double *SN0_XC , *SN0_XO , *SN0_XMg, *SN0_XAl, *SN0_XSi, *SN0_XS , *SN0_XFe;
-  double *SN0_fC , *SN0_fO , *SN0_fMg, *SN0_fAl, *SN0_fSi, *SN0_fS , *SN0_fFe;
-  double *SN0_fSiM, *SN0_fFeM, *SN0_fMg2SiO4, *SN0_fMgSiO3, *SN0_fFe3O4
-       , *SN0_fAC, *SN0_fSiO2D, *SN0_fMgO, *SN0_fFeS, *SN0_fAl2O3
-       , *SN0_freforg , *SN0_fvolorg , *SN0_fH2Oice;
-  double *SN0_r0SiM, *SN0_r0FeM, *SN0_r0Mg2SiO4, *SN0_r0MgSiO3, *SN0_r0Fe3O4
-       , *SN0_r0AC, *SN0_r0SiO2D, *SN0_r0MgO, *SN0_r0FeS, *SN0_r0Al2O3
-       , *SN0_r0reforg , *SN0_r0volorg , *SN0_r0H2Oice;
-  double *SN0_kpSiM, *SN0_kpFeM, *SN0_kpMg2SiO4, *SN0_kpMgSiO3, *SN0_kpFe3O4
-       , *SN0_kpAC, *SN0_kpSiO2D, *SN0_kpMgO, *SN0_kpFeS, *SN0_kpAl2O3
-       , *SN0_kpreforg , *SN0_kpvolorg , *SN0_kpH2Oice;
-
   /* UV background data */
   UVBtable UVbackground_table;
 
@@ -714,6 +619,9 @@ typedef struct
 
   /* tracks the initial value of the code-units */
   code_units initial_units;
+
+  /// holds data that in a manner opaque to consumers of grackle
+  struct gr_opaque_storage* opaque_storage;
 } chemistry_data_storage;
 
 /**************************

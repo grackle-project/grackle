@@ -1,4 +1,4 @@
-# This file is only to be used when building the pygrackle python module
+# This file is only to be used when building the gracklepy python module
 # -> the python build-backend, scikit-build-core, is responsible for reading in
 #    this file (it defines predefines certain variables and certain commands)
 # -> scikit-build-core is configured in ${GRACKLE_REPO_ROOT}/pyproject.toml
@@ -25,13 +25,13 @@ find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 # read in cython utilities (provided by cython-cmake python-package)
 include(UseCython)
 
-# deal with dependency on Grackle and define _PYGRACKLE_CONSUME_MODE
-if ("$ENV{PYGRACKLE_LEGACY_LINK}" STREQUAL "classic")
+# deal with dependency on Grackle and define _GRACKLEPY_CONSUME_MODE
+if ("$ENV{GRACKLEPY_LEGACY_LINK}" STREQUAL "classic")
   # match old setuptools-approach for the builds with the classic build-system
   # -> explicitly match legacy behavior: link against library in local build &
   #    HOPE that the library will be installed when we need it
   # -> more idiomatic alternative: provide cmake with full library path
-  set(_PYGRACKLE_CONSUME_MODE "ExternalClassic")
+  set(_GRACKLEPY_CONSUME_MODE "ExternalClassic")
 
   add_library(Grackle::Grackle INTERFACE IMPORTED)
   target_include_directories(Grackle::Grackle
@@ -40,11 +40,11 @@ if ("$ENV{PYGRACKLE_LEGACY_LINK}" STREQUAL "classic")
   target_link_directories(Grackle::Grackle
     INTERFACE ${GRACKLE_REPO_ROOT}/src/clib/.libs)
 
-elseif (NOT "$ENV{PYGRACKLE_LEGACY_LINK}" STREQUAL "")
+elseif (NOT "$ENV{GRACKLEPY_LEGACY_LINK}" STREQUAL "")
 
   message(FATAL_ERROR
-    "when defined, the PYGRACKLE_LEGACY_LINK environment variable must be "
-    "\"\" or \"classic\". It can't be: \"$ENV{PYGRACKLE_LEGACY_LINK}\"")
+    "when defined, the GRACKLEPY_LEGACY_LINK environment variable must be "
+    "\"\" or \"classic\". It can't be: \"$ENV{GRACKLEPY_LEGACY_LINK}\"")
 
 elseif(DEFINED ENV{Grackle_ROOT} OR DEFINED ENV{Grackle_DIR})
 
@@ -58,7 +58,7 @@ elseif(DEFINED ENV{Grackle_ROOT} OR DEFINED ENV{Grackle_DIR})
   # -> ideally, would only modify the RPATH if it isn't in a standard system
   #    search path, but that is tricky to check. For now, the caller should set
   #    CMAKE_SKIP_INSTALL_RPATH=OFF in that scenario
-  set(_PYGRACKLE_CONSUME_MODE "ExternalCMake")
+  set(_GRACKLEPY_CONSUME_MODE "ExternalCMake")
 
   find_package(Grackle COMPONENTS shared REQUIRED)
   if ((NOT CMAKE_SKIP_RPATH) AND
@@ -75,10 +75,10 @@ elseif(DEFINED ENV{Grackle_ROOT} OR DEFINED ENV{Grackle_DIR})
   endif()
 
 else()
-  # standalone pygrackle-build (Grackle is freshly compiled as a shared lib
-  # and packaged as part of pygrackle)
-  # -> this is the most reliable/robust way to install pygrackle
-  set(_PYGRACKLE_CONSUME_MODE "Embedded")
+  # standalone gracklepy-build (Grackle is freshly compiled as a shared lib
+  # and packaged as part of gracklepy)
+  # -> this is the most reliable/robust way to install gracklepy
+  set(_GRACKLEPY_CONSUME_MODE "Embedded")
 
   enable_language(Fortran) # <- needed for embedded CMake builds
   set(BUILD_SHARED_LIBS ON)
@@ -98,7 +98,7 @@ endif()
 # ------------------
 
 # take the __config__.py.in template file and use it to create __config__.py
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pygrackle/__config__.py.in
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gracklepy/__config__.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/__config__.py @ONLY
 )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/__config__.py
@@ -107,7 +107,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/__config__.py
 # transpile gracke_wrapper.pyx to a C file and then compile into a shared
 # represented by the grackle_wrapper target
 cython_transpile(
-  pygrackle/grackle_wrapper.pyx
+  gracklepy/grackle_wrapper.pyx
   LANGUAGE C
   CYTHON_ARGS -3
   OUTPUT_VARIABLE grackle_wrapper_c

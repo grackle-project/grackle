@@ -13,16 +13,16 @@
 
 import numpy as np
 
-from pygrackle import \
+from gracklepy import \
     chemistry_data, \
     setup_fluid_container
 
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
 
-from pygrackle.utilities.testing import \
+from gracklepy.utilities.testing import \
     assert_almost_equal, \
     random_logscale
 

@@ -82,39 +82,7 @@
   #define GRFLOAT_C(DBL_LITERAL) ( DBL_LITERAL )
 #endif
 
-/* HDF5 definitions */
-
-#define HDF5_FILE_I4 H5T_STD_I32BE
-#define HDF5_FILE_I8 H5T_STD_I64BE
-#define HDF5_FILE_R4 H5T_IEEE_F32BE
-#define HDF5_FILE_R8 H5T_IEEE_F64BE
-#define HDF5_FILE_B8 H5T_STD_B8BE
-
-#define HDF5_I4  H5T_NATIVE_INT
-#define HDF5_I8  H5T_NATIVE_LLONG
-#define HDF5_R4  H5T_NATIVE_FLOAT
-#define HDF5_R8  H5T_NATIVE_DOUBLE
-#define HDF5_R16 H5T_NATIVE_LDOUBLE
-
-/* Precision-dependent definitions */
-
-#ifdef GRACKLE_FLOAT_4
-#define FSYM "f"
-#define ESYM "e"
-#endif
-
-#ifdef GRACKLE_FLOAT_8
-#define FSYM "lf"
-#define ESYM "le"
-#endif
-
-#define GSYM "g"
-
 /* Standard definitions (well, fairly standard) */
-
-#ifndef NULL
-#define NULL      0
-#endif
 
 #ifdef FAIL
 #undef FAIL
@@ -129,7 +97,6 @@
 
 #define FLOAT_UNDEFINED  -99999.0
 #define INT_UNDEFINED    -99999
-#define MAX_LINE_LENGTH                   512
 
 #ifndef tiny
 #define tiny 1.0e-20
@@ -145,25 +112,5 @@
 #define huge_fortran_val GRFLOAT_C(1.0e20)
 #define tiny8 1.0e-40
 #define huge8 1.0e40
-
-/* Macro definitions (things C should have) */
-
-#ifndef __cplusplus
-
-// we exclude these from C++ source code because min & max can collide with
-// the names of some C++ symbols
-
-// we can replace all occurences of max with fmax in the future
-#define max(A,B) ((A) > (B) ? (A) : (B))
-// I think we can delete this macro right now (I don't think it's EVER used!)
-#define min(A,B) ((A) < (B) ? (A) : (B))
-
-// TODO: remove the following 3 macros (they are NEVER used)
-#define sign(A)  ((A) >  0  ?  1  : -1 )
-#define COS(X) cos((double) (X))
-#define SIN(X) sin((double) (X))
-#endif /* end of macro defintions for C code (excluded from C++) */
-
-#define POW(X,Y) pow((double) (X), (double) (Y))
 
 #endif

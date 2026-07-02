@@ -47,7 +47,7 @@ Although many systems already have them installed, both build systems have addit
 
 * the :ref:`CMake build system <cmake_build>` requires cmake to be installed.
   It's easiest to download a binary distribution from the `CMake website <https://cmake.org/download/>`_ or use your system's package manager.
-  We require version 3.16 or newer.
+  We require version 3.22 or newer.
 
 * the :ref:`classic build system <classic_build>`, employs the ``makedepend`` and the `libtool <https://www.gnu.org/software/libtool/>`_ utilities.
   It's often easiest to download these dependencies through your system's package manager.
@@ -720,7 +720,7 @@ Compiler Toolchain Compatability
 
 As a general rule of thumb, the easiest, most reliable thing to do is  to ensure that Grackle is built with the same compiler toolchain (or a compatible one) as the
 
-* the downstream application itself (whether it's a simulation code or pygrackle)
+* the downstream application itself (whether it's a simulation code or gracklepy)
 * any other dependencies of the application (whether it's other software libraries or other python extension-modules loaded at the same time).
 
 This is only something you need to consider on platforms with multiple compiler toolchains present. 

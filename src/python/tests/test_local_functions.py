@@ -18,12 +18,12 @@ import os
 
 from numpy.testing import assert_approx_equal
 
-from pygrackle import \
+from gracklepy import \
     FluidContainer, \
     chemistry_data, \
     setup_fluid_container
 
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.physical_constants import \
     cm_per_mpc, \
     mass_hydrogen_cgs, \
     sec_per_Myr
