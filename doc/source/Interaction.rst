@@ -508,79 +508,64 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
 
 .. c:var:: gr_float* HI_density
 
-   Pointer to the H density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 1, 2, 3, or 4.
+   Pointer to the HI density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.
 
 .. c:var:: gr_float* HII_density
 
-   Pointer to the H\ :sup:`+` density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 1, 2, 3 or 4.
+   Pointer to the HII density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.
 
 .. c:var:: gr_float* HM_density
 
    Pointer to the H\ :sup:`-`\  density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 2, 3, or 4.
+   :c:data:`primordial_chemistry` is set to 2 or 3.
 
 .. c:var:: gr_float* HeI_density
 
-   Pointer to the He density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 1, 2, 3, or 4.
+   Pointer to the HeI density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.
 
 .. c:var:: gr_float* HeII_density
 
-   Pointer to the He\ :sup:`+` density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 1, 2, 3, or 4.
+   Pointer to the HeII density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.
 
 .. c:var:: gr_float* HeIII_density
 
-   Pointer to the He\ :sup:`+`\ :sup:`+` density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 1, 2, 3, or 4.
-   
-.. c:var:: gr_float* HeHII_density
-
-   Pointer to the HeH\ :sup:`+`  density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 4.
+   Pointer to the HeIII density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.
 
 .. c:var:: gr_float* H2I_density
 
    Pointer to the H\ :sub:`2`\  density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 2, 3, or 4.
+   :c:data:`primordial_chemistry` is set to 2 or 3.
 
 .. c:var:: gr_float* H2II_density
 
    Pointer to the H\ :sub:`2`\ \ :sup:`+`\  density field
    array.  Used when :c:data:`primordial_chemistry` is set to
-   2, 3, or 4.
-   
+   2 or 3.
+
 .. c:var:: gr_float* DI_density
 
-   Pointer to the D density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 3 or 4.
+   Pointer to the DI density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 3.
 
 .. c:var:: gr_float* DII_density
 
-   Pointer to the D\ :sup:`+` density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 3 or 4.
-   
-.. c:var:: gr_float* DM_density
-
-   Pointer to the D\ :sup:`-`  density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 4.
+   Pointer to the DII density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 3.
 
 .. c:var:: gr_float* HDI_density
 
    Pointer to the HD density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 3 or 4.
-
-.. c:var:: gr_float* HDII_density
-
-   Pointer to the HD\ :sup:`+` density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 4.
+   :c:data:`primordial_chemistry` is set to 3.
 
 .. c:var:: gr_float* e_density
 
    Pointer to the electron density field array.  Used when
-   :c:data:`primordial_chemistry` is set to 1, 2, 3, or 4.  Note,
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.  Note,
    the electron mass density should be scaled by the ratio of the
    proton mass to the electron mass. See :ref:`e-density-note` for
    more information.
