@@ -584,27 +584,7 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    the electron mass density should be scaled by the ratio of the
    proton mass to the electron mass. See :ref:`e-density-note` for
    more information.
-  
-.. c:var:: gr_float* OI_density
 
-   Pointer to the O density field array.  Used when
-   :c:data:`metal_chemistry` is set to 1. 
-   
-.. c:var:: gr_float* O2_density
-
-   Pointer to the O\ :sub:`2` density field array.  Used when
-   :c:data:`metal_chemistry` is set to 1.   
-   
-.. c:var:: gr_float* OII_density
-
-   Pointer to the O\ :sup:`+` density field array.  Used when
-   :c:data:`metal_chemistry` is set to 1.
-   
-.. c:var:: gr_float* O2II_density
-
-   Pointer to the O\ :sub:`2`  \ :sup:`+` density field array.  Used when
-   :c:data:`metal_chemistry` is set to 1.     
-   
 .. c:var:: gr_float* metal_density
 
    Pointer to the metal density field array.  Used when
