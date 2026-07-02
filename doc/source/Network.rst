@@ -571,7 +571,7 @@ H\ :sub:`2`:sup:`+`      :c:data:`H2II_density`
 He                       :c:data:`HeI_density`
 He\ :sup:`+`             :c:data:`HeII_density`
 He\ :sup:`+` :sup:`+`    :c:data:`HeIII_density`
-HeH\ :sup:`+`            :c:data:`HeHII_density
+HeH\ :sup:`+`            :c:data:`HeHII_density`
 e\ :sup:`-`              :c:data:`e_density`
 D                        :c:data:`DI_density`
 D\ :sup:`+`              :c:data:`DII_density`
