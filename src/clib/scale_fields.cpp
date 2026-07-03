@@ -297,8 +297,7 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
           }
         }
 
-        if ((my_chemistry->grain_growth == 1) ||
-            (my_chemistry->dust_sublimation == 1)) {
+        if (my_chemistry->grain_growth == 1) {
           if (my_chemistry->dust_species > 0) {
             for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
                  i++) {
@@ -320,8 +319,7 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
             dust(i, j, k) = dust(i, j, k) * factor;
           }
 
-          if ((my_chemistry->grain_growth == 1) ||
-              (my_chemistry->dust_sublimation == 1)) {
+          if (my_chemistry->grain_growth == 1) {
             if (my_chemistry->dust_species > 0) {
               for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
                    i++) {
