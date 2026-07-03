@@ -314,6 +314,7 @@ _model_test_grids = \
                     "use_dust_density_field": 1,
                     "photoelectric_heating": 0,
                     "dust_recombination_cooling": 1,
+                    "dust_sublimation": 1,
                     "grain_growth": 1,
                     "dust_species": 3,
                     "multi_metals": 0,
