@@ -287,8 +287,7 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
             H2OII(i, j, k) = std::fmax(H2OII(i, j, k), tiny_fortran_val);
             H3OII(i, j, k) = std::fmax(H3OII(i, j, k), tiny_fortran_val);
             O2II(i, j, k) = std::fmax(O2II(i, j, k), tiny_fortran_val);
-            if ((my_chemistry->grain_growth == 1) ||
-                (my_chemistry->dust_sublimation == 1)) {
+            if (my_chemistry->grain_growth == 1) {
               if (my_chemistry->dust_species > 0) {
                 Mg(i, j, k) = std::fmax(Mg(i, j, k), tiny_fortran_val);
               }
@@ -309,8 +308,7 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
       for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           dust(i, j, k) = std::fmax(dust(i, j, k), tiny_fortran_val);
-          if ((my_chemistry->grain_growth == 1) ||
-              (my_chemistry->dust_sublimation == 1)) {
+          if (my_chemistry->grain_growth == 1) {
             // !                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
             if (my_chemistry->dust_species > 0) {
               MgSiO3(i, j, k) = std::fmax(MgSiO3(i, j, k), tiny_fortran_val);

@@ -138,8 +138,7 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
     if (my_chemistry->use_dust_density_field == 1) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         dust(i, j, k) = dust(i, j, k) * factor;
-        if ((my_chemistry->grain_growth == 1) ||
-            (my_chemistry->dust_sublimation == 1)) {
+        if (my_chemistry->grain_growth == 1) {
           // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
           if (my_chemistry->dust_species > 0) {
             MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
