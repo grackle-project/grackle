@@ -470,11 +470,7 @@ int grackle::impl::initialize_rates(
     //   DustTemperatureStart, DustTemperatureEnd
 
     int anyDust;
-    if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
-        anyDust = TRUE;
-    } else {
-        anyDust = FALSE;
-    }
+    anyDust = (my_chemistry->dust_chemistry > 0) ? TRUE : FALSE;
 
     //* Obtain the conversion factors which convert between code and physical units. We define a_value = 1 at z = zInit such that a = a_value * [a].
     double timeBase1 = my_units->time_units;
