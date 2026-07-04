@@ -206,12 +206,7 @@ void grackle::impl::cool1d_multi_g(
 
   // Set flag for dust-related options
 
-  if ((my_chemistry->h2_on_dust > 0) || (my_chemistry->dust_chemistry > 0) ||
-      (my_chemistry->dust_recombination_cooling > 0)) {
-    anydust = MASK_TRUE;
-  } else {
-    anydust = MASK_FALSE;
-  }
+  anydust = (my_chemistry->dust_chemistry > 0) ? MASK_TRUE : MASK_FALSE;
 
   // Set units
 

@@ -174,6 +174,13 @@ static int local_initialize_chemistry_data_(
     fprintf(stdout, "Initializing grackle data.\n");
   }
 
+  if (my_chemistry->h2_on_dust != 0) {
+    if (grackle_verbose) {
+      fprintf(stderr, "ERROR: h2_on_dust parameter has been removed.\n");
+      return GR_FAIL;
+    }
+  }
+
   /* Set the minimum temperature for using tabulated metal cooling. */
   if (my_chemistry->tabulated_cooling_minimum_temperature < -1.0) {
     if (my_chemistry->metal_chemistry > 0) {
@@ -207,14 +214,6 @@ static int local_initialize_chemistry_data_(
       my_chemistry->dust_recombination_cooling = 1;
       if (grackle_verbose) {
         fprintf(stdout, "Dust chemistry enabled, setting dust_recombination_cooling to 1.\n");
-      }
-    }
-
-    if (my_chemistry->primordial_chemistry > 1 &&
-        my_chemistry->h2_on_dust == 0) {
-      my_chemistry->h2_on_dust = 1;
-      if (grackle_verbose) {
-        fprintf(stdout, "Dust chemistry enabled, setting h2_on_dust to 1.\n");
       }
     }
 
