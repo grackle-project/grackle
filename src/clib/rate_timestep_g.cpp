@@ -435,6 +435,20 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
     }
   }
 
+  // Add UV background photo-ionization of metal species
+
+  if (my_chemistry->metal_chemistry > 0) {
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        dedot[i] = dedot[i] +
+                   kph_buf[PhotoRxnLUT::kphCI_bg][i] *
+                       CI(i, idx_range.j, idx_range.k) / 12.0 +
+                   kph_buf[PhotoRxnLUT::kphOI_bg][i] *
+                       OI(i, idx_range.j, idx_range.k) / 16.0;
+      }
+    }
+  }
+
   return;
 }
 

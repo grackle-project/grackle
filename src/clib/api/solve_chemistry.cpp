@@ -35,7 +35,8 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
 
   my_uvb_rates.k24 = my_uvb_rates.k25 = my_uvb_rates.k26 =
     my_uvb_rates.k27 = my_uvb_rates.k28 = my_uvb_rates.k29 =
-    my_uvb_rates.k30 = my_uvb_rates.k31 = my_uvb_rates.piHI =
+    my_uvb_rates.k30 = my_uvb_rates.k31 =
+    my_uvb_rates.kphCI_bg = my_uvb_rates.kphOI_bg = my_uvb_rates.piHI =
     my_uvb_rates.piHeI = my_uvb_rates.piHeII = my_uvb_rates.crsHI =
     my_uvb_rates.crsHeI = my_uvb_rates.crsHeII =
     my_uvb_rates.comp_xray = my_uvb_rates.temp_xray = 0.;
@@ -56,6 +57,8 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
     my_uvb_rates.k29       = my_rates->k29;
     my_uvb_rates.k30       = my_rates->k30;
     my_uvb_rates.k31       = my_rates->k31;
+    my_uvb_rates.kphCI_bg  = my_rates->kphCI_bg;
+    my_uvb_rates.kphOI_bg  = my_rates->kphOI_bg;
     my_uvb_rates.piHI      = my_rates->piHI;
     my_uvb_rates.piHeI     = my_rates->piHeI;
     my_uvb_rates.piHeII    = my_rates->piHeII;

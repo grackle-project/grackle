@@ -841,6 +841,10 @@ inline void lookup_cool_rates1d(
       kph_buf[PhotoRxnLUT::k29][i] = my_uvb_rates.k29;
       kph_buf[PhotoRxnLUT::k30][i] = my_uvb_rates.k30;
       // k31 is handled separately
+
+      // metal photo-ionization rates (these are never self-shielded)
+      kph_buf[PhotoRxnLUT::kphCI_bg][i] = my_uvb_rates.kphCI_bg;
+      kph_buf[PhotoRxnLUT::kphOI_bg][i] = my_uvb_rates.kphOI_bg;
     }
   }
 

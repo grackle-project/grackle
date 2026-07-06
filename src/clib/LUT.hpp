@@ -145,6 +145,9 @@ struct PhotoRxnLUT {
     k29,
     k30,
     k31,
+    // Radiative rates for metal species (UV background)
+    kphCI_bg,
+    kphOI_bg,
 
     NUM_ENTRIES  // <- (specifies the number of shieldable radiative reactions)
   };  // enum
