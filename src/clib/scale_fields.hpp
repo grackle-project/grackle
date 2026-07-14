@@ -122,6 +122,12 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   const IndexHelper idx_helper = build_index_helper_(my_fields);
+  const bool single_dust_density_field =
+    ((my_chemistry->dust_chemistry == 1) &&
+     (my_chemistry->use_dust_density_field == 1)) ||
+    ((my_chemistry->dust_chemistry == 2) &&
+     (my_chemistry->dust_species == 0));
+
 
   OMP_PRAGMA("omp parallel for schedule(runtime)")
   for (int t = 0; t < idx_helper.outer_ind_size; t++) {
@@ -135,32 +141,31 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
         metal(i, j, k) = metal(i, j, k) * factor;
       }
     }
-    if (my_chemistry->use_dust_density_field == 1) {
+    if (single_dust_density_field) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         dust(i, j, k) = dust(i, j, k) * factor;
-        if ((my_chemistry->grain_growth == 1) ||
-            (my_chemistry->dust_sublimation == 1)) {
-          // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-          if (my_chemistry->dust_species > 0) {
-            MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
-            AC(i, j, k) = AC(i, j, k) * factor;
-          }
-          if (my_chemistry->dust_species > 1) {
-            SiM(i, j, k) = SiM(i, j, k) * factor;
-            FeM(i, j, k) = FeM(i, j, k) * factor;
-            Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
-            Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
-            SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
-            MgO(i, j, k) = MgO(i, j, k) * factor;
-            FeS(i, j, k) = FeS(i, j, k) * factor;
-            Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
-          }
-          if (my_chemistry->dust_species > 2) {
-            reforg(i, j, k) = reforg(i, j, k) * factor;
-            volorg(i, j, k) = volorg(i, j, k) * factor;
-            H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
-          }
-          // !            endif
+      }
+    }
+    else if (my_chemistry->dust_chemistry == 2) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (my_chemistry->dust_species > 0) {
+          MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
+          AC(i, j, k) = AC(i, j, k) * factor;
+        }
+        if (my_chemistry->dust_species > 1) {
+          SiM(i, j, k) = SiM(i, j, k) * factor;
+          FeM(i, j, k) = FeM(i, j, k) * factor;
+          Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
+          Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
+          SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
+          MgO(i, j, k) = MgO(i, j, k) * factor;
+          FeS(i, j, k) = FeS(i, j, k) * factor;
+          Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
+        }
+        if (my_chemistry->dust_species > 2) {
+          reforg(i, j, k) = reforg(i, j, k) * factor;
+          volorg(i, j, k) = volorg(i, j, k) * factor;
+          H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
         }
       }
     }
