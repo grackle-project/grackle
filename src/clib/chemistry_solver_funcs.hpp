@@ -181,6 +181,11 @@ inline void species_density_updates_gauss_seidel(
   const double* const* grain_growth_rates =
     FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
   const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
+  /* flag for if Gen Chiaki's dust model is enabled with dust evolution
+     in the form of either grain growth or sublimation. */
+  const bool chiaki_model_dust_evolution =
+    (my_chemistry->dust_chemistry == 2) &&
+    ((my_chemistry->grain_growth == 1) || (my_chemistry->dust_sublimation == 1));
 
   int i;
   double scoef, acoef;
@@ -645,7 +650,7 @@ inline void species_density_updates_gauss_seidel(
               + kcol_buf[CollisionalRxnLUT::kz41][i] *  OHII(i,j,k) / 17.
               + kcol_buf[CollisionalRxnLUT::kz42][i] * H2OII(i,j,k) / 18.
               + kcol_buf[CollisionalRxnLUT::kz51][i] *    CI(i,j,k) / 12.;
-          if ((my_chemistry->grain_growth == 1)  ||  (my_chemistry->dust_sublimation == 1))  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0)  {
               scoef = scoef + 2. *
                     grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] * 2.;
@@ -871,7 +876,7 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf[CollisionalRxnLUT::kz28][i] *    OH(i,j,k) / 17.
             + kcol_buf[CollisionalRxnLUT::kz29][i] *    O2(i,j,k) / 32.
             + kcol_buf[CollisionalRxnLUT::kz51][i] *   H2I(i,j,k) /  2.;
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::AC_dust]      [i] / CI(i,j,k) * 12.;
@@ -920,7 +925,7 @@ inline void species_density_updates_gauss_seidel(
            );
         acoef = 0.
             + kcol_buf[CollisionalRxnLUT::kz26][i] *    OH(i,j,k) / 17.;
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 2)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust]  [i] / CO(i,j,k) * 17. * 0.5
@@ -1025,7 +1030,7 @@ inline void species_density_updates_gauss_seidel(
         acoef = 0.
             + kcol_buf[CollisionalRxnLUT::kz18][i] *    HI(i,j,k)
             + kcol_buf[CollisionalRxnLUT::kz35][i] *   HII(i,j,k);
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] / H2O(i,j,k) * 18. * 2.;
@@ -1075,7 +1080,7 @@ inline void species_density_updates_gauss_seidel(
         acoef = 0.
             + kcol_buf[CollisionalRxnLUT::kz52][i] *    OH(i,j,k) / 17.
             + kcol_buf[CollisionalRxnLUT::kz53][i] *    O2(i,j,k) / 32.;
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 1)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::SiM_dust]     [i] / SiI(i,j,k) * 28.;
@@ -1093,7 +1098,7 @@ inline void species_density_updates_gauss_seidel(
            );
         acoef = 0.
             + kcol_buf[CollisionalRxnLUT::kz54][i] *    OH(i,j,k) / 17.;
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] / SiOI(i,j,k) * 44.;
@@ -1113,7 +1118,7 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf[CollisionalRxnLUT::kz54][i] *  SiOI(i,j,k) *    OH(i,j,k) / 748.
            );
         acoef = 0.;
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 1)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::SiO2_dust]   [i] / SiO2I(i,j,k) * 60.;
@@ -1146,7 +1151,7 @@ inline void species_density_updates_gauss_seidel(
            );
         acoef = 0.
             + kcol_buf[CollisionalRxnLUT::kz16][i] *    HI(i,j,k);
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 2)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust]  [i] / CH2(i,j,k) * 14. * 0.5;
@@ -1237,7 +1242,7 @@ inline void species_density_updates_gauss_seidel(
                    / ( 1. + acoef*dtit[i] );
 
 
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             // ***** Mg **********
             scoef = 0.;
@@ -1295,7 +1300,7 @@ inline void species_density_updates_gauss_seidel(
   }
 
   // --- (D4) Now do dust species ---
-  if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+  if (chiaki_model_dust_evolution)  {
     for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE)  {
 
@@ -1558,6 +1563,11 @@ inline void species_density_derivatives_0d(
   const double* const* grain_growth_rates =
     FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
   const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
+  /* flag for if Gen Chiaki's dust model is enabled with dust evolution
+     in the form of either grain growth or sublimation. */
+  const bool chiaki_model_dust_evolution =
+    (my_chemistry->dust_chemistry == 2) &&
+    ((my_chemistry->grain_growth == 1) || (my_chemistry->dust_sublimation == 1));
 
   double scoef, acoef;
 
@@ -1997,7 +2007,7 @@ inline void species_density_derivatives_0d(
           + kcol_buf[CollisionalRxnLUT::kz41][0]    *  OHII        / 17.
           + kcol_buf[CollisionalRxnLUT::kz42][0]    * H2OII        / 18.
           + kcol_buf[CollisionalRxnLUT::kz51][0]    *    CI        / 12.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 0)  {
           scoef = scoef + 2. *
                 grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      * 2.;
@@ -2226,7 +2236,7 @@ inline void species_density_derivatives_0d(
           + kcol_buf[CollisionalRxnLUT::kz28][0]    *    OH        / 17.
           + kcol_buf[CollisionalRxnLUT::kz29][0]    *    O2        / 32.
           + kcol_buf[CollisionalRxnLUT::kz51][0]    *   H2I        /  2.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::AC_dust][0]          / CI        * 12.;
@@ -2275,7 +2285,7 @@ inline void species_density_derivatives_0d(
          );
       acoef = 0.
           + kcol_buf[CollisionalRxnLUT::kz26][0]    *    OH        / 17.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust][0]      / CO        * 17. * 0.5
@@ -2380,7 +2390,7 @@ inline void species_density_derivatives_0d(
       acoef = 0.
           + kcol_buf[CollisionalRxnLUT::kz18][0]    *    HI
           + kcol_buf[CollisionalRxnLUT::kz35][0]    *   HII;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      / H2O        * 18. * 2.;
@@ -2430,7 +2440,7 @@ inline void species_density_derivatives_0d(
       acoef = 0.
           + kcol_buf[CollisionalRxnLUT::kz52][0]    *    OH        / 17.
           + kcol_buf[CollisionalRxnLUT::kz53][0]    *    O2        / 32.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::SiM_dust][0]         / SiI        * 28.;
@@ -2448,7 +2458,7 @@ inline void species_density_derivatives_0d(
          );
       acoef = 0.
           + kcol_buf[CollisionalRxnLUT::kz54][0]    *    OH        / 17.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      / SiOI        * 44.;
@@ -2468,7 +2478,7 @@ inline void species_density_derivatives_0d(
           + kcol_buf[CollisionalRxnLUT::kz54][0]    *  SiOI        *    OH        / 748.
          );
       acoef = 0.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::SiO2_dust][0]       / SiO2I        * 60.;
@@ -2501,7 +2511,7 @@ inline void species_density_derivatives_0d(
          );
       acoef = 0.
           + kcol_buf[CollisionalRxnLUT::kz16][0]    *    HI;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust][0]      / CH2        * 14. * 0.5;
@@ -2592,7 +2602,7 @@ inline void species_density_derivatives_0d(
 
 
 
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 0)  {
           // ***** Mg **********
           scoef = 0.;
@@ -2650,7 +2660,7 @@ inline void species_density_derivatives_0d(
   }
 
   // --- (D4) Now do dust species ---
-  if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+  if (chiaki_model_dust_evolution)  {
 
     if (itmask_metal[0] != MASK_FALSE   )  {
 

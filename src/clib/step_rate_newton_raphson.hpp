@@ -193,6 +193,12 @@ inline void step_rate_newton_raphson(
   int itr, itr_time;
   int nsp, isp, jsp, id;
   double dspj, err, err_max;
+  /* flag for if Gen Chiaki's dust model is enabled with dust evolution
+     in the form of either grain growth or sublimation. */
+  const bool chiaki_model_dust_evolution =
+    (my_chemistry->dust_chemistry == 2) &&
+    ((my_chemistry->grain_growth == 1) || (my_chemistry->dust_sublimation == 1));
+
   // the following specifies the historical 1-based index that we would use to
   // hold energy
   const int i_eng = MAX_EVOLVED_SPECIES_FIELDS + 1;
@@ -279,12 +285,12 @@ inline void step_rate_newton_raphson(
       if (itmask_metal[i] != MASK_FALSE)  {
         if (my_chemistry->metal_chemistry == 1)  {
           nsp = nsp + 19;
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0) { nsp = nsp + 1; }
             if (my_chemistry->dust_species > 1) { nsp = nsp + 3; }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0) { nsp = nsp + 2; }
           if (my_chemistry->dust_species > 1) { nsp = nsp + 8; }
           if (my_chemistry->dust_species > 2) { nsp = nsp + 3; }
@@ -345,7 +351,7 @@ inline void step_rate_newton_raphson(
           dsp[SpLUT::H2OII] = my_fields->H2OII_density[field_idx1d];
           dsp[SpLUT::H3OII] = my_fields->H3OII_density[field_idx1d];
           dsp[SpLUT::O2II] = my_fields->O2II_density[field_idx1d];
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) ) {
+          if (chiaki_model_dust_evolution) {
             if (my_chemistry->dust_species > 0)  {
               dsp[SpLUT::Mg] = my_fields->Mg_density[field_idx1d];
             }
@@ -356,7 +362,7 @@ inline void step_rate_newton_raphson(
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) ) {
+        if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 0)  {
             dsp[SpLUT::MgSiO3_dust] = my_fields->MgSiO3_dust_density[field_idx1d];
             dsp[SpLUT::AC_dust] = my_fields->AC_dust_density[field_idx1d];
@@ -435,7 +441,7 @@ inline void step_rate_newton_raphson(
           idsp[id++] = SpLUT::H2OII;
           idsp[id++] = SpLUT::H3OII;
           idsp[id++] = SpLUT::O2II;
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0)  {
               idsp[id++] = SpLUT::Mg;
             }
@@ -446,7 +452,7 @@ inline void step_rate_newton_raphson(
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             idsp[id++] = SpLUT::MgSiO3_dust;
             idsp[id++] = SpLUT::AC_dust;
@@ -726,7 +732,7 @@ label_9996:
           my_fields->H2OII_density[field_idx1d]   = dsp[SpLUT::H2OII];
           my_fields->H3OII_density[field_idx1d]   = dsp[SpLUT::H3OII];
           my_fields->O2II_density[field_idx1d]    = dsp[SpLUT::O2II];
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0)  {
               my_fields->Mg_density[field_idx1d]      = dsp[SpLUT::Mg];
             }
@@ -737,7 +743,7 @@ label_9996:
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             my_fields->MgSiO3_dust_density[field_idx1d]  = dsp[SpLUT::MgSiO3_dust];
             my_fields->AC_dust_density[field_idx1d]      = dsp[SpLUT::AC_dust];
