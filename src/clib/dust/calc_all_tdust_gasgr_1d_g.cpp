@@ -76,6 +76,11 @@ void grackle::impl::calc_all_tdust_gasgr_1d_g(
   double dlog10Tdust = 0.0;
   double* log10Tdust_vals = nullptr;
 
+  const bool single_species_dust_model =
+    (my_chemistry->dust_chemistry == 1) ||
+    ((my_chemistry->dust_chemistry == 2) &&
+     (my_chemistry->dust_species == 0));
+
   // NOTE: gr_N is a historical name
   // -> it is pretty uninformative and should be changed!
   int gr_N[2] = {0, 0};
@@ -95,15 +100,10 @@ void grackle::impl::calc_all_tdust_gasgr_1d_g(
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask_metal[i] != MASK_FALSE) {
-      if (my_chemistry->dust_species == 0) {
-        if (my_chemistry->use_dust_density_field > 0) {
-          mygisrf[i] = my_rates->gamma_isrf *
-                       my_chemistry->local_dust_to_gas_ratio / dust2gas[i] *
-                       metallicity[i];
-          // ! correct with the depletion or enhancement of condensation rate.
-        } else {
-          mygisrf[i] = my_rates->gamma_isrf;
-        }
+      if (single_species_dust_model) {
+        mygisrf[i] = my_rates->gamma_isrf *
+          my_chemistry->local_dust_to_gas_ratio / dust2gas[i] *
+          metallicity[i];
 
       } else {
         if (my_chemistry->use_multiple_dust_temperatures == 0) {

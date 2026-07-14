@@ -221,6 +221,11 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
   int dj, dk;
   dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
   dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
+  const bool single_dust_density_field =
+    ((my_chemistry->dust_chemistry == 1) &&
+     (my_chemistry->use_dust_density_field == 1)) ||
+    ((my_chemistry->dust_chemistry == 2) &&
+     (my_chemistry->dust_species == 0));
 
   // parallelize the k and j loops with OpenMP
   // flat j and k loops for better parallelism
@@ -272,84 +277,71 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metal(i, j, k) = metal(i, j, k) * factor;
         }
+      }
 
-        if (my_chemistry->metal_chemistry == 1) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            CI(i, j, k) = CI(i, j, k) * factor;
-            CII(i, j, k) = CII(i, j, k) * factor;
-            CO(i, j, k) = CO(i, j, k) * factor;
-            CO2(i, j, k) = CO2(i, j, k) * factor;
-            OI(i, j, k) = OI(i, j, k) * factor;
-            OH(i, j, k) = OH(i, j, k) * factor;
-            H2O(i, j, k) = H2O(i, j, k) * factor;
-            O2(i, j, k) = O2(i, j, k) * factor;
-            SiI(i, j, k) = SiI(i, j, k) * factor;
-            SiOI(i, j, k) = SiOI(i, j, k) * factor;
-            SiO2I(i, j, k) = SiO2I(i, j, k) * factor;
-            CH(i, j, k) = CH(i, j, k) * factor;
-            CH2(i, j, k) = CH2(i, j, k) * factor;
-            COII(i, j, k) = COII(i, j, k) * factor;
-            OII(i, j, k) = OII(i, j, k) * factor;
-            OHII(i, j, k) = OHII(i, j, k) * factor;
-            H2OII(i, j, k) = H2OII(i, j, k) * factor;
-            H3OII(i, j, k) = H3OII(i, j, k) * factor;
-            O2II(i, j, k) = O2II(i, j, k) * factor;
+      if (my_chemistry->metal_chemistry == 1) {
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          CI(i, j, k) = CI(i, j, k) * factor;
+          CII(i, j, k) = CII(i, j, k) * factor;
+          CO(i, j, k) = CO(i, j, k) * factor;
+          CO2(i, j, k) = CO2(i, j, k) * factor;
+          OI(i, j, k) = OI(i, j, k) * factor;
+          OH(i, j, k) = OH(i, j, k) * factor;
+          H2O(i, j, k) = H2O(i, j, k) * factor;
+          O2(i, j, k) = O2(i, j, k) * factor;
+          SiI(i, j, k) = SiI(i, j, k) * factor;
+          SiOI(i, j, k) = SiOI(i, j, k) * factor;
+          SiO2I(i, j, k) = SiO2I(i, j, k) * factor;
+          CH(i, j, k) = CH(i, j, k) * factor;
+          CH2(i, j, k) = CH2(i, j, k) * factor;
+          COII(i, j, k) = COII(i, j, k) * factor;
+          OII(i, j, k) = OII(i, j, k) * factor;
+          OHII(i, j, k) = OHII(i, j, k) * factor;
+          H2OII(i, j, k) = H2OII(i, j, k) * factor;
+          H3OII(i, j, k) = H3OII(i, j, k) * factor;
+          O2II(i, j, k) = O2II(i, j, k) * factor;
+        }
+      }
+
+      if (single_dust_density_field) {
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          dust(i, j, k) = dust(i, j, k) * factor;
+        }
+      }
+
+      else if (my_chemistry->dust_chemistry == 2) {
+        if (my_chemistry->dust_species > 0) {
+          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
+               i++) {
+            Mg(i, j, k) = Mg(i, j, k) * factor;
+
+            MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
+            AC(i, j, k) = AC(i, j, k) * factor;
           }
         }
+        if (my_chemistry->dust_species > 1) {
+          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
+               i++) {
+            Al(i, j, k) = Al(i, j, k) * factor;
+            S(i, j, k) = S(i, j, k) * factor;
+            Fe(i, j, k) = Fe(i, j, k) * factor;
 
-        if ((my_chemistry->grain_growth == 1) ||
-            (my_chemistry->dust_sublimation == 1)) {
-          if (my_chemistry->dust_species > 0) {
-            for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                 i++) {
-              Mg(i, j, k) = Mg(i, j, k) * factor;
-            }
-          }
-          if (my_chemistry->dust_species > 1) {
-            for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                 i++) {
-              Al(i, j, k) = Al(i, j, k) * factor;
-              S(i, j, k) = S(i, j, k) * factor;
-              Fe(i, j, k) = Fe(i, j, k) * factor;
-            }
+            SiM(i, j, k) = SiM(i, j, k) * factor;
+            FeM(i, j, k) = FeM(i, j, k) * factor;
+            Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
+            Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
+            SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
+            MgO(i, j, k) = MgO(i, j, k) * factor;
+            FeS(i, j, k) = FeS(i, j, k) * factor;
+            Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
           }
         }
-
-        if (my_chemistry->use_dust_density_field == 1) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            dust(i, j, k) = dust(i, j, k) * factor;
-          }
-
-          if ((my_chemistry->grain_growth == 1) ||
-              (my_chemistry->dust_sublimation == 1)) {
-            if (my_chemistry->dust_species > 0) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
-                AC(i, j, k) = AC(i, j, k) * factor;
-              }
-            }
-            if (my_chemistry->dust_species > 1) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                SiM(i, j, k) = SiM(i, j, k) * factor;
-                FeM(i, j, k) = FeM(i, j, k) * factor;
-                Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
-                Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
-                SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
-                MgO(i, j, k) = MgO(i, j, k) * factor;
-                FeS(i, j, k) = FeS(i, j, k) * factor;
-                Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
-              }
-            }
-            if (my_chemistry->dust_species > 2) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                reforg(i, j, k) = reforg(i, j, k) * factor;
-                volorg(i, j, k) = volorg(i, j, k) * factor;
-                H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
-              }
-            }
+        if (my_chemistry->dust_species > 2) {
+          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
+               i++) {
+            reforg(i, j, k) = reforg(i, j, k) * factor;
+            volorg(i, j, k) = volorg(i, j, k) * factor;
+            H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
           }
         }
       }

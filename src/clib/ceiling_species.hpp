@@ -193,6 +193,11 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
   // locals
 
   int i, j, k;
+  const bool single_dust_density_field =
+    ((my_chemistry->dust_chemistry == 1) &&
+     (my_chemistry->use_dust_density_field == 1)) ||
+    ((my_chemistry->dust_chemistry == 2) &&
+     (my_chemistry->dust_species == 0));
 
   if (my_chemistry->primordial_chemistry > 0) {
     for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
@@ -267,71 +272,76 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
           //    metal_Y19(i,j,k) = max(metal_Y19(i,j,k), tiny)
           // endif
           //- !                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-          if (my_chemistry->metal_chemistry == 1) {
-            CI(i, j, k) = std::fmax(CI(i, j, k), tiny_fortran_val);
-            CII(i, j, k) = std::fmax(CII(i, j, k), tiny_fortran_val);
-            CO(i, j, k) = std::fmax(CO(i, j, k), tiny_fortran_val);
-            CO2(i, j, k) = std::fmax(CO2(i, j, k), tiny_fortran_val);
-            OI(i, j, k) = std::fmax(OI(i, j, k), tiny_fortran_val);
-            OH(i, j, k) = std::fmax(OH(i, j, k), tiny_fortran_val);
-            H2O(i, j, k) = std::fmax(H2O(i, j, k), tiny_fortran_val);
-            O2(i, j, k) = std::fmax(O2(i, j, k), tiny_fortran_val);
-            SiI(i, j, k) = std::fmax(SiI(i, j, k), tiny_fortran_val);
-            SiOI(i, j, k) = std::fmax(SiOI(i, j, k), tiny_fortran_val);
-            SiO2I(i, j, k) = std::fmax(SiO2I(i, j, k), tiny_fortran_val);
-            CH(i, j, k) = std::fmax(CH(i, j, k), tiny_fortran_val);
-            CH2(i, j, k) = std::fmax(CH2(i, j, k), tiny_fortran_val);
-            COII(i, j, k) = std::fmax(COII(i, j, k), tiny_fortran_val);
-            OII(i, j, k) = std::fmax(OII(i, j, k), tiny_fortran_val);
-            OHII(i, j, k) = std::fmax(OHII(i, j, k), tiny_fortran_val);
-            H2OII(i, j, k) = std::fmax(H2OII(i, j, k), tiny_fortran_val);
-            H3OII(i, j, k) = std::fmax(H3OII(i, j, k), tiny_fortran_val);
-            O2II(i, j, k) = std::fmax(O2II(i, j, k), tiny_fortran_val);
-            if ((my_chemistry->grain_growth == 1) ||
-                (my_chemistry->dust_sublimation == 1)) {
-              if (my_chemistry->dust_species > 0) {
-                Mg(i, j, k) = std::fmax(Mg(i, j, k), tiny_fortran_val);
-              }
-              if (my_chemistry->dust_species > 1) {
-                Al(i, j, k) = std::fmax(Al(i, j, k), tiny_fortran_val);
-                S(i, j, k) = std::fmax(S(i, j, k), tiny_fortran_val);
-                Fe(i, j, k) = std::fmax(Fe(i, j, k), tiny_fortran_val);
-              }
-            }
-          }
-          // !                endif
         }
       }
     }
   }
-  if (my_chemistry->use_dust_density_field == 1) {
+
+  if (my_chemistry->metal_chemistry == 1) {
+    for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+      for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          CI(i, j, k) = std::fmax(CI(i, j, k), tiny_fortran_val);
+          CII(i, j, k) = std::fmax(CII(i, j, k), tiny_fortran_val);
+          CO(i, j, k) = std::fmax(CO(i, j, k), tiny_fortran_val);
+          CO2(i, j, k) = std::fmax(CO2(i, j, k), tiny_fortran_val);
+          OI(i, j, k) = std::fmax(OI(i, j, k), tiny_fortran_val);
+          OH(i, j, k) = std::fmax(OH(i, j, k), tiny_fortran_val);
+          H2O(i, j, k) = std::fmax(H2O(i, j, k), tiny_fortran_val);
+          O2(i, j, k) = std::fmax(O2(i, j, k), tiny_fortran_val);
+          SiI(i, j, k) = std::fmax(SiI(i, j, k), tiny_fortran_val);
+          SiOI(i, j, k) = std::fmax(SiOI(i, j, k), tiny_fortran_val);
+          SiO2I(i, j, k) = std::fmax(SiO2I(i, j, k), tiny_fortran_val);
+          CH(i, j, k) = std::fmax(CH(i, j, k), tiny_fortran_val);
+          CH2(i, j, k) = std::fmax(CH2(i, j, k), tiny_fortran_val);
+          COII(i, j, k) = std::fmax(COII(i, j, k), tiny_fortran_val);
+          OII(i, j, k) = std::fmax(OII(i, j, k), tiny_fortran_val);
+          OHII(i, j, k) = std::fmax(OHII(i, j, k), tiny_fortran_val);
+          H2OII(i, j, k) = std::fmax(H2OII(i, j, k), tiny_fortran_val);
+          H3OII(i, j, k) = std::fmax(H3OII(i, j, k), tiny_fortran_val);
+          O2II(i, j, k) = std::fmax(O2II(i, j, k), tiny_fortran_val);
+        }
+      }
+    }
+  }
+
+  if (single_dust_density_field) {
     for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
       for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           dust(i, j, k) = std::fmax(dust(i, j, k), tiny_fortran_val);
-          if ((my_chemistry->grain_growth == 1) ||
-              (my_chemistry->dust_sublimation == 1)) {
-            // !                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-            if (my_chemistry->dust_species > 0) {
-              MgSiO3(i, j, k) = std::fmax(MgSiO3(i, j, k), tiny_fortran_val);
-              AC(i, j, k) = std::fmax(AC(i, j, k), tiny_fortran_val);
-            }
-            if (my_chemistry->dust_species > 1) {
-              SiM(i, j, k) = std::fmax(SiM(i, j, k), tiny_fortran_val);
-              FeM(i, j, k) = std::fmax(FeM(i, j, k), tiny_fortran_val);
-              Mg2SiO4(i, j, k) = std::fmax(Mg2SiO4(i, j, k), tiny_fortran_val);
-              Fe3O4(i, j, k) = std::fmax(Fe3O4(i, j, k), tiny_fortran_val);
-              SiO2D(i, j, k) = std::fmax(SiO2D(i, j, k), tiny_fortran_val);
-              MgO(i, j, k) = std::fmax(MgO(i, j, k), tiny_fortran_val);
-              FeS(i, j, k) = std::fmax(FeS(i, j, k), tiny_fortran_val);
-              Al2O3(i, j, k) = std::fmax(Al2O3(i, j, k), tiny_fortran_val);
-            }
-            if (my_chemistry->dust_species > 2) {
-              reforg(i, j, k) = std::fmax(reforg(i, j, k), tiny_fortran_val);
-              volorg(i, j, k) = std::fmax(volorg(i, j, k), tiny_fortran_val);
-              H2Oice(i, j, k) = std::fmax(H2Oice(i, j, k), tiny_fortran_val);
-            }
-            // !                endif
+        }
+      }
+    }
+  }
+  else if (my_chemistry->dust_chemistry == 2) {
+    for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+      for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          if (my_chemistry->dust_species > 0) {
+            Mg(i, j, k) = std::fmax(Mg(i, j, k), tiny_fortran_val);
+
+            MgSiO3(i, j, k) = std::fmax(MgSiO3(i, j, k), tiny_fortran_val);
+            AC(i, j, k) = std::fmax(AC(i, j, k), tiny_fortran_val);
+          }
+          if (my_chemistry->dust_species > 1) {
+            Al(i, j, k) = std::fmax(Al(i, j, k), tiny_fortran_val);
+            S(i, j, k) = std::fmax(S(i, j, k), tiny_fortran_val);
+            Fe(i, j, k) = std::fmax(Fe(i, j, k), tiny_fortran_val);
+
+            SiM(i, j, k) = std::fmax(SiM(i, j, k), tiny_fortran_val);
+            FeM(i, j, k) = std::fmax(FeM(i, j, k), tiny_fortran_val);
+            Mg2SiO4(i, j, k) = std::fmax(Mg2SiO4(i, j, k), tiny_fortran_val);
+            Fe3O4(i, j, k) = std::fmax(Fe3O4(i, j, k), tiny_fortran_val);
+            SiO2D(i, j, k) = std::fmax(SiO2D(i, j, k), tiny_fortran_val);
+            MgO(i, j, k) = std::fmax(MgO(i, j, k), tiny_fortran_val);
+            FeS(i, j, k) = std::fmax(FeS(i, j, k), tiny_fortran_val);
+            Al2O3(i, j, k) = std::fmax(Al2O3(i, j, k), tiny_fortran_val);
+          }
+          if (my_chemistry->dust_species > 2) {
+            reforg(i, j, k) = std::fmax(reforg(i, j, k), tiny_fortran_val);
+            volorg(i, j, k) = std::fmax(volorg(i, j, k), tiny_fortran_val);
+            H2Oice(i, j, k) = std::fmax(H2Oice(i, j, k), tiny_fortran_val);
           }
         }
       }
