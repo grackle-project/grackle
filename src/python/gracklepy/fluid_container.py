@@ -327,7 +327,7 @@ def _required_extra_fields(my_chemistry):
 
 def _required_calculated_fields(my_chemistry):
     my_fields = _calculated_fields.copy()
-    if my_chemistry.use_multiple_dust_temperatures:
+    if my_chemistry.dust_chemistry == 2 and my_chemistry.dust_species > 0:
         my_fields.extend(_dust_temperatures[my_chemistry.dust_species])
     return my_fields
 

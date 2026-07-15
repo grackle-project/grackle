@@ -49,6 +49,11 @@ void calc_tdust_3d(
   // Loop over zones, and do an entire i-column in one go
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
+  const bool single_species_dust_model =
+    (my_chemistry->dust_chemistry == 1) ||
+    ((my_chemistry->dust_chemistry == 2) &&
+     (my_chemistry->dust_species == 0));
+
   // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
@@ -251,7 +256,7 @@ void calc_tdust_3d(
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
-          if (my_chemistry->use_multiple_dust_temperatures == 0)  {
+          if (single_species_dust_model)  {
             dust_temp(i,j,k) = tdust[i];
           } else {
             if (my_chemistry->dust_species > 0)  {

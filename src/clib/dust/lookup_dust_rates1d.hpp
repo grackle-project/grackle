@@ -254,51 +254,22 @@ inline void lookup_dust_rates1d(
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
         double summed_h2dust = 0.0;
-
-        if (my_chemistry->use_multiple_dust_temperatures == 0) {
-          // in this branch, all grains share a single dust temperature
-          double logTdust = std::log(tdust[i]);  // <- natural log
-
-          // precompute the shared coefficients
-          double h2dust_silicate_coef = f_wrap::interpolate_2d_g(
+        for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+          const double* coef_table =
+            gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
+                ? h2rate_carbonaceous_coef_table
+                : h2rate_silicate_coef_table;
+          // take the natural log of the grain species's Temperature
+          double logTdust = std::log(grain_temperatures.data[gsp_idx][i]);
+          double coef = f_wrap::interpolate_2d_g(
               logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-              interp_props.parameters[0], dlogTdust, interp_props.parameters[1],
-              dlogtem, interp_props.data_size, h2rate_silicate_coef_table);
-          double h2dust_carbonaceous_coef = f_wrap::interpolate_2d_g(
-              logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-              interp_props.parameters[0], dlogTdust, interp_props.parameters[1],
-              dlogtem, interp_props.data_size, h2rate_carbonaceous_coef_table);
-
-          // perform the summation
-          for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-            double coef =
-                gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
-                    ? h2dust_carbonaceous_coef
-                    : h2dust_silicate_coef;
-            double sigma_per_gas_mass =
-                internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                    .data[gsp_idx][i];
-            summed_h2dust += coef * sigma_per_gas_mass;
-          }
-
-        } else {
-          for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-            const double* coef_table =
-                gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
-                    ? h2rate_carbonaceous_coef_table
-                    : h2rate_silicate_coef_table;
-            // take the natural log of the grain species's Temperature
-            double logTdust = std::log(grain_temperatures.data[gsp_idx][i]);
-            double coef = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                interp_props.parameters[0], dlogTdust,
-                interp_props.parameters[1], dlogtem, interp_props.data_size,
-                coef_table);
-            double sigma_per_gas_mass =
-                internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                    .data[gsp_idx][i];
-            summed_h2dust += coef * sigma_per_gas_mass;
-          }
+              interp_props.parameters[0], dlogTdust,
+              interp_props.parameters[1], dlogtem, interp_props.data_size,
+              coef_table);
+          double sigma_per_gas_mass =
+            internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
+            .data[gsp_idx][i];
+          summed_h2dust += coef * sigma_per_gas_mass;
         }
         h2dust[i] = summed_h2dust;
       }
@@ -395,10 +366,7 @@ inline void lookup_dust_rates1d(
             gsp_info->species_info[gsp_idx].sublimation_temperature;
 
         // get pointer to the dust temperatures for the current grain species
-        const double* temdust_arr =
-            (my_chemistry->use_multiple_dust_temperatures == 0)
-                ? tdust
-                : grain_temperatures.data[gsp_idx];
+        const double* temdust_arr = grain_temperatures.data[gsp_idx];
 
         // get the view of the grain species's current mass density
         const gr_float* rho_gsp_ptr = field_data_adaptor.get_ptr_dynamic(

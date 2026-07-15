@@ -216,74 +216,74 @@ void update_edot_dust_cooling_rate(
     const chemistry_data* my_chemistry, IndexRange idx_range,
     View<gr_float***> d, const double* gasgr,
     const GrainSpeciesCollection& gas_grainsp_heatrate) {
+
+  const bool single_species_dust_model =
+    (my_chemistry->dust_chemistry == 1) ||
+    ((my_chemistry->dust_chemistry == 2) &&
+     (my_chemistry->dust_species == 0));
+
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask_metal[i] != MASK_FALSE) {
       double Ldst;
-      if (my_chemistry->dust_species == 0) {
+      if (single_species_dust_model) {
         Ldst =
             -gasgr[i] * (tgas[i] - tdust[i]) * dust2gas[i] * rhoH[i] * rhoH[i];
 
-      } else {  // my_chemistry->dust_species > 0
-        if (my_chemistry->use_multiple_dust_temperatures == 0) {
-          Ldst = -gasgr[i] * (tgas[i] - tdust[i]) *
-                 d(i, idx_range.j, idx_range.k) * rhoH[i];
-        } else {
+      } else if (my_chemistry->dust_chemistry == 2) {
+        if (my_chemistry->dust_species > 0) {
           Ldst =
-              -(gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust][i] *
-                    (tgas[i] -
-                     grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i]) +
-                gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust][i] *
-                    (tgas[i] -
-                     grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i])) *
-              d(i, idx_range.j, idx_range.k) * rhoH[i];
-
-          if (my_chemistry->dust_species > 1) {
-            Ldst =
-                Ldst -
-                (gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiM_dust][i] *
-                     (tgas[i] -
-                      grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i]) +
-                 gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeM_dust][i] *
-                     (tgas[i] -
-                      grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i]) +
-                 gas_grainsp_heatrate.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] *
-                     (tgas[i] - grain_temperatures
-                                    .data[OnlyGrainSpLUT::Mg2SiO4_dust][i]) +
-                 gas_grainsp_heatrate.data[OnlyGrainSpLUT::Fe3O4_dust][i] *
-                     (tgas[i] -
-                      grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i]) +
-                 gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiO2_dust][i] *
-                     (tgas[i] -
-                      grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i]) +
-                 gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgO_dust][i] *
-                     (tgas[i] -
-                      grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i]) +
-                 gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeS_dust][i] *
-                     (tgas[i] -
-                      grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i]) +
-                 gas_grainsp_heatrate.data[OnlyGrainSpLUT::Al2O3_dust][i] *
-                     (tgas[i] -
-                      grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i])) *
-                    d(i, idx_range.j, idx_range.k) * rhoH[i];
-          }
-
-          if (my_chemistry->dust_species > 2) {
-            Ldst =
-                Ldst -
-                (gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust][i] *
-                     (tgas[i] - grain_temperatures
-                                    .data[OnlyGrainSpLUT::ref_org_dust][i]) +
-                 gas_grainsp_heatrate.data[OnlyGrainSpLUT::vol_org_dust][i] *
-                     (tgas[i] - grain_temperatures
-                                    .data[OnlyGrainSpLUT::vol_org_dust][i]) +
-                 gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust][i] *
-                     (tgas[i] - grain_temperatures
-                                    .data[OnlyGrainSpLUT::H2O_ice_dust][i])) *
-                    d(i, idx_range.j, idx_range.k) * rhoH[i];
-          }
+            -(gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust][i] *
+              (tgas[i] -
+               grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i]) +
+              gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust][i] *
+              (tgas[i] -
+               grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i])) *
+            d(i, idx_range.j, idx_range.k) * rhoH[i];
+        }
+        if (my_chemistry->dust_species > 1) {
+          Ldst =
+            Ldst -
+            (gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiM_dust][i] *
+             (tgas[i] -
+              grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i]) +
+             gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeM_dust][i] *
+             (tgas[i] -
+              grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i]) +
+             gas_grainsp_heatrate.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] *
+             (tgas[i] - grain_temperatures
+              .data[OnlyGrainSpLUT::Mg2SiO4_dust][i]) +
+             gas_grainsp_heatrate.data[OnlyGrainSpLUT::Fe3O4_dust][i] *
+             (tgas[i] -
+              grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i]) +
+             gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiO2_dust][i] *
+             (tgas[i] -
+              grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i]) +
+             gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgO_dust][i] *
+             (tgas[i] -
+              grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i]) +
+             gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeS_dust][i] *
+             (tgas[i] -
+              grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i]) +
+             gas_grainsp_heatrate.data[OnlyGrainSpLUT::Al2O3_dust][i] *
+             (tgas[i] -
+              grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i])) *
+            d(i, idx_range.j, idx_range.k) * rhoH[i];
+        }
+        if (my_chemistry->dust_species > 2) {
+          Ldst =
+            Ldst -
+            (gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust][i] *
+             (tgas[i] - grain_temperatures
+              .data[OnlyGrainSpLUT::ref_org_dust][i]) +
+             gas_grainsp_heatrate.data[OnlyGrainSpLUT::vol_org_dust][i] *
+             (tgas[i] - grain_temperatures
+              .data[OnlyGrainSpLUT::vol_org_dust][i]) +
+             gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust][i] *
+             (tgas[i] - grain_temperatures
+              .data[OnlyGrainSpLUT::H2O_ice_dust][i])) *
+            d(i, idx_range.j, idx_range.k) * rhoH[i];
         }
       }
-
       edot[i] = edot[i] + Ldst;
     }
   }

@@ -116,6 +116,11 @@ void grackle::impl::cool1d_multi_g(
   // Declare some constants:
   const double mh_local_var = mh_grflt;
 
+  const bool single_species_dust_model =
+    (my_chemistry->dust_chemistry == 1) ||
+    ((my_chemistry->dust_chemistry == 2) &&
+     (my_chemistry->dust_species == 0));
+
   // Locals
   int i, iZscale, mycmbTfloor;
   double dom, qq, vibl, zr, hdlte1, hdlow1, fudge, gphdl1, dom_inv, tau,
@@ -928,7 +933,7 @@ void grackle::impl::cool1d_multi_g(
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
-        if (my_chemistry->use_multiple_dust_temperatures == 0) {
+        if (single_species_dust_model) {
           // In the future, we should consider renaming `alphad`. The
           // current name is a little confusing since:
           // - the related `alpha` variable holds linear absorption
