@@ -1,11 +1,13 @@
 #include "gtest/gtest.h"
 #include <cstdint>
 
-#include "fortran_func_wrappers.hpp"
+#include <initializer_list>
+#include <utility>  // std::pair
 
-extern "C" {
-    #include "grackle_macros.h"
-}
+#include "grtestutils/coord_grid.hpp"
+#include "fortran_func_wrappers.hpp"
+#include "interp_grid.hpp"
+
 
 TEST(InterpolationTest, Interpolate1D) {
 
@@ -353,4 +355,364 @@ TEST(InterpolationTest, Interpolate5D) {
     );
 
     EXPECT_DOUBLE_EQ(value, 10.247619047619049);
+}
+
+// =============================================================================
+// Down below we move onto making more exhaustive property tests
+// =============================================================================
+
+static double perform_interp(const grtest::Coordinate& c,
+                             const GRIMPL_NS::InterpGrid& interp_grid) {
+  namespace f_wrap = ::grackle::impl::fortran_wrapper;
+  const GRIMPL_NS::InterpGridProps& props = interp_grid.props;
+  switch (props.rank) {
+    case 1:
+      return f_wrap::interpolate_1d_g(
+          c.components[0], props.dimension, props.parameters[0],
+          props.parameter_spacing[0], props.data_size, interp_grid.data);
+    case 2:
+      return f_wrap::interpolate_2d_g(
+          c.components[0], c.components[1], props.dimension,
+          props.parameters[0], props.parameter_spacing[0], props.parameters[1],
+          props.parameter_spacing[1], props.data_size, interp_grid.data);
+    case 3:
+      return f_wrap::interpolate_3d_g(
+          c.components[0], c.components[1], c.components[2], props.dimension,
+          props.parameters[0], props.parameter_spacing[0], props.parameters[1],
+          props.parameter_spacing[1], props.parameters[2],
+          props.parameter_spacing[2], props.data_size, interp_grid.data);
+    case 4:
+      return f_wrap::interpolate_4d_g(
+          c.components[0], c.components[1], c.components[2], c.components[3],
+          props.dimension, props.parameters[0], props.parameter_spacing[0],
+          props.parameters[1], props.parameter_spacing[1], props.parameters[2],
+          props.parameter_spacing[2], props.parameters[3],
+          props.parameter_spacing[3], props.data_size, interp_grid.data);
+    case 5:
+      return f_wrap::interpolate_5d_g(
+          c.components[0], c.components[1], c.components[2], c.components[3],
+          c.components[4], props.dimension, props.parameters[0],
+          props.parameter_spacing[0], props.parameters[1],
+          props.parameter_spacing[1], props.parameters[2],
+          props.parameter_spacing[2], props.parameters[3],
+          props.parameter_spacing[3], props.parameters[4],
+          props.parameter_spacing[4], props.data_size, interp_grid.data);
+    default:
+      GRIMPL_ERROR("unexpected rank: %d", (int)props.rank);
+  }
+}
+
+template <typename Fn>
+static std::pair<GRIMPL_NS::InterpGrid, grtest::CoordGrid> setup(
+    const std::vector<GRIMPL_NS::InterpDimScale>& dim_scales, Fn fn) {
+  int rank = dim_scales.size();
+  GRIMPL_NS::InterpGridProps grid_props(rank, dim_scales.data());
+  std::vector<std::vector<double>> coords;
+  for (int i = 0; i < rank; i++) {
+    int n_elements = grid_props.dimension[i];
+    std::vector<double>& cur_ax = coords.emplace_back(n_elements);
+    for (int j = 0; j < n_elements; j++) {
+      cur_ax[j] = grid_props.parameters[i][j];
+    }
+  }
+
+  grtest::CoordGrid coord_grid(coords);
+
+  // set up the data_field
+  double* data_field = new double[coord_grid.size()];
+  int i = 0;
+  for (const grtest::Coordinate& coord : coord_grid) {
+    data_field[i] = fn(coord);
+    // std::string s = testing::PrintToString(coord);
+    // printf("  fn(%s)=%g, \n", s.c_str(), data_field[i]);
+    // fflush(stdout);
+    i++;
+  }
+
+  GRIMPL_NS::InterpGrid interp_grid(std::move(grid_props), data_field);
+  return {std::move(interp_grid), coord_grid};
+}
+
+/// This namespace aggregates different "policies" that are used as parameters
+/// for the @ref InterpGridTest test fixture.
+///
+/// In slightly more detail, each policy is a distinct type that defines a
+/// function and a set of grid dimension scales, from which the tests
+/// associated with @ref InterpGridTest will construct an interpolation grid.
+/// And then the tests verify that interpolations can reproduce the initial
+/// values
+///
+/// See the docstring of @ref InterpGridTest for more details
+namespace InterpTestPolicies {
+
+struct Simple1D {
+  // implements the function that will be interpolated by the test
+  static double fn(const grtest::Coordinate& c) { return c[0] + 5.0; };
+
+  // returns the dimension scales for producing the interpolation grid
+  static std::vector<GRIMPL_NS::InterpDimScale> grid_dim_scales() {
+    return {GRIMPL_NS::InterpDimScale::Linear(2, 0, 1.0)};
+  };
+};
+
+struct Piecewise1D {
+  // implements the function that will be interpolated by the test
+  static double fn(const grtest::Coordinate& c) {
+    return (c[0] < 1.0) ? c[0] + 5.0 : (c[0] - 0.25) * 2 + 5.25;
+  };
+
+  // returns the dimension scales for producing the interpolation grid
+  static std::vector<GRIMPL_NS::InterpDimScale> grid_dim_scales() {
+    // important: make sure the interpolation grid includes the breakpoint of
+    // the interpolation grid
+    return {GRIMPL_NS::InterpDimScale::Linear(4, 0, 0.25)};
+  };
+};
+
+struct Simple2D {
+  // implements the function that will be interpolated in the test
+  static double fn(const grtest::Coordinate& c) {
+    return c[0] * 0.5 + c[1] * -1.0 + 5.0;
+  };
+
+  // returns the dimension scales for producing the interpolation grid
+  static std::vector<GRIMPL_NS::InterpDimScale> grid_dim_scales() {
+    return {
+        GRIMPL_NS::InterpDimScale::Linear(3, 0, 1.0),
+        GRIMPL_NS::InterpDimScale::Linear(3, -3.0, 0.5),
+    };
+  }
+};
+
+struct Alt2D {
+  // implements the function that will be interpolated in the test
+  static double fn(const grtest::Coordinate& c) {
+    return 100.0 * c[0] * c[1] + c[0] * 0.5 + c[1] * -1.0 + 5.0;
+  };
+
+  // returns the dimension scales for producing the interpolation grid
+  static std::vector<GRIMPL_NS::InterpDimScale> grid_dim_scales() {
+    return {
+        GRIMPL_NS::InterpDimScale::Linear(3, 0, 1.0),
+        GRIMPL_NS::InterpDimScale::Linear(3, -3.0, 0.5),
+    };
+  }
+};
+
+struct Piecewise2D {
+  // implements the function that will be interpolated in the test
+  static double fn(const grtest::Coordinate& c) {
+    double bp0 = 1.0;
+    double bp1 = 0.5;
+
+    double a = (c[0] < bp0) ? c[0] * 4 : (c[0] - bp0) + bp0 * 4;
+    double b = (c[1] < bp1) ? c[1] * -0.5 : (c[1] - bp1) + bp1 * -0.5;
+
+    return a + b;
+  }
+
+  // returns the dimension scales for producing the interpolation grid
+  static std::vector<GRIMPL_NS::InterpDimScale> grid_dim_scales() {
+    // important: make sure the interpolation grid includes the breakpoints of
+    // the interpolation grid
+    return {
+        GRIMPL_NS::InterpDimScale::Linear(3, 0, 1.0),
+        GRIMPL_NS::InterpDimScale::Linear(5, -1.0, 0.5),
+    };
+  }
+};
+
+struct Simple3D {
+  // implements the function that will be interpolated during the test
+  static double fn(const grtest::Coordinate& c) {
+    return c[0] * 0.01 + c[1] * -1.0 + c[2] * 100.0 + 5.0;
+  };
+
+  // returns the dimension scales for producing the interpolation grid
+  static std::vector<GRIMPL_NS::InterpDimScale> grid_dim_scales() {
+    return {GRIMPL_NS::InterpDimScale::Linear(4, 0, 1.0),
+            GRIMPL_NS::InterpDimScale::Linear(4, -3.0, 0.5),
+            GRIMPL_NS::InterpDimScale::Linear(4, -1.0, 0.25)};
+  }
+};
+
+struct Simple4D {
+  // implements the function that will be interpolated during the test
+  static double fn(const grtest::Coordinate& c) {
+    return c[0] * 0.1 + c[1] * -1.0 + c[2] * 10.0 + c[3] * -100.0 + 5.0;
+  };
+
+  // returns the dimension scales for producing the interpolation grid
+  static std::vector<GRIMPL_NS::InterpDimScale> grid_dim_scales() {
+    return {
+        GRIMPL_NS::InterpDimScale::Linear(2, 0, 1.0),
+        GRIMPL_NS::InterpDimScale::Linear(2, -3.0, 0.5),
+        GRIMPL_NS::InterpDimScale::Linear(2, -1.0, 0.25),
+        GRIMPL_NS::InterpDimScale::Linear(2, 1.0, 0.5),
+    };
+  }
+};
+
+struct Simple5D {
+  // implements the function that will be interpolated during the test
+  static double fn(const grtest::Coordinate& c) {
+    return c[0] * 0.1 + c[1] * -1.0 + c[2] * 10.0 + c[3] * -100.0 + 5.0;
+  };
+
+  // returns the dimension scales for producing the interpolation grid
+  static std::vector<GRIMPL_NS::InterpDimScale> grid_dim_scales() {
+    return {
+        GRIMPL_NS::InterpDimScale::Linear(2, 0, 1.0),
+        GRIMPL_NS::InterpDimScale::Linear(2, -3.0, 0.5),
+        GRIMPL_NS::InterpDimScale::Linear(2, -1.0, 0.25),
+        GRIMPL_NS::InterpDimScale::Linear(2, 1.0, 0.5),
+        GRIMPL_NS::InterpDimScale::Linear(2, -2.0, 2.0),
+    };
+  }
+};
+
+}  // namespace InterpTestPolicies
+
+/// A fixture class template that defines logic for testing different
+/// interpolation schemes on grids of values
+///
+/// We refer to the actual parameter as a "test-policy". A policy is a
+/// unique type that each policy that defines a function and a set of grid
+/// dimension scales. The tests associated with this fixture will use this
+/// information to construct an interpolation grid for interpolating values of
+/// that function. The tests will verify that interpolations can reproduce the
+/// behavior of the function.
+///
+/// IMPORTANTLY, we must be able to exactly reproduce the value of the
+/// function.
+///
+/// At this time, a policy should implement the following interface
+/// @code{cpp}
+///   struct MyPolicy {
+///     // implements the function that is modelled by the tests
+///     static double fn(const grtest::Coordinate& c);
+///
+///     // returns the dimension scales for producing the interpolation grid
+///     static std::vector<GRIMPL_NS::InterpDimScale> grid_dim_scales();
+///   };
+/// @endcode
+template <typename TestPolicy>
+class InterpGridTest : public testing::Test {};
+
+using MyPolicies = ::testing::Types<
+    InterpTestPolicies::Simple1D, InterpTestPolicies::Piecewise1D,
+    InterpTestPolicies::Simple2D, InterpTestPolicies::Alt2D,
+    InterpTestPolicies::Piecewise2D, InterpTestPolicies::Simple3D,
+    InterpTestPolicies::Simple4D, InterpTestPolicies::Simple5D>;
+// the trailing comma on the next line can be removed once we start using c++20
+TYPED_TEST_SUITE(InterpGridTest, MyPolicies, );
+
+TYPED_TEST(InterpGridTest, AtGridPoints) {
+  using Policy = TypeParam;
+  auto my_fn = [](const grtest::Coordinate& c) -> double {
+    return Policy::fn(c);
+  };
+  auto [interp_grid, coord_grid] = setup(Policy::grid_dim_scales(), my_fn);
+
+  ASSERT_TRUE(interp_grid) << "error setting up coord grid";
+
+  for (const grtest::Coordinate& c : coord_grid) {
+    // allows a discrepancy of 4 ULPs
+    EXPECT_DOUBLE_EQ(perform_interp(c, interp_grid), my_fn(c))
+        << "for c = " << testing::PrintToString(c);
+  }
+}
+
+TYPED_TEST(InterpGridTest, BetweenGridPoints) {
+  using Policy = TypeParam;
+  std::vector<GRIMPL_NS::InterpDimScale> dim_scales = Policy::grid_dim_scales();
+  auto my_fn = [](const grtest::Coordinate& c) -> double {
+    return Policy::fn(c);
+  };
+  auto [interp_grid, _] = setup(Policy::grid_dim_scales(), my_fn);
+
+  ASSERT_TRUE(interp_grid) << "error setting up coord grid";
+
+  // construct a new coordinate grid where we query locations between each point
+  std::vector<std::vector<double>> test_locs;
+  for (const GRIMPL_NS::InterpDimScale& dim_scale : dim_scales) {
+    std::vector<double>& v = test_locs.emplace_back();
+    std::size_t dim_scale_count = dim_scale.count;
+    v.reserve(2 * (dim_scale_count - 1));
+    for (std::size_t i = 0; i < (dim_scale_count - 1); i++) {
+      double left = dim_scale.access_value(i);
+      double right = dim_scale.access_value(i + 1);
+      v.push_back(0.75 * left + 0.25 * right);
+      v.push_back(0.25 * left + 0.75 * right);
+    }
+  }
+
+  grtest::CoordGrid check_coord_grid(test_locs);
+
+  for (const grtest::Coordinate& c : check_coord_grid) {
+    // allows a discrepancy of 4 ULPs
+    EXPECT_DOUBLE_EQ(perform_interp(c, interp_grid), my_fn(c))
+        << "for c = " << testing::PrintToString(c);
+  }
+}
+
+// Tests what happens when we interpolate beyond the edge of the grid
+// - at the time of writing, this simply extrapolates
+// - in principle, we should probably default to snapping to the nearest
+//   interpolated value within the domain of allowed points. We actually take
+//   some steps to manually do this for certain quantities and in certain
+//   locations of the codebase, but I'm a little skeptical that we do it
+//   consistently enough
+TYPED_TEST(InterpGridTest, BeyondGrid) {
+  using Policy = TypeParam;
+  std::vector<GRIMPL_NS::InterpDimScale> dim_scales = Policy::grid_dim_scales();
+  auto my_fn = [](const grtest::Coordinate& c) -> double {
+    return Policy::fn(c);
+  };
+  auto [interp_grid, _] = setup(Policy::grid_dim_scales(), my_fn);
+
+  ASSERT_TRUE(interp_grid) << "error setting up coord grid";
+
+  // construct a new coordinate grid where we query locations between each point
+  // (we will also keep track of the most extreme values along each axis)
+  constexpr int MAX_RANK = 5;
+  double ax_extremes[MAX_RANK][2];
+  std::vector<std::vector<double>> test_locs;
+
+  int grid_rank = dim_scales.size();
+  ASSERT_LE(grid_rank, MAX_RANK) << "sanity check failed";
+  for (int i = 0; i < grid_rank; i++) {
+    const GRIMPL_NS::InterpDimScale& dim_scale = dim_scales[i];
+    std::size_t dim_scale_count = dim_scale.count;
+    double leftmost = dim_scale.access_value(0);
+    double leftmost_step = dim_scale.access_value(1) - leftmost;
+    double rightmost = dim_scale.access_value(dim_scale_count - 1);
+    double rightmost_step =
+        rightmost - dim_scale.access_value(dim_scale_count - 2);
+
+    std::vector<double> v{leftmost - 0.25 * leftmost_step, leftmost,
+                          leftmost + 0.25 * leftmost_step, rightmost,
+                          rightmost + 0.25 * rightmost_step};
+
+    test_locs.emplace_back(std::move(v));
+    ax_extremes[i][0] = leftmost;
+    ax_extremes[i][1] = rightmost;
+  }
+
+  grtest::CoordGrid check_coord_grid(test_locs);
+
+  for (const grtest::Coordinate& c : check_coord_grid) {
+    grtest::Coordinate clamped_coord;
+    clamped_coord.rank = grid_rank;
+    for (int i = 0; i < grid_rank; i++) {
+      clamped_coord.components[i] =
+          GRIMPL_NS::clamp(c[i], ax_extremes[i][0], ax_extremes[i][1]);
+    }
+
+    // allows a discrepancy of 4 ULPs
+    EXPECT_DOUBLE_EQ(perform_interp(c, interp_grid), my_fn(c))
+        << "for c = " << testing::PrintToString(c)
+        << ". Nearest location in domain: "
+        << testing::PrintToString(clamped_coord);
+  }
 }

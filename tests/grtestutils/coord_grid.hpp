@@ -24,6 +24,12 @@ namespace grtest {
 struct Coordinate {
   double components[5];
   int rank;
+
+  /// overloads array access operation
+  ///
+  /// Give an instance `c` and an integer `i`, this method lets us write c[i],
+  /// which is equivalent to `c.components[i]`
+  double operator[](int index) const noexcept { return components[index]; }
 };
 
 // teach GoogleTest how to print grtest::Coordinate
@@ -103,14 +109,10 @@ public:
     GRIMPL_REQUIRE(rank_ >= 1 && rank_ <= gridcoord_detail::MAX_RANK,
                    "passed an invalid rank");
 
-    int running_product = 1;
     for (int i = rank_ - 1; i >= 0; i--) {
       // setup cycle_info_[i]
-      if (i + 1 < rank_) {
-        running_product *= cycle_info_[i + 1].cycle_len;
-      }
       int extent = coords[i].size();
-      int element_reps = running_product;
+      int element_reps = (i + 1 == rank_) ? 1 : cycle_info_[i + 1].cycle_len;
       int cycle_len = extent * element_reps;
       cycle_info_[i] = {extent, element_reps, cycle_len};
     }
