@@ -87,10 +87,13 @@ def _setup_dust_densities(fc, state_vals, dust_to_gas_ratio):
     or on the injection metals.
     """
 
-    if fc.chemistry_data.metal_chemistry == 0 or fc.chemistry_data.dust_species == 0:
+    # If we are using the multi-grain dust model, then we will compute
+    # a total dust density by summing all the dust species.
+    # Otherwise, we will just go from the dust-to-gas ratio.
+    if fc.chemistry_data.dust_chemistry != 2 or fc.chemistry_data.dust_species == 0:
         state_vals["dust_density"] = dust_to_gas_ratio * state_vals["density"]
 
-    elif fc.chemistry_data.metal_chemistry == 1:
+    elif fc.chemistry_data.dust_chemistry == 2:
         metal_field = fc.inject_pathway_density_yield_fields[0]
         metal_density = state_vals[metal_field]
         dust_density = 0
