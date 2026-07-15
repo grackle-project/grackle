@@ -13,9 +13,7 @@ target_link_libraries(runIndexHelperTests testdeps)
 gtest_discover_tests(runIndexHelperTests)
 
 add_executable(runInterpolationTests
-  test_unit_interpolators_g.cpp
-  #test_interpolators_comparisons.cpp
-)
+  test_unit_interpolators_g.cpp test_interp_grid.cpp)
 target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
 

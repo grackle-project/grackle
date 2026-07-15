@@ -987,7 +987,7 @@ int solve_rate_cool(
           // sweep of a backward Euler method (for all cells specified by
           // itmask_nr)
           grackle::impl::step_rate_newton_raphson(
-            imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
+            imetal, idx_range, dom, chunit, dx_cgs, c_ljeans,
             dtit.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
             nelec_times_mH.data(), edot.data(), anydust, spsolvbuf.itmask_nr,
