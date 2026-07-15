@@ -5,8 +5,9 @@
 #include <utility>  // std::pair
 
 #include "grtestutils/coord_grid.hpp"
-#include "fortran_func_wrappers.hpp"
 #include "interp_grid.hpp"
+#include "interpolate.hpp"
+#include "utils-cpp.hpp"  // GRIMPL_NS::clamp
 
 
 TEST(InterpolationTest, Interpolate1D) {
@@ -24,7 +25,7 @@ TEST(InterpolationTest, Interpolate1D) {
     }
 
     
-    double value = grackle::impl::fortran_wrapper::interpolate_1d_g(
+    double value = GRIMPL_NS::interpolate_1d(
         input1,
         gridDim.data(),
         gridPar1.data(), dgridPar1,
@@ -61,7 +62,7 @@ TEST(InterpolationTest, Interpolate2D) {
     }
 
 
-    double value = grackle::impl::fortran_wrapper::interpolate_2d_g(
+    double value = GRIMPL_NS::interpolate_2d(
         input1, input2,
         gridDim.data(),
         gridPar1.data(), dgridPar1,
@@ -107,7 +108,7 @@ TEST(InterpolationTest, Interpolate3D) {
         }
     }
 
-    double value = grackle::impl::fortran_wrapper::interpolate_3d_g(
+    double value = GRIMPL_NS::interpolate_3d(
         input1, input2, input3,
         gridDim.data(),
         gridPar1.data(), dgridPar1,
@@ -157,7 +158,7 @@ TEST(InterpolationTest, Interpolate3Dz) {
         }
     }
 
-    double value_end_int_0 = grackle::impl::fortran_wrapper::interpolate_3dz_g(
+    double value_end_int_0 = GRIMPL_NS::interpolate_3dz(
       input1, input2, input3,
       gridDim.data(),
       gridPar1.data(), dgridPar1,
@@ -168,7 +169,7 @@ TEST(InterpolationTest, Interpolate3Dz) {
     );
 
     end_int = 1;
-    double value_end_int_1 = grackle::impl::fortran_wrapper::interpolate_3dz_g(
+    double value_end_int_1 = GRIMPL_NS::interpolate_3dz(
       input1, input2, input3,
       gridDim.data(),
       gridPar1.data(), dgridPar1,
@@ -219,7 +220,7 @@ TEST(InterpolationTest, Interpolate2Df3D) {
         }
     }
 
-    double value = grackle::impl::fortran_wrapper::interpolate_2df3d_g(
+    double value = GRIMPL_NS::interpolate_2Df3D(
       input1, input3,
       gridDim.data(),
       gridPar1.data(), dgridPar1,
@@ -275,7 +276,7 @@ TEST(InterpolationTest, Interpolate4D) {
         }
     }
 
-    double value = grackle::impl::fortran_wrapper::interpolate_4d_g(
+    double value = GRIMPL_NS::interpolate_4d(
         input1, input2, input3, input4,
         gridDim.data(),
         gridPar1.data(), dgridPar1,
@@ -343,7 +344,7 @@ TEST(InterpolationTest, Interpolate5D) {
         }
     }
 
-    double value = grackle::impl::fortran_wrapper::interpolate_5d_g(
+    double value = GRIMPL_NS::interpolate_5d(
         input1, input2, input3, input4, input5,
         gridDim.data(),
         gridPar1.data(), dgridPar1,
@@ -363,33 +364,32 @@ TEST(InterpolationTest, Interpolate5D) {
 
 static double perform_interp(const grtest::Coordinate& c,
                              const GRIMPL_NS::InterpGrid& interp_grid) {
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
   const GRIMPL_NS::InterpGridProps& props = interp_grid.props;
   switch (props.rank) {
     case 1:
-      return f_wrap::interpolate_1d_g(
+      return GRIMPL_NS::interpolate_1d(
           c.components[0], props.dimension, props.parameters[0],
           props.parameter_spacing[0], props.data_size, interp_grid.data);
     case 2:
-      return f_wrap::interpolate_2d_g(
+      return GRIMPL_NS::interpolate_2d(
           c.components[0], c.components[1], props.dimension,
           props.parameters[0], props.parameter_spacing[0], props.parameters[1],
           props.parameter_spacing[1], props.data_size, interp_grid.data);
     case 3:
-      return f_wrap::interpolate_3d_g(
+      return GRIMPL_NS::interpolate_3d(
           c.components[0], c.components[1], c.components[2], props.dimension,
           props.parameters[0], props.parameter_spacing[0], props.parameters[1],
           props.parameter_spacing[1], props.parameters[2],
           props.parameter_spacing[2], props.data_size, interp_grid.data);
     case 4:
-      return f_wrap::interpolate_4d_g(
+      return GRIMPL_NS::interpolate_4d(
           c.components[0], c.components[1], c.components[2], c.components[3],
           props.dimension, props.parameters[0], props.parameter_spacing[0],
           props.parameters[1], props.parameter_spacing[1], props.parameters[2],
           props.parameter_spacing[2], props.parameters[3],
           props.parameter_spacing[3], props.data_size, interp_grid.data);
     case 5:
-      return f_wrap::interpolate_5d_g(
+      return GRIMPL_NS::interpolate_5d(
           c.components[0], c.components[1], c.components[2], c.components[3],
           c.components[4], props.dimension, props.parameters[0],
           props.parameter_spacing[0], props.parameters[1],
