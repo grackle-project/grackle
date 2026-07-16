@@ -225,49 +225,6 @@ inline void calc_grain_size_increment_1d(
         internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i], gr_N,
         repacked_opac_table.data());
   }
-
-  // step 3: calculate the total cross-section and the total opacity table
-  // (i.e. that include contributions from all grain species)
-
-  // todo: can we skip this when my_chemistry->use_multiple_dust_temperatures
-  //   is not 0?
-
-  double* sigma_tot = internal_dust_prop_buf.sigma_per_gas_mass_tot;
-  View<double**> kappa_tab_tot(internal_dust_prop_buf.dyntab_kappa_tot,
-                               n_log10Tdust_vals, my_fields->grid_dimension[0]);
-
-  // zero-out the current value
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    sigma_tot[i] = 0.0;
-  }
-
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    for (int idx = 0; idx < n_log10Tdust_vals; idx++) {
-      kappa_tab_tot(idx, i) = 0.0;
-    }
-  }
-
-  // todo: get rid of the itmask check (it shouldn't be necessary here)
-  for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
-    const double* cur_grsp_sigma =
-        internal_dust_prop_buf.grain_sigma_per_gas_mass.data[grsp_i];
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        sigma_tot[i] += cur_grsp_sigma[i];
-      }
-    }
-
-    const double* tmp = internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i];
-    View<const double**> cur_grsp_kappa_tab(tmp, n_log10Tdust_vals,
-                                            my_fields->grid_dimension[0]);
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        for (int idx = 0; idx < n_log10Tdust_vals; idx++) {
-          kappa_tab_tot(idx, i) += cur_grsp_kappa_tab(idx, i);
-        }
-      }
-    }
-  }
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
