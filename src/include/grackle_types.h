@@ -188,7 +188,7 @@ typedef struct
   // use_isrf_field = 1
   gr_float *isrf_habing;
 
-  // use_multiple_dust_temperatures = 1
+  // dust_chemistry = 2 and dust_species = 1,2,3
   gr_float *SiM_dust_temperature;
   gr_float *FeM_dust_temperature;
   gr_float *Mg2SiO4_dust_temperature;
