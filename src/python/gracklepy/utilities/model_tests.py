@@ -34,7 +34,6 @@ _parameter_exclude = (
     {"metal_chemistry": 1, "primordial_chemistry": 1},
     {"metal_chemistry": 1, "metal_cooling": 0},
     {"grackle_data_file": "CloudyData_noUVB.h5", "UVbackground": 1},
-    {"dust_species": 0, "use_multiple_dust_temperatures": 1},
     {"primordial_chemistry": 0, "dust_recombination_cooling": 1},
 )
 
@@ -310,8 +309,7 @@ _model_test_grids = \
                     "metal_cooling": 1,
                     "metal_chemistry": 1,
                     "three_body_rate": 4,
-                    "dust_chemistry": 1,
-                    "use_dust_density_field": 1,
+                    "dust_chemistry": 2,
                     "photoelectric_heating": 0,
                     "dust_recombination_cooling": 1,
                     "dust_sublimation": 1,
@@ -322,8 +320,8 @@ _model_test_grids = \
                 },
                 "variants": \
                 {
+                    "grain_growth": (0,),
                     "dust_species": (0, 1, 2),
-                    "use_multiple_dust_temperatures": (0, 1),
                     "multi_metals": (1,),
                     "metal_abundances": (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
                 }
