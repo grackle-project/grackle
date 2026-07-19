@@ -230,16 +230,14 @@ void update_edot_dust_cooling_rate(
             -gasgr[i] * (tgas[i] - tdust[i]) * dust2gas[i] * rhoH[i] * rhoH[i];
 
       } else if (my_chemistry->dust_chemistry == 2) {
-        if (my_chemistry->dust_species > 0) {
-          Ldst =
-            -(gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust][i] *
-              (tgas[i] -
-               grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i]) +
-              gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust][i] *
-              (tgas[i] -
-               grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i])) *
-            d(i, idx_range.j, idx_range.k) * rhoH[i];
-        }
+        Ldst =
+          -(gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust][i] *
+            (tgas[i] -
+             grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i]) +
+            gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust][i] *
+            (tgas[i] -
+             grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i])) *
+          d(i, idx_range.j, idx_range.k) * rhoH[i];
         if (my_chemistry->dust_species > 1) {
           Ldst =
             Ldst -
