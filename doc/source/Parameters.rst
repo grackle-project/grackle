@@ -79,27 +79,54 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int dust_chemistry
 
-   Flag to control additional dust cooling and chemistry processes.
+   Flag to include dust grains. Each setting corresponds to a distinct
+   model. Any non-zero value for this parameter also enables
+   additional dust-related processes, some of which can also be
+   configured individually.
    Default: 0.
 
    - 0: no dust-related processes included.
-   - 1: adds the following processes:
+   - 1: enables a "static" dust model where the density of dust
+     remains constant throughout the call to
+     :c:data:`solve_chemistry`. Two options exist for specifying the
+     density of dust, depending on the value of the
+     :c:data:`use_dust_density_field` parameter. If
+     :c:data:`use_dust_density_field` is set to:
 
-     #. photo-electric heating (sets :c:data:`photoelectric_heating` to 2).
-     #. cooling from electron recombination onto dust (equation 9 from
-        `Wolfire et al. 1995
-        <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__).
-        Both the photo-electric heating and recombination cooling are scaled
-        by the value of the :c:data:`interstellar_radiation_field`.
-     #. H\ :sub:`2`\  formation on dust and dust-gas heat transfer (if
-        #:c:data:`primordial_chemistry` > 1).
+       - 0: the dust density is calculated as the gas density
+         multiplied by the metallicity (in solar units) multiplied by
+         the local dust-to-gas ratio (set by the
+         :c:data:`local_dust_to_gas_ratio` parameter. Put another way,
+         the dust density is the metal density multiplied by the ratio
+         (:c:data:`local_dust_to_gas_ratio` /
+         :c:data:`SolarMetalFractionByMass`) (i.e., the dust to metal
+         ratio is constant).
+       - 1: the dust density is provided directly by the
+         :c:data:`dust_density` field pointer.
 
-   Setting :c:data:`dust_chemistry` greater than 0 requires
-   :c:data:`metal_cooling` to be enabled.
+   - 2: enables the dust model described by `Chiaki & Wise (2019)
+     <https://ui.adsabs.harvard.edu/abs/2019MNRAS.482.3933C>`__. This
+     model has several options, configurable by parameters prepended
+     with ``chiaki_dust_model_``.
+
+   Additionally, setting :c:data:`dust_chemistry` > 0 enables the
+   following:
+
+   - photo-electric heating (sets :c:data:`photoelectric_heating` to
+     2). Disable by setting :c:data:`photoelectric_heating` to 0.
+   - cooling from electron recombination onto dust (equation 9 from
+     `Wolfire et al. 1995
+     <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__). Disable
+     by setting :c:data:`dust_recombination_cooling` to 0.
+   - H\ :sub:`2`\  formation on dust and dust-gas heat transfer (if
+     :c:data:`primordial_chemistry` > 1).
 
 .. note:: Other values for :c:data:`photoelectric_heating` may also be used
    in conjunction with setting the :c:data:`dust_chemistry` parameter. It will
    only be changed to 2 if unset.
+
+.. note:: Setting :c:data:`dust_chemistry` greater than 0 requires
+   :c:data:`metal_cooling` to be enabled.
 
 .. c:var:: int h2_on_dust
 
