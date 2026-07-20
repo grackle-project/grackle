@@ -139,6 +139,8 @@
      &       nH2, nother, nSSh, nratio, nssh_he, nratio_he,
      &       fSShHI, fSShHeI, pe_eps, pe_X, grbeta
 
+     &       ,e_old, e_now, e_new, e_mid
+
 !  Slice locals
  
       integer*8 indixe(in)
@@ -247,7 +249,9 @@
      &        priDataSize, priMMW,
      &        itmask)
 
+
       else
+
 
 !     Compute mean molecular weight (and temperature) directly
 
@@ -954,13 +958,13 @@ c  new (correct) way: (april 4, 2007)
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
-
                myde(i) = 1 - mmw(i) * (3.0_DKIND * fh + 1.0_DKIND) /
      &              4.0_DKIND
                if (imetal .eq. 1) then
                   myde(i) = myde(i) - mmw(i) * metal(i,j,k) /
      &                 (d(i,j,k) * mu_metal)
                endif
+
                myde(i) = d(i,j,k) * myde(i) / mmw(i)
                myde(i) = max(myde(i), 0._DKIND)
 
@@ -1142,6 +1146,7 @@ c  new (correct) way: (april 4, 2007)
 
       endif
 
+
 !     Set tgasold
 
       do i=is+1, ie+1
@@ -1149,6 +1154,7 @@ c  new (correct) way: (april 4, 2007)
          tgasold(i) = tgas(i)
          end if
       enddo
+
 
       return
       end

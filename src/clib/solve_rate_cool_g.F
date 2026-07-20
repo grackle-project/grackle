@@ -279,13 +279,14 @@
       real*8 heq1, heq2, eqk221, eqk222, eqk131, eqk132,
      &       eqt1, eqt2, eqtdef, dheq, heq, dlogtem, dx_cgs,
      &       c_ljeans
-      real*8  rho_cgs, temp, tsp_gyr, tsp_sec, tsp_code, old
-      real*8, parameter :: GYR_SEC = 3.15576e16_DKIND
+      real*8  rho_cgs, tsp_gyr, tsp_sec,
+     &       e_end, old_dust, tsp_end, tsp_begin,
+     &       dt_energy, cool_frac
+      real*8, parameter :: GYR_SEC = 3.154e16_DKIND
       real*8, parameter :: a_um = 0.10_DKIND
       real*8, parameter :: omega = 2.5_DKIND
-      real*8, parameter :: k_sup = 0.4_DKIND
       real*8, parameter :: mu    = 0.6_DKIND
-      real*8 :: tgas_end(in)
+      real*8 :: tgas_end
 
 !  row temporaries
 
@@ -412,8 +413,9 @@
 !$omp&   brem, edot,
 !$omp&   hyd01k, h2k01, vibh, roth, rotl,
 !$omp&   gpldl, gphdl, hdlte, hdlow, cieco,
-!$omp&   rho_cgs, temp, tsp_gyr, tsp_sec, tsp_code, old,
-
+!$omp&   rho_cgs, tsp_gyr, tsp_sec, old_dust,
+!$omp&   e_end, tsp_end, tgas_end, tsp_begin,
+!$omp&   dt_energy, cool_frac,
 !$omp&   itmask )
 #endif
       do t = 0, dk*dj-1
@@ -519,14 +521,6 @@
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing, itmask)
-
-
-
-         do i = is+1, ie+1
-            !edot(i) = 0
-            edot(i) = -k_sup * e(i,j,k) * d(i,j,k)
-         end do
-
 
             if (ispecies .gt. 0) then
 
@@ -740,10 +734,18 @@
      &              edot(i) = tiny8
 	       if (abs(edot(i)) .lt. tiny8) edot(i) = tiny8
 
-!              Compute timestep for 10% change
 
-                  dtit(i) = min(real(abs(0.1_DKIND*
-     &              energy/edot(i)), DKIND), 
+
+                  if (tgas(i) .gt. 3.0*1.0e5_DKIND) then
+                     cool_frac = 0.02_DKIND
+                  else
+                     cool_frac = 0.1_DKIND
+                  endif
+
+
+                  dt_energy = real(abs(cool_frac*
+     &              energy/edot(i)), DKIND)
+                  dtit(i) = min(dt_energy,
      &              dt-ttot(i), dtit(i))
 
 
@@ -782,27 +784,35 @@
       do i = is+1, ie+1
         if (.not. itmask(i)) cycle
         rho_cgs = max( d(i,j,k) * dbase1, tiny8 )
-        tgas_end(i) = e(i,j,k) * (gamma-1._DKIND) * mmw(i) * utem
-        temp    = max( (tgas(i) + 0.5 *(tgas_end(i) - tgas(i)))
-     &          *(mu / mmw(i)), 1.0_DKIND )
-        tsp_gyr = 0.17_DKIND * (a_um/0.1_DKIND)
-     &          * (1.0e-27_DKIND / rho_cgs)
-     &          * (((10.0_DKIND**6.3_DKIND)/temp)**omega + 1.0_DKIND)
 
-        ! transform to  code time
+        e_end = e(i,j,k) + edot(i)/d(i,j,k) * dtit(i)
+        tgas_end  = e_end * (gamma-1._DKIND)
+     &       * mu * utem
+        tsp_begin = 0.17_DKIND * (a_um/0.1_DKIND)
+     &       * (1.0e-27_DKIND / rho_cgs)
+     &       * ((10.0_DKIND**6.3_DKIND/tgas(i))**omega
+     &       + 1.0_DKIND)
+        tsp_end   = 0.17_DKIND * (a_um/0.1_DKIND)
+     &       * (1.0e-27_DKIND / rho_cgs)
+     &       * ((10.0_DKIND**6.3_DKIND/tgas_end)**omega
+     &       + 1.0_DKIND)
+
+        tsp_gyr = 2.0_DKIND /
+     &       (1.0_DKIND/tsp_begin + 1.0_DKIND/tsp_end)
+
         tsp_sec  = tsp_gyr * GYR_SEC
-        tsp_code = tsp_sec / utim
 
-        if (idustfield .eq. 1 .and. tsp_code .gt. 0.0_DKIND) then
-          old  = dust(i,j,k)
-          dtit(i) = min(dtit(i), 0.1_DKIND * tsp_code / 3.0_DKIND)
-          dust(i,j,k) = old * exp(-dtit(i) / (tsp_code/3.0_DKIND))
 
-          if (dust(i,j,k) .lt. 0.0_DKIND) dust(i,j,k) = 0.0_DKIND
+        if (idustfield .eq. 1 .and. tsp_sec .gt. 0.0_DKIND) then
+           old_dust  = dust(i,j,k)
+           dust(i,j,k) = old_dust *
+     &         exp(-dtit(i)*utim/(tsp_sec/3.0_DKIND))
+           dust(i,j,k) = max(dust(i,j,k), 0.0_DKIND)
+
         end if
 
-      end do
 
+      end do
 
 !           Update total and gas energy
 
@@ -811,6 +821,7 @@
                if (itmask(i)) then
                e(i,j,k)  = e(i,j,k) +
      &                 real(edot(i)/d(i,j,k)*dtit(i), RKIND)
+
 
 #ifdef WRITE_COOLING_DEBUG
                if (e(i,j,k) .ne. e(i,j,k)) then
