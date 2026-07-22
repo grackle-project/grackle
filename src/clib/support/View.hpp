@@ -18,7 +18,65 @@
 
 #include <type_traits>  // std::remove_pointer_t, std::is_pointer_v
 
+// A brief discussion on Views and Data Layout
+// ===========================================
+//
+// Background
+// ----------
+// For some background, C++23 introduced `std::mdspan` to describe
+// multi-dimensional views. A `std::mdspan` is parameterized by
+// - the data's extents (aka the shape)
+// - the data's layout, which dictates how a multidimensional index is mapped
+//   to a 1D pointer offset
+//
+// For views of contiguous data there are 2 obvious layouts:
+// 1. layout-right: where the stride is `1` along the rightmost extent.
+//    - for extents `{a,b,c}`, an optimal nested for-loop will iterates from
+//      `0` up to `a` in the outermost loop and from `0` up to `c`
+//      in the innermost loop
+//    - this is the "natural layout" for a multidimensional c-style array
+//      `arr[a][b][c]`
+// 2. layout-left: where the stride is `1` along the leftmost extent
+//    - for extents `{a,b,c}`, an optimal nested for-loop will iterates from
+//      `0` up to `c` in the outermost loop and from `0` up to `a`
+//      in the innermost loop
+//    - this is the "natural layout" for a multidimensional fortran array
+//      `arr(a, b, c)`
+//
+// Views In Grackle
+// ----------------
+// Since Grackle doesn't yet use C++23, we define our own custom view type.
+//
+// Because Grackle was originally written in Fortran, all 3d arrays
+// (they represent spatial grids have left layout). However, there are also
+// some arrays with right layout (e.g. and gaussj after transcription and
+// interpolation grids). It would nice to be as consistent as possible.
+// Since Grackle is now written in C++, we will be using Right Layout
+//
+// The Plan
+// --------
+// We are starting to transition away from treating fields as full 3D spatial
+// grids and moving towards treating them as 1D spatial grids. While we do
+// this, this is a natural place for us to start transitioning the standard
+// layout type
+//
+// Once we finish transitioning the layout type, we should delete the
+// `DataLayout` type and simplify GeneralView down to View
 namespace GRIMPL_NAMESPACE_DECL {
+
+/// @brief describes the data layout
+///
+/// For contiguous multidimensional view with:
+/// - LEFT layout means that the leftmost component of a multidimensional index
+///   is the contiguous axis. This corresponds the "natural" layout of Fortran
+///   arrays
+/// - RIGHT layout means that the rightmost component of a multidimensional
+///   index is the contiguous axis. This corresponds the "natural" layout of
+///   arrays in C/C++
+enum struct DataLayout {
+  LEFT,  ///< the leftmost dimension has a stride 1
+  RIGHT  ///< the rightmost dimension has a stride 1
+};
 
 namespace view_detail {
 
@@ -138,7 +196,7 @@ struct MDPtrProps_ {
 /// information about where memory is allocated.
 ///
 /// We may want to remove all use of the 3D GeneralView.
-template <typename T>
+template <typename T, DataLayout data_layout>
 class GeneralView {
   // first, we define useful types used by instances of the class template
   using ptrprops_ = view_detail::MDPtrProps_<T>;
@@ -149,6 +207,7 @@ public:
   using reference_type = element_type&;
   using size_type = int;  // maybe revisit this?
   static constexpr int rank = ptrprops_::rank;
+  static constexpr DataLayout layout = data_layout;
 
 private:
   // these entries exist to help us support implicit casts of views of mutable
@@ -156,7 +215,7 @@ private:
   using non_const_ptr_ =
       view_detail::MkPtr_t<std::remove_const_t<element_type>, rank>;
   using const_ptr_ = view_detail::MkPtr_t<std::add_const_t<element_type>, rank>;
-  friend class GeneralView<const_ptr_>;
+  friend class GeneralView<const_ptr_, data_layout>;
 
   // attributes:
   element_type* data_;
@@ -193,14 +252,30 @@ public:
   }
 
   GeneralView(element_type* ptr, int ilen, int jlen)
-      : data_(ptr), extent_{ilen, jlen}, strides_{1, ilen} {
+      : data_(ptr), extent_{ilen, jlen} {
     static_assert(rank == 2, "constructor only works with 2D views");
+    if constexpr (layout == DataLayout::LEFT) {
+      strides_[0] = 1;
+      strides_[1] = ilen;
+    } else {
+      strides_[0] = jlen;
+      strides_[1] = 1;
+    }
     check_invariants_();
   }
 
   GeneralView(element_type* ptr, int ilen, int jlen, int klen)
-      : data_(ptr), extent_{ilen, jlen, klen}, strides_{1, ilen, ilen * jlen} {
+      : data_(ptr), extent_{ilen, jlen, klen} {
     static_assert(rank == 3, "constructor only works with 3D views");
+    if constexpr (layout == DataLayout::LEFT) {
+      strides_[0] = 1;
+      strides_[1] = ilen;
+      strides_[2] = ilen * jlen;
+    } else {
+      strides_[0] = jlen * klen;
+      strides_[1] = klen;
+      strides_[2] = 1;
+    }
     check_invariants_();
   }
   ///@}
@@ -217,7 +292,7 @@ public:
   /// when T is not a pointer-to-const, then it would duplicate the
   /// copy-constructor.
   template <class = std::enable_if<std::is_same<T, const_ptr_>::value>>
-  GeneralView(const GeneralView<non_const_ptr_>& other) {
+  GeneralView(const GeneralView<non_const_ptr_, layout>& other) {
     data_ = other.data_;
     for (int i = 0; i < rank; i++) {
       extent_[i] = other.extent_[i];
@@ -249,18 +324,26 @@ public:
 
   GRIMPL_FORCE_INLINE element_type& operator()(int i, int j) const {
     static_assert(rank == 2, "2 indices should only be specified for 2D views");
-    return data_[i + j * strides_[1]];  // strides_[0] == 1
+    if constexpr (layout == DataLayout::LEFT) {
+      return data_[i + j * strides_[1]];  // strides_[0] == 1
+    } else {
+      return data_[i * strides_[0] + j];  // strides_[1] == 1
+    }
   }
 
   GRIMPL_FORCE_INLINE element_type& operator()(int i, int j, int k) const {
     static_assert(rank == 3, "3 indices should only be specified for 3D views");
-    return data_[i + j * strides_[1] + k * strides_[2]];  // strides_[0] == 1
+    if constexpr (layout == DataLayout::LEFT) {
+      return data_[i + j * strides_[1] + k * strides_[2]];  // strides_[0] == 1
+    } else {
+      return data_[i * strides_[0] + j * strides_[1] + k];  // strides_[2] == 1
+    }
   }
   ///@}
 };
 
 template <typename T>
-using View = GeneralView<T>;
+using View = GeneralView<T, DataLayout::LEFT>;
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 

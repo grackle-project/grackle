@@ -24,14 +24,13 @@
 #include <utility>  // std::pair
 
 #include "support/status_reporting.hpp"
+#include "support/View.hpp"
 
 namespace grtest {
 
-/// To be used with @ref IdxMapping
-enum struct DataLayout {
-  LEFT,  ///< the leftmost dimension has a stride 1
-  RIGHT  ///< the rightmost dimension has a stride 1
-};
+// idealy, we will delete GRIMPL_NS::DataLayout at some point in the future
+// -> when that happens, we will need to start defining it here
+using DataLayout = GRIMPL_NS::DataLayout;
 
 /// Maps multi-dimensional indices to a 1D pointer offset
 ///
