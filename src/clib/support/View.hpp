@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares the View construct
+/// Declares the GeneralView construct
 ///
 //===----------------------------------------------------------------------===//
 
@@ -47,7 +47,7 @@ struct MkPtr_<value_type, 3> {
 template <typename value_type, int Rank>
 using MkPtr_t = typename MkPtr_<value_type, Rank>::type;
 
-/// this simply helps us implement the View class template
+/// this simply helps us implement the GeneralView class template
 template <typename T>
 struct MDPtrProps_ {
   // try to strip off 3-pointer layers (it's ok to have fewer layers)
@@ -64,21 +64,21 @@ struct MDPtrProps_ {
 
 }  // namespace view_detail
 
-/// Implements the View class template
+/// A general purpose multidimensional view
 ///
 /// @tparam T defines the datatype and dimensionality of the span. This is
 ///     easiest to explain with examples.
-///       - ``float**`` specifies a 2D View of ``float`` values
-///       - ``const double***`` specifies a 3D View of ``const double`` values
+///       - ``float**`` specifies a 2D GeneralView of ``float`` values
+///       - ``const double***`` specifies a 3D GeneralView of ``const double``
+///         values
 ///     Be aware that the use of multiple of multiple pointer indirection is
 ///     purely a symbolic shorthand. Under the hood, ``int*`` is used whether
 ///     this parameter is ``int*``, ``int**``, or ``int***``.
 ///
 /// Overview
 /// --------
-/// This file holds the declaration/definition of the grackle::Imple::View
-/// class template. You should think of instances of the class template as a
-/// special kind of pointer:
+/// You should think of instances of the class template as a special kind of
+/// pointer:
 ///  - instances can be empty (i.e. they encode a nullptr) or store the address
 ///    to memory that is used to store a multidimensional array
 ///  - instances also track the shape of the multidimensional array in order
@@ -89,10 +89,10 @@ struct MDPtrProps_ {
 ///    useful)
 ///  - it has pointer semantics (more on this below)
 ///
-/// The idea of a ``View`` is common in various C++ HPC libraries (e.g. see
-/// Kokkos or Raja). Enzo-E makes use of a similar ``CelloView``. In modern C++
-/// lingo this is a kind of span. If we were using C++23, we might use
-/// std::mdspan instead of defining a custom type.
+/// The idea of a ``GeneralView`` is common in various C++ HPC libraries (e.g.
+/// see Kokkos or Raja). Enzo-E makes use of a similar ``CelloGeneralView``. In
+/// modern C++ lingo this is a kind of span. If we were using C++23, we might
+/// use std::mdspan instead of defining a custom type.
 ///
 /// Motivation
 /// ----------
@@ -107,38 +107,39 @@ struct MDPtrProps_ {
 ///
 /// Let's consider a few key scenarios:
 /// 1. Const-semantics:
-///    - When you have a View of ``const`` values, ``View<const int*>``, you
-///      can't modify the values, similar to ``const int*``. There is no
-///      container equivalent (e.g. ``std::vector<const int>`` doesn't exist)
+///    - When you have a GeneralView of ``const`` values,
+///      ``GeneralView<const int*>``, you can't modify the values, similar to
+///      ``const int*``. There is no container equivalent (e.g.
+///      ``std::vector<const int>`` doesn't exist)
 ///    - Like a variable holding a ``const`` pointer to an integer,
-///      ``int const *``, a variable holding a ``const View<int*>`` can be used
-///      to freely modify referenced values. In both cases ``const`` means that
-///      the properties of the array (shape/memory-address) can't change. (In
-///      contrast, you can't mutate elements of a ``const std::vector<int>``)
+///      ``int const *``, a variable holding a ``const GeneralView<int*>`` can
+///      be used to freely modify referenced values. In both cases ``const``
+///      means that the properties of the array (shape/memory-address) can't
+///      change. (In contrast, you can't mutate elements of a
+///      ``const std::vector<int>``)
 /// 2. Copying/assignment:
-///    - Like with copying a pointer, copying a View just copies the properites
-///      of the underlying data (shape/memory-address). If you store a copy of
-///      ``view_a`` and store it in a variable ``view_b``, then ``view_a`` and
-///      ``view_b`` can be used to access/modify data at the same memory
-///      location. If ``view_b`` previously held information about a different
-///      view, the act of copying has no impact on the values in the old view.
-///      (Both behaviors contrast with ``std::vector`` where copy operations
+///    - Like with copying a pointer, copying a GeneralView just copies the
+///      properites of the underlying data (shape/memory-address). If you store
+///      a copy of ``view_a`` and store it in a variable ``view_b``, then
+///      ``view_a`` and ``view_b`` can be used to access/modify data at the same
+///      memory location. If ``view_b`` previously held information about a
+///      different view, the act of copying has no impact on the values in the
+///      old view. (Both behaviors contrast with ``std::vector`` where copy
+///      operations
 ///      always involve making a deepcopy).
 ///
-/// At this time, a View can not allocate its own data. For example of how to
-/// do this, see Enzo-E's CelloView class template.
+/// At this time, a GeneralView can not allocate its own data. For example of
+/// how to do this, see Enzo-E's CelloView class template.
 ///
 /// Considerations
 /// --------------
-/// In the long-term, it may make sense to use a ``View`` template class that
-/// wraps Kokkos::View. It is a relatively elegant way to attach information
-/// about where memory is allocated.
-/// - We might want to remove all use of this as a 2D View
-/// - We might also want to remove all use of this as a 3D View and just use it
-///   as a 1D View (it depends on our thoughts about self-shielding)
+/// In the long-term, it may make sense to use a ``GeneralView`` template class
+/// that wraps Kokkos::View. It is a relatively elegant way to attach
+/// information about where memory is allocated.
 ///
+/// We may want to remove all use of the 3D GeneralView.
 template <typename T>
-class View {
+class GeneralView {
   // first, we define useful types used by instances of the class template
   using ptrprops_ = view_detail::MDPtrProps_<T>;
 
@@ -155,7 +156,7 @@ private:
   using non_const_ptr_ =
       view_detail::MkPtr_t<std::remove_const_t<element_type>, rank>;
   using const_ptr_ = view_detail::MkPtr_t<std::add_const_t<element_type>, rank>;
-  friend class View<const_ptr_>;
+  friend class GeneralView<const_ptr_>;
 
   // attributes:
   element_type* data_;
@@ -178,25 +179,26 @@ public:
   /// @note
   /// The syntax ensures that the contents of extent_ are all initialized to
   /// zero since extent_ is an array of non-class types
-  View() : data_{nullptr}, extent_{}, strides_{} {}
+  GeneralView() : data_{nullptr}, extent_{}, strides_{} {}
 
   ///@{
   /// Construct a view from an existing pointer `ptr`. Every arg after the
   /// pointer specifies the extent of an access (from the fastest axis to the
   /// slowest axis)
-  View(element_type* ptr, int ilen) : data_(ptr), extent_{ilen}, strides_{1} {
+  GeneralView(element_type* ptr, int ilen)
+      : data_(ptr), extent_{ilen}, strides_{1} {
     // we may need to enforce this check in a different way
     static_assert(rank == 1, "constructor only works with 1D views");
     check_invariants_();
   }
 
-  View(element_type* ptr, int ilen, int jlen)
+  GeneralView(element_type* ptr, int ilen, int jlen)
       : data_(ptr), extent_{ilen, jlen}, strides_{1, ilen} {
     static_assert(rank == 2, "constructor only works with 2D views");
     check_invariants_();
   }
 
-  View(element_type* ptr, int ilen, int jlen, int klen)
+  GeneralView(element_type* ptr, int ilen, int jlen, int klen)
       : data_(ptr), extent_{ilen, jlen, klen}, strides_{1, ilen, ilen * jlen} {
     static_assert(rank == 3, "constructor only works with 3D views");
     check_invariants_();
@@ -206,15 +208,16 @@ public:
   /// conversion constructor that facilitates implicit casts from views of
   /// non-constant values to views of constant values
   ///
-  /// For example, this allows implicit creation of ``View<const double**>``
-  /// from ``View<double**>``
+  /// For example, this allows implicit creation of ``GeneralView<const
+  /// double**>`` from ``GeneralView<double**>``
   ///
   /// @note
-  /// This is only defined for instances of View for which T is a pointer to a
-  /// a const (e.g. `const int*`, `const double**`). If it were defined when
-  /// T is not a pointer-to-const, then it would duplicate the copy-constructor.
+  /// This is only defined for instances of GeneralView for which T is a pointer
+  /// to a a const (e.g. `const int*`, `const double**`). If it were defined
+  /// when T is not a pointer-to-const, then it would duplicate the
+  /// copy-constructor.
   template <class = std::enable_if<std::is_same<T, const_ptr_>::value>>
-  View(const View<non_const_ptr_>& other) {
+  GeneralView(const GeneralView<non_const_ptr_>& other) {
     data_ = other.data_;
     for (int i = 0; i < rank; i++) {
       extent_[i] = other.extent_[i];
@@ -223,11 +226,11 @@ public:
   }
 
   // explicitly use defaults for a handful of cases
-  ~View() = default;
-  View(const View&) = default;             // copy constructor
-  View(View&&) = default;                  // move constructor
-  View& operator=(const View&) = default;  // copy assignment
-  View& operator=(View&&) = default;       // move assignment
+  ~GeneralView() = default;
+  GeneralView(const GeneralView&) = default;             // copy constructor
+  GeneralView(GeneralView&&) = default;                  // move constructor
+  GeneralView& operator=(const GeneralView&) = default;  // copy assignment
+  GeneralView& operator=(GeneralView&&) = default;       // move assignment
 
   element_type* data() const noexcept { return data_; }
   size_type extent(int i) const {
@@ -255,6 +258,9 @@ public:
   }
   ///@}
 };
+
+template <typename T>
+using View = GeneralView<T>;
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
