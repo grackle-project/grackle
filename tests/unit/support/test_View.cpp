@@ -19,24 +19,14 @@
 #include "support/View.hpp"
 #include "support/config.hpp"
 
-TEST(FortranView, Empty1D) {
+TEST(View, Empty1D) {
   GRIMPL_NS::FortranView<double*> empty_view;
   EXPECT_EQ(empty_view.data(), nullptr);
 }
 
-TEST(FortranView, Empty2D) {
-  GRIMPL_NS::FortranView<float**> empty_view;
-  EXPECT_EQ(empty_view.data(), nullptr);
-}
-
-TEST(FortranView, Empty3D) {
-  GRIMPL_NS::FortranView<const int***> empty_view;
-  EXPECT_EQ(empty_view.data(), nullptr);
-}
-
-TEST(FortranView, Simple1D) {
+TEST(View, Simple1D) {
   int arr[3] = {8, -3, 6};
-  GRIMPL_NS::FortranView<int*> v(arr, 3);
+  GRIMPL_NS::View<int*> v(arr, 3);
 
   EXPECT_EQ(arr, v.data());
   EXPECT_EQ(v.extent(0), 3);
@@ -45,11 +35,11 @@ TEST(FortranView, Simple1D) {
   EXPECT_EQ(v(2), 6);
 }
 
-TEST(FortranView, Simple1DConstCast) {
+TEST(View, Simple1DConstCast) {
   int arr[3] = {8, -3, 6};
-  GRIMPL_NS::FortranView<int*> v(arr, 3);
+  GRIMPL_NS::View<int*> v(arr, 3);
 
-  GRIMPL_NS::FortranView<const int*> v_const = v;
+  GRIMPL_NS::View<const int*> v_const = v;
 
   EXPECT_EQ(arr, v_const.data());
   EXPECT_EQ(v_const.extent(0), 3);
@@ -62,6 +52,152 @@ TEST(FortranView, Simple1DConstCast) {
   EXPECT_EQ(v_const(0), 0);
   EXPECT_EQ(v_const(1), -3);
   EXPECT_EQ(v_const(2), -6);
+}
+
+TEST(View, Empty2D) {
+  GRIMPL_NS::View<float**> empty_view;
+  EXPECT_EQ(empty_view.data(), nullptr);
+}
+
+TEST(View, Empty3D) {
+  GRIMPL_NS::View<const int***> empty_view;
+  EXPECT_EQ(empty_view.data(), nullptr);
+}
+
+TEST(View, Simple2D) {
+  // clang-format off:  formatter knows nothing about shape
+  double arr[20] = {
+    0, 0, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 0,
+    8, 0, 0, 0,
+    0, 0, 0, 17
+  };
+  // clang-format on
+
+  GRIMPL_NS::View<double**> v(arr, 5, 4);
+
+  EXPECT_EQ(arr, v.data());
+  EXPECT_EQ(v.extent(0), 5);
+  EXPECT_EQ(v.extent(1), 4);
+  EXPECT_EQ(v(3, 0), 8);
+  EXPECT_EQ(v(1, 2), 1);
+  EXPECT_EQ(v(4, 3), 17);
+}
+
+TEST(View, Simple2DConstCast) {
+  // clang-format off:  formatter knows nothing about shape
+  double arr[20] = {
+    0, 0, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 0,
+    8, 0, 0, 0,
+    0, 0, 0, 17
+  };
+  // clang-format on
+
+  GRIMPL_NS::View<double**> v(arr, 5, 4);
+  GRIMPL_NS::View<const double**> v_const = v;
+
+  EXPECT_EQ(arr, v_const.data());
+  EXPECT_EQ(v_const.extent(0), 5);
+  EXPECT_EQ(v_const.extent(1), 4);
+  EXPECT_EQ(v_const(3, 0), 8);
+  EXPECT_EQ(v_const(1, 2), 1);
+  EXPECT_EQ(v_const(4, 3), 17);
+}
+
+TEST(View, Simple3D) {
+  // clang-format off:  formatter knows nothing about shape
+  float arr[60] = {
+    0,  0,  0,
+    0,  0,  0,
+    0, -3,  0,
+    0,  0,  0,
+
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+
+    0,  0,  0,
+    9,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  1
+  };
+  // clang-format on
+
+  GRIMPL_NS::View<float***> v(arr, 5, 4, 3);
+
+  EXPECT_EQ(arr, v.data());
+  EXPECT_EQ(v.extent(0), 5);
+  EXPECT_EQ(v.extent(1), 4);
+  EXPECT_EQ(v.extent(2), 3);
+  EXPECT_EQ(v(3, 1, 0), 9);
+  EXPECT_EQ(v(0, 2, 1), -3);
+  EXPECT_EQ(v(4, 3, 2), 1);
+}
+
+TEST(View, Simple3DConstCast) {
+  // clang-format off:  formatter knows nothing about shape
+  float arr[60] = {
+    0,  0,  0,
+    0,  0,  0,
+    0, -3,  0,
+    0,  0,  0,
+
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+
+    0,  0,  0,
+    9,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  0,
+    0,  0,  1
+  };
+  // clang-format on
+
+  GRIMPL_NS::View<float***> v(arr, 5, 4, 3);
+  GRIMPL_NS::View<const float***> v_const = v;
+
+  EXPECT_EQ(arr, v_const.data());
+  EXPECT_EQ(v_const.extent(0), 5);
+  EXPECT_EQ(v_const.extent(1), 4);
+  EXPECT_EQ(v_const.extent(2), 3);
+  EXPECT_EQ(v_const(3, 1, 0), 9);
+  EXPECT_EQ(v_const(0, 2, 1), -3);
+  EXPECT_EQ(v_const(4, 3, 2), 1);
+}
+
+TEST(FortranView, Empty2D) {
+  GRIMPL_NS::FortranView<float**> empty_view;
+  EXPECT_EQ(empty_view.data(), nullptr);
+}
+
+TEST(FortranView, Empty3D) {
+  GRIMPL_NS::FortranView<const int***> empty_view;
+  EXPECT_EQ(empty_view.data(), nullptr);
 }
 
 TEST(FortranView, Simple2D) {
@@ -171,9 +307,10 @@ TEST(FortranView, Simple3DConstCast) {
 //===----------------------------------------------------------------------===//
 
 // this acts like a "plugin" for View2DInterfaceTest
+template <GRIMPL_NS::DataLayout layout>
 struct View2DManager {
   using element_type = double;
-  using ViewType = GRIMPL_NS::FortranView<element_type**>;
+  using ViewType = GRIMPL_NS::GeneralView<element_type**, layout>;
 
 private:
   std::vector<std::unique_ptr<element_type[]>> ptrs_;
@@ -250,7 +387,9 @@ protected:
   }
 };
 
-using MyManagerTypes = ::testing::Types<View2DManager>;
+using MyManagerTypes =
+    ::testing::Types<View2DManager<GRIMPL_NS::DataLayout::LEFT>,
+                     View2DManager<GRIMPL_NS::DataLayout::RIGHT>>;
 // until we adopt C++20, we need to insert a trailing comma in order to suppress
 // warnings about legacy C++20 variadic macro behavior
 // https://github.com/google/googletest/issues/2271#issuecomment-665742471

@@ -348,6 +348,10 @@ public:
 template <typename T>
 using FortranView = GeneralView<T, DataLayout::LEFT>;
 
+/// @brief a multidimensional view with C++'s "natural" data layout
+template <typename T>
+using View = GeneralView<T, DataLayout::RIGHT>;
+
 }  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // SUPPORT_VIEW_HPP
