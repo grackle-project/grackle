@@ -136,9 +136,9 @@ inline void lookup_dust_rates1d(
     const double logTdust_start = std::log(my_chemistry->DustTemperatureStart);
     const double logTdust_end = std::log(my_chemistry->DustTemperatureEnd);
     // construct a view the h2dust interpolation table
-    grackle::impl::View<double**> h2dusta(
-        my_rates->h2dust, my_chemistry->NumberOfTemperatureBins,
-        my_chemistry->NumberOfDustTemperatureBins);
+    FortranView<double**> h2dusta(my_rates->h2dust,
+                                  my_chemistry->NumberOfTemperatureBins,
+                                  my_chemistry->NumberOfDustTemperatureBins);
 
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
@@ -201,7 +201,7 @@ inline void lookup_dust_rates1d(
                                  my_rates->opaque_storage->inject_pathway_props,
                                  my_fields, internal_dust_prop_scratch_buf);
 
-    grackle::impl::View<const gr_float***> d(
+    FortranView<const gr_float***> d(
         my_fields->density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -332,14 +332,14 @@ inline void lookup_dust_rates1d(
 
         // preload views of each ingredient's current mass density &
         // precompute the divisor divided by the mass density
-        grackle::impl::View<const gr_float***>
+        FortranView<const gr_float***>
             ingred_view[grackle::impl::max_ingredients_per_grain_species];
         double ingred_divisor[grackle::impl::max_ingredients_per_grain_species];
 
         for (int ingred_idx = 0; ingred_idx < n_ingred; ingred_idx++) {
           const gr_float* ptr = field_data_adaptor.get_ptr_dynamic(
               ingredient_l[ingred_idx].species_idx);
-          ingred_view[ingred_idx] = grackle::impl::View<const gr_float***>(
+          ingred_view[ingred_idx] = FortranView<const gr_float***>(
               ptr, my_fields->grid_dimension[0], my_fields->grid_dimension[1],
               my_fields->grid_dimension[2]);
 
@@ -403,7 +403,7 @@ inline void lookup_dust_rates1d(
         // get the view of the grain species's current mass density
         const gr_float* rho_gsp_ptr = field_data_adaptor.get_ptr_dynamic(
             gsp_info->species_info[gsp_idx].species_idx);
-        grackle::impl::View<const gr_float***> rho_gsp(
+        FortranView<const gr_float***> rho_gsp(
             rho_gsp_ptr, my_fields->grid_dimension[0],
             my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 

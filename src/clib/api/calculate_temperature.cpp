@@ -77,19 +77,19 @@ static void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
 
-    grackle::impl::View<gr_float***> d(
+    FortranView<gr_float***> d(
         my_fields->density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-    grackle::impl::View<gr_float***> metal;
+    FortranView<gr_float***> metal;
 
     if (imetal == 1) {
-      metal = grackle::impl::View<gr_float***>(
+      metal = FortranView<gr_float***>(
           my_fields->metal_density, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     }
 
-    grackle::impl::View<gr_float***> temperature(
+    FortranView<gr_float***> temperature(
         temperature_data_, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 

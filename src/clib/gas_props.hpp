@@ -136,13 +136,13 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
                             const grackle_field_data* my_fields,
                             InternalGrUnits internalu, IndexRange idx_range) {
   // construct 3d views
-  View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
-                            my_fields->grid_dimension[1],
-                            my_fields->grid_dimension[2]);
-  View<const gr_float***> e(
+  FortranView<const gr_float***> d(
+      my_fields->density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<const gr_float***> e(
       my_fields->internal_energy, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  View<const gr_float***> metal(
+  FortranView<const gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -177,31 +177,31 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
 
   } else {
     // get 3D views
-    View<const gr_float***> de(
+    FortranView<const gr_float***> de(
         my_fields->e_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    View<const gr_float***> HI(
+    FortranView<const gr_float***> HI(
         my_fields->HI_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    View<const gr_float***> HII(
+    FortranView<const gr_float***> HII(
         my_fields->HII_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    View<const gr_float***> HeI(
+    FortranView<const gr_float***> HeI(
         my_fields->HeI_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    View<const gr_float***> HeII(
+    FortranView<const gr_float***> HeII(
         my_fields->HeII_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    View<const gr_float***> HeIII(
+    FortranView<const gr_float***> HeIII(
         my_fields->HeIII_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    View<const gr_float***> HM(
+    FortranView<const gr_float***> HM(
         my_fields->HM_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    View<const gr_float***> H2I(
+    FortranView<const gr_float***> H2I(
         my_fields->H2I_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    View<const gr_float***> H2II(
+    FortranView<const gr_float***> H2II(
         my_fields->H2II_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -332,10 +332,10 @@ inline void calc_metallicity_and_electron_density(
     double* metallicity, double* nelec_times_mH, IndexRange idx_range,
     int imetal, const gr_mask_type* itmask, const double* mmw,
     const chemistry_data* my_chemistry, const grackle_field_data* my_fields) {
-  View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
-                            my_fields->grid_dimension[1],
-                            my_fields->grid_dimension[2]);
-  View<const gr_float***> metal(
+  FortranView<const gr_float***> d(
+      my_fields->density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<const gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -378,7 +378,7 @@ inline void calc_metallicity_and_electron_density(
   } else {  // my_chemistry->primordial_chemistry > 0
     // directly copy the already known electron density
 
-    View<const gr_float***> de(
+    FortranView<const gr_float***> de(
         my_fields->e_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {

@@ -37,12 +37,12 @@ void cool1d_cloudy_old_tables(const double* rhoH, const double* metallicity,
                               IndexRange idx_range) {
   // General Arguments
 
-  grackle::impl::View<gr_float***> d(density, idx_range.i_stop,
-                                     my_fields->grid_dimension[1],
-                                     my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> de(e_density, idx_range.i_stop,
-                                      my_fields->grid_dimension[1],
-                                      my_fields->grid_dimension[2]);
+  FortranView<gr_float***> d(density, idx_range.i_stop,
+                             my_fields->grid_dimension[1],
+                             my_fields->grid_dimension[2]);
+  FortranView<gr_float***> de(e_density, idx_range.i_stop,
+                              my_fields->grid_dimension[1],
+                              my_fields->grid_dimension[2]);
 
   // Locals
 

@@ -69,10 +69,10 @@ static void enforce_max_heatcool_subcycle_dt_(
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields
 ) {
 
-  View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+  FortranView<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                             my_fields->grid_dimension[1],
                             my_fields->grid_dimension[2]);
-  View<const gr_float***> specific_eint(my_fields->internal_energy,
+  FortranView<const gr_float***> specific_eint(my_fields->internal_energy,
                                         my_fields->grid_dimension[0],
                                         my_fields->grid_dimension[1],
                                         my_fields->grid_dimension[2]);
@@ -406,23 +406,23 @@ static void set_subcycle_dt_from_chemistry_scheme_(
   const int j = idx_range.j;
   const int k = idx_range.k;
 
-  grackle::impl::View<gr_float***> de(my_fields->e_density,
+  FortranView<gr_float***> de(my_fields->e_density,
                                       my_fields->grid_dimension[0],
                                       my_fields->grid_dimension[1],
                                       my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HI(my_fields->HI_density,
+  FortranView<gr_float***> HI(my_fields->HI_density,
                                       my_fields->grid_dimension[0],
                                       my_fields->grid_dimension[1],
                                       my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HII(my_fields->HII_density,
+  FortranView<gr_float***> HII(my_fields->HII_density,
                                        my_fields->grid_dimension[0],
                                        my_fields->grid_dimension[1],
                                        my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> d(my_fields->density,
+  FortranView<gr_float***> d(my_fields->density,
                                      my_fields->grid_dimension[0],
                                      my_fields->grid_dimension[1],
                                      my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> e(my_fields->internal_energy,
+  FortranView<gr_float***> e(my_fields->internal_energy,
                                      my_fields->grid_dimension[0],
                                      my_fields->grid_dimension[1],
                                      my_fields->grid_dimension[2]);
@@ -530,7 +530,7 @@ static inline void coupled_rt_modify_itmask_(
   grackle_field_data* my_fields
 )
 {
-  grackle::impl::View<const gr_float***> kphHI(my_fields->RT_HI_ionization_rate,
+  FortranView<const gr_float***> kphHI(my_fields->RT_HI_ionization_rate,
                                                my_fields->grid_dimension[0],
                                                my_fields->grid_dimension[1],
                                                my_fields->grid_dimension[2]);
@@ -802,11 +802,11 @@ int solve_rate_cool(
     LnTPreparer lnT_preparer(tgasold_.data());
 
     // create views of density and internal energy fields to support 3D access
-    grackle::impl::View<gr_float***> d(my_fields->density,
+    FortranView<gr_float***> d(my_fields->density,
                                        my_fields->grid_dimension[0],
                                        my_fields->grid_dimension[1],
                                        my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> e(my_fields->internal_energy,
+    FortranView<gr_float***> e(my_fields->internal_energy,
                                        my_fields->grid_dimension[0],
                                        my_fields->grid_dimension[1],
                                        my_fields->grid_dimension[2]);

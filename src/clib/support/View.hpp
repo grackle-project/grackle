@@ -342,8 +342,11 @@ public:
   ///@}
 };
 
+/// @brief a multidimensional view with a data layout equivalent to fortran
+///
+/// REMINDER: we use 0-indexing
 template <typename T>
-using View = GeneralView<T, DataLayout::LEFT>;
+using FortranView = GeneralView<T, DataLayout::LEFT>;
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 

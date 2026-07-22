@@ -214,7 +214,7 @@ void update_edot_dust_cooling_rate(
     const GrainSpeciesCollection& grain_temperatures, const double* dust2gas,
     const double* rhoH, const gr_mask_type* itmask_metal,
     const chemistry_data* my_chemistry, IndexRange idx_range,
-    View<gr_float***> d, const double* gasgr,
+    FortranView<gr_float***> d, const double* gasgr,
     const GrainSpeciesCollection& gas_grainsp_heatrate) {
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask_metal[i] != MASK_FALSE) {

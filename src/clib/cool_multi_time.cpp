@@ -52,7 +52,7 @@ void cool_multi_time(
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
 
-    View<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    FortranView<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     GrainSpeciesCollection grain_temperatures =
       new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
@@ -85,11 +85,11 @@ void cool_multi_time(
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
     // create views of density and internal energy fields to support 3D access
-    grackle::impl::View<gr_float***> d(my_fields->density,
+    FortranView<gr_float***> d(my_fields->density,
                                        my_fields->grid_dimension[0],
                                        my_fields->grid_dimension[1],
                                        my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> specific_eint(
+    FortranView<gr_float***> specific_eint(
         my_fields->internal_energy, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 

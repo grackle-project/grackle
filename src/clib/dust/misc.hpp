@@ -103,10 +103,10 @@ inline void dust_related_props(
   //    faster when there is no branching
 
   if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 0)) {
-    grackle::impl::View<const gr_float***> d(
+    FortranView<const gr_float***> d(
         my_fields->density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<const gr_float***> dust(
+    FortranView<const gr_float***> dust(
         my_fields->dust_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -129,7 +129,7 @@ inline void dust_related_props(
 
   if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 1)) {
     if (my_chemistry->use_isrf_field > 0) {
-      grackle::impl::View<const gr_float***> isrf_habing(
+      FortranView<const gr_float***> isrf_habing(
           my_fields->isrf_habing, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 

@@ -180,8 +180,8 @@ inline void step_rate_newton_raphson(
 
   // Density, energy and velocity fields fields
 
-  grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // ierror local variable
   //   - this variable is only used internally by this subroutine for
@@ -205,13 +205,13 @@ inline void step_rate_newton_raphson(
   std::vector<double> dspdot1(i_eng);
   std::vector<double> ddsp(i_eng);
   std::vector<double> der_data_(i_eng * i_eng);
-  grackle::impl::View<double**> der(der_data_.data(), i_eng, i_eng);
+  FortranView<double**> der(der_data_.data(), i_eng, i_eng);
 
   // (In the future, we may want to reconsider when/how we allocate
   // the following 3 variables)
   std::vector<int> idsp;
   std::vector<double> mtrx_data_;
-  grackle::impl::View<double**> mtrx;
+  FortranView<double**> mtrx;
   std::vector<double> vec;
   // Another parameter
   const double eps = 1.e-4;
@@ -293,7 +293,7 @@ inline void step_rate_newton_raphson(
       nsp = nsp + imp_eng[i];
       idsp.reserve(nsp);
       mtrx_data_.reserve(nsp * nsp);
-      mtrx = grackle::impl::View<double**>(mtrx_data_.data(), nsp, nsp);
+      mtrx = FortranView<double**>(mtrx_data_.data(), nsp, nsp);
       vec.reserve(nsp);
 
       // copy values into dsp from my_fields
@@ -764,7 +764,7 @@ label_9996:
 
       idsp.clear();
       vec.clear();
-      mtrx = grackle::impl::View<double**>();
+      mtrx = FortranView<double**>();
       mtrx_data_.clear();
 
     }

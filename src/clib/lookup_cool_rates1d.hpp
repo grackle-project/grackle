@@ -54,10 +54,10 @@ void secondary_ionization_adjustments(IndexRange idx_range,
                                       InternalGrUnits internalu,
                                       double* const* kph_buf) {
   // construct views of HI_density & HII_density fields
-  grackle::impl::View<gr_float***> HI(
+  FortranView<gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HII(
+  FortranView<gr_float***> HII(
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -201,13 +201,13 @@ inline void interpolate_collisional_rxn_rates_(
 
   // Part 2: possibly override k13 using density dependent values
   if (my_chemistry->primordial_chemistry > 1) {
-    grackle::impl::View<gr_float***> HI(
+    FortranView<gr_float***> HI(
         my_fields->HI_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     // construct the view of the k13 table
-    grackle::impl::View<double**> k13dda(
-        my_rates->k13dd, my_chemistry->NumberOfTemperatureBins, 14);
+    FortranView<double**> k13dda(my_rates->k13dd,
+                                 my_chemistry->NumberOfTemperatureBins, 14);
 
     // define an inline function to fill an array with the 14 interpolated
     // k13dda values for an arbitrary `i`
@@ -291,22 +291,22 @@ inline void model_H2I_dissociation_shielding(
   }
 
   // Construct views of fields referenced in several parts of this function.
-  grackle::impl::View<const gr_float***> d(
+  FortranView<const gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<const gr_float***> HI(
+  FortranView<const gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<const gr_float***> H2I(
+  FortranView<const gr_float***> H2I(
       my_fields->H2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<const gr_float***> H2II(
+  FortranView<const gr_float***> H2II(
       my_fields->H2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  grackle::impl::View<const gr_float***> kdissH2I;
+  FortranView<const gr_float***> kdissH2I;
   if (my_chemistry->use_radiative_transfer == 1) {
-    kdissH2I = grackle::impl::View<const gr_float***>(
+    kdissH2I = FortranView<const gr_float***>(
         my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   }
@@ -331,9 +331,9 @@ inline void model_H2I_dissociation_shielding(
 
   if (my_chemistry->H2_self_shielding > 0) {
     // conditionally construct a view
-    grackle::impl::View<const gr_float***> xH2shield;
+    FortranView<const gr_float***> xH2shield;
     if (my_chemistry->H2_self_shielding == 2) {
-      xH2shield = grackle::impl::View<const gr_float***>(
+      xH2shield = FortranView<const gr_float***>(
           my_fields->H2_self_shielding_length, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     }
@@ -419,7 +419,7 @@ inline void model_H2I_dissociation_shielding(
   // Custom H2 shielding
   if (my_chemistry->H2_custom_shielding > 0) {
     // create a view of the field of custom shielding values
-    grackle::impl::View<const gr_float***> f_shield_custom(
+    FortranView<const gr_float***> f_shield_custom(
         my_fields->H2_custom_shielding_factor, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -449,17 +449,17 @@ struct ShieldFactorCalculator {
   int primordial_chemistry;
   IndexRange idx_range;
 
-  grackle::impl::View<const gr_float***> HI;
-  grackle::impl::View<const gr_float***> HII;
-  grackle::impl::View<const gr_float***> HeI;
-  grackle::impl::View<const gr_float***> HeII;
-  grackle::impl::View<const gr_float***> HeIII;
-  grackle::impl::View<const gr_float***> HM;
-  grackle::impl::View<const gr_float***> H2I;
-  grackle::impl::View<const gr_float***> H2II;
-  grackle::impl::View<const gr_float***> DI;
-  grackle::impl::View<const gr_float***> DII;
-  grackle::impl::View<const gr_float***> HDI;
+  FortranView<const gr_float***> HI;
+  FortranView<const gr_float***> HII;
+  FortranView<const gr_float***> HeI;
+  FortranView<const gr_float***> HeII;
+  FortranView<const gr_float***> HeIII;
+  FortranView<const gr_float***> HM;
+  FortranView<const gr_float***> H2I;
+  FortranView<const gr_float***> H2II;
+  FortranView<const gr_float***> DI;
+  FortranView<const gr_float***> DII;
+  FortranView<const gr_float***> HDI;
 };
 
 /// construct a ShieldFactorCalculator instance
@@ -477,42 +477,42 @@ inline ShieldFactorCalculator setup_shield_factor_calculator(
   calc.primordial_chemistry = my_chemistry->primordial_chemistry;
   calc.idx_range = idx_range;
 
-  calc.HI = grackle::impl::View<const gr_float***>(
+  calc.HI = FortranView<const gr_float***>(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  calc.HII = grackle::impl::View<const gr_float***>(
+  calc.HII = FortranView<const gr_float***>(
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  calc.HeI = grackle::impl::View<const gr_float***>(
+  calc.HeI = FortranView<const gr_float***>(
       my_fields->HeI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  calc.HeII = grackle::impl::View<const gr_float***>(
+  calc.HeII = FortranView<const gr_float***>(
       my_fields->HeII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  calc.HeIII = grackle::impl::View<const gr_float***>(
+  calc.HeIII = FortranView<const gr_float***>(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   if (my_chemistry->primordial_chemistry > 1) {
-    calc.HM = grackle::impl::View<const gr_float***>(
+    calc.HM = FortranView<const gr_float***>(
         my_fields->HM_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    calc.H2I = grackle::impl::View<const gr_float***>(
+    calc.H2I = FortranView<const gr_float***>(
         my_fields->H2I_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    calc.H2II = grackle::impl::View<const gr_float***>(
+    calc.H2II = FortranView<const gr_float***>(
         my_fields->H2II_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     if (my_chemistry->primordial_chemistry > 2) {
-      calc.DI = grackle::impl::View<const gr_float***>(
+      calc.DI = FortranView<const gr_float***>(
           my_fields->DI_density, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      calc.DII = grackle::impl::View<const gr_float***>(
+      calc.DII = FortranView<const gr_float***>(
           my_fields->DII_density, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      calc.HDI = grackle::impl::View<const gr_float***>(
+      calc.HDI = FortranView<const gr_float***>(
           my_fields->HDI_density, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     }
