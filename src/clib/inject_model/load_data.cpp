@@ -473,7 +473,6 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
       my_rates->opaque_storage->inject_pathway_props;
 
   if (!GrainMetalInjectPathways_is_valid(inject_pathway_props)) {
-    drop_FrozenKeyIdxBiMap(&inj_path_names);
     return GR_FAIL;
   }
 
@@ -486,7 +485,6 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   inject_pathway_props->log10Tdust_interp_props =
       InterpGridProps(1, &dim_scale);
   if (!inject_pathway_props->log10Tdust_interp_props) {
-    drop_FrozenKeyIdxBiMap(&inj_path_names);
     return GR_FAIL;
   }
 
@@ -515,7 +513,6 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   int ret = grackle::impl::inj_model_input::input_inject_model_iterate(
       &setup_yield_table_callback, static_cast<void*>(&ctx));
 
-  drop_FrozenKeyIdxBiMap(&inj_path_names);
   if (ret != GR_SUCCESS) {
     return GrPrintAndReturnErr(
         "some kind of unspecified error occured when loading data from each "

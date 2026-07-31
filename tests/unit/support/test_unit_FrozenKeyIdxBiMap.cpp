@@ -130,9 +130,6 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
 
   // PART 4: We can also query the length
   EXPECT_EQ(34, grimpl::FrozenKeyIdxBiMap_size(&m));
-
-  // Finally, to cleanup we will deallocate data tracked internally by `m`
-  grimpl::drop_FrozenKeyIdxBiMap(&m);
 }
 
 // validate basic operations for an empty bimap
@@ -151,8 +148,6 @@ TEST(FrozenKeyIdxBiMap, EmptyBasicOps) {
 
   EXPECT_EQ(nullptr, grackle::impl::FrozenKeyIdxBiMap_inverse_find(&m, 0))
       << "index lookup should always fail for an empty mapping";
-
-  grackle::impl::drop_FrozenKeyIdxBiMap(&m);
 }
 
 // validate behavior of clone for an empty bimap
@@ -169,11 +164,7 @@ TEST(FrozenKeyIdxBiMap, EmptyClone) {
 
   bool success = grackle::impl::FrozenKeyIdxBiMap_is_ok(&m_clone);
 
-  grackle::impl::drop_FrozenKeyIdxBiMap(&m);  // drop the original
-
-  if (success) {
-    grackle::impl::drop_FrozenKeyIdxBiMap(&m_clone);
-  } else {
+  if (!success) {
     FAIL() << "cloning an empty mapping failed!";
   }
 }
@@ -191,7 +182,6 @@ TEST_P(BiMapCreate, Simple) {
       grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
 
   EXPECT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
-  grackle::impl::drop_FrozenKeyIdxBiMap(&tmp);
 }
 
 TEST_P(BiMapCreate, LongKey) {
@@ -203,7 +193,6 @@ TEST_P(BiMapCreate, LongKey) {
       grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
 
   ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
-  grackle::impl::drop_FrozenKeyIdxBiMap(&tmp);
 }
 
 TEST_P(BiMapCreate, TooLongKey) {
@@ -278,7 +267,6 @@ protected:
 
   void TearDown() override {
     if (bimap_p != nullptr) {
-      grackle::impl::drop_FrozenKeyIdxBiMap(bimap_p);
       delete bimap_p;
     }
   }
@@ -350,7 +338,7 @@ TEST_P(BiMapGeneral, Clone) {
   grackle::impl::FrozenKeyIdxBiMap* clone_p = &clone;
 
   // for the sake of robustly checking everything, we delete bimap_p
-  grackle::impl::drop_FrozenKeyIdxBiMap(bimap_p);
+  delete bimap_p;
   bimap_p = nullptr;
 
   EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(clone_p, "internal_energy"),
@@ -368,9 +356,6 @@ TEST_P(BiMapGeneral, Clone) {
   } else {
     EXPECT_FALSE(ReusesOriginalKeyPtrs(clone_p));
   }
-
-  // finally, cleanup the clone
-  grackle::impl::drop_FrozenKeyIdxBiMap(clone_p);
 }
 
 INSTANTIATE_TEST_SUITE_P(

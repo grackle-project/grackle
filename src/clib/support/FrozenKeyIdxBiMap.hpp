@@ -241,6 +241,9 @@ public:  // interface methods
     return *this;
   }
 
+  /// @brief Destuctor
+  inline ~FrozenKeyIdxBiMap() noexcept;
+
   /// @brief swaps contents
   void swap(FrozenKeyIdxBiMap& other) noexcept {
     std::swap(length, other.length);
@@ -292,34 +295,12 @@ inline bool FrozenKeyIdxBiMap_is_ok(const FrozenKeyIdxBiMap* ptr) {
   return ptr->length != bimap_detail::INVALID_VAL;
 }
 
-/// Destroys the internal data tracked by an instance
-///
-/// @param[in] ptr A non-null pointer to a valid bimap instance
-///
-/// @warning
-/// As with any C datatype, care is required to avoid issues with internal
-/// dangling pointers. YOU SHOULD ONLY CALL THIS ONCE for a given instance
-/// (and only if the instance was properly by the interface)
-/// - while some efforts are made to reduce the possiblity of issues, some
-///   things just can't be avoided (especially when it comes to shallow copies)
-/// - here's a problematic example:
-///   @code{.cpp}
-///   FrozenKeyIdxBiMap bimap = new_FrozenKeyIdxBiMap( /*<args...>*/ );
-///   // (the FrozenKeyIdxBiMap_is_ok check is elided for brevity)
-///
-///   // you should generally avoid shallow copies (if possible)
-///   FrozenKeyIdxBiMap shallow_cpy = bimap;
-///
-///   // problems arise below (if we swap order, the 2nd call is still bad)
-///   drop_FrozenKeyIdxBiMap(&shallow_cpy);  // <- this is OK
-///   drop_FrozenKeyIdxBiMap(&bimap);        // <- this is BAD
-///   @endcode
-inline void drop_FrozenKeyIdxBiMap(FrozenKeyIdxBiMap* ptr) {
-  if (FrozenKeyIdxBiMap_is_ok(ptr)) {
-    if (ptr->length > 0) {
-      if (ptr->mode == BiMapMode::COPIES_KEYDATA) {
-        for (bimap_detail::rowidx_type i = 0; i < ptr->capacity; i++) {
-          bimap_StrU16_detail::Row* row = ptr->table_rows + i;
+inline FrozenKeyIdxBiMap::~FrozenKeyIdxBiMap() noexcept {
+  if (FrozenKeyIdxBiMap_is_ok(this)) {
+    if (length > 0) {
+      if (mode == BiMapMode::COPIES_KEYDATA) {
+        for (bimap_detail::rowidx_type i = 0; i < capacity; i++) {
+          bimap_StrU16_detail::Row* row = table_rows + i;
           // casting from (const char*) to (char*) should be legal (as long as
           // there were no bugs modifying the value of ptr->mode)
           if (row->keylen > 0) {
@@ -327,10 +308,9 @@ inline void drop_FrozenKeyIdxBiMap(FrozenKeyIdxBiMap* ptr) {
           }
         }
       }
-      delete[] ptr->table_rows;
-      delete[] ptr->ordered_row_indices;
+      delete[] table_rows;
+      delete[] ordered_row_indices;
     }  // ptr->length > 0
-    (*ptr) = mk_invalid_FrozenKeyIdxBiMap();
   }
 }
 
