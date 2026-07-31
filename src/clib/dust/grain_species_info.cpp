@@ -82,7 +82,7 @@ GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
 
 }  // anonymous namespace
 
-void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
+GrainSpeciesInfo::GrainSpeciesInfo(int dust_species_parameter) {
   n_species_ = get_n_grain_species(dust_species_parameter);
   if (n_species_ <= 0) {
     n_species_ = -1;

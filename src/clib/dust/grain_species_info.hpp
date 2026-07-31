@@ -117,9 +117,12 @@ class GrainSpeciesInfo {
   FrozenKeyIdxBiMap name_map_;
 
 private:  // helper methods
-  // a temporary method to be used while we convert this struct to a class
-  void setup_helper_(int dust_species_parameter);
-
+  /// @brief helper method to deallocate a species_info array
+  ///
+  /// @note We could get rid of this by converting @ref GrainSpeciesInfoEntry
+  /// to a proper class, or by using std::unique_ptr and encoding the cleanup
+  /// of grow_ingredients in a custom deleter (this would be a little tricky
+  /// since the deleter would need to know the array's length)
   static void cleanup_array_(int n_species,
                              GrainSpeciesInfoEntry* species_info) {
     if (n_species > 0) {
@@ -145,9 +148,16 @@ public:
   /// @brief returns mapping between grain species names and associated indices
   const FrozenKeyIdxBiMap& name_map() const { return name_map_; }
 
-  explicit GrainSpeciesInfo(int dust_species_parameter) {
-    setup_helper_(dust_species_parameter);
-  }
+  /// @brief Primary Constructor
+  ///
+  /// It is the caller's responsibility to check whether the resulting object
+  /// is valid (e.g. by checking `if (obj)`).
+  ///
+  /// @note
+  /// In the future, we could use a factory method that returns a std::optional
+  /// or a C++23's std::expected. This would let us ensure that instance of
+  /// this class only exists if it's valid
+  explicit GrainSpeciesInfo(int dust_species_parameter);
 
   // the following are disabled because the default implementations won't
   // properly handle FrozenKeyIdxBiMap (since it doesn't act like a class) or
