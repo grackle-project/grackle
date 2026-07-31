@@ -14,8 +14,9 @@
 #define GRAIN_SPECIES_INFO_HPP
 
 #include "../support/FrozenKeyIdxBiMap.hpp"
+#include "../support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// holds information about a single gas species that is an ingredient for
 /// grain growth
@@ -190,6 +191,6 @@ inline int get_n_grain_species(int dust_species_parameter) {
 /// The correctness of this constant is explicitly checked in a unit test
 inline constexpr int max_ingredients_per_grain_species = 3;
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* GRAIN_SPECIES_INFO_HPP */

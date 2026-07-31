@@ -17,6 +17,8 @@
 #include "grain_species_info.hpp"
 #include "../support/FrozenKeyIdxBiMap.hpp"
 
+namespace GRIMPL_NAMESPACE_DECL {
+
 // The following logic effectively does 2 (related things):
 // 1. it serves as a human-readable registry of all known grain species and
 //    their associated properties.
@@ -51,12 +53,10 @@ namespace {  // stuff inside an anonymous namespace is local to this file
 /// - the @p growth_ingredients argument is terminated by the sentinel
 /// - the ingredient list in the returned instance is **NOT** terminated by
 ///   the sentinel
-grackle::impl::GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
+GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
     int species_idx, bool h2dust_uses_carbonaceous_table,
     double sublimation_temperature, double bulk_density_cgs,
-    const grackle::impl::GrainGrowthIngredient* growth_ingredients) {
-  using grackle::impl::GrainGrowthIngredient;
-
+    const GrainGrowthIngredient* growth_ingredients) {
   // the main "work" is to determine the number of specified growth_ingredients
   // and copy them (if there are no ingredients, we use a nullptr)
   GrainGrowthIngredient* out_ingredient_ptr = nullptr;
@@ -69,24 +69,21 @@ grackle::impl::GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
       n_ingredients++;
     }
     // allocate and initialize the pointer
-    out_ingredient_ptr =
-        new grackle::impl::GrainGrowthIngredient[n_ingredients];
+    out_ingredient_ptr = new GrainGrowthIngredient[n_ingredients];
     for (int i = 0; i < n_ingredients; i++) {
       out_ingredient_ptr[i] = growth_ingredients[i];
     }
   }
 
-  return grackle::impl::GrainSpeciesInfoEntry{species_idx,
-                                              h2dust_uses_carbonaceous_table,
-                                              sublimation_temperature,
-                                              bulk_density_cgs,
-                                              n_ingredients,
-                                              out_ingredient_ptr};
+  return GrainSpeciesInfoEntry{species_idx,
+                               h2dust_uses_carbonaceous_table,
+                               sublimation_temperature,
+                               bulk_density_cgs,
+                               n_ingredients,
+                               out_ingredient_ptr};
 }
 
 }  // anonymous namespace
-
-namespace GRIMPL_NAMESPACE_DECL {
 
 void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
   n_species_ = get_n_grain_species(dust_species_parameter);
