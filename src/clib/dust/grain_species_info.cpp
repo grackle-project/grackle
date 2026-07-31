@@ -6,12 +6,9 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements functions associated with GrainSpeciesInfo (namely, the
-/// new_GrainSpeciesInfo function)
+/// Implements logic associated with GrainSpeciesInfo
 ///
 //===----------------------------------------------------------------------===//
-
-#include <cstring>  // memcpy
 
 #include "LUT.hpp"
 #include "grain_species_info.hpp"
