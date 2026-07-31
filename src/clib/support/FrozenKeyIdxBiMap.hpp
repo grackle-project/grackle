@@ -190,6 +190,22 @@ private:  // helper methods
     }
   }
 
+  /// @brief Create an invalid FrozenKeyIdxBiMap
+  ///
+  /// @note
+  /// ugh, it's unfortunate that we need to make this... but for now it's
+  /// useful. Ideally, we will get rid of this function.
+  static FrozenKeyIdxBiMap make_invalid_() {
+    FrozenKeyIdxBiMap out;
+    out.length = bimap_detail::INVALID_VAL;
+    out.capacity = bimap_detail::INVALID_VAL;
+    out.max_probe = 0;
+    out.mode = BiMapMode::REFS_KEYDATA;
+    out.table_rows = nullptr;
+    out.ordered_row_indices = nullptr;
+    return out;
+  }
+
 public:  // interface methods
   /// @brief Factory Method (constructs a new FrozenKeyIdxBiMap)
   ///
@@ -210,19 +226,8 @@ public:  // interface methods
 
   /// @brief Default Constructor
   ///
-  /// Returns an instance with a known invalid state.
-  ///
-  /// @note
-  /// In the future, this should produce a map with 0 elements. The current
-  /// implementation was a simple choice while we start removing occurrences
-  /// of copy construction/assignment
-  FrozenKeyIdxBiMap()
-      : length{bimap_detail::INVALID_VAL},
-        capacity{bimap_detail::INVALID_VAL},
-        max_probe{0},
-        mode{BiMapMode::REFS_KEYDATA},
-        table_rows{nullptr},
-        ordered_row_indices{nullptr} {}
+  /// Returns an instance holding 0 elements.
+  FrozenKeyIdxBiMap() { alloc_(0, 0, BiMapMode::REFS_KEYDATA); }
 
   // for now, lets disble copy construction and assignment (its usually a
   // mistake when that happens and this is important to transitioning towards
@@ -283,16 +288,6 @@ public:  // interface methods
     std::swap(ordered_row_indices, other.ordered_row_indices);
   }
 };
-
-/// Create an invalid FrozenKeyIdxBiMap
-///
-/// @note
-/// ugh, it's unfortunate that we need to make this... but for now it's useful.
-/// Ideally, we would refactor so that we can get rid of this function. A
-/// useful compromise might simply put it within the bimap_detail namespace
-inline FrozenKeyIdxBiMap mk_invalid_FrozenKeyIdxBiMap() {
-  return FrozenKeyIdxBiMap();
-}
 
 /// checks whether a creational function produced a valid bimap
 ///
@@ -416,11 +411,11 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
     return out;
   } else if (keys == nullptr) {
     GrPrintErrMsg("keys must not be a nullptr");
-    return mk_invalid_FrozenKeyIdxBiMap();
+    return FrozenKeyIdxBiMap::make_invalid_();
   } else if (key_count < 1 || static_cast<int64_t>(key_count) > max_len) {
     GrPrintErrMsg("key_count must be positive & can't exceed %lld",
                   static_cast<long long int>(max_len));
-    return mk_invalid_FrozenKeyIdxBiMap();
+    return FrozenKeyIdxBiMap::make_invalid_();
   }
 
   // based on the preceding check, this shouldn't be able to fail
@@ -438,13 +433,13 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
           "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
           "exceeding %d",
           keys[i], i, bimap_detail::KEYLEN_MAX);
-      return mk_invalid_FrozenKeyIdxBiMap();
+      return FrozenKeyIdxBiMap::make_invalid_();
     }
     // check uniqueness
     for (int j = 0; j < i; j++) {
       if (strcmp(keys[i], keys[j]) == 0) {
         GrPrintErrMsg("\"%s\" key repeats", keys[i]);
-        return mk_invalid_FrozenKeyIdxBiMap();
+        return FrozenKeyIdxBiMap::make_invalid_();
       }
     }
   }
@@ -477,7 +472,7 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
 
 inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::clone() const {
   if (!FrozenKeyIdxBiMap_is_ok(this)) {
-    return mk_invalid_FrozenKeyIdxBiMap();
+    return FrozenKeyIdxBiMap::make_invalid_();
   }
 
   FrozenKeyIdxBiMap out;
