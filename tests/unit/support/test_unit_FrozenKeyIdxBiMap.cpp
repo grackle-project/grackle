@@ -101,7 +101,7 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
 
   // PART 1: build a FrozenKeyIdxBiMap from this list
   // the 3rd argument tells the string to make copies of each string
-  grimpl::FrozenKeyIdxBiMap m = grimpl::new_FrozenKeyIdxBiMap(
+  grimpl::FrozenKeyIdxBiMap m = grimpl::FrozenKeyIdxBiMap::create(
       keys, 34, grimpl::BiMapMode::COPIES_KEYDATA);
 
   // before we use it, we should confirm the constructor succeeded
@@ -134,7 +134,7 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
 
 // validate basic operations for an empty bimap
 TEST(FrozenKeyIdxBiMap, EmptyBasicOps) {
-  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::new_FrozenKeyIdxBiMap(
+  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::FrozenKeyIdxBiMap::create(
       nullptr, 0, grackle::impl::BiMapMode::COPIES_KEYDATA);
   ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&m))
       << "construction of a FrozenKeyIdxBiMap unexpectedly failed";
@@ -153,7 +153,7 @@ TEST(FrozenKeyIdxBiMap, EmptyBasicOps) {
 // validate behavior of clone for an empty bimap
 TEST(FrozenKeyIdxBiMap, EmptyClone) {
   // make the original
-  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::new_FrozenKeyIdxBiMap(
+  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::FrozenKeyIdxBiMap::create(
       nullptr, 0, grackle::impl::BiMapMode::COPIES_KEYDATA);
   ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&m))
       << "construction of a FrozenKeyIdxBiMap unexpectedly failed";
@@ -179,7 +179,7 @@ TEST_P(BiMapCreate, Simple) {
   const char* keys[] = {"denisty", "internal_energy"};
 
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
+      grackle::impl::FrozenKeyIdxBiMap::create(keys, 2, GetParam());
 
   EXPECT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
@@ -190,7 +190,7 @@ TEST_P(BiMapCreate, LongKey) {
   const char* keys[2] = {first_key, long_key.data()};
 
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
+      grackle::impl::FrozenKeyIdxBiMap::create(keys, 2, GetParam());
 
   ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
@@ -201,27 +201,27 @@ TEST_P(BiMapCreate, TooLongKey) {
   const char* keys[2] = {first_key, long_key.data()};
 
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
+      grackle::impl::FrozenKeyIdxBiMap::create(keys, 2, GetParam());
   ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
 
 TEST_P(BiMapCreate, 0LenKey) {
   const char* keys[2] = {"density", ""};
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
+      grackle::impl::FrozenKeyIdxBiMap::create(keys, 2, GetParam());
   ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
 
 TEST_P(BiMapCreate, NullptrWithPosCount) {
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(nullptr, 1, GetParam());
+      grackle::impl::FrozenKeyIdxBiMap::create(nullptr, 1, GetParam());
   ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
 
 TEST_P(BiMapCreate, NotNull0KeyCount) {
   const char* keys[] = {"denisty", "internal_energy"};
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(keys, 0, GetParam());
+      grackle::impl::FrozenKeyIdxBiMap::create(keys, 0, GetParam());
   ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 }
 
@@ -242,7 +242,8 @@ grackle::impl::FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(
     key_ptr_l[i] = vec_[i].c_str();
   }
 
-  return new_FrozenKeyIdxBiMap(key_ptr_l.data(), key_count, mode);
+  return grackle::impl::FrozenKeyIdxBiMap::create(key_ptr_l.data(), key_count,
+                                                  mode);
 }
 
 class BiMapGeneral : public testing::TestWithParam<grackle::impl::BiMapMode> {

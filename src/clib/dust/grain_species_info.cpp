@@ -293,7 +293,7 @@ GrainSpeciesInfo::GrainSpeciesInfo(int dust_species_parameter) {
   }
 
   name_map_ =
-      new_FrozenKeyIdxBiMap(names, n_species_, BiMapMode::COPIES_KEYDATA);
+      FrozenKeyIdxBiMap::create(names, n_species_, BiMapMode::COPIES_KEYDATA);
 
   if (!FrozenKeyIdxBiMap_is_ok(&name_map_)) {
     GrainSpeciesInfo::cleanup_array_(n_species_, species_info_);

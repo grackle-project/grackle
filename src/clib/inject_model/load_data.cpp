@@ -453,7 +453,7 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   //    BiMapMode::REFS_KEYDATA to instruct the map to avoid making copies.
   // -> In the future, when model names are dynamically specified by an HDF5
   //    file, we'll need to use BiMapMode::COPIES_KEYDATA.
-  FrozenKeyIdxBiMap inj_path_names = new_FrozenKeyIdxBiMap(
+  FrozenKeyIdxBiMap inj_path_names = FrozenKeyIdxBiMap::create(
       inj_path_name_l, n_pathways, BiMapMode::REFS_KEYDATA);
   if (!FrozenKeyIdxBiMap_is_ok(&inj_path_names)) {
     return GrPrintAndReturnErr(

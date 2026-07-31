@@ -169,8 +169,6 @@ struct FrozenKeyIdxBiMap {
   bimap_detail::rowidx_type* ordered_row_indices;
 
 private:  // helper methods
-  friend FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
-                                                 int key_count, BiMapMode mode);
   friend FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(
       const FrozenKeyIdxBiMap* ptr);
 
@@ -196,6 +194,23 @@ private:  // helper methods
   }
 
 public:  // interface methods
+  /// @brief Factory Method (constructs a new FrozenKeyIdxBiMap)
+  ///
+  /// @param[in]  keys Sequence of 1 or more unique strings. Each string must
+  ///     include at least 1 non-null character and be null-terminated
+  /// @param[in]  key_count The length of keys
+  /// @param[in]  mode specifies handling of keys. This will be passed on to any
+  ///     clones that are made.
+  ///
+  /// @note
+  /// Callers should pass the returned value to @ref FrozenKeyIdxBiMap_is_ok
+  /// to check whether there was an error during creation. This is pretty
+  /// ugly/clunky, but it's the only practical way to achieve comparable
+  /// behavior to other internal data types. The best alternatives involve the
+  /// use of std::optional or C++23's std::expected.
+  static FrozenKeyIdxBiMap create(const char* const keys[], int key_count,
+                                  BiMapMode mode);
+
   /// @brief Default Constructor
   ///
   /// Returns an instance with a known invalid state.
@@ -264,23 +279,6 @@ public:  // interface methods
 inline FrozenKeyIdxBiMap mk_invalid_FrozenKeyIdxBiMap() {
   return FrozenKeyIdxBiMap();
 }
-
-/// Constructs a new FrozenKeyIdxBiMap
-///
-/// @param[in]  keys Sequence of 1 or more unique strings. Each string must
-///     include at least 1 non-null character and be null-terminated
-/// @param[in]  key_count The length of keys
-/// @param[in]  mode specifies handling of keys. This will be passed on to any
-///     clones that are made.
-///
-/// @note
-/// Callers should pass the returned value to @ref FrozenKeyIdxBiMap_is_ok
-/// to check whether there was an error during creation. This is pretty
-/// ugly/clunky, but it's the only practical way to achieve comparable behavior
-/// to other internal data types. The best alternatives involve things like
-/// std::optional or converting this type to a simple C++ class.
-FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[], int key_count,
-                                        BiMapMode mode);
 
 /// checks whether a creational function produced a valid bimap
 ///
@@ -407,8 +405,9 @@ inline const char* FrozenKeyIdxBiMap_inverse_find(const FrozenKeyIdxBiMap* map,
 
 /** @}*/  // end of group
 
-inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
-                                               int key_count, BiMapMode mode) {
+inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
+                                                   int key_count,
+                                                   BiMapMode mode) {
   int64_t max_len = static_cast<int64_t>(bimap_cap_detail::max_key_count());
   if (keys == nullptr && key_count == 0) {
     FrozenKeyIdxBiMap out;
