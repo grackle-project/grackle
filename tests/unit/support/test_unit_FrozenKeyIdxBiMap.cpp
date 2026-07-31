@@ -12,6 +12,7 @@
 
 #include <iostream>  // needed to teach googletest how to print
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -272,7 +273,7 @@ protected:
     ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
 
     bimap_p = new grackle::impl::FrozenKeyIdxBiMap;
-    (*bimap_p) = tmp;
+    (*bimap_p) = std::move(tmp);
   }
 
   void TearDown() override {

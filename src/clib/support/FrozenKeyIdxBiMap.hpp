@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <utility>  // std::swap
 
 #include "config.hpp"
 #include "support/status_reporting.hpp"
@@ -166,6 +167,89 @@ struct FrozenKeyIdxBiMap {
   bimap_StrU16_detail::Row* table_rows;
   /// tracks the row indices to make iteration faster
   bimap_detail::rowidx_type* ordered_row_indices;
+
+private:  // helper methods
+  friend FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
+                                                 int key_count, BiMapMode mode);
+  friend FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(
+      const FrozenKeyIdxBiMap* ptr);
+
+  /// a helper function used to actually allocate memory for FrozenKeyIdxBiMap
+  void alloc_(uint16_t target_length, uint16_t target_capacity,
+              BiMapMode target_mode) {
+    // it would be nice to handle allocate all pointers as a single block of
+    // memory, but that gets tricky. Essentially, we would allocate
+    // uninitialized memory and manually use placement-new (and the
+    // corresponding `delete`)
+    using bimap_detail::rowidx_type;
+    using bimap_StrU16_detail::Row;
+    length = target_length;
+    capacity = target_capacity;
+    max_probe = target_capacity;
+    mode = target_mode;
+    table_rows = (target_capacity > 0) ? new Row[target_capacity] : nullptr;
+    ordered_row_indices =
+        (target_length > 0) ? new rowidx_type[target_length] : nullptr;
+    for (uint16_t i = 0; i < target_capacity; i++) {
+      table_rows[i].keylen = 0;
+    }
+  }
+
+public:  // interface methods
+  /// @brief Default Constructor
+  ///
+  /// Returns an instance with a known invalid state.
+  ///
+  /// @note
+  /// In the future, this should produce a map with 0 elements. The current
+  /// implementation was a simple choice while we start removing occurrences
+  /// of copy construction/assignment
+  FrozenKeyIdxBiMap()
+      : length{bimap_detail::INVALID_VAL},
+        capacity{bimap_detail::INVALID_VAL},
+        max_probe{0},
+        mode{BiMapMode::REFS_KEYDATA},
+        table_rows{nullptr},
+        ordered_row_indices{nullptr} {}
+
+  // for now, lets disble copy construction and assignment (its usually a
+  // mistake when that happens and this is important to transitioning towards
+  // acting more like a class)
+  FrozenKeyIdxBiMap(const FrozenKeyIdxBiMap&) = delete;
+  FrozenKeyIdxBiMap& operator=(const FrozenKeyIdxBiMap&) = delete;
+
+  /// @brief Move Constructor
+  ///
+  /// Constructs a new instance and transfers the contents from @p other into
+  /// the new instance. @p other is left in an undefined state.
+  ///
+  /// @param other The source of contents for the newly constructed instance
+  FrozenKeyIdxBiMap(FrozenKeyIdxBiMap&& other) noexcept : FrozenKeyIdxBiMap() {
+    swap(other);
+  }
+
+  /// @brief Move Assignment
+  ///
+  /// Transfers the contents from @p other into `this`. @p other is left in an
+  /// undefined state.
+  ///
+  /// @param other The source of contents for the newly constructed instance
+  FrozenKeyIdxBiMap& operator=(FrozenKeyIdxBiMap&& other) {
+    if (this != &other) {
+      swap(other);
+    }
+    return *this;
+  }
+
+  /// @brief swaps contents
+  void swap(FrozenKeyIdxBiMap& other) noexcept {
+    std::swap(length, other.length);
+    std::swap(capacity, other.capacity);
+    std::swap(max_probe, other.max_probe);
+    std::swap(mode, other.mode);
+    std::swap(table_rows, other.table_rows);
+    std::swap(ordered_row_indices, other.ordered_row_indices);
+  }
 };
 
 /// Create an invalid FrozenKeyIdxBiMap
@@ -175,12 +259,7 @@ struct FrozenKeyIdxBiMap {
 /// Ideally, we would refactor so that we can get rid of this function. A
 /// useful compromise might simply put it within the bimap_detail namespace
 inline FrozenKeyIdxBiMap mk_invalid_FrozenKeyIdxBiMap() {
-  return FrozenKeyIdxBiMap{bimap_detail::INVALID_VAL,
-                           bimap_detail::INVALID_VAL,
-                           0,
-                           BiMapMode::REFS_KEYDATA,
-                           nullptr,
-                           nullptr};
+  return FrozenKeyIdxBiMap();
 }
 
 /// Constructs a new FrozenKeyIdxBiMap
@@ -348,36 +427,13 @@ inline const char* FrozenKeyIdxBiMap_inverse_find(const FrozenKeyIdxBiMap* map,
 
 /** @}*/  // end of group
 
-namespace bimap_detail {
-
-/// a helper function used to actually allocate memory for FrozenKeyIdxBiMap
-inline FrozenKeyIdxBiMap alloc(uint16_t length, uint16_t capacity,
-                               BiMapMode mode) {
-  // it would be nice to handle allocate all pointers as a single block of
-  // memory, but that gets tricky. Essentially, we would allocate uninitialized
-  // memory and manually use placement-new (and the corresponding `delete`)
-  using bimap_detail::rowidx_type;
-  using bimap_StrU16_detail::Row;
-  FrozenKeyIdxBiMap out = {
-      /*length=*/length,
-      /*capacity=*/capacity,
-      /*max_probe=*/capacity,
-      /*mode=*/mode,
-      /*table_rows=*/(capacity > 0) ? new Row[capacity] : nullptr,
-      /*ordered_row_indices=*/(length > 0) ? new rowidx_type[length] : nullptr};
-  for (uint16_t i = 0; i < capacity; i++) {
-    out.table_rows[i].keylen = 0;
-  }
-  return out;
-}
-
-}  // namespace bimap_detail
-
 inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
                                                int key_count, BiMapMode mode) {
   int64_t max_len = static_cast<int64_t>(bimap_cap_detail::max_key_count());
   if (keys == nullptr && key_count == 0) {
-    return bimap_detail::alloc(0, 0, mode);
+    FrozenKeyIdxBiMap out;
+    out.alloc_(0, 0, mode);
+    return out;
   } else if (keys == nullptr) {
     GrPrintErrMsg("keys must not be a nullptr");
     return mk_invalid_FrozenKeyIdxBiMap();
@@ -414,7 +470,8 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
   }
 
   // now, that we know we will succeed, lets construct the bimap
-  FrozenKeyIdxBiMap out = bimap_detail::alloc(key_count, capacity, mode);
+  FrozenKeyIdxBiMap out;
+  out.alloc_(key_count, capacity, mode);
 
   // now it's time to fill in the array
   int max_probe_count = 1;
@@ -443,8 +500,8 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
     return mk_invalid_FrozenKeyIdxBiMap();
   }
 
-  FrozenKeyIdxBiMap out =
-      bimap_detail::alloc(ptr->length, ptr->capacity, ptr->mode);
+  FrozenKeyIdxBiMap out;
+  out.alloc_(ptr->length, ptr->capacity, ptr->mode);
   out.max_probe = ptr->max_probe;
 
   if (ptr->length == 0) {
