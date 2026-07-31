@@ -501,7 +501,8 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   GrainSpeciesInfo* grain_species_info =
       my_rates->opaque_storage->grain_species_info;
   const FrozenKeyIdxBiMap* grain_species_names =
-      (grain_species_info == nullptr) ? nullptr : &grain_species_info->name_map;
+      (grain_species_info == nullptr) ? nullptr
+                                      : &grain_species_info->name_map();
 
   SetupCallbackCtx ctx = {
       /* inject_pathway_props = */ my_rates->opaque_storage

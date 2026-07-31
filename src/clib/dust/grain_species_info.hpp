@@ -106,6 +106,7 @@ struct GrainSpeciesInfo {
   /// holds info about a separate grain species
   GrainSpeciesInfoEntry* species_info;
 
+private:
   /// maps between grain species names and the associated index. The mapping is
   /// **ALWAYS** consistent with ``OnlyGrainSpLUT``.
   ///
@@ -113,7 +114,7 @@ struct GrainSpeciesInfo {
   /// An argument could be made for storing this separately from the rest of
   /// the struct since the core grackle calculations don't (or at least
   /// shouldn't) use this data structure during the calculation.
-  FrozenKeyIdxBiMap name_map;
+  FrozenKeyIdxBiMap name_map_;
 
 private:  // helper methods
   // a temporary method to be used while we convert this struct to a class
@@ -132,8 +133,11 @@ private:  // helper methods
   }
 
 public:
-  /// checks whether instance is valid
+  /// @brief checks whether instance is valid
   explicit operator bool() const { return n_species > 0; }
+
+  /// @brief returns mapping between grain species names and associated indices
+  const FrozenKeyIdxBiMap& name_map() const { return name_map_; }
 
   explicit GrainSpeciesInfo(int dust_species_parameter) {
     setup_helper_(dust_species_parameter);
@@ -150,7 +154,7 @@ public:
   ~GrainSpeciesInfo() {
     if (n_species > 0) {
       GrainSpeciesInfo::cleanup_array_(n_species, species_info);
-      drop_FrozenKeyIdxBiMap(&name_map);
+      drop_FrozenKeyIdxBiMap(&name_map_);
     }
   }
 };

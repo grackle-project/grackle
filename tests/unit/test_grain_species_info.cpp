@@ -185,7 +185,7 @@ TEST_P(GrainSpeciesInfoTest, OnlyGrainSpeciesLUT) {
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
     const char* name = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
-        &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
+        &grain_species_info_->name_map(), static_cast<std::uint16_t>(i));
 
     ASSERT_NE(name, nullptr);      // sanity check!
     EXPECT_EQ(i, ref_l[i].index);  // sanity check!
@@ -202,7 +202,7 @@ TEST_P(GrainSpeciesInfoTest, SublimationTemp) {
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
     const char* name = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
-        &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
+        &grain_species_info_->name_map(), static_cast<std::uint16_t>(i));
     ASSERT_NE(name, nullptr);  // sanity check!
     // actual check!
     EXPECT_GT(grain_species_info_->species_info[i].sublimation_temperature, 0)
@@ -219,7 +219,7 @@ TEST_P(GrainSpeciesInfoTest, SpeciesLUTCompare) {
   const int n_species = grain_species_info_->n_species;
   for (int i = 0; i < n_species; i++) {
     const char* name_cstr = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
-        &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
+        &grain_species_info_->name_map(), static_cast<std::uint16_t>(i));
     ASSERT_NE(name_cstr, nullptr);  // sanity check!
     // actual check!
     std::string actual_name(name_cstr);
@@ -316,7 +316,7 @@ TEST_P(GrainSpeciesInfoTest, SampledGrainIngredients) {
     const grackle::impl::GrainSpeciesInfoEntry& species_info =
         grain_species_info_->species_info[gsp_idx];
     const char* name_ptr = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
-        &grain_species_info_->name_map, gsp_idx);
+        &grain_species_info_->name_map(), gsp_idx);
     ASSERT_NE(nullptr, name_ptr);  // sanity check!
     std::string name = name_ptr;
 

@@ -93,7 +93,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
   if (n_species <= 0) {
     n_species = -1;
     species_info = nullptr;
-    name_map = mk_invalid_FrozenKeyIdxBiMap();
+    name_map_ = mk_invalid_FrozenKeyIdxBiMap();
     return;
   }
 
@@ -298,9 +298,10 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         /* growth_ingredients = */ nullptr);
   }
 
-  name_map = new_FrozenKeyIdxBiMap(names, n_species, BiMapMode::COPIES_KEYDATA);
+  name_map_ =
+      new_FrozenKeyIdxBiMap(names, n_species, BiMapMode::COPIES_KEYDATA);
 
-  if (!FrozenKeyIdxBiMap_is_ok(&name_map)) {
+  if (!FrozenKeyIdxBiMap_is_ok(&name_map_)) {
     GrainSpeciesInfo::cleanup_array_(n_species, species_info);
     n_species = -1;
     species_info = nullptr;
