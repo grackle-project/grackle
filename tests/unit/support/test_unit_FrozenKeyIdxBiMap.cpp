@@ -159,8 +159,7 @@ TEST(FrozenKeyIdxBiMap, EmptyClone) {
       << "construction of a FrozenKeyIdxBiMap unexpectedly failed";
 
   // make the clone
-  grackle::impl::FrozenKeyIdxBiMap m_clone =
-      grackle::impl::FrozenKeyIdxBiMap_clone(&m);
+  grackle::impl::FrozenKeyIdxBiMap m_clone = m.clone();
 
   bool success = grackle::impl::FrozenKeyIdxBiMap_is_ok(&m_clone);
 
@@ -333,8 +332,7 @@ TEST_P(BiMapGeneral, KeyFromIdxValidIdx) {
 }
 
 TEST_P(BiMapGeneral, Clone) {
-  grackle::impl::FrozenKeyIdxBiMap clone =
-      grackle::impl::FrozenKeyIdxBiMap_clone(bimap_p);
+  grackle::impl::FrozenKeyIdxBiMap clone = bimap_p->clone();
   ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&clone));
   grackle::impl::FrozenKeyIdxBiMap* clone_p = &clone;
 

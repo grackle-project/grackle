@@ -152,7 +152,7 @@ enum class BiMapMode {
 /// detail! Always prefer the associated functions (they are defined in such
 /// a way that they should be inlined)
 struct FrozenKeyIdxBiMap {
-  // don't forget to update FrozenKeyIdxBiMap_clone when changing members
+  // don't forget to update the clone method when changing data members
 
   /// the number of contained strings
   bimap_detail::rowidx_type length;
@@ -169,9 +169,6 @@ struct FrozenKeyIdxBiMap {
   bimap_detail::rowidx_type* ordered_row_indices;
 
 private:  // helper methods
-  friend FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(
-      const FrozenKeyIdxBiMap* ptr);
-
   /// a helper function used to actually allocate memory for FrozenKeyIdxBiMap
   void alloc_(uint16_t target_length, uint16_t target_capacity,
               BiMapMode target_mode) {
@@ -259,6 +256,23 @@ public:  // interface methods
   /// @brief Destuctor
   inline ~FrozenKeyIdxBiMap() noexcept;
 
+  /// @brief Makes a clone of this
+  ///
+  /// The clone inherits the original's BiMapMode value. If it held
+  /// BiMapMode::COPIES_KEYDATA, then fresh copies of the strings are made
+  ///
+  /// @warning
+  /// Callers should pass the returned value to @ref FrozenKeyIdxBiMap_is_ok
+  /// to check whether there was an error during creation. This is pretty
+  /// ugly/clunky, but it's the only practical way to achieve comparable
+  /// behavior to other internal data types. The best alternatives involve
+  /// things like std::optional or C++23's std::expected.
+  ///
+  /// @note
+  /// If we wanted slightly more idiomatic C++, we would fold this into the
+  /// copy constructor and copy assignment methods.
+  FrozenKeyIdxBiMap clone() const;
+
   /// @brief swaps contents
   void swap(FrozenKeyIdxBiMap& other) noexcept {
     std::swap(length, other.length);
@@ -311,19 +325,6 @@ inline FrozenKeyIdxBiMap::~FrozenKeyIdxBiMap() noexcept {
     }  // ptr->length > 0
   }
 }
-
-/// Makes a clone of the specified FrozenKeyIdxBiMap
-///
-/// The clone inherits the original's BiMapMode value. If it held
-/// BiMapMode::COPIES_KEYDATA, then fresh copies of the strings are made
-///
-/// @note
-/// Callers should pass the returned value to @ref FrozenKeyIdxBiMap_is_ok
-/// to check whether there was an error during creation. This is pretty
-/// ugly/clunky, but it's the only practical way to achieve comparable behavior
-/// to other internal data types. The best alternatives involve things like
-/// std::optional or converting this type to a simple C++ class.
-FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr);
 
 namespace bimap {
 
@@ -474,16 +475,16 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
   return out;
 }
 
-inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
-  if (!FrozenKeyIdxBiMap_is_ok(ptr)) {
+inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::clone() const {
+  if (!FrozenKeyIdxBiMap_is_ok(this)) {
     return mk_invalid_FrozenKeyIdxBiMap();
   }
 
   FrozenKeyIdxBiMap out;
-  out.alloc_(ptr->length, ptr->capacity, ptr->mode);
-  out.max_probe = ptr->max_probe;
+  out.alloc_(length, capacity, mode);
+  out.max_probe = max_probe;
 
-  if (ptr->length == 0) {
+  if (length == 0) {
     return out;
   }
 
@@ -494,8 +495,8 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
       "something is very wrong!");
 
   bool copy_key_data = out.mode == BiMapMode::COPIES_KEYDATA;
-  for (bimap_detail::rowidx_type i = 0; i < ptr->capacity; i++) {
-    const bimap_StrU16_detail::Row& ref_row = ptr->table_rows[i];
+  for (bimap_detail::rowidx_type i = 0; i < capacity; i++) {
+    const bimap_StrU16_detail::Row& ref_row = table_rows[i];
     if (ref_row.keylen > 0) {
       bimap_StrU16_detail::overwrite_row(out.table_rows + i, ref_row.key,
                                          ref_row.keylen, ref_row.value,
@@ -503,8 +504,8 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
     }
   }
 
-  for (bimap_detail::rowidx_type i = 0; i < ptr->length; i++) {
-    out.ordered_row_indices[i] = ptr->ordered_row_indices[i];
+  for (bimap_detail::rowidx_type i = 0; i < length; i++) {
+    out.ordered_row_indices[i] = ordered_row_indices[i];
   }
   return out;
 };
