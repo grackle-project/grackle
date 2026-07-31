@@ -84,23 +84,22 @@ grackle::impl::GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
                                               out_ingredient_ptr};
 }
 
-// ugh, I don't like this...
-grackle::impl::GrainSpeciesInfo mk_invalid_GrainSpeciesInfo() {
-  return {-1, nullptr, grackle::impl::mk_invalid_FrozenKeyIdxBiMap()};
-}
-
 }  // anonymous namespace
 
-grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
-    int dust_species_parameter) {
-  int n_species = get_n_grain_species(dust_species_parameter);
+namespace GRIMPL_NAMESPACE_DECL {
+
+void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
+  n_species = get_n_grain_species(dust_species_parameter);
   if (n_species <= 0) {
-    return mk_invalid_GrainSpeciesInfo();
+    n_species = -1;
+    species_info = nullptr;
+    name_map = mk_invalid_FrozenKeyIdxBiMap();
+    return;
   }
 
   // names is allocated with the max number of known grain species
   const char* names[OnlyGrainSpLUT::NUM_ENTRIES];
-  GrainSpeciesInfoEntry* species_info = new GrainSpeciesInfoEntry[n_species];
+  species_info = new GrainSpeciesInfoEntry[n_species];
 
   // At the time of writing:
   // - we **only** use h2rate_carbonaceous_coef_table for the AC_dust
@@ -299,16 +298,15 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* growth_ingredients = */ nullptr);
   }
 
-  GrainSpeciesInfo out{
-      n_species, species_info,
-      new_FrozenKeyIdxBiMap(names, n_species, BiMapMode::COPIES_KEYDATA)};
+  name_map = new_FrozenKeyIdxBiMap(names, n_species, BiMapMode::COPIES_KEYDATA);
 
-  if (FrozenKeyIdxBiMap_is_ok(&out.name_map)) {
-    return out;
-  } else {
-    drop_GrainSpeciesInfo(&out);
-    return mk_invalid_GrainSpeciesInfo();
+  if (!FrozenKeyIdxBiMap_is_ok(&name_map)) {
+    GrainSpeciesInfo::cleanup_array_(n_species, species_info);
+    n_species = -1;
+    species_info = nullptr;
   }
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #undef GRIMPL_INGREDIENT_LIST_SENTINEL

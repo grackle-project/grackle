@@ -114,6 +114,45 @@ struct GrainSpeciesInfo {
   /// the struct since the core grackle calculations don't (or at least
   /// shouldn't) use this data structure during the calculation.
   FrozenKeyIdxBiMap name_map;
+
+private:  // helper methods
+  // a temporary method to be used while we convert this struct to a class
+  void setup_helper_(int dust_species_parameter);
+
+  static void cleanup_array_(int n_species,
+                             GrainSpeciesInfoEntry* species_info) {
+    if (n_species > 0) {
+      for (int gsp_idx = 0; gsp_idx < n_species; gsp_idx++) {
+        if ((species_info[gsp_idx].growth_ingredients) != nullptr) {
+          delete[] species_info[gsp_idx].growth_ingredients;
+        }
+      }
+      delete[] species_info;
+    }
+  }
+
+public:
+  /// checks whether instance is valid
+  explicit operator bool() const { return n_species > 0; }
+
+  explicit GrainSpeciesInfo(int dust_species_parameter) {
+    setup_helper_(dust_species_parameter);
+  }
+
+  // the following are disabled because the default implementations won't
+  // properly handle FrozenKeyIdxBiMap (since it doesn't act like a class) or
+  // species_info
+  GrainSpeciesInfo(const GrainSpeciesInfo&) = delete;
+  GrainSpeciesInfo(GrainSpeciesInfo&&) = delete;
+  GrainSpeciesInfo& operator=(const GrainSpeciesInfo&) = delete;
+  GrainSpeciesInfo& operator=(GrainSpeciesInfo&&) = delete;
+
+  ~GrainSpeciesInfo() {
+    if (n_species > 0) {
+      GrainSpeciesInfo::cleanup_array_(n_species, species_info);
+      drop_FrozenKeyIdxBiMap(&name_map);
+    }
+  }
 };
 
 /// return the number of grain species
@@ -141,33 +180,6 @@ inline int get_n_grain_species(int dust_species_parameter) {
 /// @note
 /// The correctness of this constant is explicitly checked in a unit test
 inline constexpr int max_ingredients_per_grain_species = 3;
-
-/// Constructs an returns a fully initialized GrainSpeciesInfo instance.
-///
-/// @param[in]  dust_species_parameter The parameter tracked by #chemistry_data
-/// @returns A fully initialized GrainSpeciesInfo instance
-GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter);
-
-/// performs cleanup of the contents of GrainSpeciesInfo
-///
-/// This effectively invokes the destructor
-inline void drop_GrainSpeciesInfo(GrainSpeciesInfo* ptr) {
-  if (ptr->n_species == 0) {
-    return;  // avoids double-free
-  }
-
-  for (int gsp_idx = 0; gsp_idx < ptr->n_species; gsp_idx++) {
-    if ((ptr->species_info[gsp_idx].growth_ingredients) != nullptr) {
-      delete[] ptr->species_info[gsp_idx].growth_ingredients;
-    }
-  }
-  delete[] ptr->species_info;
-  drop_FrozenKeyIdxBiMap(&ptr->name_map);
-  // the following 2 lines are not strictly necessary, but they may help us
-  // avoid a double-free and a dangling pointer
-  ptr->n_species = 0;
-  ptr->species_info = nullptr;
-}
 
 }  // namespace grackle::impl
 

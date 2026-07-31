@@ -99,30 +99,15 @@ int number_known_grain_species() {
 /// tracks the max value allowed by Grackle's dust_species runtime parameter
 constexpr int MAX_dust_species_VAL = 3;
 
-// down below, we define some machinery to make sure we properly deallocate
-// memory when a test fails. This would not be an issue if we were willing to
-// make GrainSpeciesInfoDeleter a C++ class with a proper constructor &
-// destructor
-struct GrainSpeciesInfoDeleter {
-  void operator()(grackle::impl::GrainSpeciesInfo* ptr) const {
-    grackle::impl::drop_GrainSpeciesInfo(ptr);
-    delete ptr;
-  }
-};
-
 using unique_GrainSpeciesInfo_ptr =
-    std::unique_ptr<grackle::impl::GrainSpeciesInfo, GrainSpeciesInfoDeleter>;
+    std::unique_ptr<GRIMPL_NS::GrainSpeciesInfo>;
 
 /// creates a unique_ptr holding a grackle::impl::GrainSpeciesInfo
 ///
 /// This is useful for preventing memory leaks when tests fail
 unique_GrainSpeciesInfo_ptr make_unique_GrainSpeciesInfo(
     int dust_species_param) {
-  // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
-  grackle::impl::GrainSpeciesInfo* ptr = new grackle::impl::GrainSpeciesInfo;
-  (*ptr) = grackle::impl::new_GrainSpeciesInfo(dust_species_param);
-  return unique_GrainSpeciesInfo_ptr(ptr, GrainSpeciesInfoDeleter());
-  // NOLINTEND(clang-analyzer-cplusplus.NewDeleteLeaks)
+  return std::make_unique<GRIMPL_NS::GrainSpeciesInfo>(dust_species_param);
 }
 
 }  // anonymous namespace
