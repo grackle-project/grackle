@@ -216,7 +216,7 @@ inline void lookup_dust_rates1d(
         my_rates->opaque_storage->grain_species_info;
     GRIMPL_REQUIRE(gsp_info != nullptr, "sanity check!");
 
-    int n_grain_species = gsp_info->n_species;
+    int n_grain_species = gsp_info->n_species();
 
     // Look-up rate for H2 formation on dust
     // -------------------------------------
@@ -271,7 +271,7 @@ inline void lookup_dust_rates1d(
           // perform the summation
           for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
             double coef =
-                gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
+                gsp_info->species_info()[gsp_idx].h2dust_uses_carbonaceous_table
                     ? h2dust_carbonaceous_coef
                     : h2dust_silicate_coef;
             double sigma_per_gas_mass =
@@ -283,7 +283,7 @@ inline void lookup_dust_rates1d(
         } else {
           for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
             const double* coef_table =
-                gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
+                gsp_info->species_info()[gsp_idx].h2dust_uses_carbonaceous_table
                     ? h2rate_carbonaceous_coef_table
                     : h2rate_silicate_coef_table;
             // take the natural log of the grain species's Temperature
@@ -325,9 +325,9 @@ inline void lookup_dust_rates1d(
       for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
         //  get the number of ingredients for the current grain species &
         //  the actual ingredient list
-        int n_ingred = gsp_info->species_info[gsp_idx].n_growth_ingredients;
+        int n_ingred = gsp_info->species_info()[gsp_idx].n_growth_ingredients;
         const GrainGrowthIngredient* ingredient_l =
-            gsp_info->species_info[gsp_idx].growth_ingredients;
+            gsp_info->species_info()[gsp_idx].growth_ingredients;
 
         // preload views of each ingredient's current mass density &
         // precompute the divisor divided by the mass density

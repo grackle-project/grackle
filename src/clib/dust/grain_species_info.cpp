@@ -89,17 +89,17 @@ grackle::impl::GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
 namespace GRIMPL_NAMESPACE_DECL {
 
 void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
-  n_species = get_n_grain_species(dust_species_parameter);
-  if (n_species <= 0) {
-    n_species = -1;
-    species_info = nullptr;
+  n_species_ = get_n_grain_species(dust_species_parameter);
+  if (n_species_ <= 0) {
+    n_species_ = -1;
+    species_info_ = nullptr;
     name_map_ = mk_invalid_FrozenKeyIdxBiMap();
     return;
   }
 
   // names is allocated with the max number of known grain species
   const char* names[OnlyGrainSpLUT::NUM_ENTRIES];
-  species_info = new GrainSpeciesInfoEntry[n_species];
+  species_info_ = new GrainSpeciesInfoEntry[n_species_];
 
   // At the time of writing:
   // - we **only** use h2rate_carbonaceous_coef_table for the AC_dust
@@ -130,7 +130,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         {2, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[0] = "MgSiO3_dust";
-    species_info[0] = mk_gsp_info_entry_helper_(
+    species_info_[0] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::MgSiO3_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1222.0,
@@ -143,7 +143,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         {1, SpLUT::CI, 12.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[1] = "AC_dust";
-    species_info[1] = mk_gsp_info_entry_helper_(
+    species_info_[1] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::AC_dust,
         /* h2dust_uses_carbonaceous_table = */ true,
         /* sublimation_temperature = */ 1800.0,
@@ -158,7 +158,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         {1, SpLUT::SiI, 28.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[2] = "SiM_dust";
-    species_info[2] = mk_gsp_info_entry_helper_(
+    species_info_[2] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::SiM_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
@@ -171,7 +171,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         {1, SpLUT::Fe, 56.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[3] = "FeM_dust";
-    species_info[3] = mk_gsp_info_entry_helper_(
+    species_info_[3] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::FeM_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
@@ -186,7 +186,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         {3, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[4] = "Mg2SiO4_dust";
-    species_info[4] = mk_gsp_info_entry_helper_(
+    species_info_[4] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::Mg2SiO4_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1277.0,
@@ -200,7 +200,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         {4, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[5] = "Fe3O4_dust";
-    species_info[5] = mk_gsp_info_entry_helper_(
+    species_info_[5] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::Fe3O4_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
@@ -213,7 +213,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         {1, SpLUT::SiO2I, 60.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[6] = "SiO2_dust";
-    species_info[6] = mk_gsp_info_entry_helper_(
+    species_info_[6] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::SiO2_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
@@ -227,7 +227,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         {1, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[7] = "MgO_dust";
-    species_info[7] = mk_gsp_info_entry_helper_(
+    species_info_[7] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::MgO_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
@@ -241,7 +241,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         {1, SpLUT::S, 32.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[8] = "FeS_dust";
-    species_info[8] = mk_gsp_info_entry_helper_(
+    species_info_[8] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::FeS_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 680.0,
@@ -255,7 +255,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
         {3, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[9] = "Al2O3_dust";
-    species_info[9] = mk_gsp_info_entry_helper_(
+    species_info_[9] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::Al2O3_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
@@ -271,7 +271,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
     // nominal growth rxn: "0.5CO + 0.5CH2 + 1.2N -> ref_org_dust"
     // nuclide ratios: C:H:O:N = 1:1:0.5:1.2
     names[10] = "ref_org_dust";
-    species_info[10] = mk_gsp_info_entry_helper_(
+    species_info_[10] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::ref_org_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 575.0,
@@ -281,7 +281,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
     // nominal growth rxn: "CO + 2H2I -> vol_org_dust"
     // effective formula: CH3OH
     names[11] = "vol_org_dust";
-    species_info[11] = mk_gsp_info_entry_helper_(
+    species_info_[11] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::vol_org_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 375.0,
@@ -290,7 +290,7 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
 
     // nominal growth rxn: "H2O -> H2O_ice_dust"
     names[12] = "H2O_ice_dust";
-    species_info[12] = mk_gsp_info_entry_helper_(
+    species_info_[12] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::H2O_ice_dust,
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 153.0,
@@ -299,12 +299,12 @@ void GrainSpeciesInfo::setup_helper_(int dust_species_parameter) {
   }
 
   name_map_ =
-      new_FrozenKeyIdxBiMap(names, n_species, BiMapMode::COPIES_KEYDATA);
+      new_FrozenKeyIdxBiMap(names, n_species_, BiMapMode::COPIES_KEYDATA);
 
   if (!FrozenKeyIdxBiMap_is_ok(&name_map_)) {
-    GrainSpeciesInfo::cleanup_array_(n_species, species_info);
-    n_species = -1;
-    species_info = nullptr;
+    GrainSpeciesInfo::cleanup_array_(n_species_, species_info_);
+    n_species_ = -1;
+    species_info_ = nullptr;
   }
 }
 

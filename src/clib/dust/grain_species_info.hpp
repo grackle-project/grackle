@@ -81,7 +81,7 @@ struct GrainSpeciesInfoEntry {
 /// Relationship with OnlyGrainSpLUT
 /// --------------------------------
 /// In the short term, the index of each species in the
-/// @ref GrainSpeciesInfo::species_info out.species_info is dictated by the
+/// @ref GrainSpeciesInfo::species_info() is dictated by the
 /// order of enumerators in the OnlyGrainSpLUT enumeration.
 ///
 /// In the medium term, we plan to entirely eliminate the OnlyGrainSpLUT
@@ -91,22 +91,21 @@ struct GrainSpeciesInfoEntry {
 /// possible grain species and perform nearly identical operations on each
 /// species. In each case, it is straight-forward to replace these blocks of
 /// logic with for-loops (we just need to encode species-specific variations in
-/// the calculations in out.species_info that have the same ordering as the
+/// the calculations in species_info that have the same ordering as the
 /// species). To phrase it another way, in nearly all of the places where we
 /// would use OnlyGrainSpLUT, we don't need to know the grain species identity.
 ///
 /// The exception to this is when we compute the h2dust rate. In this case
 /// we need to identify AC_dust since we need to do something **slightly**
 /// different from the other grains, but this is easy to work around
-struct GrainSpeciesInfo {
+class GrainSpeciesInfo {
   /// number of grain species considered for the current Grackle configuration
-  int n_species;
+  int n_species_;
 
-  /// an out.species_info of length of length @ref n_species where each entry
-  /// holds info about a separate grain species
-  GrainSpeciesInfoEntry* species_info;
+  /// holds @ref n_species entries. Each entry holds info about a separate
+  /// grain species
+  GrainSpeciesInfoEntry* species_info_;
 
-private:
   /// maps between grain species names and the associated index. The mapping is
   /// **ALWAYS** consistent with ``OnlyGrainSpLUT``.
   ///
@@ -134,7 +133,13 @@ private:  // helper methods
 
 public:
   /// @brief checks whether instance is valid
-  explicit operator bool() const { return n_species > 0; }
+  explicit operator bool() const { return n_species_ > 0; }
+
+  /// @brief number of grain species considered in current Grackle configuration
+  int n_species() const { return n_species_; }
+
+  /// @brief returns sequence of entries describing each grain species
+  const GrainSpeciesInfoEntry* species_info() const { return species_info_; }
 
   /// @brief returns mapping between grain species names and associated indices
   const FrozenKeyIdxBiMap& name_map() const { return name_map_; }
@@ -152,8 +157,8 @@ public:
   GrainSpeciesInfo& operator=(GrainSpeciesInfo&&) = delete;
 
   ~GrainSpeciesInfo() {
-    if (n_species > 0) {
-      GrainSpeciesInfo::cleanup_array_(n_species, species_info);
+    if (n_species_ > 0) {
+      GrainSpeciesInfo::cleanup_array_(n_species_, species_info_);
       drop_FrozenKeyIdxBiMap(&name_map_);
     }
   }

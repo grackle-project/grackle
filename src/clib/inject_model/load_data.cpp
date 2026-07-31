@@ -162,7 +162,7 @@ int configure_RegBuilder(const chemistry_data_storage* my_rates,
   if ((my_rates->opaque_storage != nullptr) &&
       (my_rates->opaque_storage->grain_species_info != nullptr)) {
     int n_grain_species =
-        my_rates->opaque_storage->grain_species_info->n_species;
+        my_rates->opaque_storage->grain_species_info->n_species();
 
     // the length of each grain species yield array is equal to the number of
     // injection pathways
