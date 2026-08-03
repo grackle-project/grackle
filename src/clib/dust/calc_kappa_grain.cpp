@@ -27,8 +27,6 @@ void calc_kappa_grain(const double* tdust, double* kgr,
                       double t_subl, int gr_N, int gr_Size, double gr_dT,
                       const double* gr_Td, const double* logalsp_data_,
                       int idspecies) {
-  // Parameters
-
   // grain opacity from Omukai (2000, equation 17) normalized by
   // the local dust-to-gas ratio, which in this work is 0.934e-2.
   const double kgr1 = 4.0e-4 / 0.00934;
@@ -40,16 +38,6 @@ void calc_kappa_grain(const double* tdust, double* kgr,
   // for Td < 50 K. We go with this because Omukai (2000) does not suggest
   // what should be done for Td > 50 K.
   const double kgr200 = 16.0 / 0.00934;
-
-  // Opacity table
-  FortranView<const double**> logalsp(logalsp_data_, gr_N, in);
-
-  // Locals
-  std::vector<double> logalsp1(gr_Size);
-
-  // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
-  // =======================================================================
-  long long gr_N_i64 = (idspecies == 0) ? 0 : static_cast<long long>(gr_N);
 
   if (idspecies == 0) {
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -68,6 +56,11 @@ void calc_kappa_grain(const double* tdust, double* kgr,
       }
     }
   } else {
+    // Opacity table
+    FortranView<const double**> logalsp(logalsp_data_, gr_N, in);
+    std::vector<double> logalsp1(gr_Size);
+    long long gr_N_i64 = static_cast<long long>(gr_N);
+
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         for (int j = 0; j < gr_Size; j++) {
