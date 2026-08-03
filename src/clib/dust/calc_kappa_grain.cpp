@@ -45,18 +45,14 @@ void calc_kappa_grain(const double* tdust, double* kgr,
   FortranView<const double**> logalsp(logalsp_data_, gr_N, in);
 
   // Locals
-
-  int i;
-  double logkgr;
   std::vector<double> logalsp1(gr_Size);
-  double log10tdust;
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
   long long gr_N_i64 = (idspecies == 0) ? 0 : static_cast<long long>(gr_N);
 
   if (idspecies == 0) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         // Temperature dependence from Dopcke et al. (2011).
         // Normalized to Omukai (2000).
@@ -72,15 +68,15 @@ void calc_kappa_grain(const double* tdust, double* kgr,
       }
     }
   } else {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         for (int j = 0; j < gr_Size; j++) {
           logalsp1[j] = logalsp(j, i);
         }
-        log10tdust = std::log10(tdust[i]);
+        double log10tdust = std::log10(tdust[i]);
 
-        logkgr = interpolate_1d(log10tdust, &gr_N_i64, gr_Td, gr_dT, gr_N_i64,
-                                logalsp1.data());
+        double logkgr = interpolate_1d(log10tdust, &gr_N_i64, gr_Td, gr_dT,
+                                       gr_N_i64, logalsp1.data());
 
         kgr[i] = std::pow(10., logkgr);
       }
