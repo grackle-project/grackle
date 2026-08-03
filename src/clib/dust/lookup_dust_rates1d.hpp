@@ -18,7 +18,7 @@
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
-#include "fortran_func_wrappers.hpp"
+#include "interpolate.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
 #include "opaque_storage.hpp"
@@ -113,9 +113,6 @@ inline void lookup_dust_rates1d(
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
   // TODO: get rid of dlogtem argument!
 
   const double dlogTdust =
@@ -230,7 +227,7 @@ inline void lookup_dust_rates1d(
     // of tabulated values
 
     // load properties of the interpolation table
-    gr_interp_grid_props& interp_props =
+    InterpGridProps& interp_props =
         my_rates->opaque_storage->h2dust_grain_interp_props;
 
     // load the tables that we are interpolating over
@@ -260,11 +257,11 @@ inline void lookup_dust_rates1d(
           double logTdust = std::log(tdust[i]);  // <- natural log
 
           // precompute the shared coefficients
-          double h2dust_silicate_coef = f_wrap::interpolate_2d_g(
+          double h2dust_silicate_coef = interpolate_2d(
               logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
               interp_props.parameters[0], dlogTdust, interp_props.parameters[1],
               dlogtem, interp_props.data_size, h2rate_silicate_coef_table);
-          double h2dust_carbonaceous_coef = f_wrap::interpolate_2d_g(
+          double h2dust_carbonaceous_coef = interpolate_2d(
               logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
               interp_props.parameters[0], dlogTdust, interp_props.parameters[1],
               dlogtem, interp_props.data_size, h2rate_carbonaceous_coef_table);
@@ -289,11 +286,11 @@ inline void lookup_dust_rates1d(
                     : h2rate_silicate_coef_table;
             // take the natural log of the grain species's Temperature
             double logTdust = std::log(grain_temperatures.data[gsp_idx][i]);
-            double coef = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                interp_props.parameters[0], dlogTdust,
-                interp_props.parameters[1], dlogtem, interp_props.data_size,
-                coef_table);
+            double coef = interpolate_2d(logTdust, logTlininterp_buf.logtem[i],
+                                         interp_props.dimension,
+                                         interp_props.parameters[0], dlogTdust,
+                                         interp_props.parameters[1], dlogtem,
+                                         interp_props.data_size, coef_table);
             double sigma_per_gas_mass =
                 internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                     .data[gsp_idx][i];
@@ -370,7 +367,7 @@ inline void lookup_dust_rates1d(
             limiting_factor *= (n_ingred > 0);
 
             // finally, we're ready to compute the rate
-            double kd = f_wrap::interpolate_1d_g(
+            double kd = interpolate_1d(
                 logTlininterp_buf.logtem[i], nratec_single_elem_arr,
                 interp_props.parameters[1], dlogtem, nratec_single_elem_arr[0],
                 my_rates->grain_growth_rate);

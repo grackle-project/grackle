@@ -12,10 +12,9 @@
 #ifndef GRAIN_METAL_INJECT_PATHWAYS_HPP
 #define GRAIN_METAL_INJECT_PATHWAYS_HPP
 
-#include "grackle.h"  // gr_interp_grid_props
 #include "../LUT.hpp"
 #include "../internal_types.hpp"
-#include "../interp_table_utils.hpp"
+#include "../interp_grid.hpp"  // InterpGridProps
 #include "../support/status_reporting.hpp"
 #include "../visitor/common.hpp"
 
@@ -176,11 +175,11 @@ struct GrainMetalInjectPathways {
   /// in opacity calculations.
   ///
   /// @note
-  /// Using a full #gr_interp_grid_props seems like it's a little overkill for
+  /// Using a full #InterpGridProps seems like it's a little overkill for
   /// holding values for 1D interpolation, but it may be worthwhile that this
   /// datatype is **ONLY** used for interpolation. Maybe in the future, we
   /// should make a specialized version for 1D data?
-  gr_interp_grid_props log10Tdust_interp_props;
+  InterpGridProps log10Tdust_interp_props;
 
   /// the number of polynomial coefficients that will be computed from the
   /// opacity_coef_table. They are used in a polynomial of degree
@@ -287,13 +286,6 @@ inline GrainMetalInjectPathways new_GrainMetalInjectPathways(
   out.grain_yields = new_GrainSpeciesCollection(n_pathways);
   out.size_moments = new_GrainSpeciesCollection(3 * n_pathways);
 
-  init_empty_interp_grid_props_(&out.log10Tdust_interp_props);
-  out.log10Tdust_interp_props.rank = 1LL;
-  long long n_log10Tdust_vals_LL = static_cast<long long>(n_log10Tdust_vals);
-  out.log10Tdust_interp_props.dimension[0] = n_log10Tdust_vals_LL;
-  out.log10Tdust_interp_props.data_size = n_log10Tdust_vals_LL;
-  out.log10Tdust_interp_props.parameters[0] = new double[n_log10Tdust_vals];
-
   out.n_opac_poly_coef = n_opac_poly_coef;
 
   out.opacity_coef_table = new_GrainSpeciesCollection(
@@ -336,8 +328,6 @@ inline void drop_GrainMetalInjectPathways(GrainMetalInjectPathways* ptr) {
     yields::drop_MetalTables(&ptr->gas_metal_nuclide_yields);
     drop_GrainSpeciesCollection(&ptr->grain_yields);
     drop_GrainSpeciesCollection(&ptr->size_moments);
-    free_interp_grid_props_(&ptr->log10Tdust_interp_props,
-                            /* use_delete = */ true);
     drop_GrainSpeciesCollection(&ptr->opacity_coef_table);
   }
 }

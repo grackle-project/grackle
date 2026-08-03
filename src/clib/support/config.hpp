@@ -136,7 +136,7 @@
 /// >   passing the ``-ffast-math`` flag to gcc (__restrict__ semantics are
 /// >   well defined and its opt-in)
 #if defined(__GNUC__)
-// #define GRIMPL_RESTRICT __restrict__
+// #define GRIMPL_RESTRICT __restrict
 #define GRIMPL_RESTRICT /* ... */
 #else
 #define GRIMPL_RESTRICT /* ... */

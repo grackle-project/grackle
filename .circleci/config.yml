@@ -312,6 +312,12 @@ jobs:
                    # core-library maintain backwards compatability
       resource_class: medium  # <- 2 cores
 
+    environment:
+      # it seemed like cmake may have been creating more jobs than there are
+      # cores (perhaps b/c we're in a container?). This is an attempt to
+      # manually fix the job count to the number of cores
+      CMAKE_BUILD_PARALLEL_LEVEL: 2
+
     working_directory: ~/grackle
 
     steps:
