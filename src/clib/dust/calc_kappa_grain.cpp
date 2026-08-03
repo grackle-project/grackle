@@ -55,9 +55,9 @@ void calc_kappa_grain(const double* tdust, double* kgr,
   // =======================================================================
   long long gr_N_i64 = (idspecies == 0) ? 0 : static_cast<long long>(gr_N);
 
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      if (idspecies == 0) {
+  if (idspecies == 0) {
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
         // Temperature dependence from Dopcke et al. (2011).
         // Normalized to Omukai (2000).
         // See comment above for note about Td dependence for kgr.
@@ -69,7 +69,11 @@ void calc_kappa_grain(const double* tdust, double* kgr,
           kgr[i] = std::fmax(tiny_fortran_val,
                              (kgr200 * std::pow((tdust[i] / 1.5e3), (-12))));
         }
-      } else {
+      }
+    }
+  } else {
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
         for (int j = 0; j < gr_Size; j++) {
           logalsp1[j] = logalsp(j, i);
         }
