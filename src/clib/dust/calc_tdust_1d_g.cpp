@@ -328,32 +328,25 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
                      int gr_N, double gr_dT, const double* gr_Td,
                      const double* alsp_data_, double* kgr, int idspecies,
                      IndexRange idx_range) {
-  // opacity table of a grain species
-  //
-  // In some configurations gr_N can be 0 while the backing buffer may still be
-  // non-null. The View invariant disallows non-null data with a zero leading
-  // extent, so pass nullptr for the zero-length case.
-  const double* alsp_ptr = (gr_N > 0) ? alsp_data_ : nullptr;
-  FortranView<const double**> alsp(alsp_ptr, gr_N, buf_len);
-  std::vector<double> logalsp_data_(gr_N * buf_len);
-  double* logalsp_ptr = (gr_N > 0) ? logalsp_data_.data() : nullptr;
-  FortranView<double**> logalsp(logalsp_ptr, gr_N, buf_len);
-
-  int Td_N = gr_N;
-  int Td_Size = gr_N;
-  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      for (int j = 0; j < gr_N; j++) {
-        logalsp(j, i) = std::log10(alsp(j, i));
-      }
-    }
-  }
-
   if (idspecies == 0) {
     AnalyticOpacCalc calculator(passive_dust_model_T_sublimation);
     calc_tdust_1d_(tdust, tgas, nh, gasgr, gamma_isrfa, isrf, itmask, trad,
                    buf_len, kgr, idx_range, calculator);
   } else {
+    FortranView<const double**> alsp(alsp_data_, gr_N, buf_len);
+    std::vector<double> logalsp_data_(gr_N * buf_len);
+    FortranView<double**> logalsp(logalsp_data_.data(), gr_N, buf_len);
+
+    int Td_N = gr_N;
+    int Td_Size = gr_N;
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        for (int j = 0; j < gr_N; j++) {
+          logalsp(j, i) = std::log10(alsp(j, i));
+        }
+      }
+    }
+
     MultiGrainGrowthOpacCalc calculator(buf_len, Td_N, Td_Size, gr_dT, gr_Td,
                                         logalsp_data_.data());
     calc_tdust_1d_(tdust, tgas, nh, gasgr, gamma_isrfa, isrf, itmask, trad,
