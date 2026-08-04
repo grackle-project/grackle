@@ -50,9 +50,12 @@ static constexpr double passive_dust_model_T_sublimation = 1500.0;
 template <typename OpacCalculator>
 void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
                     const double* gasgr, const double* gamma_isrfa,
-                    const double* isrf, const gr_mask_type* itmask, double trad,
-                    int buf_len, double* kgr, IndexRange idx_range,
-                    const OpacCalculator& calculator) {
+                    const double* isrf, const gr_mask_type* itmask,
+                    double nominal_Trad, int buf_len, double* kgr,
+                    IndexRange idx_range, const OpacCalculator& calculator) {
+  const double Trad = std::fmax(1., nominal_Trad);
+  const double Trad4 = std::pow(Trad, 4);
+
   // define an inline function that computes the grain opacity for the provided
   // dust temperature range.
   // -> in the future, we probably want to refactor calc_gr_balance_g so that
@@ -89,8 +92,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
   int iter, c_done, c_total, nm_done;
 
-  double pert_i, floored_trad, floored_trad4;
-
   // Slice Locals
 
   std::vector<double> kgrplus(buf_len);
@@ -113,10 +114,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // iteration mask specifies where we use bisection
   std::vector<gr_mask_type> bi_itmask(buf_len);
 
-  pert_i = 1.e-3;
-
-  floored_trad = std::fmax(1., trad);
-  floored_trad4 = std::pow(floored_trad, 4);
+  double pert_i = 1.e-3;
 
   // Set total cells for calculation
 
@@ -136,8 +134,8 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     nm_itmask[i] = itmask[i];
     bi_itmask[i] = itmask[i];
     if (nm_itmask[i] != MASK_FALSE) {
-      if (floored_trad >= tgas[i]) {
-        tdustnow[i] = floored_trad;
+      if (Trad >= tgas[i]) {
+        tdustnow[i] = Trad;
         nm_itmask[i] = MASK_FALSE;
         bi_itmask[i] = MASK_FALSE;
         c_done = c_done + 1;
@@ -147,8 +145,8 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         nm_itmask[i] = MASK_FALSE;
         nm_done = nm_done + 1;
       } else {
-        tdustnow[i] = std::fmax(floored_trad,
-                                std::pow((gamma_isrf[i] / radf / kgr1), 0.17));
+        tdustnow[i] =
+            std::fmax(Trad, std::pow((gamma_isrf[i] / radf / kgr1), 0.17));
         pert[i] = pert_i;
       }
 
@@ -175,11 +173,11 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
     // Calculate heating/cooling balance
 
-    calc_gr_balance_g(tdustnow.data(), tgas, kgr, floored_trad4, gasgr,
+    calc_gr_balance_g(tdustnow.data(), tgas, kgr, Trad4, gasgr,
                       gamma_isrf.data(), nh, nm_itmask.data(), sol.data(),
                       idx_range);
 
-    calc_gr_balance_g(tdplus.data(), tgas, kgrplus.data(), floored_trad4, gasgr,
+    calc_gr_balance_g(tdplus.data(), tgas, kgrplus.data(), Trad4, gasgr,
                       gamma_isrf.data(), nh, nm_itmask.data(), solplus.data(),
                       idx_range);
 
@@ -199,7 +197,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
             minpert);
 
         // If negative solution calculated, give up and wait for bisection step.
-        if (tdustnow[i] < floored_trad) {
+        if (tdustnow[i] < Trad) {
           nm_itmask[i] = MASK_FALSE;
           nm_done = nm_done + 1;
           // Check for convergence of solution
@@ -234,7 +232,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   if (c_done < c_total) {
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (bi_itmask[i] != MASK_FALSE) {
-        tdustnow[i] = floored_trad;
+        tdustnow[i] = Trad;
         // bi_t_high(i) = tgas(i)
         bi_t_high[i] = 3e3;
       }
@@ -253,7 +251,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
       calc_kappa(bi_t_mid.data(), kgr, bi_itmask.data(), idx_range);
 
-      calc_gr_balance_g(bi_t_mid.data(), tgas, kgr, floored_trad4, gasgr,
+      calc_gr_balance_g(bi_t_mid.data(), tgas, kgr, Trad4, gasgr,
                         gamma_isrf.data(), nh, bi_itmask.data(), sol.data(),
                         idx_range);
 
@@ -309,7 +307,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
           eprintf(
               "CALC_TDUST_1D_G Newton method -  T_dust < 0: i =  %d j =  %d k "
               "=  %d nh =  %g t_gas =  %g t_rad =  %g t_dust =  %g\n",
-              i, idx_range.jp1, idx_range.kp1, nh[i], tgas[i], floored_trad,
+              i, idx_range.jp1, idx_range.kp1, nh[i], tgas[i], Trad,
               tdustnow[i]);
         }
         // ERROR_MESSAGE
