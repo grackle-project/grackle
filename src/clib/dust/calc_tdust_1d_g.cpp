@@ -48,10 +48,10 @@ static constexpr double passive_dust_model_T_sublimation = 1500.0;
 /// shocked if a hybrid scheme wasn't superior to running pure Newton-Raphson
 /// and then falling back to Bisection.
 template <typename OpacCalculator>
-void calc_tdust_1d_(double* tdust, double* tgas, double* nh, double* gasgr,
-                    const double* gamma_isrfa, const double* isrf,
-                    const gr_mask_type* itmask, double trad, int buf_len,
-                    double* kgr, IndexRange idx_range,
+void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
+                    const double* gasgr, const double* gamma_isrfa,
+                    const double* isrf, const gr_mask_type* itmask, double trad,
+                    int buf_len, double* kgr, IndexRange idx_range,
                     const OpacCalculator& calculator) {
   // define an inline function that computes the grain opacity for the provided
   // dust temperature range.
@@ -322,12 +322,12 @@ void calc_tdust_1d_(double* tdust, double* tgas, double* nh, double* gasgr,
   return;
 }
 
-void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
-                     const double* gamma_isrfa, const double* isrf,
-                     const gr_mask_type* itmask, double trad, int buf_len,
-                     int gr_N, double gr_dT, const double* gr_Td,
-                     const double* alsp_data_, double* kgr, int idspecies,
-                     IndexRange idx_range) {
+void calc_tdust_1d_g(double* tdust, const double* tgas, const double* nh,
+                     const double* gasgr, const double* gamma_isrfa,
+                     const double* isrf, const gr_mask_type* itmask,
+                     double trad, int buf_len, int gr_N, double gr_dT,
+                     const double* gr_Td, const double* alsp_data_, double* kgr,
+                     int idspecies, IndexRange idx_range) {
   if (idspecies == 0) {
     AnalyticOpacCalc calculator(passive_dust_model_T_sublimation);
     calc_tdust_1d_(tdust, tgas, nh, gasgr, gamma_isrfa, isrf, itmask, trad,

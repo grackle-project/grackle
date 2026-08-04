@@ -53,12 +53,12 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// written by: Britton Smith, 2011
 /// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
 ///
-void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
-                     const double* gamma_isrfa, const double* isrf,
-                     const gr_mask_type* itmask, double trad, int buf_len,
-                     int gr_N, double gr_dT, const double* gr_Td,
-                     const double* alsp_data_, double* kgr, int idspecies,
-                     IndexRange idx_range);
+void calc_tdust_1d_g(double* tdust, const double* tgas, const double* nh,
+                     const double* gasgr, const double* gamma_isrfa,
+                     const double* isrf, const gr_mask_type* itmask,
+                     double trad, int buf_len, int gr_N, double gr_dT,
+                     const double* gr_Td, const double* alsp_data_, double* kgr,
+                     int idspecies, IndexRange idx_range);
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 #endif /* CALC_TDUST_1D_G_HPP */
