@@ -64,8 +64,12 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
   }
 
-  // define an inline function that computes the grain opacity for the provided
-  // dust temperature range.
+  // define the function that we will perform root finding on
+  //
+  // It computes the grain opacity and grain's heating/cooling rate given a dust
+  // temperature. The root finding hunts for the dust temperature where the
+  // grain's heating and cooling are balanced (we are also interested in
+  // returning the associated opacity).
   // -> in the future, we probably want to refactor calc_gr_balance_g so that
   //    we can compute opacity and energy balance at the same time
   // -> in that scenario, we may not want to actually include the for-loop in
@@ -74,13 +78,16 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // -> we should also think about directly computing analytic derivatives.
   //    This shouldn't be too hard and would significantly improve the
   //    robustness (and speed) of the newton solver pass
-  auto calc_kappa = [&](const double* tdust, double* kgr,
-                        const gr_mask_type* itmask, IndexRange idx_range) {
+  auto fn = [&](const double* Tdust, double* kgr, double* sol,
+                const gr_mask_type* itmask, IndexRange idx_range) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kgr[i] = calculator.calc_opac(tdust[i], i);
+        kgr[i] = calculator.calc_opac(Tdust[i], i);
       }
     }
+
+    calc_gr_balance_g(Tdust, tgas, kgr, Trad4, gasgr, gamma_isrf.data(), nh,
+                      itmask, sol, idx_range);
   };
 
   const double radf = 4. * sigma_sb_grflt;
@@ -168,19 +175,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       }
     }
 
-    // Calculate grain opacities
-    calc_kappa(tdustnow.data(), kgr, nm_itmask.data(), idx_range);
-    calc_kappa(tdplus.data(), kgrplus.data(), nm_itmask.data(), idx_range);
-
-    // Calculate heating/cooling balance
-
-    calc_gr_balance_g(tdustnow.data(), tgas, kgr, Trad4, gasgr,
-                      gamma_isrf.data(), nh, nm_itmask.data(), sol.data(),
-                      idx_range);
-
-    calc_gr_balance_g(tdplus.data(), tgas, kgrplus.data(), Trad4, gasgr,
-                      gamma_isrf.data(), nh, nm_itmask.data(), solplus.data(),
-                      idx_range);
+    // Calculate grain opacities AND heating/cooling balance
+    fn(tdustnow.data(), kgr, sol.data(), nm_itmask.data(), idx_range);
+    fn(tdplus.data(), kgrplus.data(), solplus.data(), nm_itmask.data(),
+       idx_range);
 
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (nm_itmask[i] != MASK_FALSE) {
@@ -250,11 +248,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         }
       }
 
-      calc_kappa(bi_t_mid.data(), kgr, bi_itmask.data(), idx_range);
-
-      calc_gr_balance_g(bi_t_mid.data(), tgas, kgr, Trad4, gasgr,
-                        gamma_isrf.data(), nh, bi_itmask.data(), sol.data(),
-                        idx_range);
+      fn(bi_t_mid.data(), kgr, sol.data(), bi_itmask.data(), idx_range);
 
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
