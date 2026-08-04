@@ -17,11 +17,61 @@
 #define CALC_TDUST_1D_G_HPP
 
 #include "fortran_func_decls.h"  // gr_mask_int
-#include "grackle.h"             // gr_float
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
 
+#include <cmath>  // std::pow
+
 namespace GRIMPL_NAMESPACE_DECL {
+
+/// @brief Defines constants and logic used for computing dust temperature
+namespace Tdust_detail {
+
+/// @brief Four times the Stefan-Boltzmann constant
+inline constexpr double sigma_sb_times_4 = 4.0 * sigma_sb_grflt;
+
+/// @brief Calculate grain heating/cooling balance
+///
+///  TODO: this docstring should EXPLICITLY document how the action of this
+///  function changes based on whether we are using the single-field
+///  dust model or the multi-species dust model.
+///  In the classic single single-field model, the returned values
+///  are emission/absorption rate per unit grain mass with units of
+///  erg/s/g.
+///  In the multi-species dust model, I **THINK** that the returned
+///  values are emission/absorption rate per unit gas mass with units
+///  of erg/s/g (But I'm not entirely unsure).
+///
+/// @param Tdust dust temperature
+/// @param Tgas gas temperature
+/// @param kgr grain opacity
+/// @param Trad4 CMB radiation temperature to the 4th power
+/// @param gasgr gas-grain heat transfer rates
+/// @param gamma_isrf Heating from interstellar radiation field
+/// @param nH hydrogen number density
+///
+/// @note
+/// If we provided the derivative of @p kgr with respect to Tdust, the
+/// analytic derivative of this function is straightforward
+///
+/// @par History
+/// original function written by: Britton Smith, 2019
+/// modified: January, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
+/// modified: August 2026 by Matthew Abruzzo; converted to scalar calculation
+inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
+                                 double Trad4, double gasgr, double gamma_isrf,
+                                 double nH) {
+  return gamma_isrf + sigma_sb_times_4 * kgr * (Trad4 - std::pow(Tdust, 4)) +
+         (gasgr * nH * (Tgas - Tdust));
+  //  Historically, the following comment was present here:
+  //      emission/absorption rate per unit grain mass [erg/s/g]
+  //      for Z = Zsun (default)
+  //  This comment is **ONLY** correct when the function used as
+  //  part of the single-field dust model. See the docstring for
+  //  more details.
+}
+
+}  // namespace Tdust_detail
 
 ///  Calculate equilibrium dust temperature
 ///
