@@ -16,7 +16,6 @@
 #include <cstdio>
 #include <vector>
 
-#include "dust/calc_gr_balance_g.hpp"
 #include "dust/multi_grain_species/opac_calculator.hpp"
 #include "dust/passive/analytic_opac.hpp"
 #include "grackle.h"
@@ -86,8 +85,12 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       }
     }
 
-    calc_gr_balance_g(Tdust, tgas, kgr, Trad4, gasgr, gamma_isrf.data(), nh,
-                      itmask, sol, idx_range);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        sol[i] = Tdust_detail::calc_grain_balance(
+            Tdust[i], tgas[i], kgr[i], Trad4, gasgr[i], gamma_isrf[i], nh[i]);
+      }
+    }
   };
 
   const double radf = 4. * sigma_sb_grflt;
