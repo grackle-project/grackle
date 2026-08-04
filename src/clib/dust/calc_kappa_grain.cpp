@@ -17,6 +17,7 @@
 
 #include "interpolate.hpp"
 #include "support/View.hpp"
+#include "passive/analytic_opac.hpp"
 
 #include "calc_kappa_grain.hpp"
 
@@ -27,32 +28,11 @@ void calc_kappa_grain(const double* tdust, double* kgr,
                       double t_subl, int gr_N, int gr_Size, double gr_dT,
                       const double* gr_Td, const double* logalsp_data_,
                       int idspecies) {
-  // grain opacity from Omukai (2000, equation 17) normalized by
-  // the local dust-to-gas ratio, which in this work is 0.934e-2.
-  const double kgr1 = 4.0e-4 / 0.00934;
-
-  // We then apply a Td^2 scaling up to 200 K following Dopcke et al. (2011).
-  // However, note that Dopcke et al. (2011) adopt a different
-  // normalization (i.e., for kgr1).
-  // Also note that Omukai (2000) says the Td^2 proportionality is only valid
-  // for Td < 50 K. We go with this because Omukai (2000) does not suggest
-  // what should be done for Td > 50 K.
-  const double kgr200 = 16.0 / 0.00934;
-
   if (idspecies == 0) {
+    AnalyticOpacCalc calculator(t_subl);
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        // Temperature dependence from Dopcke et al. (2011).
-        // Normalized to Omukai (2000).
-        // See comment above for note about Td dependence for kgr.
-        if (tdust[i] < 200.) {
-          kgr[i] = kgr1 * std::pow(tdust[i], 2);
-        } else if (tdust[i] < t_subl) {
-          kgr[i] = kgr200;
-        } else {
-          kgr[i] = std::fmax(tiny_fortran_val,
-                             (kgr200 * std::pow((tdust[i] / 1.5e3), (-12))));
-        }
+        kgr[i] = calculator.calc_opac(tdust[i]);
       }
     }
   } else {
