@@ -88,8 +88,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
   };
 
-  const double radf = 4. * sigma_sb_grflt;
-
   // grain opacity from Omukai (2000, equation 17) normalized by
   // the local dust-to-gas ratio, which in this work is 0.934e-2.
   const double kgr1 = 4.0e-4 / 0.00934;
@@ -151,8 +149,15 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         nm_itmask[i] = MASK_FALSE;
         nm_done = nm_done + 1;
       } else {
-        tdustnow[i] =
-            std::fmax(Trad, std::pow((gamma_isrf[i] / radf / kgr1), 0.17));
+        // we the following is a guess based on the premise that cooling from
+        // thermal radiation is balanced by heating from the interstellar
+        // radiation field.
+        // -> The constants assume that we are using the classic passive dust
+        //    model with Tgrain < 200 Kelvin
+        // -> striclty speaking, the exponent should be 1/6
+        double isrf_balance_guess = std::pow(
+            (gamma_isrf[i] / Tdust_detail::sigma_sb_times_4 / kgr1), 0.17);
+        tdustnow[i] = std::fmax(Trad, isrf_balance_guess);
         pert[i] = pert_i;
       }
 
