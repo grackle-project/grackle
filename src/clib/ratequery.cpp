@@ -78,6 +78,8 @@ static Entry get_PhotoRxn_Entry(chemistry_data_storage* my_rates, int i) {
       return new_Entry(&my_rates->kphCI_bg, "kphCI_bg");
     case PhotoRxnLUT::kphOI_bg:
       return new_Entry(&my_rates->kphOI_bg, "kphOI_bg");
+    case PhotoRxnLUT::kdissCO_bg:
+      return new_Entry(&my_rates->kdissCO_bg, "kdissCO_bg");
     default: {
       return mk_invalid_Entry();
     }

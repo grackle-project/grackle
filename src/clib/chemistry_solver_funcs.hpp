@@ -884,6 +884,8 @@ inline void species_density_updates_gauss_seidel(
             + grain_growth_rates[OnlyGrainSpLUT::AC_dust]      [i] / CI(i,j,k) * 12.;
           }
         }
+        scoef = scoef + 12. *
+            kph_buf[PhotoRxnLUT::kdissCO_bg][i] * CO(i,j,k) /28.0;
         if (my_chemistry->use_radiative_transfer == 1)  {
           if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
             acoef = acoef
@@ -936,6 +938,8 @@ inline void species_density_updates_gauss_seidel(
             + grain_growth_rates[OnlyGrainSpLUT::vol_org_dust]  [i] / CO(i,j,k) * 17.;
           }
         }
+        acoef = acoef
+            + kph_buf[PhotoRxnLUT::kdissCO_bg][i];
         if (my_chemistry->use_radiative_transfer == 1)  {
           if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
             acoef = acoef
@@ -977,6 +981,8 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf[CollisionalRxnLUT::kz32][i] *    CH(i,j,k) / 13.
             + kcol_buf[CollisionalRxnLUT::kz33][i] *    OH(i,j,k) / 17.
             + kph_buf[PhotoRxnLUT::kphOI_bg][i];
+        scoef = scoef + 16. *
+            kph_buf[PhotoRxnLUT::kdissCO_bg][i] * CO(i,j,k) /28.0;
         if (my_chemistry->use_radiative_transfer == 1)  {
           if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
             acoef = acoef
@@ -2251,6 +2257,8 @@ inline void species_density_derivatives_0d(
           + grain_growth_rates[OnlyGrainSpLUT::AC_dust][0]          / CI        * 12.;
         }
       }
+      scoef = scoef + 12. *
+          kph_buf[PhotoRxnLUT::kdissCO_bg][0]    * CO        /28.0;
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
           acoef = acoef
@@ -2303,6 +2311,8 @@ inline void species_density_derivatives_0d(
           + grain_growth_rates[OnlyGrainSpLUT::vol_org_dust][0]      / CO        * 17.;
         }
       }
+      acoef = acoef
+          + kph_buf[PhotoRxnLUT::kdissCO_bg][0];
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
           acoef = acoef
@@ -2344,6 +2354,8 @@ inline void species_density_derivatives_0d(
           + kcol_buf[CollisionalRxnLUT::kz32][0]    *    CH        / 13.
           + kcol_buf[CollisionalRxnLUT::kz33][0]    *    OH        / 17.
           + kph_buf[PhotoRxnLUT::kphOI_bg][0];
+      scoef = scoef + 16. *
+          kph_buf[PhotoRxnLUT::kdissCO_bg][0]    * CO        /28.0;
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
           acoef = acoef

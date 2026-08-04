@@ -391,6 +391,7 @@ typedef struct
     /* Radiative rates for metal species. */
     double *kphCI;
     double *kphOI;
+    double *kdissCO;
 
     double *piHI;
     double *piHeI;
@@ -489,6 +490,7 @@ typedef struct
   /* Radiative rates for metal species (for external field). */
   double kphCI_bg;
   double kphOI_bg;
+  double kdissCO_bg;
 
   /* H2 formation on dust grains */
   double *h2dust;
@@ -653,6 +655,7 @@ typedef struct
     /* Radiative rates for metal species. */
     double kphCI_bg;
     double kphOI_bg;
+    double kdissCO_bg;
 
     double piHI;
     double piHeI;

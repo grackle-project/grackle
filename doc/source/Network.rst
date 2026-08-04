@@ -218,6 +218,21 @@ various parameters.
      - k31
      - none
      - :c:data:`primordial_chemistry` > 1
+   * - C + :math:`{\gamma}`
+     - C\ :sup:`+` + |e-|
+     - kphCI
+     - none
+     - :c:data:`metal_chemistry` = 1
+   * - O + :math:`{\gamma}`
+     - O\ :sup:`+` + |e-|
+     - kphOI
+     - none
+     - :c:data:`metal_chemistry` = 1
+   * - CO + :math:`{\gamma}`
+     - C + O
+     - kdissCO
+     - none
+     - :c:data:`metal_chemistry` = 1
    * - H + H + grain
      - H\ :sub:`2` + grain
      - k2dust

@@ -98,6 +98,14 @@ For all on/off integer flags, 0 is off and 1 is on.
 
    Flag to enable a UV background.  If enabled, the cooling table to be
    used must be specified with the :c:data:`grackle_data_file` parameter.
+   When metal chemistry is enabled (``metal_chemistry`` > 0), the
+   photo-ionization rates of C and O and the photo-dissociation rate of CO
+   are also read from the UV background table (datasets ``kphCI``,
+   ``kphOI`` and ``kdissCO``); if the table does not contain them, these
+   rates are set to zero and a warning is printed.  With
+   :c:data:`self_shielding_method` > 0 the O I rate is attenuated by the
+   same factor as H I (both are driven by photons above the Lyman limit),
+   while the C I and CO rates remain optically thin.
    Default: 0.
 
 .. c:var:: float UVbackground_redshift_on

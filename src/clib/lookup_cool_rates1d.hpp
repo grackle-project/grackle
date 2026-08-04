@@ -604,6 +604,16 @@ inline void apply_misc_shield_factors(
               kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
         }
 
+        // Scale O I photo-ionization (13.62 eV) using the same scaling as
+        // HI. The C I ionization and CO dissociation rates are left
+        // optically thin: they are driven by photons below the Lyman limit.
+        if (my_uvb_rates.kphOI_bg < tiny8) {
+          kph_buf[PhotoRxnLUT::kphOI_bg][i] = 0.;
+        } else {
+          kph_buf[PhotoRxnLUT::kphOI_bg][i] =
+              kph_buf[PhotoRxnLUT::kphOI_bg][i] * tmp.f_shield_H;
+        }
+
         kph_buf[PhotoRxnLUT::k25][i] = my_uvb_rates.k25;
         kph_buf[PhotoRxnLUT::k26][i] = my_uvb_rates.k26;
       }
@@ -636,6 +646,16 @@ inline void apply_misc_shield_factors(
         } else {
           kph_buf[PhotoRxnLUT::k29][i] =
               kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
+        }
+
+        // Scale O I photo-ionization (13.62 eV) using the same scaling as
+        // HI. The C I ionization and CO dissociation rates are left
+        // optically thin: they are driven by photons below the Lyman limit.
+        if (my_uvb_rates.kphOI_bg < tiny8) {
+          kph_buf[PhotoRxnLUT::kphOI_bg][i] = 0.;
+        } else {
+          kph_buf[PhotoRxnLUT::kphOI_bg][i] =
+              kph_buf[PhotoRxnLUT::kphOI_bg][i] * tmp.f_shield_H;
         }
 
         // Apply same equations to HeI (assumes HeI closely follows HI)
@@ -686,6 +706,16 @@ inline void apply_misc_shield_factors(
         } else {
           kph_buf[PhotoRxnLUT::k29][i] =
               kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
+        }
+
+        // Scale O I photo-ionization (13.62 eV) using the same scaling as
+        // HI. The C I ionization and CO dissociation rates are left
+        // optically thin: they are driven by photons below the Lyman limit.
+        if (my_uvb_rates.kphOI_bg < tiny8) {
+          kph_buf[PhotoRxnLUT::kphOI_bg][i] = 0.;
+        } else {
+          kph_buf[PhotoRxnLUT::kphOI_bg][i] =
+              kph_buf[PhotoRxnLUT::kphOI_bg][i] * tmp.f_shield_H;
         }
 
         // Apply same equations to HeI (assumes HeI closely follows HI)
@@ -842,9 +872,14 @@ inline void lookup_cool_rates1d(
       kph_buf[PhotoRxnLUT::k30][i] = my_uvb_rates.k30;
       // k31 is handled separately
 
-      // metal photo-ionization rates (these are never self-shielded)
+      // metal photo-ionization/photo-dissociation rates. Only kphOI_bg is
+      // self-shielded (in apply_misc_shield_factors): O I ionization
+      // (13.62 eV) uses the same photons as H I, while C I ionization
+      // (11.26 eV) and CO dissociation (11.2-13.6 eV) sit below the Lyman
+      // limit, where the gas is transparent.
       kph_buf[PhotoRxnLUT::kphCI_bg][i] = my_uvb_rates.kphCI_bg;
       kph_buf[PhotoRxnLUT::kphOI_bg][i] = my_uvb_rates.kphOI_bg;
+      kph_buf[PhotoRxnLUT::kdissCO_bg][i] = my_uvb_rates.kdissCO_bg;
     }
   }
 
