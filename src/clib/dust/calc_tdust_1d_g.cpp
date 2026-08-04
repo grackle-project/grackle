@@ -187,7 +187,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       if (nm_itmask[i] != MASK_FALSE) {
         // Check if the solution has converged (if not prepare the next guess)
 
-        auto slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
+        double slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
 
         tdustold[i] = tdustnow[i];
         // tdustnow(i) = tdustnow(i) - (sol(i) / slope)
