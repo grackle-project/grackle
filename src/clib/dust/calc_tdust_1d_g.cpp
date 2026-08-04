@@ -82,11 +82,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         kgr[i] = calculator.calc_opac(Tdust[i], i);
-      }
-    }
-
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
         sol[i] = Tdust_detail::calc_grain_balance(
             Tdust[i], tgas[i], kgr[i], Trad4, gasgr[i], gamma_isrf[i], nh[i]);
       }
