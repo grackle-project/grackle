@@ -56,7 +56,7 @@ public:
   /// This logic is descended from logic originally written by Britton Smith in
   /// September 2011. That logic was subsequently ported to C++ in March 2026
   /// by Christopher Bignamini & Matthew Abruzzo
-  double calc_opac(double tdust) const noexcept {
+  double calc_opac(double tdust, int i) const noexcept {
     // Temperature dependence from Dopcke et al. (2011).
     // Normalized to Omukai (2000).
     // See comment above for note about Td dependence for kgr.

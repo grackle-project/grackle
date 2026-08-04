@@ -111,6 +111,7 @@ add_library(Grackle_Grackle
   dust/lookup_dust_rates1d.hpp
   dust/multi_grain_species/calc_grain_size_increment_1d.hpp
   dust/multi_grain_species/calc_grain_size_increment_species_1d.cpp dust/multi_grain_species/calc_grain_size_increment_species_1d.hpp
+  dust/multi_grain_species/opac_calculator.hpp
   dust/misc.hpp
   dust/passive/analytic_opac.hpp
   dynamic_api.cpp

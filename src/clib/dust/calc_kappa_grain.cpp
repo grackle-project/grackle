@@ -16,8 +16,9 @@
 #include <vector>
 
 #include "interpolate.hpp"
-#include "support/View.hpp"
+#include "multi_grain_species/opac_calculator.hpp"
 #include "passive/analytic_opac.hpp"
+#include "support/View.hpp"
 
 #include "calc_kappa_grain.hpp"
 
@@ -32,26 +33,15 @@ void calc_kappa_grain(const double* tdust, double* kgr,
     AnalyticOpacCalc calculator(t_subl);
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kgr[i] = calculator.calc_opac(tdust[i]);
+        kgr[i] = calculator.calc_opac(tdust[i], i);
       }
     }
   } else {
-    // Opacity table
-    FortranView<const double**> logalsp(logalsp_data_, gr_N, in);
-    std::vector<double> logalsp1(gr_Size);
-    long long gr_N_i64 = static_cast<long long>(gr_N);
-
+    MultiGrainGrowthOpacCalc calculator(in, gr_N, gr_Size, gr_dT, gr_Td,
+                                        logalsp_data_);
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        for (int j = 0; j < gr_Size; j++) {
-          logalsp1[j] = logalsp(j, i);
-        }
-        double log10tdust = std::log10(tdust[i]);
-
-        double logkgr = interpolate_1d(log10tdust, &gr_N_i64, gr_Td, gr_dT,
-                                       gr_N_i64, logalsp1.data());
-
-        kgr[i] = std::pow(10., logkgr);
+        kgr[i] = calculator.calc_opac(tdust[i], i);
       }
     }
   }
