@@ -56,6 +56,14 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   const double Trad = std::fmax(1., nominal_Trad);
   const double Trad4 = std::pow(Trad, 4);
 
+  // fill a buffer with the heating rate from the interstellar radiation field
+  std::vector<double> gamma_isrf(buf_len);
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      gamma_isrf[i] = isrf[i] * gamma_isrfa[i];
+    }
+  }
+
   // define an inline function that computes the grain opacity for the provided
   // dust temperature range.
   // -> in the future, we probably want to refactor calc_gr_balance_g so that
@@ -81,7 +89,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // the local dust-to-gas ratio, which in this work is 0.934e-2.
   const double kgr1 = 4.0e-4 / 0.00934;
 
-  std::vector<double> gamma_isrf(buf_len);
   const double tol = 1.e-5;
   const double bi_tol = 1.e-3;
   const double minpert = 1.e-10;
@@ -123,12 +130,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   c_total = idx_range.i_stop - idx_range.i_start;
 
   // Set local iteration mask and initial guess
-
-  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      gamma_isrf[i] = isrf[i] * gamma_isrfa[i];
-    }
-  }
 
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     nm_itmask[i] = itmask[i];
