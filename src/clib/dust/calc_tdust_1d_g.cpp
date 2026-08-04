@@ -17,7 +17,8 @@
 #include <vector>
 
 #include "dust/calc_gr_balance_g.hpp"
-#include "dust/calc_kappa_grain.hpp"
+#include "dust/multi_grain_species/opac_calculator.hpp"
+#include "dust/passive/analytic_opac.hpp"
 #include "grackle.h"
 #include "fortran_func_decls.h"
 // TODO: to be removed when transcription is done
@@ -30,29 +31,47 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
-                     const double* gamma_isrfa, const double* isrf,
-                     const gr_mask_type* itmask, double trad, int buf_len,
-                     int gr_N, double gr_dT, const double* gr_Td,
-                     const double* alsp_data_, double* kgr, int idspecies,
-                     IndexRange idx_range) {
-  // opacity table of a grain species
-  //
-  // In some configurations gr_N can be 0 while the backing buffer may still be
-  // non-null. The View invariant disallows non-null data with a zero leading
-  // extent, so pass nullptr for the zero-length case.
-  const double* alsp_ptr = (gr_N > 0) ? alsp_data_ : nullptr;
-  FortranView<const double**> alsp(alsp_ptr, gr_N, buf_len);
-  std::vector<double> logalsp_data_(gr_N * buf_len);
-  double* logalsp_ptr = (gr_N > 0) ? logalsp_data_.data() : nullptr;
-  FortranView<double**> logalsp(logalsp_ptr, gr_N, buf_len);
-  int Td_Size;
-  int Td_N;
+// grain sublimation temperature in passive dust model
+static constexpr double passive_dust_model_T_sublimation = 1500.0;
 
-  // Parameters
+/// @brief A helper function that helps implement calc_tdust_1d
+///
+/// The basic premise is that the particulars of the opacity calculation are
+/// handled by the `OpacCalculator` template argument.
+///
+/// In the future, we may want to entirely replace @ref calc_tdust_1d with this
+/// function template (if we do that, this will need to be moved to the header)
+///
+/// @todo
+/// Consider using a hybrid Newton-Bisection strategy. The section in Numerical
+/// Recipes on Newton-Raphson describes this kind of strategy. I would be
+/// shocked if a hybrid scheme wasn't superior to running pure Newton-Raphson
+/// and then falling back to Bisection.
+template <typename OpacCalculator>
+void calc_tdust_1d_(double* tdust, double* tgas, double* nh, double* gasgr,
+                    const double* gamma_isrfa, const double* isrf,
+                    const gr_mask_type* itmask, double trad, int buf_len,
+                    double* kgr, IndexRange idx_range,
+                    const OpacCalculator& calculator) {
+  // define an inline function that computes the grain opacity for the provided
+  // dust temperature range.
+  // -> in the future, we probably want to refactor calc_gr_balance_g so that
+  //    we can compute opacity and energy balance at the same time
+  // -> in that scenario, we may not want to actually include the for-loop in
+  //    this function, to help us try to minimize the number of temporary
+  //    buffers we use.
+  // -> we should also think about directly computing analytic derivatives.
+  //    This shouldn't be too hard and would significantly improve the
+  //    robustness (and speed) of the newton solver pass
+  auto calc_kappa = [&](const double* tdust, double* kgr,
+                        const gr_mask_type* itmask, IndexRange idx_range) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kgr[i] = calculator.calc_opac(tdust[i], i);
+      }
+    }
+  };
 
-  // grain sublimation temperature
-  double t_subl = 1.5e3;  // TODO: should be const
   const double radf = 4. * sigma_sb_grflt;
 
   // grain opacity from Omukai (2000, equation 17) normalized by
@@ -68,7 +87,7 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
 
   // Locals
 
-  int i, iter, c_done, c_total, nm_done;
+  int iter, c_done, c_total, nm_done;
 
   double pert_i, floored_trad, floored_trad4;
 
@@ -99,18 +118,6 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
   floored_trad = std::fmax(1., trad);
   floored_trad4 = std::pow(floored_trad, 4);
 
-  // \sum rho_SN kappa_SN / \sum rho_SN ndust_SN
-
-  Td_N = gr_N;
-  Td_Size = gr_N;
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      for (int j = 0; j < gr_N; j++) {
-        logalsp(j, i) = std::log10(alsp(j, i));
-      }
-    }
-  }
-
   // Set total cells for calculation
 
   c_done = 0;
@@ -119,13 +126,13 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
 
   // Set local iteration mask and initial guess
 
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       gamma_isrf[i] = isrf[i] * gamma_isrfa[i];
     }
   }
 
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     nm_itmask[i] = itmask[i];
     bi_itmask[i] = itmask[i];
     if (nm_itmask[i] != MASK_FALSE) {
@@ -135,7 +142,7 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
         bi_itmask[i] = MASK_FALSE;
         c_done = c_done + 1;
         nm_done = nm_done + 1;
-      } else if (tgas[i] > t_subl) {
+      } else if (tgas[i] > passive_dust_model_T_sublimation) {
         // Use bisection if T_gas > grain sublimation temperature.
         nm_itmask[i] = MASK_FALSE;
         nm_done = nm_done + 1;
@@ -156,20 +163,15 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
   for (iter = 1; iter <= (itmax); iter++) {
     // Loop over slice
 
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (nm_itmask[i] != MASK_FALSE) {
         tdplus[i] = std::fmax(1.e-3, ((1. + pert[i]) * tdustnow[i]));
       }
     }
 
     // Calculate grain opacities
-    calc_kappa_grain(tdustnow.data(), kgr, nm_itmask.data(), buf_len, idx_range,
-                     t_subl, Td_N, Td_Size, gr_dT, gr_Td, logalsp.data(),
-                     idspecies);
-
-    calc_kappa_grain(tdplus.data(), kgrplus.data(), nm_itmask.data(), buf_len,
-                     idx_range, t_subl, Td_N, Td_Size, gr_dT, gr_Td,
-                     logalsp.data(), idspecies);
+    calc_kappa(tdustnow.data(), kgr, nm_itmask.data(), idx_range);
+    calc_kappa(tdplus.data(), kgrplus.data(), nm_itmask.data(), idx_range);
 
     // Calculate heating/cooling balance
 
@@ -181,7 +183,7 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
                       gamma_isrf.data(), nh, nm_itmask.data(), solplus.data(),
                       idx_range);
 
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (nm_itmask[i] != MASK_FALSE) {
         // Check if the solution has converged (if not prepare the next guess)
 
@@ -230,7 +232,7 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
 
   // If iteration count exceeded, try once more with bisection
   if (c_done < c_total) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (bi_itmask[i] != MASK_FALSE) {
         tdustnow[i] = floored_trad;
         // bi_t_high(i) = tgas(i)
@@ -239,24 +241,23 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
     }
 
     for (iter = 1; iter <= (bi_itmax); iter++) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
           bi_t_mid[i] = 0.5 * (tdustnow[i] + bi_t_high[i]);
           if (iter == 1) {
-            bi_t_mid[i] = std::fmin(bi_t_mid[i], t_subl);
+            bi_t_mid[i] =
+                std::fmin(bi_t_mid[i], passive_dust_model_T_sublimation);
           }
         }
       }
 
-      calc_kappa_grain(bi_t_mid.data(), kgr, bi_itmask.data(), buf_len,
-                       idx_range, t_subl, Td_N, Td_Size, gr_dT, gr_Td,
-                       logalsp.data(), idspecies);
+      calc_kappa(bi_t_mid.data(), kgr, bi_itmask.data(), idx_range);
 
       calc_gr_balance_g(bi_t_mid.data(), tgas, kgr, floored_trad4, gasgr,
                         gamma_isrf.data(), nh, bi_itmask.data(), sol.data(),
                         idx_range);
 
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
           if (sol[i] > 0.) {
             tdustnow[i] = bi_t_mid[i];
@@ -300,7 +301,7 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
   }
 
   // Copy values back to thrown slice
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       // Check for bad solutions
       if (tdustnow[i] < 0.) {
@@ -319,6 +320,45 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
   }
 
   return;
+}
+
+void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
+                     const double* gamma_isrfa, const double* isrf,
+                     const gr_mask_type* itmask, double trad, int buf_len,
+                     int gr_N, double gr_dT, const double* gr_Td,
+                     const double* alsp_data_, double* kgr, int idspecies,
+                     IndexRange idx_range) {
+  // opacity table of a grain species
+  //
+  // In some configurations gr_N can be 0 while the backing buffer may still be
+  // non-null. The View invariant disallows non-null data with a zero leading
+  // extent, so pass nullptr for the zero-length case.
+  const double* alsp_ptr = (gr_N > 0) ? alsp_data_ : nullptr;
+  FortranView<const double**> alsp(alsp_ptr, gr_N, buf_len);
+  std::vector<double> logalsp_data_(gr_N * buf_len);
+  double* logalsp_ptr = (gr_N > 0) ? logalsp_data_.data() : nullptr;
+  FortranView<double**> logalsp(logalsp_ptr, gr_N, buf_len);
+
+  int Td_N = gr_N;
+  int Td_Size = gr_N;
+  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      for (int j = 0; j < gr_N; j++) {
+        logalsp(j, i) = std::log10(alsp(j, i));
+      }
+    }
+  }
+
+  if (idspecies == 0) {
+    AnalyticOpacCalc calculator(passive_dust_model_T_sublimation);
+    calc_tdust_1d_(tdust, tgas, nh, gasgr, gamma_isrfa, isrf, itmask, trad,
+                   buf_len, kgr, idx_range, calculator);
+  } else {
+    MultiGrainGrowthOpacCalc calculator(buf_len, Td_N, Td_Size, gr_dT, gr_Td,
+                                        logalsp_data_.data());
+    calc_tdust_1d_(tdust, tgas, nh, gasgr, gamma_isrfa, isrf, itmask, trad,
+                   buf_len, kgr, idx_range, calculator);
+  }
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
