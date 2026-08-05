@@ -214,8 +214,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
   std::vector<double> sol(buf_len);
   std::vector<double> solplus(buf_len);
-  // holds dust temperature guess from the last root-finding iteration
-  std::vector<double> tdustold(buf_len);
   // holds dust temperature guess for the current root-finding iteration
   std::vector<double> tdustnow(buf_len);
   // relative finite difference step size
@@ -296,13 +294,13 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
         double slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
 
-        tdustold[i] = tdustnow[i];
+        double Tdust_old = tdustnow[i];
         // tdustnow(i) = tdustnow(i) - (sol(i) / slope)
         tdustnow[i] = std::fmin(tdustnow[i] - (sol[i] / slope), 3e3);
 
         pert[i] = std::fmax(
-            std::fmin(pert[i], (0.5 * std::fabs(tdustnow[i] - tdustold[i]) /
-                                tdustnow[i])),
+            std::fmin(pert[i],
+                      (0.5 * std::fabs(tdustnow[i] - Tdust_old) / tdustnow[i])),
             minpert);
 
         // If negative solution calculated, give up and wait for bisection step.
