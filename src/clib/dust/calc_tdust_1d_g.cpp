@@ -212,16 +212,12 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
   // Slice Locals
 
-  std::vector<double> kgrplus(buf_len);
   std::vector<double> sol(buf_len);
   std::vector<double> solplus(buf_len);
   // holds dust temperature guess from the last root-finding iteration
   std::vector<double> tdustold(buf_len);
   // holds dust temperature guess for the current root-finding iteration
   std::vector<double> tdustnow(buf_len);
-  // holds a value offset from the current dust temperature (tdustnow)
-  // it is used to get a finite difference estimate for the derivative
-  std::vector<double> tdplus(buf_len);
   // relative finite difference step size
   std::vector<double> pert(buf_len);
   std::vector<double> bi_t_high(buf_len);
@@ -277,14 +273,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // Iterate to convergence with Newton's method
 
   for (iter = 1; iter <= (itmax); iter++) {
-    // Loop over slice
-
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (nm_itmask[i] != MASK_FALSE) {
-        tdplus[i] = std::fmax(1.e-3, ((1. + pert[i]) * tdustnow[i]));
-      }
-    }
-
     // Calculate grain opacities AND heating/cooling balance
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (nm_itmask[i] != MASK_FALSE) {
@@ -295,11 +283,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (nm_itmask[i] != MASK_FALSE) {
-        // can we get rid of tdplus?
-        FnEval eval_rslt = fn(tdplus[i], i);
-        // todo: get rid of kgrplus
-        kgrplus[i] = eval_rslt.associated_val;
+        double Tdust_plus = std::fmax(1.e-3, (1. + pert[i]) * tdustnow[i]);
+        FnEval eval_rslt = fn(Tdust_plus, i);
         solplus[i] = eval_rslt.f_val;
+        // we don't need to record eval_rslt.associated_val
       }
     }
 
