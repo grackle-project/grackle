@@ -140,7 +140,7 @@ static int unchecked_bisect(
         x_a[i] = branchless_choice(update_a, x_mid, x_a[i]);
         x_b[i] = branchless_choice(update_a, x_b[i], x_mid);
 
-        if ((std::fabs(x_b[i] - x_a[i]) / x_a[i]) <= rtol) {
+        if (std::fabs(x_b[i] - x_a[i]) <= std::fabs(x_a[i]) * rtol) {
           itmask[i] = MASK_FALSE;
           n_unconverged--;
         }
@@ -353,6 +353,14 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // If iteration count exceeded, try once more with bisection
   if (c_done < c_total) {
     // set initial guesses
+    //
+    // There's an implicit assumption here that
+    // - fn(tdustnow[i], i).f_val > 0
+    // - fn(bi_t_high[i], i).f_val < 0
+    //
+    // We may want to check that assumption is indeed correct. While its
+    // unlikely to be false, the iteration will fail silently (with an
+    // absolute garbage result) on the off chance that it comes up
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (bi_itmask[i] != MASK_FALSE) {
         tdustnow[i] = Trad;
@@ -369,6 +377,8 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
                          bi_tol, bi_itmax, max_initial_guess);
 
     // If iteration count exceeded with bisection, end of the line.
+    // -> Since `(bi_itmax+1) < itmax`, I'm pretty sure the following
+    //    if-statement is never invoked
     if (iter > itmax) {
       int n_unconverged = 0;
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
