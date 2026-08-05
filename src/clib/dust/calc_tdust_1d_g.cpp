@@ -53,8 +53,56 @@ struct FnEval {
 };
 
 // this could definitely be better generalized
+/// @brief Find root of a function within an interval at a number of locations
+///
+/// Uses the bisection method to find an array of roots for @p fn (a
+/// scalar-valued function) for an array of bracktting intervals. Values
+/// associated the function evaluation are recorded to @p associated_vals
+///
+/// @param[in]    fn Function object representing the models the mathematical
+///    function for which roots are computed. This should have a signature
+///    of the form `FnEval fn(double x, int i)` where `i` refers to an
+///    associated array index
+/// @param[inout] x_a, x_b Arrays of interval bounds bracketting the root.
+///    Elements are updated in place as the bounds around the root are
+///    narrowed. Historically, we have called the final value in x_a the
+///    root. See the note below for additional requirements.
+/// @param[out]   associated_vals Output buffer for storing values computed
+///    while root finding. At this time, it is not specifies whether the value
+///    at index `i` cooresponds to `x_a[i]` or `x_b[i]`.
+/// @param[inout] itmask Array specifying the indices in the index range where
+///    bisection is performed. Elements will be updated as convergence is
+///    achieved.
+/// @param[in]    i_start, i_stop The range of indices for which root finding
+///    is performed.
+/// @param[in]    rtol Convergence is achieved when at an index `i`, when
+///    `fabs((x_b[i] - x_a[i]) / x_a[i]) <= rtol`.
+/// @param[in]    max_iter The maximum number of iterations
+/// @param[in]    max_initial_guess The maximum value of the very first
+///     midpoint.
+///
+/// @returns The maximum number of considered iterations. When @p max_iter is
+///     exceeded by this value, that's an indication that some calculations did
+///     not converge. You can identify unconverged locations by checking the
+///     values of @p itmask
+///
+/// @todo
+/// We should get rid of the @p max_initial_guess argument. It primarily exists
+/// for historical consistency. We could get rid of it by providing better
+/// initial x_a and x_b arguments.
+///
+/// @note
+/// For an index `i`, the current implementation requires (but does not
+/// explicitly enforce) that `fn(x_a[i], i).f_val > 0` and
+/// `fn(x_b[i], i).f_val < 0`. If this condition is not satisfied, then the
+/// results are undefined. The fact that these conditons aren't checked is
+/// reflected by the name of this function template.
+///
+/// @warning
+/// The current implementation for comparing to `rtol` introduces an implicit
+/// assumption that `x_a` and `x_b` both initially hold positive values.
 template <typename Fn>
-static int bisect(
+static int unchecked_bisect(
     const Fn& fn, double* x_a, double* x_b, double* associated_vals,
     gr_mask_type* itmask, int i_start, int i_stop, double rtol, int max_iter,
     double max_initial_guess = std::numeric_limits<double>::max()) {
@@ -315,9 +363,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
     double max_initial_guess = passive_dust_model_T_sublimation;
     double* associated_vals = kgr;
-    iter = bisect(fn, tdustnow.data(), bi_t_high.data(), associated_vals,
-                  bi_itmask.data(), idx_range.i_start, idx_range.i_stop, bi_tol,
-                  bi_itmax, max_initial_guess);
+    iter =
+        unchecked_bisect(fn, tdustnow.data(), bi_t_high.data(), associated_vals,
+                         bi_itmask.data(), idx_range.i_start, idx_range.i_stop,
+                         bi_tol, bi_itmax, max_initial_guess);
 
     // If iteration count exceeded with bisection, end of the line.
     if (iter > itmax) {
