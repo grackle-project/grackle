@@ -33,6 +33,23 @@ namespace GRIMPL_NAMESPACE_DECL {
 // grain sublimation temperature in passive dust model
 static constexpr double passive_dust_model_T_sublimation = 1500.0;
 
+/// @brief Aggregates results of a function that is being iteratively solved
+///
+/// @note
+/// To more fully support Newton-Raphson, we may want to consider adding a slot
+/// for the derivative
+struct FnEval {
+  /// the calculated value
+  double f_val;
+
+  /// @brief an associated intermediate value
+  ///
+  /// The basic premise is that this value is calculated in the process of
+  /// computing @ref f_val and we are interested in its value at the location
+  /// where the function has been solved.
+  double associated_val;
+};
+
 /// @brief A helper function that helps implement calc_tdust_1d
 ///
 /// The basic premise is that the particulars of the opacity calculation are
@@ -69,23 +86,14 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // temperature. The root finding hunts for the dust temperature where the
   // grain's heating and cooling are balanced (we are also interested in
   // returning the associated opacity).
-  // -> in the future, we probably want to refactor calc_gr_balance_g so that
-  //    we can compute opacity and energy balance at the same time
-  // -> in that scenario, we may not want to actually include the for-loop in
-  //    this function, to help us try to minimize the number of temporary
-  //    buffers we use.
-  // -> we should also think about directly computing analytic derivatives.
-  //    This shouldn't be too hard and would significantly improve the
-  //    robustness (and speed) of the newton solver pass
-  auto fn = [&](const double* Tdust, double* kgr, double* sol,
-                const gr_mask_type* itmask, IndexRange idx_range) {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        kgr[i] = calculator.calc_opac(Tdust[i], i);
-        sol[i] = Tdust_detail::calc_grain_balance(
-            Tdust[i], tgas[i], kgr[i], Trad4, gasgr[i], gamma_isrf[i], nh[i]);
-      }
-    }
+  // -> we should think about directly computing analytic derivatives. This
+  //    shouldn't be too hard and would significantly improve the robustness
+  //    (and speed) of the newton solver pass
+  auto fn = [&](double Tdust, int i) -> FnEval {
+    double kgr = calculator.calc_opac(Tdust, i);
+    double sol = Tdust_detail::calc_grain_balance(
+        Tdust, tgas[i], kgr, Trad4, gasgr[i], gamma_isrf[i], nh[i]);
+    return {sol, kgr};
   };
 
   // grain opacity from Omukai (2000, equation 17) normalized by
@@ -179,9 +187,22 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
 
     // Calculate grain opacities AND heating/cooling balance
-    fn(tdustnow.data(), kgr, sol.data(), nm_itmask.data(), idx_range);
-    fn(tdplus.data(), kgrplus.data(), solplus.data(), nm_itmask.data(),
-       idx_range);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (nm_itmask[i] != MASK_FALSE) {
+        FnEval eval_rslt = fn(tdustnow[i], i);
+        kgr[i] = eval_rslt.associated_val;
+        sol[i] = eval_rslt.f_val;
+      }
+    }
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (nm_itmask[i] != MASK_FALSE) {
+        // can we get rid of tdplus?
+        FnEval eval_rslt = fn(tdplus[i], i);
+        // todo: get rid of kgrplus
+        kgrplus[i] = eval_rslt.associated_val;
+        solplus[i] = eval_rslt.f_val;
+      }
+    }
 
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (nm_itmask[i] != MASK_FALSE) {
@@ -251,7 +272,13 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         }
       }
 
-      fn(bi_t_mid.data(), kgr, sol.data(), bi_itmask.data(), idx_range);
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (bi_itmask[i] != MASK_FALSE) {
+          FnEval eval_rslt = fn(bi_t_mid[i], i);
+          kgr[i] = eval_rslt.associated_val;
+          sol[i] = eval_rslt.f_val;
+        }
+      }
 
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
