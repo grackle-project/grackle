@@ -51,6 +51,57 @@ struct FnEval {
   double associated_val;
 };
 
+// this could definitely be better generalized
+template <typename Fn>
+static int bisect(const Fn& fn, double* x_a, double* x_b,
+                  double* associated_vals, gr_mask_type* bi_itmask,
+                  IndexRange idx_range, double rtol, int max_iter,
+                  double max_initial_guess) {
+  int n_unconverged = 0;
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    n_unconverged += (bi_itmask[i] != MASK_FALSE);
+  }
+
+  // implicitly assumption that
+  //   - fn(x_a[i], i).f_val > 0
+  //   - fn(x_b[i], i).f_val < 0
+  // TODO: we should probably check this assumption (especially for
+  //       multi-species dust grains)
+
+  int iter;
+  for (iter = 1; n_unconverged > 0 && iter <= max_iter; iter++) {
+    // compute midpoint
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (bi_itmask[i] != MASK_FALSE) {
+        double x_mid = 0.5 * (x_a[i] + x_b[i]);
+        if (iter == 1) {
+          x_mid = std::fmin(x_mid, max_initial_guess);
+        }
+
+        FnEval eval_rslt = fn(x_mid, i);
+        associated_vals[i] = eval_rslt.associated_val;
+
+        // TODO: consider implementing common bisection strategy that tracks
+        //       x_a and current bracket width. This is advantageous because
+        //       we can eliminate the conditional update of x_b (we know that
+        //       bracket width is always cut in half each iteration)
+        //
+        // if x_a, x_b, or x_mid isn't finite, branchless choice will act
+        // weird (but we will be pretty doomed in that scenario, anyway)
+        bool update_a = eval_rslt.f_val > 0.0;
+        x_a[i] = branchless_choice(update_a, x_mid, x_a[i]);
+        x_b[i] = branchless_choice(update_a, x_b[i], x_mid);
+
+        if ((std::fabs(x_b[i] - x_a[i]) / x_a[i]) <= rtol) {
+          bi_itmask[i] = MASK_FALSE;
+          n_unconverged--;
+        }
+      }
+    }
+  }
+  return iter;
+}
+
 /// @brief A helper function that helps implement calc_tdust_1d
 ///
 /// The basic premise is that the particulars of the opacity calculation are
@@ -263,46 +314,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
 
     double max_initial_guess = passive_dust_model_T_sublimation;
-    double* x_a = tdustnow.data();
-    double* x_b = bi_t_high.data();
     double* associated_vals = kgr;
-    int n_unconverged = c_total - c_done;
-    // implicitly assumption that
-    //   - sol[i] > 0 for x_a[i]
-    //   - sol[i] < 0 for x_b[i]
-    // TODO: we should probably check this assumption (especially for
-    //       multi-species dust grains)
-
-    for (iter = 1; n_unconverged > 0 && iter <= bi_itmax; iter++) {
-      // compute midpoint
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (bi_itmask[i] != MASK_FALSE) {
-          double x_mid = 0.5 * (x_a[i] + x_b[i]);
-          if (iter == 1) {
-            x_mid = std::fmin(x_mid, max_initial_guess);
-          }
-
-          FnEval eval_rslt = fn(x_mid, i);
-          associated_vals[i] = eval_rslt.associated_val;
-
-          // TODO: consider implementing common bisection strategy that tracks
-          //       x_a and current bracket width. This is advantageous because
-          //       we can eliminate the conditional update of x_b (we know that
-          //       bracket width is always cut in half each iteration)
-          //
-          // if x_a, x_b, or x_mid isn't finite, branchless choice will act
-          // weird (but we will be pretty doomed in that scenario, anyway)
-          bool update_a = eval_rslt.f_val > 0.0;
-          x_a[i] = branchless_choice(update_a, x_mid, x_a[i]);
-          x_b[i] = branchless_choice(update_a, x_b[i], x_mid);
-
-          if ((std::fabs(x_b[i] - x_a[i]) / x_a[i]) <= bi_tol) {
-            bi_itmask[i] = MASK_FALSE;
-            n_unconverged--;
-          }
-        }
-      }
-    }
+    iter = bisect(fn, tdustnow.data(), bi_t_high.data(), associated_vals,
+                  bi_itmask.data(), idx_range, bi_tol, bi_itmax,
+                  max_initial_guess);
 
     // If iteration count exceeded with bisection, end of the line.
     if (iter > itmax) {
