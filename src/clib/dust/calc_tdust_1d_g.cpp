@@ -263,8 +263,9 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
 
     double max_initial_guess = passive_dust_model_T_sublimation;
-    std::vector<double>& x_a = tdustnow;
-    std::vector<double>& x_b = bi_t_high;
+    double* x_a = tdustnow.data();
+    double* x_b = bi_t_high.data();
+    double* associated_vals = kgr;
     int n_unconverged = c_total - c_done;
     // implicitly assumption that
     //   - sol[i] > 0 for x_a[i]
@@ -282,7 +283,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
           }
 
           FnEval eval_rslt = fn(x_mid, i);
-          kgr[i] = eval_rslt.associated_val;
+          associated_vals[i] = eval_rslt.associated_val;
 
           // TODO: consider implementing common bisection strategy that tracks
           //       x_a and current bracket width. This is advantageous because
