@@ -262,9 +262,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
 
     double max_initial_guess = passive_dust_model_T_sublimation;
+    std::vector<double>& x_a = tdustnow;
     std::vector<double>& x_b = bi_t_high;
     // implicitly assumption that
-    //   - sol[i] > 0 for tdustnow[i]
+    //   - sol[i] > 0 for x_a[i]
     //   - sol[i] < 0 for x_b[i]
     // TODO: we should probably check this assumption (especially for
     //       multi-species dust grains)
@@ -273,7 +274,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     for (iter = 1; iter <= (bi_itmax); iter++) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
-          x_mid[i] = 0.5 * (tdustnow[i] + x_b[i]);
+          x_mid[i] = 0.5 * (x_a[i] + x_b[i]);
           if (iter == 1) {
             x_mid[i] = std::fmin(x_mid[i], max_initial_guess);
           }
@@ -291,12 +292,12 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
           if (sol[i] > 0.) {
-            tdustnow[i] = x_mid[i];
+            x_a[i] = x_mid[i];
           } else {
             x_b[i] = x_mid[i];
           }
 
-          if ((std::fabs(x_b[i] - tdustnow[i]) / tdustnow[i]) <= bi_tol) {
+          if ((std::fabs(x_b[i] - x_a[i]) / x_a[i]) <= bi_tol) {
             bi_itmask[i] = MASK_FALSE;
             c_done = c_done + 1;
           }
