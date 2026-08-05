@@ -284,18 +284,12 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         }
       }
 
-      // calculate value at midpoint
+      // calculate value at midpoint, update bounds and check if converged
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
           FnEval eval_rslt = fn(x_mid[i], i);
           kgr[i] = eval_rslt.associated_val;
-          sol[i] = eval_rslt.f_val;
-        }
-      }
 
-      // update x_a or x_b and check if converged
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (bi_itmask[i] != MASK_FALSE) {
           // TODO: consider implementing common bisection strategy that tracks
           //       x_a and current bracket width. This is advantageous because
           //       we can eliminate the conditional update of x_b (we know that
@@ -303,7 +297,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
           //
           // if x_a, x_b, or x_mid isn't finite, branchless choice will act
           // weird (but we will be pretty doomed in that scenario, anyway)
-          bool update_a = sol[i] > 0.0;
+          bool update_a = eval_rslt.f_val > 0.0;
           x_a[i] = branchless_choice(update_a, x_mid[i], x_a[i]);
           x_b[i] = branchless_choice(update_a, x_b[i], x_mid[i]);
 
