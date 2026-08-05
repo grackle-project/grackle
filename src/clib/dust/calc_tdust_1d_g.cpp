@@ -288,37 +288,40 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       }
     }
 
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (nm_itmask[i] != MASK_FALSE) {
-        // Check if the solution has converged (if not prepare the next guess)
+    {  // perform newton's method
+      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        if (nm_itmask[i] != MASK_FALSE) {
+          // Check if the solution has converged (if not prepare the next guess)
 
-        double slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
+          double slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
 
-        double Tdust_old = tdustnow[i];
-        // tdustnow(i) = tdustnow(i) - (sol(i) / slope)
-        tdustnow[i] = std::fmin(tdustnow[i] - (sol[i] / slope), 3e3);
+          double Tdust_old = tdustnow[i];
+          // tdustnow(i) = tdustnow(i) - (sol(i) / slope)
+          tdustnow[i] = std::fmin(tdustnow[i] - (sol[i] / slope), 3e3);
 
-        pert[i] = std::fmax(
-            std::fmin(pert[i],
-                      (0.5 * std::fabs(tdustnow[i] - Tdust_old) / tdustnow[i])),
-            minpert);
+          pert[i] = std::fmax(
+              std::fmin(pert[i], (0.5 * std::fabs(tdustnow[i] - Tdust_old) /
+                                  tdustnow[i])),
+              minpert);
 
-        // If negative solution calculated, give up and wait for bisection step.
-        if (tdustnow[i] < Trad) {
-          nm_itmask[i] = MASK_FALSE;
-          nm_done = nm_done + 1;
-          // Check for convergence of solution
-        } else if (std::fabs(sol[i] / solplus[i]) < tol) {
-          nm_itmask[i] = MASK_FALSE;
-          c_done = c_done + 1;
-          bi_itmask[i] = MASK_FALSE;
-          nm_done = nm_done + 1;
+          // If negative solution calculated, give up and wait for bisection
+          // step.
+          if (tdustnow[i] < Trad) {
+            nm_itmask[i] = MASK_FALSE;
+            nm_done = nm_done + 1;
+            // Check for convergence of solution
+          } else if (std::fabs(sol[i] / solplus[i]) < tol) {
+            nm_itmask[i] = MASK_FALSE;
+            c_done = c_done + 1;
+            bi_itmask[i] = MASK_FALSE;
+            nm_done = nm_done + 1;
+          }
+
+          // if ( nm_itmask(i) )
         }
 
-        // if ( nm_itmask(i) )
+        // End loop over slice
       }
-
-      // End loop over slice
     }
 
     // Check for all cells converged
