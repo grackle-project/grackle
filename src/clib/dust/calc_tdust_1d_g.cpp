@@ -272,22 +272,16 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     // TODO: we should probably check this assumption (especially for
     //       multi-species dust grains)
 
-    std::vector<double> x_mid(buf_len);
     for (iter = 1; n_unconverged > 0 && iter <= bi_itmax; iter++) {
       // compute midpoint
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
-          x_mid[i] = 0.5 * (x_a[i] + x_b[i]);
+          double x_mid = 0.5 * (x_a[i] + x_b[i]);
           if (iter == 1) {
-            x_mid[i] = std::fmin(x_mid[i], max_initial_guess);
+            x_mid = std::fmin(x_mid, max_initial_guess);
           }
-        }
-      }
 
-      // calculate value at midpoint, update bounds and check if converged
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (bi_itmask[i] != MASK_FALSE) {
-          FnEval eval_rslt = fn(x_mid[i], i);
+          FnEval eval_rslt = fn(x_mid, i);
           kgr[i] = eval_rslt.associated_val;
 
           // TODO: consider implementing common bisection strategy that tracks
@@ -298,8 +292,8 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
           // if x_a, x_b, or x_mid isn't finite, branchless choice will act
           // weird (but we will be pretty doomed in that scenario, anyway)
           bool update_a = eval_rslt.f_val > 0.0;
-          x_a[i] = branchless_choice(update_a, x_mid[i], x_a[i]);
-          x_b[i] = branchless_choice(update_a, x_b[i], x_mid[i]);
+          x_a[i] = branchless_choice(update_a, x_mid, x_a[i]);
+          x_b[i] = branchless_choice(update_a, x_b[i], x_mid);
 
           if ((std::fabs(x_b[i] - x_a[i]) / x_a[i]) <= bi_tol) {
             bi_itmask[i] = MASK_FALSE;
