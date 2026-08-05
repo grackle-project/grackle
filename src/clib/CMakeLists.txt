@@ -147,6 +147,7 @@ add_library(Grackle_Grackle
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
   support/index_helper.hpp
+  support/misc.hpp
   support/PartMap.hpp
   support/status_reporting.cpp support/status_reporting.hpp
   support/View.hpp
