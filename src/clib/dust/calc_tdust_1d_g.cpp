@@ -264,6 +264,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double max_initial_guess = passive_dust_model_T_sublimation;
     std::vector<double>& x_a = tdustnow;
     std::vector<double>& x_b = bi_t_high;
+    int n_unconverged = c_total - c_done;
     // implicitly assumption that
     //   - sol[i] > 0 for x_a[i]
     //   - sol[i] < 0 for x_b[i]
@@ -271,7 +272,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     //       multi-species dust grains)
 
     std::vector<double> x_mid(buf_len);
-    for (iter = 1; c_done < c_total && iter <= bi_itmax; iter++) {
+    for (iter = 1; n_unconverged > 0 && iter <= bi_itmax; iter++) {
       // compute midpoint
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
@@ -302,7 +303,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
           if ((std::fabs(x_b[i] - x_a[i]) / x_a[i]) <= bi_tol) {
             bi_itmask[i] = MASK_FALSE;
-            c_done = c_done + 1;
+            n_unconverged--;
           }
         }
       }
@@ -310,11 +311,15 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
     // If iteration count exceeded with bisection, end of the line.
     if (iter > itmax) {
+      int n_unconverged = 0;
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        n_unconverged += (bi_itmask[i] != MASK_FALSE);
+      }
       OMP_PRAGMA_CRITICAL {
         eprintf(
             "CALC_TDUST_1D_G failed to converge after %d iterations for %d "
             "cells.\n",
-            iter, (c_total - c_done));
+            iter, n_unconverged);
       }
     }
 
