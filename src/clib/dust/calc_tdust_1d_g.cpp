@@ -301,18 +301,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
             bi_itmask[i] = MASK_FALSE;
             c_done = c_done + 1;
           }
-
-          // Check for all cells converged
-          if (c_done >= c_total) {
-            break;
-          }
-
-          // if ( bi_itmask(i) )
         }
-
-        // End loop over slice
       }
 
+      // Check if all cells converged
       if (c_done >= c_total) {
         break;
       }
