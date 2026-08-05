@@ -253,6 +253,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
   // If iteration count exceeded, try once more with bisection
   if (c_done < c_total) {
+    // set initial guesses
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (bi_itmask[i] != MASK_FALSE) {
         tdustnow[i] = Trad;
@@ -261,13 +262,19 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       }
     }
 
+    double max_initial_guess = passive_dust_model_T_sublimation;
+
+    // implicitly assumption that
+    //   - sol[i] > 0 for tdustnow[i]
+    //   - sol[i] < 0 for bi_t_high
+    // TODO: we should probably check this assumption (especially for
+    //       multi-species dust grains)
     for (iter = 1; iter <= (bi_itmax); iter++) {
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
           bi_t_mid[i] = 0.5 * (tdustnow[i] + bi_t_high[i]);
           if (iter == 1) {
-            bi_t_mid[i] =
-                std::fmin(bi_t_mid[i], passive_dust_model_T_sublimation);
+            bi_t_mid[i] = std::fmin(bi_t_mid[i], max_initial_guess);
           }
         }
       }
