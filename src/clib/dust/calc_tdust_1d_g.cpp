@@ -124,7 +124,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   std::vector<double> tdplus(buf_len);
   // relative finite difference step size
   std::vector<double> pert(buf_len);
-  std::vector<double> bi_t_mid(buf_len);
   std::vector<double> bi_t_high(buf_len);
   // iteration mask specifies where we use newton's method with finite
   // differences
@@ -269,19 +268,21 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     //   - sol[i] < 0 for bi_t_high
     // TODO: we should probably check this assumption (especially for
     //       multi-species dust grains)
+
+    std::vector<double> x_mid(buf_len);
     for (iter = 1; iter <= (bi_itmax); iter++) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
-          bi_t_mid[i] = 0.5 * (tdustnow[i] + bi_t_high[i]);
+          x_mid[i] = 0.5 * (tdustnow[i] + bi_t_high[i]);
           if (iter == 1) {
-            bi_t_mid[i] = std::fmin(bi_t_mid[i], max_initial_guess);
+            x_mid[i] = std::fmin(x_mid[i], max_initial_guess);
           }
         }
       }
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
-          FnEval eval_rslt = fn(bi_t_mid[i], i);
+          FnEval eval_rslt = fn(x_mid[i], i);
           kgr[i] = eval_rslt.associated_val;
           sol[i] = eval_rslt.f_val;
         }
@@ -290,9 +291,9 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
           if (sol[i] > 0.) {
-            tdustnow[i] = bi_t_mid[i];
+            tdustnow[i] = x_mid[i];
           } else {
-            bi_t_high[i] = bi_t_mid[i];
+            bi_t_high[i] = x_mid[i];
           }
 
           if ((std::fabs(bi_t_high[i] - tdustnow[i]) / tdustnow[i]) <= bi_tol) {
