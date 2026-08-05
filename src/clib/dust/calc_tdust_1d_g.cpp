@@ -271,7 +271,8 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     //       multi-species dust grains)
 
     std::vector<double> x_mid(buf_len);
-    for (iter = 1; iter <= (bi_itmax); iter++) {
+    for (iter = 1; c_done < c_total && iter <= bi_itmax; iter++) {
+      // compute midpoint
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
           x_mid[i] = 0.5 * (x_a[i] + x_b[i]);
@@ -281,6 +282,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         }
       }
 
+      // calculate value at midpoint
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
           FnEval eval_rslt = fn(x_mid[i], i);
@@ -289,6 +291,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         }
       }
 
+      // update x_a or x_b and check if converged
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (bi_itmask[i] != MASK_FALSE) {
           if (sol[i] > 0.) {
@@ -303,12 +306,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
           }
         }
       }
-
-      // Check if all cells converged
-      if (c_done >= c_total) {
-        break;
-      }
-      // End iteration loop for bisection
     }
 
     // If iteration count exceeded with bisection, end of the line.
