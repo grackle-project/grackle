@@ -14,6 +14,7 @@
 // calc_tdust_1d_g function from FORTRAN to C++
 
 #include <cstdio>
+#include <limits>
 #include <vector>
 
 #include "dust/multi_grain_species/opac_calculator.hpp"
@@ -53,13 +54,13 @@ struct FnEval {
 
 // this could definitely be better generalized
 template <typename Fn>
-static int bisect(const Fn& fn, double* x_a, double* x_b,
-                  double* associated_vals, gr_mask_type* bi_itmask,
-                  IndexRange idx_range, double rtol, int max_iter,
-                  double max_initial_guess) {
+static int bisect(
+    const Fn& fn, double* x_a, double* x_b, double* associated_vals,
+    gr_mask_type* itmask, int i_start, int i_stop, double rtol, int max_iter,
+    double max_initial_guess = std::numeric_limits<double>::max()) {
   int n_unconverged = 0;
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    n_unconverged += (bi_itmask[i] != MASK_FALSE);
+  for (int i = i_start; i < i_stop; i++) {
+    n_unconverged += (itmask[i] != MASK_FALSE);
   }
 
   // implicitly assumption that
@@ -70,9 +71,8 @@ static int bisect(const Fn& fn, double* x_a, double* x_b,
 
   int iter;
   for (iter = 1; n_unconverged > 0 && iter <= max_iter; iter++) {
-    // compute midpoint
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (bi_itmask[i] != MASK_FALSE) {
+    for (int i = i_start; i < i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
         double x_mid = 0.5 * (x_a[i] + x_b[i]);
         if (iter == 1) {
           x_mid = std::fmin(x_mid, max_initial_guess);
@@ -93,7 +93,7 @@ static int bisect(const Fn& fn, double* x_a, double* x_b,
         x_b[i] = branchless_choice(update_a, x_b[i], x_mid);
 
         if ((std::fabs(x_b[i] - x_a[i]) / x_a[i]) <= rtol) {
-          bi_itmask[i] = MASK_FALSE;
+          itmask[i] = MASK_FALSE;
           n_unconverged--;
         }
       }
@@ -316,8 +316,8 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double max_initial_guess = passive_dust_model_T_sublimation;
     double* associated_vals = kgr;
     iter = bisect(fn, tdustnow.data(), bi_t_high.data(), associated_vals,
-                  bi_itmask.data(), idx_range, bi_tol, bi_itmax,
-                  max_initial_guess);
+                  bi_itmask.data(), idx_range.i_start, idx_range.i_stop, bi_tol,
+                  bi_itmax, max_initial_guess);
 
     // If iteration count exceeded with bisection, end of the line.
     if (iter > itmax) {
