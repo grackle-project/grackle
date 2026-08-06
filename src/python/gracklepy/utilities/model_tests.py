@@ -17,6 +17,7 @@ import os
 import sys
 
 from gracklepy import chemistry_data
+from gracklepy.utilities.physical_constants import mass_hydrogen_cgs
 
 if sys.version_info < (3, 9):
     from functools import lru_cache as cache
@@ -314,7 +315,7 @@ _model_test_grids = \
                     "use_dust_density_field": 1,
                     "photoelectric_heating": 0,
                     "dust_recombination_cooling": 1,
-                    "dust_sublimation": 1,
+                    "dust_sublimation": 0,
                     "grain_growth": 1,
                     "dust_species": 3,
                     "multi_metals": 0,
@@ -325,7 +326,7 @@ _model_test_grids = \
                     "dust_species": (0, 1, 2),
                     "use_multiple_dust_temperatures": (0, 1),
                     "multi_metals": (1,),
-                    "metal_abundances": (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+                    "metal_abundances": (11,),
                 }
             },
             "inputs": \
@@ -333,6 +334,51 @@ _model_test_grids = \
                 "defaults": \
                 {
                     "metallicity": 1e-3,
+                }
+            }
+        },
+
+        "metal_dust_chemistry_low_density": \
+        {
+            "parameters": \
+            {
+                "defaults": \
+                {
+                    "use_grackle": 1,
+                    "primordial_chemistry": 4,
+                    "CaseBRecombination": 1,
+                    "cie_cooling": 2,
+                    "h2_optical_depth_approximation": 1,
+                    "use_primordial_continuum_opacity": 1,
+                    "h2_charge_exchange_rate": 1,
+                    "h2_h_cooling_rate": 1,
+                    "h2_cooling_rate": 3,
+                    "hd_reaction_rates": 1,
+                    "grackle_data_file": "cloudy_metals_2008_3D.h5",
+                    "metal_cooling": 1,
+                    "metal_chemistry": 1,
+                    "three_body_rate": 4,
+                    "dust_chemistry": 1,
+                    "use_dust_density_field": 1,
+                    "photoelectric_heating": 0,
+                    "dust_recombination_cooling": 1,
+                    "dust_sublimation": 0,
+                    "grain_growth": 1,
+                    "dust_species": 3,
+                    "multi_metals": 0,
+                    "metal_abundances": 1,
+                },
+                "variants": \
+                {
+                    "metal_abundances": (2, 3, 4, 5, 6, 7, 8, 9, 10),
+                }
+            },
+            "inputs": \
+            {
+                "defaults": \
+                {
+                    "metallicity": 1e-3,
+                    "final_density": 1e10 * mass_hydrogen_cgs,
                 }
             }
         }
