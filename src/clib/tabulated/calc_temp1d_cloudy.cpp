@@ -27,7 +27,7 @@
 namespace GRIMPL_NAMESPACE_DECL {
 
 void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
-                        double dom, double zr, int imetal,
+                        double nHcgs_div_rhoH, double zr, int imetal,
                         const gr_mask_type* itmask,
                         const chemistry_data* my_chemistry,
                         cloudy_data cloudy_table,
@@ -80,7 +80,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
     if (itmask[i] != MASK_FALSE) {
       // Calculate proper log(n_H)
-      log_n_h[i] = std::log10(rhoH[i] * dom);
+      log_n_h[i] = std::log10(rhoH[i] * nHcgs_div_rhoH);
     }
   }
 
