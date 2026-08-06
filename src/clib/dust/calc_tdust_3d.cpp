@@ -197,12 +197,6 @@ void calc_tdust_3d(
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if(itmask_metal[i] != MASK_FALSE)  {
-          // Calculate metallicity
-
-          if (imetal == 1)  {
-            metallicity[i] = metal(i,j,k) / d(i,j,k) / my_chemistry->SolarMetalFractionByMass;
-          }
-
           // Calculate dust to gas ratio
 
           //       if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
