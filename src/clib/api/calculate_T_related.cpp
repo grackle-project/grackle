@@ -1,6 +1,6 @@
 /***********************************************************************
 /
-/ Calculate temperature field
+/ Calculate temperature related quantities
 /
 /
 / Copyright (c) 2013, Enzo/Grackle Development Team.
@@ -18,10 +18,9 @@
 #include "gas_props.hpp"
 #include "grackle.h"
 #include "internal_units.hpp"
-#include "scale_fields.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
-#include "utils-cpp.hpp"
+#include "support/View.hpp"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -29,15 +28,19 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-/// @brief Fill temperature on a 3D grid.
+/// @brief Calculate gas temperature and mmw and pass the values to a callback
+///      at each valid location.
 ///
 /// @par History
 /// written by: Britton Smith May 2015
 /// modified1:  February, 2025 by Matthew Abruzzo; ported to C++
 ///
-/// @param[out] temperature_data Array where computed values are written
+/// @param[out] callback Function object invoked at every valid index. This
+///     should have the signature
+///       `void fn(double Tgas, double mmw, int i, int j, int k)`
+///     where `i` is the contiguous index and `k` is the slowest index.
 /// @param[in]  my_chemistry specifies various properties
-/// @param[in]  cloudy_primordia specifies the cloudy table
+/// @param[in]  cloudy_primordial specifies the cloudy table
 /// @param[in]  my_fields specifies all of the field data
 /// @param[in]  internalu Specifies unit information
 template<typename Fn>
