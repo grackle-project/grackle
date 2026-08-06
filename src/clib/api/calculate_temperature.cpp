@@ -39,7 +39,8 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in]  cloudy_primordia specifies the cloudy table
 /// @param[in]  my_fields specifies all of the field data
 /// @param[in]  internalu Specifies unit information
-static int calc_T_(gr_float* temperature_data_,
+template<typename Fn>
+static int calc_T_related_(Fn callback,
                    const chemistry_data* my_chemistry,
                    cloudy_data cloudy_primordial, grackle_field_data* my_fields,
                    InternalGrUnits internalu)
@@ -54,10 +55,6 @@ static int calc_T_(gr_float* temperature_data_,
   OMP_PRAGMA("omp parallel") {
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
-
-    FortranView<gr_float***> temperature(
-        temperature_data_, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     // these are used to temporarily hold values from each idx_range
     std::vector<double> tgas(my_fields->grid_dimension[0]);
@@ -87,7 +84,7 @@ static int calc_T_(gr_float* temperature_data_,
 
       // Record the computed temperature values in the output array
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        temperature(i, idx_range.j, idx_range.k) = tgas[i];
+        callback(tgas[i], mmw[i], i, idx_range.j, idx_range.k);
       }
     }
   }  // OMP_PRAGMA("omp parallel")
@@ -104,9 +101,19 @@ extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
                                            gr_float *temperature)
 {
   if (!my_chemistry->use_grackle) { return GR_SUCCESS; }
-  return GRIMPL_NS::calc_T_(temperature, my_chemistry,
-                            my_rates->cloudy_primordial, my_fields,
-                            GRIMPL_NS::new_internalu_(my_units));
+
+  // define a callback function that records T values to temperature
+  GRIMPL_NS::FortranView<gr_float***> T_view(
+    temperature, my_fields->grid_dimension[0],
+    my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  auto callback = [T_view](double T_gas, double mmw, int i, int j, int k) {
+    T_view(i, j, k) = static_cast<gr_float>(T_gas);
+  };
+
+  return GRIMPL_NS::calc_T_related_(callback, my_chemistry,
+                                    my_rates->cloudy_primordial, my_fields,
+                                    GRIMPL_NS::new_internalu_(my_units));
 }
 
 
