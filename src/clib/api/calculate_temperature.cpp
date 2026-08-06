@@ -26,18 +26,9 @@
 #include <omp.h>
 #endif
 
-// Set the mean molecular mass for metals
-// -> TODO: this should really be defined by a (internal) header
-// -> currently, it's also defined by cool1d_multi_g and calc_temp1d_cloudy_g
-#define MU_METAL 16.0
- 
-/* This is minimum returned temperature. (K) */
- 
-#define MINIMUM_TEMPERATURE 1.0
-
 namespace GRIMPL_NAMESPACE_DECL {
 
-/// Calculate temperature on a 3D grid using mmw from a cloudy table
+/// @brief Fill temperature on a 3D grid.
 ///
 /// @par History
 /// written by: Britton Smith May 2015
@@ -49,11 +40,10 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in]  cloudy_primordia specifies the cloudy table
 /// @param[in]  my_fields specifies all of the field data
 /// @param[in]  internalu Specifies unit information
-static void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
-                             const chemistry_data* my_chemistry,
-                             cloudy_data cloudy_primordial,
-                             grackle_field_data* my_fields,
-                             InternalGrUnits internalu)
+static int calc_T_(gr_float* temperature_data_, int imetal,
+                   const chemistry_data* my_chemistry,
+                   cloudy_data cloudy_primordial, grackle_field_data* my_fields,
+                   InternalGrUnits internalu)
 {
   // this assertion is a hint to clang-analyzer about the relationship between
   // `imetal` and whether `metal_density` is a nullptr
@@ -107,6 +97,7 @@ static void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
     }
   }  // OMP_PRAGMA("omp parallel")
 
+  return GR_SUCCESS;
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
@@ -120,76 +111,9 @@ extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
   if (!my_chemistry->use_grackle) { return GR_SUCCESS; }
 
   const int imetal = (my_fields->metal_density != NULL) ? 1 : 0;
-
-  // we have special handling for tabulated-chemistry-mode
-  if (my_chemistry->primordial_chemistry == 0) {
-    GRIMPL_NS::calc_temp_cloudy(temperature, imetal, my_chemistry,
-                                my_rates->cloudy_primordial, my_fields,
-                                GRIMPL_NS::new_internalu_(my_units));
-    return GR_SUCCESS;
-  };
-
-
-  /* Compute the pressure first. */
-  if (local_calculate_pressure(my_chemistry, my_rates, my_units,
-                               my_fields, temperature) != GR_SUCCESS) {
-    std::fprintf(stderr, "Error in calculate_pressure.\n");
-    return GR_FAIL;
-  }
-
-  // Calculate temperature units and fetch some constants
-
-  const double temperature_units = get_temperature_units(my_units);
-  const double tiny_number = 1.e-20;
-  const double inv_metal_mol = 1.0 / MU_METAL;
-
-  /* Compute properties used to index the field. */
-  const GRIMPL_NS::IndexHelper ind_helper
-      = GRIMPL_NS::build_index_helper_(my_fields);
-
-  /* Compute temperature with mu calculated directly. */
-
-  /* parallelize the k and j loops with OpenMP
-   * (these loops are flattened them for better parallelism) */
-# ifdef _OPENMP
-# pragma omp parallel for schedule( runtime )
-# endif
-  for (int outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
-
-    const GRIMPL_NS::FieldFlatIndexRange range = inner_flat_range_
-        (outer_ind, &ind_helper);
-
-    for (int index = range.start; index <= range.end; index++) {
-
-      // we will only be in this loop if primordial_chemistry > 0
-      double number_density =
-        0.25 * (my_fields->HeI_density[index] +
-		    my_fields->HeII_density[index] +
-        my_fields->HeIII_density[index]) +
-        my_fields->HI_density[index] + my_fields->HII_density[index] +
-        my_fields->e_density[index];
-
-      /* Add in H2. */
- 
-      if (my_chemistry->primordial_chemistry > 1) {
-	number_density += my_fields->HM_density[index] +
-	  0.5 * (my_fields->H2I_density[index] +
-		 my_fields->H2II_density[index]);
-      }
-
-      if (imetal) {
-	number_density += my_fields->metal_density[index] * inv_metal_mol;
-      }
- 
-      /* Ignore deuterium. */
- 
-      temperature[index] *= temperature_units / fmax(number_density,
-						    tiny_number);
-      temperature[index] = fmax(temperature[index], MINIMUM_TEMPERATURE);
-    } // end: loop over i
-  } // end: loop over outer_ind
-
-  return GR_SUCCESS;
+  return GRIMPL_NS::calc_T_(temperature, imetal, my_chemistry,
+                            my_rates->cloudy_primordial, my_fields,
+                            GRIMPL_NS::new_internalu_(my_units));
 }
 
 
