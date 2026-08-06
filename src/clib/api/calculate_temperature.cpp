@@ -55,21 +55,14 @@ static void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
                              grackle_field_data* my_fields,
                              InternalGrUnits internalu)
 {
-    // this assertion is a hint to clang-analyzer about the relationship between
+  // this assertion is a hint to clang-analyzer about the relationship between
   // `imetal` and whether `metal_density` is a nullptr
-  // -> for context, `scale_fields_table` is inlined into this function. Rather
-  //    than look at `imetal`, it checks if `metal_density` is a nullptr
-  // -> without this assertion clang-tidy will infer that since there's an
-  //    explicit check for whether `metal_density` is null, regardless of
-  //    `imetal`'s value, then it must be possible for `metal_density` to be
-  //    null when `imetal` is 1. Then, it would report an error
+  // -> can we delete the assertion at this point?
   GR_INTERNAL_REQUIRE((imetal != 1) || (my_fields->metal_density != nullptr),
                       "imetal has an incorrect value");
 
-  if (internalu.extfields_in_comoving == 1) {
-    double factor = std::pow(internalu.a_value, -3);
-    grackle::impl::scale_fields_table(my_fields, factor);
-  }
+  const DensityUnitKind du_kind = (internalu.extfields_in_comoving == 1) ?
+    DensityUnitKind::COMOVING : DensityUnitKind::PROPER;
 
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
@@ -102,9 +95,10 @@ static void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
       }
 
       // calculate the basic gas properties (tgas, mmw, rhoH)
-      GRIMPL_NS::basic_gas_props(
+      basic_gas_props(
           tgas.data(), mmw.data(), rhoH.data(), imetal, itmask.data(),
-          my_chemistry, &cloudy_primordial, my_fields, internalu, idx_range);
+          my_chemistry, &cloudy_primordial, my_fields, internalu, idx_range,
+          du_kind);
 
       // Record the computed temperature values in the output array
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
@@ -112,15 +106,6 @@ static void calc_temp_cloudy(gr_float* temperature_data_, int imetal,
       }
     }
   }  // OMP_PRAGMA("omp parallel")
-
-  // Convert densities back to comoving from proper
-
-  if (internalu.extfields_in_comoving == 1) {
-    double factor = std::pow(internalu.a_value, 3);
-    grackle::impl::scale_fields_table(my_fields, factor);
-  }
-
-  return;
 
 }
 
