@@ -317,13 +317,13 @@ _model_test_grids = \
                     "dust_recombination_cooling": 1,
                     "dust_sublimation": 0,
                     "grain_growth": 1,
-                    "dust_species": 3,
+                    "dust_species": 2,
                     "multi_metals": 0,
-                    "metal_abundances": 11,
+                    "metal_abundances": 0,
                 },
                 "variants": \
                 {
-                    "dust_species": (0, 1, 2),
+                    "dust_species": (0, 1),
                     "use_multiple_dust_temperatures": (0, 1),
                     "multi_metals": (1,),
                 }
@@ -369,7 +369,7 @@ _model_test_grids = \
                 },
                 "variants": \
                 {
-                    "metal_abundances": (1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+                    "metal_abundances": (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
                 }
             },
             "inputs": \
