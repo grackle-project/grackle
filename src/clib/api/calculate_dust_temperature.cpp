@@ -36,25 +36,10 @@ extern "C" int local_calculate_dust_temperature(
   if (my_fields->metal_density == NULL)
     metal_field_present = FALSE;
 
-  /* Compute the size of the fields. */
- 
-  int size = 1;
-  for (int dim = 0; dim < my_fields->grid_rank; dim++) {
-    size *= my_fields->grid_dimension[dim];
-  }
-
-  gr_float *temperature = new gr_float[size];
-  if (local_calculate_temperature(my_chemistry, my_rates, my_units,
-                                  my_fields, temperature) != GR_SUCCESS) {
-    std::fprintf(stderr, "Error in local_calculate_temperature.\n");
-    return GR_FAIL;
-  }
-
   GRIMPL_NS::calc_tdust_3d(
-    temperature, dust_temperature, metal_field_present, my_chemistry, my_rates,
+    dust_temperature, metal_field_present, my_chemistry, my_rates,
     my_fields, internalu
   );
-  delete[] temperature;
 
   return GR_SUCCESS;
 }
