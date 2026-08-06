@@ -195,101 +195,63 @@ extern "C" int local_calculate_pressure(chemistry_data *my_chemistry,
                                         grackle_field_data *my_fields,
                                         gr_float *pressure)
 {
+  // this is only done for historical consistency (I'm not sure we actually
+  // want to enforce this minimum)
+  constexpr gr_float MIN_PRESSURE = 1.0e-20;
 
-  if (!my_chemistry->use_grackle)
+  if (!my_chemistry->use_grackle) {
     return GR_SUCCESS;
+  } else if (my_chemistry->primordial_chemistry <= 1) {
+    // If molecular hydrogen is not being used, this is trivial
+    // (this should not really be called, but provide it just in case).
 
-  double tiny_number = 1.e-20;
-  const GRIMPL_NS::IndexHelper ind_helper
-      = GRIMPL_NS::build_index_helper_(my_fields);
-  int outer_ind, index;
+    const GRIMPL_NS::IndexHelper ind_helper
+        = GRIMPL_NS::build_index_helper_(my_fields);
 
-  /* parallelize the k and j loops with OpenMP
-   * (these loops are flattened them for better parallelism) */
+    double gm1 = my_chemistry->Gamma - 1.0;
+    const gr_float* rho = my_fields->density;
+    const gr_float* eint = my_fields->internal_energy;
+
+    // parallelize the k and j loops with OpenMP
+    // (these loops are flattened them for better parallelism)
 # ifdef _OPENMP
-# pragma omp parallel for schedule( runtime ) private( outer_ind, index )
+# pragma omp parallel for schedule( runtime )
 # endif
-  for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
-
-    GRIMPL_NS::FieldFlatIndexRange range = GRIMPL_NS::inner_flat_range_(
-        outer_ind, &ind_helper);
-
-    for (index = range.start; index <= range.end; index++) {
-
-      pressure[index] = ((my_chemistry->Gamma - 1.0) *
-			 my_fields->density[index] *
-			 my_fields->internal_energy[index]);
- 
-      if (pressure[index] < tiny_number)
-        pressure[index] = tiny_number;
-    } // end: loop over i
-  } // end: loop over outer_ind
-
-  /* Correct for Gamma from H2. */
-
-  if (my_chemistry->primordial_chemistry > 1) {
- 
-    /* Calculate temperature units. */
-
-    double temperature_units = get_temperature_units(my_units);
-
-    double number_density, nH2, GammaH2Inverse,
-      GammaInverse = 1.0/(my_chemistry->Gamma-1.0), x, Gamma1, temp;
-  
-#   ifdef _OPENMP
-#   pragma omp parallel for schedule( runtime ) \
-    private( outer_ind, index, \
-             number_density, nH2, GammaH2Inverse, x, Gamma1, temp )
-#   endif
     for (int outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
+      GRIMPL_NS::FieldFlatIndexRange range = GRIMPL_NS::inner_flat_range_(
+          outer_ind, &ind_helper);
 
-      const GRIMPL_NS::FieldFlatIndexRange range = GRIMPL_NS::inner_flat_range_
-          (outer_ind, &ind_helper);
+      for (int index = range.start; index <= range.end; index++) {
+        double p = gm1 * (rho[index] * eint[index]);
+        pressure[index] = std::fmax(static_cast<gr_float>(p), MIN_PRESSURE);
+      }
+    }
+    return GR_SUCCESS;
+  } else { // primordial_chemistry >= 2
+    GRIMPL_NS::InternalGrUnits internalu = GRIMPL_NS::new_internalu_(my_units);
 
-      for (index = range.start; index <= range.end; index++) {
+    // define a callback function to fill in pressure value at each location
+    double mH_div_kboltz = internalu.utem;  // <- in code units
+    GRIMPL_NS::FortranView<const gr_float***> rho(
+        my_fields->density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    GRIMPL_NS::FortranView<gr_float***> pressure_view(
+        pressure, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-        number_density =
-          0.25 * (my_fields->HeI_density[index] +
-		  my_fields->HeII_density[index] +
-                  my_fields->HeIII_density[index]) +
-          my_fields->HI_density[index] + my_fields->HII_density[index] +
-          my_fields->HM_density[index] + my_fields->e_density[index];
-
-        nH2 = 0.5 * (my_fields->H2I_density[index] +
-		     my_fields->H2II_density[index]);
-
-        /* First, approximate temperature. */
-
-        if (number_density == 0)
-          number_density = tiny_number;
-        temp = std::fmax(temperature_units * pressure[index] / (number_density + nH2),
-		   1);
-
-        /* Only do full computation if there is a reasonable amount of H2.
-	   The second term in GammaH2Inverse accounts for the vibrational
-	   degrees of freedom. */
-
-        GammaH2Inverse = 0.5*5.0;
-        if (nH2 / number_density > 1e-3) {
-          x = 6100.0 / temp;
-	  if (x < 10.0)
-	    GammaH2Inverse = 0.5*(5 + 2.0 * x*x * std::exp(x)/std::pow(std::exp(x)-1.0,
-                                                                 2.0));
-        }
-
-	Gamma1 = 1.0 + (nH2 + number_density) /
-	               (nH2 * GammaH2Inverse + number_density * GammaInverse);
-	
-	/* Correct pressure with improved Gamma. */
- 
-	pressure[index] *= (Gamma1 - 1.0) / (my_chemistry->Gamma - 1.0);
- 
-      } // end: loop over i
-    } // end: loop over outer_ind
- 
-  } // end: if (my_chemistry->primordial_chemistry > 1)
- 
-  return GR_SUCCESS;
+    auto callback = [=](double T_gas, double mmw, int i, int j, int k) {
+      // here's the basic algebra
+      //      P    = ρ * kboltz * T / (mH * μ)
+      //    P / ρ  = kboltz * T / (mH * μ)
+      //    P / ρ  = T / ((mH / kboltz) * μ)
+      double pressure_div_rho = T_gas / (mH_div_kboltz * mmw);
+      gr_float p = static_cast<gr_float>(pressure_div_rho * rho(i,j,k));
+      pressure_view(i, j, k) = std::fmax(p, MIN_PRESSURE);
+    };
+    return GRIMPL_NS::calc_T_related_(callback, my_chemistry,
+                                      my_rates->cloudy_primordial, my_fields,
+                                      internalu);
+  }
 }
 
 extern "C" int calculate_pressure(code_units *my_units,
