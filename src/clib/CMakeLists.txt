@@ -91,7 +91,7 @@ add_library(Grackle_Grackle
   api/calculate_dust_temperature.cpp
   api/calculate_gamma.cpp
   api/calculate_pressure.cpp
-  api/calculate_temperature.cpp
+  api/calculate_T_related.cpp
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
   api/units.cpp
