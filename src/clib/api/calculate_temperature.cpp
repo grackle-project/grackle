@@ -35,21 +35,16 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// modified1:  February, 2025 by Matthew Abruzzo; ported to C++
 ///
 /// @param[out] temperature_data Array where computed values are written
-/// @param[in]  imetal flag if metal field is active (0 = no, 1 = yes)
 /// @param[in]  my_chemistry specifies various properties
 /// @param[in]  cloudy_primordia specifies the cloudy table
 /// @param[in]  my_fields specifies all of the field data
 /// @param[in]  internalu Specifies unit information
-static int calc_T_(gr_float* temperature_data_, int imetal,
+static int calc_T_(gr_float* temperature_data_,
                    const chemistry_data* my_chemistry,
                    cloudy_data cloudy_primordial, grackle_field_data* my_fields,
                    InternalGrUnits internalu)
 {
-  // this assertion is a hint to clang-analyzer about the relationship between
-  // `imetal` and whether `metal_density` is a nullptr
-  // -> can we delete the assertion at this point?
-  GR_INTERNAL_REQUIRE((imetal != 1) || (my_fields->metal_density != nullptr),
-                      "imetal has an incorrect value");
+  const int imetal = (my_fields->metal_density != NULL) ? 1 : 0;
 
   const DensityUnitKind du_kind = (internalu.extfields_in_comoving == 1) ?
     DensityUnitKind::COMOVING : DensityUnitKind::PROPER;
@@ -109,9 +104,7 @@ extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
                                            gr_float *temperature)
 {
   if (!my_chemistry->use_grackle) { return GR_SUCCESS; }
-
-  const int imetal = (my_fields->metal_density != NULL) ? 1 : 0;
-  return GRIMPL_NS::calc_T_(temperature, imetal, my_chemistry,
+  return GRIMPL_NS::calc_T_(temperature, my_chemistry,
                             my_rates->cloudy_primordial, my_fields,
                             GRIMPL_NS::new_internalu_(my_units));
 }
