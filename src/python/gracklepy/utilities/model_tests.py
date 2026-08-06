@@ -319,14 +319,13 @@ _model_test_grids = \
                     "grain_growth": 1,
                     "dust_species": 3,
                     "multi_metals": 0,
-                    "metal_abundances": 0,
+                    "metal_abundances": 11,
                 },
                 "variants": \
                 {
                     "dust_species": (0, 1, 2),
                     "use_multiple_dust_temperatures": (0, 1),
                     "multi_metals": (1,),
-                    "metal_abundances": (11,),
                 }
             },
             "inputs": \
@@ -366,11 +365,11 @@ _model_test_grids = \
                     "grain_growth": 1,
                     "dust_species": 3,
                     "multi_metals": 0,
-                    "metal_abundances": 1,
+                    "metal_abundances": 0,
                 },
                 "variants": \
                 {
-                    "metal_abundances": (2, 3, 4, 5, 6, 7, 8, 9, 10),
+                    "metal_abundances": (1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
                 }
             },
             "inputs": \
