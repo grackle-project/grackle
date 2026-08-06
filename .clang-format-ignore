@@ -11,7 +11,6 @@
 
 src/clib/api/calculate_cooling_time.cpp
 src/clib/api/calculate_dust_temperature.cpp
-src/clib/api/calculate_gamma.cpp
 src/clib/api/calculate_pressure.cpp
 src/clib/api/calculate_T_related.cpp
 src/clib/api/set_default_chemistry_parameters.cpp
