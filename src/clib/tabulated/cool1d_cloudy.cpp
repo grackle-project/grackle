@@ -35,12 +35,8 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
   //       (and rename it to INV_LN10)
   const double inv_log10 = 1. / std::log(10.);
 
-  // Locals
-  int get_heat;
-  double log10_tCMB;
-
-  // Slice locals
-
+  // TODO: I think we can get away with converting most (all?) of these into
+  //       into local loop variables
   std::vector<double> log_n_h(idx_range.i_stop);
   std::vector<double> log_cool(idx_range.i_stop);
   std::vector<double> log_cool_cmb(idx_range.i_stop);
@@ -48,13 +44,9 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
   std::vector<double> edot_met(idx_range.i_stop);
   std::vector<double> log10tem(idx_range.i_stop);
 
-  // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
-  // =======================================================================
+  const int get_heat = iClHeat;
+  const double log10_tCMB = std::log10(comp2);
 
-  get_heat = iClHeat;
-  log10_tCMB = std::log10(comp2);
-
-  // Calculate parameter value slopes
   // Calculate parameter value slopes
   const std::array<double, tabulated_detail::MAX_RANK> dclPar =
       tabulated_detail::param_deltas(cloudy_table);
