@@ -19,6 +19,7 @@
 #include "calc_tdust_3d.hpp"
 #include "dust_props.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+#include "gas_props.hpp"
 #include "grackle.h"
 #include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -31,7 +32,7 @@
 namespace GRIMPL_NAMESPACE_DECL {
 
 void calc_tdust_3d(
-  gr_float* gas_temp_data_, gr_float* dust_temp_data_, int imetal,
+  gr_float* dust_temp_data_, int imetal,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, InternalGrUnits internalu
 )
@@ -67,7 +68,6 @@ void calc_tdust_3d(
     View<gr_float***> HII(my_fields->HII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     View<gr_float***> H2I(my_fields->H2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     View<gr_float***> H2II(my_fields->H2II_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    View<gr_float***> gas_temp(gas_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     View<gr_float***> dust_temp(dust_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     View<gr_float***> isrf_habing(my_fields->isrf_habing, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -139,8 +139,36 @@ void calc_tdust_3d(
       const int k = idx_range.k;
       const int j = idx_range.j;
 
+      // compute gas properties (tgas and metallicity) & fill up logTlinterp_buf
+      // - compared to earlier iterations of this code path:
+      //   - this computes/records a few unneeded quantities
+      //   - it saves an allocation of a temporary temperature buffer the size
+      //     of a field (this is potentially significant)
+      //   - the temperature calculation is FAR more consistent with the
+      //     calculation during the normal chemistry/cooling solve
+      // - we can always introduce more optimized logic later that bypasses the
+      //   unnecessary work (i.e. calculating nelec_times_mH)
+      {
+        gr_mask_type* itmask = itmask_metal.data();
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          itmask[i] = MASK_TRUE;
+        }
 
-      // Set itmask to true for entire idx_range
+        // these buffers need to be filled (otherwise, we introduce lots of
+        // branching). We will overwrite all of these
+        double* dummy_mmw = myisrf.data();
+        double* dummy_rhoH = dust2gas.data();
+        double* dummy_nelec_times_mH = nh.data();
+
+        extended_gas_props(tgas.data(), dummy_mmw, dummy_rhoH,
+                           metallicity.data(), dummy_nelec_times_mH,
+                           logTlininterp_buf, imetal, itmask,
+                           my_chemistry, &my_rates->cloudy_primordial,
+                           my_fields, internalu, idx_range, nullptr);
+      }
+
+
+      // Set itmask_metal to true for entire idx_range
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask_metal[i] = MASK_TRUE;
       }
@@ -169,12 +197,6 @@ void calc_tdust_3d(
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if(itmask_metal[i] != MASK_FALSE)  {
-          // Calculate metallicity
-
-          if (imetal == 1)  {
-            metallicity[i] = metal(i,j,k) / d(i,j,k) / my_chemistry->SolarMetalFractionByMass;
-          }
-
           // Calculate dust to gas ratio
 
           //       if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
@@ -226,17 +248,8 @@ void calc_tdust_3d(
           // We have not converted to proper, so use urho and not dom
 
           nh[i] = nh[i] * internalu.urho / mh_local_var;
-
-          // copy temperature into 1D buffer
-          tgas[i]   = gas_temp(i,j,k);
         }
       }
-
-      // Compute log temperature and precompute standard interpolation props
-      LnTPreparer::prep_undamped_lnT_lininterp_bufs(logTlininterp_buf,
-                                                    idx_range, *my_chemistry,
-                                                    itmask_metal.data(),
-                                                    tgas.data());
 
       // Compute dust temperature(s) in the index-range
       calc_all_tdust_gasgr_1d_g(
