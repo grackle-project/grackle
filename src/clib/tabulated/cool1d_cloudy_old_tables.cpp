@@ -35,6 +35,9 @@ void cool1d_cloudy_old_tables(const double* rhoH, const double* metallicity,
                               gr_float* e_density,
                               grackle_field_data* my_fields,
                               IndexRange idx_range) {
+  // todo: maybe factor this constant out and have it be precomputed
+  //       (and rename it to INV_LN10)
+  const double inv_log10 = 1. / std::log(10.);
   // General Arguments
 
   grackle::impl::View<gr_float***> d(density, idx_range.i_stop,
@@ -44,13 +47,8 @@ void cool1d_cloudy_old_tables(const double* rhoH, const double* metallicity,
                                       my_fields->grid_dimension[1],
                                       my_fields->grid_dimension[2]);
 
-  // Locals
-
-  int i;
-  double inv_log10, log10_tCMB;
-
-  // Slice locals
-
+  // TODO: I think we can get away with converting most (all?) of these into
+  //       into local loop variables
   std::vector<double> log_Z(idx_range.i_stop);
   std::vector<double> e_frac(idx_range.i_stop);
   std::vector<double> log_e_frac(idx_range.i_stop);
@@ -63,17 +61,13 @@ void cool1d_cloudy_old_tables(const double* rhoH, const double* metallicity,
   std::vector<double> edot_met(idx_range.i_stop);
   std::vector<double> log10tem(idx_range.i_stop);
 
-  // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
-  // =======================================================================
-
-  inv_log10 = 1. / std::log(10.);
-  log10_tCMB = std::log10(comp2);
+  const double log10_tCMB = std::log10(comp2);
 
   // Calculate parameter value slopes
   const std::array<double, tabulated_detail::MAX_RANK> dclPar =
       tabulated_detail::param_deltas(cloudy_table);
 
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       log10tem[i] = logtem[i] * inv_log10;
 
