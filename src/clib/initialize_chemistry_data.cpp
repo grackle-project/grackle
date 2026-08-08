@@ -393,7 +393,7 @@ extern "C" int local_initialize_chemistry_data(
 
   // initialize the registry
   my_rates->opaque_storage->registry = new GRIMPL_NS::ratequery::Registry(
-    GRIMPL_NS::ratequery::RegBuilder_consume_and_build(&reg_builder)
+    reg_builder.consume_and_build()
   );
 
   if (grackle_verbose) {

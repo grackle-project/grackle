@@ -264,30 +264,25 @@ int RegBuilder::copied_f64_arr1d(const char* name, const double* f64_arr1d,
   return take_data_(name, data, props);
 }
 
-/// build a new Registry.
-///
-/// In the process, the current Registry is consumed; it's effectively reset to
-/// the state immediately after it was initialized. (This lets us avoid
-/// reallocating lots of memory)
-Registry RegBuilder_consume_and_build(RegBuilder* ptr) {
+Registry RegBuilder::consume_and_build() {
   // try to construct an EntrySet that contains all owned entries
-  if (!ptr->owned_entries.empty()) {
-    ptr->recipe_sets.emplace_back(std::move(ptr->owned_entries));
+  if (!owned_entries.empty()) {
+    recipe_sets.emplace_back(std::move(owned_entries));
   }
 
   // now actually set up the registry
-  if (ptr->recipe_sets.empty()) {
+  if (recipe_sets.empty()) {
     return Registry{0, nullptr, std::vector<EntrySet>()};
   } else {
-    int n_sets = ptr->recipe_sets.size();
+    int n_sets = recipe_sets.size();
     // set up id_offsets and determine the total number of entries
     int* id_offsets = new int[n_sets];
     int tot_entry_count = 0;
     for (int i = 0; i < n_sets; i++) {
       id_offsets[i] = tot_entry_count;
-      tot_entry_count += ptr->recipe_sets[i].size();
+      tot_entry_count += recipe_sets[i].size();
     }
-    return Registry{tot_entry_count, id_offsets, std::move(ptr->recipe_sets)};
+    return Registry{tot_entry_count, id_offsets, std::move(recipe_sets)};
   }
 }
 

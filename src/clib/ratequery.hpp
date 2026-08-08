@@ -499,17 +499,17 @@ struct RegBuilder {
   /// use (i.e. the abundances could be "baked into" some tables), but external
   /// simulation codes may want to know about to achieve better consistency.
   int copied_f64_arr1d(const char* name, const double* f64_arr1d, int len);
-};
 
-/// build a new Registry.
-///
-/// In the process, the current Registry is consumed; it's effectively reset to
-/// the state immediately after it was initialized. (This lets us avoid
-/// reallocating lots of memory)
-///
-/// @note
-/// For safety, the caller should still plan to call drop_RegBuilder
-Registry RegBuilder_consume_and_build(RegBuilder* ptr);
+  /// build a new @ref Registry.
+  ///
+  /// In the process, this builder is "consumed." In other words, it's
+  /// effectively reset to the empty state that it had immediately after it was
+  /// constructed.
+  ///
+  /// @note
+  /// The choice to consume the builder lets us minimize heap allocations
+  Registry consume_and_build();
+};
 
 /// registers miscellaneous recipes
 ///
