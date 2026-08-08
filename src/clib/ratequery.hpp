@@ -260,7 +260,7 @@ typedef Entry fetch_Entry_recipe_fn(chemistry_data_storage*, int);
 /// 2. Recipe-mode:
 ///    - In this case, the EntrySet provides access to Entry instances that
 ///      directly reference data managed by `chemistry_data_storage`
-struct EntrySet {
+class EntrySet {
   /// number of entries in the current set
   int len;
 
@@ -283,6 +283,7 @@ struct EntrySet {
   /// only used in Recipe-mode
   EntryProps common_recipe_props;
 
+public:
   /// @brief construct an empty entry set
   EntrySet()
       : len(0),
@@ -333,14 +334,7 @@ struct EntrySet {
   }
 
   /// @brief get the number of @ref Entry in the container
-  int size() const {
-    // if we mutation to data-members, we can always just return len
-    if (embedded_list.empty()) {
-      return len;
-    } else {
-      return static_cast<int>(embedded_list.size());
-    }
-  }
+  int size() const { return len; }
 
   /// look up an Entry
   ///

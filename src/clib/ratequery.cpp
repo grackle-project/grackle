@@ -152,17 +152,13 @@ static void drop_owned_Entry_list_contents(Entry* entry_list,
 }
 
 Entry EntrySet::access(chemistry_data_storage* my_rates, int i) const {
-  if (embedded_list.empty()) {  // in recipe-mode
-    if ((i < 0) || (i >= len)) {
-      return mk_invalid_Entry();
-    }
+  if ((i < 0) || (i >= this->size())) {
+    return mk_invalid_Entry();
+  } else if (embedded_list.empty()) {  // in recipe-mode
     Entry out = (recipe_fn)(my_rates, i);
     out.props = common_recipe_props;
     return out;
   } else {  // in embedded-list mode
-    if ((i < 0) || (static_cast<std::size_t>(i) >= embedded_list.size())) {
-      return mk_invalid_Entry();
-    }
     return embedded_list[i];
   }
 }
