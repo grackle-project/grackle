@@ -219,14 +219,14 @@ RegBuilder::~RegBuilder() noexcept {
 }
 
 int RegBuilder::recipe_scalar(int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
-  EntryShape common_props = mk_invalid_EntryShape();
+  EntryShape common_props = EntryShape::create_invalid();
   common_props.ndim = 0;
   return recipe_(recipe_fn, n_entries, common_props);
 }
 
 int RegBuilder::recipe_1d(int n_entries, fetch_Entry_recipe_fn* recipe_fn,
                           int common_len) {
-  EntryShape common_props = mk_invalid_EntryShape();
+  EntryShape common_props = EntryShape::create_invalid();
   common_props.ndim = 1;
   common_props.shape[0] = common_len;
   return recipe_(recipe_fn, n_entries, common_props);
@@ -244,7 +244,7 @@ int RegBuilder::copied_str_arr1d(const char* name, const char* const* str_arr1d,
     std::memcpy(my_copy[i], str_arr1d[i], nbytes);
   }
   PtrUnion data(const_cast<const char* const*>(my_copy));
-  EntryShape props = mk_invalid_EntryShape();
+  EntryShape props = EntryShape::create_invalid();
   props.ndim = 1;
   props.shape[0] = len;
   return take_data_(name, data, props);
@@ -258,7 +258,7 @@ int RegBuilder::copied_f64_arr1d(const char* name, const double* f64_arr1d,
   double* my_copy = new double[len];
   std::memcpy(my_copy, f64_arr1d, sizeof(double) * len);
   PtrUnion data(const_cast<const double*>(my_copy));
-  EntryShape props = mk_invalid_EntryShape();
+  EntryShape props = EntryShape::create_invalid();
   props.ndim = 1;
   props.shape[0] = len;
   return take_data_(name, data, props);

@@ -213,14 +213,15 @@ struct EntryShape {
   int ndim;
   int shape[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
+  /// @brief factory method for constructing invalid instance
+  static EntryShape create_invalid() {
+    EntryShape out;
+    out.ndim = -1;
+    return out;
+  }
+
   bool is_valid() const noexcept { return ndim >= 0; }
 };
-
-inline EntryShape mk_invalid_EntryShape() {
-  EntryShape out;
-  out.ndim = -1;
-  return out;
-}
 
 /// A queryable entity
 struct Entry {
@@ -230,12 +231,12 @@ struct Entry {
 };
 
 inline Entry mk_invalid_Entry() {
-  return Entry{nullptr, nullptr, mk_invalid_EntryShape()};
+  return Entry{nullptr, nullptr, EntryShape::create_invalid()};
 }
 
 /// Constructs an Entry
 inline Entry new_Entry(double* rate, const char* name) {
-  return Entry{PtrUnion(rate), name, mk_invalid_EntryShape()};
+  return Entry{PtrUnion(rate), name, EntryShape::create_invalid()};
 }
 
 /// a recipe for querying 1 or more entries from a chemistry_data_storage
@@ -293,14 +294,14 @@ public:
   EntrySet()
       : len(0),
         recipe_fn{nullptr},
-        common_recipe_props{mk_invalid_EntryShape()} {}
+        common_recipe_props{EntryShape::create_invalid()} {}
 
   /// @brief construct a set of entries in embedded list mode
   explicit EntrySet(std::vector<Entry> embedded_list)
       : len{static_cast<int>(embedded_list.size())},
         embedded_list(embedded_list),
         recipe_fn{nullptr},
-        common_recipe_props{mk_invalid_EntryShape()} {}
+        common_recipe_props{EntryShape::create_invalid()} {}
 
   /// construct a set of entries in recipe-mode
   EntrySet(int len, fetch_Entry_recipe_fn* recipe_fn, EntryShape common_props)
