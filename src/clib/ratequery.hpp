@@ -213,10 +213,40 @@ struct EntryShape {
   int ndim;
   int shape[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
+private:
+  EntryShape() = default;  // default constructor only used in factory methods
+public:
   /// @brief factory method for constructing invalid instance
   static EntryShape create_invalid() {
     EntryShape out;
     out.ndim = -1;
+    return out;
+  }
+
+  /// @brief factory method that constructs instance to describe a scalar value
+  static EntryShape create_scalar() {
+    EntryShape out;
+    out.ndim = 0;
+    return out;
+  }
+
+  /// @brief factory method for creating a 1D shape (most common case)
+  static EntryShape create_1d(int i) {
+    EntryShape out;
+    out.ndim = 1;
+    out.shape[0] = i;
+    return out;
+  }
+
+  /// @brief factory method for arbitrary number of dimensions
+  static EntryShape create(int ndim, const int* dims) {
+    GR_INTERNAL_REQUIRE(ndim > 0 && ndim <= GRACKLE_CLOUDY_TABLE_MAX_DIMENSION,
+                        "sanity check failed");
+    EntryShape out;
+    out.ndim = 1;
+    for (int i = 0; i < ndim; i++) {
+      out.shape[i] = dims[i];
+    }
     return out;
   }
 
