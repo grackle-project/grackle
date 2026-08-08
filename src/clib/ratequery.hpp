@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <vector>
+#include <utility>  // std::swap
 
 #include "grackle.h"
 #include "utils-cpp.hpp"  // GRIMPL_FORCE_INLINE
@@ -281,10 +282,56 @@ struct EntrySet {
   /// @note
   /// only used in Recipe-mode
   EntryProps common_recipe_props;
-};
 
-/// deallocate the contents of an EntrySet
-void drop_EntrySet(EntrySet* ptr);
+  /// @brief construct an empty entry set
+  EntrySet()
+      : len(0),
+        recipe_fn{nullptr},
+        common_recipe_props{mk_invalid_EntryProps()} {}
+
+  /// @brief construct a set of entries in embedded list mode
+  explicit EntrySet(std::vector<Entry> embedded_list)
+      : len{static_cast<int>(embedded_list.size())},
+        embedded_list(embedded_list),
+        recipe_fn{nullptr},
+        common_recipe_props{mk_invalid_EntryProps()} {}
+
+  /// construct a set of entries in recipe-mode
+  EntrySet(int len, fetch_Entry_recipe_fn* recipe_fn, EntryProps common_props)
+      : len{len}, recipe_fn{recipe_fn}, common_recipe_props{common_props} {}
+
+  // forbid copy-construction & copy assignment (if we want these, we would
+  // need custom implementations to properly handle embedded_list, or we would
+  // need to make Entry into a full-blown class)
+  EntrySet(const EntrySet&) = delete;
+  EntrySet& operator=(const EntrySet&) = delete;
+
+  // the following require custom implementations to properly handle
+  // embedded_list (we could use default implementations if there were proper
+  // move constructors for Entry)
+
+  /// construct new instance and move contents of @p other into it
+  EntrySet(EntrySet&& other) noexcept : EntrySet() { swap(other); }
+
+  /// move contents of @p other into this instance
+  EntrySet& operator=(EntrySet&& other) noexcept {
+    if (this != &other) {
+      swap(other);
+    }
+    return *this;
+  }
+
+  /// @brief destructor
+  ~EntrySet() noexcept;
+
+  /// @brief swaps contents
+  void swap(EntrySet& other) noexcept {
+    std::swap(len, other.len);
+    std::swap(embedded_list, other.embedded_list);
+    std::swap(recipe_fn, other.recipe_fn);
+    std::swap(common_recipe_props, other.common_recipe_props);
+  }
+};
 
 /// get the number of @ref Entry in the @ref EntrySet
 inline int EntrySet_size(const EntrySet* ptr) {
@@ -323,7 +370,11 @@ struct Registry {
   Registry& operator=(const Registry&) = delete;
 
   /// @brief Destructor
-  ~Registry();
+  ~Registry() noexcept {
+    if (id_offsets != nullptr) {
+      delete[] id_offsets;
+    }
+  }
 };
 
 /// An interface for gradually configuring a Registry

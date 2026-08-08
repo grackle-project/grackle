@@ -169,15 +169,11 @@ Entry EntrySet_access(const EntrySet* entry_set,
   }
 }
 
-void drop_EntrySet(EntrySet* ptr) {
-  if (ptr->embedded_list.empty()) {
-    // nothing to deallocate in recipe-mode
-  } else {
+EntrySet::~EntrySet() noexcept {
+  if (!embedded_list.empty()) {
     // in embedded-list-mode, we need to deallocate each Entry in the list
     // and the deallocate the actual list-pointer
-    drop_owned_Entry_list_contents(ptr->embedded_list.data(),
-                                   ptr->embedded_list.size());
-    ptr->embedded_list.clear();  // <- makes repeated calls to drop safer
+    drop_owned_Entry_list_contents(embedded_list.data(), embedded_list.size());
   }
 }
 
@@ -217,8 +213,7 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
-  ptr->recipe_sets.push_back(
-      EntrySet{n_entries, std::vector<Entry>(), recipe_fn, common_props});
+  ptr->recipe_sets.emplace_back(n_entries, recipe_fn, common_props);
 
   return GR_SUCCESS;
 }
@@ -292,12 +287,7 @@ int RegBuilder_copied_f64_arr1d(RegBuilder* ptr, const char* name,
 Registry RegBuilder_consume_and_build(RegBuilder* ptr) {
   // try to construct an EntrySet that contains all owned entries
   if (!ptr->owned_entries.empty()) {
-    int len = ptr->owned_entries.size();
-    EntrySet tmp{/* len = */ len,
-                 /* embedded_list = */ std::move(ptr->owned_entries),
-                 /* recipe_fn = */ nullptr,
-                 /* common_recipe_props = */ mk_invalid_EntryProps()};
-    ptr->recipe_sets.push_back(tmp);
+    ptr->recipe_sets.emplace_back(std::move(ptr->owned_entries));
   }
 
   // now actually set up the registry
@@ -313,16 +303,6 @@ Registry RegBuilder_consume_and_build(RegBuilder* ptr) {
       tot_entry_count += EntrySet_size(&ptr->recipe_sets[i]);
     }
     return Registry{tot_entry_count, id_offsets, std::move(ptr->recipe_sets)};
-  }
-}
-
-Registry::~Registry() {
-  if (sets.empty()) {
-    delete[] id_offsets;
-    std::size_t n_sets = sets.size();
-    for (std::size_t i = 0; i < n_sets; i++) {
-      drop_EntrySet(&sets[i]);
-    }
   }
 }
 
