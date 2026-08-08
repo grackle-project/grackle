@@ -331,27 +331,26 @@ struct EntrySet {
     std::swap(recipe_fn, other.recipe_fn);
     std::swap(common_recipe_props, other.common_recipe_props);
   }
-};
 
-/// get the number of @ref Entry in the @ref EntrySet
-inline int EntrySet_size(const EntrySet* ptr) {
-  if (ptr->embedded_list.empty()) {
-    return ptr->len;
-  } else {
-    return static_cast<int>(ptr->embedded_list.size());
+  /// @brief get the number of @ref Entry in the container
+  int size() const {
+    // if we mutation to data-members, we can always just return len
+    if (embedded_list.empty()) {
+      return len;
+    } else {
+      return static_cast<int>(embedded_list.size());
+    }
   }
-}
 
-/// look up an Entry in an EntrySet
-///
-/// @param[in] entry_set The container object being queried
-/// @param[in] my_rates Used for looking up Entry in recipe-mode
-/// @param[in] i The index to query
-///
-/// @returns An instance that references memory owned by either my_rates or by
-///     the entry_set, itself.
-Entry EntrySet_access(const EntrySet* entry_set,
-                      chemistry_data_storage* my_rates, int i);
+  /// look up an Entry
+  ///
+  /// @param[in] my_rates Used for looking up Entry in recipe-mode
+  /// @param[in] i The index to query
+  ///
+  /// @returns An instance that references memory owned by either @p my_rates or
+  ///     by the container itself
+  Entry access(chemistry_data_storage* my_rates, int i) const;
+};
 
 /// Describes a registry of queryable entries
 ///

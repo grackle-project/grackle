@@ -151,21 +151,19 @@ static void drop_owned_Entry_list_contents(Entry* entry_list,
   }
 }
 
-Entry EntrySet_access(const EntrySet* entry_set,
-                      chemistry_data_storage* my_rates, int i) {
-  if (entry_set->embedded_list.empty()) {  // in recipe-mode
-    if ((i < 0) || (i >= entry_set->len)) {
+Entry EntrySet::access(chemistry_data_storage* my_rates, int i) const {
+  if (embedded_list.empty()) {  // in recipe-mode
+    if ((i < 0) || (i >= len)) {
       return mk_invalid_Entry();
     }
-    Entry out = (entry_set->recipe_fn)(my_rates, i);
-    out.props = entry_set->common_recipe_props;
+    Entry out = (recipe_fn)(my_rates, i);
+    out.props = common_recipe_props;
     return out;
   } else {  // in embedded-list mode
-    if ((i < 0) ||
-        (static_cast<std::size_t>(i) >= entry_set->embedded_list.size())) {
+    if ((i < 0) || (static_cast<std::size_t>(i) >= embedded_list.size())) {
       return mk_invalid_Entry();
     }
-    return entry_set->embedded_list[i];
+    return embedded_list[i];
   }
 }
 
@@ -300,7 +298,7 @@ Registry RegBuilder_consume_and_build(RegBuilder* ptr) {
     int tot_entry_count = 0;
     for (int i = 0; i < n_sets; i++) {
       id_offsets[i] = tot_entry_count;
-      tot_entry_count += EntrySet_size(&ptr->recipe_sets[i]);
+      tot_entry_count += ptr->recipe_sets[i].size();
     }
     return Registry{tot_entry_count, id_offsets, std::move(ptr->recipe_sets)};
   }
@@ -347,8 +345,8 @@ static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
   for (std::size_t set_idx = 0; set_idx < n_sets; set_idx++) {
     EntrySet* cur_set = &registry->sets[set_idx];
     int tmp = i - registry->id_offsets[set_idx];
-    if ((tmp >= 0) && (tmp < EntrySet_size(cur_set))) {
-      return ratequery_rslt_{i, EntrySet_access(cur_set, my_rates, tmp)};
+    if ((tmp >= 0) && (tmp < cur_set->size())) {
+      return ratequery_rslt_{i, cur_set->access(my_rates, tmp)};
     }
   }
   return invalid_rslt_();
@@ -402,10 +400,10 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
   std::size_t n_sets = registry->sets.size();
   for (std::size_t set_idx = 0; set_idx < n_sets; set_idx++) {
     const rate_q::EntrySet* set = &registry->sets[set_idx];
-    int set_len = EntrySet_size(set);
+    int set_len = set->size();
     for (int i = 0; i < set_len; i++) {
-      rate_q::Entry entry = rate_q::EntrySet_access(
-          set, const_cast<chemistry_data_storage*>(my_rates), i);
+      rate_q::Entry entry =
+          set->access(const_cast<chemistry_data_storage*>(my_rates), i);
       // todo: figure out how to give enough compiler hints so we can remove
       //       this nullptr-check
       GR_INTERNAL_REQUIRE(entry.name != nullptr, "sanity check!");
