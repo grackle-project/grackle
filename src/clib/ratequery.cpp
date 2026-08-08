@@ -171,14 +171,14 @@ EntrySet::~EntrySet() noexcept {
 }
 
 int RegBuilder::take_data_(const char* raw_name, PtrUnion owned_data,
-                           EntryProps props) {
+                           EntryShape props) {
   if (raw_name == nullptr) {
     return GrPrintAndReturnErr("raw_name is a nullptr");
   } else if (owned_data.is_null()) {
     return GrPrintAndReturnErr("owned_data holds a nullptr");
   } else if (!owned_data.is_const_ptr()) {
     return GrPrintAndReturnErr("owned_data isn't const");
-  } else if (!EntryProps_is_valid(props)) {
+  } else if (!EntryShape_is_valid(props)) {
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
@@ -196,12 +196,12 @@ int RegBuilder::take_data_(const char* raw_name, PtrUnion owned_data,
 }
 
 int RegBuilder::recipe_(fetch_Entry_recipe_fn* recipe_fn, int n_entries,
-                        EntryProps common_props) {
+                        EntryShape common_props) {
   if (recipe_fn == nullptr) {
     return GrPrintAndReturnErr("recipe_fn is a nullptr");
   } else if (n_entries <= 0) {
     return GrPrintAndReturnErr("n_entries is not positive");
-  } else if (!EntryProps_is_valid(common_props)) {
+  } else if (!EntryShape_is_valid(common_props)) {
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
@@ -219,14 +219,14 @@ RegBuilder::~RegBuilder() noexcept {
 }
 
 int RegBuilder::recipe_scalar(int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
-  EntryProps common_props = mk_invalid_EntryProps();
+  EntryShape common_props = mk_invalid_EntryShape();
   common_props.ndim = 0;
   return recipe_(recipe_fn, n_entries, common_props);
 }
 
 int RegBuilder::recipe_1d(int n_entries, fetch_Entry_recipe_fn* recipe_fn,
                           int common_len) {
-  EntryProps common_props = mk_invalid_EntryProps();
+  EntryShape common_props = mk_invalid_EntryShape();
   common_props.ndim = 1;
   common_props.shape[0] = common_len;
   return recipe_(recipe_fn, n_entries, common_props);
@@ -244,7 +244,7 @@ int RegBuilder::copied_str_arr1d(const char* name, const char* const* str_arr1d,
     std::memcpy(my_copy[i], str_arr1d[i], nbytes);
   }
   PtrUnion data(const_cast<const char* const*>(my_copy));
-  EntryProps props = mk_invalid_EntryProps();
+  EntryShape props = mk_invalid_EntryShape();
   props.ndim = 1;
   props.shape[0] = len;
   return take_data_(name, data, props);
@@ -258,7 +258,7 @@ int RegBuilder::copied_f64_arr1d(const char* name, const double* f64_arr1d,
   double* my_copy = new double[len];
   std::memcpy(my_copy, f64_arr1d, sizeof(double) * len);
   PtrUnion data(const_cast<const double*>(my_copy));
-  EntryProps props = mk_invalid_EntryProps();
+  EntryShape props = mk_invalid_EntryShape();
   props.ndim = 1;
   props.shape[0] = len;
   return take_data_(name, data, props);
@@ -352,7 +352,7 @@ static void show_Entry(const Entry* entry) {
 */
 
 /// compute the number of items in an Entry described by @p props
-static long long get_n_items(EntryProps props) {
+static long long get_n_items(EntryShape props) {
   GR_INTERNAL_REQUIRE(props.ndim >= 0, "sanity check!");
 
   if (props.ndim == 0) {
@@ -490,8 +490,8 @@ extern "C" int grunstable_ratequery_prop(
                           rate_id)
           .entry;
 
-  const rate_q::EntryProps& props = entry.props;
-  if ((entry.name == nullptr) || !rate_q::EntryProps_is_valid(props)) {
+  const rate_q::EntryShape& props = entry.props;
+  if ((entry.name == nullptr) || !rate_q::EntryShape_is_valid(props)) {
     return GR_FAIL;
   }
 

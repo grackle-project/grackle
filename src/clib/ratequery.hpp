@@ -209,33 +209,33 @@ public:
 };
 
 /// Describes properties about the data in an entry
-struct EntryProps {
+struct EntryShape {
   int ndim;
   int shape[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 };
 
-inline EntryProps mk_invalid_EntryProps() {
-  EntryProps out;
+inline EntryShape mk_invalid_EntryShape() {
+  EntryShape out;
   out.ndim = -1;
   return out;
 }
 
-inline bool EntryProps_is_valid(EntryProps obj) { return obj.ndim >= 0; }
+inline bool EntryShape_is_valid(EntryShape obj) { return obj.ndim >= 0; }
 
 /// A queryable entity
 struct Entry {
   PtrUnion data;
   const char* name;
-  EntryProps props;
+  EntryShape props;
 };
 
 inline Entry mk_invalid_Entry() {
-  return Entry{nullptr, nullptr, mk_invalid_EntryProps()};
+  return Entry{nullptr, nullptr, mk_invalid_EntryShape()};
 }
 
 /// Constructs an Entry
 inline Entry new_Entry(double* rate, const char* name) {
-  return Entry{PtrUnion(rate), name, mk_invalid_EntryProps()};
+  return Entry{PtrUnion(rate), name, mk_invalid_EntryShape()};
 }
 
 /// a recipe for querying 1 or more entries from a chemistry_data_storage
@@ -286,24 +286,24 @@ class EntrySet {
   ///
   /// @note
   /// only used in Recipe-mode
-  EntryProps common_recipe_props;
+  EntryShape common_recipe_props;
 
 public:
   /// @brief construct an empty entry set
   EntrySet()
       : len(0),
         recipe_fn{nullptr},
-        common_recipe_props{mk_invalid_EntryProps()} {}
+        common_recipe_props{mk_invalid_EntryShape()} {}
 
   /// @brief construct a set of entries in embedded list mode
   explicit EntrySet(std::vector<Entry> embedded_list)
       : len{static_cast<int>(embedded_list.size())},
         embedded_list(embedded_list),
         recipe_fn{nullptr},
-        common_recipe_props{mk_invalid_EntryProps()} {}
+        common_recipe_props{mk_invalid_EntryShape()} {}
 
   /// construct a set of entries in recipe-mode
-  EntrySet(int len, fetch_Entry_recipe_fn* recipe_fn, EntryProps common_props)
+  EntrySet(int len, fetch_Entry_recipe_fn* recipe_fn, EntryShape common_props)
       : len{len}, recipe_fn{recipe_fn}, common_recipe_props{common_props} {}
 
   // forbid copy-construction & copy assignment (if we want these, we would
@@ -423,13 +423,13 @@ class RegBuilder {
   /// @brief builder takes ownership of the supplied data
   ///
   /// this implements common machinery for updating @ref owned_entries
-  int take_data_(const char* raw_name, PtrUnion owned_data, EntryProps props);
+  int take_data_(const char* raw_name, PtrUnion owned_data, EntryShape props);
 
   /// @brief builder creates a recipe
   ///
   /// this implements common machinery for updating @ref recipe_sets
   int recipe_(fetch_Entry_recipe_fn* recipe_fn, int n_entries,
-              EntryProps common_props);
+              EntryShape common_props);
 
 public:  // interface methods
   /// @brief default constructor
