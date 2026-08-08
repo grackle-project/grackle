@@ -245,6 +245,11 @@ inline Entry new_Entry(double* rate, const char* name) {
 /// If `N` denotes the number of entries that can be queried by a given recipe,
 /// then this function should produce unique entries for each unique index that
 /// satisfies `0 <= index <= (N-1)`
+///
+/// @warning
+/// All callers of this function assume that the memory referenced by the
+/// returned objects @ref Entry.data and @ref Entry Entry.name do **NOT** need
+/// to be deallocated
 typedef Entry fetch_Entry_recipe_fn(chemistry_data_storage*, int);
 
 /// Describes a set of entries
