@@ -357,10 +357,12 @@ struct Registry {
   /// stores sets of entries
   std::vector<EntrySet> sets;
 
-  // forbid copy-construction & copy assignment (these will provide custom
-  // implementations.
+  // forbid copy/move construction & assignment (they require custom
+  // implementations for as long as id_offsets is a regular pointer)
   Registry(const Registry&) = delete;
+  Registry(Registry&&) = delete;
   Registry& operator=(const Registry&) = delete;
+  Registry& operator=(Registry&&) = delete;
 
   /// @brief Destructor
   ~Registry() noexcept {
