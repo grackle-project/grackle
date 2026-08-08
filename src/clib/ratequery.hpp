@@ -451,19 +451,18 @@ struct RegBuilder {
   ///
   /// @returns GR_SUCCESS if successful, otherwise returns a different value
   int recipe_scalar(int n_entries, fetch_Entry_recipe_fn* recipe_fn);
-};
 
-/// register a recipe for accessing 1D arrays
-///
-/// @param[inout] ptr The RegBuilder that will be updated
-/// @param[in] n_entries The number of entries accessible through the recipe
-/// @param[in] recipe_fn The recipe being registered
-/// @param[in] common_len The length shared by each 1D array accessible
-///     through this recipe.
-///
-/// @returns GR_SUCCESS if successful, otherwise returns a different value
-int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
-                         fetch_Entry_recipe_fn* recipe_fn, int common_len);
+  /// register a recipe for accessing 1D arrays
+  ///
+  /// @param[in] n_entries The number of entries accessible through the recipe
+  /// @param[in] recipe_fn The recipe being registered
+  /// @param[in] common_len The length shared by each 1D array accessible
+  ///     through this recipe.
+  ///
+  /// @returns GR_SUCCESS if successful, otherwise returns a different value
+  int recipe_1d(int n_entries, fetch_Entry_recipe_fn* recipe_fn,
+                int common_len);
+};
 
 /// copies a 1d array of strings to make a queryable entry
 ///

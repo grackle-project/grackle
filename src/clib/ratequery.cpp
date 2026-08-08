@@ -224,12 +224,12 @@ int RegBuilder::recipe_scalar(int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
   return recipe_(recipe_fn, n_entries, common_props);
 }
 
-int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
-                         fetch_Entry_recipe_fn* recipe_fn, int common_len) {
+int RegBuilder::recipe_1d(int n_entries, fetch_Entry_recipe_fn* recipe_fn,
+                          int common_len) {
   EntryProps common_props = mk_invalid_EntryProps();
   common_props.ndim = 1;
   common_props.shape[0] = common_len;
-  return ptr->recipe_(recipe_fn, n_entries, common_props);
+  return recipe_(recipe_fn, n_entries, common_props);
 }
 
 int RegBuilder_copied_str_arr1d(RegBuilder* ptr, const char* name,
