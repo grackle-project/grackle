@@ -316,15 +316,13 @@ Registry RegBuilder_consume_and_build(RegBuilder* ptr) {
   }
 }
 
-void drop_Registry(Registry* ptr) {
-  if (!ptr->sets.empty()) {
-    delete[] ptr->id_offsets;
-    ptr->id_offsets = nullptr;
-    std::size_t n_sets = ptr->sets.size();
+Registry::~Registry() {
+  if (sets.empty()) {
+    delete[] id_offsets;
+    std::size_t n_sets = sets.size();
     for (std::size_t i = 0; i < n_sets; i++) {
-      drop_EntrySet(&ptr->sets[i]);
+      drop_EntrySet(&sets[i]);
     }
-    ptr->sets.clear();  // <- make it safer to call drop_Registry more than once
   }
 }
 

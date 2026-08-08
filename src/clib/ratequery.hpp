@@ -317,14 +317,14 @@ struct Registry {
   /// stores sets of entries
   std::vector<EntrySet> sets;
 
-  // forbid copy-construction & copy assignment (if we want these, then we
-  // should make EntrySet a full-blown class with a destructor)
+  // forbid copy-construction & copy assignment (these will provide custom
+  // implementations.
   Registry(const Registry&) = delete;
   Registry& operator=(const Registry&) = delete;
-};
 
-/// deallocate the contents of a registry
-void drop_Registry(Registry* ptr);
+  /// @brief Destructor
+  ~Registry();
+};
 
 /// An interface for gradually configuring a Registry
 ///
