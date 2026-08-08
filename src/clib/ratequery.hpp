@@ -406,7 +406,7 @@ struct Registry {
 /// @important
 /// Other parts of grackle should refrain from directly accessing the internals
 /// of this function (i.e. they should only use the associated methods)
-struct RegBuilder {
+class RegBuilder {
   /// a growable array that records recipies for accessing sets of entries
   std::vector<EntrySet> recipe_sets;
   /// a growable array of owned Entry instances
@@ -417,7 +417,8 @@ struct RegBuilder {
   /// transferred to an EntrySet.
   std::vector<Entry> owned_entries;
 
-  // helper methods
+  // helper methods:
+  // ---------------
 
   /// @brief builder takes ownership of the supplied data
   ///
@@ -430,8 +431,7 @@ struct RegBuilder {
   int recipe_(fetch_Entry_recipe_fn* recipe_fn, int n_entries,
               EntryProps common_props);
 
-  // primary interface
-
+public:  // interface methods
   /// @brief default constructor
   RegBuilder() = default;
 
