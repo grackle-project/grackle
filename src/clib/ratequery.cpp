@@ -171,9 +171,8 @@ EntrySet::~EntrySet() noexcept {
   }
 }
 
-/// Helper function that takes ownership of owned_data
-static int RegBuilder_take_data_(RegBuilder* ptr, const char* raw_name,
-                                 PtrUnion owned_data, EntryProps props) {
+int RegBuilder::take_data_(const char* raw_name, PtrUnion owned_data,
+                           EntryProps props) {
   if (raw_name == nullptr) {
     return GrPrintAndReturnErr("raw_name is a nullptr");
   } else if (owned_data.is_null()) {
@@ -193,12 +192,12 @@ static int RegBuilder_take_data_(RegBuilder* ptr, const char* raw_name,
   tmp.data = owned_data;
   tmp.name = name;
   tmp.props = props;
-  ptr->owned_entries.push_back(tmp);
+  owned_entries.push_back(tmp);
   return GR_SUCCESS;
 }
 
-static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
-                              int n_entries, EntryProps common_props) {
+int RegBuilder::recipe_(fetch_Entry_recipe_fn* recipe_fn, int n_entries,
+                        EntryProps common_props) {
   if (recipe_fn == nullptr) {
     return GrPrintAndReturnErr("recipe_fn is a nullptr");
   } else if (n_entries <= 0) {
@@ -207,7 +206,7 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
-  ptr->recipe_sets.emplace_back(n_entries, recipe_fn, common_props);
+  recipe_sets.emplace_back(n_entries, recipe_fn, common_props);
 
   return GR_SUCCESS;
 }
@@ -224,7 +223,7 @@ int RegBuilder_recipe_scalar(RegBuilder* ptr, int n_entries,
                              fetch_Entry_recipe_fn* recipe_fn) {
   EntryProps common_props = mk_invalid_EntryProps();
   common_props.ndim = 0;
-  return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
+  return ptr->recipe_(recipe_fn, n_entries, common_props);
 }
 
 int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
@@ -232,7 +231,7 @@ int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
   EntryProps common_props = mk_invalid_EntryProps();
   common_props.ndim = 1;
   common_props.shape[0] = common_len;
-  return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
+  return ptr->recipe_(recipe_fn, n_entries, common_props);
 }
 
 int RegBuilder_copied_str_arr1d(RegBuilder* ptr, const char* name,
@@ -250,7 +249,7 @@ int RegBuilder_copied_str_arr1d(RegBuilder* ptr, const char* name,
   EntryProps props = mk_invalid_EntryProps();
   props.ndim = 1;
   props.shape[0] = len;
-  return RegBuilder_take_data_(ptr, name, data, props);
+  return ptr->take_data_(name, data, props);
 }
 
 int RegBuilder_copied_f64_arr1d(RegBuilder* ptr, const char* name,
@@ -264,7 +263,7 @@ int RegBuilder_copied_f64_arr1d(RegBuilder* ptr, const char* name,
   EntryProps props = mk_invalid_EntryProps();
   props.ndim = 1;
   props.shape[0] = len;
-  return RegBuilder_take_data_(ptr, name, data, props);
+  return ptr->take_data_(name, data, props);
 }
 
 /// build a new Registry.

@@ -417,6 +417,21 @@ struct RegBuilder {
   /// transferred to an EntrySet.
   std::vector<Entry> owned_entries;
 
+  // helper methods
+
+  /// @brief builder takes ownership of the supplied data
+  ///
+  /// this implements common machinery for updating @ref owned_entries
+  int take_data_(const char* raw_name, PtrUnion owned_data, EntryProps props);
+
+  /// @brief builder creates a recipe
+  ///
+  /// this implements common machinery for updating @ref recipe_sets
+  int recipe_(fetch_Entry_recipe_fn* recipe_fn, int n_entries,
+              EntryProps common_props);
+
+  // primary interface
+
   /// @brief default constructor
   RegBuilder() = default;
 
