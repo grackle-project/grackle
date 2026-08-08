@@ -178,7 +178,7 @@ int RegBuilder::take_data_(const char* raw_name, PtrUnion owned_data,
     return GrPrintAndReturnErr("owned_data holds a nullptr");
   } else if (!owned_data.is_const_ptr()) {
     return GrPrintAndReturnErr("owned_data isn't const");
-  } else if (!EntryShape_is_valid(props)) {
+  } else if (!props.is_valid()) {
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
@@ -201,7 +201,7 @@ int RegBuilder::recipe_(fetch_Entry_recipe_fn* recipe_fn, int n_entries,
     return GrPrintAndReturnErr("recipe_fn is a nullptr");
   } else if (n_entries <= 0) {
     return GrPrintAndReturnErr("n_entries is not positive");
-  } else if (!EntryShape_is_valid(common_props)) {
+  } else if (!common_props.is_valid()) {
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
@@ -491,7 +491,7 @@ extern "C" int grunstable_ratequery_prop(
           .entry;
 
   const rate_q::EntryShape& props = entry.props;
-  if ((entry.name == nullptr) || !rate_q::EntryShape_is_valid(props)) {
+  if ((entry.name == nullptr) || !props.is_valid()) {
     return GR_FAIL;
   }
 

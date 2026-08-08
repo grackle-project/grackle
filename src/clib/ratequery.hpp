@@ -212,6 +212,8 @@ public:
 struct EntryShape {
   int ndim;
   int shape[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+
+  bool is_valid() const noexcept { return ndim >= 0; }
 };
 
 inline EntryShape mk_invalid_EntryShape() {
@@ -219,8 +221,6 @@ inline EntryShape mk_invalid_EntryShape() {
   out.ndim = -1;
   return out;
 }
-
-inline bool EntryShape_is_valid(EntryShape obj) { return obj.ndim >= 0; }
 
 /// A queryable entity
 struct Entry {
