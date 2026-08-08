@@ -417,20 +417,18 @@ struct RegBuilder {
   /// transferred to an EntrySet.
   std::vector<Entry> owned_entries;
 
-  // forbid copy-construction & copy assignment (if we want these, then we
-  // should make EntrySet & Entry full-blown classes with destructors)
+  /// @brief default constructor
+  RegBuilder() = default;
+
+  // forbid copy/move construction & assignment (if we want these, then we need
+  // custom handling for owned_entries)
   RegBuilder(const RegBuilder&) = delete;
+  RegBuilder(RegBuilder&&) = delete;
   RegBuilder& operator=(const RegBuilder&) = delete;
+  RegBuilder& operator=(RegBuilder&&) = delete;
+
+  ~RegBuilder() noexcept;
 };
-
-/// initialize a new instance
-inline RegBuilder new_RegBuilder() {
-  // by default it is automatically initialized
-  return RegBuilder{};
-}
-
-/// deallocates all storage within a RegBuilder instance
-void drop_RegBuilder(RegBuilder* ptr);
 
 /// register a recipe for accessing scalar values
 ///

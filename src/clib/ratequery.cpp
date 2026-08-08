@@ -212,17 +212,11 @@ static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
   return GR_SUCCESS;
 }
 
-void drop_RegBuilder(RegBuilder* ptr) {
-  // this first block is only done for consistency with other drop_ functions
-  // (unnecessary since no entry of recipe-sets holds any pointers to be freed)
-  if (!ptr->recipe_sets.empty()) {
-    ptr->recipe_sets.clear();
-  }
-  // this next block is very necessary!
-  if (!ptr->owned_entries.empty()) {
-    drop_owned_Entry_list_contents(ptr->owned_entries.data(),
-                                   ptr->owned_entries.size());
-    ptr->owned_entries.clear();  // <- make repeated calls of this fn safer
+RegBuilder::~RegBuilder() noexcept {
+  if (owned_entries.empty()) {
+    // this deletes the actual pointers in each tracked Entry
+    drop_owned_Entry_list_contents(owned_entries.data(), owned_entries.size());
+    // the actual deletion of std::vector<Entry> is handled automatically
   }
 }
 
