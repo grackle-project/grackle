@@ -443,17 +443,15 @@ struct RegBuilder {
   RegBuilder& operator=(RegBuilder&&) = delete;
 
   ~RegBuilder() noexcept;
-};
 
-/// register a recipe for accessing scalar values
-///
-/// @param[inout] ptr The RegBuilder that will be updated
-/// @param[in] n_entries The number of entries accessible through the recipe
-/// @param[in] recipe_fn The recipe being registered
-///
-/// @returns GR_SUCCESS if successful, otherwise returns a different value
-int RegBuilder_recipe_scalar(RegBuilder* ptr, int n_entries,
-                             fetch_Entry_recipe_fn* recipe_fn);
+  /// register a recipe for accessing scalar values
+  ///
+  /// @param[in] n_entries The number of entries accessible through the recipe
+  /// @param[in] recipe_fn The recipe being registered
+  ///
+  /// @returns GR_SUCCESS if successful, otherwise returns a different value
+  int recipe_scalar(int n_entries, fetch_Entry_recipe_fn* recipe_fn);
+};
 
 /// register a recipe for accessing 1D arrays
 ///

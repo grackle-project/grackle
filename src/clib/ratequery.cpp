@@ -83,8 +83,7 @@ static Entry get_PhotoRxn_Entry(chemistry_data_storage* my_rates, int i) {
 int add_misc_recipies_to_RegBuilder(RegBuilder* ptr,
                                     const chemistry_data* my_chemistry) {
   if (my_chemistry->primordial_chemistry != 0) {
-    return RegBuilder_recipe_scalar(ptr, PhotoRxnLUT::NUM_ENTRIES,
-                                    &get_PhotoRxn_Entry);
+    return ptr->recipe_scalar(PhotoRxnLUT::NUM_ENTRIES, &get_PhotoRxn_Entry);
   }
   return GR_SUCCESS;
 }
@@ -219,11 +218,10 @@ RegBuilder::~RegBuilder() noexcept {
   }
 }
 
-int RegBuilder_recipe_scalar(RegBuilder* ptr, int n_entries,
-                             fetch_Entry_recipe_fn* recipe_fn) {
+int RegBuilder::recipe_scalar(int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
   EntryProps common_props = mk_invalid_EntryProps();
   common_props.ndim = 0;
-  return ptr->recipe_(recipe_fn, n_entries, common_props);
+  return recipe_(recipe_fn, n_entries, common_props);
 }
 
 int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
