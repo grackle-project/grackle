@@ -232,8 +232,8 @@ int RegBuilder::recipe_1d(int n_entries, fetch_Entry_recipe_fn* recipe_fn,
   return recipe_(recipe_fn, n_entries, common_props);
 }
 
-int RegBuilder_copied_str_arr1d(RegBuilder* ptr, const char* name,
-                                const char* const* str_arr1d, int len) {
+int RegBuilder::copied_str_arr1d(const char* name, const char* const* str_arr1d,
+                                 int len) {
   if (len <= 0) {
     return GrPrintAndReturnErr("len must be positive");
   }
@@ -247,11 +247,11 @@ int RegBuilder_copied_str_arr1d(RegBuilder* ptr, const char* name,
   EntryProps props = mk_invalid_EntryProps();
   props.ndim = 1;
   props.shape[0] = len;
-  return ptr->take_data_(name, data, props);
+  return take_data_(name, data, props);
 }
 
-int RegBuilder_copied_f64_arr1d(RegBuilder* ptr, const char* name,
-                                const double* f64_arr1d, int len) {
+int RegBuilder::copied_f64_arr1d(const char* name, const double* f64_arr1d,
+                                 int len) {
   if (len <= 0) {
     return GrPrintAndReturnErr("len must be positive");
   }
@@ -261,7 +261,7 @@ int RegBuilder_copied_f64_arr1d(RegBuilder* ptr, const char* name,
   EntryProps props = mk_invalid_EntryProps();
   props.ndim = 1;
   props.shape[0] = len;
-  return ptr->take_data_(name, data, props);
+  return take_data_(name, data, props);
 }
 
 /// build a new Registry.
