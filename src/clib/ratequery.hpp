@@ -454,14 +454,6 @@ int RegBuilder_recipe_scalar(RegBuilder* ptr, int n_entries,
 int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
                          fetch_Entry_recipe_fn* recipe_fn, int common_len);
 
-/// registers miscellaneous recipes
-///
-/// @note
-/// This is a hack until we can figure out a better spot to put definitions of
-/// some miscellaneous rates
-int RegBuilder_misc_recipies(RegBuilder* ptr,
-                             const chemistry_data* my_chemistry);
-
 /// copies a 1d array of strings to make a queryable entry
 ///
 /// The resulting Registry will have a queryable entry corresponding to the
@@ -512,6 +504,14 @@ int RegBuilder_copied_f64_arr1d(RegBuilder* ptr, const char* name,
 /// @note
 /// For safety, the caller should still plan to call drop_RegBuilder
 Registry RegBuilder_consume_and_build(RegBuilder* ptr);
+
+/// registers miscellaneous recipes
+///
+/// @note
+/// This is a hack until we can figure out a better spot to put definitions of
+/// some miscellaneous rates
+int add_misc_recipies_to_RegBuilder(RegBuilder* ptr,
+                                    const chemistry_data* my_chemistry);
 
 /** @}*/  // end of group
 

@@ -384,12 +384,14 @@ static int local_initialize_chemistry_data_(
   /* store a copy of the initial units */
   my_rates->initial_units = *my_units;
 
-  // initialize the registry
-  if (grackle::impl::ratequery::RegBuilder_misc_recipies(reg_builder,
-                                                         my_chemistry)
+  // add some miscellaneous recipes for looking up rates to reg_builder
+  if (GRIMPL_NS::ratequery::add_misc_recipies_to_RegBuilder(reg_builder,
+                                                            my_chemistry)
       != GR_SUCCESS){
-    return GrPrintAndReturnErr("error in RegBuilder_misc_recipies");
+    return GrPrintAndReturnErr("error in add_misc_recipies_to_RegBuilder");
   }
+
+  // initialize the registry
   my_rates->opaque_storage->registry = new grackle::impl::ratequery::Registry(
     grackle::impl::ratequery::RegBuilder_consume_and_build(reg_builder)
   );

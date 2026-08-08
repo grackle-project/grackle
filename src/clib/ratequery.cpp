@@ -80,8 +80,8 @@ static Entry get_PhotoRxn_Entry(chemistry_data_storage* my_rates, int i) {
   }
 }
 
-int RegBuilder_misc_recipies(RegBuilder* ptr,
-                             const chemistry_data* my_chemistry) {
+int add_misc_recipies_to_RegBuilder(RegBuilder* ptr,
+                                    const chemistry_data* my_chemistry) {
   if (my_chemistry->primordial_chemistry != 0) {
     return RegBuilder_recipe_scalar(ptr, PhotoRxnLUT::NUM_ENTRIES,
                                     &get_PhotoRxn_Entry);
