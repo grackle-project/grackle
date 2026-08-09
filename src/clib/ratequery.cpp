@@ -59,21 +59,21 @@ static Entry get_PhotoRxn_Entry(chemistry_data_storage* my_rates, int i) {
   }
   switch (i) {
     case PhotoRxnLUT::k24:
-      return new_Entry(&my_rates->k24, "k24");
+      return new_Entry(&my_rates->k24, "k24", EntryShape::create_scalar());
     case PhotoRxnLUT::k25:
-      return new_Entry(&my_rates->k25, "k25");
+      return new_Entry(&my_rates->k25, "k25", EntryShape::create_scalar());
     case PhotoRxnLUT::k26:
-      return new_Entry(&my_rates->k26, "k26");
+      return new_Entry(&my_rates->k26, "k26", EntryShape::create_scalar());
     case PhotoRxnLUT::k27:
-      return new_Entry(&my_rates->k27, "k27");
+      return new_Entry(&my_rates->k27, "k27", EntryShape::create_scalar());
     case PhotoRxnLUT::k28:
-      return new_Entry(&my_rates->k28, "k28");
+      return new_Entry(&my_rates->k28, "k28", EntryShape::create_scalar());
     case PhotoRxnLUT::k29:
-      return new_Entry(&my_rates->k29, "k29");
+      return new_Entry(&my_rates->k29, "k29", EntryShape::create_scalar());
     case PhotoRxnLUT::k30:
-      return new_Entry(&my_rates->k30, "k30");
+      return new_Entry(&my_rates->k30, "k30", EntryShape::create_scalar());
     case PhotoRxnLUT::k31:
-      return new_Entry(&my_rates->k31, "k31");
+      return new_Entry(&my_rates->k31, "k31", EntryShape::create_scalar());
     default: {
       return mk_invalid_Entry();
     }

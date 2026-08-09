@@ -265,8 +265,8 @@ inline Entry mk_invalid_Entry() {
 }
 
 /// Constructs an Entry
-inline Entry new_Entry(double* rate, const char* name) {
-  return Entry{PtrUnion(rate), name, EntryShape::create_invalid()};
+inline Entry new_Entry(double* rate, const char* name, EntryShape shape) {
+  return Entry{PtrUnion(rate), name, shape};
 }
 
 /// a recipe for querying 1 or more entries from a chemistry_data_storage

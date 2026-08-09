@@ -56,6 +56,7 @@
 #include "interp_grid.hpp"
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
+#include "ratequery.hpp"
 #include "support/config.hpp"
 #include "support/status_reporting.hpp"
 
@@ -391,16 +392,19 @@ int init_kcol_rate_tables(
 ///
 /// @param my_rates The object from which the rate Entry is loaded
 /// @param i the index of the queried rate
-grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
+GRIMPL_NS::ratequery::Entry get_CollisionalRxn_Entry
     (chemistry_data_storage* my_rates, int i) {
+  namespace rateq = GRIMPL_NS::ratequery;
+
   // sanity check! (this shouldn't actually happen)
   if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
       (my_rates->opaque_storage->kcol_rate_tables == nullptr)) {
-    return grackle::impl::ratequery::mk_invalid_Entry();
+    return rateq::mk_invalid_Entry();
   }
 
-  // import new_Entry into the current scope (so we don't need the full name)
-  using ::grackle::impl::ratequery::new_Entry;
+  // all entries share a common shape
+  int len = my_rates->opaque_storage->NumberOfTemperatureBins;
+  rateq::EntryShape shape = rateq::EntryShape::create_1d(len);
 
   double** data = my_rates->opaque_storage->kcol_rate_tables->data;
 
@@ -417,7 +421,9 @@ grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
   switch (i) {
 #define TO_STR(s) #s
 #define ENTRY(NAME)                                                            \
-  case CollisionalRxnLUT::NAME: { return new_Entry(data[i], TO_STR(NAME)); }
+  case CollisionalRxnLUT::NAME: {                                              \
+    return new_Entry(data[i], TO_STR(NAME), shape);                            \
+  }
 #include "collisional_rxn_rate_members.def"
 
 #undef ENTRY
@@ -437,13 +443,15 @@ grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
 ///
 /// @param my_rates The object from which the rate Entry is loaded
 /// @param i the index of the queried rate
-grackle::impl::ratequery::Entry get_k13dd_Entry(
-    chemistry_data_storage* my_rates, int i) {
-  if (i == 0) {
-    double* ptr = (my_rates == nullptr) ? nullptr : my_rates->k13dd;
-    return grackle::impl::ratequery::new_Entry(ptr, "k13dd");
+GRIMPL_NS::ratequery::Entry get_k13dd_Entry(chemistry_data_storage* my_rates,
+                                            int i) {
+  namespace rateq = GRIMPL_NS::ratequery;
+  if (i == 0 && my_rates != nullptr) {
+    int len = my_rates->opaque_storage->NumberOfTemperatureBins * 14;
+    return rateq::new_Entry(my_rates->k13dd, "k13dd",
+                            rateq::EntryShape::create_1d(len));
   } else {
-    return grackle::impl::ratequery::mk_invalid_Entry();
+    return rateq::mk_invalid_Entry();
   }
 }
 

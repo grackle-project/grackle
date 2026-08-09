@@ -11,11 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstring>  // std::strcmp
-#include "../dust/grain_species_info.hpp"
 #include "grackle_chemistry_data.h"
+#include "grain_metal_inject_pathways.hpp"
 #include "load_data.hpp"  // forward declarations
-#include "interp_grid.hpp"
 #include "raw_data.hpp"
+#include "../dust/grain_species_info.hpp"
+#include "../interp_grid.hpp"
 #include "../LUT.hpp"
 #include "../opaque_storage.hpp"
 #include "../ratequery.hpp"
@@ -33,31 +34,35 @@ namespace {  // stuff inside an anonymous namespace is local to this file
 ///
 /// @param my_rates The object from which the rate Entry is loaded
 /// @param i the index of the queried rate
-grackle::impl::ratequery::Entry nuclide_gas_yield_recipe(
+GRIMPL_NS::ratequery::Entry nuclide_gas_yield_recipe(
     chemistry_data_storage* my_rates, int i) {
-  namespace rateq = grackle::impl::ratequery;
+  namespace rateq = GRIMPL_NS::ratequery;
   if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
       (my_rates->opaque_storage->inject_pathway_props == nullptr)) {
     return rateq::mk_invalid_Entry();
   }
-  const grackle::impl::yields::MetalTables& tab =
-      my_rates->opaque_storage->inject_pathway_props->gas_metal_nuclide_yields;
+  const GRIMPL_NS::GrainMetalInjectPathways* props =
+      my_rates->opaque_storage->inject_pathway_props;
+  const GRIMPL_NS::yields::MetalTables& tab = props->gas_metal_nuclide_yields;
+
+  // all entries share a common shape
+  rateq::EntryShape shape = rateq::EntryShape::create_1d(props->n_pathways);
 
   switch (i) {
     case 0:
-      return rateq::new_Entry(tab.C, "inject_path_gas_yield_frac.C");
+      return rateq::new_Entry(tab.C, "inject_path_gas_yield_frac.C", shape);
     case 1:
-      return rateq::new_Entry(tab.O, "inject_path_gas_yield_frac.O");
+      return rateq::new_Entry(tab.O, "inject_path_gas_yield_frac.O", shape);
     case 2:
-      return rateq::new_Entry(tab.Mg, "inject_path_gas_yield_frac.Mg");
+      return rateq::new_Entry(tab.Mg, "inject_path_gas_yield_frac.Mg", shape);
     case 3:
-      return rateq::new_Entry(tab.Al, "inject_path_gas_yield_frac.Al");
+      return rateq::new_Entry(tab.Al, "inject_path_gas_yield_frac.Al", shape);
     case 4:
-      return rateq::new_Entry(tab.Si, "inject_path_gas_yield_frac.Si");
+      return rateq::new_Entry(tab.Si, "inject_path_gas_yield_frac.Si", shape);
     case 5:
-      return rateq::new_Entry(tab.S, "inject_path_gas_yield_frac.S");
+      return rateq::new_Entry(tab.S, "inject_path_gas_yield_frac.S", shape);
     case 6:
-      return rateq::new_Entry(tab.Fe, "inject_path_gas_yield_frac.Fe");
+      return rateq::new_Entry(tab.Fe, "inject_path_gas_yield_frac.Fe", shape);
     default:
       return rateq::mk_invalid_Entry();
   }
@@ -81,57 +86,65 @@ grackle::impl::ratequery::Entry nuclide_gas_yield_recipe(
 /// 2. It would be advantageous to adopt key-names that are composed of 2
 ///    strings (that way we could reuse string-literals holding the grain
 ///    species names)
-grackle::impl::ratequery::Entry grain_yield_recipe(
-    chemistry_data_storage* my_rates, int i) {
-  namespace rateq = grackle::impl::ratequery;
+GRIMPL_NS::ratequery::Entry grain_yield_recipe(chemistry_data_storage* my_rates,
+                                               int i) {
+  namespace rateq = GRIMPL_NS::ratequery;
   if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
       (my_rates->opaque_storage->inject_pathway_props == nullptr)) {
     return rateq::mk_invalid_Entry();
   }
-  const grackle::impl::GrainSpeciesCollection& tab =
-      my_rates->opaque_storage->inject_pathway_props->grain_yields;
-  double* const* data = tab.data;
+  const GRIMPL_NS::GrainMetalInjectPathways* props =
+      my_rates->opaque_storage->inject_pathway_props;
+  double* const* data = props->grain_yields.data;
+
+  // all entries share a common shape
+  rateq::EntryShape shape = rateq::EntryShape::create_1d(props->n_pathways);
 
   switch (i) {
     case 0:
       return rateq::new_Entry(data[OnlyGrainSpLUT::MgSiO3_dust],
-                              "inject_path_grain_yield_frac.MgSiO3_dust");
+                              "inject_path_grain_yield_frac.MgSiO3_dust",
+                              shape);
     case 1:
       return rateq::new_Entry(data[OnlyGrainSpLUT::AC_dust],
-                              "inject_path_grain_yield_frac.AC_dust");
+                              "inject_path_grain_yield_frac.AC_dust", shape);
     case 2:
       return rateq::new_Entry(data[OnlyGrainSpLUT::SiM_dust],
-                              "inject_path_grain_yield_frac.SiM_dust");
+                              "inject_path_grain_yield_frac.SiM_dust", shape);
     case 3:
       return rateq::new_Entry(data[OnlyGrainSpLUT::FeM_dust],
-                              "inject_path_grain_yield_frac.FeM_dust");
+                              "inject_path_grain_yield_frac.FeM_dust", shape);
     case 4:
       return rateq::new_Entry(data[OnlyGrainSpLUT::Mg2SiO4_dust],
-                              "inject_path_grain_yield_frac.Mg2SiO4_dust");
+                              "inject_path_grain_yield_frac.Mg2SiO4_dust",
+                              shape);
     case 5:
       return rateq::new_Entry(data[OnlyGrainSpLUT::Fe3O4_dust],
-                              "inject_path_grain_yield_frac.Fe3O4_dust");
+                              "inject_path_grain_yield_frac.Fe3O4_dust", shape);
     case 6:
       return rateq::new_Entry(data[OnlyGrainSpLUT::SiO2_dust],
-                              "inject_path_grain_yield_frac.SiO2_dust");
+                              "inject_path_grain_yield_frac.SiO2_dust", shape);
     case 7:
       return rateq::new_Entry(data[OnlyGrainSpLUT::MgO_dust],
-                              "inject_path_grain_yield_frac.MgO_dust");
+                              "inject_path_grain_yield_frac.MgO_dust", shape);
     case 8:
       return rateq::new_Entry(data[OnlyGrainSpLUT::FeS_dust],
-                              "inject_path_grain_yield_frac.FeS_dust");
+                              "inject_path_grain_yield_frac.FeS_dust", shape);
     case 9:
       return rateq::new_Entry(data[OnlyGrainSpLUT::Al2O3_dust],
-                              "inject_path_grain_yield_frac.Al2O3_dust");
+                              "inject_path_grain_yield_frac.Al2O3_dust", shape);
     case 10:
       return rateq::new_Entry(data[OnlyGrainSpLUT::ref_org_dust],
-                              "inject_path_grain_yield_frac.ref_org_dust");
+                              "inject_path_grain_yield_frac.ref_org_dust",
+                              shape);
     case 11:
       return rateq::new_Entry(data[OnlyGrainSpLUT::vol_org_dust],
-                              "inject_path_grain_yield_frac.vol_org_dust");
+                              "inject_path_grain_yield_frac.vol_org_dust",
+                              shape);
     case 12:
       return rateq::new_Entry(data[OnlyGrainSpLUT::H2O_ice_dust],
-                              "inject_path_grain_yield_frac.H2O_ice_dust");
+                              "inject_path_grain_yield_frac.H2O_ice_dust",
+                              shape);
     default:
       return rateq::mk_invalid_Entry();
   }
