@@ -40,6 +40,8 @@
 #include <stdlib.h> 
 #include <stdio.h>
 #include <math.h>
+#include <climits>
+#include <limits>
 
 #include "grackle.h"
 #include "grackle_macros.h"
@@ -445,6 +447,57 @@ grackle::impl::ratequery::Entry get_k13dd_Entry(
   }
 }
 
+/// @brief Checks the set of input parameters for specifying a 1D ln(T) grid
+///
+/// There are 2 sets of parameters.
+/// 1. when @p gas_T is ``true``, we check the set of parameters that specify
+///    a grid of gas temperatures. This grid is used for the vast majority of
+///    1D interpolations of rates.
+/// 2. when @p gas_T is ``false``, we check the set of parameters that specify a
+///    grid of dust temperatures.
+///
+/// @return ``GR_SUCCESS`` indicates success. Other values indicate an error.
+int check_generic_lnT_params(const chemistry_data& chem, bool gas_T) {
+  // strictly speaking 
+  int num = (gas_T) ? chem.NumberOfTemperatureBins : 
+                      chem.NumberOfDustTemperatureBins;
+  double start = (gas_T) ? chem.TemperatureStart : chem.DustTemperatureStart;
+  double end = (gas_T) ? chem.TemperatureEnd : chem.DustTemperatureEnd;
+  const char* T_kind = (gas_T) ? "Temperature" : "DustTemperature";
+
+  // this is the lowest possible start value:
+  // -> keep in mind that std::numeric_limits<T>::min() returns the lowest
+  //    POSITIVE (non-subnormal) value represented by a floating point type, T
+  // -> it must be positive since interpolation occurs in log-space
+  // -> we currently forbid subnormal numbers because they can significantly
+  //    slow down calculations on some hardware. Plus, there isn't any value
+  //    in representing Temperatures that small (for astrophysics sims)
+  double lowest_start = std::numeric_limits<double>::min();
+
+  if (std::numeric_limits<double>::min() > start) {
+    return GrPrintAndReturnErr("error: %sStart param must be at least %.17e",
+                               T_kind, lowest_start);
+  } else if (start >= end) {
+    return GrPrintAndReturnErr("error: %sEnd param must exceed %sStart param",
+                               T_kind, T_kind);
+  } else if (num < 2) {
+    // technically, NumberOfTemperatureBins and NumberOfDustTemperatureBins are
+    // actually misnomers
+    // - "bins" typically refer to a set of non-overlapping intervals with
+    //   finite widths. You usually use bins to aggregate values (like in
+    //   histograms). It is possible to break an entire interval into a single
+    //   bin.
+    // - These parameters actually specify the number of interpolation points,
+    //   equally spaced in log-space. To perform linear interpolation, you
+    //   always need at least 2 interpolation points.
+    // (this distinction would matter less if the parameters referred to bin
+    // edges rather than bins)
+    return GrPrintAndReturnErr("error: NumberOf%sBins must exceed 1",
+                               T_kind);
+  } else {
+    return GR_SUCCESS;
+  }
+}
 
 } // anonymous namespace
 
@@ -454,20 +507,29 @@ int grackle::impl::initialize_rates(
   code_units *my_units, double co_length_unit, double co_density_unit,
   ratequery::RegBuilder* reg_builder)
 { 
-    // TODO: we REALLY need to do an error check that
-    //    my_chemistry->NumberOfTemperatureBins >= 2
-    //  is satisfied. We should give some thought about whether this should
-    //  produce errors when primordial_chemistry == 0
-
-    // TODO: also add error-checks for:
-    //   TemperatureStart, TemperatureEnd, NumberOfDustTemperatureBins,
-    //   DustTemperatureStart, DustTemperatureEnd
+    // check NumberOfTemperatureBins, Temperature(Start|End) params
+    // -> can we skip this when primordial_chemistry == 0?
+    {
+      int rc = check_generic_lnT_params(*my_chemistry, true);
+      if (rc != GR_SUCCESS) {
+        return rc;
+      }
+    }
 
     int anyDust;
     if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
         anyDust = TRUE;
     } else {
         anyDust = FALSE;
+    }
+
+    // check NumberOfDustTemperatureBins, DustTemperature(Start|End) params
+    // -> can we skip this when primordial_chemistry == 0?
+    if (anyDust) {
+      int rc = check_generic_lnT_params(*my_chemistry, false);
+      if (rc != GR_SUCCESS) {
+        return rc;
+      }
     }
 
     //* Obtain the conversion factors which convert between code and physical units. We define a_value = 1 at z = zInit such that a = a_value * [a].
