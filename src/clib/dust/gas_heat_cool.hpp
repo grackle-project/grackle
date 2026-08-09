@@ -224,7 +224,7 @@ void update_edot_dust_cooling_rate(
 
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask_metal[i] != MASK_FALSE) {
-      double Ldst;
+      double Ldst = 0.;
       if (single_species_dust_model) {
         Ldst =
             -gasgr[i] * (tgas[i] - tdust[i]) * dust2gas[i] * rhoH[i] * rhoH[i];
