@@ -310,32 +310,19 @@ class EntrySet {
   /// a function pointer that can be used to access entries through a recipe
   fetch_Entry_recipe_fn* recipe_fn;
 
-  /// properties used by all entries accessed through a recipe
-  ///
-  /// In more detail, an entry returned by `recipe_fn` has its `props` member
-  /// overwritten by this value
-  ///
-  /// @note
-  /// only used in Recipe-mode
-  EntryShape common_recipe_props;
-
 public:
   /// @brief construct an empty entry set
-  EntrySet()
-      : len(0),
-        recipe_fn{nullptr},
-        common_recipe_props{EntryShape::create_invalid()} {}
+  EntrySet() : len(0), recipe_fn{nullptr} {}
 
   /// @brief construct a set of entries in embedded list mode
   explicit EntrySet(std::vector<Entry> embedded_list)
       : len{static_cast<int>(embedded_list.size())},
         embedded_list(embedded_list),
-        recipe_fn{nullptr},
-        common_recipe_props{EntryShape::create_invalid()} {}
+        recipe_fn{nullptr} {}
 
   /// construct a set of entries in recipe-mode
-  EntrySet(int len, fetch_Entry_recipe_fn* recipe_fn, EntryShape common_props)
-      : len{len}, recipe_fn{recipe_fn}, common_recipe_props{common_props} {}
+  EntrySet(int len, fetch_Entry_recipe_fn* recipe_fn)
+      : len{len}, recipe_fn{recipe_fn} {}
 
   // forbid copy-construction & copy assignment (if we want these, we would
   // need custom implementations to properly handle embedded_list, or we would
@@ -366,7 +353,6 @@ public:
     std::swap(len, other.len);
     std::swap(embedded_list, other.embedded_list);
     std::swap(recipe_fn, other.recipe_fn);
-    std::swap(common_recipe_props, other.common_recipe_props);
   }
 
   /// @brief get the number of @ref Entry in the container
@@ -456,12 +442,6 @@ class RegBuilder {
   /// this implements common machinery for updating @ref owned_entries
   int take_data_(const char* raw_name, PtrUnion owned_data, EntryShape props);
 
-  /// @brief builder creates a recipe
-  ///
-  /// this implements common machinery for updating @ref recipe_sets
-  int recipe_(fetch_Entry_recipe_fn* recipe_fn, int n_entries,
-              EntryShape common_props);
-
 public:  // interface methods
   /// @brief default constructor
   RegBuilder() = default;
@@ -475,24 +455,13 @@ public:  // interface methods
 
   ~RegBuilder() noexcept;
 
-  /// register a recipe for accessing scalar values
+  /// register a recipe for accessing a rate array
   ///
   /// @param[in] n_entries The number of entries accessible through the recipe
   /// @param[in] recipe_fn The recipe being registered
   ///
   /// @returns GR_SUCCESS if successful, otherwise returns a different value
-  int recipe_scalar(int n_entries, fetch_Entry_recipe_fn* recipe_fn);
-
-  /// register a recipe for accessing 1D arrays
-  ///
-  /// @param[in] n_entries The number of entries accessible through the recipe
-  /// @param[in] recipe_fn The recipe being registered
-  /// @param[in] common_len The length shared by each 1D array accessible
-  ///     through this recipe.
-  ///
-  /// @returns GR_SUCCESS if successful, otherwise returns a different value
-  int recipe_1d(int n_entries, fetch_Entry_recipe_fn* recipe_fn,
-                int common_len);
+  int recipe(int n_entries, fetch_Entry_recipe_fn* recipe_fn);
 
   /// copies a 1d array of strings to make a queryable entry
   ///

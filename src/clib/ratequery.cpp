@@ -83,7 +83,7 @@ static Entry get_PhotoRxn_Entry(chemistry_data_storage* my_rates, int i) {
 int add_misc_recipies_to_RegBuilder(RegBuilder* ptr,
                                     const chemistry_data* my_chemistry) {
   if (my_chemistry->primordial_chemistry != 0) {
-    return ptr->recipe_scalar(PhotoRxnLUT::NUM_ENTRIES, &get_PhotoRxn_Entry);
+    return ptr->recipe(PhotoRxnLUT::NUM_ENTRIES, &get_PhotoRxn_Entry);
   }
   return GR_SUCCESS;
 }
@@ -154,9 +154,7 @@ Entry EntrySet::access(chemistry_data_storage* my_rates, int i) const {
   if ((i < 0) || (i >= this->size())) {
     return mk_invalid_Entry();
   } else if (embedded_list.empty()) {  // in recipe-mode
-    Entry out = (recipe_fn)(my_rates, i);
-    out.props = common_recipe_props;
-    return out;
+    return (recipe_fn)(my_rates, i);
   } else {  // in embedded-list mode
     return embedded_list[i];
   }
@@ -195,18 +193,14 @@ int RegBuilder::take_data_(const char* raw_name, PtrUnion owned_data,
   return GR_SUCCESS;
 }
 
-int RegBuilder::recipe_(fetch_Entry_recipe_fn* recipe_fn, int n_entries,
-                        EntryShape common_props) {
+int RegBuilder::recipe(int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
   if (recipe_fn == nullptr) {
     return GrPrintAndReturnErr("recipe_fn is a nullptr");
   } else if (n_entries <= 0) {
     return GrPrintAndReturnErr("n_entries is not positive");
-  } else if (!common_props.is_valid()) {
-    return GrPrintAndReturnErr("common_props isn't valid");
   }
 
-  recipe_sets.emplace_back(n_entries, recipe_fn, common_props);
-
+  recipe_sets.emplace_back(n_entries, recipe_fn);
   return GR_SUCCESS;
 }
 
@@ -216,15 +210,6 @@ RegBuilder::~RegBuilder() noexcept {
     drop_owned_Entry_list_contents(owned_entries.data(), owned_entries.size());
     // the actual deletion of std::vector<Entry> is handled automatically
   }
-}
-
-int RegBuilder::recipe_scalar(int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
-  return recipe_(recipe_fn, n_entries, EntryShape::create_scalar());
-}
-
-int RegBuilder::recipe_1d(int n_entries, fetch_Entry_recipe_fn* recipe_fn,
-                          int common_len) {
-  return recipe_(recipe_fn, n_entries, EntryShape::create_1d(common_len));
 }
 
 int RegBuilder::copied_str_arr1d(const char* name, const char* const* str_arr1d,

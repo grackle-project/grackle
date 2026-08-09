@@ -630,10 +630,8 @@ int grackle::impl::initialize_rates(
       }
 
       // register the recipe for looking up the "standard" collisional rates
-      if (reg_builder->recipe_1d(CollisionalRxnLUT::NUM_ENTRIES,
-                                 &get_CollisionalRxn_Entry,
-                                 my_chemistry->NumberOfTemperatureBins
-          ) != GR_SUCCESS) {
+      if (reg_builder->recipe(CollisionalRxnLUT::NUM_ENTRIES,
+                              &get_CollisionalRxn_Entry) != GR_SUCCESS) {
         return GrPrintAndReturnErr("error registering standard collisional "
                                    "reaction rates");
       }
@@ -654,9 +652,7 @@ int grackle::impl::initialize_rates(
         add_k13dd_reaction_rate(&my_rates->k13dd, kUnit, my_chemistry);
 
         // maybe k13dd should be considered multi-dimensional?
-        if (reg_builder->recipe_1d(1, &get_k13dd_Entry,
-                                   my_chemistry->NumberOfTemperatureBins * 14
-             ) != GR_SUCCESS) {
+        if (reg_builder->recipe(1, &get_k13dd_Entry) != GR_SUCCESS) {
           return GrPrintAndReturnErr("error registering k13dd rate");
         }
 

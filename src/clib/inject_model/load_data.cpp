@@ -162,8 +162,7 @@ int configure_RegBuilder(const chemistry_data_storage* my_rates,
 
   // the length of each gas nuclide yield array is equal to the number of
   // injection pathways
-  if (reg_builder->recipe_1d(7, &nuclide_gas_yield_recipe, n_pathways) !=
-      GR_SUCCESS) {
+  if (reg_builder->recipe(7, &nuclide_gas_yield_recipe) != GR_SUCCESS) {
     return GrPrintAndReturnErr(
         "There was an issue making nuclide gas yield fractions (for each "
         "injection pathway) queryable");
@@ -176,8 +175,8 @@ int configure_RegBuilder(const chemistry_data_storage* my_rates,
 
     // the length of each grain species yield array is equal to the number of
     // injection pathways
-    if (reg_builder->recipe_1d(n_grain_species, &grain_yield_recipe,
-                               n_pathways) != GR_SUCCESS) {
+    if (reg_builder->recipe(n_grain_species, &grain_yield_recipe) !=
+        GR_SUCCESS) {
       return GrPrintAndReturnErr(
           "There was an issue making nuclide gas yield fractions (for each "
           "injection pathway) queryable");
