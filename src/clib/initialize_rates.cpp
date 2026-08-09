@@ -516,6 +516,11 @@ int grackle::impl::initialize_rates(
       }
     }
 
+    // store NumberOfTemperatureBins inside of opaque_storage. This is a crude
+    // hack so ratequery machinery can infer shapes without my_chemistry
+    my_rates->opaque_storage->NumberOfTemperatureBins =
+        my_chemistry->NumberOfTemperatureBins;
+
     int anyDust;
     if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
         anyDust = TRUE;
