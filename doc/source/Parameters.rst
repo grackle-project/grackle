@@ -699,31 +699,6 @@ Below are parameters that configure the dust model enabled by setting
      :c:data:`ref_org_dust_density`.
      Default: 0.
 
-.. c:var:: int chiaki_dust_model_dust_sublimation
-
-   Enables the sublimation of grains when they reach their respective
-   sublimation temperatures. Sublimation results in instantaneous
-   decrease of the associated dust density to zero. The components of
-   the given grain are then added to the constituent atomic density
-   fields. Individual sublimation temperature are given below.
-
-   - enstatite (MgSiO\ :sub:`3`\ ): 1222 K
-   - amorphous carbon grains: 1800 K
-   - metallic silicon: 1500 K
-   - metallic iron: 1500 K
-   - forsterite (Mg\ :sub:`2`\ SiO\ :sub:`4`\ ): 1277 K
-   - magnetite (Fe\ :sub:`3`\ O\ :sub:`4`\ ): 1500 K
-   - silica (SiO\ :sub:`2`\ ): 1500 K
-   - magnesia (MgO): 1500 K
-   - troilite (FeS): 680 K
-   - alumina (Al\ :sub:`2`\ O\ :sub:`3`\ ): 1500 K
-   - water ice: 153 K
-   - volatile organics: 375 K
-   - refractory organics: 575 K
-
-   Requires: :c:data:`chiaki_dust_model_dust_species` > 0.
-   Default: 0.
-
 .. c:var:: int chiaki_dust_model_grain_growth
 
    Enables growth of dust grains via accretion of metal atoms.

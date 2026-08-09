@@ -131,9 +131,6 @@ typedef struct
   */
   int dust_species;
 
-  /* Flag to supply dust sublimation */
-  int dust_sublimation;
-
   /* photo-electric heating from irradiated dust */
   int photoelectric_heating;
   double photoelectric_heating_rate;
