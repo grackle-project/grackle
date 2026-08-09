@@ -193,11 +193,9 @@ inline void step_rate_newton_raphson(
   int itr, itr_time;
   int nsp, isp, jsp, id;
   double dspj, err, err_max;
-  /* flag for if Gen Chiaki's dust model is enabled with dust evolution
-     in the form of either grain growth or sublimation. */
+  // flag for Gen Chiaki's dust model with evolving grains.
   const bool chiaki_model_dust_evolution =
-    (my_chemistry->dust_chemistry == 2) &&
-    ((my_chemistry->grain_growth == 1) || (my_chemistry->dust_sublimation == 1));
+    (my_chemistry->dust_chemistry == 2) && (my_chemistry->grain_growth == 1);
 
   // the following specifies the historical 1-based index that we would use to
   // hold energy

@@ -198,11 +198,9 @@ void make_consistent(
   // locals
 
   int i, j, k;
-  /* flag for if Gen Chiaki's dust model is enabled with dust evolution
-     in the form of either grain growth or sublimation. */
+  // flag for Gen Chiaki's dust model with evolving grains.
   const bool chiaki_model_dust_evolution =
-    (my_chemistry->dust_chemistry == 2) &&
-    ((my_chemistry->grain_growth == 1) || (my_chemistry->dust_sublimation == 1));
+    (my_chemistry->dust_chemistry == 2) && (my_chemistry->grain_growth == 1);
   double totalD;
   std::vector<double> totalH(my_fields->grid_dimension[0]);
   std::vector<double> totalHe(my_fields->grid_dimension[0]);

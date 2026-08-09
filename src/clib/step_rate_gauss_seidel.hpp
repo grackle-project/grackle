@@ -99,12 +99,9 @@ inline void update_fields_from_tmpdens_gauss_seidel(
 
   const int j = idx_range.j;
   const int k = idx_range.k;
-  /* flag for if Gen Chiaki's dust model is enabled with dust evolution
-     in the form of either grain growth or sublimation. */
+  // flag for Gen Chiaki's dust model with evolving grains.
   const bool chiaki_model_dust_evolution =
-    (my_chemistry->dust_chemistry == 2) &&
-    ((my_chemistry->grain_growth == 1) || (my_chemistry->dust_sublimation == 1));
-
+    (my_chemistry->dust_chemistry == 2) && (my_chemistry->grain_growth == 1);
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
