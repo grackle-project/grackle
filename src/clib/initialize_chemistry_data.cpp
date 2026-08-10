@@ -24,7 +24,6 @@
 #include "initialize_UVbackground_data.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
-#include "interp_table_utils.hpp" // free_interp_grid_
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 #include "ratequery.hpp"
@@ -136,19 +135,6 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->gas_grain2 = NULL;
 
   my_rates->cieY06 = NULL;
-
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LHD);
-
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCI);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCII);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOI);
-
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCO);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOH);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2O);
-
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->alphap);
 
   my_rates->cloudy_data_new = -1;
 
@@ -343,9 +329,6 @@ static int local_initialize_chemistry_data_(
 
   // perform some basic allocations
   my_rates->opaque_storage = new gr_opaque_storage;
-  // the following line will be made unnecessary after PR #564 is merged
-  grackle::impl::init_empty_interp_grid_props_(
-    &my_rates->opaque_storage->h2dust_grain_interp_props);
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -559,14 +542,6 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->H2LTE);
     GRACKLE_FREE(my_rates->gas_grain);
     GRACKLE_FREE(my_rates->gas_grain2);
-
-    grackle::impl::free_interp_grid_(&my_rates->LH2);
-    grackle::impl::free_interp_grid_(&my_rates->LHD);
-
-    // we deal with freeing other interp grids inside of
-    // free_misc_species_cool_rates
-
-    grackle::impl::free_interp_grid_(&my_rates->alphap);
 
     GRACKLE_FREE(my_rates->k13dd);
     GRACKLE_FREE(my_rates->h2dust);
