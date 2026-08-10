@@ -92,7 +92,7 @@ For all on/off integer flags, 0 is off and 1 is on.
         Both the photo-electric heating and recombination cooling are scaled
         by the value of the :c:data:`interstellar_radiation_field`.
      #. H\ :sub:`2`\  formation on dust and dust-gas heat transfer (if
-        #:c:data:`primordial_chemistry` > 1).
+        :c:data:`primordial_chemistry` > 1).
 
    Setting :c:data:`dust_chemistry` greater than 0 requires
    :c:data:`metal_cooling` to be enabled.
