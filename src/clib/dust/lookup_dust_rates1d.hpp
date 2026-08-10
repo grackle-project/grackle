@@ -230,7 +230,7 @@ inline void lookup_dust_rates1d(
     // of tabulated values
 
     // load properties of the interpolation table
-    gr_interp_grid_props& interp_props =
+    InterpGridProps& interp_props =
         my_rates->opaque_storage->h2dust_grain_interp_props;
 
     // load the tables that we are interpolating over
