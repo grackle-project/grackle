@@ -282,7 +282,7 @@ def _required_density_fields(my_chemistry):
       _metal_chemistry_densities[my_chemistry.metal_chemistry].copy()
     if my_chemistry.metal_cooling == 1:
         my_fields.append("metal_density")
-    if my_chemistry.dust_chemistry == 1:
+    if my_chemistry.use_dust_density_field == 1:
         my_fields.append("dust_density")
     if my_chemistry.metal_chemistry > 0:
         my_fields.extend(_dust_metal_densities[my_chemistry.dust_species])
