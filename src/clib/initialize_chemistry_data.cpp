@@ -24,7 +24,6 @@
 #include "initialize_UVbackground_data.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
-#include "interp_table_utils.hpp" // free_interp_grid_
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 #include "ratequery.hpp"
@@ -137,19 +136,6 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
 
   my_rates->cieY06 = NULL;
 
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LHD);
-
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCI);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCII);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOI);
-
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCO);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOH);
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2O);
-
-  grackle::impl::initialize_empty_interp_grid_(&my_rates->alphap);
-
   my_rates->cloudy_data_new = -1;
 
   my_rates->opaque_storage = NULL;
@@ -218,6 +204,15 @@ static int local_initialize_chemistry_data_(
       }
     }
 
+  }
+
+  if (my_chemistry->metal_chemistry == 1) {
+    if (my_chemistry->metal_cooling == 0) {
+      if (grackle_verbose) {
+        fprintf(stderr, "ERROR: metal_chemistry = 1 requires metal_cooling = 1.\n");
+        return GR_FAIL;
+      }
+    }
   }
 
   if (my_chemistry->primordial_chemistry == 0 &&
@@ -335,14 +330,6 @@ static int local_initialize_chemistry_data_(
 
   // perform some basic allocations
   my_rates->opaque_storage = new gr_opaque_storage;
-  my_rates->opaque_storage->kcol_rate_tables = nullptr;
-  my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
-  my_rates->opaque_storage->n_kcol_rate_indices = 0;
-  grackle::impl::init_empty_interp_grid_props_(
-    &my_rates->opaque_storage->h2dust_grain_interp_props);
-  my_rates->opaque_storage->grain_species_info = nullptr;
-  my_rates->opaque_storage->inject_pathway_props = nullptr;
-  my_rates->opaque_storage->registry = nullptr;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -557,14 +544,6 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->gas_grain);
     GRACKLE_FREE(my_rates->gas_grain2);
 
-    grackle::impl::free_interp_grid_(&my_rates->LH2);
-    grackle::impl::free_interp_grid_(&my_rates->LHD);
-
-    // we deal with freeing other interp grids inside of
-    // free_misc_species_cool_rates
-
-    grackle::impl::free_interp_grid_(&my_rates->alphap);
-
     GRACKLE_FREE(my_rates->k13dd);
     GRACKLE_FREE(my_rates->h2dust);
     GRACKLE_FREE(my_rates->n_cr_n);
@@ -584,54 +563,6 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
   if (grackle::impl::free_misc_species_cool_rates(my_chemistry, my_rates) != GR_SUCCESS) {
     fprintf(stderr, "Error in free_metal_chemistry_rates.\n");
     return GR_FAIL;
-  }
-
-  // start freeing memory associated with opaque storage
-  // ---------------------------------------------------
-  if (my_rates->opaque_storage->kcol_rate_tables != nullptr) {
-    // delete contents of kcol_rate_tables
-    drop_CollisionalRxnRateCollection(my_rates->opaque_storage->kcol_rate_tables);
-    // delete kcol_rate_tables, itself
-    delete my_rates->opaque_storage->kcol_rate_tables;
-  }
-
-  if (my_rates->opaque_storage->used_kcol_rate_indices !=nullptr) {
-    // since used_kcol_rate_indices are just integers, we can directly
-    // deallocate them
-    delete[] my_rates->opaque_storage->used_kcol_rate_indices;
-  }
-
-  // delete contents of h2dust_grain_interp_props (automatically handles the
-  // case where we didn't allocate anything)
-  grackle::impl::free_interp_grid_props_(
-      &my_rates->opaque_storage->h2dust_grain_interp_props,
-      /* use_delete = */ false);
-  // since h2dust_grain_interp_props isn't a pointer, there is nothing more to
-  // allocate right here
-
-  if (my_rates->opaque_storage->grain_species_info != nullptr) {
-    // delete contents of grain_species_info
-    grackle::impl::drop_GrainSpeciesInfo(
-      my_rates->opaque_storage->grain_species_info);
-    // delete grain_species_info, itself
-    delete my_rates->opaque_storage->grain_species_info;
-  }
-
-  if (my_rates->opaque_storage->inject_pathway_props != nullptr) {
-    // delete contents of inject_pathway_props
-    grackle::impl::drop_GrainMetalInjectPathways(
-      my_rates->opaque_storage->inject_pathway_props);
-    // delete inject_pathway_props, itself
-    delete my_rates->opaque_storage->inject_pathway_props;
-  }
-
-  if (my_rates->opaque_storage->registry != nullptr) {
-    // delete contents of registry
-    grackle::impl::ratequery::drop_Registry(
-      my_rates->opaque_storage->registry
-    );
-    // delete registry, itself
-    delete my_rates->opaque_storage->registry;
   }
 
   delete my_rates->opaque_storage;

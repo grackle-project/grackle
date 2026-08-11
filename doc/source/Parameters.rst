@@ -25,28 +25,57 @@ For all on/off integer flags, 0 is off and 1 is on.
 .. c:var:: int primordial_chemistry
 
    Flag to control which primordial chemistry network is used.
-   Default: 0.  See :ref:`network` for an illustration of all reactions
+   Default: 0. See :ref:`network` for an illustration of all reactions
    appearing in the chemistry network.
 
-   - 0: no chemistry network.  Radiative cooling for primordial
+   - 0: no chemistry network. Radiative cooling for primordial
      species is solved by interpolating from lookup tables
      calculated with Cloudy.
-   - 1: 6-species atomic H and He.  Active species: H, H\ :sup:`+`,
+   - 1: 6-species atomic H and He. Active species: H, H\ :sup:`+`,
      He, He\ :sup:`+`, He\ :sup:`++`, e\ :sup:`-`.
    - 2: 9-species network including atomic species above and species
-     for molecular hydrogen formation.  This network includes
+     for molecular hydrogen formation. This network includes
      formation from the H\ :sup:`-` and H\ :sub:`2`\ :sup:`+`
      channels, three-body formation (H+H+H and H+H+H\ :sub:`2`),
      H\ :sub:`2` rotational transitions, chemical heating, and
-     collision-induced emission (optional).  Active species: above +
+     collision-induced emission (optional). Active species: above +
      H\ :sup:`-`, H\ :sub:`2`, H\ :sub:`2`\ :sup:`+`.
-   - 3: 12-species network include all above plus HD rotation cooling.
+   - 3: 12-species network including all above plus HD rotation cooling.
      Active species: above + D, D\ :sup:`+`, HD.
+   - 4: 15-species network including all above plus D\ :sup:`-`,
+     HD\ :sup:`+`, HeH\ :sup:`+`. No additional coolants are present.
 
 .. note:: In order to make use of the non-equilibrium chemistry
-   network (:c:data:`primordial_chemistry` options 1-3), you must add
+   network (:c:data:`primordial_chemistry` options 1-4), you must add
    and advect baryon fields for each of the species used by that
    particular option.
+
+.. c:var:: int metal_chemistry
+
+   Flag to control which metal chemistry network is used in addition to
+   the primordial network determined by the :c:data:`primordial_chemistry`
+   parameter. See :ref:`network` for an illustration of all reactions.
+   Default: 0.
+
+   - 0: no metal chemistry.
+   - 1: 19-species metal network with atomic and molecular forms of C, O,
+     and Si with cooling from fine-structure emission of C, C\ :sup:`+`,
+     O and rotational level transitions of OH, H\ :sub:`2`\ O, CO.
+     Active species (in addition to primordial species):
+     C, C\ :sup:`+`, CH, CH\ :sub:`2`, CO, CO\ :sup:`+`, CO\ :sub:`2`,
+     O, O\ :sup:`+`, OH, OH\ :sup:`+`, H\ :sub:`2`\ O,
+     H\ :sub:`2`\ O\ :sup:`+`, H\ :sub:`3`\ O\ :sup:`+`, O\ :sub:`2`,
+     O\ :sub:`2`\ :sup:`+`, Si, SiO, SiO\ :sub:`2`.
+
+.. note:: Setting :c:data:`metal_chemistry` to 1 requires setting
+   :c:data:`metal_cooling` to 1. Additionally, the metal coolants
+   provided by the 19-species network are only relevant for temperatures
+   below roughly 10\ :sup:`4` K. Above this, tabulated metal cooling is
+   used, similar to when :c:data:`metal_chemistry` is set to 0. The
+   :c:data:`tabulated_cooling_minimum_temperature` parameter can be used to
+   set the temperature above which tabulated cooling is included. Finally,
+   as for the primordial network, you must add and advect baryon fields for
+   each of the species provided by the enabled network.
 
 .. c:var:: int dust_chemistry
 
@@ -87,6 +116,13 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. note:: In order to use the metal cooling, you must add and advect a
    metal density field.
+
+.. c:var:: float tabulated_cooling_minimum_temperature
+
+   When :c:data:`metal_chemistry` is set to 1, this controls the temperature
+   above which tabulated metal cooling is added to supplement the cooling
+   provided by the non-equilibrium metal network.
+   Default: 10000.0 (K).
 
 .. c:var:: int cmb_temperature_floor
 

@@ -18,9 +18,10 @@
 
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "grackle.h"             // gr_float
+#include "support/config.hpp"
 #include "support/index_helper.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 ///  Calculate equilibrium dust temperature
 ///
@@ -51,6 +52,7 @@ namespace grackle::impl {
 /// @par History
 /// written by: Britton Smith, 2011
 /// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
+///
 void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
                      const double* gamma_isrfa, const double* isrf,
                      const gr_mask_type* itmask, double trad, int buf_len,
@@ -58,5 +60,5 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
                      const double* alsp_data_, double* kgr, int idspecies,
                      IndexRange idx_range);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 #endif /* CALC_TDUST_1D_G_HPP */

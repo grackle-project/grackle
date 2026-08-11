@@ -182,11 +182,11 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-nccv10"
+        default: "gold-standard-nccv14"
       cache-tag:
         description: "A unique tag to append to the cache name"
         type: string
-        default: "2"
+        default: "1"
     steps:
       - run:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
@@ -311,6 +311,12 @@ jobs:
                    # make sure that any python scripts used in compiling the
                    # core-library maintain backwards compatability
       resource_class: medium  # <- 2 cores
+
+    environment:
+      # it seemed like cmake may have been creating more jobs than there are
+      # cores (perhaps b/c we're in a container?). This is an attempt to
+      # manually fix the job count to the number of cores
+      CMAKE_BUILD_PARALLEL_LEVEL: 2
 
     working_directory: ~/grackle
 

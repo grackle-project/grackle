@@ -1,40 +1,46 @@
-// See LICENSE file for license and copyright information
-
-/// @file time_deriv_0d.hpp
-/// @brief Defines machinery to calculate the time derivative for a single zone
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Defines machinery to calculate the time derivative for a single zone
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef TIME_DERIV_0D_HPP
 #define TIME_DERIV_0D_HPP
 
+#include "LUT.hpp"
 #include "cool1d_multi_g.hpp"
 #include "chemistry_solver_funcs.hpp"
 #include "dust_props.hpp"
 #include "gas_props.hpp"
-#include "fortran_func_wrappers.hpp"
 #include "full_rxn_rate_buf.hpp"
 #include "grackle.h"
-#include "grackle_macros.h" // GRACKLE_FREE
-#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
 #include "mask.hpp"
 #include "rate_timestep_g.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "utils-field.hpp"
+#include "support/config.hpp"
+#include "support/index_helper.hpp"
 
 // we choose to adopt a longer, more descriptive namespace here so that the
 // handful of functions defined in this file can have shorter names (in the
 // future, if we are willing to define methods on a struct, we can definitely
 // shorten the namespace name)
-namespace grackle::impl::time_deriv_0d {
+namespace GRIMPL_NAMESPACE_DECL {
+namespace time_deriv_0d {
 
 /// this is a collection of the arguments that won't change between successive
 /// time derivative calculations
 struct FrozenSimpleArgs {
   // the following batch of args are all forwarded
   int imetal;
-  // todo: we can delete `iter`. This is only here for historical reasons
-  int iter;
   double dom;
   double chunit;
   double dx_cgs;
@@ -70,7 +76,7 @@ struct MainScratchBuf {
 
 /// @param[in] opacity_table_size The number of elements in a dynamically
 ///    computed dust grain opacity table
-MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
+inline MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
   int nelem = 1;
   MainScratchBuf out;
   out.grain_temperatures = new_GrainSpeciesCollection(nelem);
@@ -86,7 +92,7 @@ MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
   return out;
 }
 
-void drop_MainScratchBuf(MainScratchBuf* ptr) {
+inline void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_GrainSpeciesCollection(&ptr->grain_temperatures);
   drop_LnTLinInterpBuf(&ptr->logTlininterp_buf);
   drop_Cool1DMultiScratchBuf(&ptr->cool1dmulti_buf);
@@ -160,6 +166,14 @@ struct ContextPack {
   int grid_dimension[3];
   int grid_start[3];
   int grid_end[3];
+  /** @} */
+
+  /// @defgroup dynamic_field_bufs
+  /// The arrays in this group provide storage for the various 1-element buffers
+  /// used with the dynamically evolved `fields`
+  /** @{ */
+  gr_float eint_field_buf[1];
+  gr_float sp_density_buf[MAX_EVOLVED_SPECIES_FIELDS];
   /** @} */
 
   /// @defgroup general_time_deriv_packs
@@ -246,10 +260,13 @@ inline void configure_ContextPack(
   pack->local_edot_handling = local_edot_handling;
   pack->fields.grid_dx = my_fields->grid_dx;
 
-  // here, we overwrite each field in pack.fields_1zone with pointers from
-  // each field in my_fields corresponding to the current location (i,j,k)
+  // here, we overwrite each field in pack.fields with pointers from each field
+  // in my_fields corresponding to the current location (i,j,k)
   copy_offset_fieldmember_ptrs_(&pack->fields, my_fields, field_idx1d);
-
+  // now we overwrite each field corresponding to a dynamically evolved quantity
+  // to point to a pre-allocated quantity
+  copy_contigSpTable_fieldmember_ptrs_(&pack->fields, pack->sp_density_buf, 1);
+  pack->fields.internal_energy = pack->eint_field_buf;
 }
 
 /// here we copy the values from the scratch buffers (used by grackle's main
@@ -425,32 +442,12 @@ inline void scratchbufs_copy_from_pack(
 /// @note
 /// If we ever redefine `SpeciesCollection` to be a class template, it would be
 /// natural to represent `rhosp` with `SpeciesCollection<gr_float>`
-///
-/// @par Future Performance Considerations:
-/// From a performance perspective, a compelling case could be made that we
-/// should be wiring up the members of the `grackle_field_data` struct to point
-/// to the entries of `rhosp` and `eint` ahead of time (before we call this
-/// function). In that scenario, it would probably make the most sense:
-/// - to replace `rhosp` and `eint` arguments with an argument passing the
-///   struct AND to manage the struct entirely outside of the logic in the
-///   time_deriv_0d namespace (this could make a lot of sense if we transition
-///   this function to operating on arrays of inputs)
-/// - Alternatively, we could organize all of the routines in this namespace so
-///   that they represent a single well-defined data-structure with explicitly
-///   documented semantics for the order of invoking commands. Essentially, it
-///   would need to be a state-machine.
-/// - (no matter what, we should try to avoid a bunch of implicit "magic")
-/// In reality, `grackle_field_data` is very poorly suited for its current role
-/// as a universal data-structure for passing around any/all kinds of field
-/// data. And, we should work on coming up with a superior alternative for
-/// use within Grackle
-void derivatives(
-  double dt_FIXME, gr_float* rhosp, grackle::impl::SpeciesCollection rhosp_dot,
-  gr_float* eint, double* eint_dot_specific, ContextPack& pack
+inline void derivatives(
+  double dt_FIXME, const gr_float* rhosp, SpeciesCollection rhosp_dot,
+  const gr_float* eint, double* eint_dot_specific, ContextPack& pack
 ) {
 
   // introduce some namespace abbreviations for use within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
   namespace gr_chem = ::grackle::impl::chemistry;
 
   chemistry_data* my_chemistry = pack.fwd_args.my_chemistry;
@@ -460,12 +457,11 @@ void derivatives(
 
   pack.other_scratch_buf.itmask[0] = MASK_TRUE;
 
-  // configure the relevant members of `pack.fields` to point to the buffers
-  // specified by the rhosp and eint argument.
-  // -> the "Future Performance Considerations" section of the docstring has
-  //    a relevant discussion about this operation
-  copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rhosp, 1);
-  pack.fields.internal_energy = &eint[0];
+  // copy values in eint & rhosp arguments into buffers tracked by pack.fields
+  pack.eint_field_buf[0] = eint[0];
+  for (int i=0; i < MAX_EVOLVED_SPECIES_FIELDS; i++) {
+    pack.sp_density_buf[i] = rhosp[i];
+  }
 
   if (pack.local_edot_handling != 1) {
     // in this branch, we're effectively ignoring the dependence of temperature
@@ -588,6 +584,7 @@ void derivatives(
 }
 
 
-} // namespace grackle::impl::time_deriv_0d
+} // namespace time_deriv_0d
+} // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* TIME_DERIV_0D_HPP */

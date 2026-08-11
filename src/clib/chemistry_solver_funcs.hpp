@@ -164,6 +164,7 @@ inline void species_density_updates_gauss_seidel(
   grackle::impl::View<gr_float***> H2Oice(my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Radiation Fields
+  // NOTE: these RT fields are only supplied by the caller when use_radiative_transfer == 1; otherwise the underlying pointers are NULL and these Views must NOT be dereferenced. 
   grackle::impl::View<gr_float***> kphHI(my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kphHeI(my_fields->RT_HeI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kphHeII(my_fields->RT_HeII_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -214,7 +215,8 @@ inline void species_density_updates_gauss_seidel(
                    HI ( i, j, k ),
                    HII ( i, j, k ),
                    de ( i, j, k ),
-                   kphHI ( i, j, k ),
+                   (my_chemistry->use_radiative_transfer == 1)
+                       ? (double)kphHI( i, j, k ) : 0.0,
                    scoef,
                    acoef,
                    dtit [ i ]);
@@ -248,7 +250,9 @@ inline void species_density_updates_gauss_seidel(
                    acoef,
                    kcol_buf[CollisionalRxnLUT::k2] [ i ],
                    de ( i, j, k ),
-                   kphHI ( i, j, k ),
+                   // kphHI's field is NULL unless use_radiative_transfer == 1
+                   (my_chemistry->use_radiative_transfer == 1)
+                       ? (double)kphHI( i, j, k ) : 0.0,
                    out_spdens.data[SpLUT::HI] [ i ],
                    kph_buf[PhotoRxnLUT::k24] [ i ]);
           }
@@ -472,7 +476,8 @@ inline void species_density_updates_gauss_seidel(
                    HII ( i, j, k ),
                    de ( i, j, k ),
                    H2I ( i, j, k ),
-                   kphHI ( i, j, k ));
+                   (my_chemistry->use_radiative_transfer == 1)
+                       ? (double)kphHI( i, j, k ) : 0.0);
           }
         }
 

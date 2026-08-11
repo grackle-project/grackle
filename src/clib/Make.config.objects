@@ -27,6 +27,8 @@ OBJS_CONFIG_LIB = \
         cool1d_multi_g.lo \
         cool_multi_time.lo \
         dust/calc_all_tdust_gasgr_1d_g.lo \
+        dust/calc_gr_balance_g.lo \
+        dust/multi_grain_species/calc_grain_size_increment_species_1d.lo \
         dust/calc_kappa_grain.lo \
         dust/calc_tdust_1d_g.lo \
         dust/grain_species_info.lo \
@@ -43,13 +45,13 @@ OBJS_CONFIG_LIB = \
         lnT_prep.lo \
         rate_timestep_g.lo \
         make_consistent.lo \
+        opaque_storage.lo \
         scale_fields.lo \
+        solve_cubic_equation.lo \
         solve_rate_cool.lo \
         support/status_reporting.lo \
         update_UVbackground_rates.lo \
-        calc_tdust_1d_g.lo \
         dust/calc_tdust_3d.lo \
-        calc_grain_size_increment_1d.lo \
         rate_functions.lo \
         ratequery.lo \
         gaussj_g.lo \

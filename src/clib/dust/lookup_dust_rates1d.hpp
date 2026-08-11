@@ -230,7 +230,7 @@ inline void lookup_dust_rates1d(
     // of tabulated values
 
     // load properties of the interpolation table
-    gr_interp_grid_props& interp_props =
+    InterpGridProps& interp_props =
         my_rates->opaque_storage->h2dust_grain_interp_props;
 
     // load the tables that we are interpolating over
@@ -382,48 +382,6 @@ inline void lookup_dust_rates1d(
         }  // idx_range loop
       }  // n_grain_species loop
     }
-
-    // todo: determine better behavior when my_chemistry->dust_sublimation
-    //       and my_chemistry->grain_growth are both equal to 1. When the
-    //       former option is enabled, the latter option has no impact. Thus
-    //       it makes no sense to let users enable both options!
-
-    if (my_chemistry->dust_sublimation == 1) {
-      for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-        // load the sublimation temperature for the current grain species
-        double temdust_sublimation =
-            gsp_info->species_info[gsp_idx].sublimation_temperature;
-
-        // get pointer to the dust temperatures for the current grain species
-        const double* temdust_arr =
-            (my_chemistry->use_multiple_dust_temperatures == 0)
-                ? tdust
-                : grain_temperatures.data[gsp_idx];
-
-        // get the view of the grain species's current mass density
-        const gr_float* rho_gsp_ptr = field_data_adaptor.get_ptr_dynamic(
-            gsp_info->species_info[gsp_idx].species_idx);
-        grackle::impl::View<const gr_float***> rho_gsp(
-            rho_gsp_ptr, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-        // iterate over the current index range
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          if (itmask_metal[i] != MASK_FALSE) {
-            // zero-out the grain growth rate
-            grain_growth_rates[gsp_idx][i] = 0.0;
-
-            // set the growth rate to a negative value that will destroy the
-            // grain over the interval `dt` if the dust temperature exceeds
-            // the grain species's sublimation temperature
-            if (temdust_arr[i] > temdust_sublimation) {
-              grain_growth_rates[gsp_idx][i] =
-                  (tiny8 - rho_gsp(i, idx_range.j, idx_range.k)) / dt;
-            }
-          }
-        }
-      }
-    }  // (my_chemistry->dust_sublimation == 1)
   }
 }
 

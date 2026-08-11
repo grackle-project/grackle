@@ -12,13 +12,18 @@ add_executable(runIndexHelperTests support/test_index_helper.cpp)
 target_link_libraries(runIndexHelperTests testdeps)
 gtest_discover_tests(runIndexHelperTests)
 
-add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
+add_executable(runInterpolationTests
+  test_unit_interpolators_g.cpp test_interp_grid.cpp)
 target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
 
 add_executable(runLinAlgTests test_linalg.cpp)
 target_link_libraries(runLinAlgTests testdeps)
 gtest_discover_tests(runLinAlgTests)
+
+add_executable(runSolveCubicEquationTests test_solve_cubic_equation.cpp)
+target_link_libraries(runSolveCubicEquationTests testdeps)
+gtest_discover_tests(runSolveCubicEquationTests)
 
 add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
 target_link_libraries(runGrainSpeciesIntoTests testdeps)
@@ -31,6 +36,10 @@ gtest_discover_tests(testPartMap)
 add_executable(runStatusReporting support/test_status_reporting.cpp)
 target_link_libraries(runStatusReporting testdeps)
 gtest_discover_tests(runStatusReporting)
+
+add_executable(testView support/test_View.cpp)
+target_link_libraries(testView testdeps)
+gtest_discover_tests(testView)
 
 # these may be slightly more of an integration test than a unit test
 add_executable(runVisitorTests test_visitor.cpp)
