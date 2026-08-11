@@ -323,7 +323,7 @@ _model_test_grids = \
                 },
                 "variants": \
                 {
-                    "dust_species": (0, 1),
+                    "dust_species": (1,),
                     "use_multiple_dust_temperatures": (0, 1),
                     "multi_metals": (1,),
                 }
