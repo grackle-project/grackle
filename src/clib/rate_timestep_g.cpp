@@ -100,12 +100,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
   grackle::impl::View<gr_float***> kdissHDI(
       my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kphCI(
-      my_fields->RT_CI_ionization_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kphOI(
-      my_fields->RT_OI_ionization_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kdissOH(
       my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -410,18 +404,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
       }
     }
     if ((my_chemistry->metal_chemistry > 0) &&
-        (my_chemistry->radiative_transfer_metal_ionization > 0)) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          dedot[i] = dedot[i] +
-                     kphCI(i, idx_range.j, idx_range.k) *
-                         CI(i, idx_range.j, idx_range.k) / 12.0 +
-                     kphOI(i, idx_range.j, idx_range.k) *
-                         OI(i, idx_range.j, idx_range.k) / 16.0;
-        }
-      }
-    }
-    if ((my_chemistry->metal_chemistry > 0) &&
         (my_chemistry->radiative_transfer_metal_dissociation > 0)) {
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
@@ -435,15 +417,16 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
     }
   }
 
-  // Add UV background photo-ionization of metal species
+  // Add photo-ionization of metal species (UV background + radiative
+  // transfer)
 
   if (my_chemistry->metal_chemistry > 0) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         dedot[i] = dedot[i] +
-                   kph_buf[PhotoRxnLUT::kphCI_bg][i] *
+                   kph_buf[PhotoRxnLUT::kphCI][i] *
                        CI(i, idx_range.j, idx_range.k) / 12.0 +
-                   kph_buf[PhotoRxnLUT::kphOI_bg][i] *
+                   kph_buf[PhotoRxnLUT::kphOI][i] *
                        OI(i, idx_range.j, idx_range.k) / 16.0;
       }
     }
