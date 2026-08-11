@@ -84,6 +84,11 @@ def _data_to_fc(data, size=None, fc=None):
 
     for gfield in fc.input_fields:
         yfield, units = _field_map[gfield]
+        # this is a temporary hack until we fix the rule in the
+        # FluidContainer for when dust_density is required.
+        if yfield == ('gas', 'dust_density') and \
+          fc.chemistry_data.use_dust_density_field == 0:
+            continue
         fdata = data[yfield].to(units)
 
         if flatten:
