@@ -26,6 +26,7 @@
 #include "inject_model/misc.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
+#include "mask.hpp"
 #include "scale_fields.hpp"
 #include "support/View.hpp"
 
@@ -96,6 +97,7 @@ void calc_tdust_3d(
     std::vector<double> gasgr(my_fields->grid_dimension[0]);
     std::vector<double> gasgr_tdust(my_fields->grid_dimension[0]);
     std::vector<double> myisrf(my_fields->grid_dimension[0]);
+    std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
     LnTLinInterpBuf logTlininterp_buf =
@@ -148,12 +150,10 @@ void calc_tdust_3d(
       //     calculation during the normal chemistry/cooling solve
       // - we can always introduce more optimized logic later that bypasses the
       //   unnecessary work (i.e. calculating nelec_times_mH)
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        itmask[i] = MASK_TRUE;
+      }
       {
-        gr_mask_type* itmask = itmask_metal.data();
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          itmask[i] = MASK_TRUE;
-        }
-
         // these buffers need to be filled (otherwise, we introduce lots of
         // branching). We will overwrite all of these
         double* dummy_mmw = myisrf.data();
@@ -162,25 +162,14 @@ void calc_tdust_3d(
 
         extended_gas_props(tgas.data(), dummy_mmw, dummy_rhoH,
                            metallicity.data(), dummy_nelec_times_mH,
-                           logTlininterp_buf, imetal, itmask,
+                           logTlininterp_buf, imetal, itmask.data(),
                            my_chemistry, &my_rates->cloudy_primordial,
                            my_fields, internalu, idx_range, nullptr);
       }
 
-
-      // Set itmask_metal to true for entire idx_range
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        itmask_metal[i] = MASK_TRUE;
-      }
-
-      // Set itmask to false for metal-poor cells
-      if (imetal == 1) {
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          if (metal(i,j,k) < 1.e-9 * d(i,j,k))  {
-            itmask_metal[i] = MASK_FALSE;
-          }
-        }
-      }
+      mask::fill_itmask_metal(itmask_metal.data(), itmask.data(),
+                              metallicity.data(), imetal, idx_range,
+                              my_chemistry);
 
       // Compute grain size increment
 
