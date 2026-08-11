@@ -65,7 +65,6 @@ def set_parameters(parSet, my_chemistry):
         my_chemistry.recombination_cooling_rates = 0
         my_chemistry.bremsstrahlung_cooling_rates = 0
         my_chemistry.h2_h_cooling_rate = 2
-        my_chemistry.photoelectric_heating = 2
         return True
     #Default parameter sets with other three_body_rate values.
     #Set 3 checks caseBrecombination rates.
