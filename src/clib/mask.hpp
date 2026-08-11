@@ -17,7 +17,7 @@
 #include "grackle.h"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
-#include "utils-cpp.hpp"  // View
+#include "support/View.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 namespace mask {

@@ -27,7 +27,7 @@
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
 #include "scale_fields.hpp"
-#include "utils-cpp.hpp"
+#include "support/View.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
