@@ -181,7 +181,8 @@ static int local_initialize_chemistry_data_(
     }
   }
 
-  // Activate dust chemistry machinery.
+  // Check settings required for all dust models and
+  // activate dust-related cooling/heating processes.
   if (my_chemistry->dust_chemistry > 0) {
 
     if (my_chemistry->metal_cooling < 1) {
@@ -205,12 +206,18 @@ static int local_initialize_chemistry_data_(
 
   }
 
+  // Check settings required for Gen Chiaki dust model.
+  if (my_chemistry->dust_chemistry == 2) {
+    if (my_chemistry->dust_species < 1) {
+      fprintf(stderr, "ERROR: dust_chemistry = 2 requires dust_species > 0.\n");
+      return GR_FAIL;
+    }
+  }
+
   if (my_chemistry->metal_chemistry == 1) {
     if (my_chemistry->metal_cooling == 0) {
-      if (grackle_verbose) {
-        fprintf(stderr, "ERROR: metal_chemistry = 1 requires metal_cooling = 1.\n");
-        return GR_FAIL;
-      }
+      fprintf(stderr, "ERROR: metal_chemistry = 1 requires metal_cooling = 1.\n");
+      return GR_FAIL;
     }
   }
 

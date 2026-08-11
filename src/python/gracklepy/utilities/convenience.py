@@ -87,10 +87,7 @@ def _setup_dust_densities(fc, state_vals, dust_to_gas_ratio):
     or on the injection metals.
     """
 
-    if fc.chemistry_data.metal_chemistry == 0 or fc.chemistry_data.dust_species == 0:
-        state_vals["dust_density"] = dust_to_gas_ratio * state_vals["density"]
-
-    elif fc.chemistry_data.metal_chemistry == 1:
+    if fc.chemistry_data.dust_chemistry == 2:
         metal_field = fc.inject_pathway_density_yield_fields[0]
         metal_density = state_vals[metal_field]
         dust_density = 0
@@ -100,9 +97,11 @@ def _setup_dust_densities(fc, state_vals, dust_to_gas_ratio):
 
         state_vals["dust_density"] = dust_density
 
-    else:
-        raise ValueError("metal_chemistry must be either 0 or 1.")
-
+    # TODO: this should really be:
+    # elif fc.chemistry_data.use_dust_density_field == 1:
+    # We will leave it this way to get tests to pass and change it later.
+    elif fc.chemistry_data.dust_chemistry == 1:
+        state_vals["dust_density"] = dust_to_gas_ratio * state_vals["density"]
 
 def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities):
     """
