@@ -244,12 +244,6 @@ static int local_initialize_chemistry_data_(
     return GR_FAIL;
   }
 
-  if (my_chemistry->dust_species > 0 &&
-      my_chemistry->use_dust_density_field == 0) {
-    fprintf(stderr, "ERROR: dust_species > 0 requires use_dust_density_field > 0.\n");
-    return GR_FAIL;
-  }
-
   if (my_chemistry->dust_species == 0 &&
       my_chemistry->use_multiple_dust_temperatures > 0) {
     fprintf(stderr, "ERROR: dust_species = 0 requires use_multiple_dust_temperatures = 0.\n");
