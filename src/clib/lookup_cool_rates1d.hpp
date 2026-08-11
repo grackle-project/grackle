@@ -915,12 +915,10 @@ inline void lookup_cool_rates1d(
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
-          kph_buf[PhotoRxnLUT::kphCI][i] =
-              kph_buf[PhotoRxnLUT::kphCI][i] +
-              kphCI(i, idx_range.j, idx_range.k);
-          kph_buf[PhotoRxnLUT::kphOI][i] =
-              kph_buf[PhotoRxnLUT::kphOI][i] +
-              kphOI(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kphCI][i] = kph_buf[PhotoRxnLUT::kphCI][i] +
+                                           kphCI(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kphOI][i] = kph_buf[PhotoRxnLUT::kphOI][i] +
+                                           kphOI(i, idx_range.j, idx_range.k);
         }
       }
     }
