@@ -27,13 +27,17 @@
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
 #include "opaque_storage.hpp"
+#include "support/config.hpp"
+#include "support/View.hpp"
 #include "tabulated/cool1d_cloudy.hpp"
 #include "tabulated/cool1d_cloudy_old_tables.hpp"
 #include "utils-cpp.hpp"
 
+namespace GRIMPL_NAMESPACE_DECL {
+
 static double interp_from_3D_grid(double input1, double input2, double input3,
                                   const GRIMPL_NS::InterpGrid& interp_grid) {
-  return GRIMPL_NS::interpolate_3d(
+  return interpolate_3d(
       input1, input2, input3, interp_grid.props.dimension,
       interp_grid.props.parameters[0], interp_grid.props.parameter_spacing[0],
       interp_grid.props.parameters[1], interp_grid.props.parameter_spacing[1],
@@ -41,18 +45,16 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
       interp_grid.props.data_size, interp_grid.data);
 }
 
-void grackle::impl::cool1d_multi_g(
+void cool1d_multi_g(
     double* edot, const double* tgas, const double* mmw, double* tdust,
     const double* metallicity, double* dust2gas, const double* rhoH,
     const double* nelec_times_mH, const gr_mask_type* itmask,
     const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-    IndexRange idx_range,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
-    grackle::impl::CoolHeatScratchBuf coolingheating_buf) {
+    IndexRange idx_range, GrainSpeciesCollection grain_temperatures,
+    LnTLinInterpBuf logTlininterp_buf, Cool1DMultiScratchBuf cool1dmulti_buf,
+    CoolHeatScratchBuf coolingheating_buf) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
@@ -1327,3 +1329,5 @@ void grackle::impl::cool1d_multi_g(
 
   return;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL
