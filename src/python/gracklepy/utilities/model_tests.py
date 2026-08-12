@@ -28,6 +28,10 @@ model_test_format_version = 1
 
 # These are generally applicable to all scripts.
 _parameter_exclude = (
+    {"dust_chemistry": 0, "dust_recombination_cooling": 1},
+    {"dust_chemistry": 0, "photoelectric_heating": 1},
+    {"dust_chemistry": 0, "photoelectric_heating": 2},
+    {"dust_chemistry": 0, "photoelectric_heating": 3},
     {"dust_chemistry": 1, "metal_cooling": 0},
     {"dust_chemistry": 1, "primordial_chemistry": 0},
     {"dust_chemistry": 1, "primordial_chemistry": 1},
