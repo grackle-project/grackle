@@ -204,8 +204,8 @@ inline void step_rate_newton_raphson(
   std::vector<double> dspdot(i_eng);
   std::vector<double> dspdot1(i_eng);
   std::vector<double> ddsp(i_eng);
-  std::vector<double> der_data_(i_eng * i_eng);
-  FortranView<double**> der(der_data_.data(), i_eng, i_eng);
+  std::vector<double> jacobian_data_(i_eng * i_eng);
+  FortranView<double**> jacobian(jacobian_data_.data(), i_eng, i_eng);
 
   // (In the future, we may want to reconsider when/how we allocate
   // the following 3 variables)
@@ -550,6 +550,10 @@ inline void step_rate_newton_raphson(
             dt_FIXME, dsp.data(), dspdot.data(), pack, rhosp_grflt, rhosp_dot
           );
 
+          // fill in the jacobian matrix for the time derivative
+          // -> to accomplish this, we use finite differences to estimate
+          //    partial derivative for each evolved variable (i.e. the species
+          //    densities and possibly the total energy)
           for (jsp = 1; jsp<=(nsp); jsp++) {
             dspj = eps * dsp[idsp[jsp-1]];
             for (isp = 1; isp<=(nsp); isp++) {
@@ -569,9 +573,9 @@ inline void step_rate_newton_raphson(
               if ( (dsp[idsp[isp-1]]==0.e0)
                &&  (dspdot1[idsp[isp-1]]
                ==  dspdot[idsp[isp-1]]) )  {
-                der(idsp[isp-1],idsp[jsp-1]) = 0.e0;
+                jacobian(idsp[isp-1],idsp[jsp-1]) = 0.e0;
               } else {
-                der(idsp[isp-1],idsp[jsp-1]) =
+                jacobian(idsp[isp-1],idsp[jsp-1]) =
                    (dspdot1[idsp[isp-1]]
                    - dspdot[idsp[isp-1]]) / dspj;
               }
@@ -583,10 +587,10 @@ inline void step_rate_newton_raphson(
             for (jsp = 1; jsp<=(nsp); jsp++) {
               if(isp == jsp)  {
                 mtrx(isp-1,jsp-1) = 1.e0 - dtit[i]
-                   * der(idsp[isp-1],idsp[jsp-1]);
+                   * jacobian(idsp[isp-1],idsp[jsp-1]);
               } else {
                 mtrx(isp-1,jsp-1) =      - dtit[i]
-                   * der(idsp[isp-1],idsp[jsp-1]);
+                   * jacobian(idsp[isp-1],idsp[jsp-1]);
               }
             }
           }
