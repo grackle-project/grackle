@@ -160,6 +160,13 @@ static int local_initialize_chemistry_data_(
     fprintf(stdout, "Initializing grackle data.\n");
   }
 
+  if (my_chemistry->h2_on_dust != 0) {
+    if (grackle_verbose) {
+      fprintf(stderr, "ERROR: h2_on_dust parameter has been removed.\n");
+      return GR_FAIL;
+    }
+  }
+
   /* Set the minimum temperature for using tabulated metal cooling. */
   if (my_chemistry->tabulated_cooling_minimum_temperature < -1.0) {
     if (my_chemistry->metal_chemistry > 0) {
@@ -174,7 +181,8 @@ static int local_initialize_chemistry_data_(
     }
   }
 
-  // Activate dust chemistry machinery.
+  // Check settings required for all dust models and
+  // activate dust-related cooling/heating processes.
   if (my_chemistry->dust_chemistry > 0) {
 
     if (my_chemistry->metal_cooling < 1) {
@@ -196,22 +204,20 @@ static int local_initialize_chemistry_data_(
       }
     }
 
-    if (my_chemistry->primordial_chemistry > 1 &&
-        my_chemistry->h2_on_dust == 0) {
-      my_chemistry->h2_on_dust = 1;
-      if (grackle_verbose) {
-        fprintf(stdout, "Dust chemistry enabled, setting h2_on_dust to 1.\n");
-      }
-    }
+  }
 
+  // Check settings required for Gen Chiaki dust model.
+  if (my_chemistry->dust_chemistry == 2) {
+    if (my_chemistry->dust_species < 1) {
+      fprintf(stderr, "ERROR: dust_chemistry = 2 requires dust_species > 0.\n");
+      return GR_FAIL;
+    }
   }
 
   if (my_chemistry->metal_chemistry == 1) {
     if (my_chemistry->metal_cooling == 0) {
-      if (grackle_verbose) {
-        fprintf(stderr, "ERROR: metal_chemistry = 1 requires metal_cooling = 1.\n");
-        return GR_FAIL;
-      }
+      fprintf(stderr, "ERROR: metal_chemistry = 1 requires metal_cooling = 1.\n");
+      return GR_FAIL;
     }
   }
 
