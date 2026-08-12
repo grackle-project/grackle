@@ -14,11 +14,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 #include "index_helper.h"
+#include "unit_handling.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -47,8 +47,6 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
         double *priPar1, double *priPar2, double *priPar3, 
  	long long *priDataSize, double *priMMW);
 
-double get_temperature_units(code_units *my_units);
-
 int local_calculate_pressure(chemistry_data *my_chemistry,
                              chemistry_data_storage *my_rates,
                              code_units *my_units,
@@ -70,6 +68,17 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 
   if (!my_chemistry->use_grackle)
     return SUCCESS;
+
+  /* do unit-handling */
+  code_units units = determine_code_units(my_units, my_rates,
+                                          my_fields->current_a_value,
+                                          my_chemistry->unit_handling,
+                                          "local_solve_chemistry");
+  if (units.a_units < 0) {
+    return FAIL;
+  } else {
+    my_units = &units;
+  }
 
   /* Compute the pressure first. */
  

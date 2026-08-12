@@ -40,7 +40,9 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: grid_dimension
          TYPE(C_PTR) :: grid_start
          TYPE(C_PTR) :: grid_end
+         REAL(C_DOUBLE) :: current_a_value
          REAL(C_DOUBLE) :: grid_dx
+
          
          TYPE(C_PTR) :: density
          TYPE(C_PTR) :: HI_density

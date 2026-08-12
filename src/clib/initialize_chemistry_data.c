@@ -236,6 +236,21 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 //omp_set_schedule( omp_sched_auto,    chunk_size );
 # endif
 
+  if (my_chemistry->unit_handling == -3) {
+    if (grackle_verbose) {
+      fprintf(stderr, ("WARNING: unit_handling is unset. Defaulting to legacy "
+                       "handling.\n"));
+    }
+    my_chemistry->unit_handling = GR_UNIT_HANDLING_LEGACY;
+  } else if ((my_chemistry->unit_handling != GR_UNIT_HANDLING_LEGACY) &&
+             (my_chemistry->unit_handling != GR_UNIT_HANDLING_AUTOMATIC)) {
+    fprintf(stderr, "unit_handling has an invalid value\n");
+    return GR_FAIL;
+  }
+
+  /* store a copy of the initial units */
+  my_rates->initial_units = *my_units;
+
   /* Only allow a units to be one with proper coordinates. */
   if (my_units->comoving_coordinates == FALSE &&
       my_units->a_units != 1.0) {
@@ -342,8 +357,6 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     return GR_FAIL;
   }
 
-  /* store a copy of the initial units */
-  my_rates->initial_units = *my_units;
 
   if (grackle_verbose) {
     time_t timer;
