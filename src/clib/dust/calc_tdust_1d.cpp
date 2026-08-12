@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the calc_tdust_1d_g function
+/// Implements the calc_tdust_1d function
 ///
 //===----------------------------------------------------------------------===//
 
@@ -26,16 +26,16 @@
 #include "support/config.hpp"
 #include "utils-cpp.hpp"
 
-#include "calc_tdust_1d_g.hpp"
+#include "calc_tdust_1d.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-void calc_tdust_1d_g(double* tdust, const double* tgas, const double* nh,
-                     const double* gasgr, const double* gamma_isrfa,
-                     const double* isrf, const gr_mask_type* itmask,
-                     double trad, int buf_len, int gr_N, double gr_dT,
-                     const double* gr_Td, const double* alsp_data_, double* kgr,
-                     int idspecies, IndexRange idx_range) {
+void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
+                   const double* gasgr, const double* gamma_isrfa,
+                   const double* isrf, const gr_mask_type* itmask, double trad,
+                   int buf_len, int gr_N, double gr_dT, const double* gr_Td,
+                   const double* alsp_data_, double* kgr, int idspecies,
+                   IndexRange idx_range) {
   // opacity table of a grain species
   //
   // In some configurations gr_N can be 0 while the backing buffer may still be
