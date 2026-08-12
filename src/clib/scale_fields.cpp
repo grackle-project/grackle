@@ -221,11 +221,9 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
   int dj, dk;
   dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
   dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
-  const bool single_dust_density_field =
-    ((my_chemistry->dust_chemistry == 1) &&
-     (my_chemistry->use_dust_density_field == 1)) ||
-    ((my_chemistry->dust_chemistry == 2) &&
-     (my_chemistry->dust_species == 0));
+  const bool dust_density_field_present =
+    my_chemistry->dust_chemistry == 1 &&
+    my_chemistry->use_dust_density_field == 1;
 
   // parallelize the k and j loops with OpenMP
   // flat j and k loops for better parallelism
@@ -303,7 +301,7 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
         }
       }
 
-      if (single_dust_density_field) {
+      if (dust_density_field_present) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           dust(i, j, k) = dust(i, j, k) * factor;
         }

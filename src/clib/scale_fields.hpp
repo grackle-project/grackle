@@ -122,12 +122,9 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   const IndexHelper idx_helper = build_index_helper_(my_fields);
-  const bool single_dust_density_field =
-    ((my_chemistry->dust_chemistry == 1) &&
-     (my_chemistry->use_dust_density_field == 1)) ||
-    ((my_chemistry->dust_chemistry == 2) &&
-     (my_chemistry->dust_species == 0));
-
+  const bool dust_density_field_present =
+    my_chemistry->dust_chemistry == 1 &&
+    my_chemistry->use_dust_density_field == 1;
 
   OMP_PRAGMA("omp parallel for schedule(runtime)")
   for (int t = 0; t < idx_helper.outer_ind_size; t++) {
@@ -141,7 +138,7 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
         metal(i, j, k) = metal(i, j, k) * factor;
       }
     }
-    if (single_dust_density_field) {
+    if (dust_density_field_present) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         dust(i, j, k) = dust(i, j, k) * factor;
       }

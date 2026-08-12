@@ -76,10 +76,7 @@ void grackle::impl::calc_all_tdust_gasgr_1d_g(
   double dlog10Tdust = 0.0;
   double* log10Tdust_vals = nullptr;
 
-  const bool single_species_dust_model =
-    (my_chemistry->dust_chemistry == 1) ||
-    ((my_chemistry->dust_chemistry == 2) &&
-     (my_chemistry->dust_species == 0));
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   // NOTE: gr_N is a historical name
   // -> it is pretty uninformative and should be changed!
