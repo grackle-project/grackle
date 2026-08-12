@@ -20,10 +20,10 @@
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
-#include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "internal_units.hpp"
+#include "math/integrate.hpp"
 #include "opaque_storage.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
@@ -139,6 +139,7 @@ inline void wrapped_calc_derivatives(
   dspdot[MAX_EVOLVED_SPECIES_FIELDS] = eint_dot_specific[0];
 }
 
+
 /// An alternative to step_rate_g for evolving the species rate equations that
 /// employs the Newton-Raphson scheme rather than Gauss-Seidel
 ///
@@ -154,25 +155,21 @@ inline void wrapped_calc_derivatives(
 /// - this has **ALWAYS** been the case. Historically these buffers have been
 ///   reused when computing finite differences
 inline void step_rate_newton_raphson(
-  int imetal, IndexRange idx_range, double dom, double chunit,
-  double dx_cgs, double c_ljeans, double* dtit, double* tgas,
-  double* tdust, double* metallicity, double* dust2gas, double* rhoH,
-  double* mmw, double* nelec_times_mH, double* edot, gr_mask_type anydust,
-  const gr_mask_type* itmask_nr, const gr_mask_type* itmask_metal,
-  const int* imp_eng, chemistry_data* my_chemistry,
-  chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-  grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-  grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
-  grackle::impl::CoolHeatScratchBuf coolingheating_buf,
-  grackle::impl::ChemHeatingRates chemheatrates_buf
-)
-{
+    int imetal, IndexRange idx_range, double dom, double chunit, double dx_cgs,
+    double c_ljeans, double* dtit, double* tgas, double* tdust,
+    double* metallicity, double* dust2gas, double* rhoH, double* mmw,
+    double* nelec_times_mH, double* edot, gr_mask_type anydust,
+    const gr_mask_type* itmask_nr, const gr_mask_type* itmask_metal,
+    const int* imp_eng, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+    grackle::impl::GrainSpeciesCollection grain_temperatures,
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
+    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
+    grackle::impl::CoolHeatScratchBuf coolingheating_buf,
+    grackle::impl::ChemHeatingRates chemheatrates_buf) {
   // shorten `grackle::impl::time_deriv_0d` to `t_deriv` within this function
   namespace t_deriv = ::grackle::impl::time_deriv_0d;
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
   // the following is a quick sanity check
   // -> we can remove this once we finish transcribing lookup_cool_rate0d
@@ -190,7 +187,7 @@ inline void step_rate_newton_raphson(
   //     we should change the name?)
   int ierror;
   // Local variable
-  int itr, itr_time;
+  int itr_time;
   int nsp, isp, jsp, id;
   double dspj, err, err_max;
   // the following specifies the historical 1-based index that we would use to
@@ -537,120 +534,20 @@ inline void step_rate_newton_raphson(
 
         // Iteration to solve ODEs
 
+        // given a vector variable y (i.e. the species densities and maybe the
+        // internal energy), this lambda function will compute the
+        // associated ydot (i.e. the vector of time derivatives)
+        const auto calc_deriv = [&, dt_FIXME](const double* y,
+                                                              double* ydot) -> void {
+          wrapped_calc_derivatives(dt_FIXME, y, ydot, pack,
+                                   rhosp_grflt, rhosp_dot);
+        };
+
         err_max=1.e2;
-        itr=0;
-        while (err_max>1.e-8) {
-          if(itr>=20)  {
-            ierror = 1;
-            goto label_9996;
-          }
-
-          // calc the time derivatives
-          wrapped_calc_derivatives(
-            dt_FIXME, dsp.data(), dspdot.data(), pack, rhosp_grflt, rhosp_dot
-          );
-
-          // fill in the jacobian matrix for the time derivative
-          // -> to accomplish this, we use finite differences to estimate
-          //    partial derivative for each evolved variable (i.e. the species
-          //    densities and possibly the total energy)
-          for (jsp = 1; jsp<=(nsp); jsp++) {
-            dspj = eps * dsp[idsp[jsp-1]];
-            for (isp = 1; isp<=(nsp); isp++) {
-              if(isp == jsp)  {
-                dsp1[idsp[isp-1]] = dsp[idsp[isp-1]] + dspj;
-              } else {
-                dsp1[idsp[isp-1]] = dsp[idsp[isp-1]];
-              }
-            }
-
-            wrapped_calc_derivatives(
-              dt_FIXME, dsp1.data(), dspdot1.data(), pack, rhosp_grflt,
-              rhosp_dot
-            );
-
-            for (isp = 1; isp<=(nsp); isp++) {
-              if ( (dsp[idsp[isp-1]]==0.e0)
-               &&  (dspdot1[idsp[isp-1]]
-               ==  dspdot[idsp[isp-1]]) )  {
-                jacobian(idsp[isp-1],idsp[jsp-1]) = 0.e0;
-              } else {
-                jacobian(idsp[isp-1],idsp[jsp-1]) =
-                   (dspdot1[idsp[isp-1]]
-                   - dspdot[idsp[isp-1]]) / dspj;
-              }
-            }
-
-          }
-
-          for (isp = 1; isp<=(nsp); isp++) {
-            for (jsp = 1; jsp<=(nsp); jsp++) {
-              if(isp == jsp)  {
-                mtrx(isp-1,jsp-1) = 1.e0 - dtit[i]
-                   * jacobian(idsp[isp-1],idsp[jsp-1]);
-              } else {
-                mtrx(isp-1,jsp-1) =      - dtit[i]
-                   * jacobian(idsp[isp-1],idsp[jsp-1]);
-              }
-            }
-          }
-
-          for (isp = 1; isp<=(nsp); isp++) {
-            vec[isp-1] = dspdot[idsp[isp-1]] * dtit[i]
-                   - ddsp[idsp[isp-1]];
-          }
-
-          // to get more accuracy
-          for (isp = 1; isp<=(nsp); isp++) {
-            vec[isp-1] = vec[isp-1]/d(i,j,k);
-          }
-
-          ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec.data());
-          if(ierror == 1)  {
-            goto label_9998;
-          }
-
-          // multiply with density again
-          for (isp = 1; isp<=(nsp); isp++) {
-            vec[isp-1] = vec[isp-1]*d(i,j,k);
-          }
-
-          for (isp = 1; isp<=(nsp); isp++) {
-            ddsp[idsp[isp-1]] = ddsp[idsp[isp-1]] + vec[isp-1];
-            dsp[idsp[isp-1]]  = dsp[idsp[isp-1]]  + vec[isp-1];
-          }
-
-          if (imp_eng[i] == 1)  {
-            if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
-              for (isp = 1; isp<=(nsp); isp++) {
-                if ( (dsp[idsp[isp-1]] != dsp[idsp[isp-1]])
-                 ||  (dsp[idsp[isp-1]] <= 0.) )  {
-                  ierror = 1;
-                  goto label_9997;
-                }
-              }
-            }
-          }
-
-          err_max = 0.e0;
-          for (isp = 1; isp<=(nsp); isp++) {
-            if(dsp[idsp[isp-1]] > tiny8)  {
-              err = grackle::impl::dabs(vec[isp-1] / dsp[idsp[isp-1]]);
-            } else {
-              err = 0.e0;
-            }
-            if(err > err_max)  {
-              err_max = err;
-            }
-          }
-
-          itr=itr+1;
-        }
-
-label_9998:
-label_9997:
-label_9996:
-
+        integrate::stiff_newton_raphson(dtit, imp_eng, my_chemistry, d,
+                  calc_deriv, ierror, nsp, isp, jsp,
+                  dspj, err, err_max, dsp, dsp1, dspdot, dspdot1, ddsp,
+                  jacobian, idsp, mtrx, vec, eps, i, j, k);
 
         // Check if the fractions are valid after an iteration
 
@@ -776,9 +673,7 @@ label_9996:
 
   t_deriv::drop_MainScratchBuf(&main_scratch_buf);
   grackle::impl::drop_SpeciesCollection(&rhosp_dot);
-
 }
-
 
 } // namespace GRIMPL_NAMESPACE_DECL
 
