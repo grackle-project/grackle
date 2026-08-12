@@ -58,7 +58,8 @@ def main(args=None):
     if len(args) != 0:  # we are using the testing framework
         my_vars = get_test_variables(_MODEL_NAME, args)
 
-        metallicity = my_vars["metallicity"]
+        metallicity = my_vars.get("metallicity", 0.)
+        final_density = my_vars.get("final_density", 1e12 * mass_hydrogen_cgs)
         extra_attrs = my_vars["extra_attrs"]
         my_chemistry = my_vars["my_chemistry"]
         output_name = my_vars["output_name"]
@@ -67,6 +68,8 @@ def main(args=None):
 
     else:  # Just run the script as is.
         metallicity = 0.
+        final_density = 1e12 * mass_hydrogen_cgs
+
         # dictionary to store extra information in output dataset
         extra_attrs = {}
 
@@ -104,7 +107,6 @@ def main(args=None):
     # set initial density and temperature
     initial_temperature = 50000.
     initial_density     = 1e-1 * mass_hydrogen_cgs # g / cm^3
-    final_density       = 1e12 * mass_hydrogen_cgs
 
     metal_mass_fraction = metallicity * my_chemistry.SolarMetalFractionByMass
     dust_to_gas_ratio = metallicity * my_chemistry.local_dust_to_gas_ratio

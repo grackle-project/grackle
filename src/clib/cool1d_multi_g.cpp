@@ -13,16 +13,14 @@
 // This file was initially generated automatically during conversion of the
 // cool1d_multi_g function from FORTRAN to C++
 
-#include "dust/misc.hpp"
-#include "dust/gas_heat_cool.hpp"
-
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
-#include "gas_props.hpp"
+#include "dust/gas_heat_cool.hpp"
+#include "dust/misc.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
 #include "grackle.h"
 #include "interpolate.hpp"
-#include "dust_props.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
@@ -218,12 +216,10 @@ void grackle::impl::cool1d_multi_g(
 
   // Set flag for dust-related options
 
-  if ((my_chemistry->h2_on_dust > 0) || (my_chemistry->dust_chemistry > 0) ||
-      (my_chemistry->dust_recombination_cooling > 0)) {
-    anydust = MASK_TRUE;
-  } else {
-    anydust = MASK_FALSE;
-  }
+  anydust = (my_chemistry->dust_chemistry > 0 ||
+             my_chemistry->dust_recombination_cooling > 0)
+                ? MASK_TRUE
+                : MASK_FALSE;
 
   // Set units
 
@@ -1143,6 +1139,11 @@ void grackle::impl::cool1d_multi_g(
       edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
       my_chemistry, my_rates->gammah, idx_range, dom_inv);
 
+  /* TODO: this should be changed to just
+     my_chemistry->dust_recombination_cooling > 0
+     and dust_recombination_cooling > 0 should require dust_chemistry > 0.
+     We will keep it this way for now and change it deliberately later
+     as it will break the tests. */
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
   if ((my_chemistry->dust_chemistry > 0) ||
       (my_chemistry->dust_recombination_cooling > 0)) {
