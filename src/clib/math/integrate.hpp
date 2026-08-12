@@ -31,13 +31,12 @@ template <typename Fn>
 GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     double dt, const int*& imp_eng, chemistry_data*& my_chemistry,
     FortranView<double***>& d, const Fn& calc_deriv, int& ierror, int& nsp,
-    int& isp, int& jsp, double& dspj, double& err, double& err_max,
-    std::vector<double>& dsp, std::vector<double>& dsp1,
-    std::vector<double>& dspdot, std::vector<double>& dspdot1,
-    std::vector<double>& ddsp, FortranView<double**>& jacobian,
-    std::vector<int>& idsp, FortranView<double**>& mtrx,
-    std::vector<double>& vec, const double& eps, int& i, const int j,
-    const int k) {
+    int& isp, int& jsp, double& dspj, double err_max, std::vector<double>& dsp,
+    std::vector<double>& dsp1, std::vector<double>& dspdot,
+    std::vector<double>& dspdot1, std::vector<double>& ddsp,
+    FortranView<double**>& jacobian, std::vector<int>& idsp,
+    FortranView<double**>& mtrx, std::vector<double>& vec, const double& eps,
+    int& i, const int j, const int k) {
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
@@ -129,6 +128,7 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
 
     err_max = 0.e0;
     for (isp = 1; isp <= (nsp); isp++) {
+      double err;
       if (dsp[idsp[isp - 1]] > tiny8) {
         err = grackle::impl::dabs(vec[isp - 1] / dsp[idsp[isp - 1]]);
       } else {
