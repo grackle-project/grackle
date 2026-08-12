@@ -17,14 +17,16 @@
 #include <vector>
 
 #include "grackle.h"
-#include "utils-cpp.hpp"
 
 #include "calc_tdust_1d_g.hpp"
 #include "calc_all_tdust_gasgr_1d_g.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "opaque_storage.hpp"
+#include "support/config.hpp"
 
-void grackle::impl::calc_all_tdust_gasgr_1d_g(
+namespace GRIMPL_NAMESPACE_DECL {
+
+void calc_all_tdust_gasgr_1d_g(
     double trad, const double* tgas, double* tdust, const double* metallicity,
     const double* dust2gas, const double* nh, double* gasgr_tdust,
     const gr_mask_type* itmask_metal, double coolunit, double* gasgr,
@@ -415,3 +417,5 @@ void grackle::impl::calc_all_tdust_gasgr_1d_g(
     }
   }
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL

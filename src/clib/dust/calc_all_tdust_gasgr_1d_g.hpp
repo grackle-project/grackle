@@ -22,8 +22,9 @@
 #include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
+#include "support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 ///  Calculate all dust temperature(s) and the gas to grain heat
 ///  transfer rate(s) (the latter is commonly called gasgr)
@@ -77,6 +78,6 @@ void calc_all_tdust_gasgr_1d_g(
     grackle::impl::InternalDustPropBuf internal_dust_prop_buf,
     grackle::impl::GrainSpeciesCollection grain_kappa);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* CALC_ALL_TDUST_GASGR_1D_G_HPP */
