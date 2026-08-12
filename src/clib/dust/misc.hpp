@@ -14,7 +14,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"  // gr_mask_type
-#include "dust/calc_all_tdust_gasgr_1d_g.hpp"
+#include "dust/calc_all_tdust_gasgr_1d.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
 #include "support/index_helper.hpp"  // IndexHelper
 #include "utils-cpp.hpp"             // View
@@ -145,7 +145,7 @@ inline void dust_related_props(
 
   // compute dust temperature and cooling due to dust
   if (anydust != MASK_FALSE) {
-    grackle::impl::calc_all_tdust_gasgr_1d_g(
+    calc_all_tdust_gasgr_1d(
         trad, tgas, tdust, metallicity, dust2gas, nH, gasgr_tdust, itmask_metal,
         coolunit, gasgr, myisrf, kappa_tot, my_chemistry, my_rates, my_fields,
         idx_range, grain_temperatures, gas_grainsp_heatrate, logTlininterp_buf,

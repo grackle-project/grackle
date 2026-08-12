@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the calc_all_tdust_gasgr_1d_g function
+/// Implements the calc_all_tdust_gasgr_1d function
 ///
 //===----------------------------------------------------------------------===//
 
@@ -19,14 +19,14 @@
 #include "grackle.h"
 
 #include "calc_tdust_1d_g.hpp"
-#include "calc_all_tdust_gasgr_1d_g.hpp"
+#include "calc_all_tdust_gasgr_1d.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "opaque_storage.hpp"
 #include "support/config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-void calc_all_tdust_gasgr_1d_g(
+void calc_all_tdust_gasgr_1d(
     double trad, const double* tgas, double* tdust, const double* metallicity,
     const double* dust2gas, const double* nh, double* gasgr_tdust,
     const gr_mask_type* itmask_metal, double coolunit, double* gasgr,

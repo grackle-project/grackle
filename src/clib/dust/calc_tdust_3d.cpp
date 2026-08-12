@@ -15,9 +15,9 @@
 
 #include <vector>
 
-#include "dust/calc_all_tdust_gasgr_1d_g.hpp"
 #include "calc_tdust_3d.hpp"
 #include "dust_props.hpp"
+#include "dust/calc_all_tdust_gasgr_1d.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
 #include "gas_props.hpp"
 #include "grackle.h"
@@ -252,7 +252,7 @@ void calc_tdust_3d(
       }
 
       // Compute dust temperature(s) in the index-range
-      calc_all_tdust_gasgr_1d_g(
+      calc_all_tdust_gasgr_1d(
         trad, tgas.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), nh.data(), gasgr_tdust.data(), itmask_metal.data(),
         internalu.coolunit, gasgr.data(), myisrf.data(), kappa_tot.data(),
