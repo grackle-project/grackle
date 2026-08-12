@@ -168,7 +168,7 @@ The following snippet shows a sample Makefile for compiling a sample application
 
    c_example:
    	$(CC) $(CFLAGS) -c c_example.c -o c_example.o
-   	$(CC) $(LDFLAGS) $(OTHER_LDFLAGS) c_example.o -o c_example
+   	$(CC) c_example.o $(LDFLAGS) $(OTHER_LDFLAGS) -o c_example
 
 pkg-config also provides additional functionality, like querying version numbers, enforcing version requirements, etc.
 Most of that functionality is described in `this guide <https://people.freedesktop.org/~dbn/pkg-config-guide.html>`__.

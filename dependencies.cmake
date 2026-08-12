@@ -75,18 +75,3 @@ if (GRACKLE_USE_OPENMP)
   endif()
   find_package(OpenMP REQUIRED COMPONENTS ${_GRACKLE_OMP_COMPONENTS})
 endif()
-
-# define target to link the math functions of the C standard library
-# (i.e. the -lm flag). This is commonly needed on unix-like platforms
-# -> For platforms that don't need libm, this target acts as a dummy
-#    placeholder (that does nothing)
-# -> The -lm flag should NOT be used on MacOS (while CMake is smart enough to
-#    not pass it to the linker, it will mess with exporting linker flags)
-#
-# NOTE: when we start using C++ in the core grackle library, we can remove
-# everything related to the toolchain::m variable (since the C++ runtime
-# library is ALWAYS linked to the math functions)
-add_library(toolchain::m INTERFACE IMPORTED)
-if (UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set_target_properties(toolchain::m PROPERTIES IMPORTED_LIBNAME "m")
-endif()
