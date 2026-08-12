@@ -32,12 +32,11 @@ void calc_all_tdust_gasgr_1d(
     const gr_mask_type* itmask_metal, double coolunit, double* gasgr,
     const double* myisrf, double* kptot, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    IndexRange idx_range,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate,
-    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-    grackle::impl::InternalDustPropBuf internal_dust_prop_buf,
-    grackle::impl::GrainSpeciesCollection grain_kappa) {
+    IndexRange idx_range, GrainSpeciesCollection grain_temperatures,
+    GrainSpeciesCollection gas_grainsp_heatrate,
+    LnTLinInterpBuf logTlininterp_buf,
+    InternalDustPropBuf internal_dust_prop_buf,
+    GrainSpeciesCollection grain_kappa) {
   const double mh_local_var = mh_grflt;
   int i;
 
