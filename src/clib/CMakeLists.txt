@@ -106,6 +106,7 @@ add_library(Grackle_Grackle
   dust/calc_kappa_grain.cpp dust/calc_kappa_grain.hpp
   dust/calc_tdust_1d_g.cpp dust/calc_tdust_1d_g.hpp
   dust/calc_tdust_3d.cpp dust/calc_tdust_3d.hpp
+  dust/dust_growth_and_destruction.cpp dust/dust_growth_and_destruction.hpp
   dust/gas_heat_cool.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp

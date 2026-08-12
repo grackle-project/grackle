@@ -49,7 +49,16 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: y_velocity
          TYPE(C_PTR) :: z_velocity
          TYPE(C_PTR) :: metal_density
+         TYPE(C_PTR) :: metal_density_carbon
+         TYPE(C_PTR) :: metal_density_oxygen
+         TYPE(C_PTR) :: metal_density_magnesium
+         TYPE(C_PTR) :: metal_density_silicon
+         TYPE(C_PTR) :: metal_density_iron
          TYPE(C_PTR) :: dust_density
+         TYPE(C_PTR) :: dust_density_silicate
+         TYPE(C_PTR) :: dust_density_mg_silicate
+         TYPE(C_PTR) :: dust_density_fe_silicate
+         TYPE(C_PTR) :: dust_density_carbonaceous
          TYPE(C_PTR) :: e_density
          TYPE(C_PTR) :: HI_density
          TYPE(C_PTR) :: HII_density
@@ -133,6 +142,8 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: ref_org_dust_temperature
          TYPE(C_PTR) :: vol_org_dust_temperature
          TYPE(C_PTR) :: H2O_ice_dust_temperature
+         TYPE(C_PTR) :: sne_rate
+         TYPE(C_PTR) :: tau_dest
       END TYPE
 
 c     This is the fortran definition of grackle_chemistry_data
@@ -216,7 +227,36 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: uniform_grain_isrf_heating_rate
          INTEGER(C_INT) :: max_iterations
          INTEGER(C_INT) :: exit_after_iterations_exceeded
-cc       INTEGER(C_INT) :: omp_nthreads // not supported in fortran
+         INTEGER(C_INT) :: omp_nthreads
+         INTEGER(C_INT) :: solver_method
+         INTEGER(C_INT) :: dust_model
+         INTEGER(C_INT) :: use_sne_field
+         INTEGER(C_INT) :: use_tau_dest_field
+         REAL(C_DOUBLE) :: dust_destruction_eff
+         REAL(C_DOUBLE) :: sne_coeff
+         REAL(C_DOUBLE) :: sne_shockspeed
+         REAL(C_DOUBLE) :: dust_grainsize
+         REAL(C_DOUBLE) :: dust_growth_densref
+         REAL(C_DOUBLE) :: dust_growth_tauref
+         REAL(C_DOUBLE) :: dust_growth_sticking_coeff
+         REAL(C_DOUBLE) :: dust_condensation_eff
+         REAL(C_DOUBLE) :: sne_metal_yield
+         INTEGER(C_INT) :: dust_species_track
+         REAL(C_DOUBLE) :: dust_growth_tauref_silicate
+         REAL(C_DOUBLE) :: dust_growth_tauref_carbon
+         REAL(C_DOUBLE) :: dust_growth_clumping_factor_max
+         REAL(C_DOUBLE) :: dust_growth_clumping_nH_min
+         REAL(C_DOUBLE) :: dust_growth_clumping_nH_max
+         REAL(C_DOUBLE) :: dust_sputter_tauref
+         REAL(C_DOUBLE) :: dust_silicate_mg_fraction
+         REAL(C_DOUBLE) :: dust_mg_silicate_f_Mg
+         REAL(C_DOUBLE) :: dust_mg_silicate_f_Fe
+         REAL(C_DOUBLE) :: dust_mg_silicate_f_Si
+         REAL(C_DOUBLE) :: dust_mg_silicate_f_O
+         REAL(C_DOUBLE) :: dust_fe_silicate_f_Mg
+         REAL(C_DOUBLE) :: dust_fe_silicate_f_Fe
+         REAL(C_DOUBLE) :: dust_fe_silicate_f_Si
+         REAL(C_DOUBLE) :: dust_fe_silicate_f_O
       END TYPE
 
 c     The following define the fortran interfaces to the C routines

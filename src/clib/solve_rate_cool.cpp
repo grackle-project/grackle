@@ -40,6 +40,7 @@
 #include "cool1d_multi_g.hpp"
 #include "scale_fields.hpp"
 #include "solve_rate_cool.hpp"
+#include "dust/dust_growth_and_destruction.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -790,6 +791,17 @@ int solve_rate_cool(
     std::vector<double> nelec_times_mH(my_fields->grid_dimension[0]);
     std::vector<double> edot(my_fields->grid_dimension[0]);
 
+    // Arrays to store dust growth and destruction mass changes
+    std::vector<double> growth_dM(my_fields->grid_dimension[0]);
+    std::vector<double> destruction_dM(my_fields->grid_dimension[0]);
+    // species-specific growth & destruction outputs (dust_species_track == 1)
+    std::vector<double> growth_dM_mg_silicate(my_fields->grid_dimension[0]);
+    std::vector<double> growth_dM_fe_silicate(my_fields->grid_dimension[0]);
+    std::vector<double> growth_dM_carbon(my_fields->grid_dimension[0]);
+    std::vector<double> destruction_dM_mg_silicate(my_fields->grid_dimension[0]);
+    std::vector<double> destruction_dM_fe_silicate(my_fields->grid_dimension[0]);
+    std::vector<double> destruction_dM_carbon(my_fields->grid_dimension[0]);
+
     // iteration masks
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
@@ -998,6 +1010,46 @@ int solve_rate_cool(
           );
 
         }
+        // TEMPORARY: dust growth/destruction is currently invoked here as its
+        // own block. Eventually, the growth and destruction rates should be
+        // computed alongside the other dust rates (stored together in the
+        // newly-created FullRxnRateBuf), and the dust density updates should
+        // happen alongside the other density updates rather than as a
+        // separate pass. The placement below is a short-term stopgap and
+        // will be restructured once that integration lands.
+        if (my_chemistry->dust_model == 1){
+          if (my_chemistry->dust_species_track == 1) {
+            // Compute and apply Mg-silicate + Fe-silicate + carbonaceous rates
+            grackle::impl::dust_growth_species(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(), tgas.data(),
+              growth_dM_mg_silicate.data(), growth_dM_fe_silicate.data(),
+              growth_dM_carbon.data());
+            grackle::impl::dust_destruction_species(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(), dt, tgas.data(),
+              destruction_dM_mg_silicate.data(), destruction_dM_fe_silicate.data(),
+              destruction_dM_carbon.data());
+            grackle::impl::dust_update_species(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(),
+              growth_dM_mg_silicate.data(), growth_dM_fe_silicate.data(),
+              growth_dM_carbon.data(),
+              destruction_dM_mg_silicate.data(), destruction_dM_fe_silicate.data(),
+              destruction_dM_carbon.data(),
+              false);
+          } else {
+            grackle::impl::dust_growth(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(), tgas.data(), growth_dM.data());
+            grackle::impl::dust_destruction(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(),
+              dtit.data(), dt, tgas.data(), destruction_dM.data());
+            grackle::impl::dust_update(
+              my_chemistry, my_fields, internalu, idx_range, itmask.data(), dtit.data(),
+              growth_dM.data(), destruction_dM.data(), false);
+          }
+        }
 
         // Add the timestep to the elapsed time for each cell and find
         //  minimum elapsed time step in this row
@@ -1012,6 +1064,7 @@ int solve_rate_cool(
 
         // If all cells are done (in idx_range), break out of subcycle loop
         if (std::fabs(dt-ttmin) < tolerance*dt) { break; }
+
 
       }  // subcycle iteration loop (for current idx_range)
 

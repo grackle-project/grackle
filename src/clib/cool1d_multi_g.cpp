@@ -864,7 +864,6 @@ void grackle::impl::cool1d_multi_g(
       itmask_metal[i] = MASK_FALSE;
     }
   }
-
   dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
                      itmask_metal, my_chemistry, my_rates, my_fields, internalu,
                      idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
