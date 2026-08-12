@@ -701,7 +701,7 @@ int solve_rate_cool(
 
   // Set flag for dust-related options
   const gr_mask_type anydust =
-    ((my_chemistry->h2_on_dust > 0)  ||  (my_chemistry->dust_chemistry > 0))
+    (my_chemistry->dust_chemistry > 0)
     ? MASK_TRUE
     : MASK_FALSE;
 

@@ -222,7 +222,7 @@ various parameters.
      - H\ :sub:`2` + grain
      - k2dust
      - `Tielens & Hollenbach (1985) <https://ui.adsabs.harvard.edu/abs/1985ApJ...291..722T/abstract>`__
-     - :c:data:`primordial_chemistry` > 1 & :c:data:`h2_on_dust` = 1
+     - :c:data:`primordial_chemistry` > 1 & :c:data:`dust_chemistry` > 0
    * - H\ :sup:`+` + D
      - H + D\ :sup:`+`
      - k50
