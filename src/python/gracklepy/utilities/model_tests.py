@@ -311,7 +311,7 @@ _model_test_grids = \
                     "metal_cooling": 1,
                     "metal_chemistry": 1,
                     "three_body_rate": 4,
-                    "dust_chemistry": 1,
+                    "dust_chemistry": 2,
                     "use_dust_density_field": 1,
                     "photoelectric_heating": 0,
                     "dust_recombination_cooling": 1,
@@ -323,7 +323,7 @@ _model_test_grids = \
                 },
                 "variants": \
                 {
-                    "dust_species": (0, 1),
+                    "dust_species": (1,),
                     "use_multiple_dust_temperatures": (0, 1),
                     "multi_metals": (1,),
                 }
@@ -357,7 +357,7 @@ _model_test_grids = \
                     "metal_cooling": 1,
                     "metal_chemistry": 1,
                     "three_body_rate": 4,
-                    "dust_chemistry": 1,
+                    "dust_chemistry": 2,
                     "use_dust_density_field": 1,
                     "photoelectric_heating": 0,
                     "dust_recombination_cooling": 1,

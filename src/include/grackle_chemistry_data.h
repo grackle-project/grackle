@@ -399,50 +399,6 @@ typedef struct
 
 } UVBtable;
 
-/******************************************
- ******* Generic Interpolation Table ******
- ******************************************/
-// as with the other components of chemistry_data_storage, this struct and its
-// contents should be treated as an implementation detail
-// -> in the future, it would be nice to unify this with cloudy_data
-// -> to help facillitate this goal, we track the grid properties in a data
-//    structure (that we can probably reuse) that doesn't hold the values that
-//    are actually interpolated.
-// -> this may be useful since there may be a variable number of grids that
-//    need to be interpolated (e.g. cloudy-primordial tables have 3 grids,
-//    cloudy-metal tables have 2 grids, generic interpolation tables have 1
-//    grid). But maybe we should revisit this in the future?
-
-typedef struct gr_interp_grid_props
-{
-  /// Rank of dataset
-  ///
-  /// TODO: do we need this attribute? In most cases, we know the rank
-  ///       of a table ahead of time
-  long long rank;
-
-  /// Dimension of dataset.
-  long long dimension[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
-
-  /// Dataset parameter values (in the common case where there there is
-  /// constant spacing, we could probably track less data).
-  double *parameters[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
-
-  /// Value of the constant paramter spacing
-  double parameter_spacing[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
-
-  /// Length of 1D flattened data grid
-  long long data_size;
-
-} gr_interp_grid_props;
-
-typedef struct gr_interp_grid
-{
-  /// properties of the interpolation grid
-  gr_interp_grid_props props;
-  /// the actual data that gets interpolated
-  double* data;
-} gr_interp_grid;
 
 
 /******************************************
@@ -578,32 +534,6 @@ typedef struct
 
   /* CIE cooling rate (Yoshida et al. 2006) */
   double *cieY06;
-
-  /* The next 8 attributes hold interpolation grids representing collision
-   * rates of a species with HI or H2I. The parameters along each axis are:
-   *   grid.parameter[0]: log10( ndens_{species} / (dv/dr) )
-   *   grid.parameter[1]: log10( T )
-   *   grid.parameter[2]: log10( ndens_HI ) OR log10( ndens_H2I )
-   */
-
-  /* H2 and HD cooling rates (collision with HI; Hollenbach & McKee 1979) */
-  gr_interp_grid LH2;
-  gr_interp_grid LHD;
-
-  /* Fine-structure cooling rates (collision with HI; Maio et al. 2007) */
-  gr_interp_grid LCI;
-  gr_interp_grid LCII;
-  gr_interp_grid LOI;
-
-  /* metal molecular cooling rates (collision with H2I; UMIST table) */
-  gr_interp_grid LCO;
-  gr_interp_grid LOH;
-  gr_interp_grid LH2O;
-
-  /* primordial opacity table
-   * -> alphap.parameters[0] is log10(mass density)
-   * -> alphap.parameters[1] is log10(temperature) */
-  gr_interp_grid alphap;
 
   /* UV background data */
   UVBtable UVbackground_table;
