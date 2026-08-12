@@ -26,9 +26,10 @@
 namespace GRIMPL_NAMESPACE_DECL {
 namespace integrate {
 
+/// attempts to integrate over a timestep dt
 template <typename Fn>
 GRIMPL_FORCE_INLINE void stiff_newton_raphson(
-    double*& dtit, const int*& imp_eng, chemistry_data*& my_chemistry,
+    double dt, const int*& imp_eng, chemistry_data*& my_chemistry,
     FortranView<double***>& d, const Fn& calc_deriv, int& ierror, int& nsp,
     int& isp, int& jsp, double& dspj, double& err, double& err_max,
     std::vector<double>& dsp, std::vector<double>& dsp1,
@@ -82,16 +83,15 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
       for (jsp = 1; jsp <= (nsp); jsp++) {
         if (isp == jsp) {
           mtrx(isp - 1, jsp - 1) =
-              1.e0 - dtit[i] * jacobian(idsp[isp - 1], idsp[jsp - 1]);
+              1.e0 - dt * jacobian(idsp[isp - 1], idsp[jsp - 1]);
         } else {
-          mtrx(isp - 1, jsp - 1) =
-              -dtit[i] * jacobian(idsp[isp - 1], idsp[jsp - 1]);
+          mtrx(isp - 1, jsp - 1) = -dt * jacobian(idsp[isp - 1], idsp[jsp - 1]);
         }
       }
     }
 
     for (isp = 1; isp <= (nsp); isp++) {
-      vec[isp - 1] = dspdot[idsp[isp - 1]] * dtit[i] - ddsp[idsp[isp - 1]];
+      vec[isp - 1] = dspdot[idsp[isp - 1]] * dt - ddsp[idsp[isp - 1]];
     }
 
     // to get more accuracy

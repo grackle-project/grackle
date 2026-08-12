@@ -544,7 +544,7 @@ inline void step_rate_newton_raphson(
         };
 
         err_max=1.e2;
-        integrate::stiff_newton_raphson(dtit, imp_eng, my_chemistry, d,
+        integrate::stiff_newton_raphson(dtit[i], imp_eng, my_chemistry, d,
                   calc_deriv, ierror, nsp, isp, jsp,
                   dspj, err, err_max, dsp, dsp1, dspdot, dspdot1, ddsp,
                   jacobian, idsp, mtrx, vec, eps, i, j, k);
