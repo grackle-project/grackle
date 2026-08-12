@@ -100,7 +100,6 @@ add_library(Grackle_Grackle
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time.cpp cool_multi_time.hpp
-  dust_props.hpp
   dust/calc_all_tdust_gasgr_1d.cpp dust/calc_all_tdust_gasgr_1d.hpp
   dust/calc_gr_balance_g.cpp dust/calc_gr_balance_g.hpp
   dust/calc_kappa_grain.cpp dust/calc_kappa_grain.hpp
@@ -111,6 +110,7 @@ add_library(Grackle_Grackle
   dust/lookup_dust_rates1d.hpp
   dust/multi_grain_species/calc_grain_size_increment_1d.hpp
   dust/multi_grain_species/calc_grain_size_increment_species_1d.cpp dust/multi_grain_species/calc_grain_size_increment_species_1d.hpp
+  dust/multi_grain_species/dust_props.hpp
   dust/misc.hpp
   dynamic_api.cpp
   fortran_func_wrappers.hpp

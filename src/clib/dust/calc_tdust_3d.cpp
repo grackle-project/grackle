@@ -16,9 +16,9 @@
 #include <vector>
 
 #include "calc_tdust_3d.hpp"
-#include "dust_props.hpp"
 #include "dust/calc_all_tdust_gasgr_1d.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
 #include "gas_props.hpp"
 #include "grackle.h"
 #include "support/index_helper.hpp"

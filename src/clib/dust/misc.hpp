@@ -16,11 +16,11 @@
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "dust/calc_all_tdust_gasgr_1d.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
 #include "support/index_helper.hpp"  // IndexHelper
 #include "utils-cpp.hpp"             // View
 #include "internal_types.hpp"
 #include "internal_units.hpp"
-#include "dust_props.hpp"
 #include "support/config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {

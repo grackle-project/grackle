@@ -16,7 +16,7 @@
 #ifndef DUST_CALC_ALL_TDUST_GASGR_1D_HPP
 #define DUST_CALC_ALL_TDUST_GASGR_1D_HPP
 
-#include "dust_props.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "grackle.h"
 #include "support/index_helper.hpp"
