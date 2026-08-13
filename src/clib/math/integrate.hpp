@@ -41,15 +41,8 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
   const double max_error_exit_thresh = 1.e-8;
-
-  int itr = 0;
-
-  while (true) {
-    if (itr >= 20) {
-      ierror = 1;
-      return;
-    }
-
+  const int maxiter = 20;
+  for (int itr = 0; itr < maxiter; itr++) {
     // calc the time derivatives
     calc_deriv(dsp.data(), dspdot.data());
 
@@ -134,9 +127,11 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     if (err_max <= max_error_exit_thresh) {
       return;  // ierror has a value of 0 in this case
     }
-
-    itr = itr + 1;
   }
+
+  // this is only reachable if we exceeded the maximum number of iterations
+  ierror = 1;
+  return;
 }
 
 }  // namespace integrate
