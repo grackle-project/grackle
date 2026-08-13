@@ -52,14 +52,23 @@ public:  // public API
   /// @return GR_SUCCESS indicates that the solution converged. Other values
   ///     denote a problem
   template <typename Fn>
-  GRIMPL_FORCE_INLINE int step(
-      double dt, double local_density, const Fn& calc_deriv_and_jacobian,
-      int nsp, std::vector<double>& dsp, std::vector<double>& dspdot,
-      std::vector<double>& ddsp, FortranView<double**>& jacobian,
-      FortranView<double**>& mtrx, std::vector<double>& vec,
-      bool enforce_positive_non_NaN) const {
+  GRIMPL_FORCE_INLINE int step(double dt, double local_density,
+                               const Fn& calc_deriv_and_jacobian, int nsp,
+                               std::vector<double>& dsp,
+                               std::vector<double>& dspdot, double* scratch_ptr,
+                               bool enforce_positive_non_NaN) const {
     // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
     namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
+
+    // I think this is a highly relevant pattern
+    int scratch_offset = 0;
+    double* ddsp = scratch_ptr + scratch_offset;
+    scratch_offset += nsp;
+    double* vec = scratch_ptr + scratch_offset;
+    scratch_offset += nsp;
+    FortranView<double**> jacobian(scratch_ptr + scratch_offset, nsp, nsp);
+    scratch_offset += nsp * nsp;
+    FortranView<double**> mtrx(scratch_ptr + scratch_offset, nsp, nsp);
 
     for (int i = 0; i < nsp; i++) {
       ddsp[i] = 0.0;
@@ -92,7 +101,7 @@ public:  // public API
 
       // todo: consider adjusting gaussj_g's return value so that its more
       //       consistent with GR_SUCCESS
-      int ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec.data());
+      int ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec);
       if (ierror == 1) {
         return GR_FAIL;
       }

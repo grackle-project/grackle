@@ -194,20 +194,17 @@ inline void step_rate_newton_raphson(
   std::vector<double> full_dsp_buf(i_eng);
   std::vector<double> full_dspdot_buf(i_eng);
   std::vector<double> full_dspdot_buf1(i_eng);
-  std::vector<double> ddsp(i_eng);
-  std::vector<double> jacobian_data_(i_eng * i_eng);
 
   // initialize the ode_solver
   // -> in an upcoming pull request, we'll use it to infer the required amount
   //    of scratch space
   integrate::StiffNewtonRaphson ode_solver(i_eng);
 
+  std::vector<double> ode_scratch_buf(ode_solver.num_scratch_buf_elements());
+
   // (In the future, we may want to reconsider when/how we allocate
   // the following 3 variables)
   std::vector<int> idsp;
-  std::vector<double> mtrx_data_;
-  FortranView<double**> mtrx;
-  std::vector<double> vec;
   // Another parameter
   const double eps = 1.e-4;
 
@@ -287,9 +284,6 @@ inline void step_rate_newton_raphson(
       }
       nsp = nsp + imp_eng[i];
       idsp.reserve(nsp);
-      mtrx_data_.reserve(nsp * nsp);
-      mtrx = FortranView<double**>(mtrx_data_.data(), nsp, nsp);
-      vec.reserve(nsp);
 
       // copy values into dsp from my_fields
       // -> in the future, we will be able write the next ~80 lines as
@@ -601,10 +595,6 @@ inline void step_rate_newton_raphson(
         }
       };
 
-
-      // Maybe we don't initialize this here?
-      FortranView<double**> jacobian(jacobian_data_.data(), nsp, nsp);
-
       // iteratively try to evolve chemistry equations until answer converges
       // -> First, we try to use the current timestep value tracked by dtit[i].
       //    If the answer doesn't converge, we will try again with shorter and
@@ -631,8 +621,7 @@ inline void step_rate_newton_raphson(
 
         int ret_val = ode_solver.step(
             dtit[i], d(i, j, k), calc_f_and_jacobian, nsp, reduced_dsp,
-            dspdot, ddsp, jacobian, mtrx, vec,
-            enforce_positive_non_NaN);
+            dspdot, ode_scratch_buf.data(), enforce_positive_non_NaN);
         is_converged = ret_val == GR_SUCCESS;
 
         // Check if the fractions are valid after an iteration
@@ -755,10 +744,6 @@ inline void step_rate_newton_raphson(
       e(i,j,k)     = dsp[i_eng-1];
 
       idsp.clear();
-      vec.clear();
-      mtrx = FortranView<double**>();
-      mtrx_data_.clear();
-
     }
   }
 
