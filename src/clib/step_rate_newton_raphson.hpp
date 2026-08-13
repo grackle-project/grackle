@@ -546,15 +546,17 @@ inline void step_rate_newton_raphson(
         is_converged = ret_val == GR_SUCCESS;
 
         // Check if the fractions are valid after an iteration
-
         if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
-          for (isp = 1; isp<=(nsp); isp++) {
-            if ( (dsp[idsp[isp-1]] != dsp[idsp[isp-1]])
-             ||  (dsp[idsp[isp-1]] <= 0.) )  {
+          for (isp = 0; isp<nsp; isp++) {
+            if ( std::isnan(dsp[idsp[isp]]) || (dsp[idsp[isp]] <= 0.) )  {
               is_converged = false;
             }
           }
         }
+
+        // cut the timestep in half for the next loop
+        // todo: handle worst case scenario (i.e. it never converging or no
+        //       converging unless timestep is 0)
         if(!is_converged)  {
           dtit[i] = 0.5 * dtit[i];
         }
