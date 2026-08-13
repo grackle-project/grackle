@@ -41,7 +41,7 @@ public:  // public API
 
   // upper bound on the scratch space needed in step
   int num_scratch_buf_elements() const noexcept {
-    int n_vectors = 3;   // dspdot, vec and ddsp
+    int n_vectors = 3;   // f, vec and dy
     int n_matrices = 2;  // jacobian and mtrx
     int entries_per_matrix = max_evolved_variables_ * max_evolved_variables_;
     return n_vectors * max_evolved_variables_ + n_matrices * entries_per_matrix;
@@ -53,83 +53,83 @@ public:  // public API
   ///     denote a problem
   template <typename Fn>
   GRIMPL_FORCE_INLINE int step(double dt, double local_density,
-                               const Fn& calc_deriv_and_jacobian, int nsp,
-                               std::vector<double>& dsp, double* scratch_ptr,
+                               const Fn& calc_deriv_and_jacobian, int n,
+                               std::vector<double>& y, double* scratch_ptr,
                                bool enforce_positive_non_NaN) const {
     // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
     namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
     // I think this is a highly relevant pattern
     int scratch_offset = 0;
-    double* ddsp = scratch_ptr + scratch_offset;
-    scratch_offset += nsp;
+    double* dy = scratch_ptr + scratch_offset;
+    scratch_offset += n;
     double* vec = scratch_ptr + scratch_offset;
-    scratch_offset += nsp;
-    double* dspdot = scratch_ptr + scratch_offset;
-    scratch_offset += nsp;
-    FortranView<double**> jacobian(scratch_ptr + scratch_offset, nsp, nsp);
-    scratch_offset += nsp * nsp;
-    FortranView<double**> mtrx(scratch_ptr + scratch_offset, nsp, nsp);
+    scratch_offset += n;
+    double* f = scratch_ptr + scratch_offset;
+    scratch_offset += n;
+    FortranView<double**> jacobian(scratch_ptr + scratch_offset, n, n);
+    scratch_offset += n * n;
+    FortranView<double**> mtrx(scratch_ptr + scratch_offset, n, n);
 
-    for (int i = 0; i < nsp; i++) {
-      ddsp[i] = 0.0;
+    for (int i = 0; i < n; i++) {
+      dy[i] = 0.0;
     }
 
     const double max_error_exit_thresh = 1.e-8;
     const int maxiter = 20;
     for (int itr = 0; itr < maxiter; itr++) {
       // calc the time derivatives & the jacobian matrix for the time derivative
-      calc_deriv_and_jacobian(dsp.data(), dspdot, jacobian);
+      calc_deriv_and_jacobian(y.data(), f, jacobian);
 
-      for (int isp = 0; isp < nsp; isp++) {
-        for (int jsp = 0; jsp < nsp; jsp++) {
-          if (isp == jsp) {
-            mtrx(isp, jsp) = 1.0 - dt * jacobian(isp, jsp);
+      for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+          if (i == j) {
+            mtrx(i, j) = 1.0 - dt * jacobian(i, j);
           } else {
-            mtrx(isp, jsp) = -dt * jacobian(isp, jsp);
+            mtrx(i, j) = -dt * jacobian(i, j);
           }
         }
       }
 
-      for (int isp = 0; isp < nsp; isp++) {
-        vec[isp] = dspdot[isp] * dt - ddsp[isp];
+      for (int i = 0; i < n; i++) {
+        vec[i] = f[i] * dt - dy[i];
       }
 
       // to get more accuracy
-      for (int isp = 0; isp < nsp; isp++) {
-        vec[isp] = vec[isp] / local_density;
+      for (int i = 0; i < n; i++) {
+        vec[i] = vec[i] / local_density;
       }
 
       // todo: consider adjusting gaussj_g's return value so that its more
       //       consistent with GR_SUCCESS
-      int ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec);
+      int ierror = f_wrap::gaussj_g(n, mtrx.data(), vec);
       if (ierror == 1) {
         return GR_FAIL;
       }
 
       // multiply with density again
-      for (int isp = 0; isp < nsp; isp++) {
-        vec[isp] = vec[isp] * local_density;
+      for (int i = 0; i < n; i++) {
+        vec[i] = vec[i] * local_density;
       }
 
-      for (int isp = 0; isp < nsp; isp++) {
-        ddsp[isp] = ddsp[isp] + vec[isp];
-        dsp[isp] = dsp[isp] + vec[isp];
+      for (int i = 0; i < n; i++) {
+        dy[i] = dy[i] + vec[i];
+        y[i] = y[i] + vec[i];
       }
 
       if (enforce_positive_non_NaN) {
-        for (int isp = 0; isp < nsp; isp++) {
-          if (std::isnan(dsp[isp]) || (dsp[isp] <= 0.)) {
+        for (int i = 0; i < n; i++) {
+          if (std::isnan(y[i]) || (y[i] <= 0.)) {
             return GR_FAIL;
           }
         }
       }
 
       double err_max = 0.0;
-      for (int isp = 0; isp < nsp; isp++) {
-        double cur = dsp[isp];
+      for (int i = 0; i < n; i++) {
+        double cur = y[i];
         // todo: double check that our behavior, when cur~0, makes sense
-        double err = (cur > tiny8) ? std::fabs(vec[isp] / cur) : 0.0;
+        double err = (cur > tiny8) ? std::fabs(vec[i] / cur) : 0.0;
         err_max = std::fmax(err, err_max);
       }
 
