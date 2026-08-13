@@ -509,7 +509,95 @@ inline void step_rate_newton_raphson(
         coolingheating_buf, chemheatrates_buf
       );
 
+      // we want to integrate a system of coupled stiff ODEs
+      //
+      // From a purely mathematical perspective:
+      // - let `y(t)` specifies the (vector-valued) state of this system at a
+      //   time `t`
+      // - let `dy/dt` be equivalent to a (vector-valued) function `f(y)`.
+      // - If the current time is t₀, then we want to compute y(t₀ + Δt) from
+      //   y(t₀) for a timestep Δt.
+      // - To do this, we must define a callback function that computes
+      //   f(y) and the Jacobian matrix for f(y).
+      //
+      // From a more practical perspective:
+      // - the `dsp` buffer holds all variables actively evolved by the current
+      //   grackle configuration.
+      // - for the current timestep, only a subset of the variables may be
+      //    evolved. The selection of evolved variables is tracked by the
+      //   `idsp` buffer.
+      // - this reduced set of variables corresponds to `y(t)`
 
+      // initialize full_dsp_buf with copies of all entries in dsp
+      // -> this buffer is used internally by the callback function. It has
+      //    space for every variable that the current grackle configuration
+      //    evolves.
+      // -> the basic idea, is that the callback will overwrite the elements
+      //    corresponding to the subset of variables being evolved in the
+      //    current timestep, won't mutate other elements (if any), and will
+      //    pass this to the buffer that does the heavy lifting of computing
+      //    derivatives.
+      std::memcpy(full_dsp_buf.data(), dsp.data(), sizeof(double)*i_eng);
+
+      // actually define the callback function:
+      // - reduced_dsp corresponds to the current value of the variable y
+      // - reduced_dspdot is an output buffer for holding f(y)
+      // - jacobian is an output buffer for holding the Jacobian of f
+      //
+      // Important: index `i` in these buffers correspond to the `i`th variable
+      //            being evolved in the current timestep. The corresponding
+      //            entry in `dsp` is at the index `idsp[isp]`.
+      const auto calc_f_and_jacobian = [&, dt_FIXME](
+          const double* reduced_dsp, double* reduced_dspdot,
+          FortranView<double**>& jacobian) -> void {
+
+        // copy values out of reduced_dsp into full_dsp_buf
+        for (int isp = 0; isp < nsp; isp++) {
+          full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
+        }
+
+        wrapped_calc_derivatives(dt_FIXME, full_dsp_buf.data(),
+                                 full_dspdot_buf.data(), pack,
+                                 rhosp_grflt, rhosp_dot);
+
+        // copy the reduced set of values that we care about from
+        // full_dspdot_buf into dspdot
+        for (int isp = 0; isp < nsp; isp++) {
+          reduced_dspdot[isp] = full_dspdot_buf[idsp[isp]];
+        }
+
+        // fill in the jacobian matrix for the time derivative
+        // -> to accomplish this, we use finite differences to estimate
+        //    partial derivative for each evolved variable (i.e. the species
+        //    densities and possibly the total energy)
+        for (int jsp = 0; jsp < nsp; jsp++) {
+          double dspj = eps * reduced_dsp[jsp];
+          for (int isp = 0; isp < nsp; isp++) {
+            if (isp == jsp) {
+              full_dsp_buf[idsp[isp]] = reduced_dsp[isp] + dspj;
+            } else {
+              full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
+            }
+          }
+
+          wrapped_calc_derivatives(dt_FIXME, full_dsp_buf.data(),
+                                   full_dspdot_buf1.data(),
+                                   pack, rhosp_grflt, rhosp_dot);
+
+          for (int isp = 0; isp < nsp; isp++) {
+            double tderiv = full_dspdot_buf[idsp[isp]];
+            double offset_tderiv = full_dspdot_buf1[idsp[isp]];
+            if ((reduced_dsp[isp] == 0.0) && (offset_tderiv == tderiv)) {
+              jacobian(isp, jsp) = 0.0;
+            } else {
+              jacobian(isp, jsp) = (offset_tderiv - tderiv) / dspj;
+            }
+          }
+        }
+      };
+
+
+      // Maybe we don't initialize this here?
       FortranView<double**> jacobian(jacobian_data_.data(), nsp, nsp);
 
       // iteratively try to evolve chemistry equations until answer converges
@@ -528,69 +616,8 @@ inline void step_rate_newton_raphson(
           reduced_dsp[isp] = dsp[idsp[isp]];
         }
 
-        // initialize full_dsp_buf with copies of all entries in dsp
-        // -> the basic premise is that this will be used in the lambda
-        //    function (we'll overwrite the variables being actively evolved
-        //    from the provided argument and the unevolved variables won't ever
-        //    get modified by the lambda function)
-        std::memcpy(full_dsp_buf.data(), dsp.data(), sizeof(double)*i_eng);
-
         // Iteration to solve ODEs
 
-        // TODO: hoist the definition of this callback (and of initializing
-        //       full_dsp_buf out of this while-loop)
-        // given a vector variable dsp (i.e. the species densities and maybe the
-        // internal energy), this lambda function will compute the associated
-        // - dspdot (i.e. the vector of time derivatives)
-        // - Jacobian matrix for dspdot
-        const auto calc_deriv_and_jacobian = [&, dt_FIXME](
-            const double* reduced_dsp, double* reduced_dspdot,
-            FortranView<double**>& jacobian) -> void {
-
-          // copy values out of reduced_dsp into full_dsp_buf
-          for (int isp = 0; isp < nsp; isp++) {
-            full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
-          }
-          
-          wrapped_calc_derivatives(dt_FIXME, full_dsp_buf.data(), 
-                                   full_dspdot_buf.data(), pack,
-                                   rhosp_grflt, rhosp_dot);
-
-          // copy the reduced set of values that we care about from
-          // full_dspdot_buf into dspdot
-          for (int isp = 0; isp < nsp; isp++) {
-            reduced_dspdot[isp] = full_dspdot_buf[idsp[isp]];
-          }
-
-          // fill in the jacobian matrix for the time derivative
-          // -> to accomplish this, we use finite differences to estimate
-          //    partial derivative for each evolved variable (i.e. the species
-          //    densities and possibly the total energy)
-          for (int jsp = 0; jsp < nsp; jsp++) {
-            double dspj = eps * reduced_dsp[jsp];
-            for (int isp = 0; isp < nsp; isp++) {
-              if (isp == jsp) {
-                full_dsp_buf[idsp[isp]] = reduced_dsp[isp] + dspj;
-              } else {
-                full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
-              }
-            }
-
-            wrapped_calc_derivatives(dt_FIXME, full_dsp_buf.data(),
-                                     full_dspdot_buf1.data(),
-                                     pack, rhosp_grflt, rhosp_dot);
-
-            for (int isp = 0; isp < nsp; isp++) {
-              double tderiv = full_dspdot_buf[idsp[isp]];
-              double offset_tderiv = full_dspdot_buf1[idsp[isp]];
-              if ((reduced_dsp[isp] == 0.0) && (offset_tderiv == tderiv)) {
-                jacobian(isp, jsp) = 0.0;
-              } else {
-                jacobian(isp, jsp) = (offset_tderiv - tderiv) / dspj;
-              }
-            }
-          }
-        };
 
 
         const bool enforce_positive_non_NaN =
@@ -598,7 +625,7 @@ inline void step_rate_newton_raphson(
       (my_chemistry->with_radiative_cooling == 1);
 
         int ret_val = integrate::stiff_newton_raphson(
-            dtit[i], d(i, j, k), calc_deriv_and_jacobian, nsp, reduced_dsp,
+            dtit[i], d(i, j, k), calc_f_and_jacobian, nsp, reduced_dsp,
             dspdot, ddsp, jacobian, mtrx, vec,
             enforce_positive_non_NaN);
         is_converged = ret_val == GR_SUCCESS;
