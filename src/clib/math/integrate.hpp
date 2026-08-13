@@ -41,7 +41,7 @@ public:  // public API
 
   // upper bound on the scratch space needed in step
   int num_scratch_buf_elements() const noexcept {
-    int n_vectors = 2;   // vec and ddsp
+    int n_vectors = 3;   // dspdot, vec and ddsp
     int n_matrices = 2;  // jacobian and mtrx
     int entries_per_matrix = max_evolved_variables_ * max_evolved_variables_;
     return n_vectors * max_evolved_variables_ + n_matrices * entries_per_matrix;
@@ -54,8 +54,7 @@ public:  // public API
   template <typename Fn>
   GRIMPL_FORCE_INLINE int step(double dt, double local_density,
                                const Fn& calc_deriv_and_jacobian, int nsp,
-                               std::vector<double>& dsp,
-                               std::vector<double>& dspdot, double* scratch_ptr,
+                               std::vector<double>& dsp, double* scratch_ptr,
                                bool enforce_positive_non_NaN) const {
     // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
     namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
@@ -65,6 +64,8 @@ public:  // public API
     double* ddsp = scratch_ptr + scratch_offset;
     scratch_offset += nsp;
     double* vec = scratch_ptr + scratch_offset;
+    scratch_offset += nsp;
+    double* dspdot = scratch_ptr + scratch_offset;
     scratch_offset += nsp;
     FortranView<double**> jacobian(scratch_ptr + scratch_offset, nsp, nsp);
     scratch_offset += nsp * nsp;
@@ -78,7 +79,7 @@ public:  // public API
     const int maxiter = 20;
     for (int itr = 0; itr < maxiter; itr++) {
       // calc the time derivatives & the jacobian matrix for the time derivative
-      calc_deriv_and_jacobian(dsp.data(), dspdot.data(), jacobian);
+      calc_deriv_and_jacobian(dsp.data(), dspdot, jacobian);
 
       for (int isp = 0; isp < nsp; isp++) {
         for (int jsp = 0; jsp < nsp; jsp++) {

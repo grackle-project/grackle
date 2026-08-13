@@ -189,7 +189,6 @@ inline void step_rate_newton_raphson(
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
   std::vector<double> dsp(i_eng);
-  std::vector<double> dspdot(i_eng);
   std::vector<double> reduced_dsp(i_eng);
   std::vector<double> full_dsp_buf(i_eng);
   std::vector<double> full_dspdot_buf(i_eng);
@@ -621,7 +620,7 @@ inline void step_rate_newton_raphson(
 
         int ret_val = ode_solver.step(
             dtit[i], d(i, j, k), calc_f_and_jacobian, nsp, reduced_dsp,
-            dspdot, ode_scratch_buf.data(), enforce_positive_non_NaN);
+            ode_scratch_buf.data(), enforce_positive_non_NaN);
         is_converged = ret_val == GR_SUCCESS;
 
         // Check if the fractions are valid after an iteration
