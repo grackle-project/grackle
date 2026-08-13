@@ -56,25 +56,25 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     // -> to accomplish this, we use finite differences to estimate
     //    partial derivative for each evolved variable (i.e. the species
     //    densities and possibly the total energy)
-    for (int jsp = 1; jsp <= nsp; jsp++) {
-      double dspj = eps * dsp[idsp[jsp - 1]];
-      for (int isp = 1; isp <= nsp; isp++) {
+    for (int jsp = 0; jsp < nsp; jsp++) {
+      double dspj = eps * dsp[idsp[jsp]];
+      for (int isp = 0; isp < nsp; isp++) {
         if (isp == jsp) {
-          dsp1[idsp[isp - 1]] = dsp[idsp[isp - 1]] + dspj;
+          dsp1[idsp[isp]] = dsp[idsp[isp]] + dspj;
         } else {
-          dsp1[idsp[isp - 1]] = dsp[idsp[isp - 1]];
+          dsp1[idsp[isp]] = dsp[idsp[isp]];
         }
       }
 
       calc_deriv(dsp1.data(), dspdot1.data());
 
-      for (int isp = 1; isp <= nsp; isp++) {
-        if ((dsp[idsp[isp - 1]] == 0.e0) &&
-            (dspdot1[idsp[isp - 1]] == dspdot[idsp[isp - 1]])) {
-          jacobian(idsp[isp - 1], idsp[jsp - 1]) = 0.e0;
+      for (int isp = 0; isp < nsp; isp++) {
+        if ((dsp[idsp[isp]] == 0.0) &&
+            (dspdot1[idsp[isp]] == dspdot[idsp[isp]])) {
+          jacobian(idsp[isp], idsp[jsp]) = 0.0;
         } else {
-          jacobian(idsp[isp - 1], idsp[jsp - 1]) =
-              (dspdot1[idsp[isp - 1]] - dspdot[idsp[isp - 1]]) / dspj;
+          jacobian(idsp[isp], idsp[jsp]) =
+              (dspdot1[idsp[isp]] - dspdot[idsp[isp]]) / dspj;
         }
       }
     }
