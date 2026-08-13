@@ -25,6 +25,7 @@
 #include "internal_units.hpp"
 #include "math/integrate.hpp"
 #include "opaque_storage.hpp"
+#include "support/View.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
 #include "time_deriv_0d.hpp"
@@ -525,13 +526,42 @@ inline void step_rate_newton_raphson(
 
         // Iteration to solve ODEs
 
-        // given a vector variable y (i.e. the species densities and maybe the
-        // internal energy), this lambda function will compute the
-        // associated ydot (i.e. the vector of time derivatives)
-        const auto calc_deriv = [&, dt_FIXME](const double* y,
-                                                              double* ydot) -> void {
-          wrapped_calc_derivatives(dt_FIXME, y, ydot, pack,
+        // given a vector variable dsp (i.e. the species densities and maybe the
+        // internal energy), this lambda function will compute the associated
+        // - dspdot (i.e. the vector of time derivatives)
+        // - Jacobian matrix for dspdot
+        const auto calc_deriv_and_jacobian = [&, dt_FIXME](
+            const double* dsp, double* dspdot,
+            FortranView<double**>& jacobian) -> void {
+          wrapped_calc_derivatives(dt_FIXME, dsp, dspdot, pack,
                                    rhosp_grflt, rhosp_dot);
+          // fill in the jacobian matrix for the time derivative
+          // -> to accomplish this, we use finite differences to estimate
+          //    partial derivative for each evolved variable (i.e. the species
+          //    densities and possibly the total energy)
+          for (int jsp = 0; jsp < nsp; jsp++) {
+            double dspj = eps * dsp[idsp[jsp]];
+            for (int isp = 0; isp < nsp; isp++) {
+              if (isp == jsp) {
+                dsp1[idsp[isp]] = dsp[idsp[isp]] + dspj;
+              } else {
+                dsp1[idsp[isp]] = dsp[idsp[isp]];
+              }
+            }
+
+            wrapped_calc_derivatives(dt_FIXME, dsp1.data(), dspdot1.data(),
+                                     pack, rhosp_grflt, rhosp_dot);
+
+            for (int isp = 0; isp < nsp; isp++) {
+              if ((dsp[idsp[isp]] == 0.0) &&
+                  (dspdot1[idsp[isp]] == dspdot[idsp[isp]])) {
+                jacobian(idsp[isp], idsp[jsp]) = 0.0;
+              } else {
+                jacobian(idsp[isp], idsp[jsp]) =
+                    (dspdot1[idsp[isp]] - dspdot[idsp[isp]]) / dspj;
+              }
+            }
+          }
         };
 
 
@@ -540,8 +570,8 @@ inline void step_rate_newton_raphson(
       (my_chemistry->with_radiative_cooling == 1);
 
         int ret_val = integrate::stiff_newton_raphson(
-            dtit[i], imp_eng, d(i, j, k), calc_deriv, nsp, dsp, dsp1, dspdot,
-            dspdot1, ddsp, jacobian, idsp, mtrx, vec, eps,
+            dtit[i], imp_eng, d(i, j, k), calc_deriv_and_jacobian, nsp, dsp,
+            dsp1, dspdot, dspdot1, ddsp, jacobian, idsp, mtrx, vec, eps,
             enforce_positive_non_NaN);
         is_converged = ret_val == GR_SUCCESS;
 

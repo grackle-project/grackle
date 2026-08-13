@@ -33,12 +33,12 @@ namespace integrate {
 ///     denote a problem
 template <typename Fn>
 GRIMPL_FORCE_INLINE int stiff_newton_raphson(
-    double dt, const int*& imp_eng, double local_density, const Fn& calc_deriv,
-    int nsp, std::vector<double>& dsp, std::vector<double>& dsp1,
-    std::vector<double>& dspdot, std::vector<double>& dspdot1,
-    std::vector<double>& ddsp, FortranView<double**>& jacobian,
-    std::vector<int>& idsp, FortranView<double**>& mtrx,
-    std::vector<double>& vec, const double& eps,
+    double dt, const int*& imp_eng, double local_density,
+    const Fn& calc_deriv_and_jacobian, int nsp, std::vector<double>& dsp,
+    std::vector<double>& dsp1, std::vector<double>& dspdot,
+    std::vector<double>& dspdot1, std::vector<double>& ddsp,
+    FortranView<double**>& jacobian, std::vector<int>& idsp,
+    FortranView<double**>& mtrx, std::vector<double>& vec, const double& eps,
     bool enforce_positive_non_NaN) {
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
@@ -46,35 +46,8 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
   const double max_error_exit_thresh = 1.e-8;
   const int maxiter = 20;
   for (int itr = 0; itr < maxiter; itr++) {
-    // calc the time derivatives
-    calc_deriv(dsp.data(), dspdot.data());
-
-    // fill in the jacobian matrix for the time derivative
-    // -> to accomplish this, we use finite differences to estimate
-    //    partial derivative for each evolved variable (i.e. the species
-    //    densities and possibly the total energy)
-    for (int jsp = 0; jsp < nsp; jsp++) {
-      double dspj = eps * dsp[idsp[jsp]];
-      for (int isp = 0; isp < nsp; isp++) {
-        if (isp == jsp) {
-          dsp1[idsp[isp]] = dsp[idsp[isp]] + dspj;
-        } else {
-          dsp1[idsp[isp]] = dsp[idsp[isp]];
-        }
-      }
-
-      calc_deriv(dsp1.data(), dspdot1.data());
-
-      for (int isp = 0; isp < nsp; isp++) {
-        if ((dsp[idsp[isp]] == 0.0) &&
-            (dspdot1[idsp[isp]] == dspdot[idsp[isp]])) {
-          jacobian(idsp[isp], idsp[jsp]) = 0.0;
-        } else {
-          jacobian(idsp[isp], idsp[jsp]) =
-              (dspdot1[idsp[isp]] - dspdot[idsp[isp]]) / dspj;
-        }
-      }
-    }
+    // calc the time derivatives & the jacobian matrix for the time derivative
+    calc_deriv_and_jacobian(dsp.data(), dspdot.data(), jacobian);
 
     for (int isp = 0; isp < nsp; isp++) {
       for (int jsp = 0; jsp < nsp; jsp++) {
