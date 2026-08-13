@@ -188,8 +188,7 @@ inline void step_rate_newton_raphson(
   int ierror;
   // Local variable
   int itr_time;
-  int nsp, isp, jsp, id;
-  double dspj;
+  int nsp, isp, id;
   // the following specifies the historical 1-based index that we would use to
   // hold energy
   const int i_eng = MAX_EVOLVED_SPECIES_FIELDS + 1;
@@ -550,8 +549,7 @@ inline void step_rate_newton_raphson(
 
         double err_max=1.e2;
         integrate::stiff_newton_raphson(dtit[i], imp_eng, d,
-                  calc_deriv, ierror, nsp, isp, jsp,
-                  dspj, err_max, dsp, dsp1, dspdot, dspdot1, ddsp,
+                  calc_deriv, ierror, nsp, err_max, dsp, dsp1, dspdot, dspdot1, ddsp,
                   jacobian, idsp, mtrx, vec, eps, i, j, k, enforce_positive_non_NaN);
 
         // Check if the fractions are valid after an iteration

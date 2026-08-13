@@ -31,13 +31,13 @@ namespace integrate {
 template <typename Fn>
 GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     double dt, const int*& imp_eng, FortranView<double***>& d,
-    const Fn& calc_deriv, int& ierror, int& nsp, int& isp, int& jsp,
-    double& dspj, double err_max, std::vector<double>& dsp,
-    std::vector<double>& dsp1, std::vector<double>& dspdot,
-    std::vector<double>& dspdot1, std::vector<double>& ddsp,
-    FortranView<double**>& jacobian, std::vector<int>& idsp,
-    FortranView<double**>& mtrx, std::vector<double>& vec, const double& eps,
-    int& i, const int j, const int k, bool enforce_positive_non_NaN) {
+    const Fn& calc_deriv, int& ierror, int nsp, double err_max,
+    std::vector<double>& dsp, std::vector<double>& dsp1,
+    std::vector<double>& dspdot, std::vector<double>& dspdot1,
+    std::vector<double>& ddsp, FortranView<double**>& jacobian,
+    std::vector<int>& idsp, FortranView<double**>& mtrx,
+    std::vector<double>& vec, const double& eps, int& i, const int j,
+    const int k, bool enforce_positive_non_NaN) {
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
@@ -56,9 +56,9 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     // -> to accomplish this, we use finite differences to estimate
     //    partial derivative for each evolved variable (i.e. the species
     //    densities and possibly the total energy)
-    for (jsp = 1; jsp <= (nsp); jsp++) {
-      dspj = eps * dsp[idsp[jsp - 1]];
-      for (isp = 1; isp <= (nsp); isp++) {
+    for (int jsp = 1; jsp <= nsp; jsp++) {
+      double dspj = eps * dsp[idsp[jsp - 1]];
+      for (int isp = 1; isp <= nsp; isp++) {
         if (isp == jsp) {
           dsp1[idsp[isp - 1]] = dsp[idsp[isp - 1]] + dspj;
         } else {
@@ -68,7 +68,7 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
 
       calc_deriv(dsp1.data(), dspdot1.data());
 
-      for (isp = 1; isp <= (nsp); isp++) {
+      for (int isp = 1; isp <= nsp; isp++) {
         if ((dsp[idsp[isp - 1]] == 0.e0) &&
             (dspdot1[idsp[isp - 1]] == dspdot[idsp[isp - 1]])) {
           jacobian(idsp[isp - 1], idsp[jsp - 1]) = 0.e0;
@@ -79,8 +79,8 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
       }
     }
 
-    for (isp = 1; isp <= (nsp); isp++) {
-      for (jsp = 1; jsp <= (nsp); jsp++) {
+    for (int isp = 1; isp <= nsp; isp++) {
+      for (int jsp = 1; jsp <= nsp; jsp++) {
         if (isp == jsp) {
           mtrx(isp - 1, jsp - 1) =
               1.e0 - dt * jacobian(idsp[isp - 1], idsp[jsp - 1]);
@@ -90,12 +90,12 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
       }
     }
 
-    for (isp = 1; isp <= (nsp); isp++) {
+    for (int isp = 1; isp <= nsp; isp++) {
       vec[isp - 1] = dspdot[idsp[isp - 1]] * dt - ddsp[idsp[isp - 1]];
     }
 
     // to get more accuracy
-    for (isp = 1; isp <= (nsp); isp++) {
+    for (int isp = 1; isp <= nsp; isp++) {
       vec[isp - 1] = vec[isp - 1] / d(i, j, k);
     }
 
@@ -105,17 +105,17 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     }
 
     // multiply with density again
-    for (isp = 1; isp <= (nsp); isp++) {
+    for (int isp = 1; isp <= nsp; isp++) {
       vec[isp - 1] = vec[isp - 1] * d(i, j, k);
     }
 
-    for (isp = 1; isp <= (nsp); isp++) {
+    for (int isp = 1; isp <= nsp; isp++) {
       ddsp[idsp[isp - 1]] = ddsp[idsp[isp - 1]] + vec[isp - 1];
       dsp[idsp[isp - 1]] = dsp[idsp[isp - 1]] + vec[isp - 1];
     }
 
     if (enforce_positive_non_NaN) {
-      for (isp = 1; isp <= (nsp); isp++) {
+      for (int isp = 1; isp <= nsp; isp++) {
         if (std::isnan(dsp[idsp[isp - 1]]) || (dsp[idsp[isp - 1]] <= 0.)) {
           ierror = 1;
           return;
@@ -124,7 +124,7 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     }
 
     err_max = 0.e0;
-    for (isp = 1; isp <= (nsp); isp++) {
+    for (int isp = 1; isp <= nsp; isp++) {
       double err;
       if (dsp[idsp[isp - 1]] > tiny8) {
         err = grackle::impl::dabs(vec[isp - 1] / dsp[idsp[isp - 1]]);
