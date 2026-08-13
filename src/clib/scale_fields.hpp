@@ -123,8 +123,8 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
 
   const IndexHelper idx_helper = build_index_helper_(my_fields);
   const bool dust_density_field_present =
-    my_chemistry->dust_chemistry == 1 &&
-    my_chemistry->use_dust_density_field == 1;
+      my_chemistry->dust_chemistry == 1 &&
+      my_chemistry->use_dust_density_field == 1;
 
   OMP_PRAGMA("omp parallel for schedule(runtime)")
   for (int t = 0; t < idx_helper.outer_ind_size; t++) {
@@ -142,8 +142,7 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         dust(i, j, k) = dust(i, j, k) * factor;
       }
-    }
-    else if (my_chemistry->dust_chemistry == 2) {
+    } else if (my_chemistry->dust_chemistry == 2) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (my_chemistry->dust_species > 0) {
           MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;

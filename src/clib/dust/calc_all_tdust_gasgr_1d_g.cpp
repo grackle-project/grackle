@@ -99,8 +99,8 @@ void grackle::impl::calc_all_tdust_gasgr_1d_g(
     if (itmask_metal[i] != MASK_FALSE) {
       if (single_species_dust_model) {
         mygisrf[i] = my_rates->gamma_isrf *
-          my_chemistry->local_dust_to_gas_ratio / dust2gas[i] *
-          metallicity[i];
+                     my_chemistry->local_dust_to_gas_ratio / dust2gas[i] *
+                     metallicity[i];
 
       } else {
         if (my_chemistry->dust_species > 0) {
