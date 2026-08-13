@@ -41,10 +41,7 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
-  // when we stop indexing with ddsp using idsp, we will just clear the first
-  // nsp entries
-  std::size_t ddsp_size = ddsp.size();
-  for (std::size_t i = 0; i < ddsp_size; i++) {
+  for (int i = 0; i < nsp; i++) {
     ddsp[i] = 0.0;
   }
 
@@ -65,7 +62,7 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
     }
 
     for (int isp = 0; isp < nsp; isp++) {
-      vec[isp] = dspdot[idsp[isp]] * dt - ddsp[idsp[isp]];
+      vec[isp] = dspdot[idsp[isp]] * dt - ddsp[isp];
     }
 
     // to get more accuracy
@@ -86,7 +83,7 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
     }
 
     for (int isp = 0; isp < nsp; isp++) {
-      ddsp[idsp[isp]] = ddsp[idsp[isp]] + vec[isp];
+      ddsp[isp] = ddsp[isp] + vec[isp];
       dsp[idsp[isp]] = dsp[idsp[isp]] + vec[isp];
     }
 
