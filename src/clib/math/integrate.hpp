@@ -31,18 +31,18 @@ namespace integrate {
 template <typename Fn>
 GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     double dt, const int*& imp_eng, FortranView<double***>& d,
-    const Fn& calc_deriv, int& ierror, int nsp, double err_max,
-    std::vector<double>& dsp, std::vector<double>& dsp1,
-    std::vector<double>& dspdot, std::vector<double>& dspdot1,
-    std::vector<double>& ddsp, FortranView<double**>& jacobian,
-    std::vector<int>& idsp, FortranView<double**>& mtrx,
-    std::vector<double>& vec, const double& eps, int& i, const int j,
-    const int k, bool enforce_positive_non_NaN) {
+    const Fn& calc_deriv, int& ierror, int nsp, std::vector<double>& dsp,
+    std::vector<double>& dsp1, std::vector<double>& dspdot,
+    std::vector<double>& dspdot1, std::vector<double>& ddsp,
+    FortranView<double**>& jacobian, std::vector<int>& idsp,
+    FortranView<double**>& mtrx, std::vector<double>& vec, const double& eps,
+    int& i, const int j, const int k, bool enforce_positive_non_NaN) {
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
   int itr = 0;
 
+  double err_max = huge8;  // <- arbitrary initial value that exceeds threshold
   while (err_max > 1.e-8) {
     if (itr >= 20) {
       ierror = 1;
@@ -122,17 +122,12 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
       }
     }
 
-    err_max = 0.e0;
+    err_max = 0.0;
     for (int isp = 0; isp < nsp; isp++) {
-      double err;
-      if (dsp[idsp[isp]] > tiny8) {
-        err = grackle::impl::dabs(vec[isp] / dsp[idsp[isp]]);
-      } else {
-        err = 0.e0;
-      }
-      if (err > err_max) {
-        err_max = err;
-      }
+      double cur = dsp[idsp[isp]];
+      // todo: double check that our behavior, when cur~0, makes sense
+      double err = (cur > tiny8) ? std::fabs(vec[isp] / cur) : 0.0;
+      err_max = std::fmax(err, err_max);
     }
 
     itr = itr + 1;
