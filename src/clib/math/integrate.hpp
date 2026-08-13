@@ -51,9 +51,9 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
     for (int isp = 0; isp < nsp; isp++) {
       for (int jsp = 0; jsp < nsp; jsp++) {
         if (isp == jsp) {
-          mtrx(isp, jsp) = 1.0 - dt * jacobian(idsp[isp], idsp[jsp]);
+          mtrx(isp, jsp) = 1.0 - dt * jacobian(isp, jsp);
         } else {
-          mtrx(isp, jsp) = -dt * jacobian(idsp[isp], idsp[jsp]);
+          mtrx(isp, jsp) = -dt * jacobian(isp, jsp);
         }
       }
     }

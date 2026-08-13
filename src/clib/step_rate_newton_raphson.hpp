@@ -195,7 +195,6 @@ inline void step_rate_newton_raphson(
   std::vector<double> dspdot1(i_eng);
   std::vector<double> ddsp(i_eng);
   std::vector<double> jacobian_data_(i_eng * i_eng);
-  FortranView<double**> jacobian(jacobian_data_.data(), i_eng, i_eng);
 
   // (In the future, we may want to reconsider when/how we allocate
   // the following 3 variables)
@@ -514,6 +513,8 @@ inline void step_rate_newton_raphson(
       std::memcpy(dsp0.data(), dsp.data(), sizeof(double)*i_eng);
       std::memset(ddsp.data(), 0, sizeof(double)*i_eng);
 
+
+      FortranView<double**> jacobian(jacobian_data_.data(), nsp, nsp);
       // Search for the timestep for which chemistry converges
 
       bool is_converged = false;
@@ -555,9 +556,9 @@ inline void step_rate_newton_raphson(
             for (int isp = 0; isp < nsp; isp++) {
               if ((dsp[idsp[isp]] == 0.0) &&
                   (dspdot1[idsp[isp]] == dspdot[idsp[isp]])) {
-                jacobian(idsp[isp], idsp[jsp]) = 0.0;
+                jacobian(isp, jsp) = 0.0;
               } else {
-                jacobian(idsp[isp], idsp[jsp]) =
+                jacobian(isp, jsp) =
                     (dspdot1[idsp[isp]] - dspdot[idsp[isp]]) / dspj;
               }
             }
