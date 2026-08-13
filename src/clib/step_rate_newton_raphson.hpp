@@ -190,9 +190,11 @@ inline void step_rate_newton_raphson(
   // level function, but we will leave that for after transcription
   std::vector<double> dsp(i_eng);
   std::vector<double> dsp0(i_eng);
-  std::vector<double> dsp1(i_eng);
   std::vector<double> dspdot(i_eng);
-  std::vector<double> dspdot1(i_eng);
+  std::vector<double> reduced_dsp(i_eng);
+  std::vector<double> full_dsp_buf(i_eng);
+  std::vector<double> full_dspdot_buf(i_eng);
+  std::vector<double> full_dspdot_buf1(i_eng);
   std::vector<double> ddsp(i_eng);
   std::vector<double> jacobian_data_(i_eng * i_eng);
 
@@ -524,41 +526,69 @@ inline void step_rate_newton_raphson(
         // If not converge, restore dsp at the current time
         std::memcpy(dsp.data(), dsp0.data(), sizeof(double)*i_eng);
 
+        // reduced_dsp just includes subset of variables being actively evolved.
+        for (int isp = 0; isp < nsp; isp++) {
+          reduced_dsp[isp] = dsp[idsp[isp]];
+        }
+
+        // initialize full_dsp_buf with copies of all entries in dsp
+        // -> the basic premise is that this will be used in the lambda
+        //    function (we'll overwrite the variables being actively evolved
+        //    from the provided argument and the unevolved variables won't ever
+        //    get modified by the lambda function)
+        std::memcpy(full_dsp_buf.data(), dsp0.data(), sizeof(double)*i_eng); 
+
         // Iteration to solve ODEs
+
 
         // given a vector variable dsp (i.e. the species densities and maybe the
         // internal energy), this lambda function will compute the associated
         // - dspdot (i.e. the vector of time derivatives)
         // - Jacobian matrix for dspdot
         const auto calc_deriv_and_jacobian = [&, dt_FIXME](
-            const double* dsp, double* dspdot,
+            const double* reduced_dsp, double* reduced_dspdot,
             FortranView<double**>& jacobian) -> void {
-          wrapped_calc_derivatives(dt_FIXME, dsp, dspdot, pack,
+
+          // copy values out of reduced_dsp into full_dsp_buf
+          for (int isp = 0; isp < nsp; isp++) {
+            full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
+          }
+          
+          wrapped_calc_derivatives(dt_FIXME, full_dsp_buf.data(), 
+                                   full_dspdot_buf.data(), pack,
                                    rhosp_grflt, rhosp_dot);
+
+          // copy the reduced set of values that we care about from
+          // full_dspdot_buf into dspdot
+          for (int isp = 0; isp < nsp; isp++) {
+            reduced_dspdot[isp] = full_dspdot_buf[idsp[isp]];
+          }
+
           // fill in the jacobian matrix for the time derivative
           // -> to accomplish this, we use finite differences to estimate
           //    partial derivative for each evolved variable (i.e. the species
           //    densities and possibly the total energy)
           for (int jsp = 0; jsp < nsp; jsp++) {
-            double dspj = eps * dsp[idsp[jsp]];
+            double dspj = eps * reduced_dsp[jsp];
             for (int isp = 0; isp < nsp; isp++) {
               if (isp == jsp) {
-                dsp1[idsp[isp]] = dsp[idsp[isp]] + dspj;
+                full_dsp_buf[idsp[isp]] = reduced_dsp[isp] + dspj;
               } else {
-                dsp1[idsp[isp]] = dsp[idsp[isp]];
+                full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
               }
             }
 
-            wrapped_calc_derivatives(dt_FIXME, dsp1.data(), dspdot1.data(),
+            wrapped_calc_derivatives(dt_FIXME, full_dsp_buf.data(),
+                                     full_dspdot_buf1.data(),
                                      pack, rhosp_grflt, rhosp_dot);
 
             for (int isp = 0; isp < nsp; isp++) {
-              if ((dsp[idsp[isp]] == 0.0) &&
-                  (dspdot1[idsp[isp]] == dspdot[idsp[isp]])) {
+              double tderiv = full_dspdot_buf[idsp[isp]];
+              double offset_tderiv = full_dspdot_buf1[idsp[isp]];
+              if ((reduced_dsp[isp] == 0.0) && (offset_tderiv == tderiv)) {
                 jacobian(isp, jsp) = 0.0;
               } else {
-                jacobian(isp, jsp) =
-                    (dspdot1[idsp[isp]] - dspdot[idsp[isp]]) / dspj;
+                jacobian(isp, jsp) = (offset_tderiv - tderiv) / dspj;
               }
             }
           }
@@ -570,15 +600,15 @@ inline void step_rate_newton_raphson(
       (my_chemistry->with_radiative_cooling == 1);
 
         int ret_val = integrate::stiff_newton_raphson(
-            dtit[i], d(i, j, k), calc_deriv_and_jacobian, nsp, dsp,
-            dspdot, ddsp, jacobian, idsp, mtrx, vec,
+            dtit[i], d(i, j, k), calc_deriv_and_jacobian, nsp, reduced_dsp,
+            dspdot, ddsp, jacobian, mtrx, vec,
             enforce_positive_non_NaN);
         is_converged = ret_val == GR_SUCCESS;
 
         // Check if the fractions are valid after an iteration
         if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
           for (isp = 0; isp<nsp; isp++) {
-            if ( std::isnan(dsp[idsp[isp]]) || (dsp[idsp[isp]] <= 0.) )  {
+            if ( std::isnan(reduced_dsp[isp]) || (reduced_dsp[isp] <= 0.) )  {
               is_converged = false;
             }
           }
@@ -591,6 +621,11 @@ inline void step_rate_newton_raphson(
           dtit[i] = 0.5 * dtit[i];
         }
       }
+
+      // copy values from reduced_dsp back to dsp
+      for (int isp = 0; isp < nsp; isp++) {
+        dsp[idsp[isp]] = reduced_dsp[isp];
+      } 
 
 
       // overwrite the scratch-buffer values

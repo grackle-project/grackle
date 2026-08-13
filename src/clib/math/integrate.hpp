@@ -36,8 +36,8 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
     double dt, double local_density, const Fn& calc_deriv_and_jacobian, int nsp,
     std::vector<double>& dsp, std::vector<double>& dspdot,
     std::vector<double>& ddsp, FortranView<double**>& jacobian,
-    std::vector<int>& idsp, FortranView<double**>& mtrx,
-    std::vector<double>& vec, bool enforce_positive_non_NaN) {
+    FortranView<double**>& mtrx, std::vector<double>& vec,
+    bool enforce_positive_non_NaN) {
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
@@ -62,7 +62,7 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
     }
 
     for (int isp = 0; isp < nsp; isp++) {
-      vec[isp] = dspdot[idsp[isp]] * dt - ddsp[isp];
+      vec[isp] = dspdot[isp] * dt - ddsp[isp];
     }
 
     // to get more accuracy
@@ -84,12 +84,12 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
 
     for (int isp = 0; isp < nsp; isp++) {
       ddsp[isp] = ddsp[isp] + vec[isp];
-      dsp[idsp[isp]] = dsp[idsp[isp]] + vec[isp];
+      dsp[isp] = dsp[isp] + vec[isp];
     }
 
     if (enforce_positive_non_NaN) {
       for (int isp = 0; isp < nsp; isp++) {
-        if (std::isnan(dsp[idsp[isp]]) || (dsp[idsp[isp]] <= 0.)) {
+        if (std::isnan(dsp[isp]) || (dsp[isp] <= 0.)) {
           return GR_FAIL;
         }
       }
@@ -97,7 +97,7 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
 
     double err_max = 0.0;
     for (int isp = 0; isp < nsp; isp++) {
-      double cur = dsp[idsp[isp]];
+      double cur = dsp[isp];
       // todo: double check that our behavior, when cur~0, makes sense
       double err = (cur > tiny8) ? std::fabs(vec[isp] / cur) : 0.0;
       err_max = std::fmax(err, err_max);
