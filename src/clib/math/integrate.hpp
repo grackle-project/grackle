@@ -79,24 +79,23 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
       }
     }
 
-    for (int isp = 1; isp <= nsp; isp++) {
-      for (int jsp = 1; jsp <= nsp; jsp++) {
+    for (int isp = 0; isp < nsp; isp++) {
+      for (int jsp = 0; jsp < nsp; jsp++) {
         if (isp == jsp) {
-          mtrx(isp - 1, jsp - 1) =
-              1.e0 - dt * jacobian(idsp[isp - 1], idsp[jsp - 1]);
+          mtrx(isp, jsp) = 1.0 - dt * jacobian(idsp[isp], idsp[jsp]);
         } else {
-          mtrx(isp - 1, jsp - 1) = -dt * jacobian(idsp[isp - 1], idsp[jsp - 1]);
+          mtrx(isp, jsp) = -dt * jacobian(idsp[isp], idsp[jsp]);
         }
       }
     }
 
-    for (int isp = 1; isp <= nsp; isp++) {
-      vec[isp - 1] = dspdot[idsp[isp - 1]] * dt - ddsp[idsp[isp - 1]];
+    for (int isp = 0; isp < nsp; isp++) {
+      vec[isp] = dspdot[idsp[isp]] * dt - ddsp[idsp[isp]];
     }
 
     // to get more accuracy
-    for (int isp = 1; isp <= nsp; isp++) {
-      vec[isp - 1] = vec[isp - 1] / d(i, j, k);
+    for (int isp = 0; isp < nsp; isp++) {
+      vec[isp] = vec[isp] / d(i, j, k);
     }
 
     ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec.data());
