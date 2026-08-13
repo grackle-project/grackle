@@ -543,11 +543,16 @@ inline void step_rate_newton_raphson(
                                    rhosp_grflt, rhosp_dot);
         };
 
+
+        const bool enforce_positive_non_NaN =
+      (imp_eng[i] == 1) && (my_chemistry->primordial_chemistry > 0) &&
+      (my_chemistry->with_radiative_cooling == 1);
+
         double err_max=1.e2;
-        integrate::stiff_newton_raphson(dtit[i], imp_eng, my_chemistry, d,
+        integrate::stiff_newton_raphson(dtit[i], imp_eng, d,
                   calc_deriv, ierror, nsp, isp, jsp,
                   dspj, err_max, dsp, dsp1, dspdot, dspdot1, ddsp,
-                  jacobian, idsp, mtrx, vec, eps, i, j, k);
+                  jacobian, idsp, mtrx, vec, eps, i, j, k, enforce_positive_non_NaN);
 
         // Check if the fractions are valid after an iteration
 

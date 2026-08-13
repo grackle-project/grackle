@@ -15,6 +15,7 @@
 #ifndef MATH_INTEGRATE_HPP
 #define MATH_INTEGRATE_HPP
 
+#include <cmath>
 #include <vector>
 
 #include "grackle.h"
@@ -29,14 +30,14 @@ namespace integrate {
 /// attempts to integrate over a timestep dt
 template <typename Fn>
 GRIMPL_FORCE_INLINE void stiff_newton_raphson(
-    double dt, const int*& imp_eng, chemistry_data*& my_chemistry,
-    FortranView<double***>& d, const Fn& calc_deriv, int& ierror, int& nsp,
-    int& isp, int& jsp, double& dspj, double err_max, std::vector<double>& dsp,
+    double dt, const int*& imp_eng, FortranView<double***>& d,
+    const Fn& calc_deriv, int& ierror, int& nsp, int& isp, int& jsp,
+    double& dspj, double err_max, std::vector<double>& dsp,
     std::vector<double>& dsp1, std::vector<double>& dspdot,
     std::vector<double>& dspdot1, std::vector<double>& ddsp,
     FortranView<double**>& jacobian, std::vector<int>& idsp,
     FortranView<double**>& mtrx, std::vector<double>& vec, const double& eps,
-    int& i, const int j, const int k) {
+    int& i, const int j, const int k, bool enforce_positive_non_NaN) {
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
@@ -113,15 +114,11 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
       dsp[idsp[isp - 1]] = dsp[idsp[isp - 1]] + vec[isp - 1];
     }
 
-    if (imp_eng[i] == 1) {
-      if ((my_chemistry->primordial_chemistry > 0) &&
-          (my_chemistry->with_radiative_cooling == 1)) {
-        for (isp = 1; isp <= (nsp); isp++) {
-          if ((dsp[idsp[isp - 1]] != dsp[idsp[isp - 1]]) ||
-              (dsp[idsp[isp - 1]] <= 0.)) {
-            ierror = 1;
-            return;
-          }
+    if (enforce_positive_non_NaN) {
+      for (isp = 1; isp <= (nsp); isp++) {
+        if (std::isnan(dsp[idsp[isp - 1]]) || (dsp[idsp[isp - 1]] <= 0.)) {
+          ierror = 1;
+          return;
         }
       }
     }
