@@ -508,11 +508,12 @@ inline void step_rate_newton_raphson(
         coolingheating_buf, chemheatrates_buf
       );
 
-      // Save arrays at ttot(ip1)
-
+      // Store a copy of dsp inside of dsp0 for the current time
+      // - this is important because the iteration scheme mutates dsp in place
+      // - if we can't get convergence with the current timestep (i.e. the value
+      //   in dtit[i]), we'll need to restore the current value before we try
+      //   a smaller timestep
       std::memcpy(dsp0.data(), dsp.data(), sizeof(double)*i_eng);
-      std::memset(ddsp.data(), 0, sizeof(double)*i_eng);
-
 
       FortranView<double**> jacobian(jacobian_data_.data(), nsp, nsp);
       // Search for the timestep for which chemistry converges
@@ -520,10 +521,8 @@ inline void step_rate_newton_raphson(
       bool is_converged = false;
       while (!is_converged) {
 
-        // If not converge, restore arrays at ttot(ip1)
-
+        // If not converge, restore dsp at the current time
         std::memcpy(dsp.data(), dsp0.data(), sizeof(double)*i_eng);
-        std::memset(ddsp.data(), 0, sizeof(double)*i_eng);
 
         // Iteration to solve ODEs
 
@@ -571,7 +570,7 @@ inline void step_rate_newton_raphson(
       (my_chemistry->with_radiative_cooling == 1);
 
         int ret_val = integrate::stiff_newton_raphson(
-            dtit[i], imp_eng, d(i, j, k), calc_deriv_and_jacobian, nsp, dsp,
+            dtit[i], d(i, j, k), calc_deriv_and_jacobian, nsp, dsp,
             dspdot, ddsp, jacobian, idsp, mtrx, vec,
             enforce_positive_non_NaN);
         is_converged = ret_val == GR_SUCCESS;

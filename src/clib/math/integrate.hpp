@@ -33,14 +33,20 @@ namespace integrate {
 ///     denote a problem
 template <typename Fn>
 GRIMPL_FORCE_INLINE int stiff_newton_raphson(
-    double dt, const int*& imp_eng, double local_density,
-    const Fn& calc_deriv_and_jacobian, int nsp, std::vector<double>& dsp,
-    std::vector<double>& dspdot, std::vector<double>& ddsp,
-    FortranView<double**>& jacobian, std::vector<int>& idsp,
-    FortranView<double**>& mtrx, std::vector<double>& vec,
-    bool enforce_positive_non_NaN) {
+    double dt, double local_density, const Fn& calc_deriv_and_jacobian, int nsp,
+    std::vector<double>& dsp, std::vector<double>& dspdot,
+    std::vector<double>& ddsp, FortranView<double**>& jacobian,
+    std::vector<int>& idsp, FortranView<double**>& mtrx,
+    std::vector<double>& vec, bool enforce_positive_non_NaN) {
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
+
+  // when we stop indexing with ddsp using idsp, we will just clear the first
+  // nsp entries
+  std::size_t ddsp_size = ddsp.size();
+  for (std::size_t i = 0; i < ddsp_size; i++) {
+    ddsp[i] = 0.0;
+  }
 
   const double max_error_exit_thresh = 1.e-8;
   const int maxiter = 20;
