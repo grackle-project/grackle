@@ -284,7 +284,7 @@ def _required_density_fields(my_chemistry):
         my_fields.append("metal_density")
     if my_chemistry.use_dust_density_field == 1:
         my_fields.append("dust_density")
-    if my_chemistry.metal_chemistry > 0:
+    if my_chemistry.dust_species == 2:
         my_fields.extend(_dust_metal_densities[my_chemistry.dust_species])
         my_fields.extend(_dust_densities[my_chemistry.dust_species])
         my_fields.extend(_ordered_inject_pathway_yield_densities(my_chemistry))
