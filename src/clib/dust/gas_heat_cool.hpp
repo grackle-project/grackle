@@ -217,10 +217,7 @@ void update_edot_dust_cooling_rate(
     View<gr_float***> d, const double* gasgr,
     const GrainSpeciesCollection& gas_grainsp_heatrate) {
 
-  const bool single_species_dust_model =
-    (my_chemistry->dust_chemistry == 1) ||
-    ((my_chemistry->dust_chemistry == 2) &&
-     (my_chemistry->dust_species == 0));
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask_metal[i] != MASK_FALSE) {

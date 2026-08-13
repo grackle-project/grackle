@@ -128,10 +128,7 @@ void grackle::impl::cool1d_multi_g(
   // Declare some constants:
   const double mh_local_var = mh_grflt;
 
-  const bool single_species_dust_model =
-    (my_chemistry->dust_chemistry == 1) ||
-    ((my_chemistry->dust_chemistry == 2) &&
-     (my_chemistry->dust_species == 0));
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   // Locals
   int i, iZscale, mycmbTfloor;

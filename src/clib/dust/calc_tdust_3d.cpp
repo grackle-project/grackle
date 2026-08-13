@@ -50,10 +50,7 @@ void calc_tdust_3d(
   // Loop over zones, and do an entire i-column in one go
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
-  const bool single_species_dust_model =
-    (my_chemistry->dust_chemistry == 1) ||
-    ((my_chemistry->dust_chemistry == 2) &&
-     (my_chemistry->dust_species == 0));
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {
