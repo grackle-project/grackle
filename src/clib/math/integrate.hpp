@@ -29,8 +29,8 @@ namespace integrate {
 
 /// attempts to integrate over a timestep dt
 ///
-/// @retval 0 indicates convergence
-/// @retval 1 indicates an error
+/// @return GR_SUCCESS indicates that the solution converged. Other values
+///     denote a problem
 template <typename Fn>
 GRIMPL_FORCE_INLINE int stiff_newton_raphson(
     double dt, const int*& imp_eng, FortranView<double***>& d,
@@ -95,9 +95,11 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
       vec[isp] = vec[isp] / d(i, j, k);
     }
 
+    // todo: consider adjusting gaussj_g's return value so that its more
+    //       consistent with GR_SUCCESS
     int ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec.data());
     if (ierror == 1) {
-      return 1;
+      return GR_FAIL;
     }
 
     // multiply with density again
@@ -113,7 +115,7 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
     if (enforce_positive_non_NaN) {
       for (int isp = 0; isp < nsp; isp++) {
         if (std::isnan(dsp[idsp[isp]]) || (dsp[idsp[isp]] <= 0.)) {
-          return 1;
+          return GR_FAIL;
         }
       }
     }
@@ -127,11 +129,11 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
     }
 
     if (err_max <= max_error_exit_thresh) {
-      return 0;  // things have converged!
+      return GR_SUCCESS;
     }
   }
 
-  return 1;  // only reached if iterations exceeded maxiter
+  return GR_FAIL;  // only reached if iterations exceeded maxiter
 }
 
 }  // namespace integrate
