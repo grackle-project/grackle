@@ -40,10 +40,11 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
+  const double max_error_exit_thresh = 1.e-8;
+
   int itr = 0;
 
-  double err_max = huge8;  // <- arbitrary initial value that exceeds threshold
-  while (err_max > 1.e-8) {
+  while (true) {
     if (itr >= 20) {
       ierror = 1;
       return;
@@ -122,12 +123,16 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
       }
     }
 
-    err_max = 0.0;
+    double err_max = 0.0;
     for (int isp = 0; isp < nsp; isp++) {
       double cur = dsp[idsp[isp]];
       // todo: double check that our behavior, when cur~0, makes sense
       double err = (cur > tiny8) ? std::fabs(vec[isp] / cur) : 0.0;
       err_max = std::fmax(err, err_max);
+    }
+
+    if (err_max <= max_error_exit_thresh) {
+      return;  // ierror has a value of 0 in this case
     }
 
     itr = itr + 1;
