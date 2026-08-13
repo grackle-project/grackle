@@ -194,8 +194,8 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
 
   int i, j, k;
   const bool dust_density_field_present =
-    my_chemistry->dust_chemistry == 1 &&
-    my_chemistry->use_dust_density_field == 1;
+      my_chemistry->dust_chemistry == 1 &&
+      my_chemistry->use_dust_density_field == 1;
 
   if (my_chemistry->primordial_chemistry > 0) {
     for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
@@ -311,8 +311,7 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
         }
       }
     }
-  }
-  else if (my_chemistry->dust_chemistry == 2) {
+  } else if (my_chemistry->dust_chemistry == 2) {
     for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
       for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
