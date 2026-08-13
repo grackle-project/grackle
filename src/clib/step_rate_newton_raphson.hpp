@@ -180,14 +180,7 @@ inline void step_rate_newton_raphson(
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // ierror local variable
-  //   - this variable is only used internally by this subroutine for
-  //     determining control-flow
-  //   - it does NOT report whether or not this function succeeded (maybe
-  //     we should change the name?)
-  int ierror;
   // Local variable
-  int itr_time;
   int nsp, isp, id;
   // the following specifies the historical 1-based index that we would use to
   // hold energy
@@ -522,9 +515,8 @@ inline void step_rate_newton_raphson(
 
       // Search for the timestep for which chemistry converges
 
-      ierror=1;
-      itr_time=0;
-      while (ierror==1) {
+      bool is_converged = false;
+      while (!is_converged) {
 
         // If not converge, restore arrays at ttot(ip1)
 
@@ -551,7 +543,7 @@ inline void step_rate_newton_raphson(
             dtit[i], imp_eng, d, calc_deriv, nsp, dsp, dsp1, dspdot, dspdot1,
             ddsp, jacobian, idsp, mtrx, vec, eps, i, j, k,
             enforce_positive_non_NaN);
-        ierror = (ret_val == GR_SUCCESS) ? 0 : 1;
+        is_converged = ret_val == GR_SUCCESS;
 
         // Check if the fractions are valid after an iteration
 
@@ -559,15 +551,13 @@ inline void step_rate_newton_raphson(
           for (isp = 1; isp<=(nsp); isp++) {
             if ( (dsp[idsp[isp-1]] != dsp[idsp[isp-1]])
              ||  (dsp[idsp[isp-1]] <= 0.) )  {
-              ierror = 1;
+              is_converged = false;
             }
           }
         }
-        if(ierror == 1)  {
-          dtit[i] = 0.5e0*dtit[i];
+        if(!is_converged)  {
+          dtit[i] = 0.5 * dtit[i];
         }
-
-        itr_time=itr_time+1;
       }
 
 
