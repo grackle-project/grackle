@@ -540,8 +540,8 @@ inline void step_rate_newton_raphson(
       (my_chemistry->with_radiative_cooling == 1);
 
         int ret_val = integrate::stiff_newton_raphson(
-            dtit[i], imp_eng, d, calc_deriv, nsp, dsp, dsp1, dspdot, dspdot1,
-            ddsp, jacobian, idsp, mtrx, vec, eps, i, j, k,
+            dtit[i], imp_eng, d(i, j, k), calc_deriv, nsp, dsp, dsp1, dspdot,
+            dspdot1, ddsp, jacobian, idsp, mtrx, vec, eps,
             enforce_positive_non_NaN);
         is_converged = ret_val == GR_SUCCESS;
 

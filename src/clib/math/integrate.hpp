@@ -33,13 +33,13 @@ namespace integrate {
 ///     denote a problem
 template <typename Fn>
 GRIMPL_FORCE_INLINE int stiff_newton_raphson(
-    double dt, const int*& imp_eng, FortranView<double***>& d,
-    const Fn& calc_deriv, int nsp, std::vector<double>& dsp,
-    std::vector<double>& dsp1, std::vector<double>& dspdot,
-    std::vector<double>& dspdot1, std::vector<double>& ddsp,
-    FortranView<double**>& jacobian, std::vector<int>& idsp,
-    FortranView<double**>& mtrx, std::vector<double>& vec, const double& eps,
-    int& i, const int j, const int k, bool enforce_positive_non_NaN) {
+    double dt, const int*& imp_eng, double local_density, const Fn& calc_deriv,
+    int nsp, std::vector<double>& dsp, std::vector<double>& dsp1,
+    std::vector<double>& dspdot, std::vector<double>& dspdot1,
+    std::vector<double>& ddsp, FortranView<double**>& jacobian,
+    std::vector<int>& idsp, FortranView<double**>& mtrx,
+    std::vector<double>& vec, const double& eps,
+    bool enforce_positive_non_NaN) {
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
@@ -92,7 +92,7 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
 
     // to get more accuracy
     for (int isp = 0; isp < nsp; isp++) {
-      vec[isp] = vec[isp] / d(i, j, k);
+      vec[isp] = vec[isp] / local_density;
     }
 
     // todo: consider adjusting gaussj_g's return value so that its more
@@ -104,7 +104,7 @@ GRIMPL_FORCE_INLINE int stiff_newton_raphson(
 
     // multiply with density again
     for (int isp = 0; isp < nsp; isp++) {
-      vec[isp] = vec[isp] * d(i, j, k);
+      vec[isp] = vec[isp] * local_density;
     }
 
     for (int isp = 0; isp < nsp; isp++) {
