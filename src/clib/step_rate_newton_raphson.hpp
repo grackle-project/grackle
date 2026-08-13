@@ -197,6 +197,11 @@ inline void step_rate_newton_raphson(
   std::vector<double> ddsp(i_eng);
   std::vector<double> jacobian_data_(i_eng * i_eng);
 
+  // initialize the ode_solver
+  // -> in an upcoming pull request, we'll use it to infer the required amount
+  //    of scratch space
+  integrate::StiffNewtonRaphson ode_solver(i_eng);
+
   // (In the future, we may want to reconsider when/how we allocate
   // the following 3 variables)
   std::vector<int> idsp;
@@ -624,7 +629,7 @@ inline void step_rate_newton_raphson(
       (imp_eng[i] == 1) && (my_chemistry->primordial_chemistry > 0) &&
       (my_chemistry->with_radiative_cooling == 1);
 
-        int ret_val = integrate::stiff_newton_raphson(
+        int ret_val = ode_solver.step(
             dtit[i], d(i, j, k), calc_f_and_jacobian, nsp, reduced_dsp,
             dspdot, ddsp, jacobian, mtrx, vec,
             enforce_positive_non_NaN);
