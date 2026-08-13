@@ -571,7 +571,7 @@ inline void step_rate_newton_raphson(
 
         int ret_val = integrate::stiff_newton_raphson(
             dtit[i], imp_eng, d(i, j, k), calc_deriv_and_jacobian, nsp, dsp,
-            dsp1, dspdot, dspdot1, ddsp, jacobian, idsp, mtrx, vec, eps,
+            dspdot, ddsp, jacobian, idsp, mtrx, vec,
             enforce_positive_non_NaN);
         is_converged = ret_val == GR_SUCCESS;
 

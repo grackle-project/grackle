@@ -35,10 +35,9 @@ template <typename Fn>
 GRIMPL_FORCE_INLINE int stiff_newton_raphson(
     double dt, const int*& imp_eng, double local_density,
     const Fn& calc_deriv_and_jacobian, int nsp, std::vector<double>& dsp,
-    std::vector<double>& dsp1, std::vector<double>& dspdot,
-    std::vector<double>& dspdot1, std::vector<double>& ddsp,
+    std::vector<double>& dspdot, std::vector<double>& ddsp,
     FortranView<double**>& jacobian, std::vector<int>& idsp,
-    FortranView<double**>& mtrx, std::vector<double>& vec, const double& eps,
+    FortranView<double**>& mtrx, std::vector<double>& vec,
     bool enforce_positive_non_NaN) {
   // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
