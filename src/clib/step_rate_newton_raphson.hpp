@@ -547,9 +547,11 @@ inline void step_rate_newton_raphson(
       (imp_eng[i] == 1) && (my_chemistry->primordial_chemistry > 0) &&
       (my_chemistry->with_radiative_cooling == 1);
 
-        integrate::stiff_newton_raphson(dtit[i], imp_eng, d,
-                  calc_deriv, ierror, nsp, dsp, dsp1, dspdot, dspdot1, ddsp,
-                  jacobian, idsp, mtrx, vec, eps, i, j, k, enforce_positive_non_NaN);
+        int ret_val = integrate::stiff_newton_raphson(
+            dtit[i], imp_eng, d, calc_deriv, nsp, dsp, dsp1, dspdot, dspdot1,
+            ddsp, jacobian, idsp, mtrx, vec, eps, i, j, k,
+            enforce_positive_non_NaN);
+        ierror = ret_val;
 
         // Check if the fractions are valid after an iteration
 

@@ -28,10 +28,13 @@ namespace GRIMPL_NAMESPACE_DECL {
 namespace integrate {
 
 /// attempts to integrate over a timestep dt
+///
+/// @retval 0 indicates convergence
+/// @retval 1 indicates an error
 template <typename Fn>
-GRIMPL_FORCE_INLINE void stiff_newton_raphson(
+GRIMPL_FORCE_INLINE int stiff_newton_raphson(
     double dt, const int*& imp_eng, FortranView<double***>& d,
-    const Fn& calc_deriv, int& ierror, int nsp, std::vector<double>& dsp,
+    const Fn& calc_deriv, int nsp, std::vector<double>& dsp,
     std::vector<double>& dsp1, std::vector<double>& dspdot,
     std::vector<double>& dspdot1, std::vector<double>& ddsp,
     FortranView<double**>& jacobian, std::vector<int>& idsp,
@@ -92,9 +95,9 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
       vec[isp] = vec[isp] / d(i, j, k);
     }
 
-    ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec.data());
+    int ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec.data());
     if (ierror == 1) {
-      return;
+      return 1;
     }
 
     // multiply with density again
@@ -110,8 +113,7 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     if (enforce_positive_non_NaN) {
       for (int isp = 0; isp < nsp; isp++) {
         if (std::isnan(dsp[idsp[isp]]) || (dsp[idsp[isp]] <= 0.)) {
-          ierror = 1;
-          return;
+          return 1;
         }
       }
     }
@@ -125,13 +127,11 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     }
 
     if (err_max <= max_error_exit_thresh) {
-      return;  // ierror has a value of 0 in this case
+      return 0;  // things have converged!
     }
   }
 
-  // this is only reachable if we exceeded the maximum number of iterations
-  ierror = 1;
-  return;
+  return 1;  // only reached if iterations exceeded maxiter
 }
 
 }  // namespace integrate
