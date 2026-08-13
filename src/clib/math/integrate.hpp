@@ -104,18 +104,18 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     }
 
     // multiply with density again
-    for (int isp = 1; isp <= nsp; isp++) {
-      vec[isp - 1] = vec[isp - 1] * d(i, j, k);
+    for (int isp = 0; isp < nsp; isp++) {
+      vec[isp] = vec[isp] * d(i, j, k);
     }
 
-    for (int isp = 1; isp <= nsp; isp++) {
-      ddsp[idsp[isp - 1]] = ddsp[idsp[isp - 1]] + vec[isp - 1];
-      dsp[idsp[isp - 1]] = dsp[idsp[isp - 1]] + vec[isp - 1];
+    for (int isp = 0; isp < nsp; isp++) {
+      ddsp[idsp[isp]] = ddsp[idsp[isp]] + vec[isp];
+      dsp[idsp[isp]] = dsp[idsp[isp]] + vec[isp];
     }
 
     if (enforce_positive_non_NaN) {
-      for (int isp = 1; isp <= nsp; isp++) {
-        if (std::isnan(dsp[idsp[isp - 1]]) || (dsp[idsp[isp - 1]] <= 0.)) {
+      for (int isp = 0; isp < nsp; isp++) {
+        if (std::isnan(dsp[idsp[isp]]) || (dsp[idsp[isp]] <= 0.)) {
           ierror = 1;
           return;
         }
@@ -123,10 +123,10 @@ GRIMPL_FORCE_INLINE void stiff_newton_raphson(
     }
 
     err_max = 0.e0;
-    for (int isp = 1; isp <= nsp; isp++) {
+    for (int isp = 0; isp < nsp; isp++) {
       double err;
-      if (dsp[idsp[isp - 1]] > tiny8) {
-        err = grackle::impl::dabs(vec[isp - 1] / dsp[idsp[isp - 1]]);
+      if (dsp[idsp[isp]] > tiny8) {
+        err = grackle::impl::dabs(vec[isp] / dsp[idsp[isp]]);
       } else {
         err = 0.e0;
       }
