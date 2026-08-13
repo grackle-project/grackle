@@ -189,7 +189,6 @@ inline void step_rate_newton_raphson(
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
   std::vector<double> dsp(i_eng);
-  std::vector<double> dsp0(i_eng);
   std::vector<double> dspdot(i_eng);
   std::vector<double> reduced_dsp(i_eng);
   std::vector<double> full_dsp_buf(i_eng);
@@ -510,23 +509,21 @@ inline void step_rate_newton_raphson(
         coolingheating_buf, chemheatrates_buf
       );
 
-      // Store a copy of dsp inside of dsp0 for the current time
-      // - this is important because the iteration scheme mutates dsp in place
-      // - if we can't get convergence with the current timestep (i.e. the value
-      //   in dtit[i]), we'll need to restore the current value before we try
-      //   a smaller timestep
-      std::memcpy(dsp0.data(), dsp.data(), sizeof(double)*i_eng);
 
       FortranView<double**> jacobian(jacobian_data_.data(), nsp, nsp);
-      // Search for the timestep for which chemistry converges
 
+      // iteratively try to evolve chemistry equations until answer converges
+      // -> First, we try to use the current timestep value tracked by dtit[i].
+      //    If the answer doesn't converge, we will try again with shorter and
+      //    shorter timesteps until chemistry converges
+      // -> when we exit this loop, reduced_dsp will hold the values of all of
+      //    the evolved variables
       bool is_converged = false;
       while (!is_converged) {
 
-        // If not converge, restore dsp at the current time
-        std::memcpy(dsp.data(), dsp0.data(), sizeof(double)*i_eng);
-
-        // reduced_dsp just includes subset of variables being actively evolved.
+        // copy values into reduced_dsp for variables that are being evolved
+        // (we need to do this each time we enter the loop since reduced_dsp
+        // is mutated in place as we try to evolve things)
         for (int isp = 0; isp < nsp; isp++) {
           reduced_dsp[isp] = dsp[idsp[isp]];
         }
@@ -536,11 +533,12 @@ inline void step_rate_newton_raphson(
         //    function (we'll overwrite the variables being actively evolved
         //    from the provided argument and the unevolved variables won't ever
         //    get modified by the lambda function)
-        std::memcpy(full_dsp_buf.data(), dsp0.data(), sizeof(double)*i_eng); 
+        std::memcpy(full_dsp_buf.data(), dsp.data(), sizeof(double)*i_eng);
 
         // Iteration to solve ODEs
 
-
+        // TODO: hoist the definition of this callback (and of initializing
+        //       full_dsp_buf out of this while-loop)
         // given a vector variable dsp (i.e. the species densities and maybe the
         // internal energy), this lambda function will compute the associated
         // - dspdot (i.e. the vector of time derivatives)
