@@ -200,7 +200,7 @@ void make_consistent(
   int i, j, k;
   // flag for if Gen Chiaki's dust model is enabled with grain growth
   const bool chiaki_model_dust_evolution =
-    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
+      my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
   double totalD;
   std::vector<double> totalH(my_fields->grid_dimension[0]);
   std::vector<double> totalHe(my_fields->grid_dimension[0]);

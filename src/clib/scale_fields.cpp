@@ -222,8 +222,8 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
   dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
   dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
   const bool dust_density_field_present =
-    my_chemistry->dust_chemistry == 1 &&
-    my_chemistry->use_dust_density_field == 1;
+      my_chemistry->dust_chemistry == 1 &&
+      my_chemistry->use_dust_density_field == 1;
 
   // parallelize the k and j loops with OpenMP
   // flat j and k loops for better parallelism
@@ -309,8 +309,7 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
 
       else if (my_chemistry->dust_chemistry == 2) {
         if (my_chemistry->dust_species > 0) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-               i++) {
+          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
             Mg(i, j, k) = Mg(i, j, k) * factor;
 
             MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
@@ -318,8 +317,7 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
           }
         }
         if (my_chemistry->dust_species > 1) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-               i++) {
+          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
             Al(i, j, k) = Al(i, j, k) * factor;
             S(i, j, k) = S(i, j, k) * factor;
             Fe(i, j, k) = Fe(i, j, k) * factor;
@@ -335,8 +333,7 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
           }
         }
         if (my_chemistry->dust_species > 2) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-               i++) {
+          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
             reforg(i, j, k) = reforg(i, j, k) * factor;
             volorg(i, j, k) = volorg(i, j, k) * factor;
             H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
