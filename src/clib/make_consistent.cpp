@@ -312,18 +312,21 @@ void make_consistent(
         }
       }
 
-      // Iteration mask for metal-rich cells
-
-      // do i = is+1, ie + 1
-      //    itmask_metal(i) = .false.
-      // enddo
-      // if (imetal .eq. 1) then
-      //     do i = is+1, ie + 1
-      //        if (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k)) then
-      //           itmask_metal(i) = .true.
-      //        endif
-      //     enddo
-      // endif
+      // In the future, we may elect to only consider metal-rich cells by
+      // using an ``itmask_metal`` buffer:
+      // -> the fortran version of this function actually had some commented out
+      //    logic for handling this precise situation. The modern equivalent of
+      //    that logic would use the ``mask::fill_itmask_metal`` function to
+      //    fill ``itmask_metal``
+      // -> however, a better solution may be to make this function only
+      //    consider a single index-range of values at a time (rather than
+      //    entire fields) and to pass in a prefilled ``itmask_metal`` buffer
+      //    as an argument for use within this function
+      // -> this may be better if we decide to allow the metal density field to
+      //    change in value from dust formation or destruction. If we just
+      //    computed ``itmask_metal`` on the fly, then there would be cases
+      //    where the computed mask may be different from the mask that was
+      //    used to actually decide whether to perform metal/dust chemistry
 
       if (my_chemistry->metal_chemistry > 0) {
         // compute the expected mass density for each metal nuclide using the
