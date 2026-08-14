@@ -16,13 +16,11 @@
 #define MATH_INTEGRATE_HPP
 
 #include <cmath>
-#include <vector>
 
 #include "grackle.h"
 #include "../fortran_func_wrappers.hpp"  // GRIMPL_NS::fortran_wrapper::gaussj_g
 #include "../support/config.hpp"
 #include "../support/View.hpp"
-#include "../time_deriv_0d.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 namespace integrate {
