@@ -622,7 +622,7 @@ inline void step_rate_newton_raphson(
       (my_chemistry->with_radiative_cooling == 1);
 
         int ret_val = ode_solver.step(
-            dtit[i], d(i, j, k), calc_f_and_jacobian, nsp, reduced_dsp,
+            reduced_dsp.data(), dtit[i], d(i, j, k), calc_f_and_jacobian, nsp,
             ode_scratch_buf.data(), enforce_positive_non_NaN);
         is_converged = ret_val == GR_SUCCESS;
 

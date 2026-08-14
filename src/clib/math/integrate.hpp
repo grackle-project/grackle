@@ -74,6 +74,9 @@ public:  // public API
   /// to the backward Euler method (aka the 1-stage backwards differentiation
   /// formula).
   ///
+  /// @param[in,out] y buffer of @p n elements. It specifies the initial state
+  ///     for the system of ODEs and will be updated (in-place) to hold the
+  ///     state at the end of the timestep.
   /// @param[in]     dt the timestep
   /// @param[in]     local_density is used for rescaling. Frankly, this
   ///     parameter is a historical artifact that should be removed (when we're
@@ -90,9 +93,6 @@ public:  // public API
   /// @param[in]     n number of equations in the system of ODE. This must
   ///     **NOT** exceed the `max_evolved_variables` argument passed to the
   ///     constructor of this type.
-  /// @param[in,out] y buffer of @p n elements. It specifies the initial state
-  ///     for the system of ODEs and will be updated (in-place) to hold the
-  ///     state at the end of the timestep.
   /// @param[in]    scratch_ptr buffer of scratch space for in the calculation.
   ///     The expected length is provided by the
   ///     @ref StiffNewtonRaphson::num_scratch_buf_elements method.
@@ -139,9 +139,9 @@ public:  // public API
   /// >   yₑ,ₖ₊₁ = yₑ,ₖ + δₖ
   /// This is the equation implemented in this function
   template <typename Fn>
-  GRIMPL_FORCE_INLINE int step(double dt, double local_density,
+  GRIMPL_FORCE_INLINE int step(double* y, double dt, double local_density,
                                const Fn& calc_deriv_and_jacobian, int n,
-                               std::vector<double>& y, double* scratch_ptr,
+                               double* scratch_ptr,
                                bool enforce_positive_non_NaN) const {
     // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
     namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
@@ -168,7 +168,7 @@ public:  // public API
     // as we enter the loop, note that `y` holds `yₑ,₀ = yₛ`
     for (int k = 0; k < maxiter_; k++) {
       // evaluate f(yₑ,ₖ) and the jacobian matrix for f at yₑ,ₖ.
-      calc_deriv_and_jacobian(y.data(), f, jacobian_f);
+      calc_deriv_and_jacobian(y, f, jacobian_f);
 
       // store the value of (I - h * J_f(yₑ,ₖ)) inside mtrx
       // -> I is the identity matrix and J_f is the jacobian matrix for f
