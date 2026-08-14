@@ -77,7 +77,7 @@ public:  // public API
   /// @param[in,out] y buffer of @p n elements. It specifies the initial state
   ///     for the system of ODEs and will be updated (in-place) to hold the
   ///     state at the end of the timestep.
-  /// @param[in]     dt the timestep
+  /// @param[in]     h the timestep
   /// @param[in]     local_density is used for rescaling. Frankly, this
   ///     parameter is a historical artifact that should be removed (when we're
   ///     prepared to update the gold-standard). All rescaling should occur
@@ -139,7 +139,7 @@ public:  // public API
   /// >   yₑ,ₖ₊₁ = yₑ,ₖ + δₖ
   /// This is the equation implemented in this function
   template <typename Fn>
-  GRIMPL_FORCE_INLINE int step(double* y, double dt, double local_density,
+  GRIMPL_FORCE_INLINE int step(double* y, double h, double local_density,
                                const Fn& calc_deriv_and_jacobian, int n,
                                double* scratch_ptr,
                                bool enforce_positive_non_NaN) const {
@@ -180,16 +180,16 @@ public:  // public API
       for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
           if (i == j) {
-            mtrx(i, j) = 1.0 - dt * jacobian_f(i, j);
+            mtrx(i, j) = 1.0 - h * jacobian_f(i, j);
           } else {
-            mtrx(i, j) = -dt * jacobian_f(i, j);
+            mtrx(i, j) = -h * jacobian_f(i, j);
           }
         }
       }
 
       // fill vec with the value of (h * f(yₑ,ₖ) - (yₑ,ₖ - yₛ))
       for (int i = 0; i < n; i++) {
-        vec[i] = f[i] * dt - ycur_minus_ystart[i];
+        vec[i] = f[i] * h - ycur_minus_ystart[i];
       }
 
       // to get more accuracy  (TODO: shouldn't be part of this fn)
