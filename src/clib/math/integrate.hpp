@@ -25,6 +25,28 @@
 namespace GRIMPL_NAMESPACE_DECL {
 namespace integrate {
 
+/// @brief describes the reason that integration terminates
+enum struct TerminateFlag {
+  CONVERGED,     ///< integrator successfully converged
+  CONVERGE_ERR,  ///< integrator simply wasn't able to converge
+  OTHER_ERR      ///< some other error was detected
+};
+
+/// @brief encodes the result of a single integration step
+///
+/// Providing both the outcome and number of complete iterations is useful for
+/// at least 2 contexts:
+/// 1. Testing of the integrator is made easier
+/// 2. If an integrator fails for a few different proposed timesteps without
+///    completing a full iteration, that may be a good indication of a deeper
+///    problem.
+struct IntegrateResult {
+  TerminateFlag flag;  ///< the reason for termination
+  int iterations;      ///< number of complete iterations at termination
+
+  bool converged() const noexcept { return flag == TerminateFlag::CONVERGED; }
+};
+
 /// @brief A class for integrating stiff systems of differential equations
 ///
 /// This is intended to be a general-purpose tool that can be tested against
@@ -76,7 +98,7 @@ public:  // public API
   ///     for the system of ODEs and will be updated (in-place) to hold the
   ///     state at the end of the timestep.
   /// @param[in]     h the timestep
-  /// @param[in]     calc_deriv_and_jacobian function object with the signature
+  /// @param[in]     calc_f_and_jacobian function object with the signature
   ///     `void f(const double* y_buf, double* f_buf, double* jacobian_f_buf)`.
   ///     It should treat `y_buf` argument as an input buffer specifyng a state
   ///     for the system of ODEs. When called, it should fill `f_buf` with the
@@ -97,9 +119,6 @@ public:  // public API
   ///     parameter is a historical artifact that should be removed (when we're
   ///     prepared to update the gold-standard). All rescaling should occur
   ///     outside of this function.
-  ///
-  /// @return GR_SUCCESS indicates that the solution converged. Other values
-  ///     denote a problem
   ///
   /// High Level Algorithm Overview
   /// -----------------------------
@@ -137,11 +156,11 @@ public:  // public API
   /// >   yₑ,ₖ₊₁ = yₑ,ₖ + δₖ
   /// This is the equation implemented in this function
   template <typename Fn>
-  GRIMPL_FORCE_INLINE int step(double* y, double h,
-                               const Fn& calc_deriv_and_jacobian, int n,
-                               double* scratch_ptr,
-                               bool enforce_positive_non_NaN,
-                               double local_density = 1.0) const {
+  GRIMPL_FORCE_INLINE IntegrateResult step(double* y, double h,
+                                           const Fn& calc_f_and_jacobian, int n,
+                                           double* scratch_ptr,
+                                           bool enforce_positive_non_NaN,
+                                           double local_density = 1.0) const {
     // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
     namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
@@ -167,7 +186,7 @@ public:  // public API
     // as we enter the loop, note that `y` holds `yₑ,₀ = yₛ`
     for (int k = 0; k < maxiter_; k++) {
       // evaluate f(yₑ,ₖ) and the jacobian matrix for f at yₑ,ₖ.
-      calc_deriv_and_jacobian(y, f, jacobian_f);
+      calc_f_and_jacobian(y, f, jacobian_f);
 
       // store the value of (I - h * J_f(yₑ,ₖ)) inside mtrx
       // -> I is the identity matrix and J_f is the jacobian matrix for f
@@ -211,7 +230,9 @@ public:  // public API
       //       consistent with GR_SUCCESS
       int ierror = f_wrap::gaussj_g(n, mtrx.data(), vec);
       if (ierror == 1) {
-        return GR_FAIL;
+        // we intentionally say there have been k rather than k+1 iterations
+        // since the current iteration isn't complete
+        return IntegrateResult{TerminateFlag::OTHER_ERR, k};
       }
 
       // multiply with density again  (TODO: shouldn't be part of this fn)
@@ -230,7 +251,10 @@ public:  // public API
       if (enforce_positive_non_NaN) {
         for (int i = 0; i < n; i++) {
           if (std::isnan(y[i]) || (y[i] <= 0.)) {
-            return GR_FAIL;
+            // a compelling case could be made for saying there are k+1 complete
+            // iterations, but saying there are k iterations is probably more
+            // useful for identifying underlying issues
+            return IntegrateResult{TerminateFlag::OTHER_ERR, k};
           }
         }
       }
@@ -245,11 +269,12 @@ public:  // public API
       }
 
       if (max_rel_diff_mag <= max_rtol_) {
-        return GR_SUCCESS;
+        return IntegrateResult{TerminateFlag::CONVERGED, k + 1};
       }
     }
 
-    return GR_FAIL;  // only reached if iterations exceeded maxiter
+    // we have exceeded maxiter
+    return IntegrateResult{TerminateFlag::CONVERGE_ERR, maxiter_ + 1};
   }
 };
 

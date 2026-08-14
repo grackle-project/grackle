@@ -621,10 +621,10 @@ inline void step_rate_newton_raphson(
       (imp_eng[i] == 1) && (my_chemistry->primordial_chemistry > 0) &&
       (my_chemistry->with_radiative_cooling == 1);
 
-        int ret_val = ode_solver.step(
+        integrate::IntegrateResult rslt = ode_solver.step(
             reduced_dsp.data(), dtit[i], calc_f_and_jacobian, nsp,
             ode_scratch_buf.data(), enforce_positive_non_NaN, d(i, j, k));
-        is_converged = ret_val == GR_SUCCESS;
+        is_converged = rslt.converged();
 
         // Check if the fractions are valid after an iteration
         if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
