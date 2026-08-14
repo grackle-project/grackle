@@ -78,10 +78,6 @@ public:  // public API
   ///     for the system of ODEs and will be updated (in-place) to hold the
   ///     state at the end of the timestep.
   /// @param[in]     h the timestep
-  /// @param[in]     local_density is used for rescaling. Frankly, this
-  ///     parameter is a historical artifact that should be removed (when we're
-  ///     prepared to update the gold-standard). All rescaling should occur
-  ///     outside of this function.
   /// @param[in]     calc_deriv_and_jacobian function object with the signature
   ///     `void f(const double* y_buf, double* f_buf, double* jacobian_f_buf)`.
   ///     It should treat `y_buf` argument as an input buffer specifyng a state
@@ -99,6 +95,10 @@ public:  // public API
   /// @param[in]    enforce_positive_non_NaN when `true`, the calculation will
   ///     perform an explicit check that each guessed state of the differential
   ///     equations only contains positive, non-NaN components.
+  /// @param[in]     local_density is used for rescaling. Frankly, this
+  ///     parameter is a historical artifact that should be removed (when we're
+  ///     prepared to update the gold-standard). All rescaling should occur
+  ///     outside of this function.
   ///
   /// @return GR_SUCCESS indicates that the solution converged. Other values
   ///     denote a problem
@@ -139,10 +139,11 @@ public:  // public API
   /// >   yₑ,ₖ₊₁ = yₑ,ₖ + δₖ
   /// This is the equation implemented in this function
   template <typename Fn>
-  GRIMPL_FORCE_INLINE int step(double* y, double h, double local_density,
+  GRIMPL_FORCE_INLINE int step(double* y, double h,
                                const Fn& calc_deriv_and_jacobian, int n,
                                double* scratch_ptr,
-                               bool enforce_positive_non_NaN) const {
+                               bool enforce_positive_non_NaN,
+                               double local_density = 1.0) const {
     // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
     namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
 
