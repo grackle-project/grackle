@@ -36,12 +36,21 @@ class StiffNewtonRaphson {
   /// Grackle configuration
   int max_evolved_variables_;
 
+  /// integration is considered converged when the max relative difference
+  /// magnitude of any vector component does not exceed this value
+  double max_rtol_;
+
+  /// maximum number of iterations
+  int maxiter_;
+
 public:  // public API
   StiffNewtonRaphson() = delete;
 
   /// @brief primary constructor
-  explicit StiffNewtonRaphson(int max_evolved_variables)
-      : max_evolved_variables_{max_evolved_variables} {}
+  StiffNewtonRaphson(int max_evolved_variables, double max_rtol, int maxiter)
+      : max_evolved_variables_{max_evolved_variables},
+        max_rtol_{max_rtol},
+        maxiter_{maxiter} {}
 
   // upper bound on the scratch space needed in step
   int num_scratch_buf_elements() const noexcept {
@@ -156,11 +165,8 @@ public:  // public API
       ycur_minus_ystart[i] = 0.0;
     }
 
-    const double max_error_exit_thresh = 1.e-8;
-    const int maxiter = 20;
-
     // as we enter the loop, note that `y` holds `yₑ,₀ = yₛ`
-    for (int k = 0; k < maxiter; k++) {
+    for (int k = 0; k < maxiter_; k++) {
       // evaluate f(yₑ,ₖ) and the jacobian matrix for f at yₑ,ₖ.
       calc_deriv_and_jacobian(y.data(), f, jacobian_f);
 
@@ -239,7 +245,7 @@ public:  // public API
         max_rel_diff_mag = std::fmax(err, max_rel_diff_mag);
       }
 
-      if (max_rel_diff_mag <= max_error_exit_thresh) {
+      if (max_rel_diff_mag <= max_rtol_) {
         return GR_SUCCESS;
       }
     }

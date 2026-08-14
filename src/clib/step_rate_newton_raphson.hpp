@@ -195,9 +195,12 @@ inline void step_rate_newton_raphson(
   std::vector<double> full_dspdot_buf1(i_eng);
 
   // initialize the ode_solver
-  // -> in an upcoming pull request, we'll use it to infer the required amount
-  //    of scratch space
-  integrate::StiffNewtonRaphson ode_solver(i_eng);
+  // -> a solution is considered converged when the max relative difference
+  //    magnitude of any vector component does not exceed this value
+  double max_rtol = 1.e-8;
+  // -> maximum number of iterations before giving up on a provided timestep
+  int maxiter_per_dt = 20;
+  integrate::StiffNewtonRaphson ode_solver(i_eng, max_rtol, maxiter_per_dt);
 
   std::vector<double> ode_scratch_buf(ode_solver.num_scratch_buf_elements());
 
