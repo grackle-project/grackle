@@ -386,10 +386,12 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int use_dust_density_field
 
-   Flag to provide the dust density as a field using the :c:data:`dust_density`
-   pointer in the :c:type:`grackle_field_data` struct. If set to 0, the dust
-   density takes the value of :c:data:`local_dust_to_gas_ratio` multiplied
-   by the metallicity. Default: 0.
+   When :c:data:`dust_chemistry` is set to 1, use this flag to provide
+   the dust density as a field using the :c:data:`dust_density`
+   pointer in the :c:type:`grackle_field_data` struct. If set to 0,
+   the dust density takes the value of
+   :c:data:`local_dust_to_gas_ratio` multiplied by the
+   metallicity. Default: 0.
 
 .. c:var:: int use_volumetric_heating_rate
 
