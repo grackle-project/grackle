@@ -79,13 +79,13 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
   // PART 2: let's show some examples of lookups from names
 
   // Equivalent Python:  `2 == m["HII"]`
-  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_find(&m, "HII"), Optional(2));
+  EXPECT_THAT(m.find("HII"), Optional(2));
 
   // Equivalent Python/idiomatic C++:  `33 == m["O2II"]`
-  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_find(&m, "O2II"), Optional(33));
+  EXPECT_THAT(m.find("O2II"), Optional(33));
 
   // for unknown key, returns AccessRslt{has_value=false, value=<garbage>}
-  EXPECT_EQ(grimpl::FrozenKeyIdxBiMap_find(&m, "Dummy"), std::nullopt);
+  EXPECT_EQ(m.find("Dummy"), std::nullopt);
 
   // PART 3: let's show the reverse of the previous lookups
   EXPECT_STREQ("HII", grimpl::FrozenKeyIdxBiMap_inverse_find(&m, 2));
@@ -95,7 +95,7 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
   EXPECT_EQ(nullptr, grimpl::FrozenKeyIdxBiMap_inverse_find(&m, 131));
 
   // PART 4: We can also query the length
-  EXPECT_EQ(34, grimpl::FrozenKeyIdxBiMap_size(&m));
+  EXPECT_EQ(m.size(), 34);
 }
 
 // validate basic operations for an empty bimap
@@ -105,10 +105,9 @@ TEST(FrozenKeyIdxBiMap, EmptyBasicOps) {
   ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&m))
       << "construction of a FrozenKeyIdxBiMap unexpectedly failed";
 
-  EXPECT_EQ(0, grackle::impl::FrozenKeyIdxBiMap_size(&m))
-      << "an empty mapping should have a size of 0";
+  EXPECT_EQ(m.size(), 0) << "an empty mapping should have a size of 0";
 
-  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_find(&m, "key"), std::nullopt)
+  EXPECT_EQ(m.find("key"), std::nullopt)
       << "key lookup should always fail for an empty mapping";
 
   EXPECT_EQ(nullptr, grackle::impl::FrozenKeyIdxBiMap_inverse_find(&m, 0))
@@ -248,28 +247,23 @@ protected:
 };
 
 TEST_P(BiMapGeneral, FindContainedKey) {
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "density"),
-              Optional(1));
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "internal_energy"),
-              Optional(0));
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "metal_density"),
-              Optional(2));
+  EXPECT_THAT(bimap_p->find("density"), Optional(1));
+  EXPECT_THAT(bimap_p->find("internal_energy"), Optional(0));
+  EXPECT_THAT(bimap_p->find("metal_density"), Optional(2));
 }
 
 TEST_P(BiMapGeneral, FindAbsentKey) {
-  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "notAKey"),
-            std::nullopt);
+  EXPECT_EQ(bimap_p->find("notAKey"), std::nullopt);
 }
 
 TEST_P(BiMapGeneral, FindForbiddenKeys) {
   // let's veryify that trying to find forbidden keys works properly
   // -> the fact that they are forbidden means that they are always absent
 
-  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, ""), std::nullopt);
+  EXPECT_EQ(bimap_p->find(""), std::nullopt);
 
   std::string key(grackle::impl::bimap_detail::KEYLEN_MAX + 1, 'A');
-  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, key.data()),
-            std::nullopt);
+  EXPECT_EQ(bimap_p->find(key.data()), std::nullopt);
 }
 
 TEST_P(BiMapGeneral, KeyFromIdxInvalidIdx) {
@@ -304,10 +298,8 @@ TEST_P(BiMapGeneral, Clone) {
   delete bimap_p;
   bimap_p = nullptr;
 
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(clone_p, "internal_energy"),
-              Optional(0));
-  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_find(clone_p, "notAKey"),
-            std::nullopt);
+  EXPECT_THAT(clone_p->find("internal_energy"), Optional(0));
+  EXPECT_EQ(clone_p->find("notAKey"), std::nullopt);
 
   EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_inverse_find(clone_p, 3), nullptr);
   EXPECT_STREQ(grackle::impl::FrozenKeyIdxBiMap_inverse_find(clone_p, 1),

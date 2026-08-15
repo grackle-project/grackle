@@ -288,7 +288,7 @@ extern "C" int setup_yield_table_callback(
   // -> see the docstring for SetupCallbackCtx::inj_path_names for how this
   //    behavior will change when we start loading data from HDF5 files
   std::optional<uint16_t> maybe_pathway_idx =
-      FrozenKeyIdxBiMap_find(my_ctx->inj_path_names, name);
+      my_ctx->inj_path_names->find(name);
   if (!maybe_pathway_idx.has_value()) {
     return GR_SUCCESS;
   }
@@ -323,7 +323,7 @@ extern "C" int setup_yield_table_callback(
           input->initial_grain_props[yield_idx];
 
       std::optional<uint16_t> maybe_grain_idx =
-          FrozenKeyIdxBiMap_find(my_ctx->grain_species_names, yield_info.name);
+          my_ctx->grain_species_names->find(yield_info.name);
       if (!maybe_grain_idx.has_value()) {
         continue;
       }

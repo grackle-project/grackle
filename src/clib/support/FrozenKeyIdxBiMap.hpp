@@ -288,6 +288,22 @@ public:  // interface methods
     std::swap(table_rows, other.table_rows);
     std::swap(ordered_row_indices, other.ordered_row_indices);
   }
+
+  /// @brief lookup the value associated with the specified key
+  ///
+  /// This is the analog to calling `map[key]` in python.
+  ///
+  /// @param[in] key A null-terminated string
+  /// @return An optional that contains the value if the key can be found
+  std::optional<uint16_t> find(const char* key) const noexcept {
+    uint16_t tmp =
+        bimap_StrU16_detail::search(table_rows, key, capacity, max_probe).val;
+    bool success = tmp != bimap_detail::INVALID_VAL;
+    return (success) ? std::make_optional(tmp) : std::nullopt;
+  }
+
+  /// @brief return the number of keys in the map
+  int size() const noexcept { return length; }
 };
 
 /// checks whether a creational function produced a valid bimap
@@ -320,30 +336,6 @@ inline FrozenKeyIdxBiMap::~FrozenKeyIdxBiMap() noexcept {
       delete[] ordered_row_indices;
     }  // ptr->length > 0
   }
-}
-
-/// lookup the value associated with the key
-///
-/// This is the analog to calling `map[key]` in python.
-///
-/// @param[in] map A pointer to a valid bimap
-/// @param[in] key A null-terminated string
-///
-/// @return An optional that contains the value if the key can be found
-inline std::optional<uint16_t> FrozenKeyIdxBiMap_find(
-    const FrozenKeyIdxBiMap* map, const char* key) {
-  uint16_t tmp = bimap_StrU16_detail::search(map->table_rows, key,
-                                             map->capacity, map->max_probe)
-                     .val;
-  bool success = tmp != bimap_detail::INVALID_VAL;
-  return (success) ? std::make_optional(tmp) : std::nullopt;
-}
-
-/// return the number of keys in the map
-///
-/// @param[in] map A pointer to a valid bimap
-inline int FrozenKeyIdxBiMap_size(const FrozenKeyIdxBiMap* map) {
-  return map->length;
 }
 
 /// Return the key associated with the specified value
