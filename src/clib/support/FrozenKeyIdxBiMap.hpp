@@ -302,6 +302,34 @@ public:  // interface methods
     return (success) ? std::make_optional(tmp) : std::nullopt;
   }
 
+  /// @brief Return the key associated with the specified value
+  ///
+  /// For some context, if this function returns a string `s` for some index
+  /// `i`, then a call to @ref FrozenKeyIdxBiMap::find that passes `s` will
+  /// return `i`
+  ///
+  /// This is intended for use in situations where you briefly need the string
+  /// (i.e. and you plan to stop using the pointer before or at the same time as
+  /// `this` is destroyed). In more detail:
+  /// - If `this` was constructed in @ref BiMapMode::COPIES_KEYDATA mode,
+  ///   returned strings have the same lifetime as `this` (i.e. they are
+  ///   deallocated when the contents of `this` are deallocated).
+  /// - Otherwise, the returned string's allocation is externally managed. But,
+  ///   any scenario where the allocation doesn't live at least as long as
+  ///   `this`, is ill-formed
+  ///
+  /// @param[in] idx The index to check
+  /// @return The pointer to the appropriate key
+  const char* inverse_find(int idx) const noexcept {
+    if (idx >= length || idx < 0) {
+      return nullptr;
+    }
+    const char* out = table_rows[ordered_row_indices[idx]].key;
+    GR_INTERNAL_REQUIRE(out != nullptr,
+                        "logical error: string can't be nullptr");
+    return out;
+  }
+
   /// @brief return the number of keys in the map
   int size() const noexcept { return length; }
 };
@@ -336,35 +364,6 @@ inline FrozenKeyIdxBiMap::~FrozenKeyIdxBiMap() noexcept {
       delete[] ordered_row_indices;
     }  // ptr->length > 0
   }
-}
-
-/// Return the key associated with the specified value
-///
-/// For some context, if this function returns a string `s` for some index `i`,
-/// then a call to @ref FrozenKeyIdxBiMap_find that passes `s` will
-/// return `i`
-///
-/// This is intended for use in situations where you briefly need the string
-/// (i.e. and you plan to stop using the pointer before or at the same time as
-/// the @p map is destroyed). In more detail:
-/// - If the @p map was constructed in @ref BiMapMode::COPIES_KEYDATA mode,
-///   returned strings have the same lifetime as @p map (i.e. they are
-///   deallocated when the contents of @p map are deallocated).
-/// - Otherwise, the returned string's allocation is externally managed. But,
-///   any scenario where the allocation doesn't live at least as long as @p map,
-///   is ill-formed
-///
-/// @param[in] map A pointer to a valid bimap
-/// @param[in] idx The index to check
-/// @return The pointer to the appropriate key
-inline const char* FrozenKeyIdxBiMap_inverse_find(const FrozenKeyIdxBiMap* map,
-                                                  int idx) {
-  if (idx >= map->length || idx < 0) {
-    return nullptr;
-  }
-  const char* out = map->table_rows[map->ordered_row_indices[idx]].key;
-  GR_INTERNAL_REQUIRE(out != nullptr, "logical error: string can't be nullptr");
-  return out;
 }
 
 /** @}*/  // end of group
