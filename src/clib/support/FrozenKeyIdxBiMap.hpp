@@ -217,7 +217,7 @@ public:  // interface methods
   ///     clones that are made.
   ///
   /// @note
-  /// Callers should pass the returned value to @ref FrozenKeyIdxBiMap_is_ok
+  /// Callers should pass the returned value to @ref FrozenKeyIdxBiMap::is_ok
   /// to check whether there was an error during creation. This is pretty
   /// ugly/clunky, but it's the only practical way to achieve comparable
   /// behavior to other internal data types. The best alternatives involve the
@@ -268,7 +268,7 @@ public:  // interface methods
   /// BiMapMode::COPIES_KEYDATA, then fresh copies of the strings are made
   ///
   /// @warning
-  /// Callers should pass the returned value to @ref FrozenKeyIdxBiMap_is_ok
+  /// Callers should pass the returned value to @ref FrozenKeyIdxBiMap::is_ok
   /// to check whether there was an error during creation. This is pretty
   /// ugly/clunky, but it's the only practical way to achieve comparable
   /// behavior to other internal data types. The best alternatives involve
@@ -288,6 +288,11 @@ public:  // interface methods
     std::swap(table_rows, other.table_rows);
     std::swap(ordered_row_indices, other.ordered_row_indices);
   }
+
+  /// @brief checks whether a creational function produced a valid container
+  ///
+  /// @return true if the container is valid (otherwise, it returns false)
+  bool is_ok() const noexcept { return length != bimap_detail::INVALID_VAL; }
 
   /// @brief lookup the value associated with the specified key
   ///
@@ -334,21 +339,8 @@ public:  // interface methods
   int size() const noexcept { return length; }
 };
 
-/// checks whether a creational function produced a valid bimap
-///
-/// @param[in] ptr Points to the object being checked
-/// @return true if the value is ok or false if the value is invalid
-///
-/// @important
-/// The interface of @ref FrozenKeyIdxBiMap sets values in a very particular
-/// way to signal that FrozenKeyIdxBiMap is in an invalid state. This function
-/// @b ONLY checks for that particular signature.
-inline bool FrozenKeyIdxBiMap_is_ok(const FrozenKeyIdxBiMap* ptr) {
-  return ptr->length != bimap_detail::INVALID_VAL;
-}
-
 inline FrozenKeyIdxBiMap::~FrozenKeyIdxBiMap() noexcept {
-  if (FrozenKeyIdxBiMap_is_ok(this)) {
+  if (is_ok()) {
     if (length > 0) {
       if (mode == BiMapMode::COPIES_KEYDATA) {
         for (bimap_detail::rowidx_type i = 0; i < capacity; i++) {
@@ -438,7 +430,7 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
 }
 
 inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::clone() const {
-  if (!FrozenKeyIdxBiMap_is_ok(this)) {
+  if (!is_ok()) {
     return FrozenKeyIdxBiMap::make_invalid_();
   }
 

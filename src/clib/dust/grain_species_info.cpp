@@ -295,7 +295,7 @@ GrainSpeciesInfo::GrainSpeciesInfo(int dust_species_parameter) {
   name_map_ =
       FrozenKeyIdxBiMap::create(names, n_species_, BiMapMode::COPIES_KEYDATA);
 
-  if (!FrozenKeyIdxBiMap_is_ok(&name_map_)) {
+  if (!name_map_.is_ok()) {
     GrainSpeciesInfo::cleanup_array_(n_species_, species_info_);
     n_species_ = -1;
     species_info_ = nullptr;

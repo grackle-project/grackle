@@ -455,7 +455,7 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   //    file, we'll need to use BiMapMode::COPIES_KEYDATA.
   FrozenKeyIdxBiMap inj_path_names = FrozenKeyIdxBiMap::create(
       inj_path_name_l, n_pathways, BiMapMode::REFS_KEYDATA);
-  if (!FrozenKeyIdxBiMap_is_ok(&inj_path_names)) {
+  if (!inj_path_names.is_ok()) {
     return GrPrintAndReturnErr(
         "there was a problem building the map of model names");
   }
