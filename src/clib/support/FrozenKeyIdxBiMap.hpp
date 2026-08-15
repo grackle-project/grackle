@@ -339,15 +339,6 @@ inline std::optional<uint16_t> FrozenKeyIdxBiMap_find(
   return (success) ? std::make_optional(tmp) : std::nullopt;
 }
 
-/// returns whether the map contains the key
-///
-/// @param[in] map A pointer to a valid bimap
-/// @param[in] key A null-terminated string
-inline bool FrozenKeyIdxBiMap_contains(const FrozenKeyIdxBiMap* map,
-                                       const char* key) {
-  return FrozenKeyIdxBiMap_find(map, key).has_value();
-}
-
 /// return the number of keys in the map
 ///
 /// @param[in] map A pointer to a valid bimap
