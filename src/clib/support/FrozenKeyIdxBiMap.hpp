@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <optional>
 #include <utility>  // std::swap
 
 #include "config.hpp"
@@ -321,22 +322,6 @@ inline FrozenKeyIdxBiMap::~FrozenKeyIdxBiMap() noexcept {
   }
 }
 
-namespace bimap {
-
-/// holds the result of a call to @ref FrozenKeyIdxBiMap_find
-///
-/// @note
-/// This is a C-style approximation of std::optional<uint16_t>. Additionally,
-/// the choice to make value a uint16_t is motivated by PR #484
-struct AccessRslt {
-  /// Indicates whether the value member is valid
-  bool has_value;
-  /// the loaded value (if has_value is false then this holds garbage)
-  uint16_t value;
-};
-
-}  // namespace bimap
-
 /// lookup the value associated with the key
 ///
 /// This is the analog to calling `map[key]` in python.
@@ -344,14 +329,14 @@ struct AccessRslt {
 /// @param[in] map A pointer to a valid bimap
 /// @param[in] key A null-terminated string
 ///
-/// @return An instance of @ref bimap::AccessRslt that encodes the value (if
-///     the key is present)
-inline bimap::AccessRslt FrozenKeyIdxBiMap_find(const FrozenKeyIdxBiMap* map,
-                                                const char* key) {
+/// @return An optional that contains the value if the key can be found
+inline std::optional<uint16_t> FrozenKeyIdxBiMap_find(
+    const FrozenKeyIdxBiMap* map, const char* key) {
   uint16_t tmp = bimap_StrU16_detail::search(map->table_rows, key,
                                              map->capacity, map->max_probe)
                      .val;
-  return bimap::AccessRslt{tmp != bimap_detail::INVALID_VAL, tmp};
+  bool success = tmp != bimap_detail::INVALID_VAL;
+  return (success) ? std::make_optional(tmp) : std::nullopt;
 }
 
 /// returns whether the map contains the key
@@ -360,7 +345,7 @@ inline bimap::AccessRslt FrozenKeyIdxBiMap_find(const FrozenKeyIdxBiMap* map,
 /// @param[in] key A null-terminated string
 inline bool FrozenKeyIdxBiMap_contains(const FrozenKeyIdxBiMap* map,
                                        const char* key) {
-  return FrozenKeyIdxBiMap_find(map, key).has_value;
+  return FrozenKeyIdxBiMap_find(map, key).has_value();
 }
 
 /// return the number of keys in the map
