@@ -147,7 +147,7 @@ enum class BiMapMode {
 /// The contents of this struct should be considered an implementation
 /// detail! Always prefer the associated functions (they are defined in such
 /// a way that they should be inlined)
-struct FrozenKeyIdxBiMap {
+class FrozenKeyIdxBiMap {
   // don't forget to update the clone method when changing data members
 
   /// the number of contained strings
@@ -164,7 +164,6 @@ struct FrozenKeyIdxBiMap {
   /// tracks the row indices to make iteration faster
   bimap_detail::rowidx_type* ordered_row_indices;
 
-private:  // helper methods
   /// a helper function used to actually allocate memory for FrozenKeyIdxBiMap
   void alloc_(uint16_t target_length, uint16_t target_capacity,
               BiMapMode target_mode) {
