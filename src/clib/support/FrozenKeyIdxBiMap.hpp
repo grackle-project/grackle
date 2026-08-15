@@ -33,11 +33,6 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// FrozenKeyIdxBiMap provides specialized mapping functionality for internal
 /// use within Grackle. The functionality is useful as a building-block for
 /// runtime lookup-tables and other data types with map-like interface.
-///
-/// The data type was implemented in a C-style. The FrozenKeyIdxBiMap struct
-/// should be treated as an opaque type that is operated upon by a set of
-/// associated functions. More idiomatic C++ (or languages like Rust & Swift),
-/// the associated functions would be attached to the struct as methods
 /** @{*/
 
 /// describes the operating modes of @ref FrozenKeyIdxBiMap
@@ -339,6 +334,8 @@ public:  // interface methods
   int size() const noexcept { return length; }
 };
 
+/** @}*/  // end of group
+
 inline FrozenKeyIdxBiMap::~FrozenKeyIdxBiMap() noexcept {
   if (is_ok()) {
     if (length > 0) {
@@ -357,8 +354,6 @@ inline FrozenKeyIdxBiMap::~FrozenKeyIdxBiMap() noexcept {
     }  // ptr->length > 0
   }
 }
-
-/** @}*/  // end of group
 
 inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
                                                    int key_count,
