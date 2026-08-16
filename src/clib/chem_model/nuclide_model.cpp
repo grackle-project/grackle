@@ -107,9 +107,9 @@ int NuclideModel::copy_info_to_RegBuilder(
     for (int i = 0; i < len; i++) {
       symbols[i] = symbol_map_.inverse_find(i);
     }
-    if (reg_builder.copied_str_arr1d("nuclides.symbols", symbols.data(), len) !=
+    if (reg_builder.copied_str_arr1d("nuclide.symbols", symbols.data(), len) !=
         GR_SUCCESS) {
-      return GrPrintAndReturnErr("error making nuclides.symbols queryable");
+      return GrPrintAndReturnErr("error making nuclide.symbols queryable");
     }
   }
 
