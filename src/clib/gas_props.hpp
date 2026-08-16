@@ -17,6 +17,7 @@
 #include "support/index_helper.hpp"
 #include "internal_units.hpp"
 #include "lnT_prep.hpp"
+#include "phys_constants.hpp"
 #include "support/config.hpp"
 #include "tabulated/calc_temp1d_cloudy.hpp"
 #include "utils-cpp.hpp"
@@ -219,12 +220,14 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
 
     // Compute mean molecular weight (and temperature) directly
 
+    // enforce our assumption about the mass_factor for H and e
+    static_assert(mass_factor::H == 1.0 && mass_factor::e == 1.0);
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         mmw[i] = (HeI(i, idx_range.j, idx_range.k) +
                   HeII(i, idx_range.j, idx_range.k) +
                   HeIII(i, idx_range.j, idx_range.k)) /
-                     4. +
+                     mass_factor::He +
                  HI(i, idx_range.j, idx_range.k) +
                  HII(i, idx_range.j, idx_range.k) +
                  de(i, idx_range.j, idx_range.k);
@@ -241,7 +244,7 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
           mmw[i] = mmw[i] + HM(i, idx_range.j, idx_range.k) +
                    (H2I(i, idx_range.j, idx_range.k) +
                     H2II(i, idx_range.j, idx_range.k)) /
-                       2.;
+                       mass_factor::H2;
           rhoH[i] = rhoH[i] + H2I(i, idx_range.j, idx_range.k) +
                     H2II(i, idx_range.j, idx_range.k);
         }
