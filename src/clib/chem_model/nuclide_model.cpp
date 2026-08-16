@@ -16,6 +16,7 @@
 #include "../phys_constants.hpp"
 #include "../support/FrozenKeyIdxBiMap.hpp"
 #include "../support/status_reporting.hpp"
+#include "grackle.h"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -81,6 +82,55 @@ NuclideModel::NuclideModel() {
   for (int i = 0; i < nuclide_detail::N_ENTRIES; i++) {
     props_.push_back(nuclide_detail::pairs[i].second);
   }
+}
+
+template <typename Fn>
+static int copy_f64_(ratequery::RegBuilder& reg_builder, const char* name,
+                     std::vector<double>& tmp_buf, Fn prop_getter) {
+  int len = static_cast<int>(tmp_buf.size());
+  for (int i = 0; i < len; i++) {
+    tmp_buf[i] = prop_getter(i);
+  }
+  if (reg_builder.copied_f64_arr1d(name, tmp_buf.data(), len) != GR_SUCCESS) {
+    return GrPrintAndReturnErr("error making %s queryable", name);
+  }
+  return GR_SUCCESS;
+}
+
+int NuclideModel::copy_info_to_RegBuilder(
+    ratequery::RegBuilder& reg_builder) const {
+  int len = size();
+
+  // first, lets add the symbols
+  {
+    std::vector<const char*> symbols(len);
+    for (int i = 0; i < len; i++) {
+      symbols[i] = symbol_map_.inverse_find(i);
+    }
+    if (reg_builder.copied_str_arr1d("nuclides.symbols", symbols.data(), len) !=
+        GR_SUCCESS) {
+      return GrPrintAndReturnErr("error making nuclides.symbols queryable");
+    }
+  }
+
+  // now, lets add the other values
+
+  // declare variable that will be captured by reference in lambda expression
+  const std::vector<NuclideProp>& v = props_;
+
+  // declare a temporary buffer
+  std::vector<double> tmp_buf(len);
+  if (copy_f64_(reg_builder, "nuclide.mass_factor", tmp_buf,
+                [&v](int i) { return v[i].mass_factor; }) != GR_SUCCESS) {
+    return GrPrintAndReturnErr("error making nuclide.mass_factor queryable");
+  } else if (copy_f64_(reg_builder, "nuclide.n_proton", tmp_buf,
+                       [&v](int i) { return v[i].n_proton; }) != GR_SUCCESS) {
+    return GrPrintAndReturnErr("error making nuclide.n_proton queryable");
+  } else if (copy_f64_(reg_builder, "nuclide.mass_dalton", tmp_buf,
+                       [&v](int i) { return v[i].mass_Da; }) != GR_SUCCESS) {
+    return GrPrintAndReturnErr("error making nuclide.mass_dalton queryable");
+  }
+  return GR_SUCCESS;
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL

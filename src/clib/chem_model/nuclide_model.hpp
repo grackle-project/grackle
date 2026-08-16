@@ -14,6 +14,7 @@
 
 #include <vector>
 
+#include "../ratequery.hpp"
 #include "../support/config.hpp"
 #include "../support/FrozenKeyIdxBiMap.hpp"
 
@@ -132,6 +133,29 @@ public:
   const NuclideProp& get(int idx) const { return props_[idx]; }
 
   int size() const noexcept { return symbol_map_.size(); }
+
+  /// @brief copy relevant information to make it queryable ratequery
+  ///
+  /// This mainly exists for exposing this information to gracklepy. In
+  /// reality, we should probably make public API functions to expose relevant
+  /// mass_factor information to end-users. But, I'm not so sure we actually
+  /// need to expose mass_factor values for nuclide symbols (I think we
+  /// actually want to directly expose mass_factor values for chemical species).
+  ///
+  /// We elect to copy values to @p reg_builder (as opposed to defining recipes
+  /// for dynamically accessing values stored within the current object) for 2
+  /// reasons:
+  /// 1. there isn't an obvious reason for us to keep NuclideProp around after
+  ///    we initially configure Grackle (except perhaps that we want to query
+  ///    this information)
+  /// 2. NuclideModel currently organizes data as an array of structs. In order
+  ///    to make the data available through a recipe, we would need to
+  ///    internally repack the data as a struct of arrays (this would involve
+  ///    making methods for every queryable property)
+  ///
+  /// @note
+  /// It's an error to call this more than once for a given reg_builder
+  int copy_info_to_RegBuilder(ratequery::RegBuilder& reg_builder) const;
 };
 
 }  // namespace GRIMPL_NAMESPACE_DECL

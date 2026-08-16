@@ -19,6 +19,7 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "auto_general.hpp"
+#include "chem_model/nuclide_model.hpp"
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.hpp"
@@ -335,6 +336,21 @@ extern "C" int local_initialize_chemistry_data(
     if (my_chemistry->HydrogenFractionByMass < 0) {
       my_chemistry->HydrogenFractionByMass = default_Hfrac;
     }
+  }
+
+  // it's time to make it possible to query nuclide properties
+  // -> note that that nuclide_model's constructor temporarily allocates
+  //    heap memory (before it is deallocated in the destructor)
+  // -> while this is currently a little wasteful, it's probably worth doing
+  //    because in the near future, the plan is to use nuclide_model to help us
+  //    do some setup in order to approach make_consistent in a dynamic way
+  //    (i.e. to minimize the number of edits every time a new species is added)
+  {
+    GRIMPL_NS::NuclideModel nuclide_model;  // <- default constructed
+    // the following copies some data into the reg_builder (it will get
+    // transferred to the registry). If we are worried about this, we can
+    // create a new parameter to disable this behavior
+    nuclide_model.copy_info_to_RegBuilder(reg_builder);
   }
 
   // it's time to start initializing values in my_rates
