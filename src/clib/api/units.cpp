@@ -15,7 +15,7 @@
 #include <cmath>
 #include <cstdio>
 #include "grackle.h"
-#include "phys_constants.h"
+#include "phys_constants.hpp"
 
 extern "C" double get_velocity_units(const code_units *my_units)
 {

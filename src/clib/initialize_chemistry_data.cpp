@@ -25,7 +25,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
 #include "opaque_storage.hpp" // gr_opaque_storage
-#include "phys_constants.h"
+#include "phys_constants.hpp"
 #include "ratequery.hpp"
 #include "support/status_reporting.hpp"
 #include "tabulated/initialize_cloudy_data.hpp"

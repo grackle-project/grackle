@@ -18,7 +18,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
-#include "phys_constants.h"
+#include "phys_constants.hpp"
 #include "utils-cpp.hpp"
 
 #include "calc_gr_balance_g.hpp"

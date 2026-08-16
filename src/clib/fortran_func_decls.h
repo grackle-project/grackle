@@ -11,7 +11,7 @@ extern "C" {
 
 #include "grackle_macros.h" // FORTRAN_NAME
 #include "grackle.h"        // gr_float
-#include "phys_constants.h" // physical constants
+#include "phys_constants.hpp" // physical constants
 #include <stdint.h>         // int32_t
 typedef int32_t gr_mask_type;
 typedef long long gr_i64;

@@ -16,7 +16,7 @@
 #include <cmath>
 #include <cstdio>
 
-#include "phys_constants.h"  // pi_fortran_val
+#include "phys_constants.hpp"  // pi_fortran_val
 #include "solve_cubic_equation.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {

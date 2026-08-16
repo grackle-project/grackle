@@ -11,8 +11,8 @@
 / software.
 ************************************************************************/
 
-#ifndef __g_phys_constants_h__
-#define __g_phys_constants_h__
+#ifndef PHYS_CONSTANTS_HPP
+#define PHYS_CONSTANTS_HPP
 /***********************************************************************
 /  
 / DEFINITION OF PHYSICAL CONSTANTS
@@ -109,4 +109,4 @@
 #define ev2erg_grflt   GRFLOAT_C(1.60217653e-12)
 #define sigma_sb_grflt GRFLOAT_C(5.670373e-5)
 
-#endif
+#endif  // PHYS_CONSTANTS_HPP

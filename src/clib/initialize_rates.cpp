@@ -53,7 +53,7 @@
 #include "LUT.hpp" // CollisionalRxnLUT
 #include "interp_grid.hpp"
 #include "opaque_storage.hpp" // gr_opaque_storage
-#include "phys_constants.h"
+#include "phys_constants.hpp"
 #include "support/config.hpp"
 #include "support/status_reporting.hpp"
 

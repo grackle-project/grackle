@@ -36,7 +36,7 @@
 
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "phys_constants.h"
+#include "phys_constants.hpp"
 #include "support/config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
