@@ -15,6 +15,7 @@ import copy
 import weakref
 import sys
 from types import MappingProxyType
+from typing import Any
 from gracklepy.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
@@ -272,6 +273,61 @@ cdef class chemistry_data:
           for configuring this information
         """
         return _get_inj_path_yield_map(self._rate_map, "inject_path_grain_yield_frac.")
+
+    def _experimental_nuclide_proton_counts(
+        self
+    ) -> MappingProxyType[str, float]:
+        """
+        A helper method that returns a immutable mapping between nuclide
+        symbols and the number of protons.
+
+        Note
+        ----
+        While we make this information available in order to properly
+        initialize test problems, we are still experimenting with how best to
+        provide this information (e.g. rather than directly provide information
+        about nuclide symbols, it may be better to provide information about
+        the actual modelled species
+        """
+        # we explicitly coerce values to an int since the number of protons is
+        # always an integer (the ratequery machinery reports the info as double
+        # precision floats merely because that was convenient)
+        return _get_nuclide_symbol_map(self._rate_map, "n_proton", val_coerce_fn=int)
+
+    def _experimental_nuclide_mass_factors(
+        self
+    ) -> MappingProxyType[str, float]:
+        """
+        A helper method that returns a immutable mapping between nuclide
+        symbols and the mass_factor.
+
+        Note
+        ----
+        While we make this information available in order to properly
+        initialize test problems, we are still experimenting with how best to
+        provide this information (e.g. rather than directly provide information
+        about nuclide symbols, it may be better to provide information about
+        the actual modelled species
+        """
+        return _get_nuclide_symbol_map(self._rate_map, "mass_factor")
+
+    def _experimental_nuclide_mass_dalton(
+        self
+    ) -> MappingProxyType[str, float]:
+        """
+        A helper method that returns a immutable mapping between nuclide
+        symbols and the associated mass in daltons (aka unified mass units).
+
+        Note
+        ----
+        While we make this information available in order to properly
+        initialize test problems, we are still experimenting with how best to
+        provide this information (e.g. rather than directly provide information
+        about nuclide symbols, it may be better to provide information about
+        the actual modelled species
+        """
+        return _get_nuclide_symbol_map(self._rate_map, "mass_dalton")
+
 
     property h2dust:
         def __get__(self):
@@ -1373,6 +1429,25 @@ def _get_inj_path_yield_map(
     # we return a MappingProxyType rather than a regular dict to reflect the fact
     # users can't directly the mutate the queried entries (the entries also don't
     # have the numpy array's writable flag set to False)
+    return MappingProxyType(tmp)
+
+def _get_nuclide_symbol_map(
+        rate_map: _rate_mapping_access, key_suffix: str, val_coerce_fn: Any = float
+) -> MappingProxyType[str, Any]:
+    """
+    A helper function to return read-only nuclide property mappings
+    """
+    if not key_suffix:
+        raise ValueError("key_suffix must be a non-empty string")
+    keys = rate_map["nuclide.symbols"]
+    values = rate_map[f"nuclide.{key_suffix}"]
+
+    # coerce each element in values from scalar numpy datatypes to a python type
+    coerced_values_itr = (val_coerce_fn(v) for v in values)
+
+    tmp = dict(zip(keys, coerced_values_itr))
+    # we return a MappingProxyType rather than a regular dict to reflect the fact
+    # users can't directly the mutate the queried entries
     return MappingProxyType(tmp)
 
 
