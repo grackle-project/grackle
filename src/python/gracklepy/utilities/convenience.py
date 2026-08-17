@@ -20,19 +20,11 @@ from gracklepy.fluid_container import \
     FluidContainer
 
 from gracklepy.utilities.atomic import \
-    atomic_number, \
-    mass_number, \
     primordial_elements, \
     solar_abundance
 from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
-
-solar_mass_abundance = {element: solar_abundance[element] *
-                        mass_number[element]
-                        for element in solar_abundance
-                        if element not in primordial_elements}
-solar_metal_mass = sum(solar_mass_abundance.values())
 
 def check_convergence(fc1, fc2, fields=None, tol=0.01):
     "Check for fields to be different by less than tol."
@@ -53,19 +45,15 @@ def check_convergence(fc1, fc2, fields=None, tol=0.01):
         return False
     return True
 
-def _get_appropriate_ion_field(fc, element, state):
+def _get_appropriate_ion_field(fc, element, n_protons, state):
     """
     Return the most ionized atomic species available for an element.
     """
 
-    # this is entirely for deuterium, which we are ignoring
-    if element not in atomic_number:
-        return None
-
     if state == "neutral":
-        order = range(atomic_number[element] + 2)
+        order = range(n_protons + 2)
     elif state == "ionized":
-        order = range(atomic_number[element] + 1, 0, -1)
+        order = range(n_protons + 1, 0, -1)
     else:
         raise ValueError("State must be either neutral or ionized.")
 
@@ -100,7 +88,8 @@ def _setup_dust_densities(fc, state_vals, dust_to_gas_ratio):
     elif fc.chemistry_data.use_dust_density_field == 1:
         state_vals["dust_density"] = dust_to_gas_ratio * state_vals["density"]
 
-def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities):
+def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities,
+                                   nuclide_mass_factors):
     """
     Initialize the abundances of the metals based on the abundance pattern
     of the metal field. We either use a solar abundance pattern or that of
@@ -114,6 +103,11 @@ def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities):
     # assume a solar abundance pattern
     if fc.chemistry_data.metal_chemistry == 0:
         metal_field = "metal_density"
+        solar_mass_abundance = {
+            nuclide: solar_abundance[nuclide] * nuclide_mass_factors[nuclide]
+            for nuclide in solar_abundance if nuclide not in primordial_elements
+        }
+        solar_metal_mass = sum(solar_mass_abundance.values())
         metal_nuclide_fractions = {el: solar_mass_abundance[el] / solar_metal_mass
                                    for el in fc.nuclides if el not in primordial_elements}
 
@@ -131,26 +125,31 @@ def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities):
             continue
         nuclide_densities[el] = state_vals[metal_field] * fmass
 
-def _setup_ion_fields(fc, state_vals, nuclide_densities, state):
+def _setup_ion_fields(fc, state_vals, nuclide_densities, state, nuclide_mass_factor):
     """
     Initialize density fields for the ions that will the dominant
     species for either a neutral or ionized state.
 
     Note, here we define ion mass densities in a way that is almost
-    certainly not exactly correct and may not even be totally
-    self-consistent with the Grackle core library.
+    certainly not exactly correct.
 
     Here, we define the mass density of element X as:
-    rho_X = n_x * m_H * A_X,
-    where n_X is the number density of element X, m_H is the hydrogen
-    mass, and A_X is the mass number of the most commonly occurring
-    isotope of element X.
+    rho_X = n_x * m_H * nuclide_mass_factor[X],
+    where n_X is the number density of element X, and m_H is the
+    hydrogen mass.
 
-    This is reflected in the Grackle core library where, for example,
-    He is exactly 4 * m_H and D is 2 * m_H. However, at the time of
-    writing, the intention of the original authors is not entirely
-    clear. We, the current developers, also considered an alternative
-    interpretation for the adoption of species masses as integer
+    The nuclide_mass_factor mapping comes from within the Grackle core
+    library, and is part of our ongoing attempt to standardize existing
+    conventions. Historically nuclide_mass_factor[X] has been an integer:
+    for example the Grackle core library defined the masses of He as
+    exactly 4 * m_H and D as 2 * m_H.
+
+    Prior to adopting values provided by the core library, we (the
+    current developers) equated the mass_factor of a nuclide symbol X with
+    the most commonly occurring isotope corresponding to that symbol.
+    However, at the time of writing, the intention of the original authors
+    is not entirely clear. We, the current developers, also considered an
+    alternative interpretation for the adoption of species masses as integer
     multiples of m_H: they may be atomic masses rounded to the nearest
     integer, where "atomic mass" means the average mass of all isotopes
     weighted by their natural abundance. Generally speaking, this gives
@@ -158,12 +157,15 @@ def _setup_ion_fields(fc, state_vals, nuclide_densities, state):
     exceptions (e.g., Cu and Zn, not currently tracked by Grackle).
     """
 
+    # this maps a symbol to the number of protons
+    proton_count_map = fc.chemistry_data._experimental_nuclide_proton_counts()
+
     state_vals["e_density"] = 0
     for el in nuclide_densities:
         if el not in fc.nuclides:
             continue
 
-        field_name = _get_appropriate_ion_field(fc, el, state)
+        field_name = _get_appropriate_ion_field(fc, el, proton_count_map[el], state)
         state_vals[field_name] = nuclide_densities[el]
 
         # add to electron density
@@ -176,7 +178,7 @@ def _setup_ion_fields(fc, state_vals, nuclide_densities, state):
             ion = reg.groups()[0]
             charge = roman.fromRoman(ion) - 1
             state_vals["e_density"] += nuclide_densities[el] * charge / \
-              mass_number[el]
+              nuclide_mass_factor[el]
 
 def _setup_inj_pathway_fields(state_vals: dict[str, float],
                               inj_pathway_yield_field_names: list[str]):
@@ -301,10 +303,13 @@ def setup_fluid_container(my_chemistry,
     for el in nuclide_densities:
         nuclide_densities[el] *= state_vals["density"]
 
+    nuclide_mass_factors = my_chemistry._experimental_nuclide_mass_factors()
+
     _setup_inj_pathway_fields(state_vals, fc.inject_pathway_density_yield_fields)
-    _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities)
+    _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities,
+                                   nuclide_mass_factors)
     _setup_dust_densities(fc, state_vals, dust_to_gas_ratio)
-    _setup_ion_fields(fc, state_vals, nuclide_densities, state)
+    _setup_ion_fields(fc, state_vals, nuclide_densities, state, nuclide_mass_factors)
 
     for field in fc.density_fields:
         fc[field][:] = state_vals.get(field, tiny_density)
