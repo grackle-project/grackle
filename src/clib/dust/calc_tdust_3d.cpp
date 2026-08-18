@@ -51,6 +51,8 @@ void calc_tdust_3d(
   // Loop over zones, and do an entire i-column in one go
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
+
   // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
@@ -173,7 +175,7 @@ void calc_tdust_3d(
 
       // Compute grain size increment
 
-      if ( (my_chemistry->use_dust_density_field > 0)  &&  (my_chemistry->dust_species > 0) )  {
+      if (my_chemistry->dust_chemistry == 2) {
 
         calc_grain_size_increment_1d (
           dom, idx_range, itmask_metal.data(), my_chemistry,
@@ -212,7 +214,7 @@ void calc_tdust_3d(
           //        endif
           //       endif
 
-          if (my_chemistry->use_dust_density_field > 0)  {
+          if (my_chemistry->use_dust_density_field == 1)  {
             dust2gas[i] = dust(i,j,k) / d(i,j,k);
           } else {
             dust2gas[i] = my_chemistry->local_dust_to_gas_ratio * metallicity[i];
@@ -253,7 +255,7 @@ void calc_tdust_3d(
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
-          if (my_chemistry->use_multiple_dust_temperatures == 0)  {
+          if (single_species_dust_model)  {
             dust_temp(i,j,k) = tdust[i];
           } else {
             if (my_chemistry->dust_species > 0)  {
