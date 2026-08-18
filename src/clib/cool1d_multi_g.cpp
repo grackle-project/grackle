@@ -85,8 +85,6 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///     (with some refactoring, this can probably be removed)
 /// @param[in,out] myisrf a scratch buffer that may be used to temporarily
 ///     record the interstellar radiation field
-/// @param[in,out] internal_dust_prop_buf Holds scratch-space for holding
-///     grain-specific information
 /// @param[out] alpha_continuum_buf buffer to which linear absorption
 ///     coefficients from dust are added (each element is updated in place with
 ///     the sum of its existing value and the contribution from dust). In
@@ -108,8 +106,7 @@ static void handle_dust_contributions(
     grackle_field_data* my_fields, InternalGrUnits internalu,
     IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf, double rad_T,
     double* dust2gas, double* tdust, GrainSpeciesCollection grain_temperatures,
-    double* gasgr_tdust, double* myisrf,
-    InternalDustPropBuf internal_dust_prop_buf, double* alpha_continuum) {
+    double* gasgr_tdust, double* myisrf, double* alpha_continuum) {
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   const double dom = internalu_calc_dom_(internalu);
@@ -118,6 +115,13 @@ static void handle_dust_contributions(
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
+
+  // buffers of intermediate quantities used within dust-routines (for
+  // calculating quantites related to heating/cooling)
+  InternalDustPropBuf internal_dust_prop_buf = new_InternalDustPropBuf(
+      my_fields->grid_dimension[0],
+      GrainMetalInjectPathways_get_n_log10Tdust_vals(
+          my_rates->opaque_storage->inject_pathway_props));
 
   // opacity coefficients for each dust grain (the product of opacity
   // coefficient & gas mass density is the linear absortpion coefficient)
@@ -190,6 +194,8 @@ static void handle_dust_contributions(
         my_rates->regr, idx_range, dom_inv);
   }
 
+  // Free memory
+  drop_InternalDustPropBuf(&internal_dust_prop_buf);
   drop_GrainSpeciesCollection(&grain_kappa);
   drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
 }
@@ -333,14 +339,6 @@ void cool1d_multi_g(
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
-
-  // buffers of intermediate quantities used within dust-routines (for
-  // calculating quantites related to heating/cooling)
-  grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
-      grackle::impl::new_InternalDustPropBuf(
-          my_fields->grid_dimension[0],
-          GrainMetalInjectPathways_get_n_log10Tdust_vals(
-              opaque_storage.inject_pathway_props));
 
   // Iteration mask
 
@@ -959,7 +957,7 @@ void cool1d_multi_g(
       metallicity, itmask, itmask_metal, my_chemistry, my_rates, my_fields,
       internalu, idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
       grain_temperatures, cool1dmulti_buf.gasgr_tdust, myisrf.data(),
-      internal_dust_prop_buf, alpha_continuum.data());
+      alpha_continuum.data());
 
   // --- Compute (external) radiative heating terms ---
   // Photoionization heating
@@ -1409,9 +1407,6 @@ void cool1d_multi_g(
       }
     }
   }
-
-  // Free memory
-  grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
 
   return;
 }
