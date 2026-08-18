@@ -193,9 +193,6 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
   // locals
 
   int i, j, k;
-  const bool dust_density_field_present =
-      my_chemistry->dust_chemistry == 1 &&
-      my_chemistry->use_dust_density_field == 1;
 
   if (my_chemistry->primordial_chemistry > 0) {
     for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
@@ -255,21 +252,6 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
             eprintf("i, j, k, metal, density =  %d %d %d %g %g\n", i, j, k,
                     metal(i, j, k), d(i, j, k));
           }
-          // if( immulti .gt. 0 ) then
-          //    metal_loc(i,j,k) = max(metal_loc(i,j,k), tiny)
-          //    metal_C13(i,j,k) = max(metal_C13(i,j,k), tiny)
-          //    metal_C20(i,j,k) = max(metal_C20(i,j,k), tiny)
-          //    metal_C25(i,j,k) = max(metal_C25(i,j,k), tiny)
-          //    metal_C30(i,j,k) = max(metal_C30(i,j,k), tiny)
-          //    metal_F13(i,j,k) = max(metal_F13(i,j,k), tiny)
-          //    metal_F15(i,j,k) = max(metal_F15(i,j,k), tiny)
-          //    metal_F50(i,j,k) = max(metal_F50(i,j,k), tiny)
-          //    metal_F80(i,j,k) = max(metal_F80(i,j,k), tiny)
-          //    metal_P170(i,j,k)= max(metal_P170(i,j,k),tiny)
-          //    metal_P200(i,j,k)= max(metal_P200(i,j,k),tiny)
-          //    metal_Y19(i,j,k) = max(metal_Y19(i,j,k), tiny)
-          // endif
-          //- !                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
         }
       }
     }
@@ -303,15 +285,7 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
     }
   }
 
-  if (dust_density_field_present) {
-    for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
-      for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          dust(i, j, k) = std::fmax(dust(i, j, k), tiny_fortran_val);
-        }
-      }
-    }
-  } else if (my_chemistry->dust_chemistry == 2) {
+  if (my_chemistry->dust_chemistry == 2) {
     for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
       for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
