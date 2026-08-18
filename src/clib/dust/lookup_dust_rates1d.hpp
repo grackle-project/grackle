@@ -145,11 +145,10 @@ inline void lookup_dust_rates1d(
         // Assume dust melts at Tdust > DustTemperatureEnd, in the context of
         // computing the H2 formation rate
         //
-        // important: at the time of writing, whem using a generic dust
-        // density field (my_chemistry->use_dust_density_field > 0), I'm
-        // 99% sure that we don't mutate that density field. This contrasts
-        // with Grackle's behavior when tracking dust species fields.
-
+        // important: at the time of writing, when using a generic dust
+        // density field (i.e. my_chemistry->use_dust_density_field == 1),
+        // we don't mutate that density field. This contrasts with Grackle's
+        // behavior when tracking dust species fields.
         if (tdust[i] > my_chemistry->DustTemperatureEnd) {
           h2dust[i] = tiny8;
         } else {
