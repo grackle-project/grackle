@@ -42,10 +42,10 @@ void calc_tdust_1d_g(double* tdust, double* tgas, double* nh, double* gasgr,
   // non-null. The View invariant disallows non-null data with a zero leading
   // extent, so pass nullptr for the zero-length case.
   const double* alsp_ptr = (gr_N > 0) ? alsp_data_ : nullptr;
-  View<const double**> alsp(alsp_ptr, gr_N, buf_len);
+  FortranView<const double**> alsp(alsp_ptr, gr_N, buf_len);
   std::vector<double> logalsp_data_(gr_N * buf_len);
   double* logalsp_ptr = (gr_N > 0) ? logalsp_data_.data() : nullptr;
-  View<double**> logalsp(logalsp_ptr, gr_N, buf_len);
+  FortranView<double**> logalsp(logalsp_ptr, gr_N, buf_len);
   int Td_Size;
   int Td_N;
 

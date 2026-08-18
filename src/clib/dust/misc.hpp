@@ -84,8 +84,7 @@ inline void dust_related_props(
   double coolunit = internalu.coolunit;
 
   // Compute grain size increment
-  if ((my_chemistry->use_dust_density_field > 0) &&
-      (my_chemistry->dust_species > 0)) {
+  if (my_chemistry->dust_chemistry == 2) {
     grackle::impl::calc_grain_size_increment_1d(
         dom, idx_range, itmask_metal, my_chemistry,
         my_rates->opaque_storage->grain_species_info,
@@ -103,14 +102,14 @@ inline void dust_related_props(
   //    faster when there is no branching
 
   if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 0)) {
-    grackle::impl::View<const gr_float***> d(
+    FortranView<const gr_float***> d(
         my_fields->density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<const gr_float***> dust(
+    FortranView<const gr_float***> dust(
         my_fields->dust_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-    if (my_chemistry->use_dust_density_field > 0) {
+    if (my_chemistry->use_dust_density_field == 1) {
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         // REMINDER: use of `itmask` over `itmask_metal` is
         //   currently required by Photo-electric heating
@@ -129,7 +128,7 @@ inline void dust_related_props(
 
   if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 1)) {
     if (my_chemistry->use_isrf_field > 0) {
-      grackle::impl::View<const gr_float***> isrf_habing(
+      FortranView<const gr_float***> isrf_habing(
           my_fields->isrf_habing, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
