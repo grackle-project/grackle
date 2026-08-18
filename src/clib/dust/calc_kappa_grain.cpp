@@ -13,19 +13,20 @@
 // This file was initially generated automatically during conversion of the
 // calc_kappa_grain function from FORTRAN to C++
 
-#include <cstdio>
 #include <vector>
 
-#include "grackle.h"
-#include "fortran_func_wrappers.hpp"
-#include "utils-cpp.hpp"
+#include "interpolate.hpp"
+#include "support/View.hpp"
 
 #include "calc_kappa_grain.hpp"
 
-void grackle::impl::calc_kappa_grain(
-    const double* tdust, double* kgr, const gr_mask_type* itmask, int in,
-    IndexRange idx_range, double t_subl, int gr_N, int gr_Size, double gr_dT,
-    const double* gr_Td, const double* logalsp_data_, int idspecies) {
+namespace GRIMPL_NAMESPACE_DECL {
+
+void calc_kappa_grain(const double* tdust, double* kgr,
+                      const gr_mask_type* itmask, int in, IndexRange idx_range,
+                      double t_subl, int gr_N, int gr_Size, double gr_dT,
+                      const double* gr_Td, const double* logalsp_data_,
+                      int idspecies) {
   // Parameters
 
   // grain opacity from Omukai (2000, equation 17) normalized by
@@ -48,14 +49,11 @@ void grackle::impl::calc_kappa_grain(
   int i;
   double logkgr;
   std::vector<double> logalsp1(gr_Size);
-  long long gr_N_i64;
   double log10tdust;
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
-  if (idspecies != 0) {
-    gr_N_i64 = (long long)(gr_N);
-  }
+  long long gr_N_i64 = (idspecies == 0) ? 0 : static_cast<long long>(gr_N);
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -77,8 +75,8 @@ void grackle::impl::calc_kappa_grain(
         }
         log10tdust = std::log10(tdust[i]);
 
-        logkgr = grackle::impl::fortran_wrapper::interpolate_1d_g(
-            log10tdust, &gr_N_i64, gr_Td, gr_dT, gr_N_i64, logalsp1.data());
+        logkgr = interpolate_1d(log10tdust, &gr_N_i64, gr_Td, gr_dT, gr_N_i64,
+                                logalsp1.data());
 
         kgr[i] = std::pow(10., logkgr);
       }
@@ -86,3 +84,5 @@ void grackle::impl::calc_kappa_grain(
   }
   return;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL
