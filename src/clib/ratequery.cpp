@@ -272,17 +272,18 @@ Registry RegBuilder::consume_and_build() {
 
   // now actually set up the registry
   if (recipe_sets.empty()) {
-    return Registry{0, nullptr, std::vector<EntrySet>()};
+    return Registry{0, std::vector<int>(), std::vector<EntrySet>()};
   } else {
     int n_sets = recipe_sets.size();
     // set up id_offsets and determine the total number of entries
-    int* id_offsets = new int[n_sets];
+    std::vector<int> id_offsets(n_sets);
     int tot_entry_count = 0;
     for (int i = 0; i < n_sets; i++) {
       id_offsets[i] = tot_entry_count;
       tot_entry_count += recipe_sets[i].size();
     }
-    return Registry{tot_entry_count, id_offsets, std::move(recipe_sets)};
+    return Registry{tot_entry_count, std::move(id_offsets),
+                    std::move(recipe_sets)};
   }
 }
 

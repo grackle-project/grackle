@@ -358,23 +358,9 @@ struct Registry {
   /// number of entries
   int n_entries;
   /// stores the minimum rate_id for each EntrySet
-  int* id_offsets;
+  std::vector<int> id_offsets;
   /// stores sets of entries
   std::vector<EntrySet> sets;
-
-  // forbid copy/move construction & assignment (they require custom
-  // implementations for as long as id_offsets is a regular pointer)
-  Registry(const Registry&) = delete;
-  Registry(Registry&&) = delete;
-  Registry& operator=(const Registry&) = delete;
-  Registry& operator=(Registry&&) = delete;
-
-  /// @brief Destructor
-  ~Registry() noexcept {
-    if (id_offsets != nullptr) {
-      delete[] id_offsets;
-    }
-  }
 };
 
 /// An interface for gradually configuring a Registry
