@@ -205,7 +205,7 @@ add_library(Grackle_Grackle
   phys_const.def
 )
 
-target_compile_features(Grackle_Grackle PRIVATE cxx_std_17)
+target_compile_features(Grackle_Grackle PRIVATE cxx_std_20)
 
 # A downstream application built with CMake generally has 2 inclusion
 # approaches (ways that they can make use of this build):
