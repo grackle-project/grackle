@@ -58,6 +58,8 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///     to 0 before adding contributions.
 /// @param[in] tgas 1d array of gas temperature
 /// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
+/// @param[in] nelec_times_mH 1D array holding the number density of electrons
+///     (multiplied by the Hydrogen mass) for the @p idx_range
 /// @param[in] nH 1d array of Hydrogen number densities
 /// @param[in] metallicity 1d array of metallicities
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
@@ -100,15 +102,18 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///   intermediate steps
 static void handle_dust_contributions(
     gr_mask_type anydust, double* edot, const double* tgas, const double* rhoH,
-    double* nH, const double* metallicity, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    InternalGrUnits internalu, IndexRange idx_range,
-    LnTLinInterpBuf logTlininterp_buf, double rad_T, double* dust2gas,
-    double* tdust, GrainSpeciesCollection grain_temperatures,
+    const double* nelec_times_mH, double* nH, const double* metallicity,
+    const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
+    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    grackle_field_data* my_fields, InternalGrUnits internalu,
+    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf, double rad_T,
+    double* dust2gas, double* tdust, GrainSpeciesCollection grain_temperatures,
     double* gasgr_tdust, double* myisrf,
     InternalDustPropBuf internal_dust_prop_buf, double* alpha_continuum) {
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
+
+  const double dom = internalu_calc_dom_(internalu);
+  const double dom_inv = 1. / dom;
 
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
@@ -146,7 +151,6 @@ static void handle_dust_contributions(
   // in the classic single-species dust model
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
     const double mh_local_var = mh_grflt;
-    const double dom = internalu_calc_dom_(internalu);
     int n_grain_species =
         my_rates->opaque_storage->grain_species_info->n_species;
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -171,6 +175,19 @@ static void handle_dust_contributions(
     dust_gas_edot::update_edot_dust_cooling_rate(
         edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
         my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
+  }
+
+  // Photo-electric heating by UV-irradiated dust
+  dust_gas_edot::update_edot_photoelectric_heat(
+      edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf, itmask, my_chemistry,
+      my_rates->gammah, idx_range, dom_inv);
+
+  // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
+  if (my_chemistry->dust_recombination_cooling > 0) {
+    dust_gas_edot::update_edot_dust_recombination(
+        edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf, itmask,
+        my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
+        my_rates->regr, idx_range, dom_inv);
   }
 
   drop_GrainSpeciesCollection(&grain_kappa);
@@ -938,11 +955,11 @@ void cool1d_multi_g(
   }
 
   handle_dust_contributions(
-      anydust, edot, tgas, rhoH, cool1dmulti_buf.mynh, metallicity, itmask,
-      itmask_metal, my_chemistry, my_rates, my_fields, internalu, idx_range,
-      logTlininterp_buf, comp2, dust2gas, tdust, grain_temperatures,
-      cool1dmulti_buf.gasgr_tdust, myisrf.data(), internal_dust_prop_buf,
-      alpha_continuum.data());
+      anydust, edot, tgas, rhoH, nelec_times_mH, cool1dmulti_buf.mynh,
+      metallicity, itmask, itmask_metal, my_chemistry, my_rates, my_fields,
+      internalu, idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
+      grain_temperatures, cool1dmulti_buf.gasgr_tdust, myisrf.data(),
+      internal_dust_prop_buf, alpha_continuum.data());
 
   // --- Compute (external) radiative heating terms ---
   // Photoionization heating
@@ -1115,19 +1132,6 @@ void cool1d_multi_g(
                                  edot, comp2, dom, zr, mycmbTfloor,
                                  my_chemistry->UVbackground, iZscale, itmask,
                                  my_rates->cloudy_primordial, idx_range);
-  }
-
-  // Photo-electric heating by UV-irradiated dust
-  dust_gas_edot::update_edot_photoelectric_heat(
-      edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
-      my_chemistry, my_rates->gammah, idx_range, dom_inv);
-
-  // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-  if (my_chemistry->dust_recombination_cooling > 0) {
-    dust_gas_edot::update_edot_dust_recombination(
-        edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
-        my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
-        my_rates->regr, idx_range, dom_inv);
   }
 
   // Compton cooling or heating and X-ray compton heating
