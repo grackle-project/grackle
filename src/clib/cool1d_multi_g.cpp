@@ -45,6 +45,74 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
       interp_grid.props.data_size, interp_grid.data);
 }
 
+/// this is a helper function that handles all dust contributions pertaining
+/// to cool1d_multi_g
+///
+/// At the moment, we are gradually shifting functionality into this function
+/// (it does not yet handle dust edot contributions or adding to the continuum
+/// opacity)
+/// 
+/// @param[in] anydust Whether dust chemistry is enabled
+/// @param[in] tgas 1d array of gas temperature
+/// @param[in] nH 1d array of Hydrogen number densities
+/// @param[in] metallicity 1d array of metallicities
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] itmask_metal Specifies the metal/dust-specific iteration-mask of
+///     the @p idx_range for this calculation.
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] my_rates Holds assorted rate data and other internal
+///     configuration info.
+/// @param[in] my_fields Specifies the field data.
+/// @param[in] internalu Specifies Grackle's internal unit-system
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] logTlininterp_buf hold values for each location in @p idx_range
+///     that are used to linearly interpolate tables with respect to the
+///     natural log of @p tgas.
+/// @param[in] trad Holds the CMB temperature at the current redshift
+/// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
+///     location in the index range. In other words, this holds the dust mass
+///     per unit gas mass (only used in certain configuration)
+/// @param[out] tdust, grain_temperatures dust temperatures may be written
+///     to one of these variables, based on configuration
+/// @param[out] gasgr, gas_grainsp_heatrate Grain/gas energy transfer rates may
+///     be written to one of these variables, based on configuration
+/// @param[out] kappa_tot, grain_kappa Opacity-related information may be
+///     written to one of these variables, based on configuration
+/// @param[in,out] gasgr_tdust A 1D array of that acts as a scratch buffer
+///     (with some refactoring, this can probably be removed)
+/// @param[in,out] myisrf a scratch buffer that may be used to temporarily
+///     record the interstellar radiation field
+/// @param[in,out] internal_dust_prop_buf Holds scratch-space for holding
+///     grain-specific information
+///
+/// @note
+/// In some sense, this is a step towards factoring out all of the dust logic.
+/// - we need to be careful if/when we move this function out of the file
+///   where @ref cool1d_multi_g is defined. The dust logic has already gotten
+///   a little difficult to follow & we don't want to make things worse.
+/// - To be clear, I think dedicating functionality to the dust model will
+///   definitely help with all of this, but I'm a little worried about the
+///   intermediate steps
+static void handle_dust_contributions(
+    gr_mask_type anydust, const double* tgas, double* nH,
+    const double* metallicity, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range,
+    LnTLinInterpBuf logTlininterp_buf, double rad_T, double* dust2gas,
+    double* tdust, GrainSpeciesCollection grain_temperatures, double* gasgr,
+    GrainSpeciesCollection gas_grainsp_heatrate, double* kappa_tot,
+    GrainSpeciesCollection grain_kappa, double* gasgr_tdust, double* myisrf,
+    InternalDustPropBuf internal_dust_prop_buf) {
+  // compute various dust properties
+  dust_related_props(anydust, tgas, nH, metallicity, itmask, itmask_metal,
+                     my_chemistry, my_rates, my_fields, internalu, idx_range,
+                     logTlininterp_buf, rad_T, dust2gas, tdust,
+                     grain_temperatures, gasgr, gas_grainsp_heatrate, kappa_tot,
+                     grain_kappa, gasgr_tdust, myisrf, internal_dust_prop_buf);
+}
+
 void cool1d_multi_g(
     double* edot, const double* tgas, const double* mmw, double* tdust,
     const double* metallicity, double* dust2gas, const double* rhoH,
@@ -818,12 +886,12 @@ void cool1d_multi_g(
     }
   }
 
-  dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
-                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
-                     idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
-                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
-                     kappa_tot.data(), grain_kappa, cool1dmulti_buf.gasgr_tdust,
-                     myisrf.data(), internal_dust_prop_buf);
+  handle_dust_contributions(
+      anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask, itmask_metal,
+      my_chemistry, my_rates, my_fields, internalu, idx_range,
+      logTlininterp_buf, comp2, dust2gas, tdust, grain_temperatures,
+      gasgr.data(), gas_grainsp_heatrate, kappa_tot.data(), grain_kappa,
+      cool1dmulti_buf.gasgr_tdust, myisrf.data(), internal_dust_prop_buf);
 
   // Calculate dust cooling rate
   if (anydust != MASK_FALSE) {
