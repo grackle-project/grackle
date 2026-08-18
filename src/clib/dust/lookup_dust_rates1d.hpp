@@ -257,11 +257,10 @@ inline void lookup_dust_rates1d(
                   : h2rate_silicate_coef_table;
           // take the natural log of the grain species's Temperature
           double logTdust = std::log(grain_temperatures.data[gsp_idx][i]);
-          double coef = interpolate_2d(logTdust, logTlininterp_buf.logtem[i],
-                                       interp_props.dimension,
-                                       interp_props.parameters[0], dlogTdust,
-                                       interp_props.parameters[1], dlogtem,
-                                       interp_props.data_size, coef_table);
+          double coef = interpolate_2d(
+              logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+              interp_props.parameters[0], dlogTdust, interp_props.parameters[1],
+              dlogtem, interp_props.data_size, coef_table);
           double sigma_per_gas_mass =
               internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                   .data[gsp_idx][i];
