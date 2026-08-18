@@ -193,9 +193,6 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
   // locals
 
   int i, j, k;
-  const bool dust_density_field_present =
-      my_chemistry->dust_chemistry == 1 &&
-      my_chemistry->use_dust_density_field == 1;
 
   if (my_chemistry->primordial_chemistry > 0) {
     for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
