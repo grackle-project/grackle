@@ -111,8 +111,8 @@ static void handle_dust_contributions(
 
   // opacity coefficients for each dust grain (the product of opacity
   // coefficient & gas mass density is the linear absortpion coefficient)
-  grackle::impl::GrainSpeciesCollection grain_kappa =
-      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+  GrainSpeciesCollection grain_kappa =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
   // closely related to grain_kappa
   std::vector<double> kappa_tot(my_fields->grid_dimension[0]);
 
