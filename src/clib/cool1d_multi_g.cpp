@@ -79,8 +79,6 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///     per unit gas mass (only used in certain configuration)
 /// @param[out] tdust, grain_temperatures dust temperatures may be written
 ///     to one of these variables, based on configuration
-/// @param[out] gasgr, gas_grainsp_heatrate Grain/gas energy transfer rates may
-///     be written to one of these variables, based on configuration
 /// @param[in,out] gasgr_tdust A 1D array of that acts as a scratch buffer
 ///     (with some refactoring, this can probably be removed)
 /// @param[in,out] myisrf a scratch buffer that may be used to temporarily
@@ -107,10 +105,9 @@ static void handle_dust_contributions(
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range,
     LnTLinInterpBuf logTlininterp_buf, double rad_T, double* dust2gas,
-    double* tdust, GrainSpeciesCollection grain_temperatures, double* gasgr,
-    GrainSpeciesCollection gas_grainsp_heatrate, double* gasgr_tdust,
-    double* myisrf, InternalDustPropBuf internal_dust_prop_buf,
-    double* alpha_continuum) {
+    double* tdust, GrainSpeciesCollection grain_temperatures,
+    double* gasgr_tdust, double* myisrf,
+    InternalDustPropBuf internal_dust_prop_buf, double* alpha_continuum) {
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
@@ -124,11 +121,17 @@ static void handle_dust_contributions(
   // closely related to grain_kappa
   std::vector<double> kappa_tot(my_fields->grid_dimension[0]);
 
+  // holds the gas/grain-species heat transfer rates
+  GrainSpeciesCollection gas_grainsp_heatrate =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+  // closely related to gas_grainsp_heatrate
+  std::vector<double> gasgr(my_fields->grid_dimension[0]);
+
   // compute various dust properties
   dust_related_props(anydust, tgas, nH, metallicity, itmask, itmask_metal,
                      my_chemistry, my_rates, my_fields, internalu, idx_range,
                      logTlininterp_buf, rad_T, dust2gas, tdust,
-                     grain_temperatures, gasgr, gas_grainsp_heatrate,
+                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
                      kappa_tot.data(), grain_kappa, gasgr_tdust, myisrf,
                      internal_dust_prop_buf);
 
@@ -167,10 +170,11 @@ static void handle_dust_contributions(
   if (anydust != MASK_FALSE) {
     dust_gas_edot::update_edot_dust_cooling_rate(
         edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
-        my_chemistry, idx_range, d, gasgr, gas_grainsp_heatrate);
+        my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
   }
 
   drop_GrainSpeciesCollection(&grain_kappa);
+  drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
 }
 
 void cool1d_multi_g(
@@ -278,8 +282,6 @@ void cool1d_multi_g(
   std::vector<double> gael(my_fields->grid_dimension[0]);
   std::vector<double> h2lte(my_fields->grid_dimension[0]);
   std::vector<double> galdl(my_fields->grid_dimension[0]);
-  // gas/grain heat transfer rate
-  std::vector<double> gasgr(my_fields->grid_dimension[0]);
   // holds values of the interstellar radiation field
   std::vector<double> myisrf(my_fields->grid_dimension[0]);
   std::vector<double> cieY06(my_fields->grid_dimension[0]);
@@ -322,9 +324,6 @@ void cool1d_multi_g(
           my_fields->grid_dimension[0],
           GrainMetalInjectPathways_get_n_log10Tdust_vals(
               opaque_storage.inject_pathway_props));
-  // holds the gas/grain-species heat transfer rates
-  grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate =
-      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
   // Iteration mask
 
@@ -942,8 +941,8 @@ void cool1d_multi_g(
       anydust, edot, tgas, rhoH, cool1dmulti_buf.mynh, metallicity, itmask,
       itmask_metal, my_chemistry, my_rates, my_fields, internalu, idx_range,
       logTlininterp_buf, comp2, dust2gas, tdust, grain_temperatures,
-      gasgr.data(), gas_grainsp_heatrate, cool1dmulti_buf.gasgr_tdust,
-      myisrf.data(), internal_dust_prop_buf, alpha_continuum.data());
+      cool1dmulti_buf.gasgr_tdust, myisrf.data(), internal_dust_prop_buf,
+      alpha_continuum.data());
 
   // --- Compute (external) radiative heating terms ---
   // Photoionization heating
@@ -1409,7 +1408,6 @@ void cool1d_multi_g(
 
   // Free memory
   grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
-  grackle::impl::drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
 
   return;
 }
