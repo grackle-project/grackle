@@ -50,9 +50,14 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///
 /// At the moment, we are gradually shifting functionality into this function
 /// (it does not yet handle dust edot contributions)
-/// 
+///
 /// @param[in] anydust Whether dust chemistry is enabled
+/// @param[out] edot 1D array to hold the computed the time derivative of the
+///     internal energy in the @p idx_range. Contributions are accumulated in
+///     this buffer. In other words, this function does **NOT** set elements to
+///     to 0 before adding contributions.
 /// @param[in] tgas 1d array of gas temperature
+/// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
 /// @param[in] nH 1d array of Hydrogen number densities
 /// @param[in] metallicity 1d array of metallicities
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
@@ -82,7 +87,7 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///     record the interstellar radiation field
 /// @param[in,out] internal_dust_prop_buf Holds scratch-space for holding
 ///     grain-specific information
-/// @param[in,out] alpha_continuum_buf buffer to which linear absorption
+/// @param[out] alpha_continuum_buf buffer to which linear absorption
 ///     coefficients from dust are added (each element is updated in place with
 ///     the sum of its existing value and the contribution from dust). In
 ///     certain configurations this is not actually updated.
@@ -96,8 +101,8 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///   definitely help with all of this, but I'm a little worried about the
 ///   intermediate steps
 static void handle_dust_contributions(
-    gr_mask_type anydust, const double* tgas, double* nH,
-    const double* metallicity, const gr_mask_type* itmask,
+    gr_mask_type anydust, double* edot, const double* tgas, const double* rhoH,
+    double* nH, const double* metallicity, const gr_mask_type* itmask,
     const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range,
@@ -106,8 +111,11 @@ static void handle_dust_contributions(
     GrainSpeciesCollection gas_grainsp_heatrate, double* gasgr_tdust,
     double* myisrf, InternalDustPropBuf internal_dust_prop_buf,
     double* alpha_continuum) {
-
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
+
+  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                             my_fields->grid_dimension[1],
+                             my_fields->grid_dimension[2]);
 
   // opacity coefficients for each dust grain (the product of opacity
   // coefficient & gas mass density is the linear absortpion coefficient)
@@ -120,8 +128,9 @@ static void handle_dust_contributions(
   dust_related_props(anydust, tgas, nH, metallicity, itmask, itmask_metal,
                      my_chemistry, my_rates, my_fields, internalu, idx_range,
                      logTlininterp_buf, rad_T, dust2gas, tdust,
-                     grain_temperatures, gasgr, gas_grainsp_heatrate, kappa_tot.data(),
-                     grain_kappa, gasgr_tdust, myisrf, internal_dust_prop_buf);
+                     grain_temperatures, gasgr, gas_grainsp_heatrate,
+                     kappa_tot.data(), grain_kappa, gasgr_tdust, myisrf,
+                     internal_dust_prop_buf);
 
   // Add contributions from dust opacity to alpha_continuum, the continuum
   // linear absorption coefficient
@@ -133,11 +142,6 @@ static void handle_dust_contributions(
   // I think this comment explains why we aren't including dust contributions
   // in the classic single-species dust model
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
-
-    FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
-                               my_fields->grid_dimension[1],
-                               my_fields->grid_dimension[2]);
-
     const double mh_local_var = mh_grflt;
     const double dom = internalu_calc_dom_(internalu);
     int n_grain_species =
@@ -157,6 +161,13 @@ static void handle_dust_contributions(
             kappa_sum * d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
       }
     }
+  }
+
+  // Calculate dust cooling rate
+  if (anydust != MASK_FALSE) {
+    dust_gas_edot::update_edot_dust_cooling_rate(
+        edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
+        my_chemistry, idx_range, d, gasgr, gas_grainsp_heatrate);
   }
 
   drop_GrainSpeciesCollection(&grain_kappa);
@@ -928,19 +939,11 @@ void cool1d_multi_g(
   }
 
   handle_dust_contributions(
-      anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask, itmask_metal,
-      my_chemistry, my_rates, my_fields, internalu, idx_range,
+      anydust, edot, tgas, rhoH, cool1dmulti_buf.mynh, metallicity, itmask,
+      itmask_metal, my_chemistry, my_rates, my_fields, internalu, idx_range,
       logTlininterp_buf, comp2, dust2gas, tdust, grain_temperatures,
-      gasgr.data(), gas_grainsp_heatrate,
-      cool1dmulti_buf.gasgr_tdust, myisrf.data(), internal_dust_prop_buf,
-      alpha_continuum.data());
-
-  // Calculate dust cooling rate
-  if (anydust != MASK_FALSE) {
-    dust_gas_edot::update_edot_dust_cooling_rate(
-        edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
-        my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
-  }
+      gasgr.data(), gas_grainsp_heatrate, cool1dmulti_buf.gasgr_tdust,
+      myisrf.data(), internal_dust_prop_buf, alpha_continuum.data());
 
   // --- Compute (external) radiative heating terms ---
   // Photoionization heating
