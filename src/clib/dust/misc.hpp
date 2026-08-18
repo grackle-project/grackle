@@ -71,7 +71,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 inline void dust_related_props(
     gr_mask_type anydust, const double* tgas, double* nH,
     const double* metallicity, const gr_mask_type* itmask,
-    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range,
     LnTLinInterpBuf logTlininterp_buf, double trad, double* dust2gas,
@@ -84,8 +84,7 @@ inline void dust_related_props(
   double coolunit = internalu.coolunit;
 
   // Compute grain size increment
-  if ((my_chemistry->use_dust_density_field > 0) &&
-      (my_chemistry->dust_species > 0)) {
+  if (my_chemistry->dust_chemistry == 2) {
     grackle::impl::calc_grain_size_increment_1d(
         dom, idx_range, itmask_metal, my_chemistry,
         my_rates->opaque_storage->grain_species_info,
@@ -103,14 +102,14 @@ inline void dust_related_props(
   //    faster when there is no branching
 
   if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 0)) {
-    grackle::impl::View<const gr_float***> d(
+    FortranView<const gr_float***> d(
         my_fields->density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<const gr_float***> dust(
+    FortranView<const gr_float***> dust(
         my_fields->dust_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-    if (my_chemistry->use_dust_density_field > 0) {
+    if (my_chemistry->use_dust_density_field == 1) {
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         // REMINDER: use of `itmask` over `itmask_metal` is
         //   currently required by Photo-electric heating
@@ -129,7 +128,7 @@ inline void dust_related_props(
 
   if ((anydust != MASK_FALSE) || (my_chemistry->photoelectric_heating > 1)) {
     if (my_chemistry->use_isrf_field > 0) {
-      grackle::impl::View<const gr_float***> isrf_habing(
+      FortranView<const gr_float***> isrf_habing(
           my_fields->isrf_habing, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -151,10 +150,10 @@ inline void dust_related_props(
     grackle::impl::calc_all_tdust_gasgr_1d_g(
         trad, const_cast<double*>(tgas), tdust,
         const_cast<double*>(metallicity), dust2gas, nH, gasgr_tdust,
-        itmask_metal, coolunit, gasgr, myisrf, kappa_tot, my_chemistry,
-        my_rates, my_fields, idx_range, grain_temperatures,
-        gas_grainsp_heatrate, logTlininterp_buf, internal_dust_prop_buf,
-        grain_kappa);
+        const_cast<gr_mask_type*>(itmask_metal), coolunit, gasgr, myisrf,
+        kappa_tot, my_chemistry, my_rates, my_fields, idx_range,
+        grain_temperatures, gas_grainsp_heatrate, logTlininterp_buf,
+        internal_dust_prop_buf, grain_kappa);
   }
 }
 }  // namespace GRIMPL_NAMESPACE_DECL

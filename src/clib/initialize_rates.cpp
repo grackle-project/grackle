@@ -55,7 +55,7 @@
 #include "LUT.hpp" // CollisionalRxnLUT
 #include "interp_grid.hpp"
 #include "opaque_storage.hpp" // gr_opaque_storage
-#include "phys_constants.h"
+#include "phys_constants.hpp"
 #include "support/config.hpp"
 #include "support/status_reporting.hpp"
 
@@ -517,11 +517,7 @@ int grackle::impl::initialize_rates(
     }
 
     int anyDust;
-    if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
-        anyDust = TRUE;
-    } else {
-        anyDust = FALSE;
-    }
+    anyDust = (my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) ? TRUE : FALSE;
 
     // check NumberOfDustTemperatureBins, DustTemperature(Start|End) params
     // -> can we skip this when primordial_chemistry == 0?

@@ -91,8 +91,8 @@ For all on/off integer flags, 0 is off and 1 is on.
         <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__).
         Both the photo-electric heating and recombination cooling are scaled
         by the value of the :c:data:`interstellar_radiation_field`.
-     #. H\ :sub:`2`\  formation on dust (sets :c:data:`h2_on_dust` to 1
-        if :c:data:`primordial_chemistry` > 1).
+     #. H\ :sub:`2`\  formation on dust and dust-gas heat transfer (if
+        :c:data:`primordial_chemistry` > 1).
 
    Setting :c:data:`dust_chemistry` greater than 0 requires
    :c:data:`metal_cooling` to be enabled.
@@ -103,10 +103,9 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int h2_on_dust
 
-   Flag to enable H\ :sub:`2` formation on dust grains, dust cooling, and
-   dust-gas heat transfer follow `Omukai (2000)
-   <http://adsabs.harvard.edu/abs/2000ApJ...534..809O>`_.  This assumes
-   that the dust to gas ratio scales with the metallicity.  Default: 0.
+   This parameter has been removed. To enable H\ :sub:`2` formation on
+   dust grains and dust-gas heat transfer, set :c:data:`dust_chemistry`
+   > 0 and :c:data:`primordial_chemistry` > 1.
 
 .. c:var:: int metal_cooling
 
@@ -255,7 +254,7 @@ For all on/off integer flags, 0 is off and 1 is on.
    equation 9 of `Wolfire et al. (1995) 
    <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__
    rescaled by the local dust-to-gas ratio. This option is automatically 
-   set by :c:data:`h2_on_dust` > 0 or :c:data:`dust_chemistry` > 0.
+   enabled when setting :c:data:`dust_chemistry` > 0.
    Default: 0.
 
 .. note:: With :c:data:`primordial_chemistry` > 0, the electron density

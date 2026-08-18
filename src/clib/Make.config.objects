@@ -31,6 +31,7 @@ OBJS_CONFIG_LIB = \
         dust/multi_grain_species/calc_grain_size_increment_species_1d.lo \
         dust/calc_kappa_grain.lo \
         dust/calc_tdust_1d_g.lo \
+        dust/calc_tdust_3d.lo \
         dust/grain_species_info.lo \
         dynamic_api.lo \
         api/units.lo \
@@ -41,7 +42,6 @@ OBJS_CONFIG_LIB = \
         initialize_UVbackground_data.lo \
         inject_model/load_data.lo \
         inject_model/raw_data.lo \
-        interpolators_g.lo \
         lnT_prep.lo \
         rate_timestep_g.lo \
         make_consistent.lo \
@@ -51,7 +51,6 @@ OBJS_CONFIG_LIB = \
         solve_rate_cool.lo \
         support/status_reporting.lo \
         update_UVbackground_rates.lo \
-        dust/calc_tdust_3d.lo \
         rate_functions.lo \
         ratequery.lo \
         gaussj_g.lo \
