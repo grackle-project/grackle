@@ -16,14 +16,12 @@
 #include "dust/misc.hpp"
 #include "dust/gas_heat_cool.hpp"
 
-#include <cstdio>
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
 #include "gas_props.hpp"
 #include "grackle.h"
-#include "fortran_func_decls.h"
-#include "fortran_func_wrappers.hpp"
+#include "interpolate.hpp"
 #include "dust_props.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
@@ -35,7 +33,7 @@
 
 static double interp_from_3D_grid(double input1, double input2, double input3,
                                   const GRIMPL_NS::InterpGrid& interp_grid) {
-  return grackle::impl::fortran_wrapper::interpolate_3d_g(
+  return GRIMPL_NS::interpolate_3d(
       input1, input2, input3, interp_grid.props.dimension,
       interp_grid.props.parameters[0], interp_grid.props.parameter_spacing[0],
       interp_grid.props.parameters[1], interp_grid.props.parameter_spacing[1],
@@ -837,13 +835,12 @@ void grackle::impl::cool1d_multi_g(
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         // ! primordial continuum opacity !!
-        log_a = grackle::impl::fortran_wrapper::interpolate_2d_g(
-            logrho[i], logT[i], interp_grid.props.dimension,
-            interp_grid.props.parameters[0],
-            interp_grid.props.parameter_spacing[0],
-            interp_grid.props.parameters[1],
-            interp_grid.props.parameter_spacing[1], interp_grid.props.data_size,
-            interp_grid.data);
+        log_a = interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
+                               interp_grid.props.parameters[0],
+                               interp_grid.props.parameter_spacing[0],
+                               interp_grid.props.parameters[1],
+                               interp_grid.props.parameter_spacing[1],
+                               interp_grid.props.data_size, interp_grid.data);
 
         alpha[i] = std::pow(1.e1, log_a);
       }
