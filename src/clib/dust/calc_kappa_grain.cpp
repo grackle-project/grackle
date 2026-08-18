@@ -42,7 +42,7 @@ void calc_kappa_grain(const double* tdust, double* kgr,
   const double kgr200 = 16.0 / 0.00934;
 
   // Opacity table
-  grackle::impl::View<const double**> logalsp(logalsp_data_, gr_N, in);
+  FortranView<const double**> logalsp(logalsp_data_, gr_N, in);
 
   // Locals
 
