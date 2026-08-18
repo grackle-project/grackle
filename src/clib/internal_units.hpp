@@ -253,7 +253,7 @@ inline double internalu_calc_dom_(InternalGrUnits internalu) {
 inline double internalu_calc_coef_ljeans_(InternalGrUnits internalu,
                                                  double gamma) {
   const double mh_local_var = internalu_get_mh_(internalu);
-  return sqrt((gamma * pi_fortran_val * kboltz_grflt) /
+  return sqrt((gamma * constants::pi_fortran_val * kboltz_grflt) /
               (GravConst_grflt * mh_local_var * internalu.dbase1));
 }
 

@@ -18,8 +18,13 @@
 #ifndef PHYS_CONSTANTS_HPP
 #define PHYS_CONSTANTS_HPP
 
+#include "grackle.h"  // gr_float
 #include "grackle_float.h"
 #include "grackle_macros.h"  // GRFLOAT_C
+#include "support/config.hpp"
+
+// reminder macros are totally unaffected by the presence of this namespace
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// @defgroup PhysConsts Physical Constants
 ///
@@ -37,25 +42,12 @@
 /// =====================
 /// - It would be nice to do away with the alternative versions of these
 ///   constants
-/// - It would be nice to convert all constants from MACROS convert to c++
-///   constants (reminiscent of the style of the <numbers> header from C++ 20)
-///   and put them inside a dedicated namespace (perhaps GRIMPL_NS::constant?)
+/// - It would be nice to convert all constants from MACROS to c++ constans
+///   (reminiscent of the style of the <numbers> header from C++ 20)
 ///   - it's generally considered better practice to use named constants than
 ///     macros (it can certainly simplify things with debuggers)
-///   - For example, this might look like:
-///     @code{.cpp}
-///     namespace GRIMPL_NAMESPACE_DECL {
-///     namespace constant{
-///
-///     /// Boltzmann's constant [cm^2 * g * s^-2 * K^-1] or [erg / K]
-///     inline constexpr double kboltz = 1.3806504e-16;
-///     inline constexpr gr_float kboltz_grflt = kboltz;
-///
-///     /// Mass of hydrogen [g]
-///     inline constexpr double mh 1.67262171e-24;
-///     inline constexpr gr_float mh_grflt = mh;
-///     }
-///     }
+///   - we've already started to do this with the pi constants (this was spurred
+///     on by the fact that error arose with g++ if we targetted C++ 20)
 /** @{*/
 
 /* Physics constants */
@@ -72,21 +64,27 @@
 #define mh 1.67262171e-24
 #define mh_grflt GRFLOAT_C(mh)
 
-/* Mass of an electron [g] */
+namespace constants {
 
-#define me 9.10938215e-28
-#define me_grflt GRFLOAT_C(me)
+/// @brief mass of an electron [g]
+inline constexpr double me = 9.10938215e-28;
+inline constexpr gr_float me_grflt = static_cast<gr_float>(me);
 
-/* Pi */
-
-#define pi 3.14159265358979323846
+/// @brief the mathematical constant π
+///
+/// If/when we adopt C++ 20, we should consider using the value of
+/// std::numbers::pi (we probably want to confirm that the value can't vary
+/// between standard library implementations)
+inline constexpr double pi = 3.14159265358979323846;
 
 // the following matches the value of `pi_val` from "phys_consts.def"
+// TODO: we should unify these definitions with the above value of pi
 #ifdef GRACKLE_FLOAT_4
-#define pi_fortran_val 3.14159265f
+inline constexpr float pi_fortran_val = 3.14159265f;
 #else
-#define pi_fortran_val 3.141592653589793
+inline constexpr double pi_fortran_val = 3.141592653589793;
 #endif
+}  // namespace constants
 
 /************************************************/
 
@@ -131,5 +129,7 @@
 #define sigma_sb_grflt GRFLOAT_C(5.670373e-5)
 
 /** @}*/  // end of group
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // PHYS_CONSTANTS_HPP

@@ -286,10 +286,11 @@ void grackle::impl::cool1d_multi_g(
 
       // From Chiaki & Wise (2019), approximate dv/dr as 1/(3 * t_ff)
       logdvdr[i] = -8.79947961814e0 + 0.5e0 * logrho[i];  // km/s / cm
-      lshield_con[i] = std::sqrt(
-          (my_chemistry->Gamma * pi_fortran_val * kboltz_grflt * tgas[i]) /
-          (GravConst_grflt * mmw[i] * mh_local_var *
-           d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
+      lshield_con[i] =
+          std::sqrt((my_chemistry->Gamma * constants::pi_fortran_val *
+                     kboltz_grflt * tgas[i]) /
+                    (GravConst_grflt * mmw[i] * mh_local_var *
+                     d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
     }
   }
 
