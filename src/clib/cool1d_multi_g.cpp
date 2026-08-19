@@ -172,19 +172,15 @@ static void handle_dust_contributions(
   //    ! We better not include dust opacity.
   // I think this comment explains why we aren't including dust contributions
   // in the classic single-species dust model
-  if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
+  if ((anydust != MASK_FALSE) && (!single_species_dust_model)) {
     const double mh_local_var = mh_grflt;
     int n_grain_species =
         my_rates->opaque_storage->grain_species_info->n_species;
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
         double kappa_sum = 0.0;
-        if (single_species_dust_model) {
-          kappa_sum = kappa_tot[i];
-        } else {
-          for (int grsp_i = 0; grsp_i < n_grain_species; grsp_i++) {
-            kappa_sum += grain_kappa.data[grsp_i][i];
-          }
+        for (int grsp_i = 0; grsp_i < n_grain_species; grsp_i++) {
+          kappa_sum += grain_kappa.data[grsp_i][i];
         }
 
         alpha_continuum[i] +=
