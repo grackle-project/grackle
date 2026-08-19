@@ -50,9 +50,6 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 /// this is a helper function that handles all dust contributions pertaining
 /// to cool1d_multi_g
 ///
-/// At the moment, we are gradually shifting functionality into this function
-/// (it does not yet handle dust edot contributions)
-///
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range. Contributions are accumulated in
 ///     this buffer. In other words, this function does **NOT** set elements to
