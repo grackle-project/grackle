@@ -753,7 +753,6 @@ inline void apply_misc_shield_factors(
 ///     for this calculation.
 /// @param[in] itmask_metal Specifies the iteration-mask of the @p idx_range for
 ///     performing metal and dust calculations.
-/// @param[in] dt See the warning at the end of the docstring
 /// @param[in] my_chemistry holds a number of configuration parameters.
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
@@ -773,15 +772,11 @@ inline void apply_misc_shield_factors(
 ///     values that are used to compute heating from certain chemical reactions.
 /// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
 ///     temporary grain species properties (only used in certain configurations)
-///
-/// > [!important]
-/// > TODO: The role of the `dt` argument **MUST** be clarified! See the
-/// > docstring of @ref grackle::impl::lookup_dust_rates1d for more details
 inline void lookup_cool_rates1d(
     IndexRange idx_range, gr_mask_type anydust, const double* tgas1d,
     const double* mmw, const double* tdust, const double* dust2gas, double dom,
     double dx_cgs, double c_ljeans, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
@@ -809,7 +804,7 @@ inline void lookup_cool_rates1d(
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
-    lookup_dust_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal, dt,
+    lookup_dust_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal,
                         my_chemistry, my_rates, my_fields, grain_temperatures,
                         logTlininterp_buf, rxn_rate_buf,
                         internal_dust_prop_scratch_buf);

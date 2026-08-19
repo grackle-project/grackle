@@ -518,7 +518,7 @@ inline void derivatives(
     pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
     pack.other_scratch_buf.tdust, pack.other_scratch_buf.dust2gas,
     pack.fwd_args.dom, pack.fwd_args.dx_cgs, pack.fwd_args.c_ljeans,
-    pack.other_scratch_buf.itmask, &pack.local_itmask_metal, dt_FIXME,
+    pack.other_scratch_buf.itmask, &pack.local_itmask_metal,
     my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
     pack.main_scratch_buf.grain_temperatures,
     pack.main_scratch_buf.logTlininterp_buf,

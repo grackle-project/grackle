@@ -56,7 +56,6 @@ namespace grackle::impl {
 /// @param[in] dom a standard quantity used throughout the codebase
 /// @param[in] itmask_metal Specifies the iteration-mask for the @p idx_range
 ///     performing metal and dust calculations.
-/// @param[in] dt See the warning at the end of the docstring
 /// @param[in] my_chemistry holds a number of configuration parameters.
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
@@ -71,44 +70,10 @@ namespace grackle::impl {
 ///    rates for @p idx_range
 /// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
 ///     temporary grain species properties (only used in certain configurations)
-///
-/// > [!important]
-/// > TODO: The role of the `dt` argument **MUST** be clarified! It is passed
-/// > different values in different areas of the codebase!!!!
-/// > - `solve_rate_cool_g` passes in the value of the total timestep that the
-/// >   chemistry is evolved. This is the traditional meaning of `dt`
-/// > - the time derivative calculation within `step_rate_newton_raphson`
-/// >   passes the timestep of the current subcycle (effectively the whole
-/// >   function is only being called for a single element idx_range)
-/// >
-/// > Internally, this arg only appears to be used to determine dust grain
-/// > destruction rate.
-/// > - the dust destruction rate is 0 for all temperatures below some
-/// >   threshold (the threshold depends on the grain species)
-/// > - above the threshold, the destruction rate is essentially the current
-/// >   grain density divided by the value of the `dt` argument
-/// >
-/// > If you think about it:
-/// > - I'd argue that setting `dt` to the whole timestep that we are evolving
-/// >   the zone over is blatantly wrong. It violates the principle that you
-/// >   should get consistent results whether you invoke grackle 100 separate
-/// >   times or just 1 time. (The amount of dust heating would change)
-/// > - setting `dt` to the current subcycle timestep makes a lot more sense
-/// >   (and is the only logical choice)
-/// >   - It is roughly equivalent to saying that dust is immediately destroyed
-/// >     once the gas reaches a threshold temperature.
-/// >   - the model is overly simplistic since dust grains can survive for
-/// >     quite in ionized gas (see for example
-/// >     https://ui.adsabs.harvard.edu/abs/2024ApJ...974...81R/abstract)
-/// >
-/// > If we stick with this instantaneous destruction model, then all
-/// > dust-grain related heating and cooling should probably assume that the
-/// > dust-grain density is already 0.
 inline void lookup_dust_rates1d(
     IndexRange idx_range, const double* tdust, const double* dust2gas,
-    double dom, const gr_mask_type* itmask_metal, double dt,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields,
+    double dom, const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
