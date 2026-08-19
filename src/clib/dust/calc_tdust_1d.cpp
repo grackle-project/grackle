@@ -289,24 +289,24 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
 
     {  // perform newton's method
+      double* x = tdustnow.data();
+      double max_x = 3000.0;
+      // below this x value, we give up!
+      double giveup_small_x_threshold = Trad;
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (nm_itmask[i] != MASK_FALSE) {
           // Check if the solution has converged (if not prepare the next guess)
 
-          double slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
+          double slope = (solplus[i] - sol[i]) / (pert[i] * x[i]);
 
-          double Tdust_old = tdustnow[i];
-          // tdustnow(i) = tdustnow(i) - (sol(i) / slope)
-          tdustnow[i] = std::fmin(tdustnow[i] - (sol[i] / slope), 3e3);
+          double x_old = x[i];
+          x[i] = std::fmin(x[i] - (sol[i] / slope), max_x);
 
           pert[i] = std::fmax(
-              std::fmin(pert[i], (0.5 * std::fabs(tdustnow[i] - Tdust_old) /
-                                  tdustnow[i])),
+              std::fmin(pert[i], 0.5 * std::fabs(x[i] - x_old) / x[i]),
               minpert);
 
-          // If negative solution calculated, give up and wait for bisection
-          // step.
-          if (tdustnow[i] < Trad) {
+          if (x[i] < giveup_small_x_threshold) {
             nm_itmask[i] = MASK_FALSE;
             nm_done = nm_done + 1;
             // Check for convergence of solution
