@@ -178,13 +178,16 @@ static void handle_dust_contributions(
         my_rates->opaque_storage->grain_species_info->n_species;
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
-        double kappa_sum = 0.0;
+        // right now, summing up the grain_kappa components and then updating
+        // alpha_continuum *may* be marginally faster, but the current approach
+        // is probably better in the long run
+        // -> in order to cut down on temporary scratch buffers, we'll probably
+        //    want to add contributions to alpha_continuum as we compute
+        //    the opacities for a given grain species
+        double tmp = d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
         for (int grsp_i = 0; grsp_i < n_grain_species; grsp_i++) {
-          kappa_sum += grain_kappa.data[grsp_i][i];
+          alpha_continuum[i] += grain_kappa.data[grsp_i][i] * tmp;
         }
-
-        alpha_continuum[i] +=
-            kappa_sum * d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
       }
     }
   }
