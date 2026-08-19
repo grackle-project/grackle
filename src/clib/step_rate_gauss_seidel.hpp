@@ -99,6 +99,9 @@ inline void update_fields_from_tmpdens_gauss_seidel(
 
   const int j = idx_range.j;
   const int k = idx_range.k;
+  // flag for if Gen Chiaki's dust model is enabled with grain growth
+  const bool chiaki_model_dust_evolution =
+    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
@@ -180,19 +183,19 @@ inline void update_fields_from_tmpdens_gauss_seidel(
         H2OII(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2OII][i]   ), tiny_fortran_val);
         H3OII(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H3OII][i]   ), tiny_fortran_val);
         O2II(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::O2II][i]    ), tiny_fortran_val);
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
-          if (my_chemistry->dust_species > 0)  {
-            Mg(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Mg][i]      ), tiny_fortran_val);
-          }
-          if (my_chemistry->dust_species > 1)  {
-            Al(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Al][i]      ), tiny_fortran_val);
-            S(i,j,k)       = std::fmax((gr_float)(species_tmpdens.data[SpLUT::S][i]       ), tiny_fortran_val);
-            Fe(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Fe][i]      ), tiny_fortran_val);
-          }
-        }
       }
 
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution && itmask_metal[i] != MASK_FALSE) {
+
+        if (my_chemistry->dust_species > 0)  {
+          Mg(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Mg][i]      ), tiny_fortran_val);
+        }
+        if (my_chemistry->dust_species > 1)  {
+          Al(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Al][i]      ), tiny_fortran_val);
+          S(i,j,k)       = std::fmax((gr_float)(species_tmpdens.data[SpLUT::S][i]       ), tiny_fortran_val);
+          Fe(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Fe][i]      ), tiny_fortran_val);
+        }
+
         if (my_chemistry->dust_species > 0)  {
           MgSiO3(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::MgSiO3_dust][i]  ), tiny_fortran_val);
           AC(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::AC_dust][i]      ), tiny_fortran_val);
@@ -215,7 +218,6 @@ inline void update_fields_from_tmpdens_gauss_seidel(
       }
 
     }
-    // 
 
     if (HI(i,j,k) != HI(i,j,k))  {
       OMP_PRAGMA_CRITICAL

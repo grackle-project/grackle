@@ -198,6 +198,9 @@ void make_consistent(
   // locals
 
   int i, j, k;
+  // flag for if Gen Chiaki's dust model is enabled with grain growth
+  const bool chiaki_model_dust_evolution =
+      my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
   double totalD;
   std::vector<double> totalH(my_fields->grid_dimension[0]);
   std::vector<double> totalHe(my_fields->grid_dimension[0]);
@@ -312,18 +315,21 @@ void make_consistent(
         }
       }
 
-      // Iteration mask for metal-rich cells
-
-      // do i = is+1, ie + 1
-      //    itmask_metal(i) = .false.
-      // enddo
-      // if (imetal .eq. 1) then
-      //     do i = is+1, ie + 1
-      //        if (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k)) then
-      //           itmask_metal(i) = .true.
-      //        endif
-      //     enddo
-      // endif
+      // In the future, we may elect to only consider metal-rich cells by
+      // using an ``itmask_metal`` buffer:
+      // -> the fortran version of this function actually had some commented out
+      //    logic for handling this precise situation. The modern equivalent of
+      //    that logic would use the ``mask::fill_itmask_metal`` function to
+      //    fill ``itmask_metal``
+      // -> however, a better solution may be to make this function only
+      //    consider a single index-range of values at a time (rather than
+      //    entire fields) and to pass in a prefilled ``itmask_metal`` buffer
+      //    as an argument for use within this function
+      // -> this may be better if we decide to allow the metal density field to
+      //    change in value from dust formation or destruction. If we just
+      //    computed ``itmask_metal`` on the fly, then there would be cases
+      //    where the computed mask may be different from the mask that was
+      //    used to actually decide whether to perform metal/dust chemistry
 
       if (my_chemistry->metal_chemistry > 0) {
         // compute the expected mass density for each metal nuclide using the
@@ -453,7 +459,6 @@ void make_consistent(
 
       if (my_chemistry->metal_chemistry == 1) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          // if (itmask_metal(i)) then
           CI(i, j, k) = std::fabs(CI(i, j, k));
           CII(i, j, k) = std::fabs(CII(i, j, k));
           CO(i, j, k) = std::fabs(CO(i, j, k));
@@ -473,30 +478,22 @@ void make_consistent(
           H2OII(i, j, k) = std::fabs(H2OII(i, j, k));
           H3OII(i, j, k) = std::fabs(H3OII(i, j, k));
           O2II(i, j, k) = std::fabs(O2II(i, j, k));
-          if ((my_chemistry->grain_growth == 1) ||
-              (my_chemistry->dust_sublimation == 1)) {
-            if (my_chemistry->dust_species > 0) {
-              Mg(i, j, k) = std::fabs(Mg(i, j, k));
-            }
-            if (my_chemistry->dust_species > 1) {
-              Al(i, j, k) = std::fabs(Al(i, j, k));
-              S(i, j, k) = std::fabs(S(i, j, k));
-              Fe(i, j, k) = std::fabs(Fe(i, j, k));
-            }
-          }
-          // endif
         }
       }
 
-      if ((my_chemistry->grain_growth == 1) ||
-          (my_chemistry->dust_sublimation == 1)) {
+      if (chiaki_model_dust_evolution) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          // if (itmask_metal(i)) then
           if (my_chemistry->dust_species > 0) {
+            Mg(i, j, k) = std::fabs(Mg(i, j, k));
+
             MgSiO3(i, j, k) = std::fabs(MgSiO3(i, j, k));
             AC(i, j, k) = std::fabs(AC(i, j, k));
           }
           if (my_chemistry->dust_species > 1) {
+            Al(i, j, k) = std::fabs(Al(i, j, k));
+            S(i, j, k) = std::fabs(S(i, j, k));
+            Fe(i, j, k) = std::fabs(Fe(i, j, k));
+
             SiM(i, j, k) = std::fabs(SiM(i, j, k));
             FeM(i, j, k) = std::fabs(FeM(i, j, k));
             Mg2SiO4(i, j, k) = std::fabs(Mg2SiO4(i, j, k));
@@ -511,7 +508,6 @@ void make_consistent(
             volorg(i, j, k) = std::fabs(volorg(i, j, k));
             H2Oice(i, j, k) = std::fabs(H2Oice(i, j, k));
           }
-          // endif
         }
       }
 
@@ -549,8 +545,7 @@ void make_consistent(
             H2OII(i, j, k) = H2OII(i, j, k) * correctOg;
             H3OII(i, j, k) = H3OII(i, j, k) * correctOg;
             O2II(i, j, k) = O2II(i, j, k) * correctOg;
-            if ((my_chemistry->grain_growth == 1) ||
-                (my_chemistry->dust_sublimation == 1)) {
+            if (chiaki_model_dust_evolution) {
               if (my_chemistry->dust_species > 0) {
                 totalOd = 48. / 100. * MgSiO3(i, j, k);
               }
@@ -594,8 +589,7 @@ void make_consistent(
             CH(i, j, k) = CH(i, j, k) * correctCg;
             CH2(i, j, k) = CH2(i, j, k) * correctCg;
             COII(i, j, k) = COII(i, j, k) * correctCg;
-            if ((my_chemistry->grain_growth == 1) ||
-                (my_chemistry->dust_sublimation == 1)) {
+            if (chiaki_model_dust_evolution) {
               if (my_chemistry->dust_species > 0) {
                 totalCd = AC(i, j, k);
               }
@@ -619,8 +613,7 @@ void make_consistent(
             SiI(i, j, k) = SiI(i, j, k) * correctSig;
             SiOI(i, j, k) = SiOI(i, j, k) * correctSig;
             SiO2I(i, j, k) = SiO2I(i, j, k) * correctSig;
-            if ((my_chemistry->grain_growth == 1) ||
-                (my_chemistry->dust_sublimation == 1)) {
+            if (chiaki_model_dust_evolution) {
               if (my_chemistry->dust_species > 0) {
                 totalSid = 28. / 100. * MgSiO3(i, j, k);
               }
@@ -640,8 +633,7 @@ void make_consistent(
               }
             }
 
-            if ((my_chemistry->grain_growth == 1) ||
-                (my_chemistry->dust_sublimation == 1)) {
+            if (chiaki_model_dust_evolution) {
               if (my_chemistry->dust_species > 1) {
                 totalFeg = Fe(i, j, k);
                 correctFeg = (gr_float)(Feg[i] / totalFeg);
@@ -689,8 +681,7 @@ void make_consistent(
                      16. / 28. * COII(i, j, k) + OII(i, j, k) +
                      16. / 17. * OHII(i, j, k) + 16. / 18. * H2OII(i, j, k) +
                      16. / 19. * H3OII(i, j, k) + O2II(i, j, k);
-            if ((my_chemistry->grain_growth == 1) ||
-                (my_chemistry->dust_sublimation == 1)) {
+            if (chiaki_model_dust_evolution) {
               if (my_chemistry->dust_species > 0) {
                 totalO = totalO + 48. / 100. * MgSiO3(i, j, k);
               }
@@ -706,8 +697,7 @@ void make_consistent(
                          16. / 18. * H2Oice(i, j, k);
               }
             }
-            if ((my_chemistry->grain_growth == 0) &&
-                (my_chemistry->dust_sublimation == 0)) {
+            if (!chiaki_model_dust_evolution) {
               correctO = (gr_float)(Og[i] / totalO);
               CO(i, j, k) = CO(i, j, k) * correctO;
               CO2(i, j, k) = CO2(i, j, k) * correctO;
@@ -759,8 +749,7 @@ void make_consistent(
             totalC = CI(i, j, k) + CII(i, j, k) + 12. / 28. * CO(i, j, k) +
                      12. / 44. * CO2(i, j, k) + 12. / 13. * CH(i, j, k) +
                      12. / 14. * CH2(i, j, k) + 12. / 28. * COII(i, j, k);
-            if ((my_chemistry->grain_growth == 1) ||
-                (my_chemistry->dust_sublimation == 1)) {
+            if (chiaki_model_dust_evolution) {
               if (my_chemistry->dust_species > 0) {
                 totalC = totalC + AC(i, j, k);
               }
@@ -769,8 +758,7 @@ void make_consistent(
                          12. / 32. * volorg(i, j, k);
               }
             }
-            if ((my_chemistry->grain_growth == 0) &&
-                (my_chemistry->dust_sublimation == 0)) {
+            if (!chiaki_model_dust_evolution) {
               correctC = (gr_float)(Cg[i] / totalC);
               CI(i, j, k) = CI(i, j, k) * correctC;
               CII(i, j, k) = CII(i, j, k) * correctC;
@@ -799,8 +787,7 @@ void make_consistent(
 
             totalSi = SiI(i, j, k) + 28. / 44. * SiOI(i, j, k) +
                       28. / 60. * SiO2I(i, j, k);
-            if ((my_chemistry->grain_growth == 1) ||
-                (my_chemistry->dust_sublimation == 1)) {
+            if (chiaki_model_dust_evolution) {
               if (my_chemistry->dust_species > 0) {
                 totalSi = totalSi + 28. / 100. * MgSiO3(i, j, k);
               }
@@ -810,8 +797,7 @@ void make_consistent(
                           28. / 60. * SiO2D(i, j, k);
               }
             }
-            if ((my_chemistry->grain_growth == 0) &&
-                (my_chemistry->dust_sublimation == 0)) {
+            if (!chiaki_model_dust_evolution) {
               correctSi = (gr_float)(Sig[i] / totalSi);
               SiI(i, j, k) = SiI(i, j, k) * correctSi;
               SiOI(i, j, k) = SiOI(i, j, k) * correctSi;
@@ -831,8 +817,7 @@ void make_consistent(
               }
             }
 
-            if ((my_chemistry->grain_growth == 1) ||
-                (my_chemistry->dust_sublimation == 1)) {
+            if (chiaki_model_dust_evolution) {
               if (my_chemistry->dust_species > 1) {
                 totalFe = Fe(i, j, k) + FeM(i, j, k) +
                           168. / 232. * Fe3O4(i, j, k) +
