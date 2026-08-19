@@ -310,7 +310,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
             nm_itmask[i] = MASK_FALSE;
             nm_done = nm_done + 1;
             // Check for convergence of solution
-          } else if (std::fabs(sol[i] / solplus[i]) < tol) {
+          } else if (std::fabs(sol[i]) < std::fabs(solplus[i] * tol)) {
             nm_itmask[i] = MASK_FALSE;
             c_done = c_done + 1;
             bi_itmask[i] = MASK_FALSE;
