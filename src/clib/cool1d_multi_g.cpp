@@ -52,11 +52,19 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 /// At the moment, we are gradually shifting functionality into this function
 /// (it does not yet handle dust edot contributions)
 ///
-/// @param[in] anydust Whether dust chemistry is enabled
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range. Contributions are accumulated in
 ///     this buffer. In other words, this function does **NOT** set elements to
 ///     to 0 before adding contributions.
+/// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
+///     location in the index range. In other words, this holds the dust mass
+///     per unit gas mass (only used in certain configuration)
+/// @param[out] tdust, grain_temperatures dust temperatures may be written
+///     to one of these variables, based on configuration
+/// @param[out] alpha_continuum_buf buffer to which linear absorption
+///     coefficients from dust are added (each element is updated in place with
+///     the sum of its existing value and the contribution from dust). In
+///     certain configurations this is not actually updated.
 /// @param[in] tgas 1d array of gas temperature
 /// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
 /// @param[in] nelec_times_mH 1D array holding the number density of electrons
@@ -76,15 +84,6 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///     that are used to linearly interpolate tables with respect to the
 ///     natural log of @p tgas.
 /// @param[in] trad Holds the CMB temperature at the current redshift
-/// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
-///     location in the index range. In other words, this holds the dust mass
-///     per unit gas mass (only used in certain configuration)
-/// @param[out] tdust, grain_temperatures dust temperatures may be written
-///     to one of these variables, based on configuration
-/// @param[out] alpha_continuum_buf buffer to which linear absorption
-///     coefficients from dust are added (each element is updated in place with
-///     the sum of its existing value and the contribution from dust). In
-///     certain configurations this is not actually updated.
 ///
 /// @note
 /// In some sense, this is a step towards factoring out all of the dust logic.
@@ -95,14 +94,14 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///   definitely help with all of this, but I'm a little worried about the
 ///   intermediate steps
 static void handle_dust_contributions(
-    double* edot, const double* tgas, const double* rhoH,
-    const double* nelec_times_mH, const double* metallicity,
-    const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields, InternalGrUnits internalu,
-    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf, double rad_T,
-    double* dust2gas, double* tdust, GrainSpeciesCollection grain_temperatures,
-    double* alpha_continuum) {
+    double* edot, double* dust2gas, double* tdust,
+    GrainSpeciesCollection grain_temperatures, double* alpha_continuum,
+    const double* tgas, const double* rhoH, const double* nelec_times_mH,
+    const double* metallicity, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range,
+    LnTLinInterpBuf logTlininterp_buf, double rad_T) {
   // Set flag for dust-related options
   const gr_mask_type anydust = (my_chemistry->dust_chemistry > 0 ||
                                 my_chemistry->dust_recombination_cooling > 0)
@@ -949,11 +948,10 @@ void cool1d_multi_g(
     }
   }
 
-  handle_dust_contributions(edot, tgas, rhoH, nelec_times_mH, metallicity,
-                            itmask, itmask_metal, my_chemistry, my_rates,
-                            my_fields, internalu, idx_range, logTlininterp_buf,
-                            comp2, dust2gas, tdust, grain_temperatures,
-                            alpha_continuum.data());
+  handle_dust_contributions(
+      edot, dust2gas, tdust, grain_temperatures, alpha_continuum.data(), tgas,
+      rhoH, nelec_times_mH, metallicity, itmask, itmask_metal, my_chemistry,
+      my_rates, my_fields, internalu, idx_range, logTlininterp_buf, comp2);
 
   // --- Compute (external) radiative heating terms ---
   // Photoionization heating
