@@ -530,10 +530,11 @@ inline void derivatives(
     // - add contributions to edot from dust
     // - compute and store dust-related reaction rates in rxn_rate_buf
     my_rates->opaque_storage->dust_solver.calc_Tdust_and_chem_contrib(
-        pack.other_scratch_buf.edot, pack.other_scratch_buf.dust2gas,
+        pack.other_scratch_buf.edot, alpha_continuum,
+        &pack.main_scratch_buf.rxn_rate_buf, pack.other_scratch_buf.dust2gas,
         pack.other_scratch_buf.tdust, pack.main_scratch_buf.grain_temperatures,
-        alpha_continuum, &pack.main_scratch_buf.rxn_rate_buf, pack.other_scratch_buf.tgas,
-        pack.other_scratch_buf.rhoH, pack.other_scratch_buf.nelec_times_mH,
+        pack.other_scratch_buf.tgas, pack.other_scratch_buf.rhoH,
+        pack.other_scratch_buf.nelec_times_mH,
         pack.other_scratch_buf.metallicity, pack.other_scratch_buf.itmask,
         &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
         internalu, pack.idx_range_1_element,

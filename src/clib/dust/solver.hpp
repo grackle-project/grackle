@@ -112,25 +112,63 @@ public:
   ///
   /// This is intended to be the main entry-point for the dust model.
   ///
-  /// At the moment, the arguments @p edot, @p alpha_continuum_buf, and
-  /// @p rxn_rate_buf are allowed to be passed ``nullptr`` to indicate that we
-  /// want skip calculation of a given quantity.
+  /// This function writes results that fall into 2 categories of values:
+  /// 1. the primary outputs that directly affect chemistry
+  ///    - these include the @p edot, @p alpha_continuum_buf, and
+  ///      @p rxn_rate_buf buffers
+  ///    - these buffers are allowed to be passed ``nullptr`` to indicate that
+  ///      we want skip calculation of a given quantity.
+  /// 2. the secondary outputs:
+  ///    - these include @p dust2gas and the dust temperature buffers
+  ///    - strictly speaking, a chemistry solver shouldn't need to know
+  ///      anything about any of these quantities. These are primarily provided
+  ///      for the purpose of using @ref lookup_dust_rxn_rates1d if you need
+  ///      to numerically estimating partial derivatives for a fixed dust
+  ///      temperature
+  ///
+  /// Thoughts For The Future
+  /// -----------------------
+  /// We should give some thought to:
+  /// - handling scratch space. Currently, we use a LOT of scratch space.
+  ///   Comments in the implementation discuss strategies for reducing usage.
+  ///   But, we are still going to need some scratch space. I suspect the best
+  ///   strategy (for gpu compatibility) is to provide a method that expresses
+  ///   how much scratch space is needed, as a function of the idx_range length
+  ///   and just pass a buffer with that much space to this function
+  /// - whether we need to actually consider @p dust2gass to be an output
+  ///   buffer. A fairly compelling case could be made that we should just
+  ///   allocate as a local variable (from scratch space) and recompute it when
+  ///   we need it. Technically speaking, this introduces additional operations,
+  ///   but it's not very expensive (especially compared to the rest of the
+  ///   dust-related calculations). Plus it would dramatically simplify
+  ///   bookkeeping.
+  /// - computing analytic partial derivatives (i.e. with respect to
+  ///   temperature, chemical species, and any dust grain species). By doing
+  ///   this:
+  ///   - we can eliminate @ref lookup_dust_rxn_rates1d (this will simplify a
+  ///     bunch of bookeeping)
+  ///   - in places where we previously would have used
+  ///     @ref lookup_dust_rxn_rates1d, we will stop requiring the implicit
+  ///     assumption that dust temperature is constant
+  ///   Computing the analytic derivatives should be pretty straight-forward
+  ///   (and it will probably be faster than estimating them from finite
+  ///   differences). The primary challenge is deciding on an appropriate format
   ///
   /// @param[out] edot 1D array to hold the computed the time derivative of the
   ///     internal energy in the @p idx_range. Contributions are accumulated in
   ///     this buffer. In other words, this function does **NOT** set elements
   ///     to 0 before adding contributions.
-  /// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
-  ///     location in the index range. In other words, this holds the dust mass
-  ///     per unit gas mass (only used in certain configuration)
-  /// @param[out] tdust, grain_temperatures dust temperatures may be written
-  ///     to one of these variables, based on configuration
   /// @param[out] alpha_continuum_buf buffer to which linear absorption
   ///     coefficients from dust are added (each element is updated in place
   ///     with the sum of its existing value and the contribution from dust). In
   ///     certain configurations this is not actually updated.
   /// @param[out] rxn_rate_buf output buffers to be filled with computed
   ///    reaction rates for @p idx_range
+  /// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
+  ///     location in the index range. In other words, this holds the dust mass
+  ///     per unit gas mass (only used in certain configuration)
+  /// @param[out] tdust, grain_temperatures dust temperatures may be written
+  ///     to one of these variables, based on configuration
   /// @param[in] tgas 1d array of gas temperature
   /// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
   /// @param[in] nelec_times_mH 1D array holding the number density of electrons
@@ -150,14 +188,15 @@ public:
   ///     that are used to linearly interpolate tables with respect to the
   ///     natural log of @p tgas.
   void calc_Tdust_and_chem_contrib(
-      double* edot, double* dust2gas, double* tdust,
-      GrainSpeciesCollection grain_temperatures, double* alpha_continuum,
-      FullRxnRateBuf* rxn_rate_buf, const double* tgas, const double* rhoH,
-      const double* nelec_times_mH, const double* metallicity,
-      const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
-      chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-      grackle_field_data* my_fields, InternalGrUnits internalu,
-      IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf) const;
+      double* edot, double* alpha_continuum, FullRxnRateBuf* rxn_rate_buf,
+      double* dust2gas, double* tdust,
+      GrainSpeciesCollection grain_temperatures, const double* tgas,
+      const double* rhoH, const double* nelec_times_mH,
+      const double* metallicity, const gr_mask_type* itmask,
+      const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+      chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+      InternalGrUnits internalu, IndexRange idx_range,
+      LnTLinInterpBuf logTlininterp_buf) const;
 };
 
 }  // namespace GRIMPL_NAMESPACE_DECL

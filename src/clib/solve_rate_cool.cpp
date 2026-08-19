@@ -892,8 +892,8 @@ int solve_rate_cool(
         // - add contributions to edot from dust
         // - computing/storing dust-related reaction rates in rxn_rate_buf
         my_rates->opaque_storage->dust_solver.calc_Tdust_and_chem_contrib(
-            edot.data(), dust2gas.data(), tdust.data(), grain_temperatures,
-            alpha_continuum.data(), &spsolvbuf.rxn_rate_buf, tgas.data(),
+            edot.data(), alpha_continuum.data(), &spsolvbuf.rxn_rate_buf,
+            dust2gas.data(), tdust.data(), grain_temperatures, tgas.data(),
             rhoH.data(), nelec_times_mH.data(), metallicity.data(),
             itmask.data(), itmask_metal.data(), my_chemistry, my_rates,
             my_fields, internalu, idx_range, logTlininterp_buf);

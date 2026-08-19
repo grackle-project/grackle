@@ -280,14 +280,14 @@ void DustSolver::lookup_dust_rxn_rates1d(
 }
 
 void DustSolver::calc_Tdust_and_chem_contrib(
-    double* edot, double* dust2gas, double* tdust,
-    GrainSpeciesCollection grain_temperatures, double* alpha_continuum,
-    FullRxnRateBuf* rxn_rate_buf, const double* tgas, const double* rhoH,
-    const double* nelec_times_mH, const double* metallicity,
-    const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields, InternalGrUnits internalu,
-    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf) const {
+    double* edot, double* alpha_continuum, FullRxnRateBuf* rxn_rate_buf,
+    double* dust2gas, double* tdust, GrainSpeciesCollection grain_temperatures,
+    const double* tgas, const double* rhoH, const double* nelec_times_mH,
+    const double* metallicity, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range,
+    LnTLinInterpBuf logTlininterp_buf) const {
   // Reducing scratch space usage of chiaki multi-grain growth dust model:
   // - The function is currently structured to perform the following operations
   //   - compute dust-temperature/opacity/grain-properties
