@@ -556,18 +556,15 @@ inline void derivatives(
 
   // uses the temperature to look up the chemical rates (they are interpolated
   // with respect to log temperature from input tables)
-  grackle::impl::lookup_cool_rates1d(
-    pack.idx_range_1_element, pack.fwd_args.anydust,
+  GRIMPL_NS::lookup_cool_rates1d(
+    pack.idx_range_1_element,
     pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
-    pack.other_scratch_buf.tdust, pack.other_scratch_buf.dust2gas,
     pack.fwd_args.dom, pack.fwd_args.dx_cgs, pack.fwd_args.c_ljeans,
     pack.other_scratch_buf.itmask, &pack.local_itmask_metal,
     my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
-    pack.main_scratch_buf.grain_temperatures,
     pack.main_scratch_buf.logTlininterp_buf,
     pack.main_scratch_buf.rxn_rate_buf,
-    pack.main_scratch_buf.chemheatrates_buf,
-    pack.main_scratch_buf.internal_dust_prop_scratch_buf
+    pack.main_scratch_buf.chemheatrates_buf
   );
 
 

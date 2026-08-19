@@ -728,17 +728,8 @@ inline void apply_misc_shield_factors(
 /// All dust-related reaction rates are computed in a separate function
 ///
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] anydust Whether to model any dust
 /// @param[in] tgas1d specifies the gas temperatures for the @p idx_range
 /// @param[in] mmw specifies the mean molecular weight for the @p idx_range
-/// @param[in] tdust Precomputed dust temperatures at each location in the
-///     index range. This **ONLY** holds meaningful values when using variants
-///     of the classic 1-field dust-model or using variant of the
-///     multi-grain-species model where all grains are configured to share a
-///     single temperature.
-/// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
-///     index range. In other words, this holds the dust mass per unit gas mass
-///     (only used in certain configuration)
 /// @param[in] dom a standard quantity used throughout the codebase
 /// @param[in] dx_cgs The width of a cell in comoving cm (I think). Used in
 ///     certain self-shielding calculations.
@@ -764,20 +755,15 @@ inline void apply_misc_shield_factors(
 ///    rates for @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
 ///     values that are used to compute heating from certain chemical reactions.
-/// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
-///     temporary grain species properties (only used in certain configurations)
 inline void lookup_cool_rates1d(
-    IndexRange idx_range, gr_mask_type anydust, const double* tgas1d,
-    const double* mmw, const double* tdust, const double* dust2gas, double dom,
+    IndexRange idx_range, const double* tgas1d, const double* mmw, double dom,
     double dx_cgs, double c_ljeans, const gr_mask_type* itmask,
     const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
-    grackle::impl::ChemHeatingRates chemheatrates_buf,
-    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
+    grackle::impl::ChemHeatingRates chemheatrates_buf) {
   // Construct views of fields referenced in several parts of this function.
 
   // Linearly Interpolate the Collisional Rxn Rates

@@ -933,14 +933,11 @@ int solve_rate_cool(
           //
           // -> TODO: passing dt to this function is probably incorrect. See
           //    the C++ docstring for a longer discussion
-          grackle::impl::lookup_cool_rates1d(
-            idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
-            dust2gas.data(), dom, dx_cgs, c_ljeans, itmask.data(),
-            itmask_metal.data(), my_chemistry,
-            my_rates, my_fields, *my_uvb_rates, internalu,
-            grain_temperatures, logTlininterp_buf,
-            spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
-            internal_dust_prop_scratch_buf
+          GRIMPL_NS::lookup_cool_rates1d(
+              idx_range, tgas.data(), mmw.data(), dom, dx_cgs, c_ljeans,
+              itmask.data(), itmask_metal.data(), my_chemistry,
+              my_rates, my_fields, *my_uvb_rates, internalu, logTlininterp_buf,
+              spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf
           );
 
           // Compute dedot and HIdot, the rates of change of de and HI
