@@ -17,7 +17,6 @@
 #define LOOKUP_COOL_RATES1D_HPP
 
 #include "grackle.h"
-#include "dust/lookup_dust_rates1d.hpp"
 #include "dust/multi_grain_species/dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
@@ -804,10 +803,10 @@ inline void lookup_cool_rates1d(
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
-    lookup_dust_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal,
-                        my_chemistry, my_rates, my_fields, grain_temperatures,
-                        logTlininterp_buf, rxn_rate_buf,
-                        internal_dust_prop_scratch_buf);
+    my_rates->opaque_storage->dust_solver.lookup_dust_rates1d(
+        idx_range, tdust, dust2gas, dom, itmask_metal, my_chemistry, my_rates,
+        my_fields, grain_temperatures, logTlininterp_buf, rxn_rate_buf,
+        internal_dust_prop_scratch_buf);
   }
 
   // Deal with the photo reaction rates

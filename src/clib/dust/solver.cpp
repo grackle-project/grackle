@@ -6,26 +6,22 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the lookup_dust_rates1d function.
+/// Implements the @ref DustSolver type
 ///
 //===----------------------------------------------------------------------===//
-
-#ifndef DUST_LOOKUP_DUST_RATES1D_HPP
-#define DUST_LOOKUP_DUST_RATES1D_HPP
 
 #include <cfloat>  // DBL_MAX
 
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+#include "dust/solver.hpp"
 #include "interpolate.hpp"
-#include "internal_types.hpp"
-#include "lnT_prep.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 #include "utils-field.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 // Some ideas for refactoring
 // - we probably want to break the following function up into its constituent
@@ -36,47 +32,12 @@ namespace grackle::impl {
 // - we may also want to give some thought to possibly grouping subsets of the
 //   arguments that are only used for certain dust models.
 
-/// Look-up rate for H2 formation on dust & (in certain configurations) the
-/// grain growth rates for each location in the index-range.
-///
-/// > [!note]
-/// > This function should not be invoked when we aren't using any dust model
-///
-/// @param[in] idx_range Specifies the current index-range
-/// @param[in] tdust Precomputed dust temperatures at each location in the
-///     index range. This **ONLY** holds meaningful values when using variants
-///     of the classic 1-field dust-model or using variant of the
-///     multi-grain-species model where all grains are configured to share a
-///     single temperature.
-/// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
-///     index range. In other words, this holds the dust mass per unit gas mass
-///     (only used in certain configuration)
-/// @param[out] h2dust Buffer that gets filled with the rate for forming
-///     molecular hydrogen on dust grains. **THIS IS ALWAYS FILLED**
-/// @param[in] dom a standard quantity used throughout the codebase
-/// @param[in] itmask_metal Specifies the iteration-mask for the @p idx_range
-///     performing metal and dust calculations.
-/// @param[in] my_chemistry holds a number of configuration parameters.
-/// @param[in] my_rates Holds assorted rate data and other internal
-///     configuration info.
-/// @param[in] my_fields Specifies the field data.
-/// @param[in] grain_temperatures individual grain species temperatures. This
-///     is only used in certain configurations (i.e. when we aren't using the
-///     tdust argument)
-/// @param[in] logTlininterp_buf Specifies precomputed arrays of values (for
-///    each location in the index range) that are used to linearly interpolate
-///    tables with respect to logT (the natural log of the gas temperature).
-/// @param[out] rxn_rate_buf output buffers to be filled with computed reaction
-///    rates for @p idx_range
-/// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
-///     temporary grain species properties (only used in certain configurations)
-inline void lookup_dust_rates1d(
+void DustSolver::lookup_dust_rates1d(
     IndexRange idx_range, const double* tdust, const double* dust2gas,
     double dom, const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-    FullRxnRateBuf rxn_rate_buf,
+    GrainSpeciesCollection grain_temperatures,
+    LnTLinInterpBuf logTlininterp_buf, FullRxnRateBuf rxn_rate_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
   // TODO: get rid of dlogtem argument!
 
@@ -316,6 +277,4 @@ inline void lookup_dust_rates1d(
   }
 }
 
-}  // namespace grackle::impl
-
-#endif  // DUST_LOOKUP_DUST_RATES1D_HPP
+}  // namespace GRIMPL_NAMESPACE_DECL
