@@ -52,6 +52,14 @@ struct FnEval {
   double associated_val;
 };
 
+/// Encodes a mask value specifying the status at a given index of a numerical
+/// root-finding algorithm
+enum struct SolveStatus {
+  UNCONVERGED,  ///< the solver has not reached a converged solution
+  CONVERGED,    ///< the solver has successfully converged
+  SKIP_SOLVE    ///< the solver will skip the calculation
+};
+
 // this could definitely be better generalized
 /// @brief Find root of a function within an interval at a number of locations
 ///
@@ -70,9 +78,10 @@ struct FnEval {
 /// @param[out]   associated_vals Output buffer for storing values computed
 ///    while root finding. At this time, it is not specifies whether the value
 ///    at index `i` cooresponds to `x_a[i]` or `x_b[i]`.
-/// @param[inout] itmask Array specifying the indices in the index range where
-///    bisection is performed. Elements will be updated as convergence is
-///    achieved.
+/// @param[inout] solvemask Array specifying a @ref SolveStatus value at each
+///    index. The solver will only look for roots at indices that initially have
+///    values of @ref SolveStatus::UNCONVERGED. Elements will be updated to hold
+///    @ref SolveStatus::CONVERGED, as convergence is achieved.
 /// @param[in]    i_start, i_stop The range of indices for which root finding
 ///    is performed.
 /// @param[in]    rtol Convergence is achieved when at an index `i`, when
@@ -84,7 +93,7 @@ struct FnEval {
 /// @returns The maximum number of considered iterations. When @p max_iter is
 ///     exceeded by this value, that's an indication that some calculations did
 ///     not converge. You can identify unconverged locations by checking the
-///     values of @p itmask
+///     values of @p solvemask
 ///
 /// @todo
 /// We should get rid of the @p max_initial_guess argument. It primarily exists
@@ -104,11 +113,11 @@ struct FnEval {
 template <typename Fn>
 static int unchecked_bisect(
     const Fn& fn, double* x_a, double* x_b, double* associated_vals,
-    gr_mask_type* itmask, int i_start, int i_stop, double rtol, int max_iter,
+    SolveStatus* solvemask, int i_start, int i_stop, double rtol, int max_iter,
     double max_initial_guess = std::numeric_limits<double>::max()) {
   int n_unconverged = 0;
   for (int i = i_start; i < i_stop; i++) {
-    n_unconverged += (itmask[i] != MASK_FALSE);
+    n_unconverged += (solvemask[i] == SolveStatus::UNCONVERGED);
   }
 
   // implicitly assumption that
@@ -120,7 +129,7 @@ static int unchecked_bisect(
   int iter;
   for (iter = 1; n_unconverged > 0 && iter <= max_iter; iter++) {
     for (int i = i_start; i < i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
+      if (solvemask[i] == SolveStatus::UNCONVERGED) {
         double x_mid = 0.5 * (x_a[i] + x_b[i]);
         if (iter == 1) {
           x_mid = std::fmin(x_mid, max_initial_guess);
@@ -141,7 +150,7 @@ static int unchecked_bisect(
         x_b[i] = branchless_choice(update_a, x_b[i], x_mid);
 
         if (std::fabs(x_b[i] - x_a[i]) <= std::fabs(x_a[i]) * rtol) {
-          itmask[i] = MASK_FALSE;
+          solvemask[i] = SolveStatus::CONVERGED;
           n_unconverged--;
         }
       }
@@ -222,8 +231,8 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // iteration mask specifies where we use newton's method with finite
   // differences
   std::vector<gr_mask_type> nm_itmask(buf_len);
-  // iteration mask specifies where we use bisection
-  std::vector<gr_mask_type> bi_itmask(buf_len);
+  // specifies where we use bisection
+  std::vector<SolveStatus> bi_solvemask(buf_len);
 
   double pert_i = 1.e-3;
 
@@ -237,12 +246,13 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     nm_itmask[i] = itmask[i];
-    bi_itmask[i] = itmask[i];
+    bi_solvemask[i] = (itmask[i] == MASK_FALSE) ? SolveStatus::CONVERGED
+                                                : SolveStatus::UNCONVERGED;
     if (nm_itmask[i] != MASK_FALSE) {
       if (Trad >= tgas[i]) {
         tdustnow[i] = Trad;
         nm_itmask[i] = MASK_FALSE;
-        bi_itmask[i] = MASK_FALSE;
+        bi_solvemask[i] = SolveStatus::CONVERGED;
         c_done = c_done + 1;
         nm_done = nm_done + 1;
       } else if (tgas[i] > passive_dust_model_T_sublimation) {
@@ -313,7 +323,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
           } else if (std::fabs(sol[i]) < std::fabs(solplus[i] * tol)) {
             nm_itmask[i] = MASK_FALSE;
             c_done = c_done + 1;
-            bi_itmask[i] = MASK_FALSE;
+            bi_solvemask[i] = SolveStatus::CONVERGED;
             nm_done = nm_done + 1;
           }
 
@@ -350,7 +360,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     // unlikely to be false, the iteration will fail silently (with an
     // absolute garbage result) on the off chance that it comes up
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (bi_itmask[i] != MASK_FALSE) {
+      if (bi_solvemask[i] == SolveStatus::UNCONVERGED) {
         tdustnow[i] = Trad;
         // bi_t_high(i) = tgas(i)
         bi_t_high[i] = 3e3;
@@ -361,8 +371,8 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double* associated_vals = kgr;
     iter =
         unchecked_bisect(fn, tdustnow.data(), bi_t_high.data(), associated_vals,
-                         bi_itmask.data(), idx_range.i_start, idx_range.i_stop,
-                         bi_tol, bi_itmax, max_initial_guess);
+                         bi_solvemask.data(), idx_range.i_start,
+                         idx_range.i_stop, bi_tol, bi_itmax, max_initial_guess);
 
     // If iteration count exceeded with bisection, end of the line.
     // -> Since `(bi_itmax+1) < itmax`, I'm pretty sure the following
@@ -370,7 +380,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     if (iter > itmax) {
       int n_unconverged = 0;
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        n_unconverged += (bi_itmask[i] != MASK_FALSE);
+        n_unconverged += (bi_solvemask[i] != SolveStatus::CONVERGED);
       }
       OMP_PRAGMA_CRITICAL {
         eprintf(
