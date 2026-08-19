@@ -418,7 +418,8 @@ void DustSolver::calc_Tdust_and_chem_contrib(
     }
   }
 
-  if (my_chemistry->dust_chemistry > 0 && rxn_rate_buf != nullptr) {
+  if (DustSolver::any_dust_rxn_rates(*my_chemistry) &&
+      rxn_rate_buf != nullptr) {
     // todo: we can do some refactoring when it comes to the chiaki mutlti
     //       grain growth model
     // -> in the current implementation, lookup_dust_rates1d is needlessly

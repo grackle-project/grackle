@@ -20,6 +20,7 @@
 #include "./multi_grain_species/dust_props.hpp"
 #include "../support/config.hpp"
 #include "../support/index_helper.hpp"
+#include "fortran_func_decls.h"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -44,6 +45,14 @@ public:
   /// @brief default constructor
   DustSolver() = default;
 
+  /// @brief indicates whether this solver computes any dust reaction rates
+  ///
+  /// TODO: consider converting to an instance method that doesn't need to be
+  ///       passed any arguments
+  static bool any_dust_rxn_rates(const chemistry_data& my_chemistry) noexcept {
+    return my_chemistry.dust_chemistry > 0;
+  }
+
   /// @brief Look-up rate for H2 formation on dust & (in certain configurations)
   ///        the grain growth rates for each location in the index-range.
   ///
@@ -58,7 +67,8 @@ public:
   /// becomes capable of computing analytic derivatives.
   ///
   /// > [!note]
-  /// > This function should not be invoked when we aren't using any dust model
+  /// > This function should not be invoked unless @ref any_dust_rxn_rates
+  /// > returns ``true``.
   ///
   /// @param[in] idx_range Specifies the current index-range
   /// @param[in] tdust Precomputed dust temperatures at each location in the

@@ -699,9 +699,9 @@ int solve_rate_cool(
   // Set error indicator (we will return this value)
   int ierr = GR_SUCCESS;
 
-  // Set flag for dust-related options
+  // Set flag for dust-related reaction rates
   const gr_mask_type anydust =
-    (my_chemistry->dust_chemistry > 0)
+    (DustSolver::any_dust_rxn_rates(*my_chemistry))
     ? MASK_TRUE
     : MASK_FALSE;
 

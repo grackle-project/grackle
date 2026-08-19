@@ -474,7 +474,7 @@ inline void derivatives(
     //    temperature (since dust absorption will vary)
     // -> we don't do that right now for historical consistency and because it
     //    would probably be computationally demanding
-    if (pack.fwd_args.anydust != MASK_FALSE) {
+    if (DustSolver::any_dust_rxn_rates(*my_chemistry)) {
       my_rates->opaque_storage->dust_solver.lookup_dust_rxn_rates1d(
           pack.idx_range_1_element, pack.other_scratch_buf.tdust,
           pack.other_scratch_buf.dust2gas, pack.fwd_args.dom,
