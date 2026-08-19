@@ -142,11 +142,10 @@ inline void lookup_dust_rates1d(
         // Assume dust melts at Tdust > DustTemperatureEnd, in the context of
         // computing the H2 formation rate
         //
-        // important: at the time of writing, whem using a generic dust
-        // density field (my_chemistry->use_dust_density_field > 0), I'm
-        // 99% sure that we don't mutate that density field. This contrasts
-        // with Grackle's behavior when tracking dust species fields.
-
+        // important: at the time of writing, when using a generic dust
+        // density field (i.e. my_chemistry->use_dust_density_field == 1),
+        // we don't mutate that density field. This contrasts with Grackle's
+        // behavior when tracking dust species fields.
         if (tdust[i] > my_chemistry->DustTemperatureEnd) {
           h2dust[i] = tiny8;
         } else {
@@ -251,51 +250,21 @@ inline void lookup_dust_rates1d(
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
         double summed_h2dust = 0.0;
-
-        if (my_chemistry->use_multiple_dust_temperatures == 0) {
-          // in this branch, all grains share a single dust temperature
-          double logTdust = std::log(tdust[i]);  // <- natural log
-
-          // precompute the shared coefficients
-          double h2dust_silicate_coef = interpolate_2d(
+        for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+          const double* coef_table =
+              gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
+                  ? h2rate_carbonaceous_coef_table
+                  : h2rate_silicate_coef_table;
+          // take the natural log of the grain species's Temperature
+          double logTdust = std::log(grain_temperatures.data[gsp_idx][i]);
+          double coef = interpolate_2d(
               logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
               interp_props.parameters[0], dlogTdust, interp_props.parameters[1],
-              dlogtem, interp_props.data_size, h2rate_silicate_coef_table);
-          double h2dust_carbonaceous_coef = interpolate_2d(
-              logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-              interp_props.parameters[0], dlogTdust, interp_props.parameters[1],
-              dlogtem, interp_props.data_size, h2rate_carbonaceous_coef_table);
-
-          // perform the summation
-          for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-            double coef =
-                gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
-                    ? h2dust_carbonaceous_coef
-                    : h2dust_silicate_coef;
-            double sigma_per_gas_mass =
-                internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                    .data[gsp_idx][i];
-            summed_h2dust += coef * sigma_per_gas_mass;
-          }
-
-        } else {
-          for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-            const double* coef_table =
-                gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
-                    ? h2rate_carbonaceous_coef_table
-                    : h2rate_silicate_coef_table;
-            // take the natural log of the grain species's Temperature
-            double logTdust = std::log(grain_temperatures.data[gsp_idx][i]);
-            double coef = interpolate_2d(logTdust, logTlininterp_buf.logtem[i],
-                                         interp_props.dimension,
-                                         interp_props.parameters[0], dlogTdust,
-                                         interp_props.parameters[1], dlogtem,
-                                         interp_props.data_size, coef_table);
-            double sigma_per_gas_mass =
-                internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                    .data[gsp_idx][i];
-            summed_h2dust += coef * sigma_per_gas_mass;
-          }
+              dlogtem, interp_props.data_size, coef_table);
+          double sigma_per_gas_mass =
+              internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
+                  .data[gsp_idx][i];
+          summed_h2dust += coef * sigma_per_gas_mass;
         }
         h2dust[i] = summed_h2dust;
       }

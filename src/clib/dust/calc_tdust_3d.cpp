@@ -26,8 +26,9 @@
 #include "inject_model/misc.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
+#include "mask.hpp"
 #include "scale_fields.hpp"
-#include "utils-cpp.hpp"
+#include "support/View.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -49,6 +50,8 @@ void calc_tdust_3d(
 
   // Loop over zones, and do an entire i-column in one go
   const IndexHelper idx_helper = build_index_helper_(my_fields);
+
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {
@@ -96,6 +99,7 @@ void calc_tdust_3d(
     std::vector<double> gasgr(my_fields->grid_dimension[0]);
     std::vector<double> gasgr_tdust(my_fields->grid_dimension[0]);
     std::vector<double> myisrf(my_fields->grid_dimension[0]);
+    std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
     LnTLinInterpBuf logTlininterp_buf =
@@ -148,12 +152,10 @@ void calc_tdust_3d(
       //     calculation during the normal chemistry/cooling solve
       // - we can always introduce more optimized logic later that bypasses the
       //   unnecessary work (i.e. calculating nelec_times_mH)
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        itmask[i] = MASK_TRUE;
+      }
       {
-        gr_mask_type* itmask = itmask_metal.data();
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          itmask[i] = MASK_TRUE;
-        }
-
         // these buffers need to be filled (otherwise, we introduce lots of
         // branching). We will overwrite all of these
         double* dummy_mmw = myisrf.data();
@@ -162,29 +164,18 @@ void calc_tdust_3d(
 
         extended_gas_props(tgas.data(), dummy_mmw, dummy_rhoH,
                            metallicity.data(), dummy_nelec_times_mH,
-                           logTlininterp_buf, imetal, itmask,
+                           logTlininterp_buf, imetal, itmask.data(),
                            my_chemistry, &my_rates->cloudy_primordial,
                            my_fields, internalu, idx_range, nullptr);
       }
 
-
-      // Set itmask_metal to true for entire idx_range
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        itmask_metal[i] = MASK_TRUE;
-      }
-
-      // Set itmask to false for metal-poor cells
-      if (imetal == 1) {
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          if (metal(i,j,k) < 1.e-9 * d(i,j,k))  {
-            itmask_metal[i] = MASK_FALSE;
-          }
-        }
-      }
+      mask::fill_itmask_metal(itmask_metal.data(), itmask.data(),
+                              metallicity.data(), imetal, idx_range,
+                              my_chemistry);
 
       // Compute grain size increment
 
-      if ( (my_chemistry->use_dust_density_field > 0)  &&  (my_chemistry->dust_species > 0) )  {
+      if (my_chemistry->dust_chemistry == 2) {
 
         calc_grain_size_increment_1d (
           dom, idx_range, itmask_metal.data(), my_chemistry,
@@ -223,7 +214,7 @@ void calc_tdust_3d(
           //        endif
           //       endif
 
-          if (my_chemistry->use_dust_density_field > 0)  {
+          if (my_chemistry->use_dust_density_field == 1)  {
             dust2gas[i] = dust(i,j,k) / d(i,j,k);
           } else {
             dust2gas[i] = my_chemistry->local_dust_to_gas_ratio * metallicity[i];
@@ -264,7 +255,7 @@ void calc_tdust_3d(
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
-          if (my_chemistry->use_multiple_dust_temperatures == 0)  {
+          if (single_species_dust_model)  {
             dust_temp(i,j,k) = tdust[i];
           } else {
             if (my_chemistry->dust_species > 0)  {
