@@ -21,6 +21,7 @@
 #include "dust/misc.hpp"
 #include "dust/multi_grain_species/dust_props.hpp"
 #include "dust/gas_heat_cool.hpp"
+#include "fortran_func_decls.h"
 #include "grackle.h"
 #include "interpolate.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -94,7 +95,7 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///   definitely help with all of this, but I'm a little worried about the
 ///   intermediate steps
 static void handle_dust_contributions(
-    gr_mask_type anydust, double* edot, const double* tgas, const double* rhoH,
+    double* edot, const double* tgas, const double* rhoH,
     const double* nelec_times_mH, const double* metallicity,
     const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
@@ -102,6 +103,11 @@ static void handle_dust_contributions(
     IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf, double rad_T,
     double* dust2gas, double* tdust, GrainSpeciesCollection grain_temperatures,
     double* alpha_continuum) {
+  // Set flag for dust-related options
+  const gr_mask_type anydust = (my_chemistry->dust_chemistry > 0 ||
+                                my_chemistry->dust_recombination_cooling > 0)
+                                   ? MASK_TRUE
+                                   : MASK_FALSE;
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   const double dom = internalu_calc_dom_(internalu);
@@ -353,19 +359,10 @@ void cool1d_multi_g(
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
 
   // Iteration mask
-
-  gr_mask_type anydust;
   std::vector<gr_mask_type> itmask_tab(my_fields->grid_dimension[0]);
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
-
-  // Set flag for dust-related options
-
-  anydust = (my_chemistry->dust_chemistry > 0 ||
-             my_chemistry->dust_recombination_cooling > 0)
-                ? MASK_TRUE
-                : MASK_FALSE;
 
   // Set units
 
@@ -952,11 +949,11 @@ void cool1d_multi_g(
     }
   }
 
-  handle_dust_contributions(anydust, edot, tgas, rhoH, nelec_times_mH,
-                            metallicity, itmask, itmask_metal, my_chemistry,
-                            my_rates, my_fields, internalu, idx_range,
-                            logTlininterp_buf, comp2, dust2gas, tdust,
-                            grain_temperatures, alpha_continuum.data());
+  handle_dust_contributions(edot, tgas, rhoH, nelec_times_mH, metallicity,
+                            itmask, itmask_metal, my_chemistry, my_rates,
+                            my_fields, internalu, idx_range, logTlininterp_buf,
+                            comp2, dust2gas, tdust, grain_temperatures,
+                            alpha_continuum.data());
 
   // --- Compute (external) radiative heating terms ---
   // Photoionization heating
