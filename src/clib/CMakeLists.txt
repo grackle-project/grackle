@@ -112,6 +112,7 @@ add_library(Grackle_Grackle
   dust/multi_grain_species/calc_grain_size_increment_species_1d.cpp dust/multi_grain_species/calc_grain_size_increment_species_1d.hpp
   dust/multi_grain_species/dust_props.hpp
   dust/misc.hpp
+  dust/solver.hpp
   dynamic_api.cpp
   fortran_func_wrappers.hpp
   full_rxn_rate_buf.hpp
