@@ -17,8 +17,8 @@
 #define LOOKUP_COOL_RATES1D_HPP
 
 #include "grackle.h"
-#include "dust_props.hpp"
 #include "dust/lookup_dust_rates1d.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "full_rxn_rate_buf.hpp"
