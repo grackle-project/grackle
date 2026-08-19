@@ -63,7 +63,6 @@ struct FrozenSimpleArgs {
 struct MainScratchBuf {
   GrainSpeciesCollection grain_temperatures;
   LnTLinInterpBuf logTlininterp_buf;
-  Cool1DMultiScratchBuf cool1dmulti_buf;
   CoolHeatScratchBuf coolingheating_buf;
   ChemHeatingRates chemheatrates_buf;
   InternalDustPropBuf internal_dust_prop_scratch_buf;
@@ -81,7 +80,6 @@ inline MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
   MainScratchBuf out;
   out.grain_temperatures = new_GrainSpeciesCollection(nelem);
   out.logTlininterp_buf = new_LnTLinInterpBuf(nelem);
-  out.cool1dmulti_buf = new_Cool1DMultiScratchBuf(nelem);
   out.coolingheating_buf = new_CoolHeatScratchBuf(nelem);
   out.chemheatrates_buf = new_ChemHeatingRates(nelem);
   out.internal_dust_prop_scratch_buf =
@@ -95,7 +93,6 @@ inline MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
 inline void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_GrainSpeciesCollection(&ptr->grain_temperatures);
   drop_LnTLinInterpBuf(&ptr->logTlininterp_buf);
-  drop_Cool1DMultiScratchBuf(&ptr->cool1dmulti_buf);
   drop_CoolHeatScratchBuf(&ptr->coolingheating_buf);
   drop_ChemHeatingRates(&ptr->chemheatrates_buf);
   drop_InternalDustPropBuf(&ptr->internal_dust_prop_scratch_buf);
@@ -290,7 +287,6 @@ inline void scratchbufs_copy_into_pack(
   const double* rhoH, const double* mmw, const double* nelec_times_mH,
   const double* edot, grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-  grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
   grackle::impl::CoolHeatScratchBuf coolingheating_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf
 ) {
@@ -324,12 +320,6 @@ inline void scratchbufs_copy_into_pack(
       pack->main_scratch_buf.grain_temperatures, grain_temperatures, copy_fn
     );
 
-    // the tgasold buffer is definitely needed when the current implementation
-    // co-evolves the internal energy
-    visit_member_pair(
-      pack->main_scratch_buf.cool1dmulti_buf, cool1dmulti_buf, copy_fn
-    );
-
     // unclear whether the following cases need to be copied
     visit_member_pair(
       pack->main_scratch_buf.coolingheating_buf, coolingheating_buf, copy_fn
@@ -360,15 +350,13 @@ inline void scratchbufs_copy_into_pack(
 ///
 /// @note
 /// This function should **NOT** exist and should be removed (it only exists
-/// right now as we pursue transcription). In particular, it makes no logical
-/// sense to overwrite the value of cool1dmulti_buf.tgasold
+/// right now as we pursue transcription).
 inline void scratchbufs_copy_from_pack(
   int index, ContextPack* pack, double* tgas,
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
   double* mmw, double* nelec_times_mH, double* edot,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-  grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
   grackle::impl::CoolHeatScratchBuf coolingheating_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf
 ) {
@@ -386,9 +374,6 @@ inline void scratchbufs_copy_from_pack(
     );
     visit_member_pair(
       pack->main_scratch_buf.grain_temperatures, grain_temperatures, copy_fn
-    );
-    visit_member_pair(
-      pack->main_scratch_buf.cool1dmulti_buf, cool1dmulti_buf, copy_fn
     );
     visit_member_pair(
       pack->main_scratch_buf.coolingheating_buf, coolingheating_buf, copy_fn
@@ -522,7 +507,6 @@ inline void derivatives(
       pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
       my_uvb_rates, internalu, pack.idx_range_1_element, pack.main_scratch_buf.grain_temperatures,
       pack.main_scratch_buf.logTlininterp_buf,
-      pack.main_scratch_buf.cool1dmulti_buf,
       pack.main_scratch_buf.coolingheating_buf
     );
   }

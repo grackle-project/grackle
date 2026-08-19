@@ -112,57 +112,6 @@ void drop_CoolHeatScratchBuf(CoolHeatScratchBuf*);
 
 // -----------------------------------------------------------------
 
-/// holds other assorted scratch buffers used within cool1d_multi_g
-///
-/// @note
-/// Prior to transcription, there was a distinction between the buffers that
-/// are now inside of this struct and the buffers in CoolHeatScratchBuf. The
-/// distinction has been preserved during transcription, but it is not clear
-/// how real the distinction truly is.
-struct Cool1DMultiScratchBuf {
-  double* mynh = nullptr;
-  double* gasgr_tdust = nullptr;
-};
-
-/// used to help implement the visitor design pattern
-///
-/// (avoid using this unless you really have to)
-template<class BinaryFn>
-void visit_member_pair(
-  Cool1DMultiScratchBuf& obj0, Cool1DMultiScratchBuf& obj1, BinaryFn f
-) {
-  namespace vis = ::grackle::impl::visitor;
-
-  vis::begin_visit("Cool1DMultiScratchBuf", f);
-  f(VIS_MEMBER_NAME("mynh"), obj0.mynh, obj1.mynh, vis::idx_range_len_multiple(1));
-  f(VIS_MEMBER_NAME("gasgr_tdust"), obj0.gasgr_tdust, obj1.gasgr_tdust, vis::idx_range_len_multiple(1));
-  vis::end_visit(f);
-}
-
-/// implements the visitor design pattern
-///
-/// @param ptr[in,out] Members of the specified object will be visited
-/// @param fn[in] Calls function that will be applied to each function
-template <class UnaryVisitor>
-inline void visit_member(Cool1DMultiScratchBuf* ptr, UnaryVisitor fn) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, Cool1DMultiScratchBuf, ptr, fn);
-}
-
-/// allocates the contents of a new Cool1DMultiScratchBuf
-///
-/// @param nelem The number of elements in each buffer
-Cool1DMultiScratchBuf new_Cool1DMultiScratchBuf(int nelem);
-
-/// performs cleanup of the contents of Cool1DMultiScratchBuf
-///
-/// This effectively invokes the destructor
-void drop_Cool1DMultiScratchBuf(Cool1DMultiScratchBuf*);
-
-// -----------------------------------------------------------------
-
-
-// -----------------------------------------------------------------
-
 /// holds reaction rates chemical heating reaction rates
 ///
 /// @note

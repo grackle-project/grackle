@@ -227,8 +227,7 @@ void cool1d_multi_g(
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     IndexRange idx_range, GrainSpeciesCollection grain_temperatures,
-    LnTLinInterpBuf logTlininterp_buf, Cool1DMultiScratchBuf cool1dmulti_buf,
-    CoolHeatScratchBuf coolingheating_buf) {
+    LnTLinInterpBuf logTlininterp_buf, CoolHeatScratchBuf coolingheating_buf) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
@@ -311,8 +310,8 @@ void cool1d_multi_g(
   // support to Grackle. Future work should work on addressing this
   // - in the immediate short-term, we need to focus on aggregating these
   //   variables into logically organized structs. In a lot of cases, it
-  //   may make sense to move the buffers into the existing
-  //   Cool1DMultiScratchBuf or CoolHeatScratchBuf structs.
+  //   may make sense to move the buffers into the existing CoolHeatScratchBuf
+  //   struct.
   // - in the longer term the goal is to refactor this logic to remove as many
   //   of these buffers as possible (without crippling cache performance on
   //   CPUs)
