@@ -15,7 +15,9 @@
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+#include "dust/gas_heat_cool.hpp"
 #include "dust/solver.hpp"
+#include "dust/misc.hpp"
 #include "interpolate.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
@@ -38,7 +40,7 @@ void DustSolver::lookup_dust_rates1d(
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     GrainSpeciesCollection grain_temperatures,
     LnTLinInterpBuf logTlininterp_buf, FullRxnRateBuf rxn_rate_buf,
-    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
+    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) const {
   // TODO: get rid of dlogtem argument!
 
   const double dlogTdust =
@@ -275,6 +277,132 @@ void DustSolver::lookup_dust_rates1d(
       }  // n_grain_species loop
     }
   }
+}
+
+void DustSolver::calc_Tdust_and_chem_contrib(
+    double* edot, double* dust2gas, double* tdust,
+    GrainSpeciesCollection grain_temperatures, double* alpha_continuum,
+    const double* tgas, const double* rhoH, const double* nelec_times_mH,
+    const double* metallicity, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range,
+    LnTLinInterpBuf logTlininterp_buf) const {
+  // Set flag for dust-related options
+  const gr_mask_type anydust = (my_chemistry->dust_chemistry > 0 ||
+                                my_chemistry->dust_recombination_cooling > 0)
+                                   ? MASK_TRUE
+                                   : MASK_FALSE;
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
+
+  const double dom = internalu_calc_dom_(internalu);
+  const double dom_inv = 1. / dom;
+  const double rad_T = internalu_calc_Tcmb_(internalu);
+
+  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                             my_fields->grid_dimension[1],
+                             my_fields->grid_dimension[2]);
+
+  // buffers of intermediate quantities used within dust-routines (for
+  // calculating quantites related to heating/cooling)
+  InternalDustPropBuf internal_dust_prop_buf = new_InternalDustPropBuf(
+      my_fields->grid_dimension[0],
+      GrainMetalInjectPathways_get_n_log10Tdust_vals(
+          my_rates->opaque_storage->inject_pathway_props));
+
+  // opacity coefficients for each dust grain (the product of opacity
+  // coefficient & gas mass density is the linear absortpion coefficient)
+  GrainSpeciesCollection grain_kappa =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+  // closely related to grain_kappa
+  std::vector<double> kappa_tot(my_fields->grid_dimension[0]);
+
+  // holds the gas/grain-species heat transfer rates
+  GrainSpeciesCollection gas_grainsp_heatrate =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+  // closely related to gas_grainsp_heatrate
+  std::vector<double> gasgr(my_fields->grid_dimension[0]);
+
+  // holds values of the interstellar radiation field
+  std::vector<double> myisrf(my_fields->grid_dimension[0]);
+
+  // 1d array of Hydrogen number densities
+  // TODO: get rid of this buffer
+  // -> accessing this buffer vs recomputing the value each time has a very
+  //    small impact on rruntime
+  // -> Getting rid of the buffer reduces cache complexity and simplifies logic
+  //    (in fact, its plausible that getting rid of this could speed things up)
+  std::vector<double> nH(my_fields->grid_dimension[0]);
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      nH[i] = rhoH[i] * dom;
+    }
+  }
+
+  // a scratch buffer (with some refactoring, this can probably be removed)
+  std::vector<double> gasgr_tdust(my_fields->grid_dimension[0]);
+
+  // compute various dust properties
+  dust_related_props(anydust, tgas, nH.data(), metallicity, itmask,
+                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
+                     idx_range, logTlininterp_buf, rad_T, dust2gas, tdust,
+                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
+                     kappa_tot.data(), grain_kappa, gasgr_tdust.data(),
+                     myisrf.data(), internal_dust_prop_buf);
+
+  // Add contributions from dust opacity to alpha_continuum, the continuum
+  // linear absorption coefficient
+  //
+  // The original Fortran version of this logic had the following 2
+  // comments:
+  //    ! if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
+  //    ! We better not include dust opacity.
+  // I think this comment explains why we aren't including dust contributions
+  // in the classic single-species dust model
+  if ((anydust != MASK_FALSE) && (!single_species_dust_model)) {
+    const double mh_local_var = mh_grflt;
+    int n_grain_species =
+        my_rates->opaque_storage->grain_species_info->n_species;
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask_metal[i] != MASK_FALSE) {
+        // right now, summing up the grain_kappa components and then updating
+        // alpha_continuum *may* be marginally faster, but the current approach
+        // is probably better in the long run
+        // -> in order to cut down on temporary scratch buffers, we'll probably
+        //    want to add contributions to alpha_continuum as we compute
+        //    the opacities for a given grain species
+        double tmp = d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
+        for (int grsp_i = 0; grsp_i < n_grain_species; grsp_i++) {
+          alpha_continuum[i] += grain_kappa.data[grsp_i][i] * tmp;
+        }
+      }
+    }
+  }
+
+  // Calculate dust cooling rate
+  if (anydust != MASK_FALSE) {
+    dust_gas_edot::update_edot_dust_cooling_rate(
+        edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
+        my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
+  }
+
+  // Photo-electric heating by UV-irradiated dust
+  dust_gas_edot::update_edot_photoelectric_heat(
+      edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
+      my_chemistry, my_rates->gammah, idx_range, dom_inv);
+
+  // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
+  if (my_chemistry->dust_recombination_cooling > 0) {
+    dust_gas_edot::update_edot_dust_recombination(
+        edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
+        my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
+        my_rates->regr, idx_range, dom_inv);
+  }
+
+  // Free memory
+  drop_InternalDustPropBuf(&internal_dust_prop_buf);
+  drop_GrainSpeciesCollection(&grain_kappa);
+  drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL

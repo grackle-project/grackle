@@ -16,16 +16,12 @@
 #include <cstdio>
 #include <vector>
 
-#include "dust/grain_species_info.hpp"
 #include "cool1d_multi_g.hpp"
-#include "dust/misc.hpp"
-#include "dust/multi_grain_species/dust_props.hpp"
-#include "dust/gas_heat_cool.hpp"
+#include "dust/solver.hpp"
 #include "fortran_func_decls.h"
 #include "grackle.h"
 #include "internal_units.hpp"
 #include "interpolate.hpp"
-#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
 #include "opaque_storage.hpp"
@@ -45,175 +41,6 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
       interp_grid.props.parameters[1], interp_grid.props.parameter_spacing[1],
       interp_grid.props.parameters[2], interp_grid.props.parameter_spacing[2],
       interp_grid.props.data_size, interp_grid.data);
-}
-
-/// this is a helper function that handles all dust contributions pertaining
-/// to cool1d_multi_g
-///
-/// @param[out] edot 1D array to hold the computed the time derivative of the
-///     internal energy in the @p idx_range. Contributions are accumulated in
-///     this buffer. In other words, this function does **NOT** set elements to
-///     to 0 before adding contributions.
-/// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
-///     location in the index range. In other words, this holds the dust mass
-///     per unit gas mass (only used in certain configuration)
-/// @param[out] tdust, grain_temperatures dust temperatures may be written
-///     to one of these variables, based on configuration
-/// @param[out] alpha_continuum_buf buffer to which linear absorption
-///     coefficients from dust are added (each element is updated in place with
-///     the sum of its existing value and the contribution from dust). In
-///     certain configurations this is not actually updated.
-/// @param[in] tgas 1d array of gas temperature
-/// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
-/// @param[in] nelec_times_mH 1D array holding the number density of electrons
-///     (multiplied by the Hydrogen mass) for the @p idx_range
-/// @param[in] metallicity 1d array of metallicities
-/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
-///     for this calculation.
-/// @param[in] itmask_metal Specifies the metal/dust-specific iteration-mask of
-///     the @p idx_range for this calculation.
-/// @param[in] my_chemistry holds a number of configuration parameters.
-/// @param[in] my_rates Holds assorted rate data and other internal
-///     configuration info.
-/// @param[in] my_fields Specifies the field data.
-/// @param[in] internalu Specifies Grackle's internal unit-system
-/// @param[in] idx_range Specifies the current index-range
-/// @param[in] logTlininterp_buf hold values for each location in @p idx_range
-///     that are used to linearly interpolate tables with respect to the
-///     natural log of @p tgas.
-///
-/// @note
-/// In some sense, this is a step towards factoring out all of the dust logic.
-/// - we need to be careful if/when we move this function out of the file
-///   where @ref cool1d_multi_g is defined. The dust logic has already gotten
-///   a little difficult to follow & we don't want to make things worse.
-/// - To be clear, I think dedicating functionality to the dust model will
-///   definitely help with all of this, but I'm a little worried about the
-///   intermediate steps
-static void handle_dust_contributions(
-    double* edot, double* dust2gas, double* tdust,
-    GrainSpeciesCollection grain_temperatures, double* alpha_continuum,
-    const double* tgas, const double* rhoH, const double* nelec_times_mH,
-    const double* metallicity, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    InternalGrUnits internalu, IndexRange idx_range,
-    LnTLinInterpBuf logTlininterp_buf) {
-  // Set flag for dust-related options
-  const gr_mask_type anydust = (my_chemistry->dust_chemistry > 0 ||
-                                my_chemistry->dust_recombination_cooling > 0)
-                                   ? MASK_TRUE
-                                   : MASK_FALSE;
-  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
-
-  const double dom = internalu_calc_dom_(internalu);
-  const double dom_inv = 1. / dom;
-  const double rad_T = internalu_calc_Tcmb_(internalu);
-
-  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
-                             my_fields->grid_dimension[1],
-                             my_fields->grid_dimension[2]);
-
-  // buffers of intermediate quantities used within dust-routines (for
-  // calculating quantites related to heating/cooling)
-  InternalDustPropBuf internal_dust_prop_buf = new_InternalDustPropBuf(
-      my_fields->grid_dimension[0],
-      GrainMetalInjectPathways_get_n_log10Tdust_vals(
-          my_rates->opaque_storage->inject_pathway_props));
-
-  // opacity coefficients for each dust grain (the product of opacity
-  // coefficient & gas mass density is the linear absortpion coefficient)
-  GrainSpeciesCollection grain_kappa =
-      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
-  // closely related to grain_kappa
-  std::vector<double> kappa_tot(my_fields->grid_dimension[0]);
-
-  // holds the gas/grain-species heat transfer rates
-  GrainSpeciesCollection gas_grainsp_heatrate =
-      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
-  // closely related to gas_grainsp_heatrate
-  std::vector<double> gasgr(my_fields->grid_dimension[0]);
-
-  // holds values of the interstellar radiation field
-  std::vector<double> myisrf(my_fields->grid_dimension[0]);
-
-  // 1d array of Hydrogen number densities
-  // TODO: get rid of this buffer
-  // -> accessing this buffer vs recomputing the value each time has a very
-  //    small impact on rruntime
-  // -> Getting rid of the buffer reduces cache complexity and simplifies logic
-  //    (in fact, its plausible that getting rid of this could speed things up)
-  std::vector<double> nH(my_fields->grid_dimension[0]);
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      nH[i] = rhoH[i] * dom;
-    }
-  }
-
-  // a scratch buffer (with some refactoring, this can probably be removed)
-  std::vector<double> gasgr_tdust(my_fields->grid_dimension[0]);
-
-  // compute various dust properties
-  dust_related_props(anydust, tgas, nH.data(), metallicity, itmask,
-                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
-                     idx_range, logTlininterp_buf, rad_T, dust2gas, tdust,
-                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
-                     kappa_tot.data(), grain_kappa, gasgr_tdust.data(),
-                     myisrf.data(), internal_dust_prop_buf);
-
-  // Add contributions from dust opacity to alpha_continuum, the continuum
-  // linear absorption coefficient
-  //
-  // The original Fortran version of this logic had the following 2
-  // comments:
-  //    ! if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
-  //    ! We better not include dust opacity.
-  // I think this comment explains why we aren't including dust contributions
-  // in the classic single-species dust model
-  if ((anydust != MASK_FALSE) && (!single_species_dust_model)) {
-    const double mh_local_var = mh_grflt;
-    int n_grain_species =
-        my_rates->opaque_storage->grain_species_info->n_species;
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask_metal[i] != MASK_FALSE) {
-        // right now, summing up the grain_kappa components and then updating
-        // alpha_continuum *may* be marginally faster, but the current approach
-        // is probably better in the long run
-        // -> in order to cut down on temporary scratch buffers, we'll probably
-        //    want to add contributions to alpha_continuum as we compute
-        //    the opacities for a given grain species
-        double tmp = d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
-        for (int grsp_i = 0; grsp_i < n_grain_species; grsp_i++) {
-          alpha_continuum[i] += grain_kappa.data[grsp_i][i] * tmp;
-        }
-      }
-    }
-  }
-
-  // Calculate dust cooling rate
-  if (anydust != MASK_FALSE) {
-    dust_gas_edot::update_edot_dust_cooling_rate(
-        edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
-        my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
-  }
-
-  // Photo-electric heating by UV-irradiated dust
-  dust_gas_edot::update_edot_photoelectric_heat(
-      edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
-      my_chemistry, my_rates->gammah, idx_range, dom_inv);
-
-  // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-  if (my_chemistry->dust_recombination_cooling > 0) {
-    dust_gas_edot::update_edot_dust_recombination(
-        edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
-        my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
-        my_rates->regr, idx_range, dom_inv);
-  }
-
-  // Free memory
-  drop_InternalDustPropBuf(&internal_dust_prop_buf);
-  drop_GrainSpeciesCollection(&grain_kappa);
-  drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
 }
 
 void cool1d_multi_g(
@@ -388,7 +215,7 @@ void cool1d_multi_g(
   //
   // in the immediate future, the plan is to hoist this function call out of
   // cool1d_multi_g
-  handle_dust_contributions(
+  opaque_storage.dust_solver.calc_Tdust_and_chem_contrib(
       edot, dust2gas, tdust, grain_temperatures, alpha_continuum.data(), tgas,
       rhoH, nelec_times_mH, metallicity, itmask, itmask_metal, my_chemistry,
       my_rates, my_fields, internalu, idx_range, logTlininterp_buf);
