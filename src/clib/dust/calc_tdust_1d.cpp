@@ -230,9 +230,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   std::vector<double> bi_t_high(buf_len);
   // iteration mask specifies where we use newton's method with finite
   // differences
-  std::vector<SolveStatus> nm_solvemask(buf_len);
-  // specifies where we use bisection
-  std::vector<SolveStatus> bi_solvemask(buf_len);
+  std::vector<SolveStatus> nm_solvemask(buf_len, SolveStatus::CONVERGED);
 
   double pert_i = 1.e-3;
 
@@ -249,14 +247,12 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       if (Trad >= tgas[i]) {
         tdustnow[i] = Trad;
         nm_solvemask[i] = SolveStatus::CONVERGED;
-        bi_solvemask[i] = SolveStatus::CONVERGED;
         c_done = c_done + 1;
         nm_done = nm_done + 1;
       } else if (tgas[i] > passive_dust_model_T_sublimation) {
         // Use bisection if T_gas > grain sublimation temperature.
         nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
         nm_done = nm_done + 1;
-        bi_solvemask[i] = SolveStatus::UNCONVERGED;
       } else {
         // we the following is a guess based on the premise that cooling from
         // thermal radiation is balanced by heating from the interstellar
@@ -269,12 +265,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         tdustnow[i] = std::fmax(Trad, isrf_balance_guess);
         pert[i] = pert_i;
         nm_solvemask[i] = SolveStatus::UNCONVERGED;
-        bi_solvemask[i] = SolveStatus::UNCONVERGED;
       }
 
     } else {
       nm_solvemask[i] = SolveStatus::CONVERGED;
-      bi_solvemask[i] = SolveStatus::CONVERGED;
       c_done = c_done + 1;
       nm_done = nm_done + 1;
     }
@@ -325,7 +319,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
           } else if (std::fabs(sol[i]) < std::fabs(solplus[i] * tol)) {
             nm_solvemask[i] = SolveStatus::CONVERGED;
             c_done = c_done + 1;
-            bi_solvemask[i] = SolveStatus::CONVERGED;
             nm_done = nm_done + 1;
           }
 
@@ -350,6 +343,9 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     // End iteration loop for Newton's method
   }
 
+  // specifies where we use bisection
+  std::vector<SolveStatus> bi_solvemask(buf_len, SolveStatus::CONVERGED);
+
   // If iteration count exceeded, try once more with bisection
   if (c_done < c_total) {
     // set initial guesses
@@ -362,7 +358,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     // unlikely to be false, the iteration will fail silently (with an
     // absolute garbage result) on the off chance that it comes up
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (bi_solvemask[i] == SolveStatus::UNCONVERGED) {
+      if (nm_solvemask[i] == SolveStatus::CONVERGED) {
+        bi_solvemask[i] = SolveStatus::CONVERGED;
+      } else {  // we want SolveStatus::UNCONVERGED and SolveStatus::SKIP_SOLVE
+        bi_solvemask[i] = SolveStatus::UNCONVERGED;
         tdustnow[i] = Trad;
         // bi_t_high(i) = tgas(i)
         bi_t_high[i] = 3e3;
