@@ -783,6 +783,7 @@ int solve_rate_cool(
     std::vector<double> dust2gas(my_fields->grid_dimension[0]);
     std::vector<double> rhoH(my_fields->grid_dimension[0]);
     std::vector<double> mmw(my_fields->grid_dimension[0]);
+    std::vector<double> alpha_continuum(my_fields->grid_dimension[0]);
     // when primordial_chemistry > 0, this buffer simply holds copies of
     // of the e_density field
     std::vector<double> nelec_times_mH(my_fields->grid_dimension[0]);
@@ -882,7 +883,7 @@ int solve_rate_cool(
                                 metallicity.data(), imetal, idx_range,
                                 my_chemistry);
 
-        // Initialize edot
+        // Initialize edot and alpha_continuum
         // -> we primarily set edot to tiny_fortran_val for historical
         //    consistency with the behavior of Tfloor.
         // -> it would be better to set it to 0 and modify the subcycle timestep
@@ -893,13 +894,14 @@ int solve_rate_cool(
           edot[i] = (itmask[i] == MASK_FALSE) * tiny_fortran_val;
           // the above line is a branchless version of
           // edot[i] = (itmask[i] == MASK_FALSE) ? tiny_fortran_val : 0.0;
+          alpha_continuum[i] = 0.0;
         }
 
         // Compute the edot values (so we can get the cooling time)
         // -> at this time the function also fillls dust2gas and tdust.
         // -> (we plan to factor out the extra calculations)
         cool1d_multi_g(
-          edot.data(),
+          edot.data(), alpha_continuum.data(),
           tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry,

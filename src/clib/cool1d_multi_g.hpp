@@ -34,6 +34,9 @@ namespace grackle::impl {
 ///     internal energy in the @p idx_range. Contributions are accumulated in
 ///     this buffer. In other words, this function does **NOT** set elements to
 ///     to 0 before adding contributions.
+/// @param[in] alpha_continuum 1D array holding continuum linear absorption
+///     coefficients for each location in the @p idx_range. This buffer may
+///     already contain non-zero contributions.
 /// @param[in] tgas 1D array of gas temperatures for the @p idx_range
 /// @param[in] mmw 1D array of mean molecular weights for the @p idx_range
 /// @param[out] tdust 1D array to hold the computed dust temperatures at
@@ -79,10 +82,10 @@ namespace grackle::impl {
 /// modified3: February, 2003 by Robert Harkness; iteration mask
 /// modified4: September, 2009 by BDS to include cloudy cooling
 /// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void cool1d_multi_g(double* edot, const double* tgas, const double* mmw,
-                    double* tdust, const double* metallicity, double* dust2gas,
-                    const double* rhoH, const double* nelec_times_mH,
-                    const gr_mask_type* itmask,
+void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
+                    const double* mmw, double* tdust, const double* metallicity,
+                    double* dust2gas, const double* rhoH,
+                    const double* nelec_times_mH, const gr_mask_type* itmask,
                     const gr_mask_type* itmask_metal,
                     chemistry_data* my_chemistry,
                     chemistry_data_storage* my_rates,

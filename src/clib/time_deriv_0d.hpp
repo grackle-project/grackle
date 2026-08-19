@@ -495,12 +495,14 @@ inline void derivatives(
     pack.other_scratch_buf.edot[0] =
         (pack.other_scratch_buf.itmask[0] == MASK_FALSE) ? tiny_fortran_val : 0.0;
 
+    double alpha_continuum[1] = {0.0};
+
     // Compute the edot values (so we can get the cooling time)
     // -> at this time the function also fillls dust2gas and tdust
     // -> (we plan to factor out the extra calculations)
     cool1d_multi_g(
-      pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
-      pack.other_scratch_buf.mmw,
+      pack.other_scratch_buf.edot, alpha_continuum,
+      pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
       pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
       pack.other_scratch_buf.nelec_times_mH,

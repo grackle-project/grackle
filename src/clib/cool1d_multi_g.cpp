@@ -44,13 +44,14 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 }
 
 void cool1d_multi_g(
-    double* edot, const double* tgas, const double* mmw, double* tdust,
-    const double* metallicity, double* dust2gas, const double* rhoH,
-    const double* nelec_times_mH, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-    IndexRange idx_range, GrainSpeciesCollection grain_temperatures,
+    double* edot, double* alpha_continuum, const double* tgas,
+    const double* mmw, double* tdust, const double* metallicity,
+    double* dust2gas, const double* rhoH, const double* nelec_times_mH,
+    const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
+    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
+    InternalGrUnits internalu, IndexRange idx_range,
+    GrainSpeciesCollection grain_temperatures,
     LnTLinInterpBuf logTlininterp_buf, CoolHeatScratchBuf coolingheating_buf) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
@@ -175,7 +176,6 @@ void cool1d_multi_g(
   std::vector<double> LCO(my_fields->grid_dimension[0]);
   std::vector<double> LOH(my_fields->grid_dimension[0]);
   std::vector<double> LH2O(my_fields->grid_dimension[0]);
-  std::vector<double> alpha_continuum(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
@@ -204,11 +204,6 @@ void cool1d_multi_g(
   // multiplicative factor for including/excluding H2 cooling
   ih2cox = (double)(my_chemistry->ih2co);
 
-  // zero-out the continuum absorption coefficients
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    alpha_continuum[i] = 0.0;
-  }
-
   // based on configuration precise configuration, perform a subset of:
   // - compute Tdust, dust2gas
   // - add contributions to alpha_continuum, edot from dust
@@ -216,9 +211,9 @@ void cool1d_multi_g(
   // in the immediate future, the plan is to hoist this function call out of
   // cool1d_multi_g
   opaque_storage.dust_solver.calc_Tdust_and_chem_contrib(
-      edot, dust2gas, tdust, grain_temperatures, alpha_continuum.data(), tgas,
-      rhoH, nelec_times_mH, metallicity, itmask, itmask_metal, my_chemistry,
-      my_rates, my_fields, internalu, idx_range, logTlininterp_buf);
+      edot, dust2gas, tdust, grain_temperatures, alpha_continuum, tgas, rhoH,
+      nelec_times_mH, metallicity, itmask, itmask_metal, my_chemistry, my_rates,
+      my_fields, internalu, idx_range, logTlininterp_buf);
 
   // Compute log densities
 
