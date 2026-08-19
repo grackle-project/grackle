@@ -217,7 +217,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
   // Locals
 
-  int iter, c_done, c_total, nm_done;
+  int iter;
 
   // Slice Locals
 
@@ -234,25 +234,18 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
   double pert_i = 1.e-3;
 
-  // Set total cells for calculation
-
-  c_done = 0;
-  nm_done = 0;
-  c_total = idx_range.i_stop - idx_range.i_start;
-
   // Set local iteration mask and initial guess
-
+  int c_remain = 0;
+  int nm_remain = 0;
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       if (Trad >= tgas[i]) {
         tdustnow[i] = Trad;
         nm_solvemask[i] = SolveStatus::CONVERGED;
-        c_done = c_done + 1;
-        nm_done = nm_done + 1;
       } else if (tgas[i] > passive_dust_model_T_sublimation) {
         // Use bisection if T_gas > grain sublimation temperature.
         nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
-        nm_done = nm_done + 1;
+        c_remain++;
       } else {
         // we the following is a guess based on the premise that cooling from
         // thermal radiation is balanced by heating from the interstellar
@@ -265,14 +258,19 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         tdustnow[i] = std::fmax(Trad, isrf_balance_guess);
         pert[i] = pert_i;
         nm_solvemask[i] = SolveStatus::UNCONVERGED;
+        c_remain++;
+        nm_remain++;
       }
 
     } else {
       nm_solvemask[i] = SolveStatus::CONVERGED;
-      c_done = c_done + 1;
-      nm_done = nm_done + 1;
     }
   }
+
+  // Set total cells for calculation
+  int c_total = idx_range.i_stop - idx_range.i_start;
+  int c_done = c_total - c_remain;
+  int nm_done = c_total - nm_remain;
 
   // Iterate to convergence with Newton's method
 
