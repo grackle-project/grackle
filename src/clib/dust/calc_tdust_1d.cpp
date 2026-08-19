@@ -230,7 +230,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   std::vector<double> bi_t_high(buf_len);
   // iteration mask specifies where we use newton's method with finite
   // differences
-  std::vector<gr_mask_type> nm_itmask(buf_len);
+  std::vector<SolveStatus> nm_solvemask(buf_len);
   // specifies where we use bisection
   std::vector<SolveStatus> bi_solvemask(buf_len);
 
@@ -245,20 +245,18 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // Set local iteration mask and initial guess
 
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    nm_itmask[i] = itmask[i];
-    bi_solvemask[i] = (itmask[i] == MASK_FALSE) ? SolveStatus::CONVERGED
-                                                : SolveStatus::UNCONVERGED;
-    if (nm_itmask[i] != MASK_FALSE) {
+    if (itmask[i] != MASK_FALSE) {
       if (Trad >= tgas[i]) {
         tdustnow[i] = Trad;
-        nm_itmask[i] = MASK_FALSE;
+        nm_solvemask[i] = SolveStatus::CONVERGED;
         bi_solvemask[i] = SolveStatus::CONVERGED;
         c_done = c_done + 1;
         nm_done = nm_done + 1;
       } else if (tgas[i] > passive_dust_model_T_sublimation) {
         // Use bisection if T_gas > grain sublimation temperature.
-        nm_itmask[i] = MASK_FALSE;
+        nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
         nm_done = nm_done + 1;
+        bi_solvemask[i] = SolveStatus::UNCONVERGED;
       } else {
         // we the following is a guess based on the premise that cooling from
         // thermal radiation is balanced by heating from the interstellar
@@ -270,9 +268,13 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
             (gamma_isrf[i] / Tdust_detail::sigma_sb_times_4 / kgr1), 0.17);
         tdustnow[i] = std::fmax(Trad, isrf_balance_guess);
         pert[i] = pert_i;
+        nm_solvemask[i] = SolveStatus::UNCONVERGED;
+        bi_solvemask[i] = SolveStatus::UNCONVERGED;
       }
 
     } else {
+      nm_solvemask[i] = SolveStatus::CONVERGED;
+      bi_solvemask[i] = SolveStatus::CONVERGED;
       c_done = c_done + 1;
       nm_done = nm_done + 1;
     }
@@ -283,14 +285,14 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   for (iter = 1; iter <= (itmax); iter++) {
     // Calculate grain opacities AND heating/cooling balance
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (nm_itmask[i] != MASK_FALSE) {
+      if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
         FnEval eval_rslt = fn(tdustnow[i], i);
         kgr[i] = eval_rslt.associated_val;
         sol[i] = eval_rslt.f_val;
       }
     }
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (nm_itmask[i] != MASK_FALSE) {
+      if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
         double Tdust_plus = std::fmax(1.e-3, (1. + pert[i]) * tdustnow[i]);
         FnEval eval_rslt = fn(Tdust_plus, i);
         solplus[i] = eval_rslt.f_val;
@@ -304,7 +306,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       // below this x value, we give up!
       double giveup_small_x_threshold = Trad;
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (nm_itmask[i] != MASK_FALSE) {
+        if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
           // Check if the solution has converged (if not prepare the next guess)
 
           double slope = (solplus[i] - sol[i]) / (pert[i] * x[i]);
@@ -317,11 +319,11 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
               minpert);
 
           if (x[i] < giveup_small_x_threshold) {
-            nm_itmask[i] = MASK_FALSE;
+            nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
             nm_done = nm_done + 1;
             // Check for convergence of solution
           } else if (std::fabs(sol[i]) < std::fabs(solplus[i] * tol)) {
-            nm_itmask[i] = MASK_FALSE;
+            nm_solvemask[i] = SolveStatus::CONVERGED;
             c_done = c_done + 1;
             bi_solvemask[i] = SolveStatus::CONVERGED;
             nm_done = nm_done + 1;
