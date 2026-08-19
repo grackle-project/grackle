@@ -6,24 +6,25 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares the calc_all_tdust_gasgr_1d_g function
+/// Declares the calc_all_tdust_gasgr_1d function
 ///
 //===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // calc_all_tdust_gasgr_1d_g function from FORTRAN to C++
 
-#ifndef CALC_ALL_TDUST_GASGR_1D_G_HPP
-#define CALC_ALL_TDUST_GASGR_1D_G_HPP
+#ifndef DUST_CALC_ALL_TDUST_GASGR_1D_HPP
+#define DUST_CALC_ALL_TDUST_GASGR_1D_HPP
 
-#include "dust_props.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "grackle.h"
 #include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
+#include "support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 ///  Calculate all dust temperature(s) and the gas to grain heat
 ///  transfer rate(s) (the latter is commonly called gasgr)
@@ -64,19 +65,18 @@ namespace grackle::impl {
 ///
 /// @par History
 /// modified: January, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void calc_all_tdust_gasgr_1d_g(
-    double trad, double* tgas, double* tdust, const double* metallicity,
-    const double* dust2gas, double* nh, double* gasgr_tdust,
-    gr_mask_type* itmask_metal, double coolunit, double* gasgr, double* myisrf,
-    double* kptot, chemistry_data* my_chemistry,
+void calc_all_tdust_gasgr_1d(
+    double trad, const double* tgas, double* tdust, const double* metallicity,
+    const double* dust2gas, const double* nh, double* gasgr_tdust,
+    const gr_mask_type* itmask_metal, double coolunit, double* gasgr,
+    const double* myisrf, double* kptot, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    IndexRange idx_range,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate,
-    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-    grackle::impl::InternalDustPropBuf internal_dust_prop_buf,
-    grackle::impl::GrainSpeciesCollection grain_kappa);
+    IndexRange idx_range, GrainSpeciesCollection grain_temperatures,
+    GrainSpeciesCollection gas_grainsp_heatrate,
+    LnTLinInterpBuf logTlininterp_buf,
+    InternalDustPropBuf internal_dust_prop_buf,
+    GrainSpeciesCollection grain_kappa);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* CALC_ALL_TDUST_GASGR_1D_G_HPP */
+#endif  // DUST_CALC_ALL_TDUST_GASGR_1D_HPP
