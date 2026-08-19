@@ -22,8 +22,8 @@
 
 #include "grackle.h"
 #include "calc_grain_size_increment_species_1d.hpp"
-#include "dust_props.hpp"
 #include "dust/grain_species_info.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -128,11 +128,11 @@ inline void calc_grain_size_increment_1d(
 
   // do the work
   {
-    View<gr_float**> SN_metal(repacked_inj_path_metal_densities.data(),
-                              my_fields->grid_dimension[0],
-                              inject_pathway_props->n_pathways);
+    FortranView<gr_float**> SN_metal(repacked_inj_path_metal_densities.data(),
+                                     my_fields->grid_dimension[0],
+                                     inject_pathway_props->n_pathways);
 
-    View<const gr_float***> metal(
+    FortranView<const gr_float***> metal(
         const_cast<const gr_float*>(my_fields->metal_density),
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
@@ -145,7 +145,7 @@ inline void calc_grain_size_increment_1d(
       // when my_chemistry->multi_metals == 0, inj_path_metal_dens wraps
       // the same pointer as `metal`
 
-      View<const gr_float***> inj_path_metal_dens(
+      FortranView<const gr_float***> inj_path_metal_dens(
           inject_pathway_metal_densities[count], my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -178,21 +178,21 @@ inline void calc_grain_size_increment_1d(
   std::vector<double> repacked_yields(n_pathways);
 
   std::vector<double> repacked_size_moments_data_(n_pathways * 3);
-  View<double**> repacked_size_moments(repacked_size_moments_data_.data(), 3,
-                                       n_pathways);
+  FortranView<double**> repacked_size_moments(
+      repacked_size_moments_data_.data(), 3, n_pathways);
 
   std::vector<double> repacked_opac_table_data_(n_pathways * gr_Size);
-  View<double**> repacked_opac_table(repacked_opac_table_data_.data(), gr_Size,
-                                     n_pathways);
+  FortranView<double**> repacked_opac_table(repacked_opac_table_data_.data(),
+                                            gr_Size, n_pathways);
 
   SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
 
   // loop over grain species
   for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
     // repack the selected injection pathways for the current grain species
-    View<double**> orig_size_moments(
+    FortranView<double**> orig_size_moments(
         inject_pathway_props->size_moments.data[grsp_i], 3, n_pathways);
-    View<double**> orig_opac_table(
+    FortranView<double**> orig_opac_table(
         inject_pathway_props->opacity_coef_table.data[grsp_i], gr_Size,
         n_pathways);
 
@@ -224,49 +224,6 @@ inline void calc_grain_size_increment_1d(
         internal_dust_prop_buf.grain_sigma_per_gas_mass.data[grsp_i],
         internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i], gr_N,
         repacked_opac_table.data());
-  }
-
-  // step 3: calculate the total cross-section and the total opacity table
-  // (i.e. that include contributions from all grain species)
-
-  // todo: can we skip this when my_chemistry->use_multiple_dust_temperatures
-  //   is not 0?
-
-  double* sigma_tot = internal_dust_prop_buf.sigma_per_gas_mass_tot;
-  View<double**> kappa_tab_tot(internal_dust_prop_buf.dyntab_kappa_tot,
-                               n_log10Tdust_vals, my_fields->grid_dimension[0]);
-
-  // zero-out the current value
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    sigma_tot[i] = 0.0;
-  }
-
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    for (int idx = 0; idx < n_log10Tdust_vals; idx++) {
-      kappa_tab_tot(idx, i) = 0.0;
-    }
-  }
-
-  // todo: get rid of the itmask check (it shouldn't be necessary here)
-  for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
-    const double* cur_grsp_sigma =
-        internal_dust_prop_buf.grain_sigma_per_gas_mass.data[grsp_i];
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        sigma_tot[i] += cur_grsp_sigma[i];
-      }
-    }
-
-    const double* tmp = internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i];
-    View<const double**> cur_grsp_kappa_tab(tmp, n_log10Tdust_vals,
-                                            my_fields->grid_dimension[0]);
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        for (int idx = 0; idx < n_log10Tdust_vals; idx++) {
-          kappa_tab_tot(idx, i) += cur_grsp_kappa_tab(idx, i);
-        }
-      }
-    }
   }
 }
 

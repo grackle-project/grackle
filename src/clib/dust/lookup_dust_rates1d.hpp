@@ -18,7 +18,7 @@
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
-#include "fortran_func_wrappers.hpp"
+#include "interpolate.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
 #include "opaque_storage.hpp"
@@ -113,9 +113,6 @@ inline void lookup_dust_rates1d(
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
   // TODO: get rid of dlogtem argument!
 
   const double dlogTdust =
@@ -136,20 +133,19 @@ inline void lookup_dust_rates1d(
     const double logTdust_start = std::log(my_chemistry->DustTemperatureStart);
     const double logTdust_end = std::log(my_chemistry->DustTemperatureEnd);
     // construct a view the h2dust interpolation table
-    grackle::impl::View<double**> h2dusta(
-        my_rates->h2dust, my_chemistry->NumberOfTemperatureBins,
-        my_chemistry->NumberOfDustTemperatureBins);
+    FortranView<double**> h2dusta(my_rates->h2dust,
+                                  my_chemistry->NumberOfTemperatureBins,
+                                  my_chemistry->NumberOfDustTemperatureBins);
 
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
         // Assume dust melts at Tdust > DustTemperatureEnd, in the context of
         // computing the H2 formation rate
         //
-        // important: at the time of writing, whem using a generic dust
-        // density field (my_chemistry->use_dust_density_field > 0), I'm
-        // 99% sure that we don't mutate that density field. This contrasts
-        // with Grackle's behavior when tracking dust species fields.
-
+        // important: at the time of writing, when using a generic dust
+        // density field (i.e. my_chemistry->use_dust_density_field == 1),
+        // we don't mutate that density field. This contrasts with Grackle's
+        // behavior when tracking dust species fields.
         if (tdust[i] > my_chemistry->DustTemperatureEnd) {
           h2dust[i] = tiny8;
         } else {
@@ -201,7 +197,7 @@ inline void lookup_dust_rates1d(
                                  my_rates->opaque_storage->inject_pathway_props,
                                  my_fields, internal_dust_prop_scratch_buf);
 
-    grackle::impl::View<const gr_float***> d(
+    FortranView<const gr_float***> d(
         my_fields->density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -230,7 +226,7 @@ inline void lookup_dust_rates1d(
     // of tabulated values
 
     // load properties of the interpolation table
-    gr_interp_grid_props& interp_props =
+    InterpGridProps& interp_props =
         my_rates->opaque_storage->h2dust_grain_interp_props;
 
     // load the tables that we are interpolating over
@@ -254,51 +250,21 @@ inline void lookup_dust_rates1d(
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
         double summed_h2dust = 0.0;
-
-        if (my_chemistry->use_multiple_dust_temperatures == 0) {
-          // in this branch, all grains share a single dust temperature
-          double logTdust = std::log(tdust[i]);  // <- natural log
-
-          // precompute the shared coefficients
-          double h2dust_silicate_coef = f_wrap::interpolate_2d_g(
+        for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+          const double* coef_table =
+              gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
+                  ? h2rate_carbonaceous_coef_table
+                  : h2rate_silicate_coef_table;
+          // take the natural log of the grain species's Temperature
+          double logTdust = std::log(grain_temperatures.data[gsp_idx][i]);
+          double coef = interpolate_2d(
               logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
               interp_props.parameters[0], dlogTdust, interp_props.parameters[1],
-              dlogtem, interp_props.data_size, h2rate_silicate_coef_table);
-          double h2dust_carbonaceous_coef = f_wrap::interpolate_2d_g(
-              logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-              interp_props.parameters[0], dlogTdust, interp_props.parameters[1],
-              dlogtem, interp_props.data_size, h2rate_carbonaceous_coef_table);
-
-          // perform the summation
-          for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-            double coef =
-                gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
-                    ? h2dust_carbonaceous_coef
-                    : h2dust_silicate_coef;
-            double sigma_per_gas_mass =
-                internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                    .data[gsp_idx][i];
-            summed_h2dust += coef * sigma_per_gas_mass;
-          }
-
-        } else {
-          for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-            const double* coef_table =
-                gsp_info->species_info[gsp_idx].h2dust_uses_carbonaceous_table
-                    ? h2rate_carbonaceous_coef_table
-                    : h2rate_silicate_coef_table;
-            // take the natural log of the grain species's Temperature
-            double logTdust = std::log(grain_temperatures.data[gsp_idx][i]);
-            double coef = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
-                interp_props.parameters[0], dlogTdust,
-                interp_props.parameters[1], dlogtem, interp_props.data_size,
-                coef_table);
-            double sigma_per_gas_mass =
-                internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
-                    .data[gsp_idx][i];
-            summed_h2dust += coef * sigma_per_gas_mass;
-          }
+              dlogtem, interp_props.data_size, coef_table);
+          double sigma_per_gas_mass =
+              internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
+                  .data[gsp_idx][i];
+          summed_h2dust += coef * sigma_per_gas_mass;
         }
         h2dust[i] = summed_h2dust;
       }
@@ -332,14 +298,14 @@ inline void lookup_dust_rates1d(
 
         // preload views of each ingredient's current mass density &
         // precompute the divisor divided by the mass density
-        grackle::impl::View<const gr_float***>
+        FortranView<const gr_float***>
             ingred_view[grackle::impl::max_ingredients_per_grain_species];
         double ingred_divisor[grackle::impl::max_ingredients_per_grain_species];
 
         for (int ingred_idx = 0; ingred_idx < n_ingred; ingred_idx++) {
           const gr_float* ptr = field_data_adaptor.get_ptr_dynamic(
               ingredient_l[ingred_idx].species_idx);
-          ingred_view[ingred_idx] = grackle::impl::View<const gr_float***>(
+          ingred_view[ingred_idx] = FortranView<const gr_float***>(
               ptr, my_fields->grid_dimension[0], my_fields->grid_dimension[1],
               my_fields->grid_dimension[2]);
 
@@ -370,7 +336,7 @@ inline void lookup_dust_rates1d(
             limiting_factor *= (n_ingred > 0);
 
             // finally, we're ready to compute the rate
-            double kd = f_wrap::interpolate_1d_g(
+            double kd = interpolate_1d(
                 logTlininterp_buf.logtem[i], nratec_single_elem_arr,
                 interp_props.parameters[1], dlogtem, nratec_single_elem_arr[0],
                 my_rates->grain_growth_rate);
@@ -382,48 +348,6 @@ inline void lookup_dust_rates1d(
         }  // idx_range loop
       }  // n_grain_species loop
     }
-
-    // todo: determine better behavior when my_chemistry->dust_sublimation
-    //       and my_chemistry->grain_growth are both equal to 1. When the
-    //       former option is enabled, the latter option has no impact. Thus
-    //       it makes no sense to let users enable both options!
-
-    if (my_chemistry->dust_sublimation == 1) {
-      for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-        // load the sublimation temperature for the current grain species
-        double temdust_sublimation =
-            gsp_info->species_info[gsp_idx].sublimation_temperature;
-
-        // get pointer to the dust temperatures for the current grain species
-        const double* temdust_arr =
-            (my_chemistry->use_multiple_dust_temperatures == 0)
-                ? tdust
-                : grain_temperatures.data[gsp_idx];
-
-        // get the view of the grain species's current mass density
-        const gr_float* rho_gsp_ptr = field_data_adaptor.get_ptr_dynamic(
-            gsp_info->species_info[gsp_idx].species_idx);
-        grackle::impl::View<const gr_float***> rho_gsp(
-            rho_gsp_ptr, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-        // iterate over the current index range
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          if (itmask_metal[i] != MASK_FALSE) {
-            // zero-out the grain growth rate
-            grain_growth_rates[gsp_idx][i] = 0.0;
-
-            // set the growth rate to a negative value that will destroy the
-            // grain over the interval `dt` if the dust temperature exceeds
-            // the grain species's sublimation temperature
-            if (temdust_arr[i] > temdust_sublimation) {
-              grain_growth_rates[gsp_idx][i] =
-                  (tiny8 - rho_gsp(i, idx_range.j, idx_range.k)) / dt;
-            }
-          }
-        }
-      }
-    }  // (my_chemistry->dust_sublimation == 1)
   }
 }
 

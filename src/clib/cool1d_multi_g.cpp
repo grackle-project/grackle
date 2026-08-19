@@ -13,29 +13,38 @@
 // This file was initially generated automatically during conversion of the
 // cool1d_multi_g function from FORTRAN to C++
 
-#include "dust/misc.hpp"
-#include "dust/gas_heat_cool.hpp"
-
 #include <cstdio>
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
-#include "gas_props.hpp"
+#include "dust/misc.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
+#include "dust/gas_heat_cool.hpp"
 #include "grackle.h"
-#include "fortran_func_decls.h"
-#include "fortran_func_wrappers.hpp"
-#include "dust_props.hpp"
+#include "interpolate.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
+#include "interp_grid.hpp"
+#include "opaque_storage.hpp"
 #include "tabulated/cool1d_cloudy.hpp"
 #include "tabulated/cool1d_cloudy_old_tables.hpp"
 #include "utils-cpp.hpp"
 
+static double interp_from_3D_grid(double input1, double input2, double input3,
+                                  const GRIMPL_NS::InterpGrid& interp_grid) {
+  return GRIMPL_NS::interpolate_3d(
+      input1, input2, input3, interp_grid.props.dimension,
+      interp_grid.props.parameters[0], interp_grid.props.parameter_spacing[0],
+      interp_grid.props.parameters[1], interp_grid.props.parameter_spacing[1],
+      interp_grid.props.parameters[2], interp_grid.props.parameter_spacing[2],
+      interp_grid.props.data_size, interp_grid.data);
+}
+
 void grackle::impl::cool1d_multi_g(
-    int imetal, double* edot, const double* tgas, const double* mmw,
-    double* tdust, const double* metallicity, double* dust2gas,
-    const double* rhoH, const double* nelec_times_mH, gr_mask_type* itmask,
-    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    double* edot, const double* tgas, const double* mmw, double* tdust,
+    const double* metallicity, double* dust2gas, const double* rhoH,
+    const double* nelec_times_mH, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     IndexRange idx_range,
@@ -43,84 +52,83 @@ void grackle::impl::cool1d_multi_g(
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
     grackle::impl::CoolHeatScratchBuf coolingheating_buf) {
-  grackle::impl::View<gr_float***> d(
-      my_fields->density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> e(
+  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                             my_fields->grid_dimension[1],
+                             my_fields->grid_dimension[2]);
+  FortranView<gr_float***> e(
       my_fields->internal_energy, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> de(
+  FortranView<gr_float***> de(
       my_fields->e_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HI(
+  FortranView<gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HII(
+  FortranView<gr_float***> HII(
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeI(
+  FortranView<gr_float***> HeI(
       my_fields->HeI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeII(
+  FortranView<gr_float***> HeII(
       my_fields->HeII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeIII(
+  FortranView<gr_float***> HeIII(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HM(
+  FortranView<gr_float***> HM(
       my_fields->HM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2I(
+  FortranView<gr_float***> H2I(
       my_fields->H2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2II(
+  FortranView<gr_float***> H2II(
       my_fields->H2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HDI(
+  FortranView<gr_float***> HDI(
       my_fields->HDI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal(
+  FortranView<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Vheat(
+  FortranView<gr_float***> Vheat(
       my_fields->volumetric_heating_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mheat(
+  FortranView<gr_float***> Mheat(
       my_fields->specific_heating_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Tfloor(
-      my_fields->temperature_floor, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> photogamma(
+  FortranView<gr_float***> photogamma(
       my_fields->RT_heating_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CI(
+  FortranView<gr_float***> CI(
       my_fields->CI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CII(
+  FortranView<gr_float***> CII(
       my_fields->CII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CO(
+  FortranView<gr_float***> CO(
       my_fields->CO_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OI(
+  FortranView<gr_float***> OI(
       my_fields->OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OH(
+  FortranView<gr_float***> OH(
       my_fields->OH_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2O(
+  FortranView<gr_float***> H2O(
       my_fields->H2O_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Declare some constants:
   const double mh_local_var = mh_grflt;
 
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
+
   // Locals
   int i, iZscale, mycmbTfloor;
   double dom, qq, vibl, zr, hdlte1, hdlow1, fudge, gphdl1, dom_inv, tau,
       ciefudge, coolunit, tbase1, nSSh, nratio, nssh_he, nratio_he, fSShHI,
-      fSShHeI, ih2cox, min_metallicity;
+      fSShHeI, ih2cox;
   double comp1, comp2;
 
   // Performing heap allocations for all of the subsequent buffers within this
@@ -179,13 +187,15 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> tau_con(my_fields->grid_dimension[0]);
   double log_a;
 
+  const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
+
   // buffers of intermediate quantities used within dust-routines (for
   // calculating quantites related to heating/cooling)
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
       grackle::impl::new_InternalDustPropBuf(
           my_fields->grid_dimension[0],
           GrainMetalInjectPathways_get_n_log10Tdust_vals(
-              my_rates->opaque_storage->inject_pathway_props));
+              opaque_storage.inject_pathway_props));
   // opacity coefficients for each dust grain (the product of opacity
   // coefficient & gas mass density is the linear absortpion coefficient)
   grackle::impl::GrainSpeciesCollection grain_kappa =
@@ -206,12 +216,10 @@ void grackle::impl::cool1d_multi_g(
 
   // Set flag for dust-related options
 
-  if ((my_chemistry->h2_on_dust > 0) || (my_chemistry->dust_chemistry > 0) ||
-      (my_chemistry->dust_recombination_cooling > 0)) {
-    anydust = MASK_TRUE;
-  } else {
-    anydust = MASK_FALSE;
-  }
+  anydust = (my_chemistry->dust_chemistry > 0 ||
+             my_chemistry->dust_recombination_cooling > 0)
+                ? MASK_TRUE
+                : MASK_FALSE;
 
   // Set units
 
@@ -230,39 +238,6 @@ void grackle::impl::cool1d_multi_g(
 
   // multiplicative factor for including/excluding H2 cooling
   ih2cox = (double)(my_chemistry->ih2co);
-
-  // ignore metal chemistry/cooling below this metallicity
-  min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
-
-  // Initialize edot
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      edot[i] = 0.;
-    }
-  }
-
-  // Skip if below the temperature floor
-
-  if (my_chemistry->use_temperature_floor == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] <= my_chemistry->temperature_floor_scalar) {
-          edot[i] = tiny_fortran_val;
-          itmask[i] = MASK_FALSE;
-        }
-      }
-    }
-  } else if (my_chemistry->use_temperature_floor == 2) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (tgas[i] <= Tfloor(i, idx_range.j, idx_range.k)) {
-          edot[i] = tiny_fortran_val;
-          itmask[i] = MASK_FALSE;
-        }
-      }
-    }
-  }
 
   // Calculate H number density
   // TODO: get rid of this buffer
@@ -466,27 +441,13 @@ void grackle::impl::cool1d_multi_g(
         if (itmask[i] != MASK_FALSE) {
           lognhat = logH2I[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH[i], my_rates->LH2.props.dimension,
-              my_rates->LH2.props.parameters[0],
-              my_rates->LH2.props.parameter_spacing[0],
-              my_rates->LH2.props.parameters[1],
-              my_rates->LH2.props.parameter_spacing[1],
-              my_rates->LH2.props.parameters[2],
-              my_rates->LH2.props.parameter_spacing[2],
-              my_rates->LH2.props.data_size, my_rates->LH2.data);
+          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
+                                         opaque_storage.LH2);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH[i], my_rates->LH2.props.dimension,
-                my_rates->LH2.props.parameters[0],
-                my_rates->LH2.props.parameter_spacing[0],
-                my_rates->LH2.props.parameters[1],
-                my_rates->LH2.props.parameter_spacing[1],
-                my_rates->LH2.props.parameters[2],
-                my_rates->LH2.props.parameter_spacing[2],
-                my_rates->LH2.props.data_size, my_rates->LH2.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                           opaque_storage.LH2);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -787,28 +748,13 @@ void grackle::impl::cool1d_multi_g(
         if (itmask[i] != MASK_FALSE) {
           lognhat = logHDI[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH[i], my_rates->LHD.props.dimension,
-              my_rates->LHD.props.parameters[0],
-              my_rates->LHD.props.parameter_spacing[0],
-              my_rates->LHD.props.parameters[1],
-              my_rates->LHD.props.parameter_spacing[1],
-              my_rates->LHD.props.parameters[2],
-              my_rates->LHD.props.parameter_spacing[2],
-              my_rates->LHD.props.data_size, my_rates->LHD.data);
+          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
+                                         opaque_storage.LHD);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH[i], my_rates->LHD.props.dimension,
-                my_rates->LHD.props.parameters[0],
-                my_rates->LHD.props.parameter_spacing[0],
-                my_rates->LHD.props.parameters[1],
-                my_rates->LHD.props.parameter_spacing[1],
-                my_rates->LHD.props.parameters[2],
-                my_rates->LHD.props.parameter_spacing[2],
-                my_rates->LHD.props.data_size, my_rates->LHD.data);
-
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                           opaque_storage.LHD);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -867,21 +813,6 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  // Iteration mask for metal-rich cells
-  if (imetal == 1) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (metallicity[i] >= min_metallicity) {
-        itmask_metal[i] = itmask[i];
-      } else {
-        itmask_metal[i] = MASK_FALSE;
-      }
-    }
-  } else {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      itmask_metal[i] = MASK_FALSE;
-    }
-  }
-
   dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
                      itmask_metal, my_chemistry, my_rates, my_fields, internalu,
                      idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
@@ -899,16 +830,16 @@ void grackle::impl::cool1d_multi_g(
   // Compute continuum opacity
 
   if (my_chemistry->use_primordial_continuum_opacity == 1) {
+    const InterpGrid& interp_grid = opaque_storage.alphap;
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         // ! primordial continuum opacity !!
-        log_a = grackle::impl::fortran_wrapper::interpolate_2d_g(
-            logrho[i], logT[i], my_rates->alphap.props.dimension,
-            my_rates->alphap.props.parameters[0],
-            my_rates->alphap.props.parameter_spacing[0],
-            my_rates->alphap.props.parameters[1],
-            my_rates->alphap.props.parameter_spacing[1],
-            my_rates->alphap.props.data_size, my_rates->alphap.data);
+        log_a = interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
+                               interp_grid.props.parameters[0],
+                               interp_grid.props.parameter_spacing[0],
+                               interp_grid.props.parameters[1],
+                               interp_grid.props.parameter_spacing[1],
+                               interp_grid.props.data_size, interp_grid.data);
 
         alpha[i] = std::pow(1.e1, log_a);
       }
@@ -933,7 +864,7 @@ void grackle::impl::cool1d_multi_g(
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
-        if (my_chemistry->use_multiple_dust_temperatures == 0) {
+        if (single_species_dust_model) {
           // In the future, we should consider renaming `alphad`. The
           // current name is a little confusing since:
           // - the related `alpha` variable holds linear absorption
@@ -1161,8 +1092,7 @@ void grackle::impl::cool1d_multi_g(
       my_chemistry, my_rates->gammah, idx_range, dom_inv);
 
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-  if ((my_chemistry->dust_chemistry > 0) ||
-      (my_chemistry->dust_recombination_cooling > 0)) {
+  if (my_chemistry->dust_recombination_cooling > 0) {
     dust_gas_edot::update_edot_dust_recombination(
         edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
         my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
@@ -1251,29 +1181,13 @@ void grackle::impl::cool1d_multi_g(
           // CI
           lognhat = logCI[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH[i], my_rates->LCI.props.dimension,
-              my_rates->LCI.props.parameters[0],
-              my_rates->LCI.props.parameter_spacing[0],
-              my_rates->LCI.props.parameters[1],
-              my_rates->LCI.props.parameter_spacing[1],
-              my_rates->LCI.props.parameters[2],
-              my_rates->LCI.props.parameter_spacing[2],
-              my_rates->LCI.props.data_size, my_rates->LCI.data);
-
+          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
+                                         opaque_storage.LCI);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH[i], my_rates->LCI.props.dimension,
-                my_rates->LCI.props.parameters[0],
-                my_rates->LCI.props.parameter_spacing[0],
-                my_rates->LCI.props.parameters[1],
-                my_rates->LCI.props.parameter_spacing[1],
-                my_rates->LCI.props.parameters[2],
-                my_rates->LCI.props.parameter_spacing[2],
-                my_rates->LCI.props.data_size, my_rates->LCI.data);
-
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                           opaque_storage.LCI);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1288,28 +1202,13 @@ void grackle::impl::cool1d_multi_g(
           // CII
           lognhat = logCII[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH[i], my_rates->LCII.props.dimension,
-              my_rates->LCII.props.parameters[0],
-              my_rates->LCII.props.parameter_spacing[0],
-              my_rates->LCII.props.parameters[1],
-              my_rates->LCII.props.parameter_spacing[1],
-              my_rates->LCII.props.parameters[2],
-              my_rates->LCII.props.parameter_spacing[2],
-              my_rates->LCII.props.data_size, my_rates->LCII.data);
-
+          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
+                                         opaque_storage.LCII);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH[i], my_rates->LCII.props.dimension,
-                my_rates->LCII.props.parameters[0],
-                my_rates->LCII.props.parameter_spacing[0],
-                my_rates->LCII.props.parameters[1],
-                my_rates->LCII.props.parameter_spacing[1],
-                my_rates->LCII.props.parameters[2],
-                my_rates->LCII.props.parameter_spacing[2],
-                my_rates->LCII.props.data_size, my_rates->LCII.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                           opaque_storage.LCII);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1324,27 +1223,13 @@ void grackle::impl::cool1d_multi_g(
           // OI
           lognhat = logOI[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH[i], my_rates->LOI.props.dimension,
-              my_rates->LOI.props.parameters[0],
-              my_rates->LOI.props.parameter_spacing[0],
-              my_rates->LOI.props.parameters[1],
-              my_rates->LOI.props.parameter_spacing[1],
-              my_rates->LOI.props.parameters[2],
-              my_rates->LOI.props.parameter_spacing[2],
-              my_rates->LOI.props.data_size, my_rates->LOI.data);
+          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
+                                         opaque_storage.LOI);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH[i], my_rates->LOI.props.dimension,
-                my_rates->LOI.props.parameters[0],
-                my_rates->LOI.props.parameter_spacing[0],
-                my_rates->LOI.props.parameters[1],
-                my_rates->LOI.props.parameter_spacing[1],
-                my_rates->LOI.props.parameters[2],
-                my_rates->LOI.props.parameter_spacing[2],
-                my_rates->LOI.props.data_size, my_rates->LOI.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                           opaque_storage.LOI);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1361,27 +1246,13 @@ void grackle::impl::cool1d_multi_g(
           // CO
           lognhat = logCO[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH2[i], my_rates->LCO.props.dimension,
-              my_rates->LCO.props.parameters[0],
-              my_rates->LCO.props.parameter_spacing[0],
-              my_rates->LCO.props.parameters[1],
-              my_rates->LCO.props.parameter_spacing[1],
-              my_rates->LCO.props.parameters[2],
-              my_rates->LCO.props.parameter_spacing[2],
-              my_rates->LCO.props.data_size, my_rates->LCO.data);
+          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH2[i],
+                                         opaque_storage.LCO);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH2[i], my_rates->LCO.props.dimension,
-                my_rates->LCO.props.parameters[0],
-                my_rates->LCO.props.parameter_spacing[0],
-                my_rates->LCO.props.parameters[1],
-                my_rates->LCO.props.parameter_spacing[1],
-                my_rates->LCO.props.parameters[2],
-                my_rates->LCO.props.parameter_spacing[2],
-                my_rates->LCO.props.data_size, my_rates->LCO.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
+                                           opaque_storage.LCO);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1396,27 +1267,13 @@ void grackle::impl::cool1d_multi_g(
           // OH
           lognhat = logOH[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH2[i], my_rates->LOH.props.dimension,
-              my_rates->LOH.props.parameters[0],
-              my_rates->LOH.props.parameter_spacing[0],
-              my_rates->LOH.props.parameters[1],
-              my_rates->LOH.props.parameter_spacing[1],
-              my_rates->LOH.props.parameters[2],
-              my_rates->LOH.props.parameter_spacing[2],
-              my_rates->LOH.props.data_size, my_rates->LOH.data);
+          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH2[i],
+                                         opaque_storage.LOH);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH2[i], my_rates->LOH.props.dimension,
-                my_rates->LOH.props.parameters[0],
-                my_rates->LOH.props.parameter_spacing[0],
-                my_rates->LOH.props.parameters[1],
-                my_rates->LOH.props.parameter_spacing[1],
-                my_rates->LOH.props.parameters[2],
-                my_rates->LOH.props.parameter_spacing[2],
-                my_rates->LOH.props.data_size, my_rates->LOH.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
+                                           opaque_storage.LOH);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;
@@ -1431,27 +1288,13 @@ void grackle::impl::cool1d_multi_g(
           // H2O
           lognhat = logH2O[i] - logdvdr[i];
 
-          log_Linv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-              lognhat, logT[i], logH2[i], my_rates->LH2O.props.dimension,
-              my_rates->LH2O.props.parameters[0],
-              my_rates->LH2O.props.parameter_spacing[0],
-              my_rates->LH2O.props.parameters[1],
-              my_rates->LH2O.props.parameter_spacing[1],
-              my_rates->LH2O.props.parameters[2],
-              my_rates->LH2O.props.parameter_spacing[2],
-              my_rates->LH2O.props.data_size, my_rates->LH2O.data);
+          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH2[i],
+                                         opaque_storage.LH2O);
           L = std::pow(1.e1, (-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = grackle::impl::fortran_wrapper::interpolate_3d_g(
-                lognhat, logTcmb[i], logH2[i], my_rates->LH2O.props.dimension,
-                my_rates->LH2O.props.parameters[0],
-                my_rates->LH2O.props.parameter_spacing[0],
-                my_rates->LH2O.props.parameters[1],
-                my_rates->LH2O.props.parameter_spacing[1],
-                my_rates->LH2O.props.parameters[2],
-                my_rates->LH2O.props.parameter_spacing[2],
-                my_rates->LH2O.props.data_size, my_rates->LH2O.data);
+            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
+                                           opaque_storage.LH2O);
             G = std::pow(1.e1, (-log_Ginv));
           } else {
             G = tiny8;

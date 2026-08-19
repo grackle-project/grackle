@@ -18,9 +18,10 @@
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
+#include "support/config.hpp"
 #include "support/index_helper.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 ///  Calculate grain plank mean opacity
 ///
@@ -57,5 +58,5 @@ void calc_kappa_grain(const double* tdust, double* kgr,
                       const double* gr_Td, const double* logalsp_data_,
                       int idspecies);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 #endif /* CALC_KAPPA_GRAIN_HPP */

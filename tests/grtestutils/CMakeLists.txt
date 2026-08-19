@@ -114,6 +114,7 @@ add_library(grtestutils_core
   # - only includes files outside of the googletest subdirectory
   # - these shouldn't reference any headers from the googletest subdirectory
   cmd.hpp cmd.cpp
+  coord_grid.hpp
   iterator_adaptor.hpp
   os.hpp os.cpp
   preset.hpp preset.cpp

@@ -180,8 +180,8 @@ inline void step_rate_newton_raphson(
 
   // Density, energy and velocity fields fields
 
-  grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // ierror local variable
   //   - this variable is only used internally by this subroutine for
@@ -193,6 +193,10 @@ inline void step_rate_newton_raphson(
   int itr, itr_time;
   int nsp, isp, jsp, id;
   double dspj, err, err_max;
+  // flag for if Gen Chiaki's dust model is enabled with grain growth
+  const bool chiaki_model_dust_evolution =
+    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
+
   // the following specifies the historical 1-based index that we would use to
   // hold energy
   const int i_eng = MAX_EVOLVED_SPECIES_FIELDS + 1;
@@ -205,13 +209,13 @@ inline void step_rate_newton_raphson(
   std::vector<double> dspdot1(i_eng);
   std::vector<double> ddsp(i_eng);
   std::vector<double> der_data_(i_eng * i_eng);
-  grackle::impl::View<double**> der(der_data_.data(), i_eng, i_eng);
+  FortranView<double**> der(der_data_.data(), i_eng, i_eng);
 
   // (In the future, we may want to reconsider when/how we allocate
   // the following 3 variables)
   std::vector<int> idsp;
   std::vector<double> mtrx_data_;
-  grackle::impl::View<double**> mtrx;
+  FortranView<double**> mtrx;
   std::vector<double> vec;
   // Another parameter
   const double eps = 1.e-4;
@@ -279,12 +283,12 @@ inline void step_rate_newton_raphson(
       if (itmask_metal[i] != MASK_FALSE)  {
         if (my_chemistry->metal_chemistry == 1)  {
           nsp = nsp + 19;
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0) { nsp = nsp + 1; }
             if (my_chemistry->dust_species > 1) { nsp = nsp + 3; }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0) { nsp = nsp + 2; }
           if (my_chemistry->dust_species > 1) { nsp = nsp + 8; }
           if (my_chemistry->dust_species > 2) { nsp = nsp + 3; }
@@ -293,7 +297,7 @@ inline void step_rate_newton_raphson(
       nsp = nsp + imp_eng[i];
       idsp.reserve(nsp);
       mtrx_data_.reserve(nsp * nsp);
-      mtrx = grackle::impl::View<double**>(mtrx_data_.data(), nsp, nsp);
+      mtrx = FortranView<double**>(mtrx_data_.data(), nsp, nsp);
       vec.reserve(nsp);
 
       // copy values into dsp from my_fields
@@ -345,7 +349,7 @@ inline void step_rate_newton_raphson(
           dsp[SpLUT::H2OII] = my_fields->H2OII_density[field_idx1d];
           dsp[SpLUT::H3OII] = my_fields->H3OII_density[field_idx1d];
           dsp[SpLUT::O2II] = my_fields->O2II_density[field_idx1d];
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) ) {
+          if (chiaki_model_dust_evolution) {
             if (my_chemistry->dust_species > 0)  {
               dsp[SpLUT::Mg] = my_fields->Mg_density[field_idx1d];
             }
@@ -356,7 +360,7 @@ inline void step_rate_newton_raphson(
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) ) {
+        if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 0)  {
             dsp[SpLUT::MgSiO3_dust] = my_fields->MgSiO3_dust_density[field_idx1d];
             dsp[SpLUT::AC_dust] = my_fields->AC_dust_density[field_idx1d];
@@ -435,7 +439,7 @@ inline void step_rate_newton_raphson(
           idsp[id++] = SpLUT::H2OII;
           idsp[id++] = SpLUT::H3OII;
           idsp[id++] = SpLUT::O2II;
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0)  {
               idsp[id++] = SpLUT::Mg;
             }
@@ -446,7 +450,7 @@ inline void step_rate_newton_raphson(
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             idsp[id++] = SpLUT::MgSiO3_dust;
             idsp[id++] = SpLUT::AC_dust;
@@ -726,7 +730,7 @@ label_9996:
           my_fields->H2OII_density[field_idx1d]   = dsp[SpLUT::H2OII];
           my_fields->H3OII_density[field_idx1d]   = dsp[SpLUT::H3OII];
           my_fields->O2II_density[field_idx1d]    = dsp[SpLUT::O2II];
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0)  {
               my_fields->Mg_density[field_idx1d]      = dsp[SpLUT::Mg];
             }
@@ -737,7 +741,7 @@ label_9996:
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             my_fields->MgSiO3_dust_density[field_idx1d]  = dsp[SpLUT::MgSiO3_dust];
             my_fields->AC_dust_density[field_idx1d]      = dsp[SpLUT::AC_dust];
@@ -764,7 +768,7 @@ label_9996:
 
       idsp.clear();
       vec.clear();
-      mtrx = grackle::impl::View<double**>();
+      mtrx = FortranView<double**>();
       mtrx_data_.clear();
 
     }
