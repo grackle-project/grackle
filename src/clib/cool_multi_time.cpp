@@ -132,11 +132,14 @@ void cool_multi_time(
       }
 
       // based on precise configuration, perform a subset of:
-      // - compute Tdust, dust2gas
-      // - add contributions to alpha_continuum, edot from dust
+      // - compute Tdust (tdust or grain_temperatures may be filled)
+      // - compute dust2gas (depending on dust model)
+      // - add contributions to alpha_continuum (depends on dust model)
+      // - add contributions to edot from dust
+      // (we skip calculation of reaction rates)
       my_rates->opaque_storage->dust_solver.calc_Tdust_and_chem_contrib(
           edot.data(), dust2gas.data(), tdust.data(), grain_temperatures,
-          alpha_continuum.data(), tgas.data(), rhoH.data(),
+          alpha_continuum.data(), nullptr, tgas.data(), rhoH.data(),
           nelec_times_mH.data(), metallicity.data(), itmask.data(),
           itmask_metal.data(), my_chemistry, my_rates, my_fields, internalu,
           idx_range, logTlininterp_buf);

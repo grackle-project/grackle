@@ -720,17 +720,12 @@ inline void apply_misc_shield_factors(
 /// This routine uses the gas temperature to calculate rate at each location
 /// in the specified index range.
 ///
-/// In more detail, this function does a lot (probably too much):
-/// - it computes collisional reaction rates
+/// In more detail, this function:
+/// - computes collisional reaction rates
 /// - shielding-adjusted photo-rates (related to the UV background)
 /// - a few heating/cooling rates
-/// - dust-related rates (details depend on the dust model)
-/// - logTlininterp_buf is considered an output too (at the time of writing, it
-///   is used for some subsequent calculations)
 ///
-/// > [!note]
-/// > A case could be made to handle the dust-related rates in a separate
-/// > function
+/// All dust-related reaction rates are computed in a separate function
 ///
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] anydust Whether to model any dust
@@ -798,15 +793,6 @@ inline void lookup_cool_rates1d(
   if (my_chemistry->primordial_chemistry > 1) {
     interpolate_h2_heating_terms_(chemheatrates_buf, idx_range, my_rates,
                                   itmask, logTlininterp_buf);
-  }
-
-  // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
-
-  if (anydust != MASK_FALSE) {
-    my_rates->opaque_storage->dust_solver.lookup_dust_rates1d(
-        idx_range, tdust, dust2gas, dom, itmask_metal, my_chemistry, my_rates,
-        my_fields, grain_temperatures, logTlininterp_buf, rxn_rate_buf,
-        internal_dust_prop_scratch_buf);
   }
 
   // Deal with the photo reaction rates

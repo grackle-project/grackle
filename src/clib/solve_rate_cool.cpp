@@ -898,15 +898,18 @@ int solve_rate_cool(
         }
 
 
-        // based on precise configuration, perform a subset of:
-        // - compute Tdust, dust2gas
-        // - add contributions to alpha_continuum, edot from dust
+        // now, handle specifics of our dust model. This includes:
+        // - computing Tdust (tdust or grain_temperatures may be filled)
+        // - computing dust2gas (for some dust models)
+        // - add contributions to alpha_continuum (for some dust models)
+        // - add contributions to edot from dust
+        // - computing/storing dust-related reaction rates in rxn_rate_buf
         my_rates->opaque_storage->dust_solver.calc_Tdust_and_chem_contrib(
             edot.data(), dust2gas.data(), tdust.data(), grain_temperatures,
-            alpha_continuum.data(), tgas.data(), rhoH.data(),
-            nelec_times_mH.data(), metallicity.data(), itmask.data(),
-            itmask_metal.data(), my_chemistry, my_rates, my_fields, internalu,
-            idx_range, logTlininterp_buf);
+            alpha_continuum.data(), &spsolvbuf.rxn_rate_buf, tgas.data(),
+            rhoH.data(), nelec_times_mH.data(), metallicity.data(),
+            itmask.data(), itmask_metal.data(), my_chemistry, my_rates,
+            my_fields, internalu, idx_range, logTlininterp_buf);
 
         // Compute the edot values (so we can get the cooling time)
         // -> at this time the function also fillls dust2gas and tdust.

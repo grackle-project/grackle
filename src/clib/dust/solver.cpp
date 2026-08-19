@@ -34,7 +34,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 // - we may also want to give some thought to possibly grouping subsets of the
 //   arguments that are only used for certain dust models.
 
-void DustSolver::lookup_dust_rates1d(
+void DustSolver::lookup_dust_rxn_rates1d(
     IndexRange idx_range, const double* tdust, const double* dust2gas,
     double dom, const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
@@ -282,12 +282,28 @@ void DustSolver::lookup_dust_rates1d(
 void DustSolver::calc_Tdust_and_chem_contrib(
     double* edot, double* dust2gas, double* tdust,
     GrainSpeciesCollection grain_temperatures, double* alpha_continuum,
-    const double* tgas, const double* rhoH, const double* nelec_times_mH,
-    const double* metallicity, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    InternalGrUnits internalu, IndexRange idx_range,
-    LnTLinInterpBuf logTlininterp_buf) const {
+    FullRxnRateBuf* rxn_rate_buf, const double* tgas, const double* rhoH,
+    const double* nelec_times_mH, const double* metallicity,
+    const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
+    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    grackle_field_data* my_fields, InternalGrUnits internalu,
+    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf) const {
+  // Reducing scratch space usage of chiaki multi-grain growth dust model:
+  // - The function is currently structured to perform the following operations
+  //   - compute dust-temperature/opacity/grain-properties
+  //   - use opacity to update alpha_continuum
+  //   - use properties to compute edot contributions
+  //   - use properties to compute any rxn rates
+  // - because the function is currently structured to perform each of the
+  //   operation for all dust species before moving onto the next operation
+  //   (and again performing the operation for all dust species), we need
+  //   scratch space to retain all computed properties for each species
+  // - instead, we should probably loop over dust species and then perform the
+  //   above operations within the loop, but just for the current dust species
+  // - this is going to take a little work, but could eliminate the vast
+  //   majority of all scratch space (we probably want to retain a little
+  //   scratch for better CPU performance)
+
   // Set flag for dust-related options
   const gr_mask_type anydust = (my_chemistry->dust_chemistry > 0 ||
                                 my_chemistry->dust_recombination_cooling > 0)
@@ -359,7 +375,8 @@ void DustSolver::calc_Tdust_and_chem_contrib(
   //    ! We better not include dust opacity.
   // I think this comment explains why we aren't including dust contributions
   // in the classic single-species dust model
-  if ((anydust != MASK_FALSE) && (!single_species_dust_model)) {
+  if ((anydust != MASK_FALSE) && (!single_species_dust_model) &&
+      (alpha_continuum != nullptr)) {
     const double mh_local_var = mh_grflt;
     int n_grain_species =
         my_rates->opaque_storage->grain_species_info->n_species;
@@ -379,24 +396,40 @@ void DustSolver::calc_Tdust_and_chem_contrib(
     }
   }
 
-  // Calculate dust cooling rate
-  if (anydust != MASK_FALSE) {
-    dust_gas_edot::update_edot_dust_cooling_rate(
-        edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
-        my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
+  if (edot != nullptr) {
+    // Calculate dust cooling rate
+    if (anydust != MASK_FALSE) {
+      dust_gas_edot::update_edot_dust_cooling_rate(
+          edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
+          my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
+    }
+
+    // Photo-electric heating by UV-irradiated dust
+    dust_gas_edot::update_edot_photoelectric_heat(
+        edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
+        my_chemistry, my_rates->gammah, idx_range, dom_inv);
+
+    // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
+    if (my_chemistry->dust_recombination_cooling > 0) {
+      dust_gas_edot::update_edot_dust_recombination(
+          edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
+          my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
+          my_rates->regr, idx_range, dom_inv);
+    }
   }
 
-  // Photo-electric heating by UV-irradiated dust
-  dust_gas_edot::update_edot_photoelectric_heat(
-      edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
-      my_chemistry, my_rates->gammah, idx_range, dom_inv);
-
-  // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-  if (my_chemistry->dust_recombination_cooling > 0) {
-    dust_gas_edot::update_edot_dust_recombination(
-        edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
-        my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
-        my_rates->regr, idx_range, dom_inv);
+  if (my_chemistry->dust_chemistry > 0 && rxn_rate_buf != nullptr) {
+    // todo: we can do some refactoring when it comes to the chiaki mutlti
+    //       grain growth model
+    // -> in the current implementation, lookup_dust_rates1d is needlessly
+    //    refilling internal_dust_prop_buf. At the very least, we should make
+    //    it possible to skip that
+    // -> more generally, in order to reduce the size/number of temporary
+    //    buffers, we should probably integrate the logic
+    lookup_dust_rxn_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal,
+                            my_chemistry, my_rates, my_fields,
+                            grain_temperatures, logTlininterp_buf,
+                            *rxn_rate_buf, internal_dust_prop_buf);
   }
 
   // Free memory

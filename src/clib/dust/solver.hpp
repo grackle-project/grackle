@@ -44,8 +44,18 @@ public:
   /// @brief default constructor
   DustSolver() = default;
 
-  /// Look-up rate for H2 formation on dust & (in certain configurations) the
-  /// grain growth rates for each location in the index-range.
+  /// @brief Look-up rate for H2 formation on dust & (in certain configurations)
+  ///        the grain growth rates for each location in the index-range.
+  ///
+  /// Importantly, this function must be provided with dust temperature(s) and
+  /// a dust2gas buffer that were computed by a prior call to
+  /// @ref calc_Tdust_and_chem_contrib.
+  ///
+  /// This interface function **ONLY** exists to aid in the calculation of
+  /// numerical derivatives of reaction rates, under the (potentially
+  /// questionable) assumption of constant dust temperatures. In other words,
+  /// this function can be eliminated if/when @ref calc_Tdust_and_chem_contrib
+  /// becomes capable of computing analytic derivatives.
   ///
   /// > [!note]
   /// > This function should not be invoked when we aren't using any dust model
@@ -58,9 +68,10 @@ public:
   ///     single temperature.
   /// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
   ///     index range. In other words, this holds the dust mass per unit gas
-  ///     mass (only used in certain configuration)
-  /// @param[out] h2dust Buffer that gets filled with the rate for forming
-  ///     molecular hydrogen on dust grains. **THIS IS ALWAYS FILLED**
+  ///     mass (only used in certain configuration). As a basic rule of thumb,
+  ///     this should **always** be passed a buffer that was previously passed
+  ///     the same buffer that was used in the call to
+  ///     @ref calc_Tdust_and_chem_contrib that computed dust temperature(s).
   /// @param[in] dom a standard quantity used throughout the codebase
   /// @param[in] itmask_metal Specifies the iteration-mask for the @p idx_range
   ///     performing metal and dust calculations.
@@ -75,12 +86,11 @@ public:
   ///    each location in the index range) that are used to linearly interpolate
   ///    tables with respect to logT (the natural log of the gas temperature).
   /// @param[out] rxn_rate_buf output buffers to be filled with computed
-  /// reaction
-  ///    rates for @p idx_range
+  ///    reaction rates for @p idx_range
   /// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
   ///     temporary grain species properties (only used in certain
   ///     configurations)
-  void lookup_dust_rates1d(
+  void lookup_dust_rxn_rates1d(
       IndexRange idx_range, const double* tdust, const double* dust2gas,
       double dom, const gr_mask_type* itmask_metal,
       chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
@@ -91,6 +101,10 @@ public:
   /// @brief compute Tdust and other dust contributions to the chemistry network
   ///
   /// This is intended to be the main entry-point for the dust model.
+  ///
+  /// At the moment, the arguments @p edot, @p alpha_continuum_buf, and
+  /// @p rxn_rate_buf are allowed to be passed ``nullptr`` to indicate that we
+  /// want skip calculation of a given quantity.
   ///
   /// @param[out] edot 1D array to hold the computed the time derivative of the
   ///     internal energy in the @p idx_range. Contributions are accumulated in
@@ -105,6 +119,8 @@ public:
   ///     coefficients from dust are added (each element is updated in place
   ///     with the sum of its existing value and the contribution from dust). In
   ///     certain configurations this is not actually updated.
+  /// @param[out] rxn_rate_buf output buffers to be filled with computed
+  ///    reaction rates for @p idx_range
   /// @param[in] tgas 1d array of gas temperature
   /// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
   /// @param[in] nelec_times_mH 1D array holding the number density of electrons
@@ -126,12 +142,12 @@ public:
   void calc_Tdust_and_chem_contrib(
       double* edot, double* dust2gas, double* tdust,
       GrainSpeciesCollection grain_temperatures, double* alpha_continuum,
-      const double* tgas, const double* rhoH, const double* nelec_times_mH,
-      const double* metallicity, const gr_mask_type* itmask,
-      const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-      chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-      InternalGrUnits internalu, IndexRange idx_range,
-      LnTLinInterpBuf logTlininterp_buf) const;
+      FullRxnRateBuf* rxn_rate_buf, const double* tgas, const double* rhoH,
+      const double* nelec_times_mH, const double* metallicity,
+      const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
+      chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+      grackle_field_data* my_fields, InternalGrUnits internalu,
+      IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf) const;
 };
 
 }  // namespace GRIMPL_NAMESPACE_DECL
