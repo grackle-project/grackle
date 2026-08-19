@@ -750,19 +750,6 @@ int solve_rate_cool(
     grackle::impl::CoolHeatScratchBuf coolingheating_buf =
       grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
 
-    // at the time of writing, the following scratch buffer is **ONLY** used
-    // within lookup_cool_rates1d. In the future, we should really work on
-    // tracking this as a part of grackle::impl::SpeciesRateSolverScratchBuf
-    // (we can't do it right now since we need to pass in 2 arguments to the
-    // factory function)
-    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf =
-      grackle::impl::new_InternalDustPropBuf(
-          my_fields->grid_dimension[0],
-          grackle::impl::GrainMetalInjectPathways_get_n_log10Tdust_vals(
-              my_rates->opaque_storage->inject_pathway_props
-          )
-      );
-
     // holds buffers exclusively used for solving species rate equations
     // (i.e. in the future, we could have the constructor skip allocations of
     // all contained data structures when using primordial_chemistry == 0)
@@ -1088,7 +1075,6 @@ int solve_rate_cool(
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
     grackle::impl::drop_LnTLinInterpBuf(&logTlininterp_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
-    grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_scratch_buf);
 
     grackle::impl::drop_SpeciesRateSolverScratchBuf(&spsolvbuf);
 
