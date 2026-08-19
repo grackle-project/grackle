@@ -28,6 +28,10 @@ model_test_format_version = 1
 
 # These are generally applicable to all scripts.
 _parameter_exclude = (
+    {"dust_chemistry": 0, "dust_recombination_cooling": 1},
+    {"dust_chemistry": 0, "photoelectric_heating": 1},
+    {"dust_chemistry": 0, "photoelectric_heating": 2},
+    {"dust_chemistry": 0, "photoelectric_heating": 3},
     {"dust_chemistry": 1, "metal_cooling": 0},
     {"dust_chemistry": 1, "primordial_chemistry": 0},
     {"dust_chemistry": 1, "primordial_chemistry": 1},
@@ -311,11 +315,9 @@ _model_test_grids = \
                     "metal_cooling": 1,
                     "metal_chemistry": 1,
                     "three_body_rate": 4,
-                    "dust_chemistry": 1,
-                    "use_dust_density_field": 1,
+                    "dust_chemistry": 2,
                     "photoelectric_heating": 0,
                     "dust_recombination_cooling": 1,
-                    "dust_sublimation": 0,
                     "grain_growth": 1,
                     "dust_species": 2,
                     "multi_metals": 0,
@@ -323,7 +325,7 @@ _model_test_grids = \
                 },
                 "variants": \
                 {
-                    "dust_species": (0, 1),
+                    "dust_species": (1,),
                     "use_multiple_dust_temperatures": (0, 1),
                     "multi_metals": (1,),
                 }
@@ -357,11 +359,9 @@ _model_test_grids = \
                     "metal_cooling": 1,
                     "metal_chemistry": 1,
                     "three_body_rate": 4,
-                    "dust_chemistry": 1,
-                    "use_dust_density_field": 1,
+                    "dust_chemistry": 2,
                     "photoelectric_heating": 0,
                     "dust_recombination_cooling": 1,
-                    "dust_sublimation": 0,
                     "grain_growth": 1,
                     "dust_species": 3,
                     "multi_metals": 0,

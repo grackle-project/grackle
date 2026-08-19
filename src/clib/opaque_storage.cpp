@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "opaque_storage.hpp"
+#include "support/config.hpp"
 
 gr_opaque_storage::~gr_opaque_storage() {
   if (kcol_rate_tables != nullptr) {
@@ -26,12 +27,8 @@ gr_opaque_storage::~gr_opaque_storage() {
     delete[] used_kcol_rate_indices;
   }
 
-  // delete contents of h2dust_grain_interp_props (automatically handles the
-  // case where we didn't allocate anything)
-  grackle::impl::free_interp_grid_props_(&h2dust_grain_interp_props,
-                                         /* use_delete = */ false);
-  // since h2dust_grain_interp_props isn't a pointer, there is nothing more to
-  // allocate right here
+  // all of the InterpGrid & InterpGridProps data members have destructors that
+  // handle their deallocation
 
   if (grain_species_info != nullptr) {
     // delete contents of grain_species_info
