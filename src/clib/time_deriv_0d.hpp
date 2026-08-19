@@ -497,17 +497,30 @@ inline void derivatives(
 
     double alpha_continuum[1] = {0.0};
 
+
+    // based on precise configuration, perform a subset of:
+    // - compute Tdust, dust2gas
+    // - add contributions to alpha_continuum, edot from dust
+    my_rates->opaque_storage->dust_solver.calc_Tdust_and_chem_contrib(
+        pack.other_scratch_buf.edot, pack.other_scratch_buf.dust2gas,
+        pack.other_scratch_buf.tdust, pack.main_scratch_buf.grain_temperatures,
+        alpha_continuum, pack.other_scratch_buf.tgas,
+        pack.other_scratch_buf.rhoH, pack.other_scratch_buf.nelec_times_mH,
+        pack.other_scratch_buf.metallicity, pack.other_scratch_buf.itmask,
+        &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
+        internalu, pack.idx_range_1_element,
+        pack.main_scratch_buf.logTlininterp_buf);
+
     // Compute the edot values (so we can get the cooling time)
     // -> at this time the function also fillls dust2gas and tdust
     // -> (we plan to factor out the extra calculations)
     cool1d_multi_g(
       pack.other_scratch_buf.edot, alpha_continuum,
       pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
-      pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
-      pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
+      pack.other_scratch_buf.metallicity, pack.other_scratch_buf.rhoH,
       pack.other_scratch_buf.nelec_times_mH,
       pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
-      my_uvb_rates, internalu, pack.idx_range_1_element, pack.main_scratch_buf.grain_temperatures,
+      my_uvb_rates, internalu, pack.idx_range_1_element,
       pack.main_scratch_buf.logTlininterp_buf,
       pack.main_scratch_buf.coolingheating_buf
     );

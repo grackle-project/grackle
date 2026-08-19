@@ -43,16 +43,17 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
       interp_grid.props.data_size, interp_grid.data);
 }
 
-void cool1d_multi_g(
-    double* edot, double* alpha_continuum, const double* tgas,
-    const double* mmw, double* tdust, const double* metallicity,
-    double* dust2gas, const double* rhoH, const double* nelec_times_mH,
-    const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-    InternalGrUnits internalu, IndexRange idx_range,
-    GrainSpeciesCollection grain_temperatures,
-    LnTLinInterpBuf logTlininterp_buf, CoolHeatScratchBuf coolingheating_buf) {
+void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
+                    const double* mmw, const double* metallicity,
+                    const double* rhoH, const double* nelec_times_mH,
+                    const gr_mask_type* itmask,
+                    const gr_mask_type* itmask_metal,
+                    chemistry_data* my_chemistry,
+                    chemistry_data_storage* my_rates,
+                    grackle_field_data* my_fields,
+                    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+                    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf,
+                    CoolHeatScratchBuf coolingheating_buf) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
@@ -203,17 +204,6 @@ void cool1d_multi_g(
 
   // multiplicative factor for including/excluding H2 cooling
   ih2cox = (double)(my_chemistry->ih2co);
-
-  // based on configuration precise configuration, perform a subset of:
-  // - compute Tdust, dust2gas
-  // - add contributions to alpha_continuum, edot from dust
-  //
-  // in the immediate future, the plan is to hoist this function call out of
-  // cool1d_multi_g
-  opaque_storage.dust_solver.calc_Tdust_and_chem_contrib(
-      edot, dust2gas, tdust, grain_temperatures, alpha_continuum, tgas, rhoH,
-      nelec_times_mH, metallicity, itmask, itmask_metal, my_chemistry, my_rates,
-      my_fields, internalu, idx_range, logTlininterp_buf);
 
   // Compute log densities
 

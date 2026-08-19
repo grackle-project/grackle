@@ -27,9 +27,6 @@ namespace grackle::impl {
 
 /// Solve radiative cooling/heating equations
 ///
-/// This function does a lot. It probably makes sense to break off some of
-/// the functionality.
-///
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range. Contributions are accumulated in
 ///     this buffer. In other words, this function does **NOT** set elements to
@@ -39,15 +36,7 @@ namespace grackle::impl {
 ///     already contain non-zero contributions.
 /// @param[in] tgas 1D array of gas temperatures for the @p idx_range
 /// @param[in] mmw 1D array of mean molecular weights for the @p idx_range
-/// @param[out] tdust 1D array to hold the computed dust temperatures at
-///     each location in the @p index range. This **ONLY** used when using
-///     variants of the classic 1-field dust-model or using the variant of the
-///     multi-grain-species model where all grains are configured to share a
-///     single temperature.
 /// @param[in]  metallicity 1D array of metallicities for the @p idx_range
-/// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
-///     location in the index range. In other words, this holds the dust mass
-///     per unit gas mass (only used in certain configuration)
 /// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
 /// @param[in] nelec_times_mH 1D array holding the number density of electrons
 ///     (multiplied by the Hydrogen mass) for the @p idx_range
@@ -65,9 +54,6 @@ namespace grackle::impl {
 ///     background. These rates do not include the effects of self-shielding.
 /// @param[in] internalu Specifies Grackle's internal unit-system
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] grain_temperatures buffers to hold individual grain species
-///     temperatures. This is only used in certain configurations (i.e. when we
-///     aren't using the tdust argument)
 /// @param[in] logTlininterp_buf Hold values for each location in @p idx_range
 ///     that are used to linearly interpolate tables with respect to the natural
 ///     log of @p tgas1d.
@@ -82,19 +68,15 @@ namespace grackle::impl {
 /// modified3: February, 2003 by Robert Harkness; iteration mask
 /// modified4: September, 2009 by BDS to include cloudy cooling
 /// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
-                    const double* mmw, double* tdust, const double* metallicity,
-                    double* dust2gas, const double* rhoH,
-                    const double* nelec_times_mH, const gr_mask_type* itmask,
-                    const gr_mask_type* itmask_metal,
-                    chemistry_data* my_chemistry,
-                    chemistry_data_storage* my_rates,
-                    grackle_field_data* my_fields,
-                    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-                    IndexRange idx_range,
-                    grackle::impl::GrainSpeciesCollection grain_temperatures,
-                    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-                    grackle::impl::CoolHeatScratchBuf coolingheating_buf);
+void cool1d_multi_g(
+    double* edot, double* alpha_continuum, const double* tgas,
+    const double* mmw, const double* metallicity, const double* rhoH,
+    const double* nelec_times_mH, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+    IndexRange idx_range, grackle::impl::LnTLinInterpBuf logTlininterp_buf,
+    grackle::impl::CoolHeatScratchBuf coolingheating_buf);
 
 };  // namespace grackle::impl
 

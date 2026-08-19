@@ -897,18 +897,29 @@ int solve_rate_cool(
           alpha_continuum[i] = 0.0;
         }
 
+
+        // based on precise configuration, perform a subset of:
+        // - compute Tdust, dust2gas
+        // - add contributions to alpha_continuum, edot from dust
+        my_rates->opaque_storage->dust_solver.calc_Tdust_and_chem_contrib(
+            edot.data(), dust2gas.data(), tdust.data(), grain_temperatures,
+            alpha_continuum.data(), tgas.data(), rhoH.data(),
+            nelec_times_mH.data(), metallicity.data(), itmask.data(),
+            itmask_metal.data(), my_chemistry, my_rates, my_fields, internalu,
+            idx_range, logTlininterp_buf);
+
         // Compute the edot values (so we can get the cooling time)
         // -> at this time the function also fillls dust2gas and tdust.
         // -> (we plan to factor out the extra calculations)
         cool1d_multi_g(
           edot.data(), alpha_continuum.data(),
-          tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
-          dust2gas.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),
+          tgas.data(), mmw.data(), metallicity.data(),
+           rhoH.data(), nelec_times_mH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry,
           my_rates, my_fields,
           *my_uvb_rates, internalu,
           idx_range,
-          grain_temperatures, logTlininterp_buf,
+          logTlininterp_buf,
           coolingheating_buf
         );
 
