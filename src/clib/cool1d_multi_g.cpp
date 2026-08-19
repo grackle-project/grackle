@@ -60,7 +60,6 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 /// @param[in] rhoH 1D array of Hydrogen mass densities for the @p idx_range
 /// @param[in] nelec_times_mH 1D array holding the number density of electrons
 ///     (multiplied by the Hydrogen mass) for the @p idx_range
-/// @param[in] nH 1d array of Hydrogen number densities
 /// @param[in] metallicity 1d array of metallicities
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
@@ -81,8 +80,6 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///     per unit gas mass (only used in certain configuration)
 /// @param[out] tdust, grain_temperatures dust temperatures may be written
 ///     to one of these variables, based on configuration
-/// @param[in,out] gasgr_tdust A 1D array of that acts as a scratch buffer
-///     (with some refactoring, this can probably be removed)
 /// @param[out] alpha_continuum_buf buffer to which linear absorption
 ///     coefficients from dust are added (each element is updated in place with
 ///     the sum of its existing value and the contribution from dust). In
@@ -98,13 +95,13 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 ///   intermediate steps
 static void handle_dust_contributions(
     gr_mask_type anydust, double* edot, const double* tgas, const double* rhoH,
-    const double* nelec_times_mH, double* nH, const double* metallicity,
+    const double* nelec_times_mH, const double* metallicity,
     const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
     grackle_field_data* my_fields, InternalGrUnits internalu,
     IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf, double rad_T,
     double* dust2gas, double* tdust, GrainSpeciesCollection grain_temperatures,
-    double* gasgr_tdust, double* alpha_continuum) {
+    double* alpha_continuum) {
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   const double dom = internalu_calc_dom_(internalu);
@@ -137,13 +134,29 @@ static void handle_dust_contributions(
   // holds values of the interstellar radiation field
   std::vector<double> myisrf(my_fields->grid_dimension[0]);
 
+  // 1d array of Hydrogen number densities
+  // TODO: get rid of this buffer
+  // -> accessing this buffer vs recomputing the value each time has a very
+  //    small impact on rruntime
+  // -> Getting rid of the buffer reduces cache complexity and simplifies logic
+  //    (in fact, its plausible that getting rid of this could speed things up)
+  std::vector<double> nH(my_fields->grid_dimension[0]);
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      nH[i] = rhoH[i] * dom;
+    }
+  }
+
+  // a scratch buffer (with some refactoring, this can probably be removed)
+  std::vector<double> gasgr_tdust(my_fields->grid_dimension[0]);
+
   // compute various dust properties
-  dust_related_props(anydust, tgas, nH, metallicity, itmask, itmask_metal,
-                     my_chemistry, my_rates, my_fields, internalu, idx_range,
-                     logTlininterp_buf, rad_T, dust2gas, tdust,
+  dust_related_props(anydust, tgas, nH.data(), metallicity, itmask,
+                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
+                     idx_range, logTlininterp_buf, rad_T, dust2gas, tdust,
                      grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
-                     kappa_tot.data(), grain_kappa, gasgr_tdust, myisrf.data(),
-                     internal_dust_prop_buf);
+                     kappa_tot.data(), grain_kappa, gasgr_tdust.data(),
+                     myisrf.data(), internal_dust_prop_buf);
 
   // Add contributions from dust opacity to alpha_continuum, the continuum
   // linear absorption coefficient
@@ -375,18 +388,6 @@ void cool1d_multi_g(
   // zero-out the continuum absorption coefficients
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     alpha_continuum[i] = 0.0;
-  }
-
-  // Calculate H number density
-  // TODO: get rid of this buffer
-  // -> the difference between accessing cool1dmulti_buf.mynh and recomputing
-  //    the value each time we need it is very small.
-  // -> Getting rid of the buffer reduces cache complexity and simplifies logic
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      cool1dmulti_buf.mynh[i] = rhoH[i] * dom;
-    }
   }
 
   // Compute log densities
@@ -951,11 +952,11 @@ void cool1d_multi_g(
     }
   }
 
-  handle_dust_contributions(
-      anydust, edot, tgas, rhoH, nelec_times_mH, cool1dmulti_buf.mynh,
-      metallicity, itmask, itmask_metal, my_chemistry, my_rates, my_fields,
-      internalu, idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
-      grain_temperatures, cool1dmulti_buf.gasgr_tdust, alpha_continuum.data());
+  handle_dust_contributions(anydust, edot, tgas, rhoH, nelec_times_mH,
+                            metallicity, itmask, itmask_metal, my_chemistry,
+                            my_rates, my_fields, internalu, idx_range,
+                            logTlininterp_buf, comp2, dust2gas, tdust,
+                            grain_temperatures, alpha_continuum.data());
 
   // --- Compute (external) radiative heating terms ---
   // Photoionization heating
