@@ -386,6 +386,17 @@ void cool1d_multi_g(
     alpha_continuum[i] = 0.0;
   }
 
+  // based on configuration precise configuration, perform a subset of:
+  // - compute Tdust, dust2gas
+  // - add contributions to alpha_continuum, edot from dust
+  //
+  // in the immediate future, the plan is to hoist this function call out of
+  // cool1d_multi_g
+  handle_dust_contributions(
+      edot, dust2gas, tdust, grain_temperatures, alpha_continuum.data(), tgas,
+      rhoH, nelec_times_mH, metallicity, itmask, itmask_metal, my_chemistry,
+      my_rates, my_fields, internalu, idx_range, logTlininterp_buf);
+
   // Compute log densities
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -947,11 +958,6 @@ void cool1d_multi_g(
       }
     }
   }
-
-  handle_dust_contributions(
-      edot, dust2gas, tdust, grain_temperatures, alpha_continuum.data(), tgas,
-      rhoH, nelec_times_mH, metallicity, itmask, itmask_metal, my_chemistry,
-      my_rates, my_fields, internalu, idx_range, logTlininterp_buf);
 
   // --- Compute (external) radiative heating terms ---
   // Photoionization heating
