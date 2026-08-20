@@ -167,16 +167,16 @@ template <typename Fn>
     double giveup_small_x_threshold, double max_x, double rtol, int max_iter,
     int& c_remain) {
   c_remain = 0;
-  int nm_remain = 0;
+  int n_to_solve = 0;
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       c_remain += solvemask[i] != SolveStatus::CONVERGED;
-      nm_remain += solvemask[i] == SolveStatus::UNCONVERGED;
+      n_to_solve += solvemask[i] == SolveStatus::UNCONVERGED;
     }
   }
   // Iterate to convergence with Newton's method
   int iter;
-  for (iter = 1; (iter <= max_iter) && (nm_remain > 0); iter++) {
+  for (iter = 1; (iter <= max_iter) && (n_to_solve > 0); iter++) {
     // Calculate grain opacities AND heating/cooling balance
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
@@ -208,12 +208,12 @@ template <typename Fn>
 
         if (x[i] < giveup_small_x_threshold) {
           solvemask[i] = SolveStatus::SKIP_SOLVE;
-          nm_remain--;
+          n_to_solve--;
           // Check for convergence of solution
         } else if (std::fabs(f_vals[i]) < std::fabs(fplus_vals[i] * rtol)) {
           solvemask[i] = SolveStatus::CONVERGED;
           c_remain--;
-          nm_remain--;
+          n_to_solve--;
         }
 
         // if ( nm_itmask(i) )
