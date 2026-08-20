@@ -175,18 +175,18 @@ static EqnSolveRslt finite_diff_newton(
     const Fn& fn, double* x, double* associated_vals, double* f_vals,
     double* fplus_vals, SolveStatus* solvemask, double* pert, double minpert,
     int i_start, int i_stop, double giveup_small_x_threshold, double max_x,
-    double rtol, int max_iter, int& c_remain) {
-  c_remain = 0;
+    double rtol, int max_iter) {
   int n_to_solve = 0;
+
+  double pert_i = 1.e-3;
   for (int i = i_start; i < i_stop; i++) {
-    c_remain += solvemask[i] != SolveStatus::CONVERGED;
     n_to_solve += solvemask[i] == SolveStatus::UNCONVERGED;
+    pert[i] = pert_i;
   }
   // Iterate to convergence with Newton's method
   bool any_giveups = false;
   int iter;
   for (iter = 0; (iter < max_iter) && (n_to_solve > 0); iter++) {
-    // Calculate grain opacities AND heating/cooling balance
     for (int i = i_start; i < i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
         FnEval eval_rslt = fn(x[i], i);
@@ -205,8 +205,6 @@ static EqnSolveRslt finite_diff_newton(
 
     for (int i = i_start; i < i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
-        // Check if the solution has converged (if not prepare the next guess)
-
         double slope = (fplus_vals[i] - f_vals[i]) / (pert[i] * x[i]);
 
         double x_old = x[i];
@@ -219,20 +217,12 @@ static EqnSolveRslt finite_diff_newton(
           solvemask[i] = SolveStatus::SKIP_SOLVE;
           n_to_solve--;
           any_giveups = true;
-          // Check for convergence of solution
         } else if (std::fabs(f_vals[i]) < std::fabs(fplus_vals[i] * rtol)) {
           solvemask[i] = SolveStatus::CONVERGED;
-          c_remain--;
           n_to_solve--;
         }
-
-        // if ( nm_itmask(i) )
       }
-
-      // End loop over slice
     }
-
-    // End iteration loop for Newton's method
   }
   return {(n_to_solve == 0) && !any_giveups, iter + 1};
 }
@@ -310,8 +300,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // differences
   std::vector<SolveStatus> nm_solvemask(buf_len, SolveStatus::CONVERGED);
 
-  double pert_i = 1.e-3;
-
   // Set local iteration mask and initial guess
   bool at_least_one_bisection = false;
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -333,7 +321,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         double isrf_balance_guess = std::pow(
             (gamma_isrf[i] / Tdust_detail::sigma_sb_times_4 / kgr1), 0.17);
         tdustnow[i] = std::fmax(Trad, isrf_balance_guess);
-        pert[i] = pert_i;
         nm_solvemask[i] = SolveStatus::UNCONVERGED;
       }
 
@@ -352,15 +339,12 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double* f_vals = sol.data();
     double* fplus_vals = solplus.data();
 
-    int c_remain = 0;
     EqnSolveRslt rslt = finite_diff_newton(
         fn, x, associated_vals, f_vals, fplus_vals, nm_solvemask.data(),
         pert.data(), minpert, idx_range.i_start, idx_range.i_stop,
-        giveup_small_x_threshold, max_x, tol, itmax, c_remain);
+        giveup_small_x_threshold, max_x, tol, itmax);
     iter = rslt.iterations;
     at_least_one_bisection = at_least_one_bisection || !rslt.all_solved;
-    GR_INTERNAL_REQUIRE(at_least_one_bisection == (c_remain > 0),
-                        "sanity check failed!");
   }
 
   // specifies where we use bisection
