@@ -22,8 +22,8 @@
 
 #include "grackle.h"
 #include "calc_grain_size_increment_species_1d.hpp"
-#include "dust_props.hpp"
 #include "dust/grain_species_info.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
