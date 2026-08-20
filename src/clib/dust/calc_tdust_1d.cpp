@@ -288,7 +288,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       }
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
-          double x_plus = std::fmax(1.e-3, (1. + pert[i]) * tdustnow[i]);
+          double x_plus = std::fmax(1.e-3, (1. + pert[i]) * x[i]);
           FnEval eval_rslt = fn(x_plus, i);
           fplus_vals[i] = eval_rslt.f_val;
           // we don't need to record eval_rslt.associated_val
