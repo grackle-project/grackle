@@ -17,7 +17,6 @@
 #define LOOKUP_COOL_RATES1D_HPP
 
 #include "grackle.h"
-#include "dust/lookup_dust_rates1d.hpp"
 #include "dust/multi_grain_species/dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
@@ -721,30 +720,16 @@ inline void apply_misc_shield_factors(
 /// This routine uses the gas temperature to calculate rate at each location
 /// in the specified index range.
 ///
-/// In more detail, this function does a lot (probably too much):
-/// - it computes collisional reaction rates
+/// In more detail, this function:
+/// - computes collisional reaction rates
 /// - shielding-adjusted photo-rates (related to the UV background)
 /// - a few heating/cooling rates
-/// - dust-related rates (details depend on the dust model)
-/// - logTlininterp_buf is considered an output too (at the time of writing, it
-///   is used for some subsequent calculations)
 ///
-/// > [!note]
-/// > A case could be made to handle the dust-related rates in a separate
-/// > function
+/// All dust-related reaction rates are computed in a separate function
 ///
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] anydust Whether to model any dust
 /// @param[in] tgas1d specifies the gas temperatures for the @p idx_range
 /// @param[in] mmw specifies the mean molecular weight for the @p idx_range
-/// @param[in] tdust Precomputed dust temperatures at each location in the
-///     index range. This **ONLY** holds meaningful values when using variants
-///     of the classic 1-field dust-model or using variant of the
-///     multi-grain-species model where all grains are configured to share a
-///     single temperature.
-/// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
-///     index range. In other words, this holds the dust mass per unit gas mass
-///     (only used in certain configuration)
 /// @param[in] dom a standard quantity used throughout the codebase
 /// @param[in] dx_cgs The width of a cell in comoving cm (I think). Used in
 ///     certain self-shielding calculations.
@@ -753,7 +738,6 @@ inline void apply_misc_shield_factors(
 ///     for this calculation.
 /// @param[in] itmask_metal Specifies the iteration-mask of the @p idx_range for
 ///     performing metal and dust calculations.
-/// @param[in] dt See the warning at the end of the docstring
 /// @param[in] my_chemistry holds a number of configuration parameters.
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
@@ -771,24 +755,15 @@ inline void apply_misc_shield_factors(
 ///    rates for @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
 ///     values that are used to compute heating from certain chemical reactions.
-/// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
-///     temporary grain species properties (only used in certain configurations)
-///
-/// > [!important]
-/// > TODO: The role of the `dt` argument **MUST** be clarified! See the
-/// > docstring of @ref grackle::impl::lookup_dust_rates1d for more details
 inline void lookup_cool_rates1d(
-    IndexRange idx_range, gr_mask_type anydust, const double* tgas1d,
-    const double* mmw, const double* tdust, const double* dust2gas, double dom,
+    IndexRange idx_range, const double* tgas1d, const double* mmw, double dom,
     double dx_cgs, double c_ljeans, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
-    grackle::impl::ChemHeatingRates chemheatrates_buf,
-    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
+    grackle::impl::ChemHeatingRates chemheatrates_buf) {
   // Construct views of fields referenced in several parts of this function.
 
   // Linearly Interpolate the Collisional Rxn Rates
@@ -804,15 +779,6 @@ inline void lookup_cool_rates1d(
   if (my_chemistry->primordial_chemistry > 1) {
     interpolate_h2_heating_terms_(chemheatrates_buf, idx_range, my_rates,
                                   itmask, logTlininterp_buf);
-  }
-
-  // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
-
-  if (anydust != MASK_FALSE) {
-    lookup_dust_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal, dt,
-                        my_chemistry, my_rates, my_fields, grain_temperatures,
-                        logTlininterp_buf, rxn_rate_buf,
-                        internal_dust_prop_scratch_buf);
   }
 
   // Deal with the photo reaction rates

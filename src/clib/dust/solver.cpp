@@ -6,26 +6,24 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the lookup_dust_rates1d function.
+/// Implements the @ref DustSolver type
 ///
 //===----------------------------------------------------------------------===//
-
-#ifndef DUST_LOOKUP_DUST_RATES1D_HPP
-#define DUST_LOOKUP_DUST_RATES1D_HPP
 
 #include <cfloat>  // DBL_MAX
 
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
 #include "dust/multi_grain_species/calc_grain_size_increment_1d.hpp"
+#include "dust/gas_heat_cool.hpp"
+#include "dust/solver.hpp"
+#include "dust/misc.hpp"
 #include "interpolate.hpp"
-#include "internal_types.hpp"
-#include "lnT_prep.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 #include "utils-field.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 // Some ideas for refactoring
 // - we probably want to break the following function up into its constituent
@@ -36,83 +34,13 @@ namespace grackle::impl {
 // - we may also want to give some thought to possibly grouping subsets of the
 //   arguments that are only used for certain dust models.
 
-/// Look-up rate for H2 formation on dust & (in certain configurations) the
-/// grain growth rates for each location in the index-range.
-///
-/// > [!note]
-/// > This function should not be invoked when we aren't using any dust model
-///
-/// @param[in] idx_range Specifies the current index-range
-/// @param[in] tdust Precomputed dust temperatures at each location in the
-///     index range. This **ONLY** holds meaningful values when using variants
-///     of the classic 1-field dust-model or using variant of the
-///     multi-grain-species model where all grains are configured to share a
-///     single temperature.
-/// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
-///     index range. In other words, this holds the dust mass per unit gas mass
-///     (only used in certain configuration)
-/// @param[out] h2dust Buffer that gets filled with the rate for forming
-///     molecular hydrogen on dust grains. **THIS IS ALWAYS FILLED**
-/// @param[in] dom a standard quantity used throughout the codebase
-/// @param[in] itmask_metal Specifies the iteration-mask for the @p idx_range
-///     performing metal and dust calculations.
-/// @param[in] dt See the warning at the end of the docstring
-/// @param[in] my_chemistry holds a number of configuration parameters.
-/// @param[in] my_rates Holds assorted rate data and other internal
-///     configuration info.
-/// @param[in] my_fields Specifies the field data.
-/// @param[in] grain_temperatures individual grain species temperatures. This
-///     is only used in certain configurations (i.e. when we aren't using the
-///     tdust argument)
-/// @param[in] logTlininterp_buf Specifies precomputed arrays of values (for
-///    each location in the index range) that are used to linearly interpolate
-///    tables with respect to logT (the natural log of the gas temperature).
-/// @param[out] rxn_rate_buf output buffers to be filled with computed reaction
-///    rates for @p idx_range
-/// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
-///     temporary grain species properties (only used in certain configurations)
-///
-/// > [!important]
-/// > TODO: The role of the `dt` argument **MUST** be clarified! It is passed
-/// > different values in different areas of the codebase!!!!
-/// > - `solve_rate_cool_g` passes in the value of the total timestep that the
-/// >   chemistry is evolved. This is the traditional meaning of `dt`
-/// > - the time derivative calculation within `step_rate_newton_raphson`
-/// >   passes the timestep of the current subcycle (effectively the whole
-/// >   function is only being called for a single element idx_range)
-/// >
-/// > Internally, this arg only appears to be used to determine dust grain
-/// > destruction rate.
-/// > - the dust destruction rate is 0 for all temperatures below some
-/// >   threshold (the threshold depends on the grain species)
-/// > - above the threshold, the destruction rate is essentially the current
-/// >   grain density divided by the value of the `dt` argument
-/// >
-/// > If you think about it:
-/// > - I'd argue that setting `dt` to the whole timestep that we are evolving
-/// >   the zone over is blatantly wrong. It violates the principle that you
-/// >   should get consistent results whether you invoke grackle 100 separate
-/// >   times or just 1 time. (The amount of dust heating would change)
-/// > - setting `dt` to the current subcycle timestep makes a lot more sense
-/// >   (and is the only logical choice)
-/// >   - It is roughly equivalent to saying that dust is immediately destroyed
-/// >     once the gas reaches a threshold temperature.
-/// >   - the model is overly simplistic since dust grains can survive for
-/// >     quite in ionized gas (see for example
-/// >     https://ui.adsabs.harvard.edu/abs/2024ApJ...974...81R/abstract)
-/// >
-/// > If we stick with this instantaneous destruction model, then all
-/// > dust-grain related heating and cooling should probably assume that the
-/// > dust-grain density is already 0.
-inline void lookup_dust_rates1d(
+void DustSolver::lookup_dust_rxn_rates1d(
     IndexRange idx_range, const double* tdust, const double* dust2gas,
-    double dom, const gr_mask_type* itmask_metal, double dt,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-    FullRxnRateBuf rxn_rate_buf,
-    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
+    double dom, const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    GrainSpeciesCollection grain_temperatures,
+    LnTLinInterpBuf logTlininterp_buf, FullRxnRateBuf rxn_rate_buf,
+    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) const {
   // TODO: get rid of dlogtem argument!
 
   const double dlogTdust =
@@ -351,6 +279,164 @@ inline void lookup_dust_rates1d(
   }
 }
 
-}  // namespace grackle::impl
+void DustSolver::calc_Tdust_and_chem_contrib(
+    double* edot, double* alpha_continuum, FullRxnRateBuf* rxn_rate_buf,
+    double* dust2gas, double* tdust, GrainSpeciesCollection grain_temperatures,
+    const double* tgas, const double* rhoH, const double* nelec_times_mH,
+    const double* metallicity, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range,
+    LnTLinInterpBuf logTlininterp_buf) const {
+  // Reducing scratch space usage of chiaki multi-grain growth dust model:
+  // - The function is currently structured to perform the following operations
+  //   - compute dust-temperature/opacity/grain-properties
+  //   - use opacity to update alpha_continuum
+  //   - use properties to compute edot contributions
+  //   - use properties to compute any rxn rates
+  // - because the function is currently structured to perform each of the
+  //   operation for all dust species before moving onto the next operation
+  //   (and again performing the operation for all dust species), we need
+  //   scratch space to retain all computed properties for each species
+  // - instead, we should probably loop over dust species and then perform the
+  //   above operations within the loop, but just for the current dust species
+  // - this is going to take a little work, but could eliminate the vast
+  //   majority of all scratch space (we probably want to retain a little
+  //   scratch for better CPU performance)
 
-#endif  // DUST_LOOKUP_DUST_RATES1D_HPP
+  // Set flag for dust-related options
+  const gr_mask_type anydust = (my_chemistry->dust_chemistry > 0 ||
+                                my_chemistry->dust_recombination_cooling > 0)
+                                   ? MASK_TRUE
+                                   : MASK_FALSE;
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
+
+  const double dom = internalu_calc_dom_(internalu);
+  const double dom_inv = 1. / dom;
+  const double rad_T = internalu_calc_Tcmb_(internalu);
+
+  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                             my_fields->grid_dimension[1],
+                             my_fields->grid_dimension[2]);
+
+  // buffers of intermediate quantities used within dust-routines (for
+  // calculating quantites related to heating/cooling)
+  InternalDustPropBuf internal_dust_prop_buf = new_InternalDustPropBuf(
+      my_fields->grid_dimension[0],
+      GrainMetalInjectPathways_get_n_log10Tdust_vals(
+          my_rates->opaque_storage->inject_pathway_props));
+
+  // opacity coefficients for each dust grain (the product of opacity
+  // coefficient & gas mass density is the linear absortpion coefficient)
+  GrainSpeciesCollection grain_kappa =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+  // closely related to grain_kappa
+  std::vector<double> kappa_tot(my_fields->grid_dimension[0]);
+
+  // holds the gas/grain-species heat transfer rates
+  GrainSpeciesCollection gas_grainsp_heatrate =
+      new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+  // closely related to gas_grainsp_heatrate
+  std::vector<double> gasgr(my_fields->grid_dimension[0]);
+
+  // holds values of the interstellar radiation field
+  std::vector<double> myisrf(my_fields->grid_dimension[0]);
+
+  // 1d array of Hydrogen number densities
+  // TODO: get rid of this buffer
+  // -> accessing this buffer vs recomputing the value each time has a very
+  //    small impact on rruntime
+  // -> Getting rid of the buffer reduces cache complexity and simplifies logic
+  //    (in fact, its plausible that getting rid of this could speed things up)
+  std::vector<double> nH(my_fields->grid_dimension[0]);
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      nH[i] = rhoH[i] * dom;
+    }
+  }
+
+  // a scratch buffer (with some refactoring, this can probably be removed)
+  std::vector<double> gasgr_tdust(my_fields->grid_dimension[0]);
+
+  // compute various dust properties
+  dust_related_props(anydust, tgas, nH.data(), metallicity, itmask,
+                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
+                     idx_range, logTlininterp_buf, rad_T, dust2gas, tdust,
+                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
+                     kappa_tot.data(), grain_kappa, gasgr_tdust.data(),
+                     myisrf.data(), internal_dust_prop_buf);
+
+  // Add contributions from dust opacity to alpha_continuum, the continuum
+  // linear absorption coefficient
+  //
+  // The original Fortran version of this logic had the following 2
+  // comments:
+  //    ! if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
+  //    ! We better not include dust opacity.
+  // I think this comment explains why we aren't including dust contributions
+  // in the classic single-species dust model
+  if ((anydust != MASK_FALSE) && (!single_species_dust_model) &&
+      (alpha_continuum != nullptr)) {
+    const double mh_local_var = mh_grflt;
+    int n_grain_species =
+        my_rates->opaque_storage->grain_species_info->n_species;
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask_metal[i] != MASK_FALSE) {
+        // right now, summing up the grain_kappa components and then updating
+        // alpha_continuum *may* be marginally faster, but the current approach
+        // is probably better in the long run
+        // -> in order to cut down on temporary scratch buffers, we'll probably
+        //    want to add contributions to alpha_continuum as we compute
+        //    the opacities for a given grain species
+        double tmp = d(i, idx_range.j, idx_range.k) * dom * mh_local_var;
+        for (int grsp_i = 0; grsp_i < n_grain_species; grsp_i++) {
+          alpha_continuum[i] += grain_kappa.data[grsp_i][i] * tmp;
+        }
+      }
+    }
+  }
+
+  if (edot != nullptr) {
+    // Calculate dust cooling rate
+    if (anydust != MASK_FALSE) {
+      dust_gas_edot::update_edot_dust_cooling_rate(
+          edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
+          my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
+    }
+
+    // Photo-electric heating by UV-irradiated dust
+    dust_gas_edot::update_edot_photoelectric_heat(
+        edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
+        my_chemistry, my_rates->gammah, idx_range, dom_inv);
+
+    // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
+    if (my_chemistry->dust_recombination_cooling > 0) {
+      dust_gas_edot::update_edot_dust_recombination(
+          edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
+          my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
+          my_rates->regr, idx_range, dom_inv);
+    }
+  }
+
+  if (DustSolver::any_dust_rxn_rates(*my_chemistry) &&
+      rxn_rate_buf != nullptr) {
+    // todo: we can do some refactoring when it comes to the chiaki mutlti
+    //       grain growth model
+    // -> in the current implementation, lookup_dust_rates1d is needlessly
+    //    refilling internal_dust_prop_buf. At the very least, we should make
+    //    it possible to skip that
+    // -> more generally, in order to reduce the size/number of temporary
+    //    buffers, we should probably integrate the logic
+    lookup_dust_rxn_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal,
+                            my_chemistry, my_rates, my_fields,
+                            grain_temperatures, logTlininterp_buf,
+                            *rxn_rate_buf, internal_dust_prop_buf);
+  }
+
+  // Free memory
+  drop_InternalDustPropBuf(&internal_dust_prop_buf);
+  drop_GrainSpeciesCollection(&grain_kappa);
+  drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
+}
+
+}  // namespace GRIMPL_NAMESPACE_DECL

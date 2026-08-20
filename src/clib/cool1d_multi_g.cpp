@@ -17,22 +17,25 @@
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
-#include "dust/misc.hpp"
-#include "dust/multi_grain_species/dust_props.hpp"
-#include "dust/gas_heat_cool.hpp"
+#include "dust/solver.hpp"
+#include "fortran_func_decls.h"
 #include "grackle.h"
+#include "internal_units.hpp"
 #include "interpolate.hpp"
-#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
 #include "opaque_storage.hpp"
+#include "support/config.hpp"
+#include "support/View.hpp"
 #include "tabulated/cool1d_cloudy.hpp"
 #include "tabulated/cool1d_cloudy_old_tables.hpp"
 #include "utils-cpp.hpp"
 
+namespace GRIMPL_NAMESPACE_DECL {
+
 static double interp_from_3D_grid(double input1, double input2, double input3,
                                   const GRIMPL_NS::InterpGrid& interp_grid) {
-  return GRIMPL_NS::interpolate_3d(
+  return interpolate_3d(
       input1, input2, input3, interp_grid.props.dimension,
       interp_grid.props.parameters[0], interp_grid.props.parameter_spacing[0],
       interp_grid.props.parameters[1], interp_grid.props.parameter_spacing[1],
@@ -40,18 +43,17 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
       interp_grid.props.data_size, interp_grid.data);
 }
 
-void grackle::impl::cool1d_multi_g(
-    double* edot, const double* tgas, const double* mmw, double* tdust,
-    const double* metallicity, double* dust2gas, const double* rhoH,
-    const double* nelec_times_mH, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-    IndexRange idx_range,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
-    grackle::impl::CoolHeatScratchBuf coolingheating_buf) {
+void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
+                    const double* mmw, const double* metallicity,
+                    const double* rhoH, const double* nelec_times_mH,
+                    const gr_mask_type* itmask,
+                    const gr_mask_type* itmask_metal,
+                    chemistry_data* my_chemistry,
+                    chemistry_data_storage* my_rates,
+                    grackle_field_data* my_fields,
+                    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+                    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf,
+                    CoolHeatScratchBuf coolingheating_buf) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
@@ -122,8 +124,6 @@ void grackle::impl::cool1d_multi_g(
   // Declare some constants:
   const double mh_local_var = mh_grflt;
 
-  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
-
   // Locals
   int i, iZscale, mycmbTfloor;
   double dom, qq, vibl, zr, hdlte1, hdlow1, fudge, gphdl1, dom_inv, tau,
@@ -136,8 +136,8 @@ void grackle::impl::cool1d_multi_g(
   // support to Grackle. Future work should work on addressing this
   // - in the immediate short-term, we need to focus on aggregating these
   //   variables into logically organized structs. In a lot of cases, it
-  //   may make sense to move the buffers into the existing
-  //   Cool1DMultiScratchBuf or CoolHeatScratchBuf structs.
+  //   may make sense to move the buffers into the existing CoolHeatScratchBuf
+  //   struct.
   // - in the longer term the goal is to refactor this logic to remove as many
   //   of these buffers as possible (without crippling cache performance on
   //   CPUs)
@@ -149,10 +149,6 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> gael(my_fields->grid_dimension[0]);
   std::vector<double> h2lte(my_fields->grid_dimension[0]);
   std::vector<double> galdl(my_fields->grid_dimension[0]);
-  // gas/grain heat transfer rate
-  std::vector<double> gasgr(my_fields->grid_dimension[0]);
-  // holds values of the interstellar radiation field
-  std::vector<double> myisrf(my_fields->grid_dimension[0]);
   std::vector<double> cieY06(my_fields->grid_dimension[0]);
 
   std::vector<double> logT(my_fields->grid_dimension[0]);
@@ -181,45 +177,15 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> LCO(my_fields->grid_dimension[0]);
   std::vector<double> LOH(my_fields->grid_dimension[0]);
   std::vector<double> LH2O(my_fields->grid_dimension[0]);
-  std::vector<double> alpha(my_fields->grid_dimension[0]);
-  std::vector<double> alphad(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
-  std::vector<double> tau_con(my_fields->grid_dimension[0]);
-  double log_a;
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
 
-  // buffers of intermediate quantities used within dust-routines (for
-  // calculating quantites related to heating/cooling)
-  grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
-      grackle::impl::new_InternalDustPropBuf(
-          my_fields->grid_dimension[0],
-          GrainMetalInjectPathways_get_n_log10Tdust_vals(
-              opaque_storage.inject_pathway_props));
-  // opacity coefficients for each dust grain (the product of opacity
-  // coefficient & gas mass density is the linear absortpion coefficient)
-  grackle::impl::GrainSpeciesCollection grain_kappa =
-      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
-  // closely related to grain_kappa
-  std::vector<double> kappa_tot(my_fields->grid_dimension[0]);
-  // holds the gas/grain-species heat transfer rates
-  grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate =
-      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
-
   // Iteration mask
-
-  gr_mask_type anydust;
   std::vector<gr_mask_type> itmask_tab(my_fields->grid_dimension[0]);
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
-
-  // Set flag for dust-related options
-
-  anydust = (my_chemistry->dust_chemistry > 0 ||
-             my_chemistry->dust_recombination_cooling > 0)
-                ? MASK_TRUE
-                : MASK_FALSE;
 
   // Set units
 
@@ -234,22 +200,10 @@ void grackle::impl::cool1d_multi_g(
   // Set compton cooling coefficients (and temperature)
 
   comp1 = my_rates->comp * std::pow((1. + zr), 4);
-  comp2 = 2.73 * (1. + zr);
+  comp2 = internalu_calc_Tcmb_(internalu);
 
   // multiplicative factor for including/excluding H2 cooling
   ih2cox = (double)(my_chemistry->ih2co);
-
-  // Calculate H number density
-  // TODO: get rid of this buffer
-  // -> the difference between accessing cool1dmulti_buf.mynh and recomputing
-  //    the value each time we need it is very small.
-  // -> Getting rid of the buffer reduces cache complexity and simplifies logic
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      cool1dmulti_buf.mynh[i] = rhoH[i] * dom;
-    }
-  }
 
   // Compute log densities
 
@@ -813,106 +767,6 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  dust_related_props(anydust, tgas, cool1dmulti_buf.mynh, metallicity, itmask,
-                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
-                     idx_range, logTlininterp_buf, comp2, dust2gas, tdust,
-                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
-                     kappa_tot.data(), grain_kappa, cool1dmulti_buf.gasgr_tdust,
-                     myisrf.data(), internal_dust_prop_buf);
-
-  // Calculate dust cooling rate
-  if (anydust != MASK_FALSE) {
-    dust_gas_edot::update_edot_dust_cooling_rate(
-        edot, tgas, tdust, grain_temperatures, dust2gas, rhoH, itmask_metal,
-        my_chemistry, idx_range, d, gasgr.data(), gas_grainsp_heatrate);
-  }
-
-  // Compute continuum opacity
-
-  if (my_chemistry->use_primordial_continuum_opacity == 1) {
-    const InterpGrid& interp_grid = opaque_storage.alphap;
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        // ! primordial continuum opacity !!
-        log_a = interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
-                               interp_grid.props.parameters[0],
-                               interp_grid.props.parameter_spacing[0],
-                               interp_grid.props.parameters[1],
-                               interp_grid.props.parameter_spacing[1],
-                               interp_grid.props.data_size, interp_grid.data);
-
-        alpha[i] = std::pow(1.e1, log_a);
-      }
-    }
-
-  } else {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        alpha[i] = 0.f;
-      }
-    }
-  }
-
-  // Add contributions from dust opacity to alpha, the linear absorption
-  // coefficient
-  //
-  //  The original Fortran version of this function had the following 2
-  //  comments:
-  //    ! if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
-  //    ! We better not include dust opacity.
-  // It's a little unclear how relevant these comments actually are.
-  if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask_metal[i] != MASK_FALSE) {
-        if (single_species_dust_model) {
-          // In the future, we should consider renaming `alphad`. The
-          // current name is a little confusing since:
-          // - the related `alpha` variable holds linear absorption
-          //   coefficients (which is commonly denoted by the Greek
-          //   letter alpha)
-          // - in contrast, `alphad` only ever holds the sum of
-          //   opacity coefficients (commonly denoted by the Greek
-          //   letter kappa)
-
-          alphad[i] = kappa_tot[i];
-
-        } else {
-          if (my_chemistry->dust_species > 0) {
-            alphad[i] = grain_kappa.data[OnlyGrainSpLUT::MgSiO3_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::AC_dust][i];
-          }
-          if (my_chemistry->dust_species > 1) {
-            alphad[i] = alphad[i] +
-                        grain_kappa.data[OnlyGrainSpLUT::SiM_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::FeM_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::Fe3O4_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::SiO2_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::MgO_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::FeS_dust][i] +
-                        grain_kappa.data[OnlyGrainSpLUT::Al2O3_dust][i];
-          }
-          if (my_chemistry->dust_species > 2) {
-            alphad[i] =
-                alphad[i] +
-                gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust][i] +
-                gas_grainsp_heatrate.data[OnlyGrainSpLUT::vol_org_dust][i] +
-                gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust][i];
-          }
-        }
-
-        alpha[i] = alpha[i] + alphad[i] * d(i, idx_range.j, idx_range.k) * dom *
-                                  mh_local_var;
-      }
-    }
-  }
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      tau_con[i] = alpha[i] * lshield_con[i];
-    }
-  }
-
   // --- Compute (external) radiative heating terms ---
   // Photoionization heating
 
@@ -1084,19 +938,6 @@ void grackle::impl::cool1d_multi_g(
                                  edot, comp2, dom, zr, mycmbTfloor,
                                  my_chemistry->UVbackground, iZscale, itmask,
                                  my_rates->cloudy_primordial, idx_range);
-  }
-
-  // Photo-electric heating by UV-irradiated dust
-  dust_gas_edot::update_edot_photoelectric_heat(
-      edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
-      my_chemistry, my_rates->gammah, idx_range, dom_inv);
-
-  // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-  if (my_chemistry->dust_recombination_cooling > 0) {
-    dust_gas_edot::update_edot_dust_recombination(
-        edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
-        my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
-        my_rates->regr, idx_range, dom_inv);
   }
 
   // Compton cooling or heating and X-ray compton heating
@@ -1333,6 +1174,36 @@ void grackle::impl::cool1d_multi_g(
 
   // Continuum opacity
 
+  // Add primordial contributions to the continuum linear absorption coefs
+  // -> Gen Chiaki added this logic. If section 2.2.3 of Chiaki & Wise (2019)
+  //    accurately describes this logic, then this should be a Planck mean
+  //    opacity
+  if (my_chemistry->use_primordial_continuum_opacity == 1) {
+    const InterpGrid& interp_grid = opaque_storage.alphap;
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        // ! primordial continuum opacity !!
+        double log10_a =
+            interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
+                           interp_grid.props.parameters[0],
+                           interp_grid.props.parameter_spacing[0],
+                           interp_grid.props.parameters[1],
+                           interp_grid.props.parameter_spacing[1],
+                           interp_grid.props.data_size, interp_grid.data);
+
+        alpha_continuum[i] += std::pow(10.0, log10_a);
+      }
+    }
+  }
+
+  // todo: stop allocating a buffer for tau_con
+  std::vector<double> tau_con(my_fields->grid_dimension[0]);
+  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      tau_con[i] = alpha_continuum[i] * lshield_con[i];
+    }
+  }
+
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       if (tau_con[i] > 1.e0) {
@@ -1345,10 +1216,7 @@ void grackle::impl::cool1d_multi_g(
     }
   }
 
-  // Free memory
-  grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
-  grackle::impl::drop_GrainSpeciesCollection(&grain_kappa);
-  grackle::impl::drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
-
   return;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL
