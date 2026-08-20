@@ -268,7 +268,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   }
 
   // Iterate to convergence with Newton's method
-  for (iter = 1; iter <= (itmax); iter++) {
+  for (iter = 1; (iter <= itmax) && (nm_remain > 0); iter++) {
     // Calculate grain opacities AND heating/cooling balance
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
@@ -319,12 +319,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
         // End loop over slice
       }
-    }
-
-    // Check for all cells done with Newton method
-    // This includes attempts where a negative solution was found
-    if (nm_remain <= 0) {
-      break;
     }
 
     // End iteration loop for Newton's method
