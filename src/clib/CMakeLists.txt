@@ -113,6 +113,7 @@ add_library(Grackle_Grackle
   dust/misc.hpp
   dust/passive/analytic_opac.hpp
   dynamic_api.cpp
+  field_adaptor.hpp
   fortran_func_wrappers.hpp
   full_rxn_rate_buf.hpp
   gas_props.hpp
@@ -159,7 +160,6 @@ add_library(Grackle_Grackle
   time_deriv_0d.hpp
   update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
-  utils-field.hpp
   visitor/common.hpp
   visitor/copy.hpp
   visitor/memory.hpp
