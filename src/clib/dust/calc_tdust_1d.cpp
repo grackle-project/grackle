@@ -267,30 +267,30 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
   }
 
-  // Iterate to convergence with Newton's method
-  for (iter = 1; (iter <= itmax) && (nm_remain > 0); iter++) {
-    // Calculate grain opacities AND heating/cooling balance
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
-        FnEval eval_rslt = fn(tdustnow[i], i);
-        kgr[i] = eval_rslt.associated_val;
-        sol[i] = eval_rslt.f_val;
+  {  // perform newton's method
+    double* x = tdustnow.data();
+    double max_x = 3000.0;
+    // below this x value, we give up!
+    double giveup_small_x_threshold = Trad;
+    // Iterate to convergence with Newton's method
+    for (iter = 1; (iter <= itmax) && (nm_remain > 0); iter++) {
+      // Calculate grain opacities AND heating/cooling balance
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
+          FnEval eval_rslt = fn(tdustnow[i], i);
+          kgr[i] = eval_rslt.associated_val;
+          sol[i] = eval_rslt.f_val;
+        }
       }
-    }
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
-        double Tdust_plus = std::fmax(1.e-3, (1. + pert[i]) * tdustnow[i]);
-        FnEval eval_rslt = fn(Tdust_plus, i);
-        solplus[i] = eval_rslt.f_val;
-        // we don't need to record eval_rslt.associated_val
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
+          double Tdust_plus = std::fmax(1.e-3, (1. + pert[i]) * tdustnow[i]);
+          FnEval eval_rslt = fn(Tdust_plus, i);
+          solplus[i] = eval_rslt.f_val;
+          // we don't need to record eval_rslt.associated_val
+        }
       }
-    }
 
-    {  // perform newton's method
-      double* x = tdustnow.data();
-      double max_x = 3000.0;
-      // below this x value, we give up!
-      double giveup_small_x_threshold = Trad;
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
           // Check if the solution has converged (if not prepare the next guess)
@@ -319,9 +319,9 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
         // End loop over slice
       }
-    }
 
-    // End iteration loop for Newton's method
+      // End iteration loop for Newton's method
+    }
   }
 
   // specifies where we use bisection
