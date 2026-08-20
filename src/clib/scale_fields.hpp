@@ -20,41 +20,6 @@
 
 namespace grackle::impl {
 
-/// Scales density and metal_density (if available) by factor
-inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
-  const int grid_start[3] = {my_fields->grid_start[0], my_fields->grid_start[1],
-                             my_fields->grid_start[2]};
-  const int grid_end[3] = {my_fields->grid_end[0], my_fields->grid_end[1],
-                           my_fields->grid_end[2]};
-
-  // Multiply density by factor (1/a^3 or a^3)
-
-  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
-                             my_fields->grid_dimension[1],
-                             my_fields->grid_dimension[2]);
-
-  for (int k = grid_start[2]; k <= grid_end[2]; k++) {
-    for (int j = grid_start[1]; j <= grid_end[1]; j++) {
-      for (int i = grid_start[0]; i <= grid_end[0]; i++) {
-        d(i, j, k) = d(i, j, k) * factor;
-      }
-    }
-  }
-
-  if (my_fields->metal_density != nullptr) {
-    FortranView<gr_float***> metal(
-        my_fields->metal_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
-      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
-        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
-          metal(i, j, k) = metal(i, j, k) * factor;
-        }
-      }
-    }
-  }
-}
-
 /// A helper function for scaling the injection pathway metal density fields
 ///
 /// @param[inout] my_fields holds the fields that will be updated in-place
@@ -122,6 +87,9 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   const IndexHelper idx_helper = build_index_helper_(my_fields);
+  const bool dust_density_field_present =
+      my_chemistry->dust_chemistry == 1 &&
+      my_chemistry->use_dust_density_field == 1;
 
   OMP_PRAGMA("omp parallel for schedule(runtime)")
   for (int t = 0; t < idx_helper.outer_ind_size; t++) {
@@ -135,32 +103,30 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
         metal(i, j, k) = metal(i, j, k) * factor;
       }
     }
-    if (my_chemistry->use_dust_density_field == 1) {
+    if (dust_density_field_present) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         dust(i, j, k) = dust(i, j, k) * factor;
-        if ((my_chemistry->grain_growth == 1) ||
-            (my_chemistry->dust_sublimation == 1)) {
-          // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-          if (my_chemistry->dust_species > 0) {
-            MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
-            AC(i, j, k) = AC(i, j, k) * factor;
-          }
-          if (my_chemistry->dust_species > 1) {
-            SiM(i, j, k) = SiM(i, j, k) * factor;
-            FeM(i, j, k) = FeM(i, j, k) * factor;
-            Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
-            Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
-            SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
-            MgO(i, j, k) = MgO(i, j, k) * factor;
-            FeS(i, j, k) = FeS(i, j, k) * factor;
-            Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
-          }
-          if (my_chemistry->dust_species > 2) {
-            reforg(i, j, k) = reforg(i, j, k) * factor;
-            volorg(i, j, k) = volorg(i, j, k) * factor;
-            H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
-          }
-          // !            endif
+      }
+    } else if (my_chemistry->dust_chemistry == 2) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (my_chemistry->dust_species > 0) {
+          MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
+          AC(i, j, k) = AC(i, j, k) * factor;
+        }
+        if (my_chemistry->dust_species > 1) {
+          SiM(i, j, k) = SiM(i, j, k) * factor;
+          FeM(i, j, k) = FeM(i, j, k) * factor;
+          Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
+          Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
+          SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
+          MgO(i, j, k) = MgO(i, j, k) * factor;
+          FeS(i, j, k) = FeS(i, j, k) * factor;
+          Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
+        }
+        if (my_chemistry->dust_species > 2) {
+          reforg(i, j, k) = reforg(i, j, k) * factor;
+          volorg(i, j, k) = volorg(i, j, k) * factor;
+          H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
         }
       }
     }

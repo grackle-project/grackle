@@ -13,18 +13,15 @@
 // This file was initially generated automatically during conversion of the
 // cool1d_multi_g function from FORTRAN to C++
 
-#include "dust/misc.hpp"
-#include "dust/gas_heat_cool.hpp"
-
 #include <cstdio>
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
-#include "gas_props.hpp"
+#include "dust/misc.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
+#include "dust/gas_heat_cool.hpp"
 #include "grackle.h"
-#include "fortran_func_decls.h"
-#include "fortran_func_wrappers.hpp"
-#include "dust_props.hpp"
+#include "interpolate.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
@@ -35,7 +32,7 @@
 
 static double interp_from_3D_grid(double input1, double input2, double input3,
                                   const GRIMPL_NS::InterpGrid& interp_grid) {
-  return grackle::impl::fortran_wrapper::interpolate_3d_g(
+  return GRIMPL_NS::interpolate_3d(
       input1, input2, input3, interp_grid.props.dimension,
       interp_grid.props.parameters[0], interp_grid.props.parameter_spacing[0],
       interp_grid.props.parameters[1], interp_grid.props.parameter_spacing[1],
@@ -124,6 +121,8 @@ void grackle::impl::cool1d_multi_g(
 
   // Declare some constants:
   const double mh_local_var = mh_grflt;
+
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   // Locals
   int i, iZscale, mycmbTfloor;
@@ -835,13 +834,12 @@ void grackle::impl::cool1d_multi_g(
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
         // ! primordial continuum opacity !!
-        log_a = grackle::impl::fortran_wrapper::interpolate_2d_g(
-            logrho[i], logT[i], interp_grid.props.dimension,
-            interp_grid.props.parameters[0],
-            interp_grid.props.parameter_spacing[0],
-            interp_grid.props.parameters[1],
-            interp_grid.props.parameter_spacing[1], interp_grid.props.data_size,
-            interp_grid.data);
+        log_a = interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
+                               interp_grid.props.parameters[0],
+                               interp_grid.props.parameter_spacing[0],
+                               interp_grid.props.parameters[1],
+                               interp_grid.props.parameter_spacing[1],
+                               interp_grid.props.data_size, interp_grid.data);
 
         alpha[i] = std::pow(1.e1, log_a);
       }
@@ -866,7 +864,7 @@ void grackle::impl::cool1d_multi_g(
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
-        if (my_chemistry->use_multiple_dust_temperatures == 0) {
+        if (single_species_dust_model) {
           // In the future, we should consider renaming `alphad`. The
           // current name is a little confusing since:
           // - the related `alpha` variable holds linear absorption
@@ -1093,14 +1091,8 @@ void grackle::impl::cool1d_multi_g(
       edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
       my_chemistry, my_rates->gammah, idx_range, dom_inv);
 
-  /* TODO: this should be changed to just
-     my_chemistry->dust_recombination_cooling > 0
-     and dust_recombination_cooling > 0 should require dust_chemistry > 0.
-     We will keep it this way for now and change it deliberately later
-     as it will break the tests. */
   // Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
-  if ((my_chemistry->dust_chemistry > 0) ||
-      (my_chemistry->dust_recombination_cooling > 0)) {
+  if (my_chemistry->dust_recombination_cooling > 0) {
     dust_gas_edot::update_edot_dust_recombination(
         edot, tgas, dust2gas, rhoH, nelec_times_mH, myisrf.data(), itmask,
         my_chemistry->local_dust_to_gas_ratio, logTlininterp_buf,
