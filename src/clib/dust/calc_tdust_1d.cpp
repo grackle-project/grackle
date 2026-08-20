@@ -159,6 +159,74 @@ static int unchecked_bisect(
   return iter;
 }
 
+template <typename Fn>
+[[maybe_unused]] static int finite_diff_newton(
+    const Fn& fn, double* x, double* associated_vals, double* f_vals,
+    double* fplus_vals, SolveStatus* nm_solvemask, const gr_mask_type* itmask,
+    double* pert, double minpert, IndexRange idx_range,
+    double giveup_small_x_threshold, double max_x, double rtol, int max_iter,
+    int& c_remain) {
+  c_remain = 0;
+  int nm_remain = 0;
+  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      c_remain += nm_solvemask[i] != SolveStatus::CONVERGED;
+      nm_remain += nm_solvemask[i] == SolveStatus::UNCONVERGED;
+    }
+  }
+  // Iterate to convergence with Newton's method
+  int iter;
+  for (iter = 1; (iter <= max_iter) && (nm_remain > 0); iter++) {
+    // Calculate grain opacities AND heating/cooling balance
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
+        FnEval eval_rslt = fn(x[i], i);
+        associated_vals[i] = eval_rslt.associated_val;
+        f_vals[i] = eval_rslt.f_val;
+      }
+    }
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
+        double x_plus = std::fmax(1.e-3, (1. + pert[i]) * x[i]);
+        FnEval eval_rslt = fn(x_plus, i);
+        fplus_vals[i] = eval_rslt.f_val;
+        // we don't need to record eval_rslt.associated_val
+      }
+    }
+
+    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
+        // Check if the solution has converged (if not prepare the next guess)
+
+        double slope = (fplus_vals[i] - f_vals[i]) / (pert[i] * x[i]);
+
+        double x_old = x[i];
+        x[i] = std::fmin(x[i] - (f_vals[i] / slope), max_x);
+
+        pert[i] = std::fmax(
+            std::fmin(pert[i], 0.5 * std::fabs(x[i] - x_old) / x[i]), minpert);
+
+        if (x[i] < giveup_small_x_threshold) {
+          nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
+          nm_remain--;
+          // Check for convergence of solution
+        } else if (std::fabs(f_vals[i]) < std::fabs(fplus_vals[i] * rtol)) {
+          nm_solvemask[i] = SolveStatus::CONVERGED;
+          c_remain--;
+          nm_remain--;
+        }
+
+        // if ( nm_itmask(i) )
+      }
+
+      // End loop over slice
+    }
+
+    // End iteration loop for Newton's method
+  }
+  return iter;
+}
+
 /// @brief A helper function that helps implement calc_tdust_1d
 ///
 /// The basic premise is that the particulars of the opacity calculation are
@@ -273,64 +341,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double* f_vals = sol.data();
     double* fplus_vals = solplus.data();
 
-    c_remain = 0;
-    int nm_remain = 0;
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        c_remain += nm_solvemask[i] != SolveStatus::CONVERGED;
-        nm_remain += nm_solvemask[i] == SolveStatus::UNCONVERGED;
-      }
-    }
-    // Iterate to convergence with Newton's method
-    for (iter = 1; (iter <= itmax) && (nm_remain > 0); iter++) {
-      // Calculate grain opacities AND heating/cooling balance
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
-          FnEval eval_rslt = fn(x[i], i);
-          associated_vals[i] = eval_rslt.associated_val;
-          f_vals[i] = eval_rslt.f_val;
-        }
-      }
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
-          double x_plus = std::fmax(1.e-3, (1. + pert[i]) * x[i]);
-          FnEval eval_rslt = fn(x_plus, i);
-          fplus_vals[i] = eval_rslt.f_val;
-          // we don't need to record eval_rslt.associated_val
-        }
-      }
-
-      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
-          // Check if the solution has converged (if not prepare the next guess)
-
-          double slope = (fplus_vals[i] - f_vals[i]) / (pert[i] * x[i]);
-
-          double x_old = x[i];
-          x[i] = std::fmin(x[i] - (f_vals[i] / slope), max_x);
-
-          pert[i] = std::fmax(
-              std::fmin(pert[i], 0.5 * std::fabs(x[i] - x_old) / x[i]),
-              minpert);
-
-          if (x[i] < giveup_small_x_threshold) {
-            nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
-            nm_remain--;
-            // Check for convergence of solution
-          } else if (std::fabs(f_vals[i]) < std::fabs(fplus_vals[i] * tol)) {
-            nm_solvemask[i] = SolveStatus::CONVERGED;
-            c_remain--;
-            nm_remain--;
-          }
-
-          // if ( nm_itmask(i) )
-        }
-
-        // End loop over slice
-      }
-
-      // End iteration loop for Newton's method
-    }
+    iter = finite_diff_newton(fn, x, associated_vals, f_vals, fplus_vals,
+                              nm_solvemask.data(), itmask, pert.data(), minpert,
+                              idx_range, giveup_small_x_threshold, max_x, tol,
+                              itmax, c_remain);
   }
 
   // specifies where we use bisection
