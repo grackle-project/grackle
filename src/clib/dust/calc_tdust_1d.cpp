@@ -296,36 +296,39 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // relative finite difference step size
   std::vector<double> pert(buf_len);
   std::vector<double> bi_t_high(buf_len);
-  // iteration mask specifies where we use newton's method with finite
-  // differences
-  std::vector<SolveStatus> nm_solvemask(buf_len, SolveStatus::CONVERGED);
 
-  // Set local iteration mask and initial guess
+  // specifies the status of each index (a solver skips a calculation if an
+  // index corresponds to SolveStatus::CONVERGED)
+  std::vector<SolveStatus> solvemask(buf_len, SolveStatus::CONVERGED);
+
+  // setup solvemask for use with newton-raphson and set initial guess
   bool at_least_one_bisection = false;
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       if (Trad >= tgas[i]) {
         tdustnow[i] = Trad;
-        nm_solvemask[i] = SolveStatus::CONVERGED;
+        solvemask[i] = SolveStatus::CONVERGED;
       } else if (tgas[i] > passive_dust_model_T_sublimation) {
-        // Use bisection if T_gas > grain sublimation temperature.
-        nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
+        // we'll be skipping the newton method if T_gas exceeds grain
+        // sublimation temperature (we'll wait to solve for Tdust until we
+        // we use the bisection method)
+        solvemask[i] = SolveStatus::SKIP_SOLVE;
         at_least_one_bisection = true;
       } else {
-        // we the following is a guess based on the premise that cooling from
+        // the following is a guess based on the premise that cooling from
         // thermal radiation is balanced by heating from the interstellar
         // radiation field.
         // -> The constants assume that we are using the classic passive dust
         //    model with Tgrain < 200 Kelvin
-        // -> striclty speaking, the exponent should be 1/6
+        // -> strictly speaking, the exponent should be 1/6
         double isrf_balance_guess = std::pow(
             (gamma_isrf[i] / Tdust_detail::sigma_sb_times_4 / kgr1), 0.17);
         tdustnow[i] = std::fmax(Trad, isrf_balance_guess);
-        nm_solvemask[i] = SolveStatus::UNCONVERGED;
+        solvemask[i] = SolveStatus::UNCONVERGED;
       }
 
     } else {
-      nm_solvemask[i] = SolveStatus::CONVERGED;
+      solvemask[i] = SolveStatus::CONVERGED;
     }
   }
 
@@ -340,19 +343,15 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double* fplus_vals = solplus.data();
 
     EqnSolveRslt rslt = finite_diff_newton(
-        fn, x, associated_vals, f_vals, fplus_vals, nm_solvemask.data(),
+        fn, x, associated_vals, f_vals, fplus_vals, solvemask.data(),
         pert.data(), minpert, idx_range.i_start, idx_range.i_stop,
         giveup_small_x_threshold, max_x, tol, itmax);
     iter = rslt.iterations;
     at_least_one_bisection = at_least_one_bisection || !rslt.all_solved;
   }
 
-  // specifies where we use bisection
-  std::vector<SolveStatus> bi_solvemask(buf_len, SolveStatus::CONVERGED);
-
-  // If iteration count exceeded, try once more with bisection
   if (at_least_one_bisection) {
-    // set initial guesses
+    // set initial guesses solvemask for bisection
     //
     // There's an implicit assumption here that
     // - fn(tdustnow[i], i).f_val > 0
@@ -362,10 +361,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     // unlikely to be false, the iteration will fail silently (with an
     // absolute garbage result) on the off chance that it comes up
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (nm_solvemask[i] == SolveStatus::CONVERGED) {
-        bi_solvemask[i] = SolveStatus::CONVERGED;
+      if (solvemask[i] == SolveStatus::CONVERGED) {
+        solvemask[i] = SolveStatus::CONVERGED;
       } else {  // we want SolveStatus::UNCONVERGED and SolveStatus::SKIP_SOLVE
-        bi_solvemask[i] = SolveStatus::UNCONVERGED;
+        solvemask[i] = SolveStatus::UNCONVERGED;
         tdustnow[i] = Trad;
         // bi_t_high(i) = tgas(i)
         bi_t_high[i] = 3e3;
@@ -376,8 +375,8 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double* associated_vals = kgr;
     iter =
         unchecked_bisect(fn, tdustnow.data(), bi_t_high.data(), associated_vals,
-                         bi_solvemask.data(), idx_range.i_start,
-                         idx_range.i_stop, bi_tol, bi_itmax, max_initial_guess)
+                         solvemask.data(), idx_range.i_start, idx_range.i_stop,
+                         bi_tol, bi_itmax, max_initial_guess)
             .iterations;
 
     // If iteration count exceeded with bisection, end of the line.
@@ -386,7 +385,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     if (iter > itmax) {
       int n_unconverged = 0;
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        n_unconverged += (bi_solvemask[i] != SolveStatus::CONVERGED);
+        n_unconverged += (solvemask[i] != SolveStatus::CONVERGED);
       }
       OMP_PRAGMA_CRITICAL {
         eprintf(
