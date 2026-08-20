@@ -162,7 +162,7 @@ static int unchecked_bisect(
 template <typename Fn>
 [[maybe_unused]] static int finite_diff_newton(
     const Fn& fn, double* x, double* associated_vals, double* f_vals,
-    double* fplus_vals, SolveStatus* nm_solvemask, const gr_mask_type* itmask,
+    double* fplus_vals, SolveStatus* solvemask, const gr_mask_type* itmask,
     double* pert, double minpert, IndexRange idx_range,
     double giveup_small_x_threshold, double max_x, double rtol, int max_iter,
     int& c_remain) {
@@ -170,8 +170,8 @@ template <typename Fn>
   int nm_remain = 0;
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
-      c_remain += nm_solvemask[i] != SolveStatus::CONVERGED;
-      nm_remain += nm_solvemask[i] == SolveStatus::UNCONVERGED;
+      c_remain += solvemask[i] != SolveStatus::CONVERGED;
+      nm_remain += solvemask[i] == SolveStatus::UNCONVERGED;
     }
   }
   // Iterate to convergence with Newton's method
@@ -179,14 +179,14 @@ template <typename Fn>
   for (iter = 1; (iter <= max_iter) && (nm_remain > 0); iter++) {
     // Calculate grain opacities AND heating/cooling balance
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
+      if (solvemask[i] == SolveStatus::UNCONVERGED) {
         FnEval eval_rslt = fn(x[i], i);
         associated_vals[i] = eval_rslt.associated_val;
         f_vals[i] = eval_rslt.f_val;
       }
     }
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
+      if (solvemask[i] == SolveStatus::UNCONVERGED) {
         double x_plus = std::fmax(1.e-3, (1. + pert[i]) * x[i]);
         FnEval eval_rslt = fn(x_plus, i);
         fplus_vals[i] = eval_rslt.f_val;
@@ -195,7 +195,7 @@ template <typename Fn>
     }
 
     for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
+      if (solvemask[i] == SolveStatus::UNCONVERGED) {
         // Check if the solution has converged (if not prepare the next guess)
 
         double slope = (fplus_vals[i] - f_vals[i]) / (pert[i] * x[i]);
@@ -207,11 +207,11 @@ template <typename Fn>
             std::fmin(pert[i], 0.5 * std::fabs(x[i] - x_old) / x[i]), minpert);
 
         if (x[i] < giveup_small_x_threshold) {
-          nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
+          solvemask[i] = SolveStatus::SKIP_SOLVE;
           nm_remain--;
           // Check for convergence of solution
         } else if (std::fabs(f_vals[i]) < std::fabs(fplus_vals[i] * rtol)) {
-          nm_solvemask[i] = SolveStatus::CONVERGED;
+          solvemask[i] = SolveStatus::CONVERGED;
           c_remain--;
           nm_remain--;
         }
