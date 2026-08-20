@@ -300,6 +300,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   double pert_i = 1.e-3;
 
   // Set local iteration mask and initial guess
+  bool at_least_one_bisection = false;
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       if (Trad >= tgas[i]) {
@@ -308,6 +309,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       } else if (tgas[i] > passive_dust_model_T_sublimation) {
         // Use bisection if T_gas > grain sublimation temperature.
         nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
+        at_least_one_bisection = true;
       } else {
         // we the following is a guess based on the premise that cooling from
         // thermal radiation is balanced by heating from the interstellar
@@ -327,7 +329,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
   }
 
-  int c_remain = 0;
   {  // perform newton's method
     double* x = tdustnow.data();
     double max_x = 3000.0;
@@ -338,17 +339,19 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double* f_vals = sol.data();
     double* fplus_vals = solplus.data();
 
+    int c_remain = 0;
     iter = finite_diff_newton(
         fn, x, associated_vals, f_vals, fplus_vals, nm_solvemask.data(),
         pert.data(), minpert, idx_range.i_start, idx_range.i_stop,
         giveup_small_x_threshold, max_x, tol, itmax, c_remain);
+    at_least_one_bisection = at_least_one_bisection || (c_remain > 0);
   }
 
   // specifies where we use bisection
   std::vector<SolveStatus> bi_solvemask(buf_len, SolveStatus::CONVERGED);
 
   // If iteration count exceeded, try once more with bisection
-  if (c_remain > 0) {
+  if (at_least_one_bisection) {
     // set initial guesses
     //
     // There's an implicit assumption here that
