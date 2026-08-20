@@ -103,10 +103,8 @@ struct EqnSolveRslt {
 /// @param[in]    max_initial_guess The maximum value of the very first
 ///     midpoint.
 ///
-/// @returns The maximum number of considered iterations. When @p max_iter is
-///     exceeded by this value, that's an indication that some calculations did
-///     not converge. You can identify unconverged locations by checking the
-///     values of @p solvemask
+/// @returns An object that describes the solution. You can identify
+///     unconverged locations by checking the values of @p solvemask
 ///
 /// @todo
 /// We should get rid of the @p max_initial_guess argument. It primarily exists
@@ -124,7 +122,7 @@ struct EqnSolveRslt {
 /// The current implementation for comparing to `rtol` introduces an implicit
 /// assumption that `x_a` and `x_b` both initially hold positive values.
 template <typename Fn>
-static int unchecked_bisect(
+static EqnSolveRslt unchecked_bisect(
     const Fn& fn, double* x_a, double* x_b, double* associated_vals,
     SolveStatus* solvemask, int i_start, int i_stop, double rtol, int max_iter,
     double max_initial_guess = std::numeric_limits<double>::max()) {
@@ -169,7 +167,7 @@ static int unchecked_bisect(
       }
     }
   }
-  return iter;
+  return EqnSolveRslt{n_unconverged == 0, iter};
 }
 
 template <typename Fn>
@@ -395,7 +393,8 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     iter =
         unchecked_bisect(fn, tdustnow.data(), bi_t_high.data(), associated_vals,
                          bi_solvemask.data(), idx_range.i_start,
-                         idx_range.i_stop, bi_tol, bi_itmax, max_initial_guess);
+                         idx_range.i_stop, bi_tol, bi_itmax, max_initial_guess)
+            .iterations;
 
     // If iteration count exceeded with bisection, end of the line.
     // -> Since `(bi_itmax+1) < itmax`, I'm pretty sure the following
