@@ -51,12 +51,6 @@ void calc_all_tdust_gasgr_1d(
   }
 
   // Cooling/heating slice locals
-
-  std::vector<double> gasgr_tbufs[OnlyGrainSpLUT::NUM_ENTRIES];
-
-  for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-    gasgr_tbufs[gsp_idx].resize(my_fields->grid_dimension[0]);
-  }
   std::vector<double> mygisrf(my_fields->grid_dimension[0]);
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
@@ -111,6 +105,10 @@ void calc_all_tdust_gasgr_1d(
                   idx_range);
 
   } else {
+    // can we reuse gasgr_tdust? Or do we actually need to perform a fresh
+    // allocation?
+    std::vector<double> gasgr_tdust_sp(my_fields->grid_dimension[0]);
+
     for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
       const double* sigma_per_gas_mass =
           internal_dust_prop_buf.grain_sigma_per_gas_mass.data[gsp_idx];
@@ -124,7 +122,6 @@ void calc_all_tdust_gasgr_1d(
 
       // Look up gas to grain heat transfer rates
       double* gasgr_sp = gas_grainsp_heatrate.data[gsp_idx];
-      double* gasgr_tdust_sp = gasgr_tbufs[gsp_idx].data();
       double fac = coolunit / mh_local_var;
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
@@ -140,9 +137,9 @@ void calc_all_tdust_gasgr_1d(
       }
 
       // Compute dust temperature
-      calc_tdust_1d(grain_temperatures.data[gsp_idx], tgas, nh, gasgr_tdust_sp,
-                    mygisrf.data(), myisrf, itmask_metal, trad,
-                    my_fields->grid_dimension[0], gr_N[1], dlog10Tdust,
+      calc_tdust_1d(grain_temperatures.data[gsp_idx], tgas, nh,
+                    gasgr_tdust_sp.data(), mygisrf.data(), myisrf, itmask_metal,
+                    trad, my_fields->grid_dimension[0], gr_N[1], dlog10Tdust,
                     log10Tdust_vals,
                     internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx],
                     grain_kappa.data[gsp_idx], false, idx_range);
