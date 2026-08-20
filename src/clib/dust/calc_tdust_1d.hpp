@@ -45,7 +45,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in]  gr_Td Temperature values of the grain opacity table
 /// @param[in]  alsp_data_ Grain opacity table data
 /// @param[out] kgr Array to hold computed grain opacities
-/// @param[in]  idspecies Flag to solve multiple grain species
+/// @param[in]  idspecies indicates whether to use the analytic opactiy formula
 /// @param[in]  idx_range Index range specifying the portion of the grid to
 ///     operate on
 ///
@@ -57,8 +57,8 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
                    const double* gasgr, const double* gamma_isrfa,
                    const double* isrf, const gr_mask_type* itmask, double trad,
                    int buf_len, int gr_N, double gr_dT, const double* gr_Td,
-                   const double* alsp_data_, double* kgr, int idspecies,
-                   IndexRange idx_range);
+                   const double* alsp_data_, double* kgr,
+                   bool analytic_opac_formula, IndexRange idx_range);
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 #endif  // DUST_CALC_TDUST_1D_HPP

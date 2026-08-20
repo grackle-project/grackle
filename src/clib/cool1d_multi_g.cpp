@@ -13,13 +13,12 @@
 // This file was initially generated automatically during conversion of the
 // cool1d_multi_g function from FORTRAN to C++
 
-#include <cstdio>
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
+#include "dust/gas_heat_cool.hpp"
 #include "dust/misc.hpp"
 #include "dust/multi_grain_species/dust_props.hpp"
-#include "dust/gas_heat_cool.hpp"
 #include "grackle.h"
 #include "interpolate.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
