@@ -73,8 +73,6 @@ namespace grackle::impl {
 /// @param[in] logTlininterp_buf Hold values for each location in @p idx_range
 ///     that are used to linearly interpolate tables with respect to the natural
 ///     log of @p tgas1d.
-/// @param[in] cool1dmulti_buf Pre-allocated buffers that are used by this
-///     function for scratch space (to hold a variety of quantities)
 /// @param[in] coolingheating_buf Pre-allocated buffers that are used by this
 ///     function for scratch space (to hold quantities that directly pertain to
 ///     cooling/heating
@@ -99,7 +97,6 @@ void cool1d_multi_g(double* edot, const double* tgas, const double* mmw,
                     IndexRange idx_range,
                     grackle::impl::GrainSpeciesCollection grain_temperatures,
                     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-                    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
                     grackle::impl::CoolHeatScratchBuf coolingheating_buf);
 
 };  // namespace grackle::impl

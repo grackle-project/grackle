@@ -148,7 +148,7 @@ inline void wrapped_calc_derivatives(
 /// @note
 /// The values in the various buffers (tgas, tdust, metallicity, dust2gas,
 /// rhoH, mmw, edot, grain_temperatures, logTlininterp_buf,
-/// cool1dmulti_buf, coolingheating_buf, chemheatrates_buf), hold undefined
+/// coolingheating_buf, chemheatrates_buf), hold undefined
 /// values after this function call wherever `itmask_nr` indicates that this
 /// function runs.
 /// - this has **ALWAYS** been the case. Historically these buffers have been
@@ -164,7 +164,6 @@ inline void step_rate_newton_raphson(
   photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-  grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
   grackle::impl::CoolHeatScratchBuf coolingheating_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf
 )
@@ -514,12 +513,10 @@ inline void step_rate_newton_raphson(
       // -> in a lot of cases, the need to copy values is dictated by the value
       //    of imp_eng
       // -> in the future, we should really refactor so that this isn't
-      //    necessary (arguably, the only thing we should really consider
-      //    copying is the value of cool1dmulti_buf.tgasold -- and that doesn't
-      //    currently get used)
+      //    necessary
       t_deriv::scratchbufs_copy_into_pack(
         i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw, nelec_times_mH,
-        edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
+        edot, grain_temperatures, logTlininterp_buf,
         coolingheating_buf, chemheatrates_buf
       );
 
@@ -677,7 +674,7 @@ label_9996:
       //    do so)
       t_deriv::scratchbufs_copy_from_pack(
         i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw, nelec_times_mH,
-        edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
+        edot, grain_temperatures, logTlininterp_buf,
         coolingheating_buf, chemheatrates_buf
       );
 

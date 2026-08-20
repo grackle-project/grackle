@@ -63,9 +63,6 @@ void cool_multi_time(
 
     LnTLinInterpBuf logTlininterp_buf =
       new_LnTLinInterpBuf(my_fields->grid_dimension[0]);
-
-    Cool1DMultiScratchBuf cool1dmulti_buf =
-      new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
  
     CoolHeatScratchBuf coolingheating_buf =
       new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
@@ -144,11 +141,11 @@ void cool_multi_time(
         mmw.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), rhoH.data(), nelec_times_mH.data(), 
         itmask.data(), itmask_metal.data(),
-        my_chemistry, my_rates, my_fields, species_densities,
-        my_uvb_rates, internalu, idx_range,
-        grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
+        my_chemistry, my_rates, my_fields, species_densities, my_uvb_rates,
+        internalu, idx_range, grain_temperatures, logTlininterp_buf,
         coolingheating_buf
       );
+      
 
       // Compute the cooling time on the slice
       //   (the gamma used here is the same as used to calculate the pressure
@@ -169,8 +166,7 @@ void cool_multi_time(
     // cleanup temporaries
     drop_GrainSpeciesCollection(&grain_temperatures);
     drop_LnTLinInterpBuf(&logTlininterp_buf);
-    drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
-    impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
+    drop_CoolHeatScratchBuf(&coolingheating_buf);
 
   }  // OMP_PRAGMA("omp parallel")
 

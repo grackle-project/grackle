@@ -252,6 +252,12 @@ inline double internalu_calc_dom_(InternalGrUnits internalu) {
   return internalu.urho*(std::pow(internalu.a_value,3))/mh_local_var;
 }
 
+/// calculates the cmb temperature
+inline double internalu_calc_Tcmb_(InternalGrUnits internalu) {
+  double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;
+  return 2.73 * (1. + zr);
+}
+
 /// calculates coefficients used for computing the Jeans' length
 ///
 /// The main benefit of factoring this out is that we can be sure that we are

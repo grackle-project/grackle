@@ -749,9 +749,6 @@ int solve_rate_cool(
     grackle::impl::LnTLinInterpBuf logTlininterp_buf =
       grackle::impl::new_LnTLinInterpBuf(my_fields->grid_dimension[0]);
 
-    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf =
-      grackle::impl::new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
-
     grackle::impl::CoolHeatScratchBuf coolingheating_buf =
       grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
 
@@ -915,7 +912,7 @@ int solve_rate_cool(
           *my_uvb_rates, internalu,
           idx_range,
           grain_temperatures, logTlininterp_buf,
-          cool1dmulti_buf, coolingheating_buf
+          coolingheating_buf
         );
 
         if (my_chemistry->primordial_chemistry > 0)  {
@@ -1017,8 +1014,7 @@ int solve_rate_cool(
             nelec_times_mH.data(), edot.data(), anydust, spsolvbuf.itmask_nr,
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
             my_fields, *my_uvb_rates, internalu, grain_temperatures,
-            logTlininterp_buf, cool1dmulti_buf, coolingheating_buf,
-            spsolvbuf.chemheatrates_buf
+            logTlininterp_buf, coolingheating_buf, spsolvbuf.chemheatrates_buf
           );
 
         }
@@ -1083,7 +1079,6 @@ int solve_rate_cool(
     // cleanup manually allocated temporaries
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
     grackle::impl::drop_LnTLinInterpBuf(&logTlininterp_buf);
-    grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
     grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_scratch_buf);
 
