@@ -120,7 +120,7 @@ void grackle::impl::cool1d_multi_g(
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Declare some constants:
-  const double mh_local_var = mh_grflt;
+  const double mh_local_var = constants::mH_grflt;
 
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 

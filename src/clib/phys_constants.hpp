@@ -62,9 +62,10 @@ namespace GRIMPL_NAMESPACE_DECL {
 /* Mass of hydrogen [g] */
 
 #define mh 1.67262171e-24
-#define mh_grflt GRFLOAT_C(mh)
 
 namespace constants {
+
+inline constexpr gr_float mH_grflt = GRFLOAT_C(mh);
 
 /// @brief mass of an electron [g]
 inline constexpr double me = 9.10938215e-28;

@@ -37,7 +37,7 @@ void calc_all_tdust_gasgr_1d(
     LnTLinInterpBuf logTlininterp_buf,
     InternalDustPropBuf internal_dust_prop_buf,
     GrainSpeciesCollection grain_kappa) {
-  const double mh_local_var = mh_grflt;
+  const double mh_local_var = constants::mH_grflt;
   int i;
 
   // Cooling/heating slice locals
