@@ -272,21 +272,25 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double max_x = 3000.0;
     // below this x value, we give up!
     double giveup_small_x_threshold = Trad;
+
+    double* associated_vals = kgr;
+    double* f_vals = sol.data();
+    double* fplus_vals = solplus.data();
     // Iterate to convergence with Newton's method
     for (iter = 1; (iter <= itmax) && (nm_remain > 0); iter++) {
       // Calculate grain opacities AND heating/cooling balance
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
-          FnEval eval_rslt = fn(tdustnow[i], i);
-          kgr[i] = eval_rslt.associated_val;
-          sol[i] = eval_rslt.f_val;
+          FnEval eval_rslt = fn(x[i], i);
+          associated_vals[i] = eval_rslt.associated_val;
+          f_vals[i] = eval_rslt.f_val;
         }
       }
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
-          double Tdust_plus = std::fmax(1.e-3, (1. + pert[i]) * tdustnow[i]);
-          FnEval eval_rslt = fn(Tdust_plus, i);
-          solplus[i] = eval_rslt.f_val;
+          double x_plus = std::fmax(1.e-3, (1. + pert[i]) * tdustnow[i]);
+          FnEval eval_rslt = fn(x_plus, i);
+          fplus_vals[i] = eval_rslt.f_val;
           // we don't need to record eval_rslt.associated_val
         }
       }
@@ -295,10 +299,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         if (nm_solvemask[i] == SolveStatus::UNCONVERGED) {
           // Check if the solution has converged (if not prepare the next guess)
 
-          double slope = (solplus[i] - sol[i]) / (pert[i] * x[i]);
+          double slope = (fplus_vals[i] - f_vals[i]) / (pert[i] * x[i]);
 
           double x_old = x[i];
-          x[i] = std::fmin(x[i] - (sol[i] / slope), max_x);
+          x[i] = std::fmin(x[i] - (f_vals[i] / slope), max_x);
 
           pert[i] = std::fmax(
               std::fmin(pert[i], 0.5 * std::fabs(x[i] - x_old) / x[i]),
@@ -308,7 +312,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
             nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
             nm_remain--;
             // Check for convergence of solution
-          } else if (std::fabs(sol[i]) < std::fabs(solplus[i] * tol)) {
+          } else if (std::fabs(f_vals[i]) < std::fabs(fplus_vals[i] * tol)) {
             nm_solvemask[i] = SolveStatus::CONVERGED;
             c_remain--;
             nm_remain--;
