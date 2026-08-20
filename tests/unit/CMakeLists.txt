@@ -17,12 +17,10 @@ add_executable(runInterpolationTests
 target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
 
-add_executable(runLinAlgTests test_linalg.cpp)
-target_link_libraries(runLinAlgTests testdeps)
-gtest_discover_tests(runLinAlgTests)
-
 add_executable(runMathTests
-  math/test_integrate.cpp math/test_solve_cubic_equation.cpp)
+  math/test_integrate.cpp
+  math/test_linalg.cpp
+  math/test_solve_cubic_equation.cpp)
 target_link_libraries(runMathTests testdeps)
 gtest_discover_tests(runMathTests)
 

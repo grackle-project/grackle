@@ -113,7 +113,6 @@ add_library(Grackle_Grackle
   dust/multi_grain_species/dust_props.hpp
   dust/misc.hpp
   dynamic_api.cpp
-  gaussj_g.cpp gaussj_g.hpp
   full_rxn_rate_buf.hpp
   gas_props.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
@@ -132,6 +131,7 @@ add_library(Grackle_Grackle
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   mask.hpp
+  math/gaussj.cpp math/gaussj.hpp
   math/integrate.hpp
   math/solve_cubic_equation.cpp math/solve_cubic_equation.hpp
   opaque_storage.cpp opaque_storage.hpp

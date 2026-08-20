@@ -10,8 +10,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef GAUSSJ_G_HPP
-#define GAUSSJ_G_HPP
+#ifndef MATH_GAUSSJ_HPP
+#define MATH_GAUSSJ_HPP
 
 namespace grackle::impl {
 
@@ -38,4 +38,4 @@ int gaussj_g(int n, const double* coef_matrix, double* vector);
 
 }  // namespace grackle::impl
 
-#endif  // GAUSSJ_G_HPP
+#endif  // MATH_GAUSSJ_HPP

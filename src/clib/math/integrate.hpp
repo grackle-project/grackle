@@ -20,7 +20,7 @@
 #include "../grackle_macros.h"
 // #include "../fortran_func_wrappers.hpp"  //
 // GRIMPL_NS::fortran_wrapper::gaussj_g
-#include "../gaussj_g.hpp"
+#include "gaussj.hpp"
 #include "../support/config.hpp"
 #include "../support/View.hpp"
 

@@ -13,7 +13,7 @@
 #include <cmath>
 #include <vector>
 
-#include "gaussj_g.hpp"
+#include "gaussj.hpp"
 
 namespace grackle::impl {
 
