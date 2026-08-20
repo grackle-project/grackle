@@ -17,7 +17,7 @@
 #include <cstring>
 
 #include "config.hpp"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 #include "FrozenKeyIdxBiMap_detail.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {

@@ -13,7 +13,7 @@
 #define GRTESTUTILS_RATEQUERY_UTILS_HPP
 
 #include "grackle.h"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 #include <algorithm>
 #include <cstring>

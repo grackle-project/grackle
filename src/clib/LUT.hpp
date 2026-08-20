@@ -6,20 +6,13 @@
 #ifndef LUT_HPP
 #define LUT_HPP
 
+#include "support/config.hpp"
+
 #ifndef __cplusplus
 #error "This file can only be read by a c++ compiler"
 #endif
 
-// once we have transcribed more code, we should really put this header's
-// contents inside of the grackle::impl namespace
-// - if a lookup-table is called {name}, then its fully qualified name will be
-//   `grackle::impl::{name}`.
-// - when using the LUT in a function, we can shorten its name, within the
-//   function to just {name} by inserting `using grackle::impl::{name};` near
-//   the start of the function
-// - we should hold off on doing this until more code is transcribed (since it
-//   will be hard for the transcription tools to automatically handle the
-//   shortenning of the fully qualified name)
+// todo: put this header's contents inside the GRIMPL_NS namespace
 
 /// This is collection of enumerators (localized to the `SpLUT::` scope), with
 /// an enumerator named for EVERY species (primordial-species, metal-species,
@@ -156,5 +149,21 @@ struct PhotoRxnLUT {
     NUM_ENTRIES  // <- (specifies the number of shieldable radiative reactions)
   };  // enum
 };  // PhotoRxnLUT struct
+
+namespace GRIMPL_NAMESPACE_DECL {
+
+///@brief Specifies the upper bound on the number of dynamically evolved
+///       species fields that Grackle evolves.
+///
+/// It's better to use this constant than @ref SpLUT::NUM_ENTRIES because we
+/// change the way SpLUT precisely works in the future (e.g. it could stop
+/// directly tracking grain species or even metal species fields)
+///
+/// @note
+/// If we ever move to a system where we want to support a fully dynamic list
+/// of fields, we may want to phase out this type
+inline constexpr int MAX_EVOLVED_SPECIES_FIELDS = SpLUT::NUM_ENTRIES;
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* LUT_HPP */

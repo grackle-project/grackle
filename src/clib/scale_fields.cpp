@@ -13,7 +13,7 @@
 #include <cstdio>
 
 #include "grackle.h"
-#include "index_helper.h"
+#include "support/index_helper.hpp"
 #include "inject_model/misc.hpp"
 #include "scale_fields.hpp"
 #include "utils-cpp.hpp"
@@ -28,9 +28,10 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
   //
   // -> note: get_n_inject_pathway_density_ptrs returns 0 in the event that
   //    my_fields->inject_pathway_metal_density holds no entries
-  View<gr_float***> inj_path_view_arr[inj_model_input::N_Injection_Pathways];
+  FortranView<gr_float***>
+      inj_path_view_arr[inj_model_input::N_Injection_Pathways];
   for (int path_idx = 0; path_idx < n_inj_path_ptrs; path_idx++) {
-    inj_path_view_arr[path_idx] = View<gr_float***>(
+    inj_path_view_arr[path_idx] = FortranView<gr_float***>(
         my_fields->inject_pathway_metal_density[path_idx],
         my_fields->grid_dimension[0], my_fields->grid_dimension[1],
         my_fields->grid_dimension[2]);
@@ -38,7 +39,7 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
 
   // parallelize the k and j loops with OpenMP
   // flat j and k loops for better parallelism
-  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
   OMP_PRAGMA("omp parallel for schedule(runtime)")
   for (int t = 0; t < idx_helper.outer_ind_size; t++) {
     const IndexRange idx_range = make_idx_range_(t, &idx_helper);
@@ -55,172 +56,175 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
 
 void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
                   grackle_field_data* my_fields, int n_inj_path_ptrs) {
-  grackle::impl::View<gr_float***> d(
-      my_fields->density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> de(
+  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                             my_fields->grid_dimension[1],
+                             my_fields->grid_dimension[2]);
+  FortranView<gr_float***> de(
       my_fields->e_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HI(
+  FortranView<gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HII(
+  FortranView<gr_float***> HII(
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeI(
+  FortranView<gr_float***> HeI(
       my_fields->HeI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeII(
+  FortranView<gr_float***> HeII(
       my_fields->HeII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeIII(
+  FortranView<gr_float***> HeIII(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HM(
+  FortranView<gr_float***> HM(
       my_fields->HM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2I(
+  FortranView<gr_float***> H2I(
       my_fields->H2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2II(
+  FortranView<gr_float***> H2II(
       my_fields->H2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DI(
+  FortranView<gr_float***> DI(
       my_fields->DI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DII(
+  FortranView<gr_float***> DII(
       my_fields->DII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HDI(
+  FortranView<gr_float***> HDI(
       my_fields->HDI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DM(
+  FortranView<gr_float***> DM(
       my_fields->DM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HDII(
+  FortranView<gr_float***> HDII(
       my_fields->HDII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeHII(
+  FortranView<gr_float***> HeHII(
       my_fields->HeHII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal(
+  FortranView<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust(
+  FortranView<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CI(
+  FortranView<gr_float***> CI(
       my_fields->CI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CII(
+  FortranView<gr_float***> CII(
       my_fields->CII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CO(
+  FortranView<gr_float***> CO(
       my_fields->CO_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CO2(
+  FortranView<gr_float***> CO2(
       my_fields->CO2_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OI(
+  FortranView<gr_float***> OI(
       my_fields->OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OH(
+  FortranView<gr_float***> OH(
       my_fields->OH_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2O(
+  FortranView<gr_float***> H2O(
       my_fields->H2O_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> O2(
+  FortranView<gr_float***> O2(
       my_fields->O2_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiI(
+  FortranView<gr_float***> SiI(
       my_fields->SiI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiOI(
+  FortranView<gr_float***> SiOI(
       my_fields->SiOI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiO2I(
+  FortranView<gr_float***> SiO2I(
       my_fields->SiO2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CH(
+  FortranView<gr_float***> CH(
       my_fields->CH_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CH2(
+  FortranView<gr_float***> CH2(
       my_fields->CH2_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> COII(
+  FortranView<gr_float***> COII(
       my_fields->COII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OII(
+  FortranView<gr_float***> OII(
       my_fields->OII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OHII(
+  FortranView<gr_float***> OHII(
       my_fields->OHII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2OII(
+  FortranView<gr_float***> H2OII(
       my_fields->H2OII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H3OII(
+  FortranView<gr_float***> H3OII(
       my_fields->H3OII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> O2II(
+  FortranView<gr_float***> O2II(
       my_fields->O2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mg(
+  FortranView<gr_float***> Mg(
       my_fields->Mg_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Al(
+  FortranView<gr_float***> Al(
       my_fields->Al_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> S(
-      my_fields->S_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Fe(
+  FortranView<gr_float***> S(my_fields->S_density, my_fields->grid_dimension[0],
+                             my_fields->grid_dimension[1],
+                             my_fields->grid_dimension[2]);
+  FortranView<gr_float***> Fe(
       my_fields->Fe_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiM(
+  FortranView<gr_float***> SiM(
       my_fields->SiM_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeM(
+  FortranView<gr_float***> FeM(
       my_fields->FeM_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mg2SiO4(
+  FortranView<gr_float***> Mg2SiO4(
       my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgSiO3(
+  FortranView<gr_float***> MgSiO3(
       my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Fe3O4(
+  FortranView<gr_float***> Fe3O4(
       my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> AC(
+  FortranView<gr_float***> AC(
       my_fields->AC_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiO2D(
+  FortranView<gr_float***> SiO2D(
       my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgO(
+  FortranView<gr_float***> MgO(
       my_fields->MgO_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeS(
+  FortranView<gr_float***> FeS(
       my_fields->FeS_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Al2O3(
+  FortranView<gr_float***> Al2O3(
       my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> reforg(
+  FortranView<gr_float***> reforg(
       my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> volorg(
+  FortranView<gr_float***> volorg(
       my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2Oice(
+  FortranView<gr_float***> H2Oice(
       my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   int dj, dk;
   dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
   dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
+  const bool dust_density_field_present =
+      my_chemistry->dust_chemistry == 1 &&
+      my_chemistry->use_dust_density_field == 1;
 
   // parallelize the k and j loops with OpenMP
   // flat j and k loops for better parallelism
@@ -272,84 +276,68 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metal(i, j, k) = metal(i, j, k) * factor;
         }
+      }
 
-        if (my_chemistry->metal_chemistry == 1) {
+      if (my_chemistry->metal_chemistry == 1) {
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          CI(i, j, k) = CI(i, j, k) * factor;
+          CII(i, j, k) = CII(i, j, k) * factor;
+          CO(i, j, k) = CO(i, j, k) * factor;
+          CO2(i, j, k) = CO2(i, j, k) * factor;
+          OI(i, j, k) = OI(i, j, k) * factor;
+          OH(i, j, k) = OH(i, j, k) * factor;
+          H2O(i, j, k) = H2O(i, j, k) * factor;
+          O2(i, j, k) = O2(i, j, k) * factor;
+          SiI(i, j, k) = SiI(i, j, k) * factor;
+          SiOI(i, j, k) = SiOI(i, j, k) * factor;
+          SiO2I(i, j, k) = SiO2I(i, j, k) * factor;
+          CH(i, j, k) = CH(i, j, k) * factor;
+          CH2(i, j, k) = CH2(i, j, k) * factor;
+          COII(i, j, k) = COII(i, j, k) * factor;
+          OII(i, j, k) = OII(i, j, k) * factor;
+          OHII(i, j, k) = OHII(i, j, k) * factor;
+          H2OII(i, j, k) = H2OII(i, j, k) * factor;
+          H3OII(i, j, k) = H3OII(i, j, k) * factor;
+          O2II(i, j, k) = O2II(i, j, k) * factor;
+        }
+      }
+
+      if (dust_density_field_present) {
+        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+          dust(i, j, k) = dust(i, j, k) * factor;
+        }
+      }
+
+      else if (my_chemistry->dust_chemistry == 2) {
+        if (my_chemistry->dust_species > 0) {
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            CI(i, j, k) = CI(i, j, k) * factor;
-            CII(i, j, k) = CII(i, j, k) * factor;
-            CO(i, j, k) = CO(i, j, k) * factor;
-            CO2(i, j, k) = CO2(i, j, k) * factor;
-            OI(i, j, k) = OI(i, j, k) * factor;
-            OH(i, j, k) = OH(i, j, k) * factor;
-            H2O(i, j, k) = H2O(i, j, k) * factor;
-            O2(i, j, k) = O2(i, j, k) * factor;
-            SiI(i, j, k) = SiI(i, j, k) * factor;
-            SiOI(i, j, k) = SiOI(i, j, k) * factor;
-            SiO2I(i, j, k) = SiO2I(i, j, k) * factor;
-            CH(i, j, k) = CH(i, j, k) * factor;
-            CH2(i, j, k) = CH2(i, j, k) * factor;
-            COII(i, j, k) = COII(i, j, k) * factor;
-            OII(i, j, k) = OII(i, j, k) * factor;
-            OHII(i, j, k) = OHII(i, j, k) * factor;
-            H2OII(i, j, k) = H2OII(i, j, k) * factor;
-            H3OII(i, j, k) = H3OII(i, j, k) * factor;
-            O2II(i, j, k) = O2II(i, j, k) * factor;
+            Mg(i, j, k) = Mg(i, j, k) * factor;
+
+            MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
+            AC(i, j, k) = AC(i, j, k) * factor;
           }
         }
+        if (my_chemistry->dust_species > 1) {
+          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+            Al(i, j, k) = Al(i, j, k) * factor;
+            S(i, j, k) = S(i, j, k) * factor;
+            Fe(i, j, k) = Fe(i, j, k) * factor;
 
-        if ((my_chemistry->grain_growth == 1) ||
-            (my_chemistry->dust_sublimation == 1)) {
-          if (my_chemistry->dust_species > 0) {
-            for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                 i++) {
-              Mg(i, j, k) = Mg(i, j, k) * factor;
-            }
-          }
-          if (my_chemistry->dust_species > 1) {
-            for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                 i++) {
-              Al(i, j, k) = Al(i, j, k) * factor;
-              S(i, j, k) = S(i, j, k) * factor;
-              Fe(i, j, k) = Fe(i, j, k) * factor;
-            }
+            SiM(i, j, k) = SiM(i, j, k) * factor;
+            FeM(i, j, k) = FeM(i, j, k) * factor;
+            Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
+            Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
+            SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
+            MgO(i, j, k) = MgO(i, j, k) * factor;
+            FeS(i, j, k) = FeS(i, j, k) * factor;
+            Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
           }
         }
-
-        if (my_chemistry->use_dust_density_field == 1) {
+        if (my_chemistry->dust_species > 2) {
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            dust(i, j, k) = dust(i, j, k) * factor;
-          }
-
-          if ((my_chemistry->grain_growth == 1) ||
-              (my_chemistry->dust_sublimation == 1)) {
-            if (my_chemistry->dust_species > 0) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
-                AC(i, j, k) = AC(i, j, k) * factor;
-              }
-            }
-            if (my_chemistry->dust_species > 1) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                SiM(i, j, k) = SiM(i, j, k) * factor;
-                FeM(i, j, k) = FeM(i, j, k) * factor;
-                Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
-                Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
-                SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
-                MgO(i, j, k) = MgO(i, j, k) * factor;
-                FeS(i, j, k) = FeS(i, j, k) * factor;
-                Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
-              }
-            }
-            if (my_chemistry->dust_species > 2) {
-              for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0];
-                   i++) {
-                reforg(i, j, k) = reforg(i, j, k) * factor;
-                volorg(i, j, k) = volorg(i, j, k) * factor;
-                H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
-              }
-            }
+            reforg(i, j, k) = reforg(i, j, k) * factor;
+            volorg(i, j, k) = volorg(i, j, k) * factor;
+            H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
           }
         }
       }

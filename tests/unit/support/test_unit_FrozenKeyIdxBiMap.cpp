@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 #include "support/FrozenKeyIdxBiMap.hpp"
 #include "grackle.h"
 

@@ -1,47 +1,80 @@
-# Handle external dependencies
-# -> locate all existing prebuilt dependencies
-# -> prepare other dependencies that must be built from source
+
+if (GRACKLE_IS_TOP_LEVEL AND
+    (CMAKE_MINIMUM_REQUIRED_VERSION VERSION_GREATER_EQUAL "3.24"))
+  message(AUTHOR_WARNING
+    "Reminder: now that Grackle's minimum required CMake version >=3.24:\n"
+    "- replace each call to a command named `GrBackport_FetchContent_<NAME>`\n"
+       "with a call to the corresponding command called `FetchContent_<NAME>`\n"
+    "- replace `include(Backport_FetchContent)` with `include(FetchContent)`\n"
+    "- delete `Backport_FetchContent.cmake`"
+  )
+elseif(GRACKLE_IS_TOP_LEVEL AND
+    (CMAKE_MINIMUM_REQUIRED_VERSION VERSION_GREATER_EQUAL "4.2"))
+  message(FATAL_ERROR
+    "Reminder: now that Grackle's minimum required CMake version >=4.2, "
+    "delete `LinterVar_TmpOverride` & `LinterVar_Restore`"
+  )
+endif()
+
+# load drop-in wrappers for FetchContent_Declare & FetchContent_MakeAvailable
+# that backport support for FIND_PACKAGE_ARGS kwarg
+include(Backport_FetchContent)
+# load LinterVar_<action> commands
+include(LinterHandling)
+
+# modify standard variables to instruct CMake not to run static-analyis linters
+# on any embedded build-targets created in calls to FetchContent_MakeAvailable
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "4.2")
+  _has_noncache_definition(CMAKE_SKIP_LINTING _GRACKLE_PREDEFINED_SKIP_LINTING)
+  if (_GRACKLE_PREDEFINED_SKIP_LINTING)
+    set(_GRACKLE_ORIG_NONCACHE_SKIP_LINTING_VAR ${CMAKE_SKIP_LINTING})
+  endif()
+  set(CMAKE_SKIP_LINTING OFF)
+else()
+  LinterVar_TmpOverride(_GRACKLE_OLD_LINTER_VARS)
+endif()
+
+# Handle external dependencies that will must be downloaded and built from
+# source if pre-built copies can't be found
+
+# NOTE: it is idiomatic to use FetchContent with a git hash rather than the
+# name of a tag or branch (since the latter 2 can freely change). If we use
+# the name of a tag/branch, then CMake will query GitHub on every
+# subsequent build to check whether the tag/branch is still the same
 
 if (GRACKLE_BUILD_TESTS)  # deal with testing dependencies
 
-  # the only testing dependency is googletest. If we can't find a pre-installed
-  # version of the library, we will fetch it and build from source
-  find_package(GTest)
+  # the only testing dependency is googletest.
+  message(STATUS
+    "If googletest can't be found, it will be downloaded & compiled"
+  )
 
-  if (NOT GTest_FOUND)
-    message(STATUS
-      "GTest not found. Fetching via FetchContent and configuring its build"
-    )
+  GrBackport_FetchContent_Declare(
+    googletest # the url contains the hash for v1.15.2
+    URL https://github.com/google/googletest/archive/b514bdc898e2951020cbdca1304b75f5950d1f59.zip
+    FIND_PACKAGE_ARGS NAMES GTest
+  )
 
-    # NOTE: it is idiomatic to use FetchContent with a git hash rather than the
-    # name of a tag or branch (since the latter 2 can freely change). If we use
-    # the name of a tag/branch, then CMake will query GitHub on every
-    # subsequent build to check whether the tag/branch is still the same
+  # In case GoogleTest's is downloaded & compiled as part of the build:
+  # -> Tell its build-system not to define installation rules (since we only use
+  #    it to run tests from the build-directory)
+  set(INSTALL_GTEST OFF)
+  # -> For Windows: Prevent overriding parent project's compiler/linker settings
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-    include(FetchContent)
-    FetchContent_Declare(
-      googletest # the url contains the hash for v1.15.2
-      URL https://github.com/google/googletest/archive/b514bdc898e2951020cbdca1304b75f5950d1f59.zip
-    )
+  # actually fetch & configure googletest (if it wasn't found)
+  GrBackport_FetchContent_MakeAvailable(googletest)
 
-    # Tell GoogleTest's build-system not to define installation rules (since we
-    # only use it to run tests from the build-directory)
-    set(INSTALL_GTEST OFF)
-    # For Windows: Prevent overriding the parent project's compiler/linker settings
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
-
-  elseif("${CMAKE_VERSION}" VERSION_LESS "3.20")
-    # CMake's built-in `FindGTest` module imported targets have different names
-    # in earlier CMake versions
-    add_library(GTest::gtest ALIAS GTest::GTest)
-    add_library(GTest::gtest_main ALIAS GTest::Main)
-  endif()
-
-  if (NOT TARGET GTest::gtest_main)
-    message("Target GTest:: stuff MISSING")
-  endif()
 endif() # GRACKLE_BUILD_TESTS
+
+# restore CMake linting variables controlling linting
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "4.2")
+  if (DEFINED _GRACKLE_ORIG_NONCACHE_SKIP_LINTING_VAR)
+    set(CMAKE_SKIP_LINTING ${_GRACKLE_ORIG_NONCACHE_SKIP_LINTING_VAR})
+  endif()
+else()
+  LinterVar_Restore(_GRACKLE_OLD_LINTER_VARS)
+endif()
 
 # find all of the other dependencies
 # -> we expect the caller of the build to make these available to us in one

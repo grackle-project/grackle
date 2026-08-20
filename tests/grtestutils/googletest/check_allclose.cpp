@@ -13,7 +13,7 @@
 #include "./check_allclose.hpp"
 #include "../view.hpp"
 #include "gtest/gtest.h"
-#include "status_reporting.h"
+#include "support/status_reporting.hpp"
 
 #include <cmath>
 #include <optional>

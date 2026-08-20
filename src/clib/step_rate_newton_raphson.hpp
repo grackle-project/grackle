@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file step_rate_newton_raphson.hpp
-/// @brief Defines the step_rate_newton_raphson function
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Defines/declares the step_rate_newton_raphson function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // step_rate_newton_raphson function from FORTRAN to C++
@@ -14,19 +21,19 @@
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "gaussj_g.hpp"
-#include "index_helper.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "internal_units.hpp"
 #include "opaque_storage.hpp"
-#include "utils-cpp.hpp"
-
-#include "utils-field.hpp"
+#include "support/config.hpp"
+#include "support/index_helper.hpp"
 #include "time_deriv_0d.hpp"
+#include "utils-cpp.hpp"
+#include "utils-field.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
-int sanity_check_() {
+int inline sanity_check_() {
   GRIMPL_REQUIRE(((1+SpLUT::e)== 1), "index of e is %d", SpLUT::e);
   GRIMPL_REQUIRE(((1+SpLUT::HI)== 2), "index of HI is %d", SpLUT::HI);
   GRIMPL_REQUIRE(((1+SpLUT::HII)== 3), "index of HII is %d", SpLUT::HII);
@@ -115,10 +122,10 @@ inline void wrapped_calc_derivatives(
   // 1. copy values out of dsp into rhosp_grflt and local_eint
   //    - at some point, we need to add some logic to deal with edge cases
   //      that can arise when `sizeof(gr_float) < sizeof(double)
-  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
     rhosp_grflt[sp_idx] = static_cast<gr_float>(dsp[sp_idx]);
   }
-  local_eint[0] = static_cast<gr_float>(dsp[SpLUT::NUM_ENTRIES]);
+  local_eint[0] = static_cast<gr_float>(dsp[MAX_EVOLVED_SPECIES_FIELDS]);
 
   // 2. call the wrapped function
   grackle::impl::time_deriv_0d::derivatives(
@@ -126,10 +133,10 @@ inline void wrapped_calc_derivatives(
   );
 
   // 3. copy the computed derivatives into dspdot
-  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
     dspdot[sp_idx] = rhosp_dot.data[sp_idx][0];
   }
-  dspdot[SpLUT::NUM_ENTRIES] = eint_dot_specific[0];
+  dspdot[MAX_EVOLVED_SPECIES_FIELDS] = eint_dot_specific[0];
 }
 
 /// An alternative to step_rate_g for evolving the species rate equations that
@@ -139,7 +146,7 @@ inline void wrapped_calc_derivatives(
 /// energy equation, this function internally evolves the energy equation
 ///
 /// @note
-/// The values in the various buffers (p2d, tgas, tdust, metallicity, dust2gas,
+/// The values in the various buffers (tgas, tdust, metallicity, dust2gas,
 /// rhoH, mmw, edot, grain_temperatures, logTlininterp_buf,
 /// cool1dmulti_buf, coolingheating_buf, chemheatrates_buf), hold undefined
 /// values after this function call wherever `itmask_nr` indicates that this
@@ -147,16 +154,16 @@ inline void wrapped_calc_derivatives(
 /// - this has **ALWAYS** been the case. Historically these buffers have been
 ///   reused when computing finite differences
 inline void step_rate_newton_raphson(
-  int imetal, IndexRange idx_range, int iter, double dom, double chunit,
-  double dx_cgs, double c_ljeans, double* dtit, double* p2d, double* tgas,
+  int imetal, IndexRange idx_range, double dom, double chunit,
+  double dx_cgs, double c_ljeans, double* dtit, double* tgas,
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
-  double* mmw, double* edot, gr_mask_type anydust,
-  gr_mask_type* itmask_nr, gr_mask_type* itmask_metal, int* imp_eng,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-  InternalGrUnits internalu,
+  double* mmw, double* nelec_times_mH, double* edot, gr_mask_type anydust,
+  const gr_mask_type* itmask_nr, const gr_mask_type* itmask_metal,
+  const int* imp_eng, chemistry_data* my_chemistry,
+  chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle::impl::LnTLinInterpBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
   grackle::impl::CoolHeatScratchBuf coolingheating_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf
@@ -173,8 +180,8 @@ inline void step_rate_newton_raphson(
 
   // Density, energy and velocity fields fields
 
-  grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // ierror local variable
   //   - this variable is only used internally by this subroutine for
@@ -186,9 +193,13 @@ inline void step_rate_newton_raphson(
   int itr, itr_time;
   int nsp, isp, jsp, id;
   double dspj, err, err_max;
+  // flag for if Gen Chiaki's dust model is enabled with grain growth
+  const bool chiaki_model_dust_evolution =
+    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
+
   // the following specifies the historical 1-based index that we would use to
   // hold energy
-  const int i_eng = SpLUT::NUM_ENTRIES + 1;
+  const int i_eng = MAX_EVOLVED_SPECIES_FIELDS + 1;
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
   std::vector<double> dsp(i_eng);
@@ -198,13 +209,13 @@ inline void step_rate_newton_raphson(
   std::vector<double> dspdot1(i_eng);
   std::vector<double> ddsp(i_eng);
   std::vector<double> der_data_(i_eng * i_eng);
-  grackle::impl::View<double**> der(der_data_.data(), i_eng, i_eng);
+  FortranView<double**> der(der_data_.data(), i_eng, i_eng);
 
   // (In the future, we may want to reconsider when/how we allocate
   // the following 3 variables)
   std::vector<int> idsp;
   std::vector<double> mtrx_data_;
-  grackle::impl::View<double**> mtrx;
+  FortranView<double**> mtrx;
   std::vector<double> vec;
   // Another parameter
   const double eps = 1.e-4;
@@ -223,7 +234,7 @@ inline void step_rate_newton_raphson(
   // collect args that are forwarded to the time-derivative calculation and are
   // effectively frozen between various calls
   t_deriv::FrozenSimpleArgs frozen_tderiv_args = {
-    imetal, iter, dom, chunit, dx_cgs, c_ljeans, anydust, my_chemistry,
+    imetal, dom, chunit, dx_cgs, c_ljeans, anydust, my_chemistry,
     my_rates, my_uvb_rates, internalu
   };
 
@@ -232,7 +243,7 @@ inline void step_rate_newton_raphson(
     frozen_tderiv_args, main_scratch_buf
   );
 
-  std::vector<gr_float> rhosp_grflt(SpLUT::NUM_ENTRIES);
+  std::vector<gr_float> rhosp_grflt(MAX_EVOLVED_SPECIES_FIELDS);
   grackle::impl::SpeciesCollection rhosp_dot =
     grackle::impl::new_SpeciesCollection(1);
 
@@ -272,12 +283,12 @@ inline void step_rate_newton_raphson(
       if (itmask_metal[i] != MASK_FALSE)  {
         if (my_chemistry->metal_chemistry == 1)  {
           nsp = nsp + 19;
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0) { nsp = nsp + 1; }
             if (my_chemistry->dust_species > 1) { nsp = nsp + 3; }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0) { nsp = nsp + 2; }
           if (my_chemistry->dust_species > 1) { nsp = nsp + 8; }
           if (my_chemistry->dust_species > 2) { nsp = nsp + 3; }
@@ -286,7 +297,7 @@ inline void step_rate_newton_raphson(
       nsp = nsp + imp_eng[i];
       idsp.reserve(nsp);
       mtrx_data_.reserve(nsp * nsp);
-      mtrx = grackle::impl::View<double**>(mtrx_data_.data(), nsp, nsp);
+      mtrx = FortranView<double**>(mtrx_data_.data(), nsp, nsp);
       vec.reserve(nsp);
 
       // copy values into dsp from my_fields
@@ -338,7 +349,7 @@ inline void step_rate_newton_raphson(
           dsp[SpLUT::H2OII] = my_fields->H2OII_density[field_idx1d];
           dsp[SpLUT::H3OII] = my_fields->H3OII_density[field_idx1d];
           dsp[SpLUT::O2II] = my_fields->O2II_density[field_idx1d];
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) ) {
+          if (chiaki_model_dust_evolution) {
             if (my_chemistry->dust_species > 0)  {
               dsp[SpLUT::Mg] = my_fields->Mg_density[field_idx1d];
             }
@@ -349,7 +360,7 @@ inline void step_rate_newton_raphson(
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) ) {
+        if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 0)  {
             dsp[SpLUT::MgSiO3_dust] = my_fields->MgSiO3_dust_density[field_idx1d];
             dsp[SpLUT::AC_dust] = my_fields->AC_dust_density[field_idx1d];
@@ -376,7 +387,7 @@ inline void step_rate_newton_raphson(
       // here, we fill in the idsp array
       // -> the idsp array is used for mapping between the compressed vector
       //    form (that only has nsp elements) and dsp (that always has
-      //    `SpLUT::NUM_ENTRIES + 1` entries)
+      //    `MAX_EVOLVED_SPECIES_FIELDS + 1` entries)
       // -> in the future, we should construct this array first (before doing
       //    anything else):
       //    -> it gives us the value of nsp for free!
@@ -428,7 +439,7 @@ inline void step_rate_newton_raphson(
           idsp[id++] = SpLUT::H2OII;
           idsp[id++] = SpLUT::H3OII;
           idsp[id++] = SpLUT::O2II;
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0)  {
               idsp[id++] = SpLUT::Mg;
             }
@@ -439,7 +450,7 @@ inline void step_rate_newton_raphson(
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             idsp[id++] = SpLUT::MgSiO3_dust;
             idsp[id++] = SpLUT::AC_dust;
@@ -507,7 +518,7 @@ inline void step_rate_newton_raphson(
       //    copying is the value of cool1dmulti_buf.tgasold -- and that doesn't
       //    currently get used)
       t_deriv::scratchbufs_copy_into_pack(
-        i, &pack, p2d, tgas, tdust, metallicity, dust2gas, rhoH, mmw,
+        i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw, nelec_times_mH,
         edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf, chemheatrates_buf
       );
@@ -665,7 +676,7 @@ label_9996:
       // -> we should totally delete this function (we may already be able to
       //    do so)
       t_deriv::scratchbufs_copy_from_pack(
-        i, &pack, p2d, tgas, tdust, metallicity, dust2gas, rhoH, mmw,
+        i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw, nelec_times_mH,
         edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf, chemheatrates_buf
       );
@@ -719,7 +730,7 @@ label_9996:
           my_fields->H2OII_density[field_idx1d]   = dsp[SpLUT::H2OII];
           my_fields->H3OII_density[field_idx1d]   = dsp[SpLUT::H3OII];
           my_fields->O2II_density[field_idx1d]    = dsp[SpLUT::O2II];
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0)  {
               my_fields->Mg_density[field_idx1d]      = dsp[SpLUT::Mg];
             }
@@ -730,7 +741,7 @@ label_9996:
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             my_fields->MgSiO3_dust_density[field_idx1d]  = dsp[SpLUT::MgSiO3_dust];
             my_fields->AC_dust_density[field_idx1d]      = dsp[SpLUT::AC_dust];
@@ -757,7 +768,7 @@ label_9996:
 
       idsp.clear();
       vec.clear();
-      mtrx = grackle::impl::View<double**>();
+      mtrx = FortranView<double**>();
       mtrx_data_.clear();
 
     }
@@ -769,7 +780,7 @@ label_9996:
 }
 
 
-} // namespace grackle::impl
+} // namespace GRIMPL_NAMESPACE_DECL
 
 
 #endif /* STEP_RATE_NEWTON_RAPHSON_HPP */

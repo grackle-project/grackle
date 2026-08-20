@@ -14,6 +14,8 @@
 #ifndef __GRACKLE_MACROS_H_
 #define __GRACKLE_MACROS_H_
 
+#include <cstdlib>
+
 #include "grackle_float.h"
 
 /***********************************************************************

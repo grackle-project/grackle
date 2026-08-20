@@ -17,8 +17,8 @@
 #define LOOKUP_COOL_RATES1D_HPP
 
 #include "grackle.h"
-#include "dust_props.hpp"
 #include "dust/lookup_dust_rates1d.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "full_rxn_rate_buf.hpp"
@@ -54,10 +54,10 @@ void secondary_ionization_adjustments(IndexRange idx_range,
                                       InternalGrUnits internalu,
                                       double* const* kph_buf) {
   // construct views of HI_density & HII_density fields
-  grackle::impl::View<gr_float***> HI(
+  FortranView<gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HII(
+  FortranView<gr_float***> HII(
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -104,7 +104,7 @@ void secondary_ionization_adjustments(IndexRange idx_range,
 inline void interpolate_h2_heating_terms_(
     grackle::impl::ChemHeatingRates chemheatrates_buf, IndexRange idx_range,
     chemistry_data_storage* my_rates, const gr_mask_type* itmask,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf) {
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       chemheatrates_buf.n_cr_n[i] =
@@ -145,7 +145,7 @@ inline void interpolate_kcol_rate_tables_(
     FullRxnRateBuf rxn_rate_buf, IndexRange idx_range,
     grackle::impl::CollisionalRxnRateCollection kcol_rate_tables,
     int* kcol_lut_indices, int n_rates, const gr_mask_type* itmask,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf) {
   // TODO: make this more efficient
   // -> to accomplish this, we probably need to account for the fact that all
   //    of the buffers within grackle::impl::CollisionalRxnRateCollection are
@@ -189,7 +189,7 @@ inline void interpolate_collisional_rxn_rates_(
     FullRxnRateBuf rxn_rate_buf, IndexRange idx_range, const double* tgas1d,
     const gr_mask_type* itmask, double dom, chemistry_data* my_chemistry,
     grackle_field_data* my_fields, chemistry_data_storage* my_rates,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf) {
   // There are 2 parts to this function
   // ----------------------------------
 
@@ -201,13 +201,13 @@ inline void interpolate_collisional_rxn_rates_(
 
   // Part 2: possibly override k13 using density dependent values
   if (my_chemistry->primordial_chemistry > 1) {
-    grackle::impl::View<gr_float***> HI(
+    FortranView<gr_float***> HI(
         my_fields->HI_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     // construct the view of the k13 table
-    grackle::impl::View<double**> k13dda(
-        my_rates->k13dd, my_chemistry->NumberOfTemperatureBins, 14);
+    FortranView<double**> k13dda(my_rates->k13dd,
+                                 my_chemistry->NumberOfTemperatureBins, 14);
 
     // define an inline function to fill an array with the 14 interpolated
     // k13dda values for an arbitrary `i`
@@ -291,22 +291,22 @@ inline void model_H2I_dissociation_shielding(
   }
 
   // Construct views of fields referenced in several parts of this function.
-  grackle::impl::View<const gr_float***> d(
+  FortranView<const gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<const gr_float***> HI(
+  FortranView<const gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<const gr_float***> H2I(
+  FortranView<const gr_float***> H2I(
       my_fields->H2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<const gr_float***> H2II(
+  FortranView<const gr_float***> H2II(
       my_fields->H2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  grackle::impl::View<const gr_float***> kdissH2I;
+  FortranView<const gr_float***> kdissH2I;
   if (my_chemistry->use_radiative_transfer == 1) {
-    kdissH2I = grackle::impl::View<const gr_float***>(
+    kdissH2I = FortranView<const gr_float***>(
         my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   }
@@ -331,9 +331,9 @@ inline void model_H2I_dissociation_shielding(
 
   if (my_chemistry->H2_self_shielding > 0) {
     // conditionally construct a view
-    grackle::impl::View<const gr_float***> xH2shield;
+    FortranView<const gr_float***> xH2shield;
     if (my_chemistry->H2_self_shielding == 2) {
-      xH2shield = grackle::impl::View<const gr_float***>(
+      xH2shield = FortranView<const gr_float***>(
           my_fields->H2_self_shielding_length, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     }
@@ -419,7 +419,7 @@ inline void model_H2I_dissociation_shielding(
   // Custom H2 shielding
   if (my_chemistry->H2_custom_shielding > 0) {
     // create a view of the field of custom shielding values
-    grackle::impl::View<const gr_float***> f_shield_custom(
+    FortranView<const gr_float***> f_shield_custom(
         my_fields->H2_custom_shielding_factor, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -449,17 +449,17 @@ struct ShieldFactorCalculator {
   int primordial_chemistry;
   IndexRange idx_range;
 
-  grackle::impl::View<const gr_float***> HI;
-  grackle::impl::View<const gr_float***> HII;
-  grackle::impl::View<const gr_float***> HeI;
-  grackle::impl::View<const gr_float***> HeII;
-  grackle::impl::View<const gr_float***> HeIII;
-  grackle::impl::View<const gr_float***> HM;
-  grackle::impl::View<const gr_float***> H2I;
-  grackle::impl::View<const gr_float***> H2II;
-  grackle::impl::View<const gr_float***> DI;
-  grackle::impl::View<const gr_float***> DII;
-  grackle::impl::View<const gr_float***> HDI;
+  FortranView<const gr_float***> HI;
+  FortranView<const gr_float***> HII;
+  FortranView<const gr_float***> HeI;
+  FortranView<const gr_float***> HeII;
+  FortranView<const gr_float***> HeIII;
+  FortranView<const gr_float***> HM;
+  FortranView<const gr_float***> H2I;
+  FortranView<const gr_float***> H2II;
+  FortranView<const gr_float***> DI;
+  FortranView<const gr_float***> DII;
+  FortranView<const gr_float***> HDI;
 };
 
 /// construct a ShieldFactorCalculator instance
@@ -477,42 +477,42 @@ inline ShieldFactorCalculator setup_shield_factor_calculator(
   calc.primordial_chemistry = my_chemistry->primordial_chemistry;
   calc.idx_range = idx_range;
 
-  calc.HI = grackle::impl::View<const gr_float***>(
+  calc.HI = FortranView<const gr_float***>(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  calc.HII = grackle::impl::View<const gr_float***>(
+  calc.HII = FortranView<const gr_float***>(
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  calc.HeI = grackle::impl::View<const gr_float***>(
+  calc.HeI = FortranView<const gr_float***>(
       my_fields->HeI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  calc.HeII = grackle::impl::View<const gr_float***>(
+  calc.HeII = FortranView<const gr_float***>(
       my_fields->HeII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  calc.HeIII = grackle::impl::View<const gr_float***>(
+  calc.HeIII = FortranView<const gr_float***>(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   if (my_chemistry->primordial_chemistry > 1) {
-    calc.HM = grackle::impl::View<const gr_float***>(
+    calc.HM = FortranView<const gr_float***>(
         my_fields->HM_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    calc.H2I = grackle::impl::View<const gr_float***>(
+    calc.H2I = FortranView<const gr_float***>(
         my_fields->H2I_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    calc.H2II = grackle::impl::View<const gr_float***>(
+    calc.H2II = FortranView<const gr_float***>(
         my_fields->H2II_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     if (my_chemistry->primordial_chemistry > 2) {
-      calc.DI = grackle::impl::View<const gr_float***>(
+      calc.DI = FortranView<const gr_float***>(
           my_fields->DI_density, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      calc.DII = grackle::impl::View<const gr_float***>(
+      calc.DII = FortranView<const gr_float***>(
           my_fields->DII_density, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      calc.HDI = grackle::impl::View<const gr_float***>(
+      calc.HDI = FortranView<const gr_float***>(
           my_fields->HDI_density, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     }
@@ -764,9 +764,9 @@ inline void apply_misc_shield_factors(
 /// @param[in] grain_temperatures individual grain species temperatures. This
 ///     is only used in certain configurations (i.e. when we aren't using the
 ///     tdust argument)
-/// @param[out] logTlininterp_buf Buffers that are filled with values for each
-///     location in @p idx_range with valuea that are used to linearly
-///     interpolate tables with respect to the natural log of @p tgas1d
+/// @param[in] logTlininterp_buf Hold values for each location in @p idx_range
+///     that are used to linearly interpolate tables with respect to the natural
+///     log of @p tgas1d.
 /// @param[out] rxn_rate_buf output buffers to be filled with computed reaction
 ///    rates for @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
@@ -785,7 +785,7 @@ inline void lookup_cool_rates1d(
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+    grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
     grackle::impl::ChemHeatingRates chemheatrates_buf,
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
@@ -793,38 +793,6 @@ inline void lookup_cool_rates1d(
 
   // Linearly Interpolate the Collisional Rxn Rates
   // ----------------------------------------------
-
-  // Set log values of start and end of lookup tables
-  const double logtem_start = std::log(my_chemistry->TemperatureStart);
-  const double logtem_end = std::log(my_chemistry->TemperatureEnd);
-  const double dlogtem = (std::log(my_chemistry->TemperatureEnd) -
-                          std::log(my_chemistry->TemperatureStart)) /
-                         (double)(my_chemistry->NumberOfTemperatureBins - 1);
-
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      // Compute temp-centered temperature (and log)
-
-      // logtem(i) = log(0.5_DKIND*(tgas(i)+tgasold(i)))
-      logTlininterp_buf.logtem[i] = std::log(tgas1d[i]);
-      logTlininterp_buf.logtem[i] = grackle::impl::clamp(
-          logTlininterp_buf.logtem[i], logtem_start, logtem_end);
-
-      // Find index into tble and precompute interpolation values
-
-      logTlininterp_buf.indixe[i] = grackle::impl::clamp(
-          (long long)((logTlininterp_buf.logtem[i] - logtem_start) / dlogtem) +
-              1LL,
-          1LL, (long long)my_chemistry->NumberOfTemperatureBins - 1LL);
-      logTlininterp_buf.t1[i] =
-          (logtem_start + (logTlininterp_buf.indixe[i] - 1) * dlogtem);
-      logTlininterp_buf.t2[i] =
-          (logtem_start + (logTlininterp_buf.indixe[i]) * dlogtem);
-      logTlininterp_buf.tdef[i] =
-          (logTlininterp_buf.logtem[i] - logTlininterp_buf.t1[i]) /
-          (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
-    }
-  }
 
   // interpolate all collisional reaction rates
   interpolate_collisional_rxn_rates_(rxn_rate_buf, idx_range, tgas1d, itmask,
@@ -841,9 +809,9 @@ inline void lookup_cool_rates1d(
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
-    lookup_dust_rates1d(idx_range, dlogtem, tdust, dust2gas, dom, itmask_metal,
-                        dt, my_chemistry, my_rates, my_fields,
-                        grain_temperatures, logTlininterp_buf, rxn_rate_buf,
+    lookup_dust_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal, dt,
+                        my_chemistry, my_rates, my_fields, grain_temperatures,
+                        logTlininterp_buf, rxn_rate_buf,
                         internal_dust_prop_scratch_buf);
   }
 
