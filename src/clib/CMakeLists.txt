@@ -132,11 +132,12 @@ add_library(Grackle_Grackle
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   mask.hpp
+  math/integrate.hpp
+  math/solve_cubic_equation.cpp math/solve_cubic_equation.hpp
   opaque_storage.cpp opaque_storage.hpp
   ratequery.cpp ratequery.hpp
   rate_functions.cpp
   rate_timestep_g.cpp rate_timestep_g.hpp
-  solve_cubic_equation.cpp solve_cubic_equation.hpp
   scale_fields.cpp scale_fields.hpp
   self_shielding_err_check.hpp
   solve_rate_cool.cpp solve_rate_cool.hpp

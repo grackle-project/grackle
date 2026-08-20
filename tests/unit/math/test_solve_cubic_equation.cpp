@@ -13,7 +13,7 @@
 
 #include <array>
 
-#include "solve_cubic_equation.hpp"
+#include "math/solve_cubic_equation.hpp"
 
 namespace {
 
