@@ -13,15 +13,14 @@
 // This file was initially generated automatically during conversion of the
 // cool1d_multi_g function from FORTRAN to C++
 
-#include <cstdio>
 #include <vector>
 
 #include "dust/grain_species_info.hpp"
 #include "cool1d_multi_g.hpp"
+#include "dust/gas_heat_cool.hpp"
 #include "dust/misc.hpp"
 #include "dust/multi_grain_species/dust_props.hpp"
 #include "dust/gas_heat_cool.hpp"
-#include "fortran_func_decls.h"
 #include "grackle.h"
 #include "internal_units.hpp"
 #include "interpolate.hpp"
@@ -76,6 +75,10 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
 /// @param[in] my_fields Specifies the field data.
+/// @param[in] sp_densities Specifies the densities of the various species
+///     that Grackle evolves (if any) in a format that allows the values to be
+///     accessed with the index lookup table. Wherever possible, data should be
+///     be accessed through this argument, rather than with @p my_fields
 /// @param[in] internalu Specifies Grackle's internal unit-system
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] logTlininterp_buf hold values for each location in @p idx_range
@@ -97,8 +100,8 @@ static void handle_dust_contributions(
     const double* metallicity, const gr_mask_type* itmask,
     const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    InternalGrUnits internalu, IndexRange idx_range,
-    LnTLinInterpBuf logTlininterp_buf) {
+    SpeciesMultiView<const gr_float> sp_densities, InternalGrUnits internalu,
+    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf) {
   // Set flag for dust-related options
   const gr_mask_type anydust = (my_chemistry->dust_chemistry > 0 ||
                                 my_chemistry->dust_recombination_cooling > 0)
@@ -155,11 +158,11 @@ static void handle_dust_contributions(
 
   // compute various dust properties
   dust_related_props(anydust, tgas, nH.data(), metallicity, itmask,
-                     itmask_metal, my_chemistry, my_rates, my_fields, internalu,
-                     idx_range, logTlininterp_buf, rad_T, dust2gas, tdust,
-                     grain_temperatures, gasgr.data(), gas_grainsp_heatrate,
-                     kappa_tot.data(), grain_kappa, gasgr_tdust.data(),
-                     myisrf.data(), internal_dust_prop_buf);
+                     itmask_metal, my_chemistry, my_rates, my_fields,
+                     sp_densities, internalu, idx_range, logTlininterp_buf,
+                     rad_T, dust2gas, tdust, grain_temperatures, gasgr.data(),
+                     gas_grainsp_heatrate, kappa_tot.data(), grain_kappa,
+                     gasgr_tdust.data(), myisrf.data(), internal_dust_prop_buf);
 
   // Add contributions from dust opacity to alpha_continuum, the continuum
   // linear absorption coefficient
@@ -222,6 +225,7 @@ void cool1d_multi_g(
     const double* nelec_times_mH, const gr_mask_type* itmask,
     const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    SpeciesMultiView<const gr_float> sp_densities,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     IndexRange idx_range, GrainSpeciesCollection grain_temperatures,
     LnTLinInterpBuf logTlininterp_buf, CoolHeatScratchBuf coolingheating_buf) {
@@ -388,10 +392,11 @@ void cool1d_multi_g(
   //
   // in the immediate future, the plan is to hoist this function call out of
   // cool1d_multi_g
-  handle_dust_contributions(
-      edot, dust2gas, tdust, grain_temperatures, alpha_continuum.data(), tgas,
-      rhoH, nelec_times_mH, metallicity, itmask, itmask_metal, my_chemistry,
-      my_rates, my_fields, internalu, idx_range, logTlininterp_buf);
+  handle_dust_contributions(edot, dust2gas, tdust, grain_temperatures,
+                            alpha_continuum.data(), tgas, rhoH, nelec_times_mH,
+                            metallicity, itmask, itmask_metal, my_chemistry,
+                            my_rates, my_fields, sp_densities, internalu,
+                            idx_range, logTlininterp_buf);
 
   // Compute log densities
 
