@@ -321,11 +321,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       }
     }
 
-    // Check for all cells converged
-    if (c_remain <= 0) {
-      break;
-    }
-
     // Check for all cells done with Newton method
     // This includes attempts where a negative solution was found
     if (nm_remain <= 0) {
