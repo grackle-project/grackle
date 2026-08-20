@@ -20,6 +20,64 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
+/// @brief Encodes the result of @ref find_zindex
+///
+/// @todo we should try to adjust the redshift index so that it is now
+///       zero-indexed. I also feel pretty strongly that we should also
+///       transition from using `long long` values to `int64_t`
+struct FindZIndexRslt {
+  /// The one-indexed redshift index
+  long long zindex;
+  /// Denotes whether the redshift is at the edge of the interpolation grid
+  ///
+  /// A value of 1 indicates that we should just interpolate from just the last
+  /// redshift slice in the datacube
+  long long end_int;
+};
+
+/// retrieve the index along the redshift dimension, most closely associated
+/// with @p z from a cloudy table, \p table (using bisection)
+///
+/// This should **ONLY** be used with new-style cloudy tables
+///
+/// @param z The redshift of interest
+/// @param table the cloudy table
+///
+/// @returns The one-indexed redshift index
+GRIMPL_FORCE_INLINE FindZIndexRslt find_zindex(double z,
+                                               const cloudy_data& table) {
+  if (table.grid_rank <= 2) {
+    return {1LL, 0LL};
+  }
+
+  // reminder (since this looks wrong at a quick glance):
+  // -> in a 1D table, axis 0 maps to temperature
+  // -> in a 2D table, axis 0 maps to density & axis 1 maps to temperature
+  // -> in a 3D table, axis 0 maps to density, axis 1 maps to redshift, &
+  //    axis 2 maps to temperature
+  const double* z_vals = table.grid_parameters[1];
+  const long long n_vals = table.grid_dimension[1];
+  if (z <= z_vals[0]) {
+    return {1LL, 0LL};
+  } else if (z >= z_vals[n_vals - 2]) {
+    return {n_vals, 1LL};
+  } else if (z >= z_vals[n_vals - 3]) {
+    return {n_vals - 2, 0LL};
+  } else {
+    long long zindex = 1;
+    long long zhighpt = n_vals - 2;
+    while ((zhighpt - zindex) > 1) {
+      long long zmidpt = (long long)((zhighpt + zindex) / 2);
+      if (z >= z_vals[zmidpt - 1]) {
+        zindex = zmidpt;
+      } else {
+        zhighpt = zmidpt;
+      }
+    }
+    return {zindex, 0LL};
+  }
+}
+
 /// helper function that determines the 1-indexed interpolation index
 ///
 /// This assumes that parameter is evenly spaced on the grid
