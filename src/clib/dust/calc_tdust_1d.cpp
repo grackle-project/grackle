@@ -26,6 +26,7 @@
 #include "phys_constants.h"
 #include "support/config.hpp"
 #include "support/misc.hpp"
+#include "support/status_reporting.hpp"
 #include "utils-cpp.hpp"
 
 #include "calc_tdust_1d.hpp"
@@ -184,6 +185,7 @@ static EqnSolveRslt finite_diff_newton(
     n_to_solve += solvemask[i] == SolveStatus::UNCONVERGED;
   }
   // Iterate to convergence with Newton's method
+  bool any_giveups = false;
   int iter;
   for (iter = 0; (iter < max_iter) && (n_to_solve > 0); iter++) {
     // Calculate grain opacities AND heating/cooling balance
@@ -218,6 +220,7 @@ static EqnSolveRslt finite_diff_newton(
         if (x[i] < giveup_small_x_threshold) {
           solvemask[i] = SolveStatus::SKIP_SOLVE;
           n_to_solve--;
+          any_giveups = true;
           // Check for convergence of solution
         } else if (std::fabs(f_vals[i]) < std::fabs(fplus_vals[i] * rtol)) {
           solvemask[i] = SolveStatus::CONVERGED;
@@ -233,7 +236,7 @@ static EqnSolveRslt finite_diff_newton(
 
     // End iteration loop for Newton's method
   }
-  return {c_remain == 0, iter + 1};
+  return {(n_to_solve == 0) && !any_giveups, iter + 1};
 }
 
 /// @brief A helper function that helps implement calc_tdust_1d
@@ -357,7 +360,9 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
         pert.data(), minpert, idx_range.i_start, idx_range.i_stop,
         giveup_small_x_threshold, max_x, tol, itmax, c_remain);
     iter = rslt.iterations;
-    at_least_one_bisection = at_least_one_bisection || (c_remain > 0);
+    at_least_one_bisection = at_least_one_bisection || !rslt.all_solved;
+    GR_INTERNAL_REQUIRE(at_least_one_bisection == (c_remain > 0),
+                        "sanity check failed!");
   }
 
   // specifies where we use bisection
