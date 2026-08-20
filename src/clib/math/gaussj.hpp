@@ -13,7 +13,9 @@
 #ifndef MATH_GAUSSJ_HPP
 #define MATH_GAUSSJ_HPP
 
-namespace grackle::impl {
+#include "../support/config.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 // Zero threshold for numerical stability
 const double eps_zero = 1e-20;
@@ -34,8 +36,8 @@ const double eps_zero = 1e-20;
 /// @retval 0 indicates success
 /// @retval 1 indicates that the matrix is singular
 ///
-int gaussj_g(int n, const double* coef_matrix, double* vector);
+int gaussj(int n, const double* coef_matrix, double* vector);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // MATH_GAUSSJ_HPP

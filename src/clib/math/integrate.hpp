@@ -227,7 +227,7 @@ public:  // public API
       //
       // todo: consider adjusting gaussj_g's return value so that its more
       //       consistent with GR_SUCCESS
-      int ierror = gaussj_g(n, mtrx.data(), vec);
+      int ierror = gaussj(n, mtrx.data(), vec);
       if (ierror == 1) {
         // we intentionally say there have been k rather than k+1 iterations
         // since the current iteration isn't complete

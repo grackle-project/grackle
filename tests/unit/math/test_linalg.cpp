@@ -63,8 +63,7 @@ TEST_P(LinAlgSolve, Check) {
   std::vector<double> matrix_colmajor =
       transpose_matrix(my_case.n, my_case.n, my_case.matrix_rowmajor);
   std::vector<double> vec = my_case.rhs_vector;
-  int rslt =
-      grackle::impl::gaussj_g(my_case.n, matrix_colmajor.data(), vec.data());
+  int rslt = GRIMPL_NS::gaussj(my_case.n, matrix_colmajor.data(), vec.data());
   ASSERT_EQ(rslt, 0) << "expected a return-code of 0, which indicates "
                      << "that the linear equations were successfully solved";
 
@@ -106,7 +105,7 @@ TEST(LinAlgSolveSingular, SillyScenario) {
   // it doesn't really matter what the values are in rhs_vec
   std::vector<double> rhs_vec = {0.0, 0.0, 0.0, 0.0};
 
-  int rslt = grackle::impl::gaussj_g(n, matrix_colmajor.data(), rhs_vec.data());
+  int rslt = GRIMPL_NS::gaussj(n, matrix_colmajor.data(), rhs_vec.data());
   ASSERT_EQ(rslt, 1) << "expected a return-code of 1, to indicate that "
                      << "the matrix is singular";
 }
@@ -121,7 +120,7 @@ TEST(LinAlgSolveSingular, AltScenario) {
   // it doesn't really matter what the values are in rhs_vec
   std::vector<double> rhs_vec = {0.0, 0.0};
 
-  int rslt = grackle::impl::gaussj_g(n, matrix_colmajor.data(), rhs_vec.data());
+  int rslt = GRIMPL_NS::gaussj(n, matrix_colmajor.data(), rhs_vec.data());
   ASSERT_EQ(rslt, 1) << "expected a return-code of 1, to indicate that "
                      << "the matrix is singular";
 }

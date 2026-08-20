@@ -15,9 +15,9 @@
 
 #include "gaussj.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
-int gaussj_g(int n, const double* coef_matrix_fortran, double* vector) {
+int gaussj(int n, const double* coef_matrix_fortran, double* vector) {
   // TODO: to be removed
   // Copy the matrix to a C-style layout (column-major order)
   std::vector<double> coef_matrix(n * n);
@@ -86,4 +86,4 @@ int gaussj_g(int n, const double* coef_matrix_fortran, double* vector) {
   return 0;
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
