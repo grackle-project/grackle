@@ -138,11 +138,11 @@ static EqnSolveRslt unchecked_bisect(
   //       multi-species dust grains)
 
   int iter;
-  for (iter = 1; n_unconverged > 0 && iter <= max_iter; iter++) {
+  for (iter = 0; n_unconverged > 0 && iter < max_iter; iter++) {
     for (int i = i_start; i < i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
         double x_mid = 0.5 * (x_a[i] + x_b[i]);
-        if (iter == 1) {
+        if (iter == 0) {
           x_mid = std::fmin(x_mid, max_initial_guess);
         }
 
@@ -167,7 +167,7 @@ static EqnSolveRslt unchecked_bisect(
       }
     }
   }
-  return EqnSolveRslt{n_unconverged == 0, iter};
+  return EqnSolveRslt{n_unconverged == 0, iter + 1};
 }
 
 template <typename Fn>
