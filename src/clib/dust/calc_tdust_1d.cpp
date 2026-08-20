@@ -60,6 +60,18 @@ enum struct SolveStatus {
   SKIP_SOLVE    ///< the solver will skip the calculation
 };
 
+/// @brief aggregates the result of a solve
+///
+/// The name is a little more generic that just RootResult since we may want
+/// to use it with fixed point iteration
+struct EqnSolveRslt {
+  /// Indicates if all indices initially assocated with a
+  /// @ref SolveStatus::UNCONVERGED status have been solved
+  bool all_solved;
+  /// The number of completed iterations
+  int iterations;
+};
+
 // this could definitely be better generalized
 /// @brief Find root of a function within an interval at a number of locations
 ///
@@ -160,7 +172,7 @@ static int unchecked_bisect(
 }
 
 template <typename Fn>
-[[maybe_unused]] static int finite_diff_newton(
+static EqnSolveRslt finite_diff_newton(
     const Fn& fn, double* x, double* associated_vals, double* f_vals,
     double* fplus_vals, SolveStatus* solvemask, double* pert, double minpert,
     int i_start, int i_stop, double giveup_small_x_threshold, double max_x,
@@ -173,7 +185,7 @@ template <typename Fn>
   }
   // Iterate to convergence with Newton's method
   int iter;
-  for (iter = 1; (iter <= max_iter) && (n_to_solve > 0); iter++) {
+  for (iter = 0; (iter < max_iter) && (n_to_solve > 0); iter++) {
     // Calculate grain opacities AND heating/cooling balance
     for (int i = i_start; i < i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
@@ -221,7 +233,7 @@ template <typename Fn>
 
     // End iteration loop for Newton's method
   }
-  return iter;
+  return {c_remain == 0, iter + 1};
 }
 
 /// @brief A helper function that helps implement calc_tdust_1d
@@ -340,10 +352,11 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double* fplus_vals = solplus.data();
 
     int c_remain = 0;
-    iter = finite_diff_newton(
+    EqnSolveRslt rslt = finite_diff_newton(
         fn, x, associated_vals, f_vals, fplus_vals, nm_solvemask.data(),
         pert.data(), minpert, idx_range.i_start, idx_range.i_stop,
         giveup_small_x_threshold, max_x, tol, itmax, c_remain);
+    iter = rslt.iterations;
     at_least_one_bisection = at_least_one_bisection || (c_remain > 0);
   }
 
