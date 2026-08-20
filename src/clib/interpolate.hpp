@@ -44,8 +44,8 @@ struct CurZInterpInfo {
 /// @param table the cloudy table
 ///
 /// @returns The one-indexed redshift index
-GRIMPL_FORCE_INLINE CurZInterpInfo find_zindex(double z,
-                                               const cloudy_data& table) {
+GRIMPL_FORCE_INLINE CurZInterpInfo
+calc_z_interp_info(double z, const cloudy_data& table) {
   if (table.grid_rank <= 2) {
     return {1LL, 0LL};
   }

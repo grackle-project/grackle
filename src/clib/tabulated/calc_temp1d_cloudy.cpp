@@ -62,7 +62,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
       tabulated_detail::param_deltas(cloudy_table);
 
   // Calculate index for redshift dimension
-  const CurZInterpInfo z_interp_info = find_zindex(zr, cloudy_table);
+  const CurZInterpInfo z_interp_info = calc_z_interp_info(zr, cloudy_table);
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
