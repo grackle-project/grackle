@@ -131,7 +131,6 @@ TEST(InterpolationTest, Interpolate3Dz) {
     double dgridPar2 = 1.5;
     long long index2 = 3;
     double dgridPar3 = 2.5;
-    std::int64_t end_int = 0;
     double input1 = 2.4;
     double input2 = 5.3;
     double input3 = 1.5;
@@ -158,7 +157,7 @@ TEST(InterpolationTest, Interpolate3Dz) {
         }
     }
 
-    GRIMPL_NS::CurZInterpInfo z_interp_info_0{index2, end_int};
+    GRIMPL_NS::CurZInterpInfo z_interp_info_0{index2, false};
     double value_end_int_0 = GRIMPL_NS::interpolate_3dz(
       input1, input2, input3,
       gridDim.data(),
@@ -168,7 +167,7 @@ TEST(InterpolationTest, Interpolate3Dz) {
       dataSize, dataField.data()
     );
 
-    GRIMPL_NS::CurZInterpInfo z_interp_info_1{index2, 1};
+    GRIMPL_NS::CurZInterpInfo z_interp_info_1{index2, true};
     double value_end_int_1 = GRIMPL_NS::interpolate_3dz(
       input1, input2, input3,
       gridDim.data(),

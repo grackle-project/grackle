@@ -30,9 +30,9 @@ struct CurZInterpInfo {
   long long zindex;
   /// Denotes whether the redshift is at the edge of the interpolation grid
   ///
-  /// A value of 1 indicates that we should just interpolate from just the last
-  /// redshift slice in the datacube
-  long long end_int;
+  /// When `true`, we just interpolate from just the last redshift slice in the
+  /// datacube
+  bool end_int;
 };
 
 /// retrieve the index along the redshift dimension, most closely associated
@@ -58,11 +58,11 @@ calc_z_interp_info(double z, const cloudy_data& table) {
   const double* z_vals = table.grid_parameters[1];
   const long long n_vals = table.grid_dimension[1];
   if (z <= z_vals[0]) {
-    return {1LL, 0LL};
+    return {1LL, false};
   } else if (z >= z_vals[n_vals - 2]) {
-    return {n_vals, 1LL};
+    return {n_vals, true};
   } else if (z >= z_vals[n_vals - 3]) {
-    return {n_vals - 2, 0LL};
+    return {n_vals - 2, false};
   } else {
     long long zindex = 1;
     long long zhighpt = n_vals - 2;
@@ -74,7 +74,7 @@ calc_z_interp_info(double z, const cloudy_data& table) {
         zhighpt = zmidpt;
       }
     }
-    return {zindex, 0LL};
+    return {zindex, false};
   }
 }
 
@@ -331,7 +331,7 @@ inline double interpolate_3dz(
     const double* GRIMPL_RESTRICT gridPar2, CurZInterpInfo z_interp_info,
     const double* GRIMPL_RESTRICT gridPar3, double dgridPar3, gr_i64 dataSize,
     const double* GRIMPL_RESTRICT dataField) {
-  if (z_interp_info.end_int == 1) {
+  if (z_interp_info.end_int) {
     return interpolate_2Df3D(input1, input3, gridDim, gridPar1, dgridPar1,
                              z_interp_info.zindex, gridPar3, dgridPar3,
                              dataSize, dataField);
