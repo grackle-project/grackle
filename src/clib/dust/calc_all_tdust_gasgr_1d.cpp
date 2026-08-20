@@ -53,11 +53,9 @@ void calc_all_tdust_gasgr_1d(
   // Cooling/heating slice locals
 
   std::vector<double> gasgr_tbufs[OnlyGrainSpLUT::NUM_ENTRIES];
-  std::vector<double> gisrf_bufs[OnlyGrainSpLUT::NUM_ENTRIES];
 
   for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
     gasgr_tbufs[gsp_idx].resize(my_fields->grid_dimension[0]);
-    gisrf_bufs[gsp_idx].resize(my_fields->grid_dimension[0]);
   }
   std::vector<double> mygisrf(my_fields->grid_dimension[0]);
 
@@ -118,10 +116,9 @@ void calc_all_tdust_gasgr_1d(
           internal_dust_prop_buf.grain_sigma_per_gas_mass.data[gsp_idx];
 
       // Calculate heating from interstellar radiation field
-      double* gisrf_buf = gisrf_bufs[gsp_idx].data();
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
-          gisrf_buf[i] = my_rates->gamma_isrf2 * sigma_per_gas_mass[i];
+          mygisrf[i] = my_rates->gamma_isrf2 * sigma_per_gas_mass[i];
         }
       }
 
@@ -144,7 +141,7 @@ void calc_all_tdust_gasgr_1d(
 
       // Compute dust temperature
       calc_tdust_1d(grain_temperatures.data[gsp_idx], tgas, nh, gasgr_tdust_sp,
-                    gisrf_buf, myisrf, itmask_metal, trad,
+                    mygisrf.data(), myisrf, itmask_metal, trad,
                     my_fields->grid_dimension[0], gr_N[1], dlog10Tdust,
                     log10Tdust_vals,
                     internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx],
