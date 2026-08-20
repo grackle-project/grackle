@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "grackle.h"             // gr_float
+#include "field_adaptor.hpp"
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -29,7 +30,6 @@
 #include "support/index_helper.hpp"
 #include "time_deriv_0d.hpp"
 #include "utils-cpp.hpp"
-#include "utils-field.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -180,8 +180,8 @@ inline void step_rate_newton_raphson(
 
   // Density, energy and velocity fields fields
 
-  grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // ierror local variable
   //   - this variable is only used internally by this subroutine for
@@ -209,13 +209,13 @@ inline void step_rate_newton_raphson(
   std::vector<double> dspdot1(i_eng);
   std::vector<double> ddsp(i_eng);
   std::vector<double> der_data_(i_eng * i_eng);
-  grackle::impl::View<double**> der(der_data_.data(), i_eng, i_eng);
+  FortranView<double**> der(der_data_.data(), i_eng, i_eng);
 
   // (In the future, we may want to reconsider when/how we allocate
   // the following 3 variables)
   std::vector<int> idsp;
   std::vector<double> mtrx_data_;
-  grackle::impl::View<double**> mtrx;
+  FortranView<double**> mtrx;
   std::vector<double> vec;
   // Another parameter
   const double eps = 1.e-4;
@@ -297,13 +297,13 @@ inline void step_rate_newton_raphson(
       nsp = nsp + imp_eng[i];
       idsp.reserve(nsp);
       mtrx_data_.reserve(nsp * nsp);
-      mtrx = grackle::impl::View<double**>(mtrx_data_.data(), nsp, nsp);
+      mtrx = FortranView<double**>(mtrx_data_.data(), nsp, nsp);
       vec.reserve(nsp);
 
       // copy values into dsp from my_fields
       // -> in the future, we will be able write the next ~80 lines as
       //    a concise 4-line for-loop when we start to use the
-      //    SpeciesLUTFieldAdaptor type
+      //    SpeciesMultiView type
 
       if ( my_chemistry->primordial_chemistry > 0 )  {
         dsp[SpLUT::e] = my_fields->e_density[field_idx1d];
@@ -391,7 +391,7 @@ inline void step_rate_newton_raphson(
       // -> in the future, we should construct this array first (before doing
       //    anything else):
       //    -> it gives us the value of nsp for free!
-      //    -> using this array with SpeciesLUTFieldAdaptor lets us cut out
+      //    -> using this array with SpeciesMultiView lets us cut out
       //       (duplicated) logic when we copy values from my_fields to dsp and
       //       the reverse (we can cut ~70 lines in each place)
       id = 0;
@@ -684,7 +684,7 @@ label_9996:
       // overwrite the fields tracked by my_fields with the evolved values
       // -> in the future, we will be able write the next ~80 lines as
       //    a concise 4-line for-loop when we start to use the
-      //    SpeciesLUTFieldAdaptor type
+      //    SpeciesMultiView type
 
       if ( my_chemistry->primordial_chemistry > 0 )  {
         my_fields->e_density[field_idx1d]       = dsp[SpLUT::e];
@@ -768,7 +768,7 @@ label_9996:
 
       idsp.clear();
       vec.clear();
-      mtrx = grackle::impl::View<double**>();
+      mtrx = FortranView<double**>();
       mtrx_data_.clear();
 
     }

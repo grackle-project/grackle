@@ -20,41 +20,6 @@
 
 namespace grackle::impl {
 
-/// Scales density and metal_density (if available) by factor
-inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
-  const int grid_start[3] = {my_fields->grid_start[0], my_fields->grid_start[1],
-                             my_fields->grid_start[2]};
-  const int grid_end[3] = {my_fields->grid_end[0], my_fields->grid_end[1],
-                           my_fields->grid_end[2]};
-
-  // Multiply density by factor (1/a^3 or a^3)
-
-  grackle::impl::View<gr_float***> d(
-      my_fields->density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  for (int k = grid_start[2]; k <= grid_end[2]; k++) {
-    for (int j = grid_start[1]; j <= grid_end[1]; j++) {
-      for (int i = grid_start[0]; i <= grid_end[0]; i++) {
-        d(i, j, k) = d(i, j, k) * factor;
-      }
-    }
-  }
-
-  if (my_fields->metal_density != nullptr) {
-    grackle::impl::View<gr_float***> metal(
-        my_fields->metal_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
-      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
-        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
-          metal(i, j, k) = metal(i, j, k) * factor;
-        }
-      }
-    }
-  }
-}
-
 /// A helper function for scaling the injection pathway metal density fields
 ///
 /// @param[inout] my_fields holds the fields that will be updated in-place
@@ -75,49 +40,49 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
 inline void scale_fields_dust(chemistry_data* my_chemistry,
                               grackle_field_data* my_fields, int imetal,
                               gr_float factor, int n_inj_path_ptrs) {
-  grackle::impl::View<gr_float***> metal(
+  FortranView<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust(
+  FortranView<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiM(
+  FortranView<gr_float***> SiM(
       my_fields->SiM_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeM(
+  FortranView<gr_float***> FeM(
       my_fields->FeM_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mg2SiO4(
+  FortranView<gr_float***> Mg2SiO4(
       my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgSiO3(
+  FortranView<gr_float***> MgSiO3(
       my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Fe3O4(
+  FortranView<gr_float***> Fe3O4(
       my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> AC(
+  FortranView<gr_float***> AC(
       my_fields->AC_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiO2D(
+  FortranView<gr_float***> SiO2D(
       my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgO(
+  FortranView<gr_float***> MgO(
       my_fields->MgO_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeS(
+  FortranView<gr_float***> FeS(
       my_fields->FeS_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Al2O3(
+  FortranView<gr_float***> Al2O3(
       my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> reforg(
+  FortranView<gr_float***> reforg(
       my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> volorg(
+  FortranView<gr_float***> volorg(
       my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2Oice(
+  FortranView<gr_float***> H2Oice(
       my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 

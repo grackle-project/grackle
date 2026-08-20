@@ -27,166 +27,166 @@ namespace GRIMPL_NAMESPACE_DECL {
 
 inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
                             grackle_field_data* my_fields) {
-  GRIMPL_NS::View<gr_float***> d(
-      my_fields->density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> de(
+  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                             my_fields->grid_dimension[1],
+                             my_fields->grid_dimension[2]);
+  FortranView<gr_float***> de(
       my_fields->e_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> HI(
+  FortranView<gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> HII(
+  FortranView<gr_float***> HII(
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> HeI(
+  FortranView<gr_float***> HeI(
       my_fields->HeI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> HeII(
+  FortranView<gr_float***> HeII(
       my_fields->HeII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> HeIII(
+  FortranView<gr_float***> HeIII(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> HM(
+  FortranView<gr_float***> HM(
       my_fields->HM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> H2I(
+  FortranView<gr_float***> H2I(
       my_fields->H2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> H2II(
+  FortranView<gr_float***> H2II(
       my_fields->H2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> DI(
+  FortranView<gr_float***> DI(
       my_fields->DI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> DII(
+  FortranView<gr_float***> DII(
       my_fields->DII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> HDI(
+  FortranView<gr_float***> HDI(
       my_fields->HDI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> metal(
+  FortranView<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> dust(
+  FortranView<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> DM(
+  FortranView<gr_float***> DM(
       my_fields->DM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> HDII(
+  FortranView<gr_float***> HDII(
       my_fields->HDII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> HeHII(
+  FortranView<gr_float***> HeHII(
       my_fields->HeHII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> CI(
+  FortranView<gr_float***> CI(
       my_fields->CI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> CII(
+  FortranView<gr_float***> CII(
       my_fields->CII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> CO(
+  FortranView<gr_float***> CO(
       my_fields->CO_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> CO2(
+  FortranView<gr_float***> CO2(
       my_fields->CO2_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> OI(
+  FortranView<gr_float***> OI(
       my_fields->OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> OH(
+  FortranView<gr_float***> OH(
       my_fields->OH_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> H2O(
+  FortranView<gr_float***> H2O(
       my_fields->H2O_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> O2(
+  FortranView<gr_float***> O2(
       my_fields->O2_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> SiI(
+  FortranView<gr_float***> SiI(
       my_fields->SiI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> SiOI(
+  FortranView<gr_float***> SiOI(
       my_fields->SiOI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> SiO2I(
+  FortranView<gr_float***> SiO2I(
       my_fields->SiO2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> CH(
+  FortranView<gr_float***> CH(
       my_fields->CH_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> CH2(
+  FortranView<gr_float***> CH2(
       my_fields->CH2_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> COII(
+  FortranView<gr_float***> COII(
       my_fields->COII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> OII(
+  FortranView<gr_float***> OII(
       my_fields->OII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> OHII(
+  FortranView<gr_float***> OHII(
       my_fields->OHII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> H2OII(
+  FortranView<gr_float***> H2OII(
       my_fields->H2OII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> H3OII(
+  FortranView<gr_float***> H3OII(
       my_fields->H3OII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> O2II(
+  FortranView<gr_float***> O2II(
       my_fields->O2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> Mg(
+  FortranView<gr_float***> Mg(
       my_fields->Mg_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> Al(
+  FortranView<gr_float***> Al(
       my_fields->Al_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> S(
-      my_fields->S_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> Fe(
+  FortranView<gr_float***> S(my_fields->S_density, my_fields->grid_dimension[0],
+                             my_fields->grid_dimension[1],
+                             my_fields->grid_dimension[2]);
+  FortranView<gr_float***> Fe(
       my_fields->Fe_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> SiM(
+  FortranView<gr_float***> SiM(
       my_fields->SiM_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> FeM(
+  FortranView<gr_float***> FeM(
       my_fields->FeM_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> Mg2SiO4(
+  FortranView<gr_float***> Mg2SiO4(
       my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> MgSiO3(
+  FortranView<gr_float***> MgSiO3(
       my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> Fe3O4(
+  FortranView<gr_float***> Fe3O4(
       my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> AC(
+  FortranView<gr_float***> AC(
       my_fields->AC_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> SiO2D(
+  FortranView<gr_float***> SiO2D(
       my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> MgO(
+  FortranView<gr_float***> MgO(
       my_fields->MgO_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> FeS(
+  FortranView<gr_float***> FeS(
       my_fields->FeS_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> Al2O3(
+  FortranView<gr_float***> Al2O3(
       my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> reforg(
+  FortranView<gr_float***> reforg(
       my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> volorg(
+  FortranView<gr_float***> volorg(
       my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  GRIMPL_NS::View<gr_float***> H2Oice(
+  FortranView<gr_float***> H2Oice(
       my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
