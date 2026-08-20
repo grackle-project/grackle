@@ -16,7 +16,7 @@
 #include "LUT.hpp"
 #include "cool1d_multi_g.hpp"
 #include "chemistry_solver_funcs.hpp"
-#include "dust_props.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
 #include "field_adaptor.hpp"
 #include "full_rxn_rate_buf.hpp"
 #include "gas_props.hpp"
