@@ -162,17 +162,14 @@ static int unchecked_bisect(
 template <typename Fn>
 [[maybe_unused]] static int finite_diff_newton(
     const Fn& fn, double* x, double* associated_vals, double* f_vals,
-    double* fplus_vals, SolveStatus* solvemask, const gr_mask_type* itmask,
-    double* pert, double minpert, IndexRange idx_range,
-    double giveup_small_x_threshold, double max_x, double rtol, int max_iter,
-    int& c_remain) {
+    double* fplus_vals, SolveStatus* solvemask, double* pert, double minpert,
+    IndexRange idx_range, double giveup_small_x_threshold, double max_x,
+    double rtol, int max_iter, int& c_remain) {
   c_remain = 0;
   int n_to_solve = 0;
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      c_remain += solvemask[i] != SolveStatus::CONVERGED;
-      n_to_solve += solvemask[i] == SolveStatus::UNCONVERGED;
-    }
+    c_remain += solvemask[i] != SolveStatus::CONVERGED;
+    n_to_solve += solvemask[i] == SolveStatus::UNCONVERGED;
   }
   // Iterate to convergence with Newton's method
   int iter;
@@ -342,7 +339,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double* fplus_vals = solplus.data();
 
     iter = finite_diff_newton(fn, x, associated_vals, f_vals, fplus_vals,
-                              nm_solvemask.data(), itmask, pert.data(), minpert,
+                              nm_solvemask.data(), pert.data(), minpert,
                               idx_range, giveup_small_x_threshold, max_x, tol,
                               itmax, c_remain);
   }
