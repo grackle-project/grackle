@@ -163,11 +163,11 @@ template <typename Fn>
 [[maybe_unused]] static int finite_diff_newton(
     const Fn& fn, double* x, double* associated_vals, double* f_vals,
     double* fplus_vals, SolveStatus* solvemask, double* pert, double minpert,
-    IndexRange idx_range, double giveup_small_x_threshold, double max_x,
+    int i_start, int i_stop, double giveup_small_x_threshold, double max_x,
     double rtol, int max_iter, int& c_remain) {
   c_remain = 0;
   int n_to_solve = 0;
-  for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+  for (int i = i_start; i < i_stop; i++) {
     c_remain += solvemask[i] != SolveStatus::CONVERGED;
     n_to_solve += solvemask[i] == SolveStatus::UNCONVERGED;
   }
@@ -175,14 +175,14 @@ template <typename Fn>
   int iter;
   for (iter = 1; (iter <= max_iter) && (n_to_solve > 0); iter++) {
     // Calculate grain opacities AND heating/cooling balance
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = i_start; i < i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
         FnEval eval_rslt = fn(x[i], i);
         associated_vals[i] = eval_rslt.associated_val;
         f_vals[i] = eval_rslt.f_val;
       }
     }
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = i_start; i < i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
         double x_plus = std::fmax(1.e-3, (1. + pert[i]) * x[i]);
         FnEval eval_rslt = fn(x_plus, i);
@@ -191,7 +191,7 @@ template <typename Fn>
       }
     }
 
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = i_start; i < i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
         // Check if the solution has converged (if not prepare the next guess)
 
@@ -338,10 +338,10 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     double* f_vals = sol.data();
     double* fplus_vals = solplus.data();
 
-    iter = finite_diff_newton(fn, x, associated_vals, f_vals, fplus_vals,
-                              nm_solvemask.data(), pert.data(), minpert,
-                              idx_range, giveup_small_x_threshold, max_x, tol,
-                              itmax, c_remain);
+    iter = finite_diff_newton(
+        fn, x, associated_vals, f_vals, fplus_vals, nm_solvemask.data(),
+        pert.data(), minpert, idx_range.i_start, idx_range.i_stop,
+        giveup_small_x_threshold, max_x, tol, itmax, c_remain);
   }
 
   // specifies where we use bisection
