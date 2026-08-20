@@ -59,7 +59,6 @@ void calc_all_tdust_gasgr_1d(
     gasgr_tbufs[gsp_idx].resize(my_fields->grid_dimension[0]);
     gisrf_bufs[gsp_idx].resize(my_fields->grid_dimension[0]);
   }
-  double fv2k, fac;
   std::vector<double> mygisrf(my_fields->grid_dimension[0]);
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
@@ -129,10 +128,10 @@ void calc_all_tdust_gasgr_1d(
       // Look up gas to grain heat transfer rates
       double* gasgr_sp = gas_grainsp_heatrate.data[gsp_idx];
       double* gasgr_tdust_sp = gasgr_tbufs[gsp_idx].data();
-      fac = coolunit / mh_local_var;
+      double fac = coolunit / mh_local_var;
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
-          fv2k =
+          double fv2k =
               my_rates->gas_grain2[logTlininterp_buf.indixe[i] - 1] +
               logTlininterp_buf.tdef[i] *
                   (my_rates->gas_grain2[logTlininterp_buf.indixe[i] + 1 - 1] -
