@@ -34,6 +34,7 @@ struct LinAlgCase {
   }
 };
 
+/*
 static std::vector<double> transpose_matrix(int n_row, int n_col,
                                             std::vector<double> matrix) {
   std::vector<double> out(n_row * n_col);
@@ -50,6 +51,7 @@ static std::vector<double> transpose_matrix(int n_row, int n_col,
 
   return out;
 }
+  */
 
 class LinAlgSolve : public testing::TestWithParam<LinAlgCase> {
   // You can implement all the usual fixture class members here.
@@ -60,10 +62,9 @@ class LinAlgSolve : public testing::TestWithParam<LinAlgCase> {
 // Solve a basic linear algebra equation.
 TEST_P(LinAlgSolve, Check) {
   LinAlgCase my_case = GetParam();
-  std::vector<double> matrix_colmajor =
-      transpose_matrix(my_case.n, my_case.n, my_case.matrix_rowmajor);
   std::vector<double> vec = my_case.rhs_vector;
-  int rslt = GRIMPL_NS::gaussj(my_case.n, matrix_colmajor.data(), vec.data());
+  int rslt =
+      GRIMPL_NS::gaussj(my_case.n, my_case.matrix_rowmajor.data(), vec.data());
   ASSERT_EQ(rslt, 0) << "expected a return-code of 0, which indicates "
                      << "that the linear equations were successfully solved";
 
@@ -100,12 +101,11 @@ TEST(LinAlgSolveSingular, SillyScenario) {
   int n = 4;
   std::vector<double> matrix_rowmajor{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  std::vector<double> matrix_colmajor = transpose_matrix(n, n, matrix_rowmajor);
 
   // it doesn't really matter what the values are in rhs_vec
   std::vector<double> rhs_vec = {0.0, 0.0, 0.0, 0.0};
 
-  int rslt = GRIMPL_NS::gaussj(n, matrix_colmajor.data(), rhs_vec.data());
+  int rslt = GRIMPL_NS::gaussj(n, matrix_rowmajor.data(), rhs_vec.data());
   ASSERT_EQ(rslt, 1) << "expected a return-code of 1, to indicate that "
                      << "the matrix is singular";
 }
@@ -115,12 +115,11 @@ TEST(LinAlgSolveSingular, AltScenario) {
   // determinant is 0)
   int n = 2;
   std::vector<double> matrix_rowmajor{-2.0, 4.0, 3.0, -6.0};
-  std::vector<double> matrix_colmajor = transpose_matrix(n, n, matrix_rowmajor);
 
   // it doesn't really matter what the values are in rhs_vec
   std::vector<double> rhs_vec = {0.0, 0.0};
 
-  int rslt = GRIMPL_NS::gaussj(n, matrix_colmajor.data(), rhs_vec.data());
+  int rslt = GRIMPL_NS::gaussj(n, matrix_rowmajor.data(), rhs_vec.data());
   ASSERT_EQ(rslt, 1) << "expected a return-code of 1, to indicate that "
                      << "the matrix is singular";
 }

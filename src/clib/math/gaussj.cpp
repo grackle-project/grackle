@@ -11,22 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include <cmath>
-#include <vector>
+#include <utility>  // std::swap
 
 #include "gaussj.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-int gaussj(int n, const double* coef_matrix_fortran, double* vector) {
-  // TODO: to be removed
-  // Copy the matrix to a C-style layout (column-major order)
-  std::vector<double> coef_matrix(n * n);
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < n; ++j) {
-      coef_matrix[j * n + i] = coef_matrix_fortran[i * n + j];
-    }
-  }
-
+int gaussj(int n, double* coef_matrix, double* vector) {
   // Loop over columns
   for (int col = 0; col < n; col++) {
     // Find the largest (absolute value) element in the column

@@ -554,7 +554,7 @@ inline void step_rate_newton_raphson(
       //            entry in `dsp` is at the index `idsp[isp]`.
       const auto calc_f_and_jacobian = [&, dt_FIXME](
           const double* reduced_dsp, double* reduced_dspdot,
-          FortranView<double**>& jacobian) -> void {
+          View<double**>& jacobian) -> void {
 
         // copy values out of reduced_dsp into full_dsp_buf
         for (int isp = 0; isp < nsp; isp++) {

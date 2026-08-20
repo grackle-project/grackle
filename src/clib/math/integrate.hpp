@@ -172,9 +172,9 @@ public:  // public API
     scratch_offset += n;
     double* f = scratch_ptr + scratch_offset;
     scratch_offset += n;
-    FortranView<double**> jacobian_f(scratch_ptr + scratch_offset, n, n);
+    View<double**> jacobian_f(scratch_ptr + scratch_offset, n, n);
     scratch_offset += n * n;
-    FortranView<double**> mtrx(scratch_ptr + scratch_offset, n, n);
+    View<double**> mtrx(scratch_ptr + scratch_offset, n, n);
 
     // initialize ycur_minus_ystart (i.e. difference between current estimate
     // for y at the end of the timestep and y at the start of the timestep)
