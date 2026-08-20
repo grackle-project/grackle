@@ -82,10 +82,8 @@ void calc_all_tdust_gasgr_1d(
         inject_pathway_props->log10Tdust_interp_props.dimension[0]);
   };
 
-  // Calculate heating from interstellar radiation field
-  //  -> this is ONLY used when `itmask_metal .eq. MASK_TRUE`
-
   if (single_species_dust_model) {
+    // Calculate heating from interstellar radiation field
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
         mygisrf[i] = my_rates->gamma_isrf *
@@ -93,24 +91,8 @@ void calc_all_tdust_gasgr_1d(
                      metallicity[i];
       }
     }
-  } else {
-    for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-      double* gisrf_buf = gisrf_bufs[gsp_idx].data();
-      const double* sigma_per_gas_mass =
-          internal_dust_prop_buf.grain_sigma_per_gas_mass.data[gsp_idx];
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask_metal[i] != MASK_FALSE) {
-          gisrf_buf[i] = my_rates->gamma_isrf2 * sigma_per_gas_mass[i];
-        }
-      }
-    }
-  }
 
-  // --- Gas to grain heat transfer ---
-
-  // Look up gas/grain heat transfer rates
-
-  if (single_species_dust_model) {
+    // Look up gas to grain heat transfer rates
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
         gasgr[i] =
@@ -123,10 +105,28 @@ void calc_all_tdust_gasgr_1d(
             (dust2gas[i] / metallicity[i]) * gasgr[i] * coolunit / mh_local_var;
       }
     }
-  } else if (my_chemistry->dust_chemistry == 2) {
+
+    // Compute dust temperature
+    calc_tdust_1d(tdust, tgas, nh, gasgr_tdust, mygisrf.data(), myisrf,
+                  itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+                  dlog10Tdust, log10Tdust_vals,
+                  internal_dust_prop_buf.dyntab_kappa_tot, kptot, true,
+                  idx_range);
+
+  } else {
     for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
       const double* sigma_per_gas_mass =
           internal_dust_prop_buf.grain_sigma_per_gas_mass.data[gsp_idx];
+
+      // Calculate heating from interstellar radiation field
+      double* gisrf_buf = gisrf_bufs[gsp_idx].data();
+      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        if (itmask_metal[i] != MASK_FALSE) {
+          gisrf_buf[i] = my_rates->gamma_isrf2 * sigma_per_gas_mass[i];
+        }
+      }
+
+      // Look up gas to grain heat transfer rates
       double* gasgr_sp = gas_grainsp_heatrate.data[gsp_idx];
       double* gasgr_tdust_sp = gasgr_tbufs[gsp_idx].data();
       fac = coolunit / mh_local_var;
@@ -142,23 +142,12 @@ void calc_all_tdust_gasgr_1d(
           gasgr_tdust_sp[i] = gasgr_sp[i] * fac;
         }
       }
-    }
-  }
 
-  // Compute dust temperature
-
-  if (single_species_dust_model) {
-    calc_tdust_1d(tdust, tgas, nh, gasgr_tdust, mygisrf.data(), myisrf,
-                  itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
-                  dlog10Tdust, log10Tdust_vals,
-                  internal_dust_prop_buf.dyntab_kappa_tot, kptot, true,
-                  idx_range);
-  } else {
-    for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-      calc_tdust_1d(grain_temperatures.data[gsp_idx], tgas, nh,
-                    gasgr_tbufs[gsp_idx].data(), gisrf_bufs[gsp_idx].data(),
-                    myisrf, itmask_metal, trad, my_fields->grid_dimension[0],
-                    gr_N[1], dlog10Tdust, log10Tdust_vals,
+      // Compute dust temperature
+      calc_tdust_1d(grain_temperatures.data[gsp_idx], tgas, nh, gasgr_tdust_sp,
+                    gisrf_buf, myisrf, itmask_metal, trad,
+                    my_fields->grid_dimension[0], gr_N[1], dlog10Tdust,
+                    log10Tdust_vals,
                     internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx],
                     grain_kappa.data[gsp_idx], false, idx_range);
     }
