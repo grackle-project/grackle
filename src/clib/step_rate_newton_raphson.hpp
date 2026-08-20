@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "grackle.h"             // gr_float
+#include "field_adaptor.hpp"
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
@@ -30,7 +31,6 @@
 #include "support/index_helper.hpp"
 #include "time_deriv_0d.hpp"
 #include "utils-cpp.hpp"
-#include "utils-field.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -294,7 +294,7 @@ inline void step_rate_newton_raphson(
       // copy values into dsp from my_fields
       // -> in the future, we will be able write the next ~80 lines as
       //    a concise 4-line for-loop when we start to use the
-      //    SpeciesLUTFieldAdaptor type
+      //    SpeciesMultiView type
 
       if ( my_chemistry->primordial_chemistry > 0 )  {
         dsp[SpLUT::e] = my_fields->e_density[field_idx1d];
@@ -382,7 +382,7 @@ inline void step_rate_newton_raphson(
       // -> in the future, we should construct this array first (before doing
       //    anything else):
       //    -> it gives us the value of nsp for free!
-      //    -> using this array with SpeciesLUTFieldAdaptor lets us cut out
+      //    -> using this array with SpeciesMultiView lets us cut out
       //       (duplicated) logic when we copy values from my_fields to dsp and
       //       the reverse (we can cut ~70 lines in each place)
       id = 0;
@@ -667,7 +667,7 @@ inline void step_rate_newton_raphson(
       // overwrite the fields tracked by my_fields with the evolved values
       // -> in the future, we will be able write the next ~80 lines as
       //    a concise 4-line for-loop when we start to use the
-      //    SpeciesLUTFieldAdaptor type
+      //    SpeciesMultiView type
 
       if ( my_chemistry->primordial_chemistry > 0 )  {
         my_fields->e_density[field_idx1d]       = dsp[SpLUT::e];

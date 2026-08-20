@@ -30,6 +30,7 @@
 #include "make_consistent.hpp"
 #include "mask.hpp"
 #include "opaque_storage.hpp"
+#include "step_rate_gauss_seidel.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"
@@ -740,6 +741,8 @@ int solve_rate_cool(
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
 
+    FieldAdaptorManager field_adaptor_mgr(my_fields);
+
     // holds computed grain temperatures:
     grackle::impl::GrainSpeciesCollection grain_temperatures =
       grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
@@ -822,6 +825,9 @@ int solve_rate_cool(
       const IndexRange idx_range = make_idx_range_(t, &idx_helper);
       const int k = idx_range.k; // use 0-based index
       const int j = idx_range.j; // use 0-based index
+
+      SpeciesMultiView<gr_float> sp_densities
+          = field_adaptor_mgr.get_species_data(idx_range);
 
       // `tolerance = 1.0e-06_DKIND * dt` was some commented logic in the
       // original fortran subroutine in this location
@@ -906,7 +912,7 @@ int solve_rate_cool(
           tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry,
-          my_rates, my_fields,
+          my_rates, my_fields, sp_densities,
           *my_uvb_rates, internalu,
           idx_range,
           grain_temperatures, logTlininterp_buf,
@@ -924,7 +930,7 @@ int solve_rate_cool(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
             dust2gas.data(), dom, dx_cgs, c_ljeans, itmask.data(),
             itmask_metal.data(), dt, my_chemistry,
-            my_rates, my_fields, *my_uvb_rates, internalu,
+            my_rates, my_fields,sp_densities, *my_uvb_rates, internalu,
             grain_temperatures, logTlininterp_buf,
             spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
             internal_dust_prop_scratch_buf
