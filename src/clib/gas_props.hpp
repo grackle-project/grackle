@@ -108,6 +108,9 @@ inline double self_consistent_Tgas(double tgas0, double nH2, double n_other,
 
 }  // namespace chemistry_T_detail
 
+/// @brief describes the kind of density units being used
+enum struct DensityUnitKind { PROPER, COMOVING };
+
 /// calculate basic gas properties for the specified @p idx_range
 ///
 /// Basic properties include @p tgas, @p mmw, and @p rhoH. For some context,
@@ -129,12 +132,17 @@ inline double self_consistent_Tgas(double tgas0, double nH2, double n_other,
 /// @param[in] my_fields Specifies the field data.
 /// @param[in] internalu Specifies Grackle's internal unit-system
 /// @param[in] idx_range Specifies the current index-range
+/// @param[in] du_kind Specifies whether densities (i.e. the provided fields
+///     and the computed @p rhoH values) have proper code units (the default) or
+///     comoving code units. This only exists to make it easier to
+///     reuse this logic for implementing Grackle's API level functions.
 inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
                             const gr_mask_type* itmask,
                             const chemistry_data* my_chemistry,
                             const cloudy_data* primordial_cloudy_data,
                             const grackle_field_data* my_fields,
-                            InternalGrUnits internalu, IndexRange idx_range) {
+                            InternalGrUnits internalu, IndexRange idx_range,
+                            DensityUnitKind du_kind = DensityUnitKind::PROPER) {
   // construct 3d views
   FortranView<const gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
@@ -145,10 +153,6 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
   FortranView<const gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  // get the appropriate constant
-  const double dom = internalu_calc_dom_(internalu);
-  const double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;
 
   // If no chemistry, use a tabulated mean molecular weight
   // and iterate to convergence.
@@ -170,10 +174,18 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH, int imetal,
         }
       }
     }
+    const double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;
 
-    grackle::impl::calc_temp1d_cloudy(rhoH, tgas, mmw, dom, zr, imetal, itmask,
-                                      my_chemistry, *primordial_cloudy_data,
-                                      my_fields, internalu, idx_range);
+    // if we are concerned about the overhead of checking du_kind, we could
+    // convert it to a template parameter
+    const double dom = internalu_calc_dom_(internalu);
+    const double nHcgs_div_rhoH = (du_kind == DensityUnitKind::PROPER)
+                                      ? dom
+                                      : dom * std::pow(internalu.a_value, -3);
+
+    GRIMPL_NS::calc_temp1d_cloudy(rhoH, tgas, mmw, nHcgs_div_rhoH, zr, imetal,
+                                  itmask, my_chemistry, *primordial_cloudy_data,
+                                  my_fields, internalu, idx_range);
 
   } else {
     // get 3D views
