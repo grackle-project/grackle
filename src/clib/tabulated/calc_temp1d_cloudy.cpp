@@ -62,7 +62,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
       tabulated_detail::param_deltas(cloudy_table);
 
   // Calculate index for redshift dimension
-  const FindZIndexRslt zindex_pair = find_zindex(zr, cloudy_table);
+  const CurZInterpInfo z_interp_info = find_zindex(zr, cloudy_table);
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -102,14 +102,13 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
 
         } else if (cloudy_table.grid_rank == 3) {
           // Interpolate over density, redshift, and temperature.
-          munew = interpolate_3dz(log10_nH, zr, log10_T,
-                                  cloudy_table.grid_dimension,  // 3 elements
-                                  cloudy_table.grid_parameters[0], dclPar[0],
-                                  cloudy_table.grid_parameters[1],
-                                  zindex_pair.zindex,
-                                  cloudy_table.grid_parameters[2], dclPar[2],
-                                  cloudy_table.data_size, cloudy_table.mmw_data,
-                                  zindex_pair.end_int);
+          munew =
+              interpolate_3dz(log10_nH, zr, log10_T,
+                              cloudy_table.grid_dimension,  // 3 elements
+                              cloudy_table.grid_parameters[0], dclPar[0],
+                              cloudy_table.grid_parameters[1], z_interp_info,
+                              cloudy_table.grid_parameters[2], dclPar[2],
+                              cloudy_table.data_size, cloudy_table.mmw_data);
         } else {
           printf("Maximum mmw data grid rank is 3!\n");
           return;

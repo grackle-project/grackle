@@ -158,25 +158,24 @@ TEST(InterpolationTest, Interpolate3Dz) {
         }
     }
 
+    GRIMPL_NS::CurZInterpInfo z_interp_info_0{index2, end_int};
     double value_end_int_0 = GRIMPL_NS::interpolate_3dz(
       input1, input2, input3,
       gridDim.data(),
       gridPar1.data(), dgridPar1,
-      gridPar2.data(), index2,
+      gridPar2.data(), z_interp_info_0,
       gridPar3.data(), dgridPar3,
-      dataSize, dataField.data(),
-      end_int
+      dataSize, dataField.data()
     );
 
-    end_int = 1;
+    GRIMPL_NS::CurZInterpInfo z_interp_info_1{index2, 1};
     double value_end_int_1 = GRIMPL_NS::interpolate_3dz(
       input1, input2, input3,
       gridDim.data(),
       gridPar1.data(), dgridPar1,
-      gridPar2.data(), index2,
+      gridPar2.data(), z_interp_info_1,
       gridPar3.data(), dgridPar3,
-      dataSize, dataField.data(),
-      end_int
+      dataSize, dataField.data()
     );
 
     EXPECT_DOUBLE_EQ(value_end_int_0, 7.3391950270214341);

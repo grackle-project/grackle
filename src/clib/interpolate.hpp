@@ -25,7 +25,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @todo we should try to adjust the redshift index so that it is now
 ///       zero-indexed. I also feel pretty strongly that we should also
 ///       transition from using `long long` values to `int64_t`
-struct FindZIndexRslt {
+struct CurZInterpInfo {
   /// The one-indexed redshift index
   long long zindex;
   /// Denotes whether the redshift is at the edge of the interpolation grid
@@ -44,7 +44,7 @@ struct FindZIndexRslt {
 /// @param table the cloudy table
 ///
 /// @returns The one-indexed redshift index
-GRIMPL_FORCE_INLINE FindZIndexRslt find_zindex(double z,
+GRIMPL_FORCE_INLINE CurZInterpInfo find_zindex(double z,
                                                const cloudy_data& table) {
   if (table.grid_rank <= 2) {
     return {1LL, 0LL};
@@ -328,12 +328,13 @@ inline double interpolate_3dz(
     double input1, double input2, double input3,
     const gr_i64* GRIMPL_RESTRICT gridDim,  // 3 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
-    const double* GRIMPL_RESTRICT gridPar2, gr_i64 index2,
+    const double* GRIMPL_RESTRICT gridPar2, CurZInterpInfo z_interp_info,
     const double* GRIMPL_RESTRICT gridPar3, double dgridPar3, gr_i64 dataSize,
-    const double* GRIMPL_RESTRICT dataField, gr_i64 end_int) {
-  if (end_int == 1) {
+    const double* GRIMPL_RESTRICT dataField) {
+  if (z_interp_info.end_int == 1) {
     return interpolate_2Df3D(input1, input3, gridDim, gridPar1, dgridPar1,
-                             index2, gridPar3, dgridPar3, dataSize, dataField);
+                             z_interp_info.zindex, gridPar3, dgridPar3,
+                             dataSize, dataField);
   }
 
   double value3[2], value2[2];
@@ -341,6 +342,7 @@ inline double interpolate_3dz(
   // Calculate interpolation indices
   const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
   const gr_i64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
+  const gr_i64 index2 = z_interp_info.zindex;
 
   // it turns out that precomputing the following 2 variables reduces runtime
   // appreciably (because the C compiler can't automatically hoist these

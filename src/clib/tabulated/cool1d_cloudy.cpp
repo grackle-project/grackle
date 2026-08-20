@@ -51,7 +51,7 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
       tabulated_detail::param_deltas(cloudy_table);
 
   // Calculate index for redshift dimension
-  const FindZIndexRslt zindex_pair = find_zindex(zr, cloudy_table);
+  const CurZInterpInfo z_interp_info = find_zindex(zr, cloudy_table);
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -121,9 +121,9 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
         log_cool[i] = interpolate_3dz(
             log_n_h[i], zr, log10tem[i], cloudy_table.grid_dimension,
             cloudy_table.grid_parameters[0], dclPar[0],
-            cloudy_table.grid_parameters[1], zindex_pair.zindex,
+            cloudy_table.grid_parameters[1], z_interp_info,
             cloudy_table.grid_parameters[2], dclPar[2], cloudy_table.data_size,
-            cloudy_table.cooling_data, zindex_pair.end_int);
+            cloudy_table.cooling_data);
         edot_met[i] = -std::pow(10., log_cool[i]);
 
         // Ignore CMB term if T >> T_CMB
@@ -131,10 +131,9 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
           log_cool_cmb[i] = interpolate_3dz(
               log_n_h[i], zr, log10_tCMB, cloudy_table.grid_dimension,
               cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.grid_parameters[1], zindex_pair.zindex,
+              cloudy_table.grid_parameters[1], z_interp_info,
               cloudy_table.grid_parameters[2], dclPar[2],
-              cloudy_table.data_size, cloudy_table.cooling_data,
-              zindex_pair.end_int);
+              cloudy_table.data_size, cloudy_table.cooling_data);
           edot_met[i] = edot_met[i] + std::pow(10., log_cool_cmb[i]);
         }
 
@@ -142,10 +141,9 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
           log_heat[i] = interpolate_3dz(
               log_n_h[i], zr, log10tem[i], cloudy_table.grid_dimension,
               cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.grid_parameters[1], zindex_pair.zindex,
+              cloudy_table.grid_parameters[1], z_interp_info,
               cloudy_table.grid_parameters[2], dclPar[2],
-              cloudy_table.data_size, cloudy_table.heating_data,
-              zindex_pair.end_int);
+              cloudy_table.data_size, cloudy_table.heating_data);
           edot_met[i] = edot_met[i] + std::pow(10., log_heat[i]);
         }
 
