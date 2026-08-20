@@ -267,13 +267,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
   }
 
-  // Set total cells for calculation
-  int c_total = idx_range.i_stop - idx_range.i_start;
-  int c_done = c_total - c_remain;
-  int nm_done = c_total - nm_remain;
-
   // Iterate to convergence with Newton's method
-
   for (iter = 1; iter <= (itmax); iter++) {
     // Calculate grain opacities AND heating/cooling balance
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
@@ -312,12 +306,12 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
           if (x[i] < giveup_small_x_threshold) {
             nm_solvemask[i] = SolveStatus::SKIP_SOLVE;
-            nm_done = nm_done + 1;
+            nm_remain--;
             // Check for convergence of solution
           } else if (std::fabs(sol[i]) < std::fabs(solplus[i] * tol)) {
             nm_solvemask[i] = SolveStatus::CONVERGED;
-            c_done = c_done + 1;
-            nm_done = nm_done + 1;
+            c_remain--;
+            nm_remain--;
           }
 
           // if ( nm_itmask(i) )
@@ -328,13 +322,13 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
 
     // Check for all cells converged
-    if (c_done >= c_total) {
+    if (c_remain <= 0) {
       break;
     }
 
     // Check for all cells done with Newton method
     // This includes attempts where a negative solution was found
-    if (nm_done >= c_total) {
+    if (nm_remain <= 0) {
       break;
     }
 
@@ -345,7 +339,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   std::vector<SolveStatus> bi_solvemask(buf_len, SolveStatus::CONVERGED);
 
   // If iteration count exceeded, try once more with bisection
-  if (c_done < c_total) {
+  if (c_remain > 0) {
     // set initial guesses
     //
     // There's an implicit assumption here that
