@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <vector>
 
+#include "LUT.hpp"
 #include "grackle.h"
 
 #include "calc_tdust_1d.hpp"
@@ -40,21 +41,21 @@ void calc_all_tdust_gasgr_1d(
   const double mh_local_var = mh_grflt;
   int i;
 
+  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
+
+  int n_grain_species = 0;
+  if (!single_species_dust_model) {
+    GrainSpeciesInfo* gsp_info = my_rates->opaque_storage->grain_species_info;
+    GRIMPL_REQUIRE(gsp_info != nullptr, "sanity check!");
+    n_grain_species = gsp_info->n_species;
+  }
+
   // Cooling/heating slice locals
 
-  std::vector<double> gasgr_tSiM(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tFeM(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tAC(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tMgO(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tFeS(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_treforg(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tH2Oice(my_fields->grid_dimension[0]);
+  std::vector<double> gasgr_tbufs[OnlyGrainSpLUT::NUM_ENTRIES];
+  for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+    gasgr_tbufs[gsp_idx].resize(my_fields->grid_dimension[0]);
+  }
   double fv2k, fac;
   std::vector<double> mygisrf(my_fields->grid_dimension[0]);
   std::vector<double> gisrfSiM(my_fields->grid_dimension[0]);
@@ -76,8 +77,6 @@ void calc_all_tdust_gasgr_1d(
 
   double dlog10Tdust = 0.0;
   double* log10Tdust_vals = nullptr;
-
-  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
   // NOTE: gr_N is a historical name
   // -> it is pretty uninformative and should be changed!
@@ -224,35 +223,35 @@ void calc_all_tdust_gasgr_1d(
         }
 
         if (my_chemistry->dust_species > 0) {
-          gasgr_tMgSiO3[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::MgSiO3_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust][i] * fac;
-          gasgr_tAC[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::AC_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust][i] * fac;
         }
         if (my_chemistry->dust_species > 1) {
-          gasgr_tSiM[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::SiM_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiM_dust][i] * fac;
-          gasgr_tFeM[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::FeM_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeM_dust][i] * fac;
-          gasgr_tMg2SiO4[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] * fac;
-          gasgr_tFe3O4[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::Fe3O4_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::Fe3O4_dust][i] * fac;
-          gasgr_tSiO2D[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::SiO2_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiO2_dust][i] * fac;
-          gasgr_tMgO[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::MgO_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgO_dust][i] * fac;
-          gasgr_tFeS[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::FeS_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeS_dust][i] * fac;
-          gasgr_tAl2O3[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::Al2O3_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::Al2O3_dust][i] * fac;
         }
         if (my_chemistry->dust_species > 2) {
-          gasgr_treforg[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::ref_org_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust][i] * fac;
-          gasgr_tvolorg[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::vol_org_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::vol_org_dust][i] * fac;
-          gasgr_tH2Oice[i] =
+          gasgr_tbufs[OnlyGrainSpLUT::H2O_ice_dust][i] =
               gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust][i] * fac;
         }
       }
@@ -271,83 +270,92 @@ void calc_all_tdust_gasgr_1d(
     if (my_chemistry->dust_species > 0) {
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], tgas, nh,
-          gasgr_tMgSiO3.data(), gisrfMgSiO3.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::MgSiO3_dust].data(), gisrfMgSiO3.data(),
+          myisrf, itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::MgSiO3_dust],
           grain_kappa.data[OnlyGrainSpLUT::MgSiO3_dust], false, idx_range);
 
-      calc_tdust_1d(
-          grain_temperatures.data[OnlyGrainSpLUT::AC_dust], tgas, nh,
-          gasgr_tAC.data(), gisrfAC.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
-          internal_dust_prop_buf.grain_dyntab_kappa
-              .data[OnlyGrainSpLUT::AC_dust],
-          grain_kappa.data[OnlyGrainSpLUT::AC_dust], false, idx_range);
+      calc_tdust_1d(grain_temperatures.data[OnlyGrainSpLUT::AC_dust], tgas, nh,
+                    gasgr_tbufs[OnlyGrainSpLUT::AC_dust].data(), gisrfAC.data(),
+                    myisrf, itmask_metal, trad, my_fields->grid_dimension[0],
+                    gr_N[1], dlog10Tdust, log10Tdust_vals,
+                    internal_dust_prop_buf.grain_dyntab_kappa
+                        .data[OnlyGrainSpLUT::AC_dust],
+                    grain_kappa.data[OnlyGrainSpLUT::AC_dust], false,
+                    idx_range);
     }
 
     if (my_chemistry->dust_species > 1) {
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], tgas, nh,
-          gasgr_tSiM.data(), gisrfSiM.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::SiM_dust].data(), gisrfSiM.data(), myisrf,
+          itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::SiM_dust],
           grain_kappa.data[OnlyGrainSpLUT::SiM_dust], false, idx_range);
 
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], tgas, nh,
-          gasgr_tFeM.data(), gisrfFeM.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::FeM_dust].data(), gisrfFeM.data(), myisrf,
+          itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::FeM_dust],
           grain_kappa.data[OnlyGrainSpLUT::FeM_dust], false, idx_range);
 
-      calc_tdust_1d(grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], tgas,
-                    nh, gasgr_tMg2SiO4.data(), gisrfMg2SiO4.data(), myisrf,
-                    itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
-                    dlog10Tdust, log10Tdust_vals,
-                    internal_dust_prop_buf.grain_dyntab_kappa
-                        .data[OnlyGrainSpLUT::Mg2SiO4_dust],
-                    grain_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], false,
-                    idx_range);
+      calc_tdust_1d(
+          grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], tgas, nh,
+          gasgr_tbufs[OnlyGrainSpLUT::Mg2SiO4_dust].data(), gisrfMg2SiO4.data(),
+          myisrf, itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
+          internal_dust_prop_buf.grain_dyntab_kappa
+              .data[OnlyGrainSpLUT::Mg2SiO4_dust],
+          grain_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], false, idx_range);
 
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust], tgas, nh,
-          gasgr_tFe3O4.data(), gisrfFe3O4.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::Fe3O4_dust].data(), gisrfFe3O4.data(),
+          myisrf, itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::Fe3O4_dust],
           grain_kappa.data[OnlyGrainSpLUT::Fe3O4_dust], false, idx_range);
 
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], tgas, nh,
-          gasgr_tSiO2D.data(), gisrfSiO2D.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::SiO2_dust].data(), gisrfSiO2D.data(),
+          myisrf, itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::SiO2_dust],
           grain_kappa.data[OnlyGrainSpLUT::SiO2_dust], false, idx_range);
 
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], tgas, nh,
-          gasgr_tMgO.data(), gisrfMgO.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::MgO_dust].data(), gisrfMgO.data(), myisrf,
+          itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::MgO_dust],
           grain_kappa.data[OnlyGrainSpLUT::MgO_dust], false, idx_range);
 
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], tgas, nh,
-          gasgr_tFeS.data(), gisrfFeS.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::FeS_dust].data(), gisrfFeS.data(), myisrf,
+          itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::FeS_dust],
           grain_kappa.data[OnlyGrainSpLUT::FeS_dust], false, idx_range);
 
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust], tgas, nh,
-          gasgr_tAl2O3.data(), gisrfAl2O3.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::Al2O3_dust].data(), gisrfAl2O3.data(),
+          myisrf, itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::Al2O3_dust],
           grain_kappa.data[OnlyGrainSpLUT::Al2O3_dust], false, idx_range);
@@ -356,24 +364,27 @@ void calc_all_tdust_gasgr_1d(
     if (my_chemistry->dust_species > 2) {
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], tgas, nh,
-          gasgr_treforg.data(), gisrfreforg.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::ref_org_dust].data(), gisrfreforg.data(),
+          myisrf, itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::ref_org_dust],
           grain_kappa.data[OnlyGrainSpLUT::ref_org_dust], false, idx_range);
 
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], tgas, nh,
-          gasgr_tvolorg.data(), gisrfvolorg.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::vol_org_dust].data(), gisrfvolorg.data(),
+          myisrf, itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::vol_org_dust],
           grain_kappa.data[OnlyGrainSpLUT::vol_org_dust], false, idx_range);
 
       calc_tdust_1d(
           grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust], tgas, nh,
-          gasgr_tH2Oice.data(), gisrfH2Oice.data(), myisrf, itmask_metal, trad,
-          my_fields->grid_dimension[0], gr_N[1], dlog10Tdust, log10Tdust_vals,
+          gasgr_tbufs[OnlyGrainSpLUT::H2O_ice_dust].data(), gisrfH2Oice.data(),
+          myisrf, itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
+          dlog10Tdust, log10Tdust_vals,
           internal_dust_prop_buf.grain_dyntab_kappa
               .data[OnlyGrainSpLUT::H2O_ice_dust],
           grain_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], false, idx_range);
