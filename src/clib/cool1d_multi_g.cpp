@@ -289,7 +289,7 @@ void grackle::impl::cool1d_multi_g(
       lshield_con[i] =
           std::sqrt((my_chemistry->Gamma * constants::pi_fortran_val *
                      constants::kboltz_grflt * tgas[i]) /
-                    (GravConst_grflt * mmw[i] * mh_local_var *
+                    (constants::GravConst_grflt * mmw[i] * mh_local_var *
                      d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
     }
   }

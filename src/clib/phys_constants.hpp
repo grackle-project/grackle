@@ -81,7 +81,6 @@ inline constexpr float pi_fortran_val = 3.14159265f;
 #else
 inline constexpr double pi_fortran_val = 3.141592653589793;
 #endif
-}  // namespace constants
 
 /************************************************/
 
@@ -89,20 +88,19 @@ inline constexpr double pi_fortran_val = 3.141592653589793;
 
 /************************************************/
 
-/* Speed of light [cms-1] */
+/// @brief Speed of light [cm s^-1]
+inline constexpr double clight = 2.99792458e10;
+inline constexpr gr_float clight_grflt = static_cast<gr_float>(clight);
 
-#define clight 2.99792458e10
-#define clight_grflt GRFLOAT_C(clight)
+/// @brief Gravitational constant [cm^3 g^-1 s^-2]
+inline constexpr double GravConst = 6.67428e-8;
+inline constexpr gr_float GravConst_grflt = static_cast<gr_float>(GravConst);
 
-/* Gravitational constant [cm3g-1s-2]*/
+/// @brief Solar mass [g]
+inline constexpr double SolarMass = 1.9891e33;
+inline constexpr gr_float SolarMass_grflt = static_cast<gr_float>(SolarMass);
 
-#define GravConst 6.67428e-8
-#define GravConst_grflt GRFLOAT_C(GravConst)
-
-/* Solar mass [g] */
-
-#define SolarMass 1.9891e33
-#define SolarMass_grflt GRFLOAT_C(SolarMass)
+}  // namespace constants
 
 /* Megaparsec [cm] */
 
