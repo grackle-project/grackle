@@ -122,7 +122,8 @@ inline constexpr gr_float pc_grflt = static_cast<gr_float>(pc);
 inline constexpr gr_float hplanck_grflt = static_cast<gr_float>(6.6260693e-27);
 
 /// @brief ergs per electronvolt (eV)
-inline constexpr gr_float ev2erg_grflt = static_cast<gr_float>(1.60217653e-12);
+inline constexpr double ev2erg = 1.60217653e-12;
+inline constexpr gr_float ev2erg_grflt = static_cast<gr_float>(ev2erg);
 
 /// @brief Stefan–Boltzmann constant [g s^-3 K^-4]
 inline constexpr gr_float sigma_sb_grflt = static_cast<gr_float>(5.670373e-5);
