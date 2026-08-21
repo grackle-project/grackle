@@ -205,7 +205,7 @@ inline double internalu_get_mh_(InternalGrUnits internalu) {
   // initialized as a floating point literal (with the same precision as
   // gr_float and then it is casted to a double)
   switch (internalu.mh_choice_) {
-    case InternalU_MassH_Choice::DOUBLE: return mh;
+    case InternalU_MassH_Choice::DOUBLE: return constants::mH;
     case InternalU_MassH_Choice::GRFLOAT: return (double)(constants::mH_grflt);
     case InternalU_MassH_Choice::ABBREVIATED: return 1.67e-24;
   }

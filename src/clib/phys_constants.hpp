@@ -59,13 +59,10 @@ namespace GRIMPL_NAMESPACE_DECL {
 #define kboltz 1.3806504e-16
 #define kboltz_grflt GRFLOAT_C(kboltz)
 
-/* Mass of hydrogen [g] */
-
-#define mh 1.67262171e-24
-
 namespace constants {
-
-inline constexpr gr_float mH_grflt = GRFLOAT_C(mh);
+/// @brief mass of hydrogen [g]
+inline constexpr double mH = 1.67262171e-24;
+inline constexpr gr_float mH_grflt = static_cast<gr_float>(mH);
 
 /// @brief mass of an electron [g]
 inline constexpr double me = 9.10938215e-28;

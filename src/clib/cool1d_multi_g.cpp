@@ -258,7 +258,8 @@ void grackle::impl::cool1d_multi_g(
       logT[i] = std::log10(tgas[i]);
       if (my_chemistry->cmb_temperature_floor == 1)
         logTcmb[i] = std::log10(comp2);
-      logrho[i] = std::log10(d(i, idx_range.j, idx_range.k) * dom * mh);
+      logrho[i] =
+          std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
       if (my_chemistry->primordial_chemistry > 0) {
         logH[i] = std::log10(HI(i, idx_range.j, idx_range.k) * dom);
         logH2[i] = std::log10(HI(i, idx_range.j, idx_range.k) * dom);
