@@ -288,7 +288,7 @@ void grackle::impl::cool1d_multi_g(
       logdvdr[i] = -8.79947961814e0 + 0.5e0 * logrho[i];  // km/s / cm
       lshield_con[i] =
           std::sqrt((my_chemistry->Gamma * constants::pi_fortran_val *
-                     kboltz_grflt * tgas[i]) /
+                     constants::kboltz_grflt * tgas[i]) /
                     (GravConst_grflt * mmw[i] * mh_local_var *
                      d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
     }

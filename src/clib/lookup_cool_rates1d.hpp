@@ -390,8 +390,9 @@ inline void model_H2I_dissociation_shielding(
                          (-0.9639 * std::log10(tgas_touse) + 3.892);
 
         double x = 2.0e-15 * N_H2;
-        double b_doppler = 1e-5 * std::sqrt(2. * kboltz_grflt * tgas1d[i] /
-                                            (2. * constants::mH_grflt));
+        double b_doppler =
+            1e-5 * std::sqrt(2. * constants::kboltz_grflt * tgas1d[i] /
+                             (2. * constants::mH_grflt));
         double f_shield =
             0.965 / std::pow((1. + x / b_doppler), aWG2019) +
             0.035 * std::exp(-8.5e-4 * std::sqrt(1. + x)) / std::sqrt(1. + x);

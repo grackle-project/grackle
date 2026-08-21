@@ -54,12 +54,11 @@ namespace GRIMPL_NAMESPACE_DECL {
 
 /************************************************/
 
-/* Boltzmann's constant [cm2gs-2K-1] or [ergK-1] */
-
-#define kboltz 1.3806504e-16
-#define kboltz_grflt GRFLOAT_C(kboltz)
-
 namespace constants {
+/// @brief Boltzmann's constant [cm^2 g s^-2 K^-1] or [erg K^-1]
+inline constexpr double kboltz = 1.3806504e-16;
+inline constexpr gr_float kboltz_grflt = static_cast<gr_float>(kboltz);
+
 /// @brief mass of hydrogen [g]
 inline constexpr double mH = 1.67262171e-24;
 inline constexpr gr_float mH_grflt = static_cast<gr_float>(mH);
