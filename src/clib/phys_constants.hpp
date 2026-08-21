@@ -100,18 +100,19 @@ inline constexpr gr_float GravConst_grflt = static_cast<gr_float>(GravConst);
 inline constexpr double SolarMass = 1.9891e33;
 inline constexpr gr_float SolarMass_grflt = static_cast<gr_float>(SolarMass);
 
+/// @brief Megaparsec [cm]
+inline constexpr gr_float Mpc = 3.0857e24;
+inline constexpr gr_float Mpc_grflt = static_cast<gr_float>(Mpc);
+
+/// @brief kiloparsec [cm]
+inline constexpr gr_float kpc = 3.0857e21;
+inline constexpr gr_float kpc_grflt = static_cast<gr_float>(kpc);
+
+/// @brief parsec [cm]
+inline constexpr gr_float pc = 3.0857e18;
+inline constexpr gr_float pc_grflt = static_cast<gr_float>(pc);
+
 }  // namespace constants
-
-/* Megaparsec [cm] */
-
-#define Mpc 3.0857e24
-#define Mpc_grflt GRFLOAT_C(Mpc)
-
-#define kpc 3.0857e21
-#define kpc_grflt GRFLOAT_C(kpc)
-
-#define pc 3.0857e18
-#define pc_grflt GRFLOAT_C(pc)
 
 /************************************************/
 
