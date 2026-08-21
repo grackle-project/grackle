@@ -61,7 +61,7 @@ void secondary_ionization_adjustments(IndexRange idx_range,
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  const double everg = ev2erg_grflt;
+  const double everg = constants::ev2erg_grflt;
   const double e24 = 13.6;
   const double e26 = 24.6;
 

@@ -112,17 +112,22 @@ inline constexpr gr_float kpc_grflt = static_cast<gr_float>(kpc);
 inline constexpr gr_float pc = 3.0857e18;
 inline constexpr gr_float pc_grflt = static_cast<gr_float>(pc);
 
-}  // namespace constants
-
 /************************************************/
 
 /* Miscellaneous values adopted from phys_const.def */
 
 /************************************************/
 
-#define hplanck_grflt GRFLOAT_C(6.6260693e-27)
-#define ev2erg_grflt GRFLOAT_C(1.60217653e-12)
-#define sigma_sb_grflt GRFLOAT_C(5.670373e-5)
+/// @brief Planck's constant [g cm^2 s^-1]
+inline constexpr gr_float hplanck_grflt = static_cast<gr_float>(6.6260693e-27);
+
+/// @brief ergs per electronvolt (eV)
+inline constexpr gr_float ev2erg_grflt = static_cast<gr_float>(1.60217653e-12);
+
+/// @brief Stefan–Boltzmann constant [g s^-3 K^-4]
+inline constexpr gr_float sigma_sb_grflt = static_cast<gr_float>(5.670373e-5);
+
+}  // namespace constants
 
 /** @}*/  // end of group
 
