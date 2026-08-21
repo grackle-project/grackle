@@ -20,7 +20,6 @@
 
 #include "grackle.h"  // gr_float
 #include "grackle_float.h"
-#include "grackle_macros.h"  // GRFLOAT_C
 #include "support/config.hpp"
 
 // reminder macros are totally unaffected by the presence of this namespace
