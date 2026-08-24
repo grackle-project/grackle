@@ -97,10 +97,7 @@ def _setup_dust_densities(fc, state_vals, dust_to_gas_ratio):
 
         state_vals["dust_density"] = dust_density
 
-    # TODO: this should really be:
-    # elif fc.chemistry_data.use_dust_density_field == 1:
-    # We will leave it this way to get tests to pass and change it later.
-    elif fc.chemistry_data.dust_chemistry == 1:
+    elif fc.chemistry_data.use_dust_density_field == 1:
         state_vals["dust_density"] = dust_to_gas_ratio * state_vals["density"]
 
 def _setup_metal_nuclide_densities(fc, state_vals, nuclide_densities):
