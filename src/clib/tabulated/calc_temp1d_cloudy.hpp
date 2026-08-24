@@ -25,7 +25,8 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// idx_range
 /// @param[in] mmw 1D array to hold the mean molecular weight values for the
 /// @p idx_range
-/// @param[in] dom Unit conversion to proper number density in code units
+/// @param[in] nHcgs_div_rhoH Factor multiplied by rhoH to get the Hydrogen
+///     number density in proper cgs units (i.e. cm^-3)
 /// @param[in] zr Current redshift
 /// @param[in] imetal Flag if metal field is active (0 = no, 1 = yes)
 /// @param[in] itmask Iteration mask
@@ -40,7 +41,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
 void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
-                        double dom, double zr, int imetal,
+                        double nHcgs_div_rhoH, double zr, int imetal,
                         const gr_mask_type* itmask,
                         const chemistry_data* my_chemistry,
                         cloudy_data cloudy_table,

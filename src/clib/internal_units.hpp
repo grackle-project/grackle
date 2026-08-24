@@ -240,7 +240,13 @@ inline double internalu_get_chunit_(InternalGrUnits internalu){
   return (1.60218e-12)/(uvel*uvel*mh_local_var);
 }
 
-/// calculates a standard quantity used throughout the codebase
+/// @brief equivalent to `nH_cgs / rhoH_proper_codeU`
+///
+/// Multiplying this quantity by Hydrogen mass density, in (proper) density
+/// code units, will produce the Hydrogen number density with units of cm^-3
+///
+/// @todo
+/// consider renaming `dom` variables to something like `nHcgs_div_rhoH`
 inline double internalu_calc_dom_(InternalGrUnits internalu) {
   const double mh_local_var = internalu_get_mh_(internalu);
   return internalu.urho*(std::pow(internalu.a_value,3))/mh_local_var;

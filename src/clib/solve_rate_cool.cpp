@@ -28,6 +28,7 @@
 #include "internal_units.hpp"
 #include "lookup_cool_rates1d.hpp"
 #include "make_consistent.hpp"
+#include "mask.hpp"
 #include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "support/config.hpp"
@@ -69,10 +70,10 @@ static void enforce_max_heatcool_subcycle_dt_(
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields
 ) {
 
-  View<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+  FortranView<const gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                             my_fields->grid_dimension[1],
                             my_fields->grid_dimension[2]);
-  View<const gr_float***> specific_eint(my_fields->internal_energy,
+  FortranView<const gr_float***> specific_eint(my_fields->internal_energy,
                                         my_fields->grid_dimension[0],
                                         my_fields->grid_dimension[1],
                                         my_fields->grid_dimension[2]);
@@ -406,23 +407,23 @@ static void set_subcycle_dt_from_chemistry_scheme_(
   const int j = idx_range.j;
   const int k = idx_range.k;
 
-  grackle::impl::View<gr_float***> de(my_fields->e_density,
+  FortranView<gr_float***> de(my_fields->e_density,
                                       my_fields->grid_dimension[0],
                                       my_fields->grid_dimension[1],
                                       my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HI(my_fields->HI_density,
+  FortranView<gr_float***> HI(my_fields->HI_density,
                                       my_fields->grid_dimension[0],
                                       my_fields->grid_dimension[1],
                                       my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HII(my_fields->HII_density,
+  FortranView<gr_float***> HII(my_fields->HII_density,
                                        my_fields->grid_dimension[0],
                                        my_fields->grid_dimension[1],
                                        my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> d(my_fields->density,
+  FortranView<gr_float***> d(my_fields->density,
                                      my_fields->grid_dimension[0],
                                      my_fields->grid_dimension[1],
                                      my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> e(my_fields->internal_energy,
+  FortranView<gr_float***> e(my_fields->internal_energy,
                                      my_fields->grid_dimension[0],
                                      my_fields->grid_dimension[1],
                                      my_fields->grid_dimension[2]);
@@ -530,7 +531,7 @@ static inline void coupled_rt_modify_itmask_(
   grackle_field_data* my_fields
 )
 {
-  grackle::impl::View<const gr_float***> kphHI(my_fields->RT_HI_ionization_rate,
+  FortranView<const gr_float***> kphHI(my_fields->RT_HI_ionization_rate,
                                                my_fields->grid_dimension[0],
                                                my_fields->grid_dimension[1],
                                                my_fields->grid_dimension[2]);
@@ -700,7 +701,7 @@ int solve_rate_cool(
 
   // Set flag for dust-related options
   const gr_mask_type anydust =
-    ((my_chemistry->h2_on_dust > 0)  ||  (my_chemistry->dust_chemistry > 0))
+    (my_chemistry->dust_chemistry > 0)
     ? MASK_TRUE
     : MASK_FALSE;
 
@@ -738,6 +739,8 @@ int solve_rate_cool(
   {
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
+
+    FieldAdaptorManager field_adaptor_mgr(my_fields);
 
     // holds computed grain temperatures:
     grackle::impl::GrainSpeciesCollection grain_temperatures =
@@ -802,11 +805,11 @@ int solve_rate_cool(
     LnTPreparer lnT_preparer(tgasold_.data());
 
     // create views of density and internal energy fields to support 3D access
-    grackle::impl::View<gr_float***> d(my_fields->density,
+    FortranView<gr_float***> d(my_fields->density,
                                        my_fields->grid_dimension[0],
                                        my_fields->grid_dimension[1],
                                        my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> e(my_fields->internal_energy,
+    FortranView<gr_float***> e(my_fields->internal_energy,
                                        my_fields->grid_dimension[0],
                                        my_fields->grid_dimension[1],
                                        my_fields->grid_dimension[2]);
@@ -821,6 +824,9 @@ int solve_rate_cool(
       const IndexRange idx_range = make_idx_range_(t, &idx_helper);
       const int k = idx_range.k; // use 0-based index
       const int j = idx_range.j; // use 0-based index
+
+      SpeciesMultiView<gr_float> sp_densities
+          = field_adaptor_mgr.get_species_data(idx_range);
 
       // `tolerance = 1.0e-06_DKIND * dt` was some commented logic in the
       // original fortran subroutine in this location
@@ -877,17 +883,35 @@ int solve_rate_cool(
         // "damping" when we fill up logTlininterp_buf)
         lnT_preparer.record_T(idx_range, itmask.data(), tgas.data());
 
+        // Adjust itmask based on Tfloor and fill itmask_metal
+        mask::adjust_from_Tfloor(itmask.data(), tgas.data(), idx_range,
+                                 my_chemistry, my_fields);
+        mask::fill_itmask_metal(itmask_metal.data(), itmask.data(),
+                                metallicity.data(), imetal, idx_range,
+                                my_chemistry);
+
+        // Initialize edot
+        // -> we primarily set edot to tiny_fortran_val for historical
+        //    consistency with the behavior of Tfloor.
+        // -> it would be better to set it to 0 and modify the subcycle timestep
+        //    to explicitly work around an edot of 0. This makes Grackle more
+        //    robust for simulations where the initial conditions are in
+        //    thermal equilibrium (edot = 0) by construction
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          edot[i] = (itmask[i] == MASK_FALSE) * tiny_fortran_val;
+          // the above line is a branchless version of
+          // edot[i] = (itmask[i] == MASK_FALSE) ? tiny_fortran_val : 0.0;
+        }
+
         // Compute the edot values (so we can get the cooling time)
-        // -> at this time the function also fillls dust2gas and tdust. It can
-        //    also modify itmask and itmask_metal
+        // -> at this time the function also fillls dust2gas and tdust.
         // -> (we plan to factor out the extra calculations)
         cool1d_multi_g(
-          imetal,
           edot.data(),
           tgas.data(), mmw.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry,
-          my_rates, my_fields,
+          my_rates, my_fields, sp_densities,
           *my_uvb_rates, internalu,
           idx_range,
           grain_temperatures, logTlininterp_buf,
@@ -905,7 +929,7 @@ int solve_rate_cool(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
             dust2gas.data(), dom, dx_cgs, c_ljeans, itmask.data(),
             itmask_metal.data(), dt, my_chemistry,
-            my_rates, my_fields, *my_uvb_rates, internalu,
+            my_rates, my_fields,sp_densities, *my_uvb_rates, internalu,
             grain_temperatures, logTlininterp_buf,
             spsolvbuf.rxn_rate_buf, spsolvbuf.chemheatrates_buf,
             internal_dust_prop_scratch_buf
