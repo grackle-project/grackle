@@ -141,20 +141,17 @@ grackle::impl::ratequery::Entry grain_yield_recipe(
 int configure_RegBuilder(const chemistry_data_storage* my_rates,
                          grackle::impl::ratequery::RegBuilder* reg_builder,
                          const char* const* inj_path_name_l, int n_pathways) {
-  namespace rateq = grackle::impl::ratequery;
-
   // make list of pathway names available to users through the ratequery API
-  if (rateq::RegBuilder_copied_str_arr1d(reg_builder, "inject_model_names",
-                                         inj_path_name_l,
-                                         n_pathways) != GR_SUCCESS) {
+  if (reg_builder->copied_str_arr1d("inject_model_names", inj_path_name_l,
+                                    n_pathways) != GR_SUCCESS) {
     return GrPrintAndReturnErr(
         "There was an issue making names of inject pathways queryable");
   }
 
   // the length of each gas nuclide yield array is equal to the number of
   // injection pathways
-  if (rateq::RegBuilder_recipe_1d(reg_builder, 7, &nuclide_gas_yield_recipe,
-                                  n_pathways) != GR_SUCCESS) {
+  if (reg_builder->recipe_1d(7, &nuclide_gas_yield_recipe, n_pathways) !=
+      GR_SUCCESS) {
     return GrPrintAndReturnErr(
         "There was an issue making nuclide gas yield fractions (for each "
         "injection pathway) queryable");
@@ -167,9 +164,8 @@ int configure_RegBuilder(const chemistry_data_storage* my_rates,
 
     // the length of each grain species yield array is equal to the number of
     // injection pathways
-    if (rateq::RegBuilder_recipe_1d(reg_builder, n_grain_species,
-                                    &grain_yield_recipe,
-                                    n_pathways) != GR_SUCCESS) {
+    if (reg_builder->recipe_1d(n_grain_species, &grain_yield_recipe,
+                               n_pathways) != GR_SUCCESS) {
       return GrPrintAndReturnErr(
           "There was an issue making nuclide gas yield fractions (for each "
           "injection pathway) queryable");
