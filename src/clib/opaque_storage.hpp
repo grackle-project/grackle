@@ -68,6 +68,25 @@ struct gr_opaque_storage {
   int n_kcol_rate_indices = 0;
   ///@}
 
+  /// Tracks the number of entries in the standard ln(T_gas) grid used for the
+  /// vast majority of 1D temperature values.
+  ///
+  /// This should be an EXACT copy of the value tracked by the
+  /// @ref chemistry_data::NumberOfTemperatureBins data member of the
+  /// @ref chemistry_data struct that was used to initialize the current
+  /// storage object.
+  ///
+  /// This exists as a kind of crude hack to allow the callback functions used
+  /// by the ratequery machinery to infer the shapes of a bunch rate arrays
+  /// (as written, it would be non-trivial for that machinery to access
+  /// this value from my_chemistry).
+  ///
+  /// @note
+  /// As already noted elsewhere, the name of this member is something of a
+  /// misnomer. It probably would be better to call it something like
+  /// NumberOfTemperatureInterpPoints
+  int NumberOfTemperatureBins;
+
   /// tracks the grid of values used for interpolating grain-species specific
   /// coefficients for computing rates of H2 formation on dust grains. (At the
   /// time of writing, chemistry_data_storage::h2dustS &

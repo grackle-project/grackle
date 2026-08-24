@@ -40,6 +40,8 @@
 #include <stdlib.h> 
 #include <stdio.h>
 #include <math.h>
+#include <climits>
+#include <limits>
 
 #include "grackle.h"
 #include "grackle_macros.h"
@@ -54,6 +56,7 @@
 #include "interp_grid.hpp"
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
+#include "ratequery.hpp"
 #include "support/config.hpp"
 #include "support/status_reporting.hpp"
 
@@ -389,16 +392,19 @@ int init_kcol_rate_tables(
 ///
 /// @param my_rates The object from which the rate Entry is loaded
 /// @param i the index of the queried rate
-grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
+GRIMPL_NS::ratequery::Entry get_CollisionalRxn_Entry
     (chemistry_data_storage* my_rates, int i) {
+  namespace rateq = GRIMPL_NS::ratequery;
+
   // sanity check! (this shouldn't actually happen)
   if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
       (my_rates->opaque_storage->kcol_rate_tables == nullptr)) {
-    return grackle::impl::ratequery::mk_invalid_Entry();
+    return rateq::mk_invalid_Entry();
   }
 
-  // import new_Entry into the current scope (so we don't need the full name)
-  using ::grackle::impl::ratequery::new_Entry;
+  // all entries share a common shape
+  int len = my_rates->opaque_storage->NumberOfTemperatureBins;
+  rateq::EntryShape shape = rateq::EntryShape::create_1d(len);
 
   double** data = my_rates->opaque_storage->kcol_rate_tables->data;
 
@@ -415,7 +421,9 @@ grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
   switch (i) {
 #define TO_STR(s) #s
 #define ENTRY(NAME)                                                            \
-  case CollisionalRxnLUT::NAME: { return new_Entry(data[i], TO_STR(NAME)); }
+  case CollisionalRxnLUT::NAME: {                                              \
+    return new_Entry(data[i], TO_STR(NAME), shape);                            \
+  }
 #include "collisional_rxn_rate_members.def"
 
 #undef ENTRY
@@ -435,16 +443,69 @@ grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
 ///
 /// @param my_rates The object from which the rate Entry is loaded
 /// @param i the index of the queried rate
-grackle::impl::ratequery::Entry get_k13dd_Entry(
-    chemistry_data_storage* my_rates, int i) {
-  if (i == 0) {
-    double* ptr = (my_rates == nullptr) ? nullptr : my_rates->k13dd;
-    return grackle::impl::ratequery::new_Entry(ptr, "k13dd");
+GRIMPL_NS::ratequery::Entry get_k13dd_Entry(chemistry_data_storage* my_rates,
+                                            int i) {
+  namespace rateq = GRIMPL_NS::ratequery;
+  if (i == 0 && my_rates != nullptr) {
+    int len = my_rates->opaque_storage->NumberOfTemperatureBins * 14;
+    return rateq::new_Entry(my_rates->k13dd, "k13dd",
+                            rateq::EntryShape::create_1d(len));
   } else {
-    return grackle::impl::ratequery::mk_invalid_Entry();
+    return rateq::mk_invalid_Entry();
   }
 }
 
+/// @brief Checks the set of input parameters for specifying a 1D ln(T) grid
+///
+/// There are 2 sets of parameters.
+/// 1. when @p gas_T is ``true``, we check the set of parameters that specify
+///    a grid of gas temperatures. This grid is used for the vast majority of
+///    1D interpolations of rates.
+/// 2. when @p gas_T is ``false``, we check the set of parameters that specify a
+///    grid of dust temperatures.
+///
+/// @return ``GR_SUCCESS`` indicates success. Other values indicate an error.
+int check_generic_lnT_params(const chemistry_data& chem, bool gas_T) {
+  // strictly speaking 
+  int num = (gas_T) ? chem.NumberOfTemperatureBins : 
+                      chem.NumberOfDustTemperatureBins;
+  double start = (gas_T) ? chem.TemperatureStart : chem.DustTemperatureStart;
+  double end = (gas_T) ? chem.TemperatureEnd : chem.DustTemperatureEnd;
+  const char* T_kind = (gas_T) ? "Temperature" : "DustTemperature";
+
+  // this is the lowest possible start value:
+  // -> keep in mind that std::numeric_limits<T>::min() returns the lowest
+  //    POSITIVE (non-subnormal) value represented by a floating point type, T
+  // -> it must be positive since interpolation occurs in log-space
+  // -> we currently forbid subnormal numbers because they can significantly
+  //    slow down calculations on some hardware. Plus, there isn't any value
+  //    in representing Temperatures that small (for astrophysics sims)
+  double lowest_start = std::numeric_limits<double>::min();
+
+  if (std::numeric_limits<double>::min() > start) {
+    return GrPrintAndReturnErr("error: %sStart param must be at least %.17e",
+                               T_kind, lowest_start);
+  } else if (start >= end) {
+    return GrPrintAndReturnErr("error: %sEnd param must exceed %sStart param",
+                               T_kind, T_kind);
+  } else if (num < 2) {
+    // technically, NumberOfTemperatureBins and NumberOfDustTemperatureBins are
+    // actually misnomers
+    // - "bins" typically refer to a set of non-overlapping intervals with
+    //   finite widths. You usually use bins to aggregate values (like in
+    //   histograms). It is possible to break an entire interval into a single
+    //   bin.
+    // - These parameters actually specify the number of interpolation points,
+    //   equally spaced in log-space. To perform linear interpolation, you
+    //   always need at least 2 interpolation points.
+    // (this distinction would matter less if the parameters referred to bin
+    // edges rather than bins)
+    return GrPrintAndReturnErr("error: NumberOf%sBins must exceed 1",
+                               T_kind);
+  } else {
+    return GR_SUCCESS;
+  }
+}
 
 } // anonymous namespace
 
@@ -454,17 +515,31 @@ int grackle::impl::initialize_rates(
   code_units *my_units, double co_length_unit, double co_density_unit,
   ratequery::RegBuilder* reg_builder)
 { 
-    // TODO: we REALLY need to do an error check that
-    //    my_chemistry->NumberOfTemperatureBins >= 2
-    //  is satisfied. We should give some thought about whether this should
-    //  produce errors when primordial_chemistry == 0
+    // check NumberOfTemperatureBins, Temperature(Start|End) params
+    // -> can we skip this when primordial_chemistry == 0?
+    {
+      int rc = check_generic_lnT_params(*my_chemistry, true);
+      if (rc != GR_SUCCESS) {
+        return rc;
+      }
+    }
 
-    // TODO: also add error-checks for:
-    //   TemperatureStart, TemperatureEnd, NumberOfDustTemperatureBins,
-    //   DustTemperatureStart, DustTemperatureEnd
+    // store NumberOfTemperatureBins inside of opaque_storage. This is a crude
+    // hack so ratequery machinery can infer shapes without my_chemistry
+    my_rates->opaque_storage->NumberOfTemperatureBins =
+        my_chemistry->NumberOfTemperatureBins;
 
     int anyDust;
     anyDust = (my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) ? TRUE : FALSE;
+
+    // check NumberOfDustTemperatureBins, DustTemperature(Start|End) params
+    // -> can we skip this when primordial_chemistry == 0?
+    if (anyDust) {
+      int rc = check_generic_lnT_params(*my_chemistry, false);
+      if (rc != GR_SUCCESS) {
+        return rc;
+      }
+    }
 
     //* Obtain the conversion factors which convert between code and physical units. We define a_value = 1 at z = zInit such that a = a_value * [a].
     double timeBase1 = my_units->time_units;
@@ -551,10 +626,8 @@ int grackle::impl::initialize_rates(
       }
 
       // register the recipe for looking up the "standard" collisional rates
-      if (grackle::impl::ratequery::RegBuilder_recipe_1d(
-              reg_builder, CollisionalRxnLUT::NUM_ENTRIES,
-              &get_CollisionalRxn_Entry, my_chemistry->NumberOfTemperatureBins
-          ) != GR_SUCCESS) {
+      if (reg_builder->recipe(CollisionalRxnLUT::NUM_ENTRIES,
+                              &get_CollisionalRxn_Entry) != GR_SUCCESS) {
         return GrPrintAndReturnErr("error registering standard collisional "
                                    "reaction rates");
       }
@@ -575,9 +648,7 @@ int grackle::impl::initialize_rates(
         add_k13dd_reaction_rate(&my_rates->k13dd, kUnit, my_chemistry);
 
         // maybe k13dd should be considered multi-dimensional?
-        if (grackle::impl::ratequery::RegBuilder_recipe_1d(
-                reg_builder, 1, &get_k13dd_Entry,
-                my_chemistry->NumberOfTemperatureBins * 14) != GR_SUCCESS) {
+        if (reg_builder->recipe(1, &get_k13dd_Entry) != GR_SUCCESS) {
           return GrPrintAndReturnErr("error registering k13dd rate");
         }
 

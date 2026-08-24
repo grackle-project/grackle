@@ -45,9 +45,7 @@ gr_opaque_storage::~gr_opaque_storage() {
   }
 
   if (registry != nullptr) {
-    // delete contents of registry
-    grackle::impl::ratequery::drop_Registry(registry);
-    // delete registry, itself
+    // delete will trigger the Registry's destructor
     delete registry;
   }
 }

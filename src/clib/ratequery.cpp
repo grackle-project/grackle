@@ -59,32 +59,31 @@ static Entry get_PhotoRxn_Entry(chemistry_data_storage* my_rates, int i) {
   }
   switch (i) {
     case PhotoRxnLUT::k24:
-      return new_Entry(&my_rates->k24, "k24");
+      return new_Entry(&my_rates->k24, "k24", EntryShape::create_scalar());
     case PhotoRxnLUT::k25:
-      return new_Entry(&my_rates->k25, "k25");
+      return new_Entry(&my_rates->k25, "k25", EntryShape::create_scalar());
     case PhotoRxnLUT::k26:
-      return new_Entry(&my_rates->k26, "k26");
+      return new_Entry(&my_rates->k26, "k26", EntryShape::create_scalar());
     case PhotoRxnLUT::k27:
-      return new_Entry(&my_rates->k27, "k27");
+      return new_Entry(&my_rates->k27, "k27", EntryShape::create_scalar());
     case PhotoRxnLUT::k28:
-      return new_Entry(&my_rates->k28, "k28");
+      return new_Entry(&my_rates->k28, "k28", EntryShape::create_scalar());
     case PhotoRxnLUT::k29:
-      return new_Entry(&my_rates->k29, "k29");
+      return new_Entry(&my_rates->k29, "k29", EntryShape::create_scalar());
     case PhotoRxnLUT::k30:
-      return new_Entry(&my_rates->k30, "k30");
+      return new_Entry(&my_rates->k30, "k30", EntryShape::create_scalar());
     case PhotoRxnLUT::k31:
-      return new_Entry(&my_rates->k31, "k31");
+      return new_Entry(&my_rates->k31, "k31", EntryShape::create_scalar());
     default: {
       return mk_invalid_Entry();
     }
   }
 }
 
-int RegBuilder_misc_recipies(RegBuilder* ptr,
-                             const chemistry_data* my_chemistry) {
+int add_misc_recipies_to_RegBuilder(RegBuilder* ptr,
+                                    const chemistry_data* my_chemistry) {
   if (my_chemistry->primordial_chemistry != 0) {
-    return RegBuilder_recipe_scalar(ptr, PhotoRxnLUT::NUM_ENTRIES,
-                                    &get_PhotoRxn_Entry);
+    return ptr->recipe(PhotoRxnLUT::NUM_ENTRIES, &get_PhotoRxn_Entry);
   }
   return GR_SUCCESS;
 }
@@ -151,46 +150,33 @@ static void drop_owned_Entry_list_contents(Entry* entry_list,
   }
 }
 
-Entry EntrySet_access(const EntrySet* entry_set,
-                      chemistry_data_storage* my_rates, int i) {
-  if (entry_set->embedded_list.empty()) {  // in recipe-mode
-    if ((i < 0) || (i >= entry_set->len)) {
-      return mk_invalid_Entry();
-    }
-    Entry out = (entry_set->recipe_fn)(my_rates, i);
-    out.props = entry_set->common_recipe_props;
-    return out;
+Entry EntrySet::access(chemistry_data_storage* my_rates, int i) const {
+  if ((i < 0) || (i >= this->size())) {
+    return mk_invalid_Entry();
+  } else if (embedded_list.empty()) {  // in recipe-mode
+    return (recipe_fn)(my_rates, i);
   } else {  // in embedded-list mode
-    if ((i < 0) ||
-        (static_cast<std::size_t>(i) >= entry_set->embedded_list.size())) {
-      return mk_invalid_Entry();
-    }
-    return entry_set->embedded_list[i];
+    return embedded_list[i];
   }
 }
 
-void drop_EntrySet(EntrySet* ptr) {
-  if (ptr->embedded_list.empty()) {
-    // nothing to deallocate in recipe-mode
-  } else {
+EntrySet::~EntrySet() noexcept {
+  if (!embedded_list.empty()) {
     // in embedded-list-mode, we need to deallocate each Entry in the list
     // and the deallocate the actual list-pointer
-    drop_owned_Entry_list_contents(ptr->embedded_list.data(),
-                                   ptr->embedded_list.size());
-    ptr->embedded_list.clear();  // <- makes repeated calls to drop safer
+    drop_owned_Entry_list_contents(embedded_list.data(), embedded_list.size());
   }
 }
 
-/// Helper function that takes ownership of owned_data
-static int RegBuilder_take_data_(RegBuilder* ptr, const char* raw_name,
-                                 PtrUnion owned_data, EntryProps props) {
+int RegBuilder::take_data_(const char* raw_name, PtrUnion owned_data,
+                           EntryShape props) {
   if (raw_name == nullptr) {
     return GrPrintAndReturnErr("raw_name is a nullptr");
   } else if (owned_data.is_null()) {
     return GrPrintAndReturnErr("owned_data holds a nullptr");
   } else if (!owned_data.is_const_ptr()) {
     return GrPrintAndReturnErr("owned_data isn't const");
-  } else if (!EntryProps_is_valid(props)) {
+  } else if (!props.is_valid()) {
     return GrPrintAndReturnErr("common_props isn't valid");
   }
 
@@ -203,57 +189,31 @@ static int RegBuilder_take_data_(RegBuilder* ptr, const char* raw_name,
   tmp.data = owned_data;
   tmp.name = name;
   tmp.props = props;
-  ptr->owned_entries.push_back(tmp);
+  owned_entries.push_back(tmp);
   return GR_SUCCESS;
 }
 
-static int RegBuilder_recipe_(RegBuilder* ptr, fetch_Entry_recipe_fn* recipe_fn,
-                              int n_entries, EntryProps common_props) {
+int RegBuilder::recipe(int n_entries, fetch_Entry_recipe_fn* recipe_fn) {
   if (recipe_fn == nullptr) {
     return GrPrintAndReturnErr("recipe_fn is a nullptr");
   } else if (n_entries <= 0) {
     return GrPrintAndReturnErr("n_entries is not positive");
-  } else if (!EntryProps_is_valid(common_props)) {
-    return GrPrintAndReturnErr("common_props isn't valid");
   }
 
-  ptr->recipe_sets.push_back(
-      EntrySet{n_entries, std::vector<Entry>(), recipe_fn, common_props});
-
+  recipe_sets.emplace_back(n_entries, recipe_fn);
   return GR_SUCCESS;
 }
 
-void drop_RegBuilder(RegBuilder* ptr) {
-  // this first block is only done for consistency with other drop_ functions
-  // (unnecessary since no entry of recipe-sets holds any pointers to be freed)
-  if (!ptr->recipe_sets.empty()) {
-    ptr->recipe_sets.clear();
-  }
-  // this next block is very necessary!
-  if (!ptr->owned_entries.empty()) {
-    drop_owned_Entry_list_contents(ptr->owned_entries.data(),
-                                   ptr->owned_entries.size());
-    ptr->owned_entries.clear();  // <- make repeated calls of this fn safer
+RegBuilder::~RegBuilder() noexcept {
+  if (owned_entries.empty()) {
+    // this deletes the actual pointers in each tracked Entry
+    drop_owned_Entry_list_contents(owned_entries.data(), owned_entries.size());
+    // the actual deletion of std::vector<Entry> is handled automatically
   }
 }
 
-int RegBuilder_recipe_scalar(RegBuilder* ptr, int n_entries,
-                             fetch_Entry_recipe_fn* recipe_fn) {
-  EntryProps common_props = mk_invalid_EntryProps();
-  common_props.ndim = 0;
-  return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
-}
-
-int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
-                         fetch_Entry_recipe_fn* recipe_fn, int common_len) {
-  EntryProps common_props = mk_invalid_EntryProps();
-  common_props.ndim = 1;
-  common_props.shape[0] = common_len;
-  return RegBuilder_recipe_(ptr, recipe_fn, n_entries, common_props);
-}
-
-int RegBuilder_copied_str_arr1d(RegBuilder* ptr, const char* name,
-                                const char* const* str_arr1d, int len) {
+int RegBuilder::copied_str_arr1d(const char* name, const char* const* str_arr1d,
+                                 int len) {
   if (len <= 0) {
     return GrPrintAndReturnErr("len must be positive");
   }
@@ -264,67 +224,39 @@ int RegBuilder_copied_str_arr1d(RegBuilder* ptr, const char* name,
     std::memcpy(my_copy[i], str_arr1d[i], nbytes);
   }
   PtrUnion data(const_cast<const char* const*>(my_copy));
-  EntryProps props = mk_invalid_EntryProps();
-  props.ndim = 1;
-  props.shape[0] = len;
-  return RegBuilder_take_data_(ptr, name, data, props);
+  return take_data_(name, data, EntryShape::create_1d(len));
 }
 
-int RegBuilder_copied_f64_arr1d(RegBuilder* ptr, const char* name,
-                                const double* f64_arr1d, int len) {
+int RegBuilder::copied_f64_arr1d(const char* name, const double* f64_arr1d,
+                                 int len) {
   if (len <= 0) {
     return GrPrintAndReturnErr("len must be positive");
   }
   double* my_copy = new double[len];
   std::memcpy(my_copy, f64_arr1d, sizeof(double) * len);
   PtrUnion data(const_cast<const double*>(my_copy));
-  EntryProps props = mk_invalid_EntryProps();
-  props.ndim = 1;
-  props.shape[0] = len;
-  return RegBuilder_take_data_(ptr, name, data, props);
+  return take_data_(name, data, EntryShape::create_1d(len));
 }
 
-/// build a new Registry.
-///
-/// In the process, the current Registry is consumed; it's effectively reset to
-/// the state immediately after it was initialized. (This lets us avoid
-/// reallocating lots of memory)
-Registry RegBuilder_consume_and_build(RegBuilder* ptr) {
+Registry RegBuilder::consume_and_build() {
   // try to construct an EntrySet that contains all owned entries
-  if (!ptr->owned_entries.empty()) {
-    int len = ptr->owned_entries.size();
-    EntrySet tmp{/* len = */ len,
-                 /* embedded_list = */ std::move(ptr->owned_entries),
-                 /* recipe_fn = */ nullptr,
-                 /* common_recipe_props = */ mk_invalid_EntryProps()};
-    ptr->recipe_sets.push_back(tmp);
+  if (!owned_entries.empty()) {
+    recipe_sets.emplace_back(std::move(owned_entries));
   }
 
   // now actually set up the registry
-  if (ptr->recipe_sets.empty()) {
+  if (recipe_sets.empty()) {
     return Registry{0, nullptr, std::vector<EntrySet>()};
   } else {
-    int n_sets = ptr->recipe_sets.size();
+    int n_sets = recipe_sets.size();
     // set up id_offsets and determine the total number of entries
     int* id_offsets = new int[n_sets];
     int tot_entry_count = 0;
     for (int i = 0; i < n_sets; i++) {
       id_offsets[i] = tot_entry_count;
-      tot_entry_count += EntrySet_size(&ptr->recipe_sets[i]);
+      tot_entry_count += recipe_sets[i].size();
     }
-    return Registry{tot_entry_count, id_offsets, std::move(ptr->recipe_sets)};
-  }
-}
-
-void drop_Registry(Registry* ptr) {
-  if (!ptr->sets.empty()) {
-    delete[] ptr->id_offsets;
-    ptr->id_offsets = nullptr;
-    std::size_t n_sets = ptr->sets.size();
-    for (std::size_t i = 0; i < n_sets; i++) {
-      drop_EntrySet(&ptr->sets[i]);
-    }
-    ptr->sets.clear();  // <- make it safer to call drop_Registry more than once
+    return Registry{tot_entry_count, id_offsets, std::move(recipe_sets)};
   }
 }
 
@@ -369,8 +301,8 @@ static ratequery_rslt_ query_Entry(chemistry_data_storage* my_rates,
   for (std::size_t set_idx = 0; set_idx < n_sets; set_idx++) {
     EntrySet* cur_set = &registry->sets[set_idx];
     int tmp = i - registry->id_offsets[set_idx];
-    if ((tmp >= 0) && (tmp < EntrySet_size(cur_set))) {
-      return ratequery_rslt_{i, EntrySet_access(cur_set, my_rates, tmp)};
+    if ((tmp >= 0) && (tmp < cur_set->size())) {
+      return ratequery_rslt_{i, cur_set->access(my_rates, tmp)};
     }
   }
   return invalid_rslt_();
@@ -394,7 +326,7 @@ static void show_Entry(const Entry* entry) {
 */
 
 /// compute the number of items in an Entry described by @p props
-static long long get_n_items(EntryProps props) {
+static long long get_n_items(EntryShape props) {
   GR_INTERNAL_REQUIRE(props.ndim >= 0, "sanity check!");
 
   if (props.ndim == 0) {
@@ -424,10 +356,10 @@ extern "C" grunstable_rateid_type grunstable_ratequery_id(
   std::size_t n_sets = registry->sets.size();
   for (std::size_t set_idx = 0; set_idx < n_sets; set_idx++) {
     const rate_q::EntrySet* set = &registry->sets[set_idx];
-    int set_len = EntrySet_size(set);
+    int set_len = set->size();
     for (int i = 0; i < set_len; i++) {
-      rate_q::Entry entry = rate_q::EntrySet_access(
-          set, const_cast<chemistry_data_storage*>(my_rates), i);
+      rate_q::Entry entry =
+          set->access(const_cast<chemistry_data_storage*>(my_rates), i);
       // todo: figure out how to give enough compiler hints so we can remove
       //       this nullptr-check
       GR_INTERNAL_REQUIRE(entry.name != nullptr, "sanity check!");
@@ -532,8 +464,8 @@ extern "C" int grunstable_ratequery_prop(
                           rate_id)
           .entry;
 
-  const rate_q::EntryProps& props = entry.props;
-  if ((entry.name == nullptr) || !rate_q::EntryProps_is_valid(props)) {
+  const rate_q::EntryShape& props = entry.props;
+  if ((entry.name == nullptr) || !props.is_valid()) {
     return GR_FAIL;
   }
 
