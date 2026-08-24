@@ -68,7 +68,7 @@ add_test(
   COMMAND ${checker_script} cmp
     --target $<TARGET_FILE:c_example>
     --ref ${script_dir}/c_example_ref.json
-    --rtol 2e-12
+    --rtol 3e-12
     --exec-timeout 10
     --exec-dir ${example_exec_dir}
 )

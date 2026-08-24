@@ -1389,15 +1389,28 @@ extern "C" double cieco_rate(double T, double units, chemistry_data *my_chemistr
     return cierate * (mh/2.0) / units;
 }
 
+extern "C" double dust_dampener(double T)
+{
+  /* This is a semi-arbitrary cutoff to prevent dust-related cooling
+     terms from becoming unphysically large at high temperatures.
+     This is applied to coolants such as gas/grain heat transfer and
+     dust recombination cooling. Without this, these would dominate
+     the cooling at temperature above ~1e6 K. However, in a model
+     including dust destruction, grains would not last long at these
+     temperatures. */
+  return std::exp(-T / 3.0e4);
+}
+
 extern "C" double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
 {
   double grain_coef;
   double fgr = 0.009387;
+
   if (my_chemistry->gas_grain_cooling_rate == 0) {
     //Calculate energy transfer from gas to dust grains (Equation 2.15, Hollenbach & McKee, 1989).
     //Normalize to the HM89 dust-to-gas ratio.
     grain_coef = 1.2e-31 * std::pow(1.0e3, -0.5) / fgr;
-    return grain_coef * std::pow(T, 0.5) * (1.0 - 0.8 * std::exp(-75.0 / T)) / units;
+    return dust_dampener(T) * grain_coef * std::pow(T, 0.5) * (1.0 - 0.8 * std::exp(-75.0 / T)) / units;
   }
   else if (my_chemistry->gas_grain_cooling_rate == 1) {
     /*
@@ -1414,7 +1427,7 @@ extern "C" double gasGrain_rate(double T, double units, chemistry_data *my_chemi
     // Hollenbach & McKee (1989) considered the contribution of other species
     // than protons and charged grains, but we now consider only H2 and He
     // and neglect charged grains (Schneider et al. 2006).
-    return grain_coef * f_vel * std::pow(T, 0.5) / units;
+    return dust_dampener(T) * grain_coef * f_vel * std::pow(T, 0.5) / units;
   }
   else {
     GR_INTERNAL_ERROR("gas_grain_cooling_rate can only be 0 or 1.\n");
@@ -1423,20 +1436,20 @@ extern "C" double gasGrain_rate(double T, double units, chemistry_data *my_chemi
 
 extern "C" double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    //Variables.
-    double f_vel = 0.5 / std::sqrt(2.0) + 0.0833333 / std::sqrt(4.0);
-    double vH_avg = std::sqrt(kboltz * T / 2.0 / GRIMPL_NS::constants::pi / mh);
+  double f_vel = 0.5 / std::sqrt(2.0) + 0.0833333 / std::sqrt(4.0);
+  double vH_avg = std::sqrt(kboltz * T / 2.0 / GRIMPL_NS::constants::pi / mh);
 
-    return f_vel * 4.0 * vH_avg * 2.0 * kboltz * mh / units;
-    //Later multiplied by sigma_gr / mass_gr for arbitrary size distribution.
+  return dust_dampener(T) * f_vel * 4.0 * vH_avg * 2.0 * kboltz * mh / units;
+  // Later multiplied by sigma_gr / mass_gr for arbitrary size distribution.
 }
 
 
 extern "C" double regr_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    //(Equation 9, Wolfire et al., 1995)
-    double grbeta = 0.74 / std::pow(T, 0.068);
-    return  4.65e-30 * std::pow(T, 0.94 + 0.5 * grbeta) / units;
+  // Equation 9, Wolfire et al., 1995
+  double grbeta = 0.74 / std::pow(T, 0.068);
+
+  return dust_dampener(T) * 4.65e-30 * std::pow(T, 0.94 + 0.5 * grbeta) / units;
 }
 
 //The below rates are scalar -- they have no temperature dependence.
