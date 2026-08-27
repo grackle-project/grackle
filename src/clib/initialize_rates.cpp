@@ -731,9 +731,14 @@ int grackle::impl::initialize_rates(
     // (it may make sense want to handle more of the dust separately)
     if (my_chemistry->dust_species > 0) {
       my_rates->opaque_storage->grain_species_info = 
-        new grackle::impl::GrainSpeciesInfo;
-      *(my_rates->opaque_storage->grain_species_info) =
-        grackle::impl::new_GrainSpeciesInfo(my_chemistry->dust_species);
+          new GRIMPL_NS::GrainSpeciesInfo(my_chemistry->dust_species);
+      if (! bool(*my_rates->opaque_storage->grain_species_info)) {
+        // it's ok for us to not clean up the grain_species_info, the
+        // destructor for opaque_storage will handle that for us
+        return GrPrintAndReturnErr(
+          "Error determining grain species information (this probably denotes "
+          "an issue with the dust_species parameter");
+      }
     }
 
     // Load injection pathway data

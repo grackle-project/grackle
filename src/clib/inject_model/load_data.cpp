@@ -162,7 +162,7 @@ int configure_RegBuilder(const chemistry_data_storage* my_rates,
   if ((my_rates->opaque_storage != nullptr) &&
       (my_rates->opaque_storage->grain_species_info != nullptr)) {
     int n_grain_species =
-        my_rates->opaque_storage->grain_species_info->n_species;
+        my_rates->opaque_storage->grain_species_info->n_species();
 
     // the length of each grain species yield array is equal to the number of
     // injection pathways
@@ -501,7 +501,8 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   GrainSpeciesInfo* grain_species_info =
       my_rates->opaque_storage->grain_species_info;
   const FrozenKeyIdxBiMap* grain_species_names =
-      (grain_species_info == nullptr) ? nullptr : &grain_species_info->name_map;
+      (grain_species_info == nullptr) ? nullptr
+                                      : &grain_species_info->name_map();
 
   SetupCallbackCtx ctx = {
       /* inject_pathway_props = */ my_rates->opaque_storage

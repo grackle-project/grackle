@@ -99,30 +99,15 @@ int number_known_grain_species() {
 /// tracks the max value allowed by Grackle's dust_species runtime parameter
 constexpr int MAX_dust_species_VAL = 3;
 
-// down below, we define some machinery to make sure we properly deallocate
-// memory when a test fails. This would not be an issue if we were willing to
-// make GrainSpeciesInfoDeleter a C++ class with a proper constructor &
-// destructor
-struct GrainSpeciesInfoDeleter {
-  void operator()(grackle::impl::GrainSpeciesInfo* ptr) const {
-    grackle::impl::drop_GrainSpeciesInfo(ptr);
-    delete ptr;
-  }
-};
-
 using unique_GrainSpeciesInfo_ptr =
-    std::unique_ptr<grackle::impl::GrainSpeciesInfo, GrainSpeciesInfoDeleter>;
+    std::unique_ptr<GRIMPL_NS::GrainSpeciesInfo>;
 
 /// creates a unique_ptr holding a grackle::impl::GrainSpeciesInfo
 ///
 /// This is useful for preventing memory leaks when tests fail
 unique_GrainSpeciesInfo_ptr make_unique_GrainSpeciesInfo(
     int dust_species_param) {
-  // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
-  grackle::impl::GrainSpeciesInfo* ptr = new grackle::impl::GrainSpeciesInfo;
-  (*ptr) = grackle::impl::new_GrainSpeciesInfo(dust_species_param);
-  return unique_GrainSpeciesInfo_ptr(ptr, GrainSpeciesInfoDeleter());
-  // NOLINTEND(clang-analyzer-cplusplus.NewDeleteLeaks)
+  return std::make_unique<GRIMPL_NS::GrainSpeciesInfo>(dust_species_param);
 }
 
 }  // anonymous namespace
@@ -161,12 +146,12 @@ protected:
     grain_species_info_ = make_unique_GrainSpeciesInfo(dust_species);
 
     // perform 3 sanity checks!
-    ASSERT_GE(grain_species_info_->n_species, 1)
+    ASSERT_GE(grain_species_info_->n_species(), 1)
         << "GrainSpeciesInfo::n_species should be positive";
-    ASSERT_LE(grain_species_info_->n_species, number_known_grain_species())
+    ASSERT_LE(grain_species_info_->n_species(), number_known_grain_species())
         << "GrainSpeciesInfo::n_species can't exceed the number of known grain "
         << "species";
-    ASSERT_NE(grain_species_info_->species_info, nullptr)
+    ASSERT_NE(grain_species_info_->species_info(), nullptr)
         << "GrainSpeciesInfo::species_info can't be a nullptr when "
         << "GrainSpeciesInfo::n_species is positive";
   }
@@ -197,10 +182,10 @@ TEST_P(GrainSpeciesInfoTest, OnlyGrainSpeciesLUT) {
       {"H2O_ice_dust", OnlyGrainSpLUT::H2O_ice_dust},
   };
 
-  const int n_species = grain_species_info_->n_species;
+  const int n_species = grain_species_info_->n_species();
   for (int i = 0; i < n_species; i++) {
     const char* name = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
-        &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
+        &grain_species_info_->name_map(), static_cast<std::uint16_t>(i));
 
     ASSERT_NE(name, nullptr);      // sanity check!
     EXPECT_EQ(i, ref_l[i].index);  // sanity check!
@@ -214,13 +199,13 @@ TEST_P(GrainSpeciesInfoTest, OnlyGrainSpeciesLUT) {
 }
 
 TEST_P(GrainSpeciesInfoTest, SublimationTemp) {
-  const int n_species = grain_species_info_->n_species;
+  const int n_species = grain_species_info_->n_species();
   for (int i = 0; i < n_species; i++) {
     const char* name = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
-        &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
+        &grain_species_info_->name_map(), static_cast<std::uint16_t>(i));
     ASSERT_NE(name, nullptr);  // sanity check!
     // actual check!
-    EXPECT_GT(grain_species_info_->species_info[i].sublimation_temperature, 0)
+    EXPECT_GT(grain_species_info_->species_info()[i].sublimation_temperature, 0)
         << "element " << i << " of the GrainSpeciesInfo::species_info array "
         << "holds an invalid sublimation temperature";
   }
@@ -231,10 +216,10 @@ TEST_P(GrainSpeciesInfoTest, SpeciesLUTCompare) {
   // XMacro as that the SpeciesLUT enumeration is built from
   std::vector<SpNameIndexPair> ref_list = grain_sp_info_from_species_list();
 
-  const int n_species = grain_species_info_->n_species;
+  const int n_species = grain_species_info_->n_species();
   for (int i = 0; i < n_species; i++) {
     const char* name_cstr = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
-        &grain_species_info_->name_map, static_cast<std::uint16_t>(i));
+        &grain_species_info_->name_map(), static_cast<std::uint16_t>(i));
     ASSERT_NE(name_cstr, nullptr);  // sanity check!
     // actual check!
     std::string actual_name(name_cstr);
@@ -242,7 +227,7 @@ TEST_P(GrainSpeciesInfoTest, SpeciesLUTCompare) {
         << "according to the reference list, the grain species at index " << i
         << " should be `" << ref_list[i].name << "` (not `" << actual_name
         << "`)";
-    EXPECT_EQ(grain_species_info_->species_info[i].species_idx,
+    EXPECT_EQ(grain_species_info_->species_info()[i].species_idx,
               ref_list[i].index)
         << "the value @ index " << i << " of GrainSpeciesInfo::species_info "
         << "seems to indicate that the SpLUT::" << actual_name << " enumerator "
@@ -255,12 +240,12 @@ TEST_P(GrainSpeciesInfoTest, SpeciesLUTCompare) {
 // have.
 TEST_P(GrainSpeciesInfoTest, MaxIngredients) {
   // go through and compute the number of ingredients for each species
-  int n_grain_species = grain_species_info_->n_species;
+  int n_grain_species = grain_species_info_->n_species();
   int max_ingredient_count = 0;
   for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
     max_ingredient_count = std::max(
         max_ingredient_count,
-        grain_species_info_->species_info[gsp_idx].n_growth_ingredients);
+        grain_species_info_->species_info()[gsp_idx].n_growth_ingredients);
   }
 
   if (MAX_dust_species_VAL == static_cast<int>(GetParam())) {
@@ -325,13 +310,13 @@ TEST_P(GrainSpeciesInfoTest, SampledGrainIngredients) {
   // - validate that each index of the ingredients is meaningful
   // - if the dust grain is listed in ingred_map, then we will compare the
   //   ingredient list
-  int n_grain_species = grain_species_info_->n_species;
+  int n_grain_species = grain_species_info_->n_species();
   std::size_t n_comparisons = 0;
   for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
     const grackle::impl::GrainSpeciesInfoEntry& species_info =
-        grain_species_info_->species_info[gsp_idx];
+        grain_species_info_->species_info()[gsp_idx];
     const char* name_ptr = grackle::impl::FrozenKeyIdxBiMap_inverse_find(
-        &grain_species_info_->name_map, gsp_idx);
+        &grain_species_info_->name_map(), gsp_idx);
     ASSERT_NE(nullptr, name_ptr);  // sanity check!
     std::string name = name_ptr;
 
@@ -380,11 +365,11 @@ TEST(GrainSpeciesInfoTestMisc, DustSpeciesExtremeValues) {
   for (auto dust_species_param : invalid_dust_species_values) {
     unique_GrainSpeciesInfo_ptr ptr =
         make_unique_GrainSpeciesInfo(dust_species_param);
-    EXPECT_LE(ptr->n_species, -1)
+    EXPECT_LE(ptr->n_species(), -1)
         << "GrainSpeciesInfo::n_species should be negative when the "
         << "dust_species parameter is " << dust_species_param << " (i.e. an "
         << "invalid value).";
-    EXPECT_EQ(ptr->species_info, nullptr)
+    EXPECT_EQ(ptr->species_info(), nullptr)
         << "GrainSpeciesInfo::species_info member should be a nullptr when the "
         << "dust_species parameter is " << dust_species_param << " (i.e. an "
         << "invalid value).";
@@ -394,13 +379,13 @@ TEST(GrainSpeciesInfoTestMisc, DustSpeciesExtremeValues) {
   {
     unique_GrainSpeciesInfo_ptr ptr =
         make_unique_GrainSpeciesInfo(MAX_dust_species_VAL);
-    EXPECT_EQ(ptr->n_species, n_known_grain_species)
+    EXPECT_EQ(ptr->n_species(), n_known_grain_species)
         << "GrainSpeciesInfo::n_species should specify the number of grain "
         << "species known to grackle, " << n_known_grain_species
         << ", when the "
         << "dust_species parameter holds the max known value, "
         << MAX_dust_species_VAL << '.';
-    EXPECT_NE(ptr->species_info, nullptr)
+    EXPECT_NE(ptr->species_info(), nullptr)
         << "GrainSpeciesInfo::species_info can't be a nullptr when "
         << "GrainSpeciesInfo::n_species is positive";
   }
