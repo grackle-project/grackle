@@ -233,6 +233,16 @@ various parameters.
      - kdissCO
      - none
      - :c:data:`metal_chemistry` = 1
+   * - OH + :math:`{\gamma}`
+     - O + H
+     - kdissOH
+     - none
+     - :c:data:`metal_chemistry` = 1
+   * - H\ :sub:`2`\ O + :math:`{\gamma}`
+     - OH + H
+     - kdissH2O
+     - none
+     - :c:data:`metal_chemistry` = 1
    * - H + H + grain
      - H\ :sub:`2` + grain
      - k2dust

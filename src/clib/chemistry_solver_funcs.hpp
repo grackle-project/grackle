@@ -169,8 +169,6 @@ inline void species_density_updates_gauss_seidel(
   grackle::impl::View<gr_float***> kphHeI(my_fields->RT_HeI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kphHeII(my_fields->RT_HeII_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kdissHDI(my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kdissOH(my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kdissH2O(my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // locals
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
@@ -383,14 +381,12 @@ inline void species_density_updates_gauss_seidel(
             scoef = scoef
               + kdissHDI(i,j,k) * HDI(i,j,k)/3.0;
           }
-          if ( (my_chemistry->metal_chemistry == 1)  && 
-               (itmask_metal[i] != MASK_FALSE) )  {
-            if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
-              scoef = scoef
-                + kdissOH (i,j,k) * OH(i,j,k) /17.0
-                + kdissH2O(i,j,k) * H2O(i,j,k)/18.0;
-            }
-          }
+        }
+        if ( (my_chemistry->metal_chemistry == 1)  &&
+             (itmask_metal[i] != MASK_FALSE) )  {
+          scoef = scoef
+            + kph_buf[PhotoRxnLUT::kdissOH][i] * OH(i,j,k) /17.0
+            + kph_buf[PhotoRxnLUT::kdissH2O][i] * H2O(i,j,k)/18.0;
         }
 
         if (anydust != MASK_FALSE)  {
@@ -947,13 +943,8 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf[CollisionalRxnLUT::kz33][i] *    OH(i,j,k) / 17.
             + kph_buf[PhotoRxnLUT::kphOI][i];
         scoef = scoef + 16. *
-            kph_buf[PhotoRxnLUT::kdissCO][i] * CO(i,j,k) /28.0;
-        if (my_chemistry->use_radiative_transfer == 1)  {
-          if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
-            scoef = scoef + 16. *
-                kdissOH (i,j,k) * OH(i,j,k) /17.0;
-          }
-        }
+            ( kph_buf[PhotoRxnLUT::kdissOH][i] * OH(i,j,k) /17.0
+            + kph_buf[PhotoRxnLUT::kdissCO][i] * CO(i,j,k) /28.0);
 
         out_spdens.data[SpLUT::OI][i]   = ( scoef*dtit[i] + OI(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -979,14 +970,10 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf[CollisionalRxnLUT::kz37][i] *   CII(i,j,k) / 12.
             + kcol_buf[CollisionalRxnLUT::kz52][i] *   SiI(i,j,k) / 28.
             + kcol_buf[CollisionalRxnLUT::kz54][i] *  SiOI(i,j,k) / 44.;
-        if (my_chemistry->use_radiative_transfer == 1)  {
-          if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
-            acoef = acoef
-              + kdissOH (i,j,k);
-            scoef = scoef + 17. *
-                kdissH2O(i,j,k) * H2O(i,j,k)/18.0;
-          }
-        }
+        acoef = acoef
+            + kph_buf[PhotoRxnLUT::kdissOH][i];
+        scoef = scoef + 17. *
+            kph_buf[PhotoRxnLUT::kdissH2O][i] * H2O(i,j,k)/18.0;
 
         out_spdens.data[SpLUT::OH][i]   = ( scoef*dtit[i] + OH(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -1018,12 +1005,8 @@ inline void species_density_updates_gauss_seidel(
             + grain_growth_rates[OnlyGrainSpLUT::H2O_ice_dust]  [i] / H2O(i,j,k) * 18.;
           }
         }
-        if (my_chemistry->use_radiative_transfer == 1)  {
-          if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
-            acoef = acoef
-              + kdissH2O(i,j,k);
-          }
-        }
+        acoef = acoef
+            + kph_buf[PhotoRxnLUT::kdissH2O][i];
 
         out_spdens.data[SpLUT::H2O][i]   = ( scoef*dtit[i] + H2O(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
@@ -1715,14 +1698,12 @@ inline void species_density_derivatives_0d(
         scoef = scoef
           + *(my_fields->RT_HDI_dissociation_rate)        * HDI       /3.0;
       }
-      if ((my_chemistry->metal_chemistry == 1)  && 
-          (itmask_metal[0] != MASK_FALSE))  {
-        if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
-          scoef = scoef
-            + *(my_fields->RT_OH_dissociation_rate)         * OH        /17.0
-            + *(my_fields->RT_H2O_dissociation_rate)        * H2O       /18.0;
-        }
-      }
+    }
+    if ((my_chemistry->metal_chemistry == 1)  &&
+        (itmask_metal[0] != MASK_FALSE))  {
+      scoef = scoef
+        + kph_buf[PhotoRxnLUT::kdissOH][0]    * OH        /17.0
+        + kph_buf[PhotoRxnLUT::kdissH2O][0]   * H2O       /18.0;
     }
 
     if (anydust != MASK_FALSE)  {
@@ -2277,13 +2258,8 @@ inline void species_density_derivatives_0d(
           + kcol_buf[CollisionalRxnLUT::kz33][0]    *    OH        / 17.
           + kph_buf[PhotoRxnLUT::kphOI][0];
       scoef = scoef + 16. *
-          kph_buf[PhotoRxnLUT::kdissCO][0]    * CO        /28.0;
-      if (my_chemistry->use_radiative_transfer == 1)  {
-        if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
-          scoef = scoef + 16. *
-              *(my_fields->RT_OH_dissociation_rate)         * OH        /17.0;
-        }
-      }
+          ( kph_buf[PhotoRxnLUT::kdissOH][0]    * OH        /17.0
+          + kph_buf[PhotoRxnLUT::kdissCO][0]    * CO        /28.0);
 
       deriv.data[SpLUT::OI][0] = deriv.data[SpLUT::OI][0] + (scoef - acoef * OI);
 
@@ -2309,14 +2285,10 @@ inline void species_density_derivatives_0d(
           + kcol_buf[CollisionalRxnLUT::kz37][0]    *   CII        / 12.
           + kcol_buf[CollisionalRxnLUT::kz52][0]    *   SiI        / 28.
           + kcol_buf[CollisionalRxnLUT::kz54][0]    *  SiOI        / 44.;
-      if (my_chemistry->use_radiative_transfer == 1)  {
-        if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
-          acoef = acoef
-            + *(my_fields->RT_OH_dissociation_rate);
-          scoef = scoef + 17. *
-              *(my_fields->RT_H2O_dissociation_rate)        * H2O       /18.0;
-        }
-      }
+      acoef = acoef
+          + kph_buf[PhotoRxnLUT::kdissOH][0];
+      scoef = scoef + 17. *
+          kph_buf[PhotoRxnLUT::kdissH2O][0]    * H2O       /18.0;
 
       deriv.data[SpLUT::OH][0] = deriv.data[SpLUT::OH][0] + (scoef - acoef * OH);
 
@@ -2348,12 +2320,8 @@ inline void species_density_derivatives_0d(
           + grain_growth_rates[OnlyGrainSpLUT::H2O_ice_dust][0]      / H2O        * 18.;
         }
       }
-      if (my_chemistry->use_radiative_transfer == 1)  {
-        if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
-          acoef = acoef
-            + *(my_fields->RT_H2O_dissociation_rate);
-        }
-      }
+      acoef = acoef
+          + kph_buf[PhotoRxnLUT::kdissH2O][0];
 
       deriv.data[SpLUT::H2O][0] = deriv.data[SpLUT::H2O][0] + (scoef - acoef * H2O);
 

@@ -151,6 +151,8 @@ struct PhotoRxnLUT {
     kphCI,
     kphOI,
     kdissCO,
+    kdissOH,
+    kdissH2O,
 
     NUM_ENTRIES  // <- (specifies the number of shieldable radiative reactions)
   };  // enum

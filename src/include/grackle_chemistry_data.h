@@ -392,6 +392,8 @@ typedef struct
     double *kphCI;
     double *kphOI;
     double *kdissCO;
+    double *kdissOH;
+    double *kdissH2O;
 
     double *piHI;
     double *piHeI;
@@ -491,6 +493,8 @@ typedef struct
   double kphCI_bg;
   double kphOI_bg;
   double kdissCO_bg;
+  double kdissOH_bg;
+  double kdissH2O_bg;
 
   /* H2 formation on dust grains */
   double *h2dust;
@@ -656,6 +660,8 @@ typedef struct
     double kphCI_bg;
     double kphOI_bg;
     double kdissCO_bg;
+    double kdissOH_bg;
+    double kdissH2O_bg;
 
     double piHI;
     double piHeI;

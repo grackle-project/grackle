@@ -877,11 +877,14 @@ inline void lookup_cool_rates1d(
       // radiative-transfer part folded in further below. Only the O I
       // background rate is self-shielded (in apply_misc_shield_factors):
       // O I ionization (13.62 eV) uses the same photons as H I, while C I
-      // ionization (11.26 eV) and CO dissociation (11.2-13.6 eV) sit below
-      // the Lyman limit, where the gas is transparent.
+      // ionization (11.26 eV) and the CO (11.2-13.6 eV), OH (4.44 eV) and
+      // H2O (5.12 eV) dissociations sit below the Lyman limit, where the
+      // gas is transparent.
       kph_buf[PhotoRxnLUT::kphCI][i] = my_uvb_rates.kphCI_bg;
       kph_buf[PhotoRxnLUT::kphOI][i] = my_uvb_rates.kphOI_bg;
       kph_buf[PhotoRxnLUT::kdissCO][i] = my_uvb_rates.kdissCO_bg;
+      kph_buf[PhotoRxnLUT::kdissOH][i] = my_uvb_rates.kdissOH_bg;
+      kph_buf[PhotoRxnLUT::kdissH2O][i] = my_uvb_rates.kdissH2O_bg;
     }
   }
 
@@ -926,11 +929,23 @@ inline void lookup_cool_rates1d(
       grackle::impl::View<const gr_float***> kdissCO(
           my_fields->RT_CO_dissociation_rate, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<const gr_float***> kdissOH(
+          my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<const gr_float***> kdissH2O(
+          my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           kph_buf[PhotoRxnLUT::kdissCO][i] =
               kph_buf[PhotoRxnLUT::kdissCO][i] +
               kdissCO(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kdissOH][i] =
+              kph_buf[PhotoRxnLUT::kdissOH][i] +
+              kdissOH(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kdissH2O][i] =
+              kph_buf[PhotoRxnLUT::kdissH2O][i] +
+              kdissH2O(i, idx_range.j, idx_range.k);
         }
       }
     }

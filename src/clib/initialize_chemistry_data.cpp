@@ -73,6 +73,8 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->kphCI_bg = 0.;
   my_rates->kphOI_bg = 0.;
   my_rates->kdissCO_bg = 0.;
+  my_rates->kdissOH_bg = 0.;
+  my_rates->kdissH2O_bg = 0.;
 
   my_rates->h2dust = NULL;
   my_rates->h2dustS = NULL;

@@ -162,6 +162,28 @@ int grackle::impl::update_UVbackground_rates(const chemistry_data *my_chemistry,
       my_uvb_rates->kdissCO_bg = 0.;
     }
 
+    // *** kdissOH ***
+    if ((my_rates->UVbackground_table.kdissOH[index-1] > 0.) &&
+        (my_rates->UVbackground_table.kdissOH[index] > 0.)) {
+      slope = std::log(my_rates->UVbackground_table.kdissOH[index] /
+                  my_rates->UVbackground_table.kdissOH[index-1]) / zvec_grad;
+      my_uvb_rates->kdissOH_bg = std::exp(redshift_grad * slope +
+			    std::log(my_rates->UVbackground_table.kdissOH[index-1]));
+    } else {
+      my_uvb_rates->kdissOH_bg = 0.;
+    }
+
+    // *** kdissH2O ***
+    if ((my_rates->UVbackground_table.kdissH2O[index-1] > 0.) &&
+        (my_rates->UVbackground_table.kdissH2O[index] > 0.)) {
+      slope = std::log(my_rates->UVbackground_table.kdissH2O[index] /
+                  my_rates->UVbackground_table.kdissH2O[index-1]) / zvec_grad;
+      my_uvb_rates->kdissH2O_bg = std::exp(redshift_grad * slope +
+			    std::log(my_rates->UVbackground_table.kdissH2O[index-1]));
+    } else {
+      my_uvb_rates->kdissH2O_bg = 0.;
+    }
+
   }
 
   // *** piHI ***
@@ -231,6 +253,8 @@ int grackle::impl::update_UVbackground_rates(const chemistry_data *my_chemistry,
     my_uvb_rates->kphCI_bg *= my_units->time_units;
     my_uvb_rates->kphOI_bg *= my_units->time_units;
     my_uvb_rates->kdissCO_bg *= my_units->time_units;
+    my_uvb_rates->kdissOH_bg *= my_units->time_units;
+    my_uvb_rates->kdissH2O_bg *= my_units->time_units;
   }
     
   my_uvb_rates->piHI /= CoolingUnits;
@@ -253,6 +277,8 @@ int grackle::impl::update_UVbackground_rates(const chemistry_data *my_chemistry,
     my_uvb_rates->kphCI_bg *= Ramp;
     my_uvb_rates->kphOI_bg *= Ramp;
     my_uvb_rates->kdissCO_bg *= Ramp;
+    my_uvb_rates->kdissOH_bg *= Ramp;
+    my_uvb_rates->kdissH2O_bg *= Ramp;
   }
   my_uvb_rates->piHI *= Ramp;
   my_uvb_rates->piHeII *= Ramp;

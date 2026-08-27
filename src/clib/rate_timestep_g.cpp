@@ -100,12 +100,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
   grackle::impl::View<gr_float***> kdissHDI(
       my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kdissOH(
-      my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kdissH2O(
-      my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // locals
   const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
@@ -403,22 +397,10 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
         }
       }
     }
-    if ((my_chemistry->metal_chemistry > 0) &&
-        (my_chemistry->radiative_transfer_metal_dissociation > 0)) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          HIdot[i] = HIdot[i] +
-                     kdissOH(i, idx_range.j, idx_range.k) *
-                         OH(i, idx_range.j, idx_range.k) / 17.0 +
-                     kdissH2O(i, idx_range.j, idx_range.k) *
-                         H2O(i, idx_range.j, idx_range.k) / 18.0;
-        }
-      }
-    }
   }
 
-  // Add photo-ionization of metal species (UV background + radiative
-  // transfer)
+  // Add photo-ionization/photo-dissociation of metal species (UV background
+  // + radiative transfer)
 
   if (my_chemistry->metal_chemistry > 0) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
@@ -428,6 +410,11 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
                        CI(i, idx_range.j, idx_range.k) / 12.0 +
                    kph_buf[PhotoRxnLUT::kphOI][i] *
                        OI(i, idx_range.j, idx_range.k) / 16.0;
+        HIdot[i] = HIdot[i] +
+                   kph_buf[PhotoRxnLUT::kdissOH][i] *
+                       OH(i, idx_range.j, idx_range.k) / 17.0 +
+                   kph_buf[PhotoRxnLUT::kdissH2O][i] *
+                       H2O(i, idx_range.j, idx_range.k) / 18.0;
       }
     }
   }
