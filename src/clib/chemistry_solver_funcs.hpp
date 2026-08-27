@@ -111,64 +111,64 @@ inline void species_density_updates_gauss_seidel(
 
   // Construct views of various species fields
   // -----------------------------------------
-  grackle::impl::View<gr_float***> de(my_fields->e_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HI(my_fields->HI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HII(my_fields->HII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeI(my_fields->HeI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeII(my_fields->HeII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeIII(my_fields->HeIII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HM(my_fields->HM_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2I(my_fields->H2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2II(my_fields->H2II_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DI(my_fields->DI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DII(my_fields->DII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HDI(my_fields->HDI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DM(my_fields->DM_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HDII(my_fields->HDII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeHII(my_fields->HeHII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CI(my_fields->CI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CII(my_fields->CII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CO(my_fields->CO_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CO2(my_fields->CO2_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OI(my_fields->OI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OH(my_fields->OH_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2O(my_fields->H2O_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> O2(my_fields->O2_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiI(my_fields->SiI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiOI(my_fields->SiOI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiO2I(my_fields->SiO2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CH(my_fields->CH_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CH2(my_fields->CH2_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> COII(my_fields->COII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OII(my_fields->OII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OHII(my_fields->OHII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2OII(my_fields->H2OII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H3OII(my_fields->H3OII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> O2II(my_fields->O2II_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mg(my_fields->Mg_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Al(my_fields->Al_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> S(my_fields->S_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Fe(my_fields->Fe_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiM(my_fields->SiM_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeM(my_fields->FeM_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mg2SiO4(my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgSiO3(my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Fe3O4(my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> AC(my_fields->AC_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiO2D(my_fields->SiO2_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgO(my_fields->MgO_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeS(my_fields->FeS_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Al2O3(my_fields->Al2O3_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> reforg(my_fields->ref_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> volorg(my_fields->vol_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2Oice(my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> de(my_fields->e_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> HI(my_fields->HI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> HII(my_fields->HII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> HeI(my_fields->HeI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> HeII(my_fields->HeII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> HeIII(my_fields->HeIII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> HM(my_fields->HM_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> H2I(my_fields->H2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> H2II(my_fields->H2II_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> DI(my_fields->DI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> DII(my_fields->DII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> HDI(my_fields->HDI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> DM(my_fields->DM_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> HDII(my_fields->HDII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> HeHII(my_fields->HeHII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> CI(my_fields->CI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> CII(my_fields->CII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> CO(my_fields->CO_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> CO2(my_fields->CO2_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> OI(my_fields->OI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> OH(my_fields->OH_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> H2O(my_fields->H2O_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> O2(my_fields->O2_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> SiI(my_fields->SiI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> SiOI(my_fields->SiOI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> SiO2I(my_fields->SiO2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> CH(my_fields->CH_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> CH2(my_fields->CH2_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> COII(my_fields->COII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> OII(my_fields->OII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> OHII(my_fields->OHII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> H2OII(my_fields->H2OII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> H3OII(my_fields->H3OII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> O2II(my_fields->O2II_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> Mg(my_fields->Mg_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> Al(my_fields->Al_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> S(my_fields->S_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> Fe(my_fields->Fe_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> SiM(my_fields->SiM_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> FeM(my_fields->FeM_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> Mg2SiO4(my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> MgSiO3(my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> Fe3O4(my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> AC(my_fields->AC_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> SiO2D(my_fields->SiO2_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> MgO(my_fields->MgO_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> FeS(my_fields->FeS_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> Al2O3(my_fields->Al2O3_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> reforg(my_fields->ref_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> volorg(my_fields->vol_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> H2Oice(my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Radiation Fields
   // NOTE: these RT fields are only supplied by the caller when use_radiative_transfer == 1; otherwise the underlying pointers are NULL and these Views must NOT be dereferenced. 
-  grackle::impl::View<gr_float***> kphHI(my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kphHeI(my_fields->RT_HeI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kphHeII(my_fields->RT_HeII_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kdissHDI(my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> kphHI(my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> kphHeI(my_fields->RT_HeI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> kphHeII(my_fields->RT_HeII_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  FortranView<gr_float***> kdissHDI(my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // locals
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
@@ -176,6 +176,9 @@ inline void species_density_updates_gauss_seidel(
   const double* const* grain_growth_rates =
     FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
   const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
+  // flag for if Gen Chiaki's dust model is enabled with grain growth
+  const bool chiaki_model_dust_evolution =
+    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
 
   int i;
   double scoef, acoef;
@@ -634,7 +637,7 @@ inline void species_density_updates_gauss_seidel(
               + kcol_buf[CollisionalRxnLUT::kz41][i] *  OHII(i,j,k) / 17.
               + kcol_buf[CollisionalRxnLUT::kz42][i] * H2OII(i,j,k) / 18.
               + kcol_buf[CollisionalRxnLUT::kz51][i] *    CI(i,j,k) / 12.;
-          if ((my_chemistry->grain_growth == 1)  ||  (my_chemistry->dust_sublimation == 1))  {
+          if (chiaki_model_dust_evolution)  {
             if (my_chemistry->dust_species > 0)  {
               scoef = scoef + 2. *
                     grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] * 2.;
@@ -861,7 +864,7 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf[CollisionalRxnLUT::kz29][i] *    O2(i,j,k) / 32.
             + kcol_buf[CollisionalRxnLUT::kz51][i] *   H2I(i,j,k) /  2.
             + kph_buf[PhotoRxnLUT::kphCI][i];
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::AC_dust]      [i] / CI(i,j,k) * 12.;
@@ -898,7 +901,7 @@ inline void species_density_updates_gauss_seidel(
            );
         acoef = 0.
             + kcol_buf[CollisionalRxnLUT::kz26][i] *    OH(i,j,k) / 17.;
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 2)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust]  [i] / CO(i,j,k) * 17. * 0.5
@@ -988,7 +991,7 @@ inline void species_density_updates_gauss_seidel(
         acoef = 0.
             + kcol_buf[CollisionalRxnLUT::kz18][i] *    HI(i,j,k)
             + kcol_buf[CollisionalRxnLUT::kz35][i] *   HII(i,j,k);
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] / H2O(i,j,k) * 18. * 2.;
@@ -1034,7 +1037,7 @@ inline void species_density_updates_gauss_seidel(
         acoef = 0.
             + kcol_buf[CollisionalRxnLUT::kz52][i] *    OH(i,j,k) / 17.
             + kcol_buf[CollisionalRxnLUT::kz53][i] *    O2(i,j,k) / 32.;
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 1)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::SiM_dust]     [i] / SiI(i,j,k) * 28.;
@@ -1052,7 +1055,7 @@ inline void species_density_updates_gauss_seidel(
            );
         acoef = 0.
             + kcol_buf[CollisionalRxnLUT::kz54][i] *    OH(i,j,k) / 17.;
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] / SiOI(i,j,k) * 44.;
@@ -1072,7 +1075,7 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf[CollisionalRxnLUT::kz54][i] *  SiOI(i,j,k) *    OH(i,j,k) / 748.
            );
         acoef = 0.;
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 1)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::SiO2_dust]   [i] / SiO2I(i,j,k) * 60.;
@@ -1105,7 +1108,7 @@ inline void species_density_updates_gauss_seidel(
            );
         acoef = 0.
             + kcol_buf[CollisionalRxnLUT::kz16][i] *    HI(i,j,k);
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 2)  {
             acoef = acoef
             + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust]  [i] / CH2(i,j,k) * 14. * 0.5;
@@ -1192,7 +1195,7 @@ inline void species_density_updates_gauss_seidel(
                    / ( 1. + acoef*dtit[i] );
 
 
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (chiaki_model_dust_evolution)  {
           if (my_chemistry->dust_species > 0)  {
             // ***** Mg **********
             scoef = 0.;
@@ -1250,7 +1253,7 @@ inline void species_density_updates_gauss_seidel(
   }
 
   // --- (D4) Now do dust species ---
-  if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+  if (chiaki_model_dust_evolution)  {
     for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE)  {
 
@@ -1513,6 +1516,9 @@ inline void species_density_derivatives_0d(
   const double* const* grain_growth_rates =
     FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
   const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
+  // flag for if Gen Chiaki's dust model is enabled with grain growth
+  const bool chiaki_model_dust_evolution =
+    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
 
   double scoef, acoef;
 
@@ -1946,7 +1952,7 @@ inline void species_density_derivatives_0d(
           + kcol_buf[CollisionalRxnLUT::kz41][0]    *  OHII        / 17.
           + kcol_buf[CollisionalRxnLUT::kz42][0]    * H2OII        / 18.
           + kcol_buf[CollisionalRxnLUT::kz51][0]    *    CI        / 12.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 0)  {
           scoef = scoef + 2. *
                 grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      * 2.;
@@ -2176,7 +2182,7 @@ inline void species_density_derivatives_0d(
           + kcol_buf[CollisionalRxnLUT::kz29][0]    *    O2        / 32.
           + kcol_buf[CollisionalRxnLUT::kz51][0]    *   H2I        /  2.
           + kph_buf[PhotoRxnLUT::kphCI][0];
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::AC_dust][0]          / CI        * 12.;
@@ -2213,7 +2219,7 @@ inline void species_density_derivatives_0d(
          );
       acoef = 0.
           + kcol_buf[CollisionalRxnLUT::kz26][0]    *    OH        / 17.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust][0]      / CO        * 17. * 0.5
@@ -2303,7 +2309,7 @@ inline void species_density_derivatives_0d(
       acoef = 0.
           + kcol_buf[CollisionalRxnLUT::kz18][0]    *    HI
           + kcol_buf[CollisionalRxnLUT::kz35][0]    *   HII;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      / H2O        * 18. * 2.;
@@ -2349,7 +2355,7 @@ inline void species_density_derivatives_0d(
       acoef = 0.
           + kcol_buf[CollisionalRxnLUT::kz52][0]    *    OH        / 17.
           + kcol_buf[CollisionalRxnLUT::kz53][0]    *    O2        / 32.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::SiM_dust][0]         / SiI        * 28.;
@@ -2367,7 +2373,7 @@ inline void species_density_derivatives_0d(
          );
       acoef = 0.
           + kcol_buf[CollisionalRxnLUT::kz54][0]    *    OH        / 17.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      / SiOI        * 44.;
@@ -2387,7 +2393,7 @@ inline void species_density_derivatives_0d(
           + kcol_buf[CollisionalRxnLUT::kz54][0]    *  SiOI        *    OH        / 748.
          );
       acoef = 0.;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::SiO2_dust][0]       / SiO2I        * 60.;
@@ -2420,7 +2426,7 @@ inline void species_density_derivatives_0d(
          );
       acoef = 0.
           + kcol_buf[CollisionalRxnLUT::kz16][0]    *    HI;
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
           + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust][0]      / CH2        * 14. * 0.5;
@@ -2507,7 +2513,7 @@ inline void species_density_derivatives_0d(
 
 
 
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (chiaki_model_dust_evolution)  {
         if (my_chemistry->dust_species > 0)  {
           // ***** Mg **********
           scoef = 0.;
@@ -2565,7 +2571,7 @@ inline void species_density_derivatives_0d(
   }
 
   // --- (D4) Now do dust species ---
-  if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+  if (chiaki_model_dust_evolution)  {
 
     if (itmask_metal[0] != MASK_FALSE   )  {
 
