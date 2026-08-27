@@ -170,7 +170,6 @@ public:
   ~GrainSpeciesInfo() {
     if (n_species_ > 0) {
       GrainSpeciesInfo::cleanup_array_(n_species_, species_info_);
-      drop_FrozenKeyIdxBiMap(&name_map_);
     }
   }
 };

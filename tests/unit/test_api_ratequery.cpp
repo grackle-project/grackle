@@ -26,6 +26,7 @@
 #include "grtestutils/googletest/assertions.hpp"
 #include "grtestutils/googletest/fixtures.hpp"
 
+#include "chem_model/nuclide_model.hpp"
 #include "grackle.h"
 #include "inject_model/raw_data.hpp"  // grackle::impl::inj_model_input::N_Injection_Pathways
 #include "support/status_reporting.hpp"
@@ -363,7 +364,9 @@ enum RateKind {
   simple_1d_rate,
   k13dd,
   inject_path_yield,
-  inject_path_names
+  inject_path_names,
+  nuclide_props,
+  nuclide_symbols
 };
 
 static long long get_n_inj_pathways(const chemistry_data* my_chemistry) {
@@ -377,37 +380,58 @@ static long long get_n_inj_pathways(const chemistry_data* my_chemistry) {
   }
 };
 
-static grtest::ExpectedRateProperties RateProperties_from_RateKind(
-    const chemistry_data* my_chemistry, RateKind kind) {
-  using grtest::ExpectedRateProperties;
-  const enum grunstable_types f64dtype = GRUNSTABLE_TYPE_F64;
-  const enum grunstable_types strdtype = GRUNSTABLE_TYPE_STR;
+class ExpectedRatePropFinder {
+  std::optional<int> lazy_n_nuclide_symbols_;
 
-  switch (kind) {
-    case RateKind::scalar_f64: {
-      std::vector<long long> shape = {};  // <-- intentionally empty
-      return ExpectedRateProperties{shape, f64dtype, true};
+  int n_nuclide_symbols_() noexcept {
+    if (!lazy_n_nuclide_symbols_.has_value()) {
+      GRIMPL_NS::NuclideModel nuclide_model;
+      lazy_n_nuclide_symbols_ = nuclide_model.size();
     }
-    case RateKind::simple_1d_rate: {
-      std::vector<long long> shape = {my_chemistry->NumberOfTemperatureBins};
-      return ExpectedRateProperties{shape, f64dtype, true};
-    }
-    case RateKind::k13dd: {
-      std::vector<long long> shape = {my_chemistry->NumberOfTemperatureBins *
-                                      14};
-      return ExpectedRateProperties{shape, f64dtype, true};
-    }
-    case RateKind::inject_path_yield: {
-      std::vector<long long> shape = {get_n_inj_pathways(my_chemistry)};
-      return ExpectedRateProperties{shape, f64dtype, true};
-    }
-    case RateKind::inject_path_names: {
-      std::vector<long long> shape = {get_n_inj_pathways(my_chemistry)};
-      return ExpectedRateProperties{shape, strdtype, false};
-    }
+    return *lazy_n_nuclide_symbols_;
   }
-  GR_INTERNAL_UNREACHABLE_ERROR()
-}
+
+public:
+  grtest::ExpectedRateProperties from_RateKind(
+      const chemistry_data* my_chemistry, RateKind kind) {
+    using grtest::ExpectedRateProperties;
+    const enum grunstable_types f64dtype = GRUNSTABLE_TYPE_F64;
+    const enum grunstable_types strdtype = GRUNSTABLE_TYPE_STR;
+
+    switch (kind) {
+      case RateKind::scalar_f64: {
+        std::vector<long long> shape = {};  // <-- intentionally empty
+        return ExpectedRateProperties{shape, f64dtype, true};
+      }
+      case RateKind::simple_1d_rate: {
+        std::vector<long long> shape = {my_chemistry->NumberOfTemperatureBins};
+        return ExpectedRateProperties{shape, f64dtype, true};
+      }
+      case RateKind::k13dd: {
+        std::vector<long long> shape = {my_chemistry->NumberOfTemperatureBins *
+                                        14};
+        return ExpectedRateProperties{shape, f64dtype, true};
+      }
+      case RateKind::inject_path_yield: {
+        std::vector<long long> shape = {get_n_inj_pathways(my_chemistry)};
+        return ExpectedRateProperties{shape, f64dtype, true};
+      }
+      case RateKind::inject_path_names: {
+        std::vector<long long> shape = {get_n_inj_pathways(my_chemistry)};
+        return ExpectedRateProperties{shape, strdtype, false};
+      }
+      case RateKind::nuclide_props: {
+        std::vector<long long> shape = {n_nuclide_symbols_()};
+        return ExpectedRateProperties{shape, f64dtype, false};
+      }
+      case RateKind::nuclide_symbols: {
+        std::vector<long long> shape = {n_nuclide_symbols_()};
+        return ExpectedRateProperties{shape, strdtype, false};
+      }
+    }
+    GR_INTERNAL_UNREACHABLE_ERROR();
+  }
+};
 
 /// returns a map between known rate names and the rate kind
 std::map<std::string, RateKind> known_rates() {
@@ -452,6 +476,11 @@ std::map<std::string, RateKind> known_rates() {
 
   out.insert({"inject_model_names", RateKind::inject_path_names});
 
+  out.insert({"nuclide.mass_factor", RateKind::nuclide_props});
+  out.insert({"nuclide.n_proton", RateKind::nuclide_props});
+  out.insert({"nuclide.mass_dalton", RateKind::nuclide_props});
+  out.insert({"nuclide.symbols", RateKind::nuclide_symbols});
+
   return out;
 }
 
@@ -461,6 +490,8 @@ using KnownRateQueryTest =
 
 TEST_F(KnownRateQueryTest, CheckProperties) {
   const std::map<std::string, RateKind> known_rate_map = known_rates();
+
+  ExpectedRatePropFinder expected_finder;
 
   // iterate over every known {parameter-name, key-id} pair
   for (const grtest::NameIdPair pair : grtest::RateQueryRange(pack)) {
@@ -472,7 +503,7 @@ TEST_F(KnownRateQueryTest, CheckProperties) {
     }
     // construct the expected properties
     grtest::ExpectedRateProperties expected_props =
-        RateProperties_from_RateKind(pack.my_chemistry(), search->second);
+        expected_finder.from_RateKind(pack.my_chemistry(), search->second);
 
     // load the actual props
     std::optional<grtest::RateProperties> maybe_actual_props =

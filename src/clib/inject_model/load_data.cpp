@@ -10,6 +10,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include <cstdint>
 #include <cstring>  // std::strcmp
 #include "../dust/grain_species_info.hpp"
 #include "grackle_chemistry_data.h"
@@ -140,20 +141,17 @@ grackle::impl::ratequery::Entry grain_yield_recipe(
 int configure_RegBuilder(const chemistry_data_storage* my_rates,
                          grackle::impl::ratequery::RegBuilder* reg_builder,
                          const char* const* inj_path_name_l, int n_pathways) {
-  namespace rateq = grackle::impl::ratequery;
-
   // make list of pathway names available to users through the ratequery API
-  if (rateq::RegBuilder_copied_str_arr1d(reg_builder, "inject_model_names",
-                                         inj_path_name_l,
-                                         n_pathways) != GR_SUCCESS) {
+  if (reg_builder->copied_str_arr1d("inject_model_names", inj_path_name_l,
+                                    n_pathways) != GR_SUCCESS) {
     return GrPrintAndReturnErr(
         "There was an issue making names of inject pathways queryable");
   }
 
   // the length of each gas nuclide yield array is equal to the number of
   // injection pathways
-  if (rateq::RegBuilder_recipe_1d(reg_builder, 7, &nuclide_gas_yield_recipe,
-                                  n_pathways) != GR_SUCCESS) {
+  if (reg_builder->recipe_1d(7, &nuclide_gas_yield_recipe, n_pathways) !=
+      GR_SUCCESS) {
     return GrPrintAndReturnErr(
         "There was an issue making nuclide gas yield fractions (for each "
         "injection pathway) queryable");
@@ -166,9 +164,8 @@ int configure_RegBuilder(const chemistry_data_storage* my_rates,
 
     // the length of each grain species yield array is equal to the number of
     // injection pathways
-    if (rateq::RegBuilder_recipe_1d(reg_builder, n_grain_species,
-                                    &grain_yield_recipe,
-                                    n_pathways) != GR_SUCCESS) {
+    if (reg_builder->recipe_1d(n_grain_species, &grain_yield_recipe,
+                               n_pathways) != GR_SUCCESS) {
       return GrPrintAndReturnErr(
           "There was an issue making nuclide gas yield fractions (for each "
           "injection pathway) queryable");
@@ -279,7 +276,6 @@ extern "C" int setup_yield_table_callback(
     const grackle::impl::inj_model_input::InjectionPathwayInputData* input,
     void* ctx) {
   namespace inj_input = ::grackle::impl::inj_model_input;
-  namespace bimap = ::grackle::impl::bimap;
 
   SetupCallbackCtx* my_ctx = static_cast<SetupCallbackCtx*>(ctx);
 
@@ -287,12 +283,12 @@ extern "C" int setup_yield_table_callback(
   // and report an error if there is one
   // -> see the docstring for SetupCallbackCtx::inj_path_names for how this
   //    behavior will change when we start loading data from HDF5 files
-  bimap::AccessRslt maybe_pathway_idx =
-      FrozenKeyIdxBiMap_find(my_ctx->inj_path_names, name);
-  if (!maybe_pathway_idx.has_value) {
+  std::optional<uint16_t> maybe_pathway_idx =
+      my_ctx->inj_path_names->find(name);
+  if (!maybe_pathway_idx.has_value()) {
     return GR_SUCCESS;
   }
-  int pathway_idx = static_cast<int>(maybe_pathway_idx.value);
+  int pathway_idx = static_cast<int>(maybe_pathway_idx.value());
 
   // load the object that we update with the data we read
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
@@ -322,12 +318,12 @@ extern "C" int setup_yield_table_callback(
       const inj_input::GrainSpeciesYieldProps& yield_info =
           input->initial_grain_props[yield_idx];
 
-      bimap::AccessRslt maybe_grain_idx =
-          FrozenKeyIdxBiMap_find(my_ctx->grain_species_names, yield_info.name);
-      if (!maybe_grain_idx.has_value) {
+      std::optional<uint16_t> maybe_grain_idx =
+          my_ctx->grain_species_names->find(yield_info.name);
+      if (!maybe_grain_idx.has_value()) {
         continue;
       }
-      int grain_species_idx = static_cast<int>(maybe_grain_idx.value);
+      int grain_species_idx = static_cast<int>(maybe_grain_idx.value());
 
       // copy the nonprimordial yield fraction
       inject_pathway_props->grain_yields.data[grain_species_idx][pathway_idx] =
@@ -453,9 +449,9 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   //    BiMapMode::REFS_KEYDATA to instruct the map to avoid making copies.
   // -> In the future, when model names are dynamically specified by an HDF5
   //    file, we'll need to use BiMapMode::COPIES_KEYDATA.
-  FrozenKeyIdxBiMap inj_path_names = new_FrozenKeyIdxBiMap(
+  FrozenKeyIdxBiMap inj_path_names = FrozenKeyIdxBiMap::create(
       inj_path_name_l, n_pathways, BiMapMode::REFS_KEYDATA);
-  if (!FrozenKeyIdxBiMap_is_ok(&inj_path_names)) {
+  if (!inj_path_names.is_ok()) {
     return GrPrintAndReturnErr(
         "there was a problem building the map of model names");
   }
@@ -473,7 +469,6 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
       my_rates->opaque_storage->inject_pathway_props;
 
   if (!GrainMetalInjectPathways_is_valid(inject_pathway_props)) {
-    drop_FrozenKeyIdxBiMap(&inj_path_names);
     return GR_FAIL;
   }
 
@@ -486,7 +481,6 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   inject_pathway_props->log10Tdust_interp_props =
       InterpGridProps(1, &dim_scale);
   if (!inject_pathway_props->log10Tdust_interp_props) {
-    drop_FrozenKeyIdxBiMap(&inj_path_names);
     return GR_FAIL;
   }
 
@@ -515,7 +509,6 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   int ret = grackle::impl::inj_model_input::input_inject_model_iterate(
       &setup_yield_table_callback, static_cast<void*>(&ctx));
 
-  drop_FrozenKeyIdxBiMap(&inj_path_names);
   if (ret != GR_SUCCESS) {
     return GrPrintAndReturnErr(
         "some kind of unspecified error occured when loading data from each "

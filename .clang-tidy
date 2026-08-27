@@ -67,7 +67,7 @@ Checks: >
 
   modernize-avoid-setjmp-longjmp,
   modernize-avoid-variadic-functions,
-  modernize-concat-nested-namespaces,
+  -modernize-concat-nested-namespaces,
   modernize-use-bool-literals,
   modernize-use-override,
 

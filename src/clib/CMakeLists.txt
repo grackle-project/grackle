@@ -96,6 +96,7 @@ add_library(Grackle_Grackle
   api/solve_chemistry.cpp
   api/units.cpp
   ceiling_species.hpp
+  chem_model/nuclide_model.cpp chem_model/nuclide_model.hpp
   cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
@@ -134,6 +135,7 @@ add_library(Grackle_Grackle
   make_consistent.cpp make_consistent.hpp
   mask.hpp
   opaque_storage.cpp opaque_storage.hpp
+  phys_constants.hpp
   ratequery.cpp ratequery.hpp
   rate_functions.cpp
   rate_timestep_g.cpp rate_timestep_g.hpp
@@ -194,7 +196,6 @@ add_library(Grackle_Grackle
   field_data_misc_fdatamembers.def  # <-- acts as a C header
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
-  phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
 
   # Fortran public headers
