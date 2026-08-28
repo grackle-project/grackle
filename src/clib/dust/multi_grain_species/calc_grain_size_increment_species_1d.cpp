@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "grackle.h"
+#include "phys_constants.hpp"
 #include "solve_cubic_equation.hpp"
 #include "utils-cpp.hpp"
 
@@ -64,7 +65,7 @@ void calc_grain_size_increment_species_1d(
   std::vector<double> SN_dsp0(n_inj_pathways);
   std::vector<double> SN_nsp0(n_inj_pathways);
   std::vector<double> drsp(grid_dimensions[0]);
-  const double pi_local_var = pi_fortran_val;
+  const double pi_local_var = constants::pi_fortran_val;
   int iTd, iTd0;
 
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {

@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cmath>
 #include "grackle.h"
-#include "phys_constants.h"
+#include "phys_constants.hpp"
 #include "support/index_helper.hpp"
 #ifdef _OPENMP
 #include <omp.h>

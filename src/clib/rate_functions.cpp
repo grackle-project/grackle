@@ -28,7 +28,7 @@
 #include "grackle.h"
 #include "grackle_rate_functions.h"
 #include "cie_thin_cooling_rate_tables.hpp"
-#include "phys_constants.h"
+#include "phys_constants.hpp"
 #include "support/status_reporting.hpp"
 #include "support/config.hpp"
 
@@ -1437,7 +1437,7 @@ extern "C" double gasGrain_rate(double T, double units, chemistry_data *my_chemi
 extern "C" double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
 {
   double f_vel = 0.5 / std::sqrt(2.0) + 0.0833333 / std::sqrt(4.0);
-  double vH_avg = std::sqrt(kboltz * T / 2.0 / pi / mh);
+  double vH_avg = std::sqrt(kboltz * T / 2.0 / GRIMPL_NS::constants::pi / mh);
 
   return dust_dampener(T) * f_vel * 4.0 * vH_avg * 2.0 * kboltz * mh / units;
   // Later multiplied by sigma_gr / mass_gr for arbitrary size distribution.
@@ -1505,7 +1505,7 @@ extern "C" double gamma_isrf2_rate(double units, chemistry_data *my_chemistry)
 //Calculation of grain growth rate.
 extern "C" double grain_growth_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double vH_avg = std::sqrt( kboltz * T / 2.0 / pi / mh);
+    double vH_avg = std::sqrt( kboltz * T / 2.0 / GRIMPL_NS::constants::pi / mh);
     return 4.0 * vH_avg * mh / units;
     // Factor of 4 because gas-phase molecules are accreted
     // onto the entire surface area of grains.
@@ -1525,7 +1525,7 @@ extern "C" double h2dust_S_rate(double T, double T_dust, double units, chemistry
     double bHP_aPC = 1.0/4.0 * std::pow(1.0 + std::sqrt((E_HC_Silicate - E_S_Silicate) /
                      (E_HP_Silicate - E_S_Silicate)), 2.0) * std::exp(-E_S_Silicate / T_dust);
     double epsilon_H2 = std::pow(1.0 + bHP_aPC, -1.0);
-    double vH_avg = std::sqrt( kboltz * T / 2.0 / pi / mh);
+    double vH_avg = std::sqrt( kboltz * T / 2.0 / GRIMPL_NS::constants::pi / mh);
 
     return 0.5 * 4.0 * vH_avg * S_H * epsilon_H2 * mh / units;
     // Factor of 4 because gas-phase molecules are accreted
@@ -1546,7 +1546,7 @@ extern "C" double h2dust_C_rate(double T, double T_dust, double units, chemistry
     double bHP_aPC = 1.0/4.0 * std::pow(1.0 + std::sqrt((E_HC_AmCarbon - E_S_AmCarbon) /
                      (E_HP_AmCarbon - E_S_AmCarbon)), 2.0) * std::exp(-E_S_AmCarbon / T_dust);
     double epsilon_H2 = std::pow(1.0 + bHP_aPC, -1.0);
-    double vH_avg = std::sqrt( kboltz * T / 2.0 / pi / mh);
+    double vH_avg = std::sqrt( kboltz * T / 2.0 / GRIMPL_NS::constants::pi / mh);
 
     return 0.5 * 4.0 * vH_avg * S_H * epsilon_H2 * mh / units;
     // Factor of 4 because gas-phase molecules are accreted
