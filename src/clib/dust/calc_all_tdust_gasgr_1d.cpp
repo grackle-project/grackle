@@ -47,7 +47,7 @@ void calc_all_tdust_gasgr_1d(
   if (!single_species_dust_model) {
     GrainSpeciesInfo* gsp_info = my_rates->opaque_storage->grain_species_info;
     GRIMPL_REQUIRE(gsp_info != nullptr, "sanity check!");
-    n_grain_species = gsp_info->n_species;
+    n_grain_species = gsp_info->n_species();
   }
 
   // Cooling/heating slice locals
