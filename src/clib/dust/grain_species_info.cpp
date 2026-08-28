@@ -87,7 +87,7 @@ GrainSpeciesInfo::GrainSpeciesInfo(int dust_species_parameter) {
   if (n_species_ <= 0) {
     n_species_ = -1;
     species_info_ = nullptr;
-    name_map_ = mk_invalid_FrozenKeyIdxBiMap();
+    name_map_ = FrozenKeyIdxBiMap();
     return;
   }
 
@@ -293,9 +293,9 @@ GrainSpeciesInfo::GrainSpeciesInfo(int dust_species_parameter) {
   }
 
   name_map_ =
-      new_FrozenKeyIdxBiMap(names, n_species_, BiMapMode::COPIES_KEYDATA);
+      FrozenKeyIdxBiMap::create(names, n_species_, BiMapMode::COPIES_KEYDATA);
 
-  if (!FrozenKeyIdxBiMap_is_ok(&name_map_)) {
+  if (!name_map_.is_ok()) {
     GrainSpeciesInfo::cleanup_array_(n_species_, species_info_);
     n_species_ = -1;
     species_info_ = nullptr;
