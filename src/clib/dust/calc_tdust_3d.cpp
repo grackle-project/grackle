@@ -22,6 +22,7 @@
 #include "field_adaptor.hpp"
 #include "gas_props.hpp"
 #include "grackle.h"
+#include "phys_constants.hpp"
 #include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
@@ -40,7 +41,7 @@ void calc_tdust_3d(
 )
 {
 
-  const double mh_local_var = mh_grflt;
+  const double mh_local_var = constants::mH_grflt;
 
   // Set unit-related quantities
   const double dom = internalu_calc_dom_(internalu);

@@ -120,7 +120,7 @@ void grackle::impl::cool1d_multi_g(
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Declare some constants:
-  const double mh_local_var = mh_grflt;
+  const double mh_local_var = constants::mH_grflt;
 
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
 
@@ -258,7 +258,8 @@ void grackle::impl::cool1d_multi_g(
       logT[i] = std::log10(tgas[i]);
       if (my_chemistry->cmb_temperature_floor == 1)
         logTcmb[i] = std::log10(comp2);
-      logrho[i] = std::log10(d(i, idx_range.j, idx_range.k) * dom * mh);
+      logrho[i] =
+          std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
       if (my_chemistry->primordial_chemistry > 0) {
         logH[i] = std::log10(HI(i, idx_range.j, idx_range.k) * dom);
         logH2[i] = std::log10(HI(i, idx_range.j, idx_range.k) * dom);
@@ -287,8 +288,8 @@ void grackle::impl::cool1d_multi_g(
       logdvdr[i] = -8.79947961814e0 + 0.5e0 * logrho[i];  // km/s / cm
       lshield_con[i] =
           std::sqrt((my_chemistry->Gamma * constants::pi_fortran_val *
-                     kboltz_grflt * tgas[i]) /
-                    (GravConst_grflt * mmw[i] * mh_local_var *
+                     constants::kboltz_grflt * tgas[i]) /
+                    (constants::GravConst_grflt * mmw[i] * mh_local_var *
                      d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
     }
   }

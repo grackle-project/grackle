@@ -49,13 +49,10 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// code. Once we finish transcription, we'll "rip the band-aid off" and use
 /// a consistent constant throughout the codebase.
 enum class InternalU_MassH_Choice {
-  /// - A value of 1 indicates that we'll use `mh_grflt` (the constant is
-  ///   expressed as a value of type gr_float -- this is consistent with what
-  ///   Grackle's Fortran routines have historically done).
   /// Denotes that we'll use `mh` which is always expressed as a double. Prior
   /// to transcription, nearly all of Grackle's C functions used this constant
   DOUBLE = 1,
-  /// Denotes that we'll use `mh_grflt`, which is always expressed a value of
+  /// Denotes that we'll use `constants::mH_grflt`, which is always expressed a value of
   /// type gr_float. Prior to transcription, all of Grackle's Fortran's
   /// functions used this constant
   GRFLOAT = 2,
@@ -208,8 +205,8 @@ inline double internalu_get_mh_(InternalGrUnits internalu) {
   // initialized as a floating point literal (with the same precision as
   // gr_float and then it is casted to a double)
   switch (internalu.mh_choice_) {
-    case InternalU_MassH_Choice::DOUBLE: return mh;
-    case InternalU_MassH_Choice::GRFLOAT: return (double)(mh_grflt);
+    case InternalU_MassH_Choice::DOUBLE: return constants::mH;
+    case InternalU_MassH_Choice::GRFLOAT: return (double)(constants::mH_grflt);
     case InternalU_MassH_Choice::ABBREVIATED: return 1.67e-24;
   }
   return NAN; // should be unreachable
@@ -259,8 +256,8 @@ inline double internalu_calc_dom_(InternalGrUnits internalu) {
 inline double internalu_calc_coef_ljeans_(InternalGrUnits internalu,
                                                  double gamma) {
   const double mh_local_var = internalu_get_mh_(internalu);
-  return sqrt((gamma * constants::pi_fortran_val * kboltz_grflt) /
-              (GravConst_grflt * mh_local_var * internalu.dbase1));
+  return sqrt((gamma * constants::pi_fortran_val * constants::kboltz_grflt) /
+              (constants::GravConst_grflt * mh_local_var * internalu.dbase1));
 }
 
 

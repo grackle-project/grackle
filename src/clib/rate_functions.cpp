@@ -949,11 +949,11 @@ extern "C" double reHeII1_rate(double T, double units, chemistry_data *my_chemis
 
         //These depend on if the user has chosen recombination case A or B.
         if (my_chemistry->CaseBRecombination == 1) {
-            return 1.26e-14 * kboltz * T * std::pow(lambdaHeII, 0.75)
-                            / units;
+            return (1.26e-14 * GRIMPL_NS::constants::kboltz * T
+                    * std::pow(lambdaHeII, 0.75) / units);
         } else {
-            return 3e-14 * kboltz * T * std::pow(lambdaHeII, 0.654)
-                    / units;
+            return (3e-14 * GRIMPL_NS::constants::kboltz * T *
+                    std::pow(lambdaHeII, 0.654) / units);
         }
     } else {
         return tiny;
@@ -1038,7 +1038,8 @@ extern "C" double hyd01k_rate(double T, double units, chemistry_data *my_chemist
         par_dum = 1.4e-13 * std::exp( (T / 125.0) - std::pow(T / 577.0, 2) );
     }
 
-    return par_dum * std::exp( -std::fmin( std::log(dhuge), 8.152e-13 / (kboltz * T) ) )
+    return par_dum * std::exp( -std::fmin( std::log(dhuge),
+                                           8.152e-13 / (GRIMPL_NS::constants::kboltz * T) ) )
             / units;
 }
             
@@ -1046,7 +1047,8 @@ extern "C" double hyd01k_rate(double T, double units, chemistry_data *my_chemist
 extern "C" double h2k01_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Dummy parameter used in the calculation.
-    double par_dum = 8.152e-13 * ( 4.2 / (kboltz * (T + 1190.0)) + 1.0 / (kboltz * T));
+    double par_dum = 8.152e-13 * ( 4.2 / (GRIMPL_NS::constants::kboltz * (T + 1190.0))
+        + 1.0 / (GRIMPL_NS::constants::kboltz * T));
 
     return 1.45e-12 * std::sqrt(T) * std::exp(-std::fmin(std::log(dhuge), par_dum)) / units;
 }
@@ -1386,7 +1388,7 @@ extern "C" double cieco_rate(double T, double units, chemistry_data *my_chemistr
 {
     double cierate = cie_thin_cooling_rate(T);
 
-    return cierate * (mh/2.0) / units;
+    return cierate * (GRIMPL_NS::constants::mH/2.0) / units;
 }
 
 extern "C" double dust_dampener(double T)
@@ -1436,10 +1438,12 @@ extern "C" double gasGrain_rate(double T, double units, chemistry_data *my_chemi
 
 extern "C" double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
 {
+  namespace constants = ::GRIMPL_NS::constants;
   double f_vel = 0.5 / std::sqrt(2.0) + 0.0833333 / std::sqrt(4.0);
-  double vH_avg = std::sqrt(kboltz * T / 2.0 / GRIMPL_NS::constants::pi / mh);
+  double vH_avg = std::sqrt(constants::kboltz * T / 2.0 / constants::pi / constants::mH);
 
-  return dust_dampener(T) * f_vel * 4.0 * vH_avg * 2.0 * kboltz * mh / units;
+  return (dust_dampener(T) * f_vel * 4.0 * vH_avg * 2.0 * constants::kboltz * constants::mH
+          / units);
   // Later multiplied by sigma_gr / mass_gr for arbitrary size distribution.
 }
 
@@ -1479,11 +1483,11 @@ extern "C" double gamma_isrf_rate(double units, chemistry_data *my_chemistry)
   if (my_chemistry->uniform_grain_isrf_heating_rate == 0) {
     // (Equation B15, Krumholz, 2014)
     // Don't normalize by coolunit since tdust calculation is done in CGS.
-    return 3.9e-24 / mh / fgr;
+    return 3.9e-24 / GRIMPL_NS::constants::mH / fgr;
   }
   else if (my_chemistry->uniform_grain_isrf_heating_rate == 1) {
     // For uniform grain size (Goldsmith 2001; Krumholz 2014)
-    return 8.60892e-24 / (2.0 * mh) / fgr;
+    return 8.60892e-24 / (2.0 * GRIMPL_NS::constants::mH) / fgr;
     // F_isrf sigma_gr / mass_gr
     // For MRN-like broken power low size distribution (Omukai 2000)
     // The factor 2 to cancel out the molecular mass of H2.
@@ -1505,8 +1509,10 @@ extern "C" double gamma_isrf2_rate(double units, chemistry_data *my_chemistry)
 //Calculation of grain growth rate.
 extern "C" double grain_growth_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double vH_avg = std::sqrt( kboltz * T / 2.0 / GRIMPL_NS::constants::pi / mh);
-    return 4.0 * vH_avg * mh / units;
+    namespace constants = ::GRIMPL_NS::constants;
+    double vH_avg = std::sqrt( constants::kboltz * T / 2.0 / constants::pi
+                               / constants::mH);
+    return 4.0 * vH_avg * constants::mH / units;
     // Factor of 4 because gas-phase molecules are accreted
     // onto the entire surface area of grains.
 }
@@ -1514,6 +1520,7 @@ extern "C" double grain_growth_rate(double T, double units, chemistry_data *my_c
 //Calculation of H2 formation rate on S grain surfaces. (Cazaux & Tielens 2002)
 extern "C" double h2dust_S_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
 {
+    namespace constants = ::GRIMPL_NS::constants;
     // Constants. 
     double E_HC_Silicate = 200.0, E_HP_Silicate = 650.0, E_S_Silicate = 3.0e4;
 
@@ -1525,9 +1532,9 @@ extern "C" double h2dust_S_rate(double T, double T_dust, double units, chemistry
     double bHP_aPC = 1.0/4.0 * std::pow(1.0 + std::sqrt((E_HC_Silicate - E_S_Silicate) /
                      (E_HP_Silicate - E_S_Silicate)), 2.0) * std::exp(-E_S_Silicate / T_dust);
     double epsilon_H2 = std::pow(1.0 + bHP_aPC, -1.0);
-    double vH_avg = std::sqrt( kboltz * T / 2.0 / GRIMPL_NS::constants::pi / mh);
+    double vH_avg = std::sqrt( constants::kboltz * T / 2.0 / constants::pi / constants::mH);
 
-    return 0.5 * 4.0 * vH_avg * S_H * epsilon_H2 * mh / units;
+    return 0.5 * 4.0 * vH_avg * S_H * epsilon_H2 * constants::mH / units;
     // Factor of 4 because gas-phase molecules are accreted
     // onto the entire surface area of grains.
 }
@@ -1535,6 +1542,7 @@ extern "C" double h2dust_S_rate(double T, double T_dust, double units, chemistry
 //Calculation of H2 formation rate on C grain surfaces. (Cazaux & Tielens 2002)
 extern "C" double h2dust_C_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
 {
+    namespace constants = ::GRIMPL_NS::constants;
     // Constants.
     double E_HC_AmCarbon = 250.0, E_HP_AmCarbon = 800.0, E_S_AmCarbon = 3.0e4;
 
@@ -1546,9 +1554,9 @@ extern "C" double h2dust_C_rate(double T, double T_dust, double units, chemistry
     double bHP_aPC = 1.0/4.0 * std::pow(1.0 + std::sqrt((E_HC_AmCarbon - E_S_AmCarbon) /
                      (E_HP_AmCarbon - E_S_AmCarbon)), 2.0) * std::exp(-E_S_AmCarbon / T_dust);
     double epsilon_H2 = std::pow(1.0 + bHP_aPC, -1.0);
-    double vH_avg = std::sqrt( kboltz * T / 2.0 / GRIMPL_NS::constants::pi / mh);
+    double vH_avg = std::sqrt( constants::kboltz * T / 2.0 / constants::pi / constants::mH);
 
-    return 0.5 * 4.0 * vH_avg * S_H * epsilon_H2 * mh / units;
+    return 0.5 * 4.0 * vH_avg * S_H * epsilon_H2 * constants::mH / units;
     // Factor of 4 because gas-phase molecules are accreted
     // onto the entire surface area of grains.
 }

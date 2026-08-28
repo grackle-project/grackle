@@ -496,8 +496,8 @@ int grackle::impl::initialize_rates(
     *   a constant (it has a factor a^3), so the number densities must be converted
     *   from comoving to proper.
     */ 
-    double kUnit = (pow(my_units->a_units, 3) * mh) / (densityBase1 * timeBase1);
-    double kUnit_3Bdy = kUnit * (pow(my_units->a_units, 3) * mh) / densityBase1;
+    double kUnit = (pow(my_units->a_units, 3) * constants::mH) / (densityBase1 * timeBase1);
+    double kUnit_3Bdy = kUnit * (pow(my_units->a_units, 3) * constants::mH) / densityBase1;
 
     /*
     * 2) Set the dimensions of the cooling coefficients.
@@ -526,7 +526,7 @@ int grackle::impl::initialize_rates(
     *   are different by the reciprocal of the above factor multiplying [L]).
     * 
     */
-    double coolingUnits = (pow(my_units->a_units, 5) * pow(lengthBase1, 2) * pow(mh, 2))
+    double coolingUnits = (pow(my_units->a_units, 5) * pow(lengthBase1, 2) * pow(constants::mH, 2))
                           / (densityBase1 * pow(timeBase1, 3));
 
     if (my_chemistry->use_primordial_continuum_opacity == 1) {

@@ -16,6 +16,7 @@
 #include <cstdio>
 #include "grackle.h"
 #include "phys_constants.hpp"
+#include "support/config.hpp"
 
 extern "C" double get_velocity_units(const code_units *my_units)
 {
@@ -33,7 +34,8 @@ extern "C" void set_velocity_units(code_units *my_units)
 
 static double get_temperature_units_(double velocity_units)
 {
-  return mh * std::pow(velocity_units, 2.0) / kboltz;
+  return (GRIMPL_NS::constants::mH * std::pow(velocity_units, 2.0)
+          / GRIMPL_NS::constants::kboltz);
 }
 
 
