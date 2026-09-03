@@ -30,6 +30,7 @@
 #include "make_consistent.hpp"
 #include "mask.hpp"
 #include "opaque_storage.hpp"
+#include "step_rate_gauss_seidel.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"

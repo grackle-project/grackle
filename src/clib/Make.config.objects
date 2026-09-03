@@ -45,13 +45,13 @@ OBJS_CONFIG_LIB = \
         make_consistent.lo \
         opaque_storage.lo \
         scale_fields.lo \
+        math/gaussj.lo \
         math/solve_cubic_equation.lo \
         solve_rate_cool.lo \
         support/status_reporting.lo \
         update_UVbackground_rates.lo \
         rate_functions.lo \
         ratequery.lo \
-        gaussj_g.lo \
         support/h5io.lo \
         utils-cpp.lo \
         internal_types.lo
