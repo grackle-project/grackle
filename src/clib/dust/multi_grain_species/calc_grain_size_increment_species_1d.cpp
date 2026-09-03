@@ -17,8 +17,8 @@
 #include <vector>
 
 #include "grackle.h"
+#include "math/solve_cubic_equation.hpp"
 #include "phys_constants.hpp"
-#include "solve_cubic_equation.hpp"
 #include "utils-cpp.hpp"
 
 #include "calc_grain_size_increment_species_1d.hpp"
