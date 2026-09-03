@@ -24,11 +24,10 @@ OBJS_CONFIG_LIB = \
         tabulated/cool1d_cloudy_old_tables.lo \
         cool1d_multi_g.lo \
         cool_multi_time.lo \
-        dust/calc_all_tdust_gasgr_1d_g.lo \
-        dust/calc_gr_balance_g.lo \
+        dust/calc_all_tdust_gasgr_1d.lo \
         dust/multi_grain_species/calc_grain_size_increment_species_1d.lo \
-        dust/calc_kappa_grain.lo \
-        dust/calc_tdust_1d_g.lo \
+        dust/calc_tdust_1d.lo \
+        dust/calc_tdust_3d.lo \
         dust/grain_species_info.lo \
         dynamic_api.lo \
         api/units.lo \
@@ -39,17 +38,15 @@ OBJS_CONFIG_LIB = \
         initialize_UVbackground_data.lo \
         inject_model/load_data.lo \
         inject_model/raw_data.lo \
-        interpolators_g.lo \
         lnT_prep.lo \
         rate_timestep_g.lo \
         make_consistent.lo \
         opaque_storage.lo \
         scale_fields.lo \
-        solve_cubic_equation.lo \
+        math/solve_cubic_equation.lo \
         solve_rate_cool.lo \
         support/status_reporting.lo \
         update_UVbackground_rates.lo \
-        dust/calc_tdust_3d.lo \
         rate_functions.lo \
         ratequery.lo \
         gaussj_g.lo \

@@ -17,10 +17,10 @@
 #define LOOKUP_COOL_RATES1D_HPP
 
 #include "grackle.h"
-#include "dust_props.hpp"
 #include "dust/lookup_dust_rates1d.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
+#include "field_adaptor.hpp"
 #include "fortran_func_decls.h"
-#include "fortran_func_wrappers.hpp"
 #include "full_rxn_rate_buf.hpp"
 #include "internal_types.hpp"
 #include "opaque_storage.hpp"
@@ -61,7 +61,7 @@ void secondary_ionization_adjustments(IndexRange idx_range,
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  const double everg = ev2erg_grflt;
+  const double everg = constants::ev2erg_grflt;
   const double e24 = 13.6;
   const double e26 = 24.6;
 
@@ -391,7 +391,8 @@ inline void model_H2I_dissociation_shielding(
 
         double x = 2.0e-15 * N_H2;
         double b_doppler =
-            1e-5 * std::sqrt(2. * kboltz_grflt * tgas1d[i] / (2. * mh_grflt));
+            1e-5 * std::sqrt(2. * constants::kboltz_grflt * tgas1d[i] /
+                             (2. * constants::mH_grflt));
         double f_shield =
             0.965 / std::pow((1. + x / b_doppler), aWG2019) +
             0.035 * std::exp(-8.5e-4 * std::sqrt(1. + x)) / std::sqrt(1. + x);
@@ -758,6 +759,10 @@ inline void apply_misc_shield_factors(
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
 /// @param[in] my_fields Specifies the field data.
+/// @param[in] species_densities Specifies the densities of the various species
+///     that Grackle evolves (if any) in a format that allows the values to be
+///     accessed with the index lookup table. Wherever possible, data should be
+///     be accessed through this argument, rather than with @p my_fields
 /// @param[in] my_uvb_rates Holds precomputed photorates that depend on the UV
 ///     background. These rates do not include the effects of self-shielding.
 /// @param[in] internalu Specifies Grackle's internal unit-system
@@ -783,6 +788,7 @@ inline void lookup_cool_rates1d(
     double dx_cgs, double c_ljeans, const gr_mask_type* itmask,
     const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    SpeciesMultiView<const gr_float> species_densities,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
@@ -810,8 +816,8 @@ inline void lookup_cool_rates1d(
 
   if (anydust != MASK_FALSE) {
     lookup_dust_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal, dt,
-                        my_chemistry, my_rates, my_fields, grain_temperatures,
-                        logTlininterp_buf, rxn_rate_buf,
+                        my_chemistry, my_rates, my_fields, species_densities,
+                        grain_temperatures, logTlininterp_buf, rxn_rate_buf,
                         internal_dust_prop_scratch_buf);
   }
 

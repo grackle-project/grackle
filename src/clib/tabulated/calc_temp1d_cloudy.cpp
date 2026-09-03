@@ -16,11 +16,10 @@
 #include <cstdio>
 #include <vector>
 
-#include "../fortran_func_decls.h"
-#include "../fortran_func_wrappers.hpp"
 #include "grackle.h"
-#include "../utils-cpp.hpp"
 #include "./common.hpp"
+#include "../interpolate.hpp"
+#include "../support/View.hpp"
 
 #include "calc_temp1d_cloudy.hpp"
 
@@ -44,92 +43,78 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   FortranView<const gr_float***> e(
       my_fields->internal_energy, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  std::vector<double> logtem(my_fields->grid_dimension[0]);
 
   // Parameters
 
   // approx. mean molecular weight of metals
   const double mu_metal = 16.;
   const int ti_max = 20;
-
-  // Locals
-
-  int i, ti;
-  double inv_log10, muold, munew;
-  long long end_int;
-
-  // Slice locals
-
-  std::vector<double> log_n_h(my_fields->grid_dimension[0]);
-  std::vector<double> log10tem(my_fields->grid_dimension[0]);
+  // todo: maybe factor this constant out and have it be precomputed
+  //       (and rename it to INV_LN10). Alternatively, if we directly compute
+  //       log10(T) we can drop this entirely
+  const double inv_log10 = 1. / std::log(10.);
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
-
-  end_int = 0;
-
-  inv_log10 = 1. / std::log(10.);
 
   // Calculate parameter value slopes
   const std::array<double, tabulated_detail::MAX_RANK> dclPar =
       tabulated_detail::param_deltas(cloudy_table);
 
   // Calculate index for redshift dimension
-  const long long zindex = tabulated_detail::find_zindex(zr, cloudy_table);
+  const CurZInterpInfo z_interp_info = calc_z_interp_info(zr, cloudy_table);
 
-  for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      // Calculate proper log(n_H)
-      log_n_h[i] = std::log10(rhoH[i] * nHcgs_div_rhoH);
-    }
-  }
+      // Calculate proper log10(n_H)
+      double log10_nH = std::log10(rhoH[i] * nHcgs_div_rhoH);
 
-  for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      munew = 1.;
+      // begin the iterative solve for tgas and munew
+      double munew = 1.;
+      double muold;
       bool skip_mmw_update = true;
-      for (ti = 1; ti <= (ti_max); ti++) {
+      for (int ti = 1; ti <= ti_max; ti++) {
         muold = munew;
 
         tgas[i] = std::fmax((my_chemistry->Gamma - 1.) *
                                 e(i, idx_range.j, idx_range.k) * munew *
                                 internalu.utem,
                             my_chemistry->TemperatureStart);
-        logtem[i] = std::log(tgas[i]);
 
-        log10tem[i] = logtem[i] * inv_log10;
+        // is it ok for us to just write log10_T = std::log10(tgas[i])?
+        double ln_T = std::log(tgas[i]);
+        double log10_T = ln_T * inv_log10;
 
         // Call interpolation functions to get mmw
 
-        // Interpolate over temperature.
         if (cloudy_table.grid_rank == 1) {
-          munew = grackle::impl::fortran_wrapper::interpolate_1d_g(
-              log10tem[i], cloudy_table.grid_dimension,
-              cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.data_size, cloudy_table.mmw_data);
+          // Interpolate over temperature.
+          munew = interpolate_1d(log10_T, cloudy_table.grid_dimension,
+                                 cloudy_table.grid_parameters[0], dclPar[0],
+                                 cloudy_table.data_size, cloudy_table.mmw_data);
 
-          // Interpolate over density and temperature.
         } else if (cloudy_table.grid_rank == 2) {
-          munew = grackle::impl::fortran_wrapper::interpolate_2d_g(
-              log_n_h[i], log10tem[i], cloudy_table.grid_dimension,
-              cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.grid_parameters[1], dclPar[1],
-              cloudy_table.data_size, cloudy_table.mmw_data);
+          // Interpolate over density and temperature.
+          munew = interpolate_2d(log10_nH, log10_T, cloudy_table.grid_dimension,
+                                 cloudy_table.grid_parameters[0], dclPar[0],
+                                 cloudy_table.grid_parameters[1], dclPar[1],
+                                 cloudy_table.data_size, cloudy_table.mmw_data);
 
-          // Interpolate over density, redshift, and temperature.
         } else if (cloudy_table.grid_rank == 3) {
-          munew = grackle::impl::fortran_wrapper::interpolate_3dz_g(
-              log_n_h[i], zr, log10tem[i],
-              cloudy_table.grid_dimension,  // 3 elements
-              cloudy_table.grid_parameters[0], dclPar[0],
-              cloudy_table.grid_parameters[1], zindex,
-              cloudy_table.grid_parameters[2], dclPar[2],
-              cloudy_table.data_size, cloudy_table.mmw_data, end_int);
+          // Interpolate over density, redshift, and temperature.
+          munew =
+              interpolate_3dz(log10_nH, zr, log10_T,
+                              cloudy_table.grid_dimension,  // 3 elements
+                              cloudy_table.grid_parameters[0], dclPar[0],
+                              cloudy_table.grid_parameters[1], z_interp_info,
+                              cloudy_table.grid_parameters[2], dclPar[2],
+                              cloudy_table.data_size, cloudy_table.mmw_data);
         } else {
           printf("Maximum mmw data grid rank is 3!\n");
           return;
         }
 
+        // can we convert 0.5f -> 0.5?
         munew = 0.5f * (munew + muold);
         tgas[i] = tgas[i] * munew / muold;
 

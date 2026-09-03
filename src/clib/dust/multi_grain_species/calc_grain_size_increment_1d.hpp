@@ -22,8 +22,9 @@
 
 #include "grackle.h"
 #include "calc_grain_size_increment_species_1d.hpp"
-#include "dust_props.hpp"
 #include "dust/grain_species_info.hpp"
+#include "dust/multi_grain_species/dust_props.hpp"
+#include "field_adaptor.hpp"
 #include "fortran_func_decls.h"
 #include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -31,7 +32,6 @@
 #include "LUT.hpp"
 #include "support/config.hpp"  // GRIMPL_NAMESPACE_DECL
 #include "utils-cpp.hpp"
-#include "utils-field.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -66,6 +66,10 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in] inject_pathway_props holds data about the modelled injection
 ///     pathways for all of the grain species.
 /// @param[in] my_fields specifies the field data
+/// @param[in] sp_densities Specifies the densities of the various species
+///     that Grackle evolves (if any) in a format that allows the values to be
+///     accessed with the index lookup table. Wherever possible, data should be
+///     be accessed through this argument, rather than with @p my_fields
 /// @param[in,out] internal_dust_prop_buf Holds dust-specific information that
 ///     gets updated by this function
 inline void calc_grain_size_increment_1d(
@@ -73,7 +77,9 @@ inline void calc_grain_size_increment_1d(
     const chemistry_data* my_chemistry,
     const GrainSpeciesInfo* grain_species_info,
     const GrainMetalInjectPathways* inject_pathway_props,
-    grackle_field_data* my_fields, InternalDustPropBuf internal_dust_prop_buf) {
+    grackle_field_data* my_fields,
+    const SpeciesMultiView<const gr_float> sp_densities,
+    InternalDustPropBuf internal_dust_prop_buf) {
   const int n_pathways = inject_pathway_props->n_pathways;
   const int n_log10Tdust_vals = static_cast<int>(
       inject_pathway_props->log10Tdust_interp_props.dimension[0]);
@@ -185,10 +191,8 @@ inline void calc_grain_size_increment_1d(
   FortranView<double**> repacked_opac_table(repacked_opac_table_data_.data(),
                                             gr_Size, n_pathways);
 
-  SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
-
   // loop over grain species
-  for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
+  for (int grsp_i = 0; grsp_i < grain_species_info->n_species(); grsp_i++) {
     // repack the selected injection pathways for the current grain species
     FortranView<double**> orig_size_moments(
         inject_pathway_props->size_moments.data[grsp_i], 3, n_pathways);
@@ -210,10 +214,10 @@ inline void calc_grain_size_increment_1d(
 
     // now, actually calculate the size increment and subsequent quantities
     const GrainSpeciesInfoEntry& cur_grsp_info =
-        grain_species_info->species_info[grsp_i];
+        grain_species_info->species_info()[grsp_i];
     double bulk_density = cur_grsp_info.bulk_density_cgs;
     const gr_float* grsp_density =
-        field_data_adaptor.get_ptr_dynamic(cur_grsp_info.species_idx);
+        sp_densities.contig1d_ptr(cur_grsp_info.species_idx);
 
     calc_grain_size_increment_species_1d(
         my_chemistry->grain_growth, itmask, inject_pathway_props->n_pathways,
@@ -224,50 +228,6 @@ inline void calc_grain_size_increment_1d(
         internal_dust_prop_buf.grain_sigma_per_gas_mass.data[grsp_i],
         internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i], gr_N,
         repacked_opac_table.data());
-  }
-
-  // step 3: calculate the total cross-section and the total opacity table
-  // (i.e. that include contributions from all grain species)
-
-  // todo: can we skip this when my_chemistry->use_multiple_dust_temperatures
-  //   is not 0?
-
-  double* sigma_tot = internal_dust_prop_buf.sigma_per_gas_mass_tot;
-  FortranView<double**> kappa_tab_tot(internal_dust_prop_buf.dyntab_kappa_tot,
-                                      n_log10Tdust_vals,
-                                      my_fields->grid_dimension[0]);
-
-  // zero-out the current value
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    sigma_tot[i] = 0.0;
-  }
-
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    for (int idx = 0; idx < n_log10Tdust_vals; idx++) {
-      kappa_tab_tot(idx, i) = 0.0;
-    }
-  }
-
-  // todo: get rid of the itmask check (it shouldn't be necessary here)
-  for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
-    const double* cur_grsp_sigma =
-        internal_dust_prop_buf.grain_sigma_per_gas_mass.data[grsp_i];
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        sigma_tot[i] += cur_grsp_sigma[i];
-      }
-    }
-
-    const double* tmp = internal_dust_prop_buf.grain_dyntab_kappa.data[grsp_i];
-    FortranView<const double**> cur_grsp_kappa_tab(
-        tmp, n_log10Tdust_vals, my_fields->grid_dimension[0]);
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        for (int idx = 0; idx < n_log10Tdust_vals; idx++) {
-          kappa_tab_tot(idx, i) += cur_grsp_kappa_tab(idx, i);
-        }
-      }
-    }
   }
 }
 

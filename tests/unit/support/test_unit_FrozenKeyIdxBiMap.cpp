@@ -12,13 +12,13 @@
 
 #include <iostream>  // needed to teach googletest how to print
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "support/status_reporting.hpp"
 #include "support/FrozenKeyIdxBiMap.hpp"
-#include "grackle.h"
 
 namespace grackle::impl {
 
@@ -35,43 +35,10 @@ void PrintTo(const BiMapMode& mode, std::ostream* os) {
   GR_INTERNAL_ERROR("should not be reachable");
 }
 
-// teach GoogleTest how to print grackle::impl::bimap::AccessRslt for more
-// informative errors (otherwise it just shows the memory's raw byte values)
-namespace bimap {
-void PrintTo(const AccessRslt& ar, std::ostream* os) {
-  std::string tmp = (ar.has_value) ? std::to_string(ar.value) : "<garbage>";
-  *os << "{has_value=" << ar.has_value << ", value=" << tmp << '}';
-}
-}  // namespace bimap
 }  // namespace grackle::impl
 
-std::string prep_descr(std::string descr, bool negation) {
-  return ((negation) ? "isn't " : "is ") + descr;
-}
-
-// the following defines a custom matcher for checking whether the has_value
-// member of an AccessRslt instance is false. Use via
-//   EXPECT_THAT(arg, EmptyAccessRslt)
-MATCHER(EmptyAccessRslt, prep_descr("an empty AccessRslt", negation)) {
-  if (!arg.has_value) {
-    return true;
-  }
-  *result_listener << "holds the " << arg.value << " value";
-  return false;
-}
-
-// the following defines a custom matcher for checking whether the has_value
-// member of an AccessRslt instance is true
-//   EXPECT_THAT(arg, AccessRsltHolding(value))
-MATCHER_P(AccessRsltHolds, v,
-          prep_descr("an AccessRslt holding " + std::to_string(v), negation)) {
-  if (!arg.has_value) {
-    *result_listener << "is empty";
-  } else if (arg.value != v) {
-    *result_listener << " holds the value, " << v;
-  }
-  return arg.has_value && arg.value == v;
-}
+// allow ourselves to write Optional(val) rather than testing::Optional(val)
+using testing::Optional;
 
 // this top test was introduced to provide a more concrete example
 // of how we might use FrozenKeyIdxBiMap
@@ -100,79 +67,66 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
 
   // PART 1: build a FrozenKeyIdxBiMap from this list
   // the 3rd argument tells the string to make copies of each string
-  grimpl::FrozenKeyIdxBiMap m = grimpl::new_FrozenKeyIdxBiMap(
+  grimpl::FrozenKeyIdxBiMap m = grimpl::FrozenKeyIdxBiMap::create(
       keys, 34, grimpl::BiMapMode::COPIES_KEYDATA);
 
   // before we use it, we should confirm the constructor succeeded
-  if (!grimpl::FrozenKeyIdxBiMap_is_ok(&m)) {
+  if (!m.is_ok()) {
     FAIL() << "creation of the m failed unexpectedly";
   }
 
   // PART 2: let's show some examples of lookups from names
 
   // Equivalent Python:  `2 == m["HII"]`
-  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_find(&m, "HII"),
-              AccessRsltHolds(2));  // aka AccessRslt{has_value=true, value=2}
+  EXPECT_THAT(m.find("HII"), Optional(2));
 
   // Equivalent Python/idiomatic C++:  `33 == m["O2II"]`
-  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_find(&m, "O2II"), AccessRsltHolds(33));
+  EXPECT_THAT(m.find("O2II"), Optional(33));
 
   // for unknown key, returns AccessRslt{has_value=false, value=<garbage>}
-  EXPECT_THAT(grimpl::FrozenKeyIdxBiMap_find(&m, "Dummy"), EmptyAccessRslt());
+  EXPECT_EQ(m.find("Dummy"), std::nullopt);
 
   // PART 3: let's show the reverse of the previous lookups
-  EXPECT_STREQ("HII", grimpl::FrozenKeyIdxBiMap_inverse_find(&m, 2));
-  EXPECT_STREQ("O2II", grimpl::FrozenKeyIdxBiMap_inverse_find(&m, 33));
+  EXPECT_STREQ("HII", m.inverse_find(2));
+  EXPECT_STREQ("O2II", m.inverse_find(33));
 
   // Behavior is again well-defined when passing an invalid index
-  EXPECT_EQ(nullptr, grimpl::FrozenKeyIdxBiMap_inverse_find(&m, 131));
+  EXPECT_EQ(nullptr, m.inverse_find(131));
 
   // PART 4: We can also query the length
-  EXPECT_EQ(34, grimpl::FrozenKeyIdxBiMap_size(&m));
-
-  // Finally, to cleanup we will deallocate data tracked internally by `m`
-  grimpl::drop_FrozenKeyIdxBiMap(&m);
+  EXPECT_EQ(m.size(), 34);
 }
 
 // validate basic operations for an empty bimap
 TEST(FrozenKeyIdxBiMap, EmptyBasicOps) {
-  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::new_FrozenKeyIdxBiMap(
+  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::FrozenKeyIdxBiMap::create(
       nullptr, 0, grackle::impl::BiMapMode::COPIES_KEYDATA);
-  ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&m))
+  ASSERT_TRUE(m.is_ok())
       << "construction of a FrozenKeyIdxBiMap unexpectedly failed";
 
-  EXPECT_EQ(0, grackle::impl::FrozenKeyIdxBiMap_size(&m))
-      << "an empty mapping should have a size of 0";
+  EXPECT_EQ(m.size(), 0) << "an empty mapping should have a size of 0";
 
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(&m, "key"),
-              EmptyAccessRslt())
+  EXPECT_EQ(m.find("key"), std::nullopt)
       << "key lookup should always fail for an empty mapping";
 
-  EXPECT_EQ(nullptr, grackle::impl::FrozenKeyIdxBiMap_inverse_find(&m, 0))
+  EXPECT_EQ(nullptr, m.inverse_find(0))
       << "index lookup should always fail for an empty mapping";
-
-  grackle::impl::drop_FrozenKeyIdxBiMap(&m);
 }
 
 // validate behavior of clone for an empty bimap
 TEST(FrozenKeyIdxBiMap, EmptyClone) {
   // make the original
-  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::new_FrozenKeyIdxBiMap(
+  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::FrozenKeyIdxBiMap::create(
       nullptr, 0, grackle::impl::BiMapMode::COPIES_KEYDATA);
-  ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&m))
+  ASSERT_TRUE(m.is_ok())
       << "construction of a FrozenKeyIdxBiMap unexpectedly failed";
 
   // make the clone
-  grackle::impl::FrozenKeyIdxBiMap m_clone =
-      grackle::impl::FrozenKeyIdxBiMap_clone(&m);
+  grackle::impl::FrozenKeyIdxBiMap m_clone = m.clone();
 
-  bool success = grackle::impl::FrozenKeyIdxBiMap_is_ok(&m_clone);
+  bool success = m.is_ok();
 
-  grackle::impl::drop_FrozenKeyIdxBiMap(&m);  // drop the original
-
-  if (success) {
-    grackle::impl::drop_FrozenKeyIdxBiMap(&m_clone);
-  } else {
+  if (!success) {
     FAIL() << "cloning an empty mapping failed!";
   }
 }
@@ -187,10 +141,9 @@ TEST_P(BiMapCreate, Simple) {
   const char* keys[] = {"denisty", "internal_energy"};
 
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
+      grackle::impl::FrozenKeyIdxBiMap::create(keys, 2, GetParam());
 
-  EXPECT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
-  grackle::impl::drop_FrozenKeyIdxBiMap(&tmp);
+  EXPECT_TRUE(tmp.is_ok());
 }
 
 TEST_P(BiMapCreate, LongKey) {
@@ -199,10 +152,9 @@ TEST_P(BiMapCreate, LongKey) {
   const char* keys[2] = {first_key, long_key.data()};
 
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
+      grackle::impl::FrozenKeyIdxBiMap::create(keys, 2, GetParam());
 
-  ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
-  grackle::impl::drop_FrozenKeyIdxBiMap(&tmp);
+  ASSERT_TRUE(tmp.is_ok());
 }
 
 TEST_P(BiMapCreate, TooLongKey) {
@@ -211,28 +163,28 @@ TEST_P(BiMapCreate, TooLongKey) {
   const char* keys[2] = {first_key, long_key.data()};
 
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
-  ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
+      grackle::impl::FrozenKeyIdxBiMap::create(keys, 2, GetParam());
+  ASSERT_FALSE(tmp.is_ok());
 }
 
 TEST_P(BiMapCreate, 0LenKey) {
   const char* keys[2] = {"density", ""};
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(keys, 2, GetParam());
-  ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
+      grackle::impl::FrozenKeyIdxBiMap::create(keys, 2, GetParam());
+  ASSERT_FALSE(tmp.is_ok());
 }
 
 TEST_P(BiMapCreate, NullptrWithPosCount) {
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(nullptr, 1, GetParam());
-  ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
+      grackle::impl::FrozenKeyIdxBiMap::create(nullptr, 1, GetParam());
+  ASSERT_FALSE(tmp.is_ok());
 }
 
 TEST_P(BiMapCreate, NotNull0KeyCount) {
   const char* keys[] = {"denisty", "internal_energy"};
   grackle::impl::FrozenKeyIdxBiMap tmp =
-      grackle::impl::new_FrozenKeyIdxBiMap(keys, 0, GetParam());
-  ASSERT_FALSE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
+      grackle::impl::FrozenKeyIdxBiMap::create(keys, 0, GetParam());
+  ASSERT_FALSE(tmp.is_ok());
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -252,7 +204,8 @@ grackle::impl::FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(
     key_ptr_l[i] = vec_[i].c_str();
   }
 
-  return new_FrozenKeyIdxBiMap(key_ptr_l.data(), key_count, mode);
+  return grackle::impl::FrozenKeyIdxBiMap::create(key_ptr_l.data(), key_count,
+                                                  mode);
 }
 
 class BiMapGeneral : public testing::TestWithParam<grackle::impl::BiMapMode> {
@@ -269,15 +222,14 @@ protected:
     grackle::impl::BiMapMode mode = GetParam();
     grackle::impl::FrozenKeyIdxBiMap tmp =
         new_FrozenKeyIdxBiMap(ordered_keys, mode);
-    ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
+    ASSERT_TRUE(tmp.is_ok());
 
     bimap_p = new grackle::impl::FrozenKeyIdxBiMap;
-    (*bimap_p) = tmp;
+    (*bimap_p) = std::move(tmp);
   }
 
   void TearDown() override {
     if (bimap_p != nullptr) {
-      grackle::impl::drop_FrozenKeyIdxBiMap(bimap_p);
       delete bimap_p;
     }
   }
@@ -285,7 +237,7 @@ protected:
   bool ReusesOriginalKeyPtrs(const grackle::impl::FrozenKeyIdxBiMap* p) const {
     for (int i = 0; i < 3; i++) {
       const char* orig_key_ptr = ordered_keys[i].c_str();
-      if (grackle::impl::FrozenKeyIdxBiMap_inverse_find(p, i) != orig_key_ptr) {
+      if (p->inverse_find(i) != orig_key_ptr) {
         return false;
       }
     }
@@ -294,45 +246,35 @@ protected:
 };
 
 TEST_P(BiMapGeneral, FindContainedKey) {
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "density"),
-              AccessRsltHolds(1));
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "internal_energy"),
-              AccessRsltHolds(0));
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "metal_density"),
-              AccessRsltHolds(2));
+  EXPECT_THAT(bimap_p->find("density"), Optional(1));
+  EXPECT_THAT(bimap_p->find("internal_energy"), Optional(0));
+  EXPECT_THAT(bimap_p->find("metal_density"), Optional(2));
 }
 
 TEST_P(BiMapGeneral, FindAbsentKey) {
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, "notAKey"),
-              EmptyAccessRslt());
+  EXPECT_EQ(bimap_p->find("notAKey"), std::nullopt);
 }
 
 TEST_P(BiMapGeneral, FindForbiddenKeys) {
   // let's veryify that trying to find forbidden keys works properly
   // -> the fact that they are forbidden means that they are always absent
 
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, ""),
-              EmptyAccessRslt());
+  EXPECT_EQ(bimap_p->find(""), std::nullopt);
 
   std::string key(grackle::impl::bimap_detail::KEYLEN_MAX + 1, 'A');
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(bimap_p, key.data()),
-              EmptyAccessRslt());
+  EXPECT_EQ(bimap_p->find(key.data()), std::nullopt);
 }
 
 TEST_P(BiMapGeneral, KeyFromIdxInvalidIdx) {
-  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_inverse_find(bimap_p, 3), nullptr);
+  EXPECT_EQ(bimap_p->inverse_find(3), nullptr);
 }
 
 TEST_P(BiMapGeneral, KeyFromIdxValidIdx) {
-  EXPECT_EQ(
-      std::string(grackle::impl::FrozenKeyIdxBiMap_inverse_find(bimap_p, 2)),
-      std::string("metal_density"));
-  EXPECT_EQ(
-      std::string(grackle::impl::FrozenKeyIdxBiMap_inverse_find(bimap_p, 1)),
-      std::string("density"));
-  EXPECT_EQ(
-      std::string(grackle::impl::FrozenKeyIdxBiMap_inverse_find(bimap_p, 0)),
-      std::string("internal_energy"));
+  EXPECT_EQ(std::string(bimap_p->inverse_find(2)),
+            std::string("metal_density"));
+  EXPECT_EQ(std::string(bimap_p->inverse_find(1)), std::string("density"));
+  EXPECT_EQ(std::string(bimap_p->inverse_find(0)),
+            std::string("internal_energy"));
 
   // check whether the bimap is using pointers to the keys used during init
   if (GetParam() == grackle::impl::BiMapMode::REFS_KEYDATA) {
@@ -343,23 +285,19 @@ TEST_P(BiMapGeneral, KeyFromIdxValidIdx) {
 }
 
 TEST_P(BiMapGeneral, Clone) {
-  grackle::impl::FrozenKeyIdxBiMap clone =
-      grackle::impl::FrozenKeyIdxBiMap_clone(bimap_p);
-  ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&clone));
+  grackle::impl::FrozenKeyIdxBiMap clone = bimap_p->clone();
+  ASSERT_TRUE(bimap_p->is_ok());
   grackle::impl::FrozenKeyIdxBiMap* clone_p = &clone;
 
   // for the sake of robustly checking everything, we delete bimap_p
-  grackle::impl::drop_FrozenKeyIdxBiMap(bimap_p);
+  delete bimap_p;
   bimap_p = nullptr;
 
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(clone_p, "internal_energy"),
-              AccessRsltHolds(0));
-  EXPECT_THAT(grackle::impl::FrozenKeyIdxBiMap_find(clone_p, "notAKey"),
-              EmptyAccessRslt());
+  EXPECT_THAT(clone_p->find("internal_energy"), Optional(0));
+  EXPECT_EQ(clone_p->find("notAKey"), std::nullopt);
 
-  EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_inverse_find(clone_p, 3), nullptr);
-  EXPECT_STREQ(grackle::impl::FrozenKeyIdxBiMap_inverse_find(clone_p, 1),
-               "density");
+  EXPECT_EQ(clone_p->inverse_find(3), nullptr);
+  EXPECT_STREQ(clone_p->inverse_find(1), "density");
 
   // check whether the clone is using pointers to the keys used during init
   if (GetParam() == grackle::impl::BiMapMode::REFS_KEYDATA) {
@@ -367,9 +305,6 @@ TEST_P(BiMapGeneral, Clone) {
   } else {
     EXPECT_FALSE(ReusesOriginalKeyPtrs(clone_p));
   }
-
-  // finally, cleanup the clone
-  grackle::impl::drop_FrozenKeyIdxBiMap(clone_p);
 }
 
 INSTANTIATE_TEST_SUITE_P(

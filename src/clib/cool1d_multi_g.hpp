@@ -17,6 +17,7 @@
 #define COOL1D_MULTI_G_HPP
 
 #include "grackle.h"                 // gr_float
+#include "field_adaptor.hpp"         // SpeciesMultiView
 #include "fortran_func_decls.h"      // gr_mask_int
 #include "internal_units.hpp"        // InternalGrUnits
 #include "internal_types.hpp"        // GrainSpeciesCollection
@@ -30,9 +31,10 @@ namespace grackle::impl {
 /// This function does a lot. It probably makes sense to break off some of
 /// the functionality.
 ///
-/// @param[in] imetal Indicates whether metals are evolved
 /// @param[out] edot 1D array to hold the computed the time derivative of the
-///     internal energy in the @p idx_range
+///     internal energy in the @p idx_range. Contributions are accumulated in
+///     this buffer. In other words, this function does **NOT** set elements to
+///     to 0 before adding contributions.
 /// @param[in] tgas 1D array of gas temperatures for the @p idx_range
 /// @param[in] mmw 1D array of mean molecular weights for the @p idx_range
 /// @param[out] tdust 1D array to hold the computed dust temperatures at
@@ -49,11 +51,18 @@ namespace grackle::impl {
 ///     (multiplied by the Hydrogen mass) for the @p idx_range
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
 ///     for this calculation.
-/// @param[out] itmask_metal
+/// @param[in] itmask_metal Specifies the general metal-focused iteration-mask
+///     of the @p idx_range for this calculation. Essentially, it is used to
+///     skip metal-related calculations in zones that are extremely metal-poor
+///     (or even metal-free).
 /// @param[in] my_chemistry holds a number of configuration parameters.
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
 /// @param[in] my_fields Specifies the field data.
+/// @param[in] sp_densities Specifies the densities of the various species
+///     that Grackle evolves (if any) in a format that allows the values to be
+///     accessed with the index lookup table. Wherever possible, data should be
+///     be accessed through this argument, rather than with @p my_fields
 /// @param[in] my_uvb_rates Holds precomputed photorates that depend on the UV
 ///     background. These rates do not include the effects of self-shielding.
 /// @param[in] internalu Specifies Grackle's internal unit-system
@@ -77,13 +86,15 @@ namespace grackle::impl {
 /// modified3: February, 2003 by Robert Harkness; iteration mask
 /// modified4: September, 2009 by BDS to include cloudy cooling
 /// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void cool1d_multi_g(int imetal, double* edot, const double* tgas,
-                    const double* mmw, double* tdust, const double* metallicity,
-                    double* dust2gas, const double* rhoH,
-                    const double* nelec_times_mH, gr_mask_type* itmask,
-                    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+void cool1d_multi_g(double* edot, const double* tgas, const double* mmw,
+                    double* tdust, const double* metallicity, double* dust2gas,
+                    const double* rhoH, const double* nelec_times_mH,
+                    const gr_mask_type* itmask,
+                    const gr_mask_type* itmask_metal,
+                    chemistry_data* my_chemistry,
                     chemistry_data_storage* my_rates,
                     grackle_field_data* my_fields,
+                    SpeciesMultiView<const gr_float> sp_densities,
                     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
                     IndexRange idx_range,
                     grackle::impl::GrainSpeciesCollection grain_temperatures,

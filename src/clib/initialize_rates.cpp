@@ -40,6 +40,8 @@
 #include <stdlib.h> 
 #include <stdio.h>
 #include <math.h>
+#include <climits>
+#include <limits>
 
 #include "grackle.h"
 #include "grackle_macros.h"
@@ -51,8 +53,10 @@
 #include "initialize_rates.hpp"
 #include "internal_types.hpp" // new_CollisionalRxnRateCollection
 #include "LUT.hpp" // CollisionalRxnLUT
+#include "interp_grid.hpp"
 #include "opaque_storage.hpp" // gr_opaque_storage
-#include "phys_constants.h"
+#include "phys_constants.hpp"
+#include "support/config.hpp"
 #include "support/status_reporting.hpp"
 
 // this function pointer type is defined inside an extern "C" block because all
@@ -269,8 +273,6 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
   // initialize my_rates->opaque_storage->h2dust_grain_interp_props
   long long n_Tdust = (long long)(my_chemistry->NumberOfDustTemperatureBins);
   long long n_Tgas = (long long)(my_chemistry->NumberOfTemperatureBins);
-  double* d_Td = (double*)malloc(n_Tdust * sizeof(double));
-  double* d_Tg = (double*)malloc(n_Tgas * sizeof(double));
 
   const double logtem_start = std::log(my_chemistry->TemperatureStart);
   const double dlogtem = (std::log(my_chemistry->TemperatureEnd) -
@@ -282,23 +284,17 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
                             std::log(my_chemistry->DustTemperatureStart)) /
                            (double)(my_chemistry->NumberOfDustTemperatureBins - 1);
 
-  for (long long idx = 0; idx < n_Tdust; idx++) {
-    d_Td[idx] = logTdust_start + (double)idx * dlogTdust;
-  }
-  for (long long idx = 0; idx < n_Tgas; idx++) {
-    d_Tg[idx] = logtem_start + (double)idx * dlogtem;
-  }
+  using GRIMPL_NS::InterpDimScale;
+  const InterpDimScale params[2] = {
+    InterpDimScale::Linear(n_Tdust, logTdust_start, dlogTdust),
+    InterpDimScale::Linear(n_Tgas, logtem_start, dlogtem),
+  };
 
-  gr_interp_grid_props* interp_props
-    = &(my_rates->opaque_storage->h2dust_grain_interp_props);
-  interp_props->rank = 2ll;
-  interp_props->dimension[0] = n_Tdust;
-  interp_props->dimension[1] = n_Tgas;
-  interp_props->parameters[0] = d_Td;
-  interp_props->parameters[1] = d_Tg;
-  interp_props->parameter_spacing[0] = dlogTdust;
-  interp_props->parameter_spacing[1] = dlogtem;
-  interp_props->data_size = n_Tdust*n_Tgas;
+  GRIMPL_NS::InterpGridProps& grid_props = my_rates->opaque_storage->h2dust_grain_interp_props;
+  grid_props = GRIMPL_NS::InterpGridProps(2, params);
+  if (!grid_props) {
+    return GR_FAIL;
+  }
 
   return GR_SUCCESS;
 }
@@ -451,6 +447,57 @@ grackle::impl::ratequery::Entry get_k13dd_Entry(
   }
 }
 
+/// @brief Checks the set of input parameters for specifying a 1D ln(T) grid
+///
+/// There are 2 sets of parameters.
+/// 1. when @p gas_T is ``true``, we check the set of parameters that specify
+///    a grid of gas temperatures. This grid is used for the vast majority of
+///    1D interpolations of rates.
+/// 2. when @p gas_T is ``false``, we check the set of parameters that specify a
+///    grid of dust temperatures.
+///
+/// @return ``GR_SUCCESS`` indicates success. Other values indicate an error.
+int check_generic_lnT_params(const chemistry_data& chem, bool gas_T) {
+  // strictly speaking 
+  int num = (gas_T) ? chem.NumberOfTemperatureBins : 
+                      chem.NumberOfDustTemperatureBins;
+  double start = (gas_T) ? chem.TemperatureStart : chem.DustTemperatureStart;
+  double end = (gas_T) ? chem.TemperatureEnd : chem.DustTemperatureEnd;
+  const char* T_kind = (gas_T) ? "Temperature" : "DustTemperature";
+
+  // this is the lowest possible start value:
+  // -> keep in mind that std::numeric_limits<T>::min() returns the lowest
+  //    POSITIVE (non-subnormal) value represented by a floating point type, T
+  // -> it must be positive since interpolation occurs in log-space
+  // -> we currently forbid subnormal numbers because they can significantly
+  //    slow down calculations on some hardware. Plus, there isn't any value
+  //    in representing Temperatures that small (for astrophysics sims)
+  double lowest_start = std::numeric_limits<double>::min();
+
+  if (std::numeric_limits<double>::min() > start) {
+    return GrPrintAndReturnErr("error: %sStart param must be at least %.17e",
+                               T_kind, lowest_start);
+  } else if (start >= end) {
+    return GrPrintAndReturnErr("error: %sEnd param must exceed %sStart param",
+                               T_kind, T_kind);
+  } else if (num < 2) {
+    // technically, NumberOfTemperatureBins and NumberOfDustTemperatureBins are
+    // actually misnomers
+    // - "bins" typically refer to a set of non-overlapping intervals with
+    //   finite widths. You usually use bins to aggregate values (like in
+    //   histograms). It is possible to break an entire interval into a single
+    //   bin.
+    // - These parameters actually specify the number of interpolation points,
+    //   equally spaced in log-space. To perform linear interpolation, you
+    //   always need at least 2 interpolation points.
+    // (this distinction would matter less if the parameters referred to bin
+    // edges rather than bins)
+    return GrPrintAndReturnErr("error: NumberOf%sBins must exceed 1",
+                               T_kind);
+  } else {
+    return GR_SUCCESS;
+  }
+}
 
 } // anonymous namespace
 
@@ -460,20 +507,25 @@ int grackle::impl::initialize_rates(
   code_units *my_units, double co_length_unit, double co_density_unit,
   ratequery::RegBuilder* reg_builder)
 { 
-    // TODO: we REALLY need to do an error check that
-    //    my_chemistry->NumberOfTemperatureBins >= 2
-    //  is satisfied. We should give some thought about whether this should
-    //  produce errors when primordial_chemistry == 0
-
-    // TODO: also add error-checks for:
-    //   TemperatureStart, TemperatureEnd, NumberOfDustTemperatureBins,
-    //   DustTemperatureStart, DustTemperatureEnd
+    // check NumberOfTemperatureBins, Temperature(Start|End) params
+    // -> can we skip this when primordial_chemistry == 0?
+    {
+      int rc = check_generic_lnT_params(*my_chemistry, true);
+      if (rc != GR_SUCCESS) {
+        return rc;
+      }
+    }
 
     int anyDust;
-    if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
-        anyDust = TRUE;
-    } else {
-        anyDust = FALSE;
+    anyDust = (my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) ? TRUE : FALSE;
+
+    // check NumberOfDustTemperatureBins, DustTemperature(Start|End) params
+    // -> can we skip this when primordial_chemistry == 0?
+    if (anyDust) {
+      int rc = check_generic_lnT_params(*my_chemistry, false);
+      if (rc != GR_SUCCESS) {
+        return rc;
+      }
     }
 
     //* Obtain the conversion factors which convert between code and physical units. We define a_value = 1 at z = zInit such that a = a_value * [a].
@@ -506,8 +558,8 @@ int grackle::impl::initialize_rates(
     *   a constant (it has a factor a^3), so the number densities must be converted
     *   from comoving to proper.
     */ 
-    double kUnit = (pow(my_units->a_units, 3) * mh) / (densityBase1 * timeBase1);
-    double kUnit_3Bdy = kUnit * (pow(my_units->a_units, 3) * mh) / densityBase1;
+    double kUnit = (pow(my_units->a_units, 3) * constants::mH) / (densityBase1 * timeBase1);
+    double kUnit_3Bdy = kUnit * (pow(my_units->a_units, 3) * constants::mH) / densityBase1;
 
     /*
     * 2) Set the dimensions of the cooling coefficients.
@@ -536,11 +588,13 @@ int grackle::impl::initialize_rates(
     *   are different by the reciprocal of the above factor multiplying [L]).
     * 
     */
-    double coolingUnits = (pow(my_units->a_units, 5) * pow(lengthBase1, 2) * pow(mh, 2))
+    double coolingUnits = (pow(my_units->a_units, 5) * pow(lengthBase1, 2) * pow(constants::mH, 2))
                           / (densityBase1 * pow(timeBase1, 3));
 
     if (my_chemistry->use_primordial_continuum_opacity == 1) {
-      initialize_primordial_opacity(my_chemistry, my_rates);
+      if (GR_SUCCESS != initialize_primordial_opacity(my_chemistry, my_rates)) {
+        return GrPrintAndReturnErr("err in initialize_primordial_opacity");
+      }
     }
 
     //* 3) Units for radiative transfer coefficients are 1/[time].
@@ -559,9 +613,9 @@ int grackle::impl::initialize_rates(
       }
 
       // register the recipe for looking up the "standard" collisional rates
-      if (grackle::impl::ratequery::RegBuilder_recipe_1d(
-              reg_builder, CollisionalRxnLUT::NUM_ENTRIES,
-              &get_CollisionalRxn_Entry, my_chemistry->NumberOfTemperatureBins
+      if (reg_builder->recipe_1d(CollisionalRxnLUT::NUM_ENTRIES,
+                                 &get_CollisionalRxn_Entry,
+                                 my_chemistry->NumberOfTemperatureBins
           ) != GR_SUCCESS) {
         return GrPrintAndReturnErr("error registering standard collisional "
                                    "reaction rates");
@@ -583,9 +637,9 @@ int grackle::impl::initialize_rates(
         add_k13dd_reaction_rate(&my_rates->k13dd, kUnit, my_chemistry);
 
         // maybe k13dd should be considered multi-dimensional?
-        if (grackle::impl::ratequery::RegBuilder_recipe_1d(
-                reg_builder, 1, &get_k13dd_Entry,
-                my_chemistry->NumberOfTemperatureBins * 14) != GR_SUCCESS) {
+        if (reg_builder->recipe_1d(1, &get_k13dd_Entry,
+                                   my_chemistry->NumberOfTemperatureBins * 14
+             ) != GR_SUCCESS) {
           return GrPrintAndReturnErr("error registering k13dd rate");
         }
 
@@ -665,8 +719,14 @@ int grackle::impl::initialize_rates(
         // Chiaki & Wise 2019 rates
         // Note: these are still defined in initialize_metal_chemistry_rates.c.
         // They should be moved someday.
-        initialize_cooling_rate_H2(my_chemistry, my_rates, coolingUnits);
-        initialize_cooling_rate_HD(my_chemistry, my_rates, coolingUnits);
+        if (GR_SUCCESS != initialize_cooling_rate_H2(my_chemistry, my_rates,
+                                                     coolingUnits)) {
+          return GrPrintAndReturnErr("err in initialize_cooling_rate_H2");
+        }
+        if (GR_SUCCESS != initialize_cooling_rate_HD(my_chemistry, my_rates,
+                                                      coolingUnits)){
+          return GrPrintAndReturnErr("err in initialize_cooling_rate_HD");
+        }
 
         //* f) HD cooling.
 
@@ -733,9 +793,14 @@ int grackle::impl::initialize_rates(
     // (it may make sense want to handle more of the dust separately)
     if (my_chemistry->dust_species > 0) {
       my_rates->opaque_storage->grain_species_info = 
-        new grackle::impl::GrainSpeciesInfo;
-      *(my_rates->opaque_storage->grain_species_info) =
-        grackle::impl::new_GrainSpeciesInfo(my_chemistry->dust_species);
+          new GRIMPL_NS::GrainSpeciesInfo(my_chemistry->dust_species);
+      if (! bool(*my_rates->opaque_storage->grain_species_info)) {
+        // it's ok for us to not clean up the grain_species_info, the
+        // destructor for opaque_storage will handle that for us
+        return GrPrintAndReturnErr(
+          "Error determining grain species information (this probably denotes "
+          "an issue with the dust_species parameter");
+      }
     }
 
     // Load injection pathway data
