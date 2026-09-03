@@ -136,6 +136,7 @@ add_library(Grackle_Grackle
   math/integrate.hpp
   math/solve_cubic_equation.cpp math/solve_cubic_equation.hpp
   opaque_storage.cpp opaque_storage.hpp
+  phys_constants.hpp
   ratequery.cpp ratequery.hpp
   rate_functions.cpp
   rate_timestep_g.cpp rate_timestep_g.hpp
@@ -195,7 +196,6 @@ add_library(Grackle_Grackle
   field_data_misc_fdatamembers.def  # <-- acts as a C header
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
-  phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
 
   # Fortran public headers
@@ -207,7 +207,7 @@ add_library(Grackle_Grackle
   phys_const.def
 )
 
-target_compile_features(Grackle_Grackle PRIVATE cxx_std_17)
+target_compile_features(Grackle_Grackle PRIVATE cxx_std_20)
 
 # A downstream application built with CMake generally has 2 inclusion
 # approaches (ways that they can make use of this build):
