@@ -79,27 +79,55 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int dust_chemistry
 
-   Flag to control additional dust cooling and chemistry processes.
+   Flag to include dust grains. Each setting corresponds to a distinct
+   model. Any non-zero value for this parameter also enables
+   additional dust-related processes, some of which can also be
+   configured individually.
    Default: 0.
 
    - 0: no dust-related processes included.
-   - 1: adds the following processes:
+   - 1: enables a "static" dust model where the density of dust
+     remains constant throughout the call to
+     :c:data:`solve_chemistry`. Two options exist for specifying the
+     density of dust, depending on the value of the
+     :c:data:`use_dust_density_field` parameter. If
+     :c:data:`use_dust_density_field` is set to:
 
-     #. photo-electric heating (sets :c:data:`photoelectric_heating` to 2).
-     #. cooling from electron recombination onto dust (equation 9 from
-        `Wolfire et al. 1995
-        <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__).
-        Both the photo-electric heating and recombination cooling are scaled
-        by the value of the :c:data:`interstellar_radiation_field`.
-     #. H\ :sub:`2`\  formation on dust and dust-gas heat transfer (if
-        :c:data:`primordial_chemistry` > 1).
+       - 0: the dust density is calculated as the gas density
+         multiplied by the metallicity (in solar units) multiplied by
+         the local dust-to-gas ratio (set by the
+         :c:data:`local_dust_to_gas_ratio` parameter). Put another
+         way, the dust density is the metal density multiplied by the
+         ratio (:c:data:`local_dust_to_gas_ratio` /
+         :c:data:`SolarMetalFractionByMass`). That is, the dust to
+         metal ratio is constant.
+       - 1: the dust density is provided directly by the
+         :c:data:`dust_density` field pointer.
 
-   Setting :c:data:`dust_chemistry` greater than 0 requires
-   :c:data:`metal_cooling` to be enabled.
+   - 2: enables the dust model described by `Chiaki & Wise (2019)
+     <https://ui.adsabs.harvard.edu/abs/2019MNRAS.482.3933C>`__. This
+     model has several options, configurable by parameters prepended
+     with ``chiaki_dust_model_``. See :ref:`chiaki-dust-parameters`
+     for descriptions of these.
+
+   Additionally, setting :c:data:`dust_chemistry` > 0 enables the
+   following:
+
+   - photo-electric heating (sets :c:data:`photoelectric_heating` to
+     2). Disable by setting :c:data:`photoelectric_heating` to 0.
+   - cooling from electron recombination onto dust (equation 9 from
+     `Wolfire et al. 1995
+     <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__). Disable
+     by setting :c:data:`dust_recombination_cooling` to 0.
+   - H\ :sub:`2`\  formation on dust and dust-gas heat transfer (if
+     :c:data:`primordial_chemistry` > 1).
 
 .. note:: Other values for :c:data:`photoelectric_heating` may also be used
    in conjunction with setting the :c:data:`dust_chemistry` parameter. It will
    only be changed to 2 if unset.
+
+.. note:: Setting :c:data:`dust_chemistry` greater than 0 requires
+   :c:data:`metal_cooling` to be enabled.
 
 .. c:var:: int h2_on_dust
 
@@ -359,10 +387,12 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int use_dust_density_field
 
-   Flag to provide the dust density as a field using the :c:data:`dust_density`
-   pointer in the :c:type:`grackle_field_data` struct. If set to 0, the dust
-   density takes the value of :c:data:`local_dust_to_gas_ratio` multiplied
-   by the metallicity. Default: 0.
+   When :c:data:`dust_chemistry` is set to 1, use this flag to provide
+   the dust density as a field using the :c:data:`dust_density`
+   pointer in the :c:type:`grackle_field_data` struct. If set to 0,
+   the dust density takes the value of
+   :c:data:`local_dust_to_gas_ratio` multiplied by the
+   metallicity. Default: 0.
 
 .. c:var:: int use_volumetric_heating_rate
 
@@ -431,6 +461,26 @@ For all on/off integer flags, 0 is off and 1 is on.
 
    Flag to only use hydrogen ionization and heating rates from the 
    radiative transfer solutions. Default: 0.
+
+.. c:var:: int radiative_transfer_HDI_dissociation
+
+   Flag to include a field representing the photo-dissociation rate of
+   HD using the :c:data:`RT_HDI_dissociation_rate` field
+   pointer. Default: 0.
+
+.. c:var:: int radiative_transfer_metal_ionization
+
+   Flag to include fields representing the photo-ionization rates of
+   CI and OI using the :c:data:`RT_CI_ionization_rate` and
+   :c:data:`RT_OI_ionization_rate` field pointers. Default: 0.
+
+.. c:var:: int radiative_transfer_metal_dissociation
+
+   Flag to include fields representing the photo-dissociation rates of
+   CO, OH, and H\ :sub:`2`:\ O using the
+   :c:data:`RT_CO_dissociation_rate`,
+   :c:data:`RT_OH_dissociation_rate`,
+   :c:data:`RT_H2O_dissociation_rate` field pointers. Default: 0.
 
 .. c:var:: int H2_self_shielding
 
@@ -592,6 +642,72 @@ For all on/off integer flags, 0 is off and 1 is on.
    or as configured by setting the ``OMP_NUM_THREADS`` environment
    variable.  Note, Grackle must be compiled with OpenMP support
    enabled.  See :ref:`openmp`.
+
+.. _chiaki-dust-parameters:
+
+Chiaki Dust Model Parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Below are parameters that configure the dust model enabled by setting
+:c:data:`dust_chemistry` to 2. This model is described `Chiaki & Wise
+(2019)
+<https://ui.adsabs.harvard.edu/abs/2019MNRAS.482.3933C>`__.
+
+.. note:: This model requires: :c:data:`dust_chemistry` = 2;
+   :c:data:`metal_chemistry` = 1; :c:data:`metal_cooling` = 1
+
+.. c:var:: int chiaki_dust_model_dust_species
+
+   Controls the number of dust species followed. Each of the species
+   must be suppled in the :c:data:`grackle_field_data` struct.
+
+   - 0: a single dust species, similar to setting
+     :c:data:`dust_chemistry` to 1. Required fields:
+     :c:data:`dust_density`.
+   - 1: two dust species are followed: enstatite (MgSiO\ :sub:`3`\ )
+     and amorphous carbon grains. Additionally, a field representing
+     atomic Mg is followed to model the growth and destruction of
+     enstatite. C, O, and Si are followed in conjunction with the
+     chemistry network associated with setting
+     :c:data:`metal_chemistry` = 1. Required fields:
+     :c:data:`MgSiO3_dust_density`, :c:data:`AC_dust_density`,
+     :c:data:`Mg_density`.
+   - 2: In addition to the two species followed in option 1, eight
+     other dust species are followed: metallic silicon; metallic
+     iron; forsterite (Mg\ :sub:`2`\ SiO\ :sub:`4`\ ); magnetite
+     (Fe\ :sub:`3`\ O\ :sub:`4`\ ); silica (SiO\ :sub:`2`\ ); magnesia
+     (MgO); troilite (FeS); alumina (Al\ :sub:`2`\ O\ :sub:`3`\ ). As
+     well, in addition to the atomic Mg, atomic Al, S, and Fe are
+     followed to model growth and destruction of the dust
+     species. Required fields (in addition to those for setting 1):
+     :c:data:`SiM_dust_density`, :c:data:`FeM_dust_density`,
+     :c:data:`Mg2SiO4_dust_density`, :c:data:`Fe3O4_dust_density`,
+     :c:data:`SiO2_dust_density`, :c:data:`MgO_dust_density`,
+     :c:data:`FeS_dust_density`, :c:data:`Al2O3_dust_density`,
+     :c:data:`Al_density`, :c:data:`S_density`, :c:data:`Fe_density`.
+   - 3: In addition to the ten dust species and four atomic species
+     from options 1 and 2, three dust species are followed: water ice;
+     volatile organics; refractory organics. Required fields (in
+     addition to those for settings 1 and 2):
+     :c:data:`H2O_dust_density`, :c:data:`vol_org_dust_density`,
+     :c:data:`ref_org_dust_density`.
+     Default: 0.
+
+.. c:var:: int chiaki_dust_model_grain_growth
+
+   Enables growth of dust grains via accretion of metal atoms.
+   Requires: :c:data:`chiaki_dust_model_dust_species` > 0.
+   Default: 0.
+
+.. c:var:: int chiaki_dust_model_multi_metals
+
+   TBD
+   Default: 0.
+
+.. c:var:: int chiaki_dust_model_metal_abundances
+
+   TBD
+   Default: 0.
 
 Data Files
 ----------
