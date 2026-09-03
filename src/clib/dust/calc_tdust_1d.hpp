@@ -28,7 +28,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 namespace Tdust_detail {
 
 /// @brief Four times the Stefan-Boltzmann constant
-inline constexpr double sigma_sb_times_4 = 4.0 * sigma_sb_grflt;
+inline constexpr double sigma_sb_times_4 = 4.0 * constants::sigma_sb_grflt;
 
 /// @brief Calculate grain heating/cooling balance
 ///

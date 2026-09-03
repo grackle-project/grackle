@@ -25,7 +25,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
 #include "opaque_storage.hpp" // gr_opaque_storage
-#include "phys_constants.h"
+#include "phys_constants.hpp"
 #include "ratequery.hpp"
 #include "support/status_reporting.hpp"
 #include "tabulated/initialize_cloudy_data.hpp"
@@ -141,16 +141,16 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->opaque_storage = NULL;
 }
 
-/// core logic of local_initialize_chemistry_data_
-///
-/// @note
-/// This has been separated from local_initialize_chemistry_data to ensure that
-/// any memory allocations tracked by reg_builder can be appropriately freed
-/// (this is somewhat unavoidable in C++ without destructors)
-static int local_initialize_chemistry_data_(
+extern "C" int local_initialize_chemistry_data(
     chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
-    code_units *my_units, grackle::impl::ratequery::RegBuilder* reg_builder)
+    code_units *my_units)
 {
+  // Here we will default construct an empty RegBuilder
+  // -> as we move through this function, we will register various
+  //    kinds of rate-related quantities
+  // -> if all goes well with initialization, we'll use it to construct
+  //    a ratequery::Registry object
+  GRIMPL_NS::ratequery::RegBuilder reg_builder;
 
   /* Better safe than sorry: Initialize everything to NULL/0 */
   initialize_empty_chemistry_data_storage_struct(my_rates);
@@ -357,7 +357,7 @@ static int local_initialize_chemistry_data_(
   // Compute rate tables.
   if (grackle::impl::initialize_rates(my_chemistry, my_rates, my_units,
                                       co_length_units, co_density_units,
-                                      reg_builder)
+                                      &reg_builder)
       != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_rates.\n");
     return GR_FAIL;
@@ -395,14 +395,16 @@ static int local_initialize_chemistry_data_(
   /* store a copy of the initial units */
   my_rates->initial_units = *my_units;
 
-  // initialize the registry
-  if (grackle::impl::ratequery::RegBuilder_misc_recipies(reg_builder,
-                                                         my_chemistry)
+  // add some miscellaneous recipes for looking up rates to reg_builder
+  if (GRIMPL_NS::ratequery::add_misc_recipies_to_RegBuilder(&reg_builder,
+                                                            my_chemistry)
       != GR_SUCCESS){
-    return GrPrintAndReturnErr("error in RegBuilder_misc_recipies");
+    return GrPrintAndReturnErr("error in add_misc_recipies_to_RegBuilder");
   }
-  my_rates->opaque_storage->registry = new grackle::impl::ratequery::Registry(
-    grackle::impl::ratequery::RegBuilder_consume_and_build(reg_builder)
+
+  // initialize the registry
+  my_rates->opaque_storage->registry = new GRIMPL_NS::ratequery::Registry(
+    reg_builder.consume_and_build()
   );
 
   if (grackle_verbose) {
@@ -468,20 +470,6 @@ static int local_initialize_chemistry_data_(
   }
 
   return GR_SUCCESS;
-}
-
-
-extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
-                                               chemistry_data_storage *my_rates,
-                                               code_units *my_units)
-{
-  namespace rate_q = grackle::impl::ratequery;
-  rate_q::RegBuilder reg_builder = rate_q::new_RegBuilder();
-
-  int out = local_initialize_chemistry_data_(my_chemistry, my_rates, my_units,
-                                             &reg_builder);
-  rate_q::drop_RegBuilder(&reg_builder);
-  return out;
 }
 
 extern "C" int initialize_chemistry_data(code_units *my_units)

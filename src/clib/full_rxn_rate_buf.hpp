@@ -37,12 +37,10 @@ namespace rxn_rate_buf_detail {
 /// holds constants specifying the maximum number of rates of a given kind
 /// that may be stored the shared buffer
 struct MaxSize {
-  enum {
-    COLLISIONAL = CollisionalRxnLUT::NUM_ENTRIES,
-    PHOTO = PhotoRxnLUT::NUM_ENTRIES,
-    GRAIN_GROWTH = OnlyGrainSpLUT::NUM_ENTRIES,
-    MISC = 1
-  };
+  static constexpr int COLLISIONAL = CollisionalRxnLUT::NUM_ENTRIES;
+  static constexpr int PHOTO = PhotoRxnLUT::NUM_ENTRIES;
+  static constexpr int GRAIN_GROWTH = OnlyGrainSpLUT::NUM_ENTRIES;
+  static constexpr int MISC = 1;
 };
 
 /// holds constants specifying the offset from the start of the buffer to the

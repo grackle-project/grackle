@@ -192,7 +192,7 @@ inline void calc_grain_size_increment_1d(
                                             gr_Size, n_pathways);
 
   // loop over grain species
-  for (int grsp_i = 0; grsp_i < grain_species_info->n_species; grsp_i++) {
+  for (int grsp_i = 0; grsp_i < grain_species_info->n_species(); grsp_i++) {
     // repack the selected injection pathways for the current grain species
     FortranView<double**> orig_size_moments(
         inject_pathway_props->size_moments.data[grsp_i], 3, n_pathways);
@@ -214,7 +214,7 @@ inline void calc_grain_size_increment_1d(
 
     // now, actually calculate the size increment and subsequent quantities
     const GrainSpeciesInfoEntry& cur_grsp_info =
-        grain_species_info->species_info[grsp_i];
+        grain_species_info->species_info()[grsp_i];
     double bulk_density = cur_grsp_info.bulk_density_cgs;
     const gr_float* grsp_density =
         sp_densities.contig1d_ptr(cur_grsp_info.species_idx);

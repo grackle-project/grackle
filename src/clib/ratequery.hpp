@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <vector>
+#include <utility>  // std::swap
 
 #include "grackle.h"
 #include "utils-cpp.hpp"  // GRIMPL_FORCE_INLINE
@@ -244,6 +245,11 @@ inline Entry new_Entry(double* rate, const char* name) {
 /// If `N` denotes the number of entries that can be queried by a given recipe,
 /// then this function should produce unique entries for each unique index that
 /// satisfies `0 <= index <= (N-1)`
+///
+/// @warning
+/// All callers of this function assume that the memory referenced by the
+/// returned objects @ref Entry.data and @ref Entry Entry.name do **NOT** need
+/// to be deallocated
 typedef Entry fetch_Entry_recipe_fn(chemistry_data_storage*, int);
 
 /// Describes a set of entries
@@ -259,7 +265,7 @@ typedef Entry fetch_Entry_recipe_fn(chemistry_data_storage*, int);
 /// 2. Recipe-mode:
 ///    - In this case, the EntrySet provides access to Entry instances that
 ///      directly reference data managed by `chemistry_data_storage`
-struct EntrySet {
+class EntrySet {
   /// number of entries in the current set
   int len;
 
@@ -281,30 +287,69 @@ struct EntrySet {
   /// @note
   /// only used in Recipe-mode
   EntryProps common_recipe_props;
-};
 
-/// deallocate the contents of an EntrySet
-void drop_EntrySet(EntrySet* ptr);
+public:
+  /// @brief construct an empty entry set
+  EntrySet()
+      : len(0),
+        recipe_fn{nullptr},
+        common_recipe_props{mk_invalid_EntryProps()} {}
 
-/// get the number of @ref Entry in the @ref EntrySet
-inline int EntrySet_size(const EntrySet* ptr) {
-  if (ptr->embedded_list.empty()) {
-    return ptr->len;
-  } else {
-    return static_cast<int>(ptr->embedded_list.size());
+  /// @brief construct a set of entries in embedded list mode
+  explicit EntrySet(std::vector<Entry> embedded_list)
+      : len{static_cast<int>(embedded_list.size())},
+        embedded_list(embedded_list),
+        recipe_fn{nullptr},
+        common_recipe_props{mk_invalid_EntryProps()} {}
+
+  /// construct a set of entries in recipe-mode
+  EntrySet(int len, fetch_Entry_recipe_fn* recipe_fn, EntryProps common_props)
+      : len{len}, recipe_fn{recipe_fn}, common_recipe_props{common_props} {}
+
+  // forbid copy-construction & copy assignment (if we want these, we would
+  // need custom implementations to properly handle embedded_list, or we would
+  // need to make Entry into a full-blown class)
+  EntrySet(const EntrySet&) = delete;
+  EntrySet& operator=(const EntrySet&) = delete;
+
+  // the following require custom implementations to properly handle
+  // embedded_list (we could use default implementations if there were proper
+  // move constructors for Entry)
+
+  /// construct new instance and move contents of @p other into it
+  EntrySet(EntrySet&& other) noexcept : EntrySet() { swap(other); }
+
+  /// move contents of @p other into this instance
+  EntrySet& operator=(EntrySet&& other) noexcept {
+    if (this != &other) {
+      swap(other);
+    }
+    return *this;
   }
-}
 
-/// look up an Entry in an EntrySet
-///
-/// @param[in] entry_set The container object being queried
-/// @param[in] my_rates Used for looking up Entry in recipe-mode
-/// @param[in] i The index to query
-///
-/// @returns An instance that references memory owned by either my_rates or by
-///     the entry_set, itself.
-Entry EntrySet_access(const EntrySet* entry_set,
-                      chemistry_data_storage* my_rates, int i);
+  /// @brief destructor
+  ~EntrySet() noexcept;
+
+  /// @brief swaps contents
+  void swap(EntrySet& other) noexcept {
+    std::swap(len, other.len);
+    std::swap(embedded_list, other.embedded_list);
+    std::swap(recipe_fn, other.recipe_fn);
+    std::swap(common_recipe_props, other.common_recipe_props);
+  }
+
+  /// @brief get the number of @ref Entry in the container
+  int size() const { return len; }
+
+  /// look up an Entry
+  ///
+  /// @param[in] my_rates Used for looking up Entry in recipe-mode
+  /// @param[in] i The index to query
+  ///
+  /// @returns An instance that references memory owned by either @p my_rates or
+  ///     by the container itself
+  Entry access(chemistry_data_storage* my_rates, int i) const;
+};
 
 /// Describes a registry of queryable entries
 ///
@@ -313,18 +358,10 @@ struct Registry {
   /// number of entries
   int n_entries;
   /// stores the minimum rate_id for each EntrySet
-  int* id_offsets;
+  std::vector<int> id_offsets;
   /// stores sets of entries
   std::vector<EntrySet> sets;
-
-  // forbid copy-construction & copy assignment (if we want these, then we
-  // should make EntrySet a full-blown class with a destructor)
-  Registry(const Registry&) = delete;
-  Registry& operator=(const Registry&) = delete;
 };
-
-/// deallocate the contents of a registry
-void drop_Registry(Registry* ptr);
 
 /// An interface for gradually configuring a Registry
 ///
@@ -355,7 +392,7 @@ void drop_Registry(Registry* ptr);
 /// @important
 /// Other parts of grackle should refrain from directly accessing the internals
 /// of this function (i.e. they should only use the associated methods)
-struct RegBuilder {
+class RegBuilder {
   /// a growable array that records recipies for accessing sets of entries
   std::vector<EntrySet> recipe_sets;
   /// a growable array of owned Entry instances
@@ -366,101 +403,107 @@ struct RegBuilder {
   /// transferred to an EntrySet.
   std::vector<Entry> owned_entries;
 
-  // forbid copy-construction & copy assignment (if we want these, then we
-  // should make EntrySet & Entry full-blown classes with destructors)
+  // helper methods:
+  // ---------------
+
+  /// @brief builder takes ownership of the supplied data
+  ///
+  /// this implements common machinery for updating @ref owned_entries
+  int take_data_(const char* raw_name, PtrUnion owned_data, EntryProps props);
+
+  /// @brief builder creates a recipe
+  ///
+  /// this implements common machinery for updating @ref recipe_sets
+  int recipe_(fetch_Entry_recipe_fn* recipe_fn, int n_entries,
+              EntryProps common_props);
+
+public:  // interface methods
+  /// @brief default constructor
+  RegBuilder() = default;
+
+  // forbid copy/move construction & assignment (if we want these, then we need
+  // custom handling for owned_entries)
   RegBuilder(const RegBuilder&) = delete;
+  RegBuilder(RegBuilder&&) = delete;
   RegBuilder& operator=(const RegBuilder&) = delete;
+  RegBuilder& operator=(RegBuilder&&) = delete;
+
+  ~RegBuilder() noexcept;
+
+  /// register a recipe for accessing scalar values
+  ///
+  /// @param[in] n_entries The number of entries accessible through the recipe
+  /// @param[in] recipe_fn The recipe being registered
+  ///
+  /// @returns GR_SUCCESS if successful, otherwise returns a different value
+  int recipe_scalar(int n_entries, fetch_Entry_recipe_fn* recipe_fn);
+
+  /// register a recipe for accessing 1D arrays
+  ///
+  /// @param[in] n_entries The number of entries accessible through the recipe
+  /// @param[in] recipe_fn The recipe being registered
+  /// @param[in] common_len The length shared by each 1D array accessible
+  ///     through this recipe.
+  ///
+  /// @returns GR_SUCCESS if successful, otherwise returns a different value
+  int recipe_1d(int n_entries, fetch_Entry_recipe_fn* recipe_fn,
+                int common_len);
+
+  /// copies a 1d array of strings to make a queryable entry
+  ///
+  /// The resulting Registry will have a queryable entry corresponding to the
+  /// specified 1D array of strings. Importantly, the RegBuilder and Registry
+  /// hold a deepcopy of the specified strings.
+  ///
+  /// @param[in] name The queryable name that corresponds to the provided data
+  /// @param[in] str_arr1d The 1d array of strings
+  /// @param[in] len The length of @p str_arr1d
+  ///
+  /// @returns GR_SUCCESS if successful, otherwise returns a different value
+  ///
+  /// @note
+  /// This is intended to be used for making information available that Grackle
+  /// otherwise does not need access to.
+  int copied_str_arr1d(const char* name, const char* const* str_arr1d, int len);
+
+  /// copies a 1d array of doubles to make a queryable entry
+  ///
+  /// The resulting Registry will have a queryable entry corresponding to the
+  /// specified 1D array of doubles. Importantly, the RegBuilder and Registry
+  /// hold a deepcopy of the values.
+  ///
+  /// @param[in] name The queryable name that corresponds to the provided data
+  /// @param[in] f64_arr1d The 1d array of doubles
+  /// @param[in] len The length of @p f64_arr1d
+  ///
+  /// @returns GR_SUCCESS if successful, otherwise returns a different value
+  ///
+  /// @note
+  /// This is intended to be used for making information available that Grackle
+  /// otherwise does not need access to. For example, it might be used to
+  /// provide information about assumed abundances that Grackle doesn't directly
+  /// use (i.e. the abundances could be "baked into" some tables), but external
+  /// simulation codes may want to know about to achieve better consistency.
+  int copied_f64_arr1d(const char* name, const double* f64_arr1d, int len);
+
+  /// build a new @ref Registry.
+  ///
+  /// In the process, this builder is "consumed." In other words, it's
+  /// effectively reset to the empty state that it had immediately after it was
+  /// constructed.
+  ///
+  /// @note
+  /// The choice to consume the builder lets us minimize heap allocations
+  Registry consume_and_build();
 };
-
-/// initialize a new instance
-inline RegBuilder new_RegBuilder() {
-  // by default it is automatically initialized
-  return RegBuilder{};
-}
-
-/// deallocates all storage within a RegBuilder instance
-void drop_RegBuilder(RegBuilder* ptr);
-
-/// register a recipe for accessing scalar values
-///
-/// @param[inout] ptr The RegBuilder that will be updated
-/// @param[in] n_entries The number of entries accessible through the recipe
-/// @param[in] recipe_fn The recipe being registered
-///
-/// @returns GR_SUCCESS if successful, otherwise returns a different value
-int RegBuilder_recipe_scalar(RegBuilder* ptr, int n_entries,
-                             fetch_Entry_recipe_fn* recipe_fn);
-
-/// register a recipe for accessing 1D arrays
-///
-/// @param[inout] ptr The RegBuilder that will be updated
-/// @param[in] n_entries The number of entries accessible through the recipe
-/// @param[in] recipe_fn The recipe being registered
-/// @param[in] common_len The length shared by each 1D array accessible
-///     through this recipe.
-///
-/// @returns GR_SUCCESS if successful, otherwise returns a different value
-int RegBuilder_recipe_1d(RegBuilder* ptr, int n_entries,
-                         fetch_Entry_recipe_fn* recipe_fn, int common_len);
 
 /// registers miscellaneous recipes
 ///
 /// @note
 /// This is a hack until we can figure out a better spot to put definitions of
 /// some miscellaneous rates
-int RegBuilder_misc_recipies(RegBuilder* ptr,
-                             const chemistry_data* my_chemistry);
-
-/// copies a 1d array of strings to make a queryable entry
-///
-/// The resulting Registry will have a queryable entry corresponding to the
-/// specified 1D array of strings. Importantly, the RegBuilder and Registry
-/// hold a deepcopy of the specified strings.
-///
-/// @param[inout] ptr The RegBuilder that will be updated
-/// @param[in] name The queryable name that corresponds to the provided data
-/// @param[in] str_arr1d The 1d array of strings
-/// @param[in] len The length of str_arr1d
-///
-/// @returns GR_SUCCESS if successful, otherwise returns a different value
-///
-/// @note
-/// This is intended to be used for making information available that Grackle
-/// otherwise does not need access to.
-int RegBuilder_copied_str_arr1d(RegBuilder* ptr, const char* name,
-                                const char* const* str_arr1d, int len);
-
-/// copies a 1d array of doubles to make a queryable entry
-///
-/// The resulting Registry will have a queryable entry corresponding to the
-/// specified 1D array of doubles. Importantly, the RegBuilder and Registry
-/// hold a deepcopy of the values.
-///
-/// @param[inout] ptr The RegBuilder that will be updated
-/// @param[in] name The queryable name that corresponds to the provided data
-/// @param[in] f64_arr1d The 1d array of doubles
-/// @param[in] len The length of str_list
-///
-/// @returns GR_SUCCESS if successful, otherwise returns a different value
-///
-/// @note
-/// This is intended to be used for making information available that Grackle
-/// otherwise does not need access to. For example, it might be used to provide
-/// information about assumed abundances that Grackle doesn't directly use (i.e.
-/// the abundances could be "baked into" some tables), but external simulation
-/// codes may want to know about to achieve better consistency.
-int RegBuilder_copied_f64_arr1d(RegBuilder* ptr, const char* name,
-                                const double* f64_arr1d, int len);
-
-/// build a new Registry.
-///
-/// In the process, the current Registry is consumed; it's effectively reset to
-/// the state immediately after it was initialized. (This lets us avoid
-/// reallocating lots of memory)
-///
-/// @note
-/// For safety, the caller should still plan to call drop_RegBuilder
-Registry RegBuilder_consume_and_build(RegBuilder* ptr);
+int add_misc_recipies_to_RegBuilder(RegBuilder* ptr,
+                                    const chemistry_data* my_chemistry);
 
 /** @}*/  // end of group
 

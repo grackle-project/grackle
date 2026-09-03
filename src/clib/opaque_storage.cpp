@@ -31,10 +31,7 @@ gr_opaque_storage::~gr_opaque_storage() {
   // handle their deallocation
 
   if (grain_species_info != nullptr) {
-    // delete contents of grain_species_info
-    grackle::impl::drop_GrainSpeciesInfo(grain_species_info);
-    // delete grain_species_info, itself
-    delete grain_species_info;
+    delete grain_species_info;  // <- has a destructor
   }
 
   if (inject_pathway_props != nullptr) {
@@ -45,9 +42,7 @@ gr_opaque_storage::~gr_opaque_storage() {
   }
 
   if (registry != nullptr) {
-    // delete contents of registry
-    grackle::impl::ratequery::drop_Registry(registry);
-    // delete registry, itself
+    // delete will trigger the Registry's destructor
     delete registry;
   }
 }
