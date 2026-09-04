@@ -889,6 +889,9 @@ inline void lookup_cool_rates1d(
       kph_buf[PhotoRxnLUT::kphOI][i] = my_uvb_rates.kphOI_bg;
       kph_buf[PhotoRxnLUT::kdissCO][i] = my_uvb_rates.kdissCO_bg;
       kph_buf[PhotoRxnLUT::kdissOH][i] = my_uvb_rates.kdissOH_bg;
+      // TODO: the Leiden H2O cross section has two dissociation branches
+      // (H2O -> OH + H and H2O -> O + H2/2H). The table stores the total
+      // and grackle only implements the OH + H channel; revisit this.
       kph_buf[PhotoRxnLUT::kdissH2O][i] = my_uvb_rates.kdissH2O_bg;
     }
   }
