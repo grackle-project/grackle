@@ -29,7 +29,7 @@
 /// [here](https://en.cppreference.com/w/cpp/preprocessor/impl). More details
 /// can be found [here](https://gcc.gnu.org/onlinedocs/cpp/Pragmas.html).
 #ifdef _OPENMP
-#define OMP_PRAGMA(x) _Pragma(#x)
+#define OMP_PRAGMA(x) _Pragma(x)
 #else
 #define OMP_PRAGMA(x) /* ... */
 #endif

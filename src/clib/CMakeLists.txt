@@ -283,6 +283,7 @@ target_link_libraries(Grackle_Grackle
           GRACKLE_HDF5_C
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_Fortran>
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_C>
+          $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_CXX>
 )
 
 # add the necessary compiler-specific Fortran flags to ensure proper handling
