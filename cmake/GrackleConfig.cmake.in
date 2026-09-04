@@ -251,30 +251,46 @@ if (${_GRACKLE_LIBKIND} STREQUAL "static")
 
   unset(_FIND_H5_ARGS)
 
-  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
-    list(APPEND _EXTRA_ARGS QUIET)
-  endif()
-
-  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED)
-    list(APPEND _EXTRA_ARGS REQUIRED)
-  endif()
+  # the order in which we build up _FIND_H5_ARGS matters!
 
   # if we know the HDF5 version used to build to build Grackle as a static
-  # library, we really need to make sure the version number of the hdf5 library
-  # match the version number of the hdf5-headers (the documentation for the
-  # H5check_version function makes it clear a mismatch is bad!)
+  # library, we really should try to request it
   set(_DESIRED_HDF5_VERSION "@HDF5_VERSION@")
   if(NOT "${_DESIRED_HDF5_VERSION}" STREQUAL "")
-    list(APPEND _EXTRA_ARGS "${_DESIRED_HDF5_VERSION}" EXACT)
+    list(APPEND _FIND_H5_ARGS "${_DESIRED_HDF5_VERSION}")
+    if ("${_DESIRED_HDF5_VERSION}" VERSION_LESS "2.0.0")
+      # prior to version 2.0, HDF5 did not adhere to semver
+      # -> in this case, we REALLY need to make sure the version number of the
+      #    hdf5 library matches the version number of the hdf5-headers (the
+      #    documentation for the H5check_version function makes it clear a
+      #    mismatch is bad!)
+      list(APPEND _FIND_H5_ARGS EXACT)
+    else()
+      # do NOT append EXACT
+      # -> starting with HDF5 2.0, HDF5 is only ever built with CMake and we
+      #    can rely upon the version compatability checks provided in HDF5's
+      #    Config Package File
+    endif()
   endif()
   unset(_DESIRED_HDF5_VERSION)
 
+  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+    list(APPEND _FIND_H5_ARGS QUIET)
+  endif()
+
+  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED)
+    list(APPEND _FIND_H5_ARGS REQUIRED)
+  endif()
+
+  set(_FIND_H5_ARGS "${_FIND_H5_ARGS};COMPONENTS;C")
+
   # now we actually find the dependencies
-  find_package(HDF5 COMPONENTS C ${_EXTRA_ARGS})
+  find_package(HDF5 ${_FIND_H5_ARGS})
   if(NOT HDF5_FOUND)
     _FIND_GRACKLE_FAIL(
       "Grackle couldn't be found because dependency HDF5 couldn't be found")
   endif()
+  unset(_FIND_H5_ARGS)
   # declare HDF5 target (details are omitted that aren't needed for linking)
   add_library(GRACKLE_HDF5_C INTERFACE IMPORTED)
   set_target_properties(GRACKLE_HDF5_C PROPERTIES

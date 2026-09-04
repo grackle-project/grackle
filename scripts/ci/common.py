@@ -9,13 +9,32 @@ import os
 import re
 import subprocess
 import sys
-from typing import Container, Dict, IO, Iterator, Mapping, NamedTuple, Optional, Union
+from typing import (
+    Container,
+    Dict,
+    IO,
+    Iterator,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Union,
+)
 
 if sys.version_info < (3, 6, 1):  # 3.6.0 doesn't support all NamedTuple features
     raise RuntimeError("python 3.6.1 or newer is required")
 
 logger = logging.getLogger("ci-setup")
 logger.setLevel(logging.DEBUG)
+
+_C_CODES = {"red": 31, "green": 32, "yellow": 33, "blue": 34, "magenta": 35, "cyan": 36}
+
+
+def ansii_colorize(snippet: str, color: str):
+    code = _C_CODES.get(color.lower())
+    if code is None:
+        raise ValueError(f"unknown color: {color}. Pick from {', '.join(_C_CODES)}")
+    return f"\x1b[{code};10m{snippet}\x1b[0m"
 
 
 def configure_logger(color: bool = False):
@@ -26,13 +45,11 @@ def configure_logger(color: bool = False):
     """
     global logger
 
-    color_start = ""
-    color_stop = ""
+    LHS = "%(name)s"
     if color:
-        color_start = "\x1b[36;20m"
-        color_stop = "\x1b[0m"
+        LHS = ansii_colorize(LHS, color="cyan")
 
-    fmt = f"{color_start}%(name)s{color_stop} > %(message)s"
+    fmt = f"{LHS} > %(message)s"
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(logging.Formatter(fmt))
@@ -122,20 +139,43 @@ def export_env_var_assignment(assignment_line: str):
 def _fmt_env_args(
     include_outer_env: bool = True,
     env: Optional[Mapping[str, str]] = None,
+    *,
+    inherit_string: str = "<inherit>",
 ) -> str:
     """
     Format a string representation conveying env variables as concisely as possible
     """
     # this assumes that the env-overwrites are short
+    if env == {}:
+        env = None
     kv_pairs = [] if env is None else (f"{k}={v}" for k, v in env.items())
     if include_outer_env and env is None:
-        return "<inherit>"
+        return inherit_string
     elif include_outer_env:
-        return f"<inherit>.update({'; '.join(kv_pairs)})"
+        return f"{inherit_string}.update({'; '.join(kv_pairs)})"
     elif env is None:
         return "<no-env-vars>"
     else:
         return f"{{{'; '.join(kv_pairs)}}}"
+
+
+def make_cmd_summary_str(
+    args: Sequence[str],
+    include_outer_env: bool = True,
+    env: Optional[Mapping[str, str]] = None,
+    cwd: Optional[str] = None,
+    *,
+    inherit_string: str = "<inherit>",
+) -> str:
+    _msg = " ".join(args)
+    _meta_list = []
+    if cwd is not None:
+        _meta_list.append(f"exec_dir: {cwd}")
+    _env_str = _fmt_env_args(
+        include_outer_env=include_outer_env, env=env, inherit_string=inherit_string
+    )
+    _meta_list.append(f"ENV: {_env_str}")
+    return f"{_msg}; ({'; '.join(_meta_list)})"
 
 
 def _get_subprocess_run_env_kwarg(
@@ -217,13 +257,10 @@ def exec_cmd(
         raise TypeError(f"args[0], {args[0]!r}, isn't a str")
 
     if log:
-        _msg = " ".join(args)
-        _meta_list = []
-        if cwd is not None:
-            _meta_list.append(f"exec_dir: {cwd}")
-        _env_str = _fmt_env_args(include_outer_env=include_outer_env, env=env)
-        _meta_list.append(f"ENV: {_env_str}")
-        logger.info(f"$ {_msg}; ({'; '.join(_meta_list)})")
+        _msg = make_cmd_summary_str(
+            args=args, include_outer_env=include_outer_env, env=env, cwd=cwd
+        )
+        logger.info(f"$ {_msg}")
 
     if dry_run:
         return

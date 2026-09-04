@@ -33,7 +33,7 @@ The design rationale for the CMake build-system tries to walk a fine line betwee
 
 The problem with the second philopsphy is that it assumes that the person building software from source is already well-versed in CMake (e.g. a developer, someone who will package and distribute your software, someone who wants to directly embed your software within their project), or they are a motivated developer/user who can be expected to learn CMake.
 It implicitly assumes that most users of a project won't ever need to directly build your software from source; they will instead install prebuilt and packaged copies of the software that are distributed through other channels (e.g. through package managers like apt, dnf, homebrew OR downloadable precompiled binaries through a website OR some kind of installer).
-While this implicit assumption may be accurate for most CMake software, it obviously doesn't apply to scientific software).
+While this implicit assumption may be accurate for most CMake software (or even most open-source software), it obviously doesn't apply to scientific software.
 
 It may be tempting to dismiss the second philosophy for scientific software.
 In fact, it doesn't provide substantial benefits in build-systems that simply build an application (like a simulation code).

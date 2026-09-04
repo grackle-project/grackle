@@ -147,7 +147,7 @@ if (BUILD_SHARED_LIBS)
   # install-rule to make a symlink called libgrackle.so to support compilation
   # with `-lgrackle`. (This is consistent with the classic build-system)
   install(CODE "
-    set(_prefix \"${CMAKE_INSTALL_PREFIX}\")
+    set(_prefix \"\${CMAKE_INSTALL_PREFIX}\")
     if(DEFINED ENV{DESTDIR})
       message(WARNING
         \"linking to libgrackle.so (during install) is untested with DESTDIR\")
@@ -186,19 +186,14 @@ else()
 endif()
 
 get_implicit_link_reqs(Fortran Fortran_implicit_libs Fortran_implicit_linkdirs)
-set(_TOOLCHAIN_LINK_LIBS ${Fortran_implicit_libs})
+set(_TOOLCHAIN_LINK_LIBS "${Fortran_implicit_libs}")
+get_implicit_link_reqs(CXX CXX_implicit_libs CXX_implicit_linkdirs)
+list(APPEND _TOOLCHAIN_LINK_LIBS ${CXX_implicit_libs})
 
-# on most unix-like platforms (but not macOS), we need to explicitly link to
-# to the standard library's math functions
-# -> here we determine based on whether our custom toolchain::m target
-#    is a dummy placeholder or not whether to add this target
-get_target_property(toolchain_m_prop toolchain::m IMPORTED_LIBNAME)
-if(${toolchain_m_prop})
-  list(APPEND _TOOLCHAIN_LINK_LIBS m) # explicit c requirement (but may
-                                      # be a duplicate)
-endif()
 
-list(REMOVE_DUPLICATES _TOOLCHAIN_LINK_LIBS)
+# we previously did this, but I don't think this is a great idea until after we stop
+# worying about implicit fortran link dependencies
+#list(REMOVE_DUPLICATES _TOOLCHAIN_LINK_LIBS)
 
 
 # Define the grackle.pc file
@@ -260,6 +255,7 @@ string(REPLACE
 
 
 set(_STATIC_EXTRA_LINK_DIRS ${Fortran_implicit_linkdirs})
+list(APPEND _STATIC_EXTRA_LINK_DIRS ${CXX_implicit_linkdirs})
 list(TRANSFORM _STATIC_EXTRA_LINK_DIRS PREPEND "-L")
 string(REPLACE
   ";" " " _STATIC_EXTRA_LINK_DIRS "${_STATIC_EXTRA_LINK_DIRS}")
@@ -298,7 +294,7 @@ else()
   # if shared library was previously installed, install grackle-conventional.pc
   # as grackle.pc. Otherwise, install grackle-static.pc as grackle.pc
   install(CODE "
-    set(_prefix \"${CMAKE_INSTALL_PREFIX}\")
+    set(_prefix \"\${CMAKE_INSTALL_PREFIX}\")
     if(DEFINED ENV{DESTDIR})
       message(WARNING
         \"linking to libgrackle.so (during install) is untested with DESTDIR\")
