@@ -124,7 +124,7 @@ public:
   /// For less experienced C++ devs, this is equivalent to Python's __call__
   /// magic methods
   void operator()(const double* y, double* f,
-                  GRIMPL_NS::FortranView<double**> jacobian_f) const {
+                  GRIMPL_NS::View<double**> jacobian_f) const {
     // set f(y)[0] = (dy0/dt) = dv/dt = d²x/dt² = -ω²*x = -ω²*y[1]
     f[0] = -omega2_() * y[1];
     // set f(y)[1] = (dy1/dt) = dx/dt = y[0]
@@ -230,7 +230,7 @@ struct KapsProblem {
   /// For less experienced C++ devs, this is equivalent to Python's __call__
   /// magic methods
   void operator()(const double* y, double* f,
-                  GRIMPL_NS::FortranView<double**> jacobian_f) const {
+                  GRIMPL_NS::View<double**> jacobian_f) const {
     // set f(y)[0] = (dy0/dt)
     f[0] = -1002.0 * y[0] + 1000.0 * std::pow(y[1], 2);
     // set f(y)[1] = (dy1/dt)

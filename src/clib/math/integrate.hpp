@@ -17,8 +17,10 @@
 
 #include <cmath>
 
-#include "grackle.h"
-#include "../fortran_func_wrappers.hpp"  // GRIMPL_NS::fortran_wrapper::gaussj_g
+#include "../grackle_macros.h"
+// #include "../fortran_func_wrappers.hpp"  //
+// GRIMPL_NS::fortran_wrapper::gaussj_g
+#include "gaussj.hpp"
 #include "../support/config.hpp"
 #include "../support/View.hpp"
 
@@ -161,9 +163,6 @@ public:  // public API
                                            double* scratch_ptr,
                                            bool enforce_positive_non_NaN,
                                            double local_density = 1.0) const {
-    // shorten `GRIMPL_NS::fortran_wrapper` to `f_wrap` within this function
-    namespace f_wrap = ::GRIMPL_NS::fortran_wrapper;
-
     // I suspect that this practice of creating local buffers from a scratch
     // buffer is a useful idiom that we'll want to repeat
     int scratch_offset = 0;
@@ -173,9 +172,9 @@ public:  // public API
     scratch_offset += n;
     double* f = scratch_ptr + scratch_offset;
     scratch_offset += n;
-    FortranView<double**> jacobian_f(scratch_ptr + scratch_offset, n, n);
+    View<double**> jacobian_f(scratch_ptr + scratch_offset, n, n);
     scratch_offset += n * n;
-    FortranView<double**> mtrx(scratch_ptr + scratch_offset, n, n);
+    View<double**> mtrx(scratch_ptr + scratch_offset, n, n);
 
     // initialize ycur_minus_ystart (i.e. difference between current estimate
     // for y at the end of the timestep and y at the start of the timestep)
@@ -228,7 +227,7 @@ public:  // public API
       //
       // todo: consider adjusting gaussj_g's return value so that its more
       //       consistent with GR_SUCCESS
-      int ierror = f_wrap::gaussj_g(n, mtrx.data(), vec);
+      int ierror = gaussj(n, mtrx.data(), vec);
       if (ierror == 1) {
         // we intentionally say there have been k rather than k+1 iterations
         // since the current iteration isn't complete
