@@ -280,16 +280,16 @@ ArrayShape mk_invalid_array_shape() {
 
 }  // anonymous namespace
 
-ArrayShape read_dataset_shape(hid_t file_id, const char* name) {
+std::optional<ArrayShape> read_dataset_shape(hid_t file_id, const char* name) {
   if (name == nullptr) {
     std::fprintf(stderr, "name is a nullptr");
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   hid_t dset_id = H5Dopen(file_id, name);
   if (dset_id == H5I_INVALID_HID) {
     std::fprintf(stderr, "Failed to open dataset \"%s\".\n", name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   hid_t space_id = H5Dget_space(dset_id);
@@ -301,7 +301,7 @@ ArrayShape read_dataset_shape(hid_t file_id, const char* name) {
   if (out.is_null()) {
     std::fprintf(stderr, "Error reading the dataspace of \"%s\".\n", name);
   }
-  return out;
+  return {out};
 }
 
 /// read the dataset named dset_name from file_id into buffer

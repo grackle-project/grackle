@@ -86,17 +86,18 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   // Open redshift dataset and get number of elements
 
-  const h5io::ArrayShape common_shape
+  const std::optional<h5io::ArrayShape> maybe_shape
     = h5io::read_dataset_shape(file_id, "/UVBRates/z");
-  if (!common_shape.is_valid()) {
+  if (!maybe_shape.has_value()) {
     return GR_FAIL; // error messages are already printed
-  } else if (common_shape.ndim != 1 || common_shape.shape[0] < 0) {
+  } else if (maybe_shape->ndim != 1 || maybe_shape->shape[0] < 0) {
     std::fprintf(
         stderr,
         "Redshift dataset (\"/UVBRates/z\") in %s has inappropriate shape\n",
         my_chemistry->grackle_data_file);
     return GR_FAIL;
   }
+  h5io::ArrayShape common_shape = *maybe_shape;
 
   long long Nz = static_cast<long long>(common_shape.shape[0]);
 

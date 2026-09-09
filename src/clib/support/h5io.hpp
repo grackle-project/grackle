@@ -144,7 +144,8 @@ struct ArrayShape {
 };
 
 /// load the shape of the dataset
-ArrayShape read_dataset_shape(hid_t file_id, const char* dset_name);
+std::optional<ArrayShape> read_dataset_shape(hid_t file_id,
+                                             const char* dset_name);
 
 /// read the dataset named dset_name from file_id into buffer
 ///
