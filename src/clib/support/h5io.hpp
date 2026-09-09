@@ -14,6 +14,7 @@
 #define SUPPORT_H5IO_HPP
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -180,9 +181,9 @@ struct GridTableProps {
 /// @param[in] file_id File identifier
 /// @param[in] dset_name The name of the dataset to read attributes from.
 ///
-/// @returns Returns the appropriate GridTableProps object. The caller should
-///     use ``out.is_valid()`` to confirm that the function was successful.
-GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name);
+/// @returns Returns the appropriate GridTableProps object.
+std::optional<GridTableProps> parse_GridTableProps(hid_t file_id,
+                                                   const char* dset_name);
 
 }  // namespace h5io
 }  // namespace GRIMPL_NAMESPACE_DECL
