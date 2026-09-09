@@ -606,8 +606,7 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
     char val_attr_name[max_attr_name_length];
 
     if (legacy_mode && ((i + 1) == grid_shape.ndim)) {
-      axes[i].name = new char[12];
-      std::snprintf(axes[i].name, 12, "Temperature");
+      axes[i].name = "Temperature";
 
       std::snprintf(val_attr_name, max_attr_name_length, "Temperature");
     } else {
@@ -631,14 +630,16 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
             tmp_attr_name, dset_name);
         return GR_FAIL;
       }
-      axes[i].name = new char[min_buf_length];
-      if (read_str_attribute(attr_id, min_buf_length, axes[i].name) < 0) {
+      axes[i].name.resize(min_buf_length);
+      if (read_str_attribute(attr_id, min_buf_length, axes[i].name.data()) <
+          0) {
         std::fprintf(stderr,
                      "error loading the \"%s\" attr from \"%s\" dataset\n",
                      tmp_attr_name, dset_name);
         return GR_FAIL;
       }
       H5Aclose(attr_id);
+      axes[i].name.resize(std::strlen(axes[i].name.c_str()));
 
       if (AttrNameRecorder_record_name(name_recorder, tmp_attr_name) !=
           GR_SUCCESS) {
@@ -677,8 +678,8 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
       return GR_FAIL;
     }
 
-    axes[i].values = new double[grid_shape.shape[i]];
-    if (H5Aread(attr_id, HDF5_R8, axes[i].values) < 0) {
+    axes[i].values.resize(grid_shape.shape[i]);
+    if (H5Aread(attr_id, HDF5_R8, axes[i].values.data()) < 0) {
       H5Aclose(attr_id);
       std::fprintf(stderr, "failed to read \"%s\" attr of \"%s\" dataset.\n",
                    val_attr_name, dset_name);
@@ -699,10 +700,6 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
 GridTableProps mk_invalid_GridTableProps() {
   GridTableProps out;
   out.table_shape = mk_invalid_array_shape();
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
-    out.axes[i].name = nullptr;
-    out.axes[i].values = nullptr;
-  }
   return out;
 }
 
@@ -887,7 +884,7 @@ bool GridTableProps_is_equal(GridTableProps props_a, GridTableProps props_b) {
     return false;
   }
   for (int i = 0; i < props_a.table_shape.ndim; i++) {
-    if (std::strcmp(props_a.axes[i].name, props_b.axes[i].name) != 0) {
+    if (props_a.axes[i].name != props_b.axes[i].name) {
       return false;
     }
     std::int64_t length = props_a.table_shape.shape[i];

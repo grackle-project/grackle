@@ -140,8 +140,7 @@ int GRIMPL_NS::initialize_cloudy_data(
       return GrPrintAndReturnErr("Encountered a non-positive grid dimension");
     }
 
-    bool is_temperature =
-      std::strcmp("Temperature", grid_props.axes[i].name) == 0;
+    bool is_temperature = grid_props.axes[i].name == "Temperature";
 
     double* buf = new double[my_cloudy->grid_dimension[i]];
     for (int64_t w = 0; w < my_cloudy->grid_dimension[i]; w++) {
@@ -162,7 +161,7 @@ int GRIMPL_NS::initialize_cloudy_data(
       std::fprintf(stdout,
           "  axis %lld (\"%s\"): %g to %g (%lld steps),\n",
           static_cast<long long>(i),
-          grid_props.axes[i].name,
+          grid_props.axes[i].name.c_str(),
           my_cloudy->grid_parameters[i][0],
           my_cloudy->grid_parameters[i][my_cloudy->grid_dimension[i]-1],
           static_cast<long long>(my_cloudy->grid_dimension[i]));

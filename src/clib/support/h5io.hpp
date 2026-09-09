@@ -14,6 +14,8 @@
 #define SUPPORT_H5IO_HPP
 
 #include <cstdint>
+#include <string>
+#include <vector>
 
 #include "hdf5.h"
 #include "grackle.h"
@@ -151,8 +153,8 @@ int read_dataset(hid_t file_id, const char* dset_name, double* buffer,
                  const ArrayShape* expected_shape = nullptr);
 
 struct GridTableAxis {
-  char* name;
-  double* values;
+  std::string name;
+  std::vector<double> values;
 };
 
 /// Used to represent properties of an interpolation table
@@ -165,19 +167,8 @@ inline bool GridTableProps_is_valid(GridTableProps grid_props) {
   return grid_props.table_shape.is_valid();
 }
 
-/// acts as a destructor for the contents within ptr
-inline void drop_GridTableProps(GridTableProps* ptr) {
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
-    if (ptr->axes[i].name != nullptr) {
-      delete[] ptr->axes[i].name;
-    }
-    if (ptr->axes[i].values != nullptr) {
-      delete[] ptr->axes[i].values;
-    }
-    ptr->axes[i].name = nullptr;
-    ptr->axes[i].values = nullptr;
-  }
-}
+// TODO: DELETE ME!
+inline void drop_GridTableProps(GridTableProps* ptr) {}
 
 /// parses the GridTableProps from dataset attributes
 ///
