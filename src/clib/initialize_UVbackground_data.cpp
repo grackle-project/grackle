@@ -70,19 +70,13 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
 
   // Read Info dataset
-  int buflen = h5io::read_str_dataset(file_id, "/UVBRates/Info", 0, nullptr);
-  if (buflen < 0) {
+  std::optional<std::string> maybe_str = h5io::read_str_dataset(file_id, "/UVBRates/Info");
+  if (!maybe_str.has_value()) {
     std::fprintf(stderr, "Error loading \"/UVBRates/Info\" dataset in %s.\n",
                  my_chemistry->grackle_data_file);
     return GR_FAIL;
   }
-  std::vector<char> info_string(buflen);
-  if (h5io::read_str_dataset(file_id, "/UVBRates/Info", buflen,
-                             info_string.data()) < 0) {
-    std::fprintf(stderr, "Error loading \"/UVBRates/Info\" dataset in %s.\n",
-                 my_chemistry->grackle_data_file);
-    return GR_FAIL;
-  }
+  std::string info_string = maybe_str.value();
 
   // Open redshift dataset and get number of elements
 

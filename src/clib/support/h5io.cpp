@@ -14,6 +14,7 @@
 #include <climits>
 #include <cstdio>
 #include <cstring>
+#include <optional>
 
 #include "hdf5.h"
 #include "grackle.h"
@@ -66,7 +67,30 @@ bool is_ascii_string(const char* buffer, int bufsz) {
   return false;  // (buffer doesn't contain a null character)
 }
 
-/// does the heavy lifting for read_str_attribute and read_str_dataset
+/// @brief does the heavy lifting for read_str_attribute and read_str_dataset
+///
+/// @param[in] id identifier of attribute or dataset that will be read
+/// @param[in] bufsz Number of ascii characters (including the null terminating
+///   character) that can be written to @p buffer
+/// @param[out] buffer Pointer to the buffer where characters are written. This
+///   can **only** be a nullptr if @p bufsz is 0.
+///
+/// @returns If successful, returns ``min_req_bufsz`` (see below). Otherwise,
+///   returns a negative value.
+///
+/// ``min_req_bufsz`` is the minimum required @p bufsz that this function must
+/// receive for it to attempt to load the string.
+/// - this is the maximum length of the string (including the null character).
+///   Thus, after succesfully calling this function
+///   ``std::strlen(buffer) + 1 <= min_req_bufsz``.
+/// - this function's behavoir is described in terms of ``min_req_bufsz``,
+///   rather than the exact required buffer length because the exact length
+///   can't be determined without loading the buffer.
+///
+/// This function fails if @p bufsz is smaller than ``min_req_bufsz``, unless
+/// @p bufsz is zero. In that case, nothing is written to @p buffer and the
+/// returns ``min_req_bufsz``. The function reports an error if the user tries
+/// to reads a utf8-encoded string that contains non-ASCII characters.
 int read_str_data_helper_(hid_t id, bool is_attr, int bufsz, char* buffer) {
   if (bufsz < 0 || id == H5I_INVALID_HID) {
     return -1;
@@ -192,26 +216,43 @@ int read_str_data_helper_(hid_t id, bool is_attr, int bufsz, char* buffer) {
   return required_bufsz;
 }
 
-}  // anonymous namespace
-
-int read_str_attribute(hid_t attr_id, int bufsz, char* buffer) {
-  return read_str_data_helper_(attr_id, true, bufsz, buffer);
+/// does the heavy lifting for read_str_attribute and read_str_dataset
+std::optional<std::string> read_str_data_helper_(hid_t id, bool is_attr) {
+  int min_buf_length = read_str_data_helper_(id, is_attr, 0, nullptr);
+  if (min_buf_length < 0) {
+    // SHOULD BE UNREACHABLE!
+    std::fprintf(stderr, "can't determine string size");
+    return std::nullopt;
+  }
+  std::string out;  // <- default constructed
+  out.resize(min_buf_length);
+  if (read_str_data_helper_(id, is_attr, min_buf_length, out.data()) < 0) {
+    return std::nullopt;
+  }
+  out.resize(std::strlen(out.c_str()));
+  return {out};
 }
 
-int read_str_dataset(hid_t file_id, const char* dset_name, int bufsz,
-                     char* buffer) {
+}  // anonymous namespace
+
+std::optional<std::string> read_str_attribute(hid_t attr_id) {
+  return read_str_data_helper_(attr_id, true);
+}
+
+std::optional<std::string> read_str_dataset(hid_t file_id,
+                                            const char* dset_name) {
   if (dset_name == nullptr) {
     std::fprintf(stderr, "dset_name is a nullptr");
-    return GR_FAIL;
+    return std::nullopt;
   }
 
   hid_t dset_id = H5Dopen(file_id, dset_name);
   if (dset_id == H5I_INVALID_HID) {
     std::fprintf(stderr, "Failed to open dataset \"%s\".\n", dset_name);
-    return GR_FAIL;
+    return std::nullopt;
   }
 
-  int out = read_str_data_helper_(dset_id, false, bufsz, buffer);
+  std::optional<std::string> out = read_str_data_helper_(dset_id, false);
   H5Dclose(dset_id);
   return out;
 }
@@ -610,24 +651,15 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
         return GR_FAIL;
       }
 
-      int min_buf_length = read_str_attribute(attr_id, 0, nullptr);
-      if (min_buf_length < 0) {
-        std::fprintf(
-            stderr,
-            "can't determine string size held by \"%s\" attr of \"%s\" dset.\n",
-            tmp_attr_name, dset_name);
-        return GR_FAIL;
-      }
-      axes[i].name.resize(min_buf_length);
-      if (read_str_attribute(attr_id, min_buf_length, axes[i].name.data()) <
-          0) {
+      std::optional<std::string> maybe_str = read_str_attribute(attr_id);
+      if (!maybe_str.has_value()) {
         std::fprintf(stderr,
                      "error loading the \"%s\" attr from \"%s\" dataset\n",
                      tmp_attr_name, dset_name);
         return GR_FAIL;
       }
       H5Aclose(attr_id);
-      axes[i].name.resize(std::strlen(axes[i].name.c_str()));
+      axes[i].name = std::move(maybe_str.value());
 
       if (AttrNameRecorder_record_name(name_recorder, tmp_attr_name) !=
           GR_SUCCESS) {
