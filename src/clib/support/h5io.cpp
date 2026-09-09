@@ -493,17 +493,15 @@ int AttrNameRecorder_stringify_attr_names(char* buffer, std::size_t buf_size,
 /// @param[inout] name_recorder Updated to track each attribute involved
 ///     in parsing a dataset's grid table properties.
 ///
-/// @returns the parsed array shape for the grid shape properties. The caller
-///     should ensure that this function was successful by calling
-///     ``out.is_valid()`` on the returned value.
-ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
-                                 AttrNameRecorder* name_recorder) {
+/// @returns the parsed array shape for the grid shape properties.
+std::optional<ArrayShape> shape_from_grid_attrs(
+    hid_t dset_id, const char* dset_name, AttrNameRecorder* name_recorder) {
   hid_t attr_id = H5Aopen_name(dset_id, "Rank");
   if (attr_id == H5I_INVALID_HID) {
     std::fprintf(stderr,
                  "Failed to open \"Rank\" attribute of \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   long long rank;
   if (H5Aread(attr_id, HDF5_I8, &rank) < 0) {
@@ -511,7 +509,7 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
     std::fprintf(stderr,
                  "Failed to read \"Rank\" attribute of \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   H5Aclose(attr_id);
   if ((rank < 0) || (GRACKLE_CLOUDY_TABLE_MAX_DIMENSION < rank)) {
@@ -521,14 +519,14 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
         "\"Rank\" attribute of \"%s\" dataset, %lld, is negative or exceeds "
         "the hardcoded maximum, %d.\n",
         dset_name, rank, GRACKLE_CLOUDY_TABLE_MAX_DIMENSION);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   if (AttrNameRecorder_record_name(name_recorder, "Rank") != GR_SUCCESS) {
     std::fprintf(
         stderr,
         "issue recording access of \"Rank\" attribute of \"%s\" dataset.",
         dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   // read in the Dimension attribute
@@ -543,13 +541,13 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
     std::fprintf(stderr,
                  "Failed to open \"Dimension\" attribute in \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   if (H5Aread(attr_id, HDF5_I8, grid_dimensions) < 0) {
     std::fprintf(stderr,
                  "Failed to read \"Dimension\" attribute in \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   H5Aclose(attr_id);
   // a quick check
@@ -559,7 +557,7 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
           stderr,
           "\"Dimension\" attribute of \"%s\" dataset has non-positive value\n",
           dset_name);
-      return mk_invalid_array_shape();
+      return std::nullopt;
     }
   }
   if (AttrNameRecorder_record_name(name_recorder, "Dimension") != GR_SUCCESS) {
@@ -567,7 +565,7 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
         stderr,
         "issue recording access of \"Dimension\" attribute of \"%s\" dataset.",
         dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   // finally, let's format the output
@@ -578,7 +576,7 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
   for (int i = 0; i < out.ndim; i++) {
     out.shape[i] = grid_dimensions[i];
   }
-  return out;
+  return {out};
 }
 
 static constexpr int max_attr_name_length = 64;
@@ -715,17 +713,17 @@ std::optional<GridTableProps> parse_GridTableProps_helper(
   }
 
   // infer the shape of the table from the attributes
-  ArrayShape inferred_shape =
+  std::optional<ArrayShape> inferred_shape =
       shape_from_grid_attrs(dset_id, dset_name, name_recorder);
-  if (!inferred_shape.is_valid()) {
+  if (!inferred_shape.has_value()) {
     return std::nullopt;
   }
 
   GridTableProps out;
-  out.table_shape = inferred_shape;
+  out.table_shape = *inferred_shape;
 
   // parse the quantities along each axis
-  if (set_grid_axes_props(dset_id, dset_name, inferred_shape, out.axes,
+  if (set_grid_axes_props(dset_id, dset_name, *inferred_shape, out.axes,
                           name_recorder) == GR_SUCCESS) {
     return {out};
   } else {
