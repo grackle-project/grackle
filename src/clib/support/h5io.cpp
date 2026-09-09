@@ -712,8 +712,7 @@ GridTableProps mk_invalid_GridTableProps() {
 ///     in parsing a dataset's grid table properties.
 ///
 /// @returns Returns the appropriate GridTableProps object. The caller should
-///     use the GridTableProps_is_valid function to confirm that the function
-///     was successful.
+///     use ``out.is_valid()`` to confirm that the function was successful.
 GridTableProps parse_GridTableProps_helper(hid_t dset_id, const char* dset_name,
                                            AttrNameRecorder* name_recorder) {
   // setup the output object so that we're always prepared to return an object
@@ -794,7 +793,7 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
   int total_accessed_attrs_count = AttrNameRecorder_length(&attr_counter);
   drop_AttrNameRecorder(&attr_counter);
 
-  if (!GridTableProps_is_valid(out)) {
+  if (!out.is_valid()) {
     H5Dclose(dset_id);
     // parse_GridTableProps_helper already printed appropriate errors messages
     return out;
@@ -901,7 +900,7 @@ int assert_has_consistent_GridTableProps(hid_t file_id, const char* dset_name,
 
   GridTableProps actual = parse_GridTableProps(file_id, dset_name);
 
-  if (!GridTableProps_is_valid(actual)) {
+  if (!actual.is_valid()) {
     fprintf(stderr,
             "Error constructing the grid properties for the \"%s\" dataset\n",
             dset_name);

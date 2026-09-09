@@ -117,7 +117,7 @@ int GRIMPL_NS::initialize_cloudy_data(
   // Parse the grid properties from the dataset's attributes
   h5io::GridTableProps grid_props = h5io::parse_GridTableProps(file_id,
                                                                dset_name);
-  if (!h5io::GridTableProps_is_valid(grid_props)) {
+  if (!grid_props.is_valid()) {
     H5Fclose (file_id);
     // error messages were already printed by h5io::parse_GridTableProps
     return GR_FAIL;

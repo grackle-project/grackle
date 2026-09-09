@@ -161,11 +161,9 @@ struct GridTableAxis {
 struct GridTableProps {
   ArrayShape table_shape;
   GridTableAxis axes[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
-};
 
-inline bool GridTableProps_is_valid(GridTableProps grid_props) {
-  return grid_props.table_shape.is_valid();
-}
+  bool is_valid() const { return table_shape.is_valid(); }
+};
 
 /// parses the GridTableProps from dataset attributes
 ///
@@ -173,8 +171,7 @@ inline bool GridTableProps_is_valid(GridTableProps grid_props) {
 /// @param[in] dset_name The name of the dataset to read attributes from.
 ///
 /// @returns Returns the appropriate GridTableProps object. The caller should
-///     use the GridTableProps_is_valid function to confirm that the function
-///     was successful.
+///     use ``out.is_valid()`` to confirm that the function was successful.
 GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name);
 
 /// checks whether props_a and props_b hold equivalent values
