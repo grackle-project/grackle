@@ -10,6 +10,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include <type_traits>
+
 #include <gtest/gtest.h>
 
 #include "chem_model/parse.hpp"
@@ -94,4 +96,18 @@ TEST(FormulaComps, MoleculeSpecies) {
   ASSERT_EQ(rslt->subscript_symbol_pairs.size(), 2);
   EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(2, "H"));
   EXPECT_EQ(rslt->subscript_symbol_pairs[1], CoefSViewPair(1, "O"));
+}
+
+constexpr bool matches_expectation_() {
+  std::string_view s = "H2OII";
+  ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
+  return (rslt.has_value() && rslt->roman_numeral_val == 2 &&
+          rslt->subscript_symbol_pairs.size() == 2 &&
+          rslt->subscript_symbol_pairs[0] == CoefSViewPair(2, "H") &&
+          rslt->subscript_symbol_pairs[1] == CoefSViewPair(1, "O"));
+}
+
+TEST(FormulaComps, CompileTimeParse) {
+  using MyCheck = std::bool_constant<matches_expectation_()>;
+  EXPECT_TRUE(MyCheck::value);
 }
