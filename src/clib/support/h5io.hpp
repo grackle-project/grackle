@@ -110,20 +110,20 @@ struct ArrayShape {
 
   /// @brief checks whether the shape is null
   bool is_null() const { return ndim == -1; }
-};
 
-/// calculates the total number of elements in the array
-inline std::int64_t ArrayShape_elem_count(ArrayShape shape) {
-  if (shape.ndim < 0) {
-    return -1;
-  } else {  // this works even if shape.ndim is 0
-    std::int64_t product = 1;
-    for (int i = 0; i < shape.ndim; i++) {
-      product *= shape.shape[i];
+  /// @brief calculates the total number of elements in the array
+  int64_t elem_count() const {
+    if (ndim < 0) {
+      return -1;
+    } else {  // this works even if shape.ndim is 0
+      int64_t product = 1;
+      for (int i = 0; i < ndim; i++) {
+        product *= shape[i];
+      }
+      return product;
     }
-    return product;
   }
-}
+};
 
 /// checks whether shape_a and shape_b are the same
 ///

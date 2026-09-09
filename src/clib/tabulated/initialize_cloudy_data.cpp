@@ -44,8 +44,7 @@ void initialize_empty_cloudy_data_struct(cloudy_data *my_cloudy)
 double* load_heatcool_data(hid_t file_id, const char* dset_name,
                            double CoolUnit,
                            grackle::impl::h5io::ArrayShape expected_shape) {
-  int64_t data_size =
-    grackle::impl::h5io::ArrayShape_elem_count(expected_shape);
+  int64_t data_size = expected_shape.elem_count();
   double* tmp_data = new double[data_size];
 
   if (grackle_verbose) {
@@ -173,7 +172,7 @@ int GRIMPL_NS::initialize_cloudy_data(
   h5io::ArrayShape expected_shape = grid_props.table_shape;
 
   // Read Cooling data.
-  my_cloudy->data_size = h5io::ArrayShape_elem_count(expected_shape);
+  my_cloudy->data_size = expected_shape.elem_count();
   my_cloudy->cooling_data = load_heatcool_data(file_id, dset_name, CoolUnit,
                                                expected_shape);
 
