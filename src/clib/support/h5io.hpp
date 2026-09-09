@@ -10,15 +10,17 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef UTILS_H5IO_HPP
-#define UTILS_H5IO_HPP
+#ifndef SUPPORT_H5IO_HPP
+#define SUPPORT_H5IO_HPP
 
 #include <cstdint>
 
 #include "hdf5.h"
 #include "grackle.h"
+#include "config.hpp"
 
-namespace grackle::impl::h5io {
+namespace GRIMPL_NAMESPACE_DECL {
+namespace h5io {
 
 /// copies the string encoded in the specified hdf5 dataset into ``buffer`` as
 /// a null-terminated string, and returns ``min_req_bufsz`` (if successful).
@@ -200,6 +202,7 @@ bool GridTableProps_is_equal(GridTableProps props_a, GridTableProps props_b);
 int assert_has_consistent_GridTableProps(hid_t file_id, const char* dset_name,
                                          GridTableProps expected);
 
-}  // namespace grackle::impl::h5io
+}  // namespace h5io
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* UTILS_H5IO_HPP */
+#endif  // SUPPORT_H5IO_HPP
