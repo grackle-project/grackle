@@ -738,7 +738,6 @@ GridTableProps parse_GridTableProps_helper(hid_t dset_id, const char* dset_name,
   // parse the quantities along each axis
   if (set_grid_axes_props(dset_id, dset_name, inferred_shape, out.axes,
                           name_recorder) != GR_SUCCESS) {
-    drop_GridTableProps(&out);
     return out;
   }
 
@@ -811,11 +810,9 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
     // the number of attributes... So, we just bypass the validation check
   } else if (num_attrs == -1) {
     H5Dclose(dset_id);
-    drop_GridTableProps(&out);
     // get_num_attrs already printed error messages in this case
     return out;
   } else if (num_attrs != total_accessed_attrs_count) {
-    drop_GridTableProps(&out);
     // to provide a detailed error message that will make it straight-forward
     // to debug the underlying problem, we are going to call
     // parse_GridTableProps_helper, but this time, we are going to actually
@@ -854,7 +851,6 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
           tmp.table_shape.ndim, dset_name, stringified_attr_list);
       delete[] stringified_attr_list;
     }
-    drop_GridTableProps(&tmp);
     drop_AttrNameRecorder(&attr_name_recorder);
     H5Dclose(dset_id);
     return mk_invalid_GridTableProps();
@@ -865,7 +861,6 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
   ArrayShape actual_shape = shape_from_space(space_id);
   H5Sclose(space_id);
   if (!actual_shape.is_null() && !(out.table_shape == actual_shape)) {
-    drop_GridTableProps(&out);
     H5Dclose(dset_id);
     std::fprintf(
         stderr,
@@ -907,7 +902,6 @@ int assert_has_consistent_GridTableProps(hid_t file_id, const char* dset_name,
   GridTableProps actual = parse_GridTableProps(file_id, dset_name);
 
   if (!GridTableProps_is_valid(actual)) {
-    drop_GridTableProps(&actual);
     fprintf(stderr,
             "Error constructing the grid properties for the \"%s\" dataset\n",
             dset_name);
@@ -915,7 +909,6 @@ int assert_has_consistent_GridTableProps(hid_t file_id, const char* dset_name,
   }
 
   bool is_equal = GridTableProps_is_equal(actual, expected);
-  drop_GridTableProps(&actual);
   if (!is_equal) {
     fprintf(stderr,
             "the \"%s\" dataset doesn't have the expected grid properties\n",

@@ -118,7 +118,6 @@ int GRIMPL_NS::initialize_cloudy_data(
   h5io::GridTableProps grid_props = h5io::parse_GridTableProps(file_id,
                                                                dset_name);
   if (!h5io::GridTableProps_is_valid(grid_props)) {
-    h5io::drop_GridTableProps(&grid_props);
     H5Fclose (file_id);
     // error messages were already printed by h5io::parse_GridTableProps
     return GR_FAIL;
@@ -135,7 +134,6 @@ int GRIMPL_NS::initialize_cloudy_data(
     if (my_cloudy->grid_dimension[i] <= 0) {
       // the caller is responsible for calling free_cloudy_data
       // -> this will cleanup all partial initialization
-      h5io::drop_GridTableProps(&grid_props);
       H5Fclose(file_id);
       return GrPrintAndReturnErr("Encountered a non-positive grid dimension");
     }
@@ -176,7 +174,6 @@ int GRIMPL_NS::initialize_cloudy_data(
                                                expected_shape);
 
   if (my_cloudy->cooling_data == nullptr) {
-    h5io::drop_GridTableProps(&grid_props);
     H5Fclose(file_id);
     return GR_FAIL;
   }
@@ -189,14 +186,12 @@ int GRIMPL_NS::initialize_cloudy_data(
     // validate that Heating table has have identical GridTableProps
     if (h5io::assert_has_consistent_GridTableProps(file_id, dset_name,
                                                    grid_props) != GR_SUCCESS){
-      h5io::drop_GridTableProps(&grid_props);
       H5Fclose(file_id);
       return GR_FAIL;
     }
     my_cloudy->heating_data = load_heatcool_data(file_id, dset_name, CoolUnit,
                                                  expected_shape);
     if (my_cloudy->heating_data == nullptr) {
-      h5io::drop_GridTableProps(&grid_props);
       H5Fclose(file_id);
       return GR_FAIL;
     }
@@ -210,7 +205,6 @@ int GRIMPL_NS::initialize_cloudy_data(
     // validate that MMW table has have identical GridTableProps
     if (h5io::assert_has_consistent_GridTableProps(file_id, mmw_dset_name,
                                                    grid_props) != GR_SUCCESS){
-      h5io::drop_GridTableProps(&grid_props);
       H5Fclose(file_id);
       return GR_FAIL;
     }
@@ -218,7 +212,6 @@ int GRIMPL_NS::initialize_cloudy_data(
     my_cloudy->mmw_data = new double[my_cloudy->data_size];
     if (h5io::read_dataset(file_id, mmw_dset_name, my_cloudy->mmw_data,
                            &expected_shape) != GR_SUCCESS) {
-      h5io::drop_GridTableProps(&grid_props);
       H5Fclose(file_id);
       return GR_FAIL;
     }

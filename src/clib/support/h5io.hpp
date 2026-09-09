@@ -167,9 +167,6 @@ inline bool GridTableProps_is_valid(GridTableProps grid_props) {
   return grid_props.table_shape.is_valid();
 }
 
-// TODO: DELETE ME!
-inline void drop_GridTableProps(GridTableProps* ptr) {}
-
 /// parses the GridTableProps from dataset attributes
 ///
 /// @param[in] file_id File identifier
