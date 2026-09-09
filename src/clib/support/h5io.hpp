@@ -105,6 +105,13 @@ struct ArrayShape {
   int ndim;
   std::int64_t shape[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
+  // this only exists to avoid warnings about potentially uninitialized members
+  ArrayShape() : ndim{0} {
+    for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
+      shape[i] = 0;
+    }
+  }
+
   /// @brief checks whether shape is valid
   bool is_valid() const { return ndim >= -1; }
 

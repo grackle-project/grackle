@@ -270,14 +270,6 @@ ArrayShape shape_from_space(hid_t space_id) {
   }
 }
 
-/// Construct an ArrayShape object that represents an invalid instance
-///
-/// @note
-/// This is useful for encoding that a function produced an error
-ArrayShape mk_invalid_array_shape() {
-  return shape_from_space(H5I_INVALID_HID);
-}
-
 }  // anonymous namespace
 
 std::optional<ArrayShape> read_dataset_shape(hid_t file_id, const char* name) {
@@ -569,9 +561,7 @@ std::optional<ArrayShape> shape_from_grid_attrs(
   }
 
   // finally, let's format the output
-  // -> we use mk_invalid_array_shape to suppress compiler warnings that out
-  //    may be uninitialized
-  ArrayShape out = mk_invalid_array_shape();
+  ArrayShape out;
   out.ndim = static_cast<int>(rank);
   for (int i = 0; i < out.ndim; i++) {
     out.shape[i] = grid_dimensions[i];
