@@ -123,22 +123,22 @@ struct ArrayShape {
       return product;
     }
   }
-};
 
-/// checks whether shape_a and shape_b are the same
-///
-/// returns false if the either shape is invalid
-inline bool ArrayShape_is_equal(ArrayShape shape_a, ArrayShape shape_b) {
-  if ((!shape_a.is_valid()) || (shape_a.ndim != shape_b.ndim)) {
-    return false;
-  }
-  for (int i = 0; i < shape_a.ndim; i++) {
-    if (shape_a.shape[i] != shape_b.shape[i]) {
+  /// @brief overloads the equality comparison (``==``) operation
+  ///
+  /// @note returns false if the either shape is invalid
+  bool operator==(const ArrayShape& other) const {
+    if ((!is_valid()) || (ndim != other.ndim)) {
       return false;
     }
+    for (int i = 0; i < ndim; i++) {
+      if (shape[i] != other.shape[i]) {
+        return false;
+      }
+    }
+    return true;
   }
-  return true;
-}
+};
 
 /// load the shape of the dataset
 ArrayShape read_dataset_shape(hid_t file_id, const char* dset_name);

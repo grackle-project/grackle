@@ -324,7 +324,7 @@ int read_dataset(hid_t file_id, const char* dset_name, double* buffer,
     ArrayShape actual_shape = shape_from_space(space_id);
     H5Sclose(space_id);
 
-    if (!ArrayShape_is_equal(*expected_shape, actual_shape)) {
+    if (!(*expected_shape == actual_shape)) {
       H5Dclose(dset_id);
       std::fprintf(stderr, "The \"%s\" dataset has an unexpected shape.\n",
                    dset_name);
@@ -867,8 +867,7 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
   hid_t space_id = H5Dget_space(dset_id);
   ArrayShape actual_shape = shape_from_space(space_id);
   H5Sclose(space_id);
-  if (!actual_shape.is_null() &&
-      !ArrayShape_is_equal(out.table_shape, actual_shape)) {
+  if (!actual_shape.is_null() && !(out.table_shape == actual_shape)) {
     drop_GridTableProps(&out);
     H5Dclose(dset_id);
     std::fprintf(
@@ -884,7 +883,7 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
 }
 
 bool GridTableProps_is_equal(GridTableProps props_a, GridTableProps props_b) {
-  if (!ArrayShape_is_equal(props_a.table_shape, props_b.table_shape)) {
+  if (!(props_a.table_shape == props_b.table_shape)) {
     return false;
   }
   for (int i = 0; i < props_a.table_shape.ndim; i++) {
