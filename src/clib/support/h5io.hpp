@@ -163,6 +163,11 @@ struct GridTableProps {
   GridTableAxis axes[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
   bool is_valid() const { return table_shape.is_valid(); }
+
+  /// @brief overloads the equality comparison (``==``) operation
+  ///
+  /// @note returns false if the either object is invalid
+  bool operator==(const GridTableProps& o) const;
 };
 
 /// parses the GridTableProps from dataset attributes
@@ -173,12 +178,6 @@ struct GridTableProps {
 /// @returns Returns the appropriate GridTableProps object. The caller should
 ///     use ``out.is_valid()`` to confirm that the function was successful.
 GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name);
-
-/// checks whether props_a and props_b hold equivalent values
-///
-/// @returns true if objects are equal and false in all other cases (including
-///     when either object is invalid)
-bool GridTableProps_is_equal(GridTableProps props_a, GridTableProps props_b);
 
 /// checks whether the specified dataset has consistent grid properties
 ///

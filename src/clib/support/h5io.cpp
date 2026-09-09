@@ -873,13 +873,12 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
   return out;
 }
 
-bool GridTableProps_is_equal(GridTableProps props_a, GridTableProps props_b) {
-  if (!(props_a.table_shape == props_b.table_shape)) {
+bool GridTableProps::operator==(const GridTableProps& o) const {
+  if (!(table_shape == o.table_shape)) {
     return false;
   }
-  for (int i = 0; i < props_a.table_shape.ndim; i++) {
-    if (props_a.axes[i].name != props_b.axes[i].name ||
-        props_a.axes[i].values != props_b.axes[i].values) {
+  for (int i = 0; i < table_shape.ndim; i++) {
+    if (axes[i].name != o.axes[i].name || axes[i].values != o.axes[i].values) {
       return false;
     }
   }
@@ -899,8 +898,7 @@ int assert_has_consistent_GridTableProps(hid_t file_id, const char* dset_name,
     return GR_FAIL;
   }
 
-  bool is_equal = GridTableProps_is_equal(actual, expected);
-  if (!is_equal) {
+  if (!(actual == expected)) {
     fprintf(stderr,
             "the \"%s\" dataset doesn't have the expected grid properties\n",
             dset_name);
