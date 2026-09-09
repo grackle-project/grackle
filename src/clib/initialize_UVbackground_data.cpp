@@ -88,7 +88,7 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   const h5io::ArrayShape common_shape
     = h5io::read_dataset_shape(file_id, "/UVBRates/z");
-  if (!h5io::ArrayShape_is_valid(common_shape)) {
+  if (!common_shape.is_valid()) {
     return GR_FAIL; // error messages are already printed
   } else if (common_shape.ndim != 1 || common_shape.shape[0] < 0) {
     std::fprintf(

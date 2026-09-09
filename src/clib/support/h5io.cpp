@@ -298,7 +298,7 @@ ArrayShape read_dataset_shape(hid_t file_id, const char* name) {
   ArrayShape out = shape_from_space(space_id);
   H5Sclose(space_id);
 
-  if (ArrayShape_is_null(out)) {
+  if (out.is_null()) {
     std::fprintf(stderr, "Error reading the dataspace of \"%s\".\n", name);
   }
   return out;
@@ -495,7 +495,7 @@ int AttrNameRecorder_stringify_attr_names(char* buffer, std::size_t buf_size,
 ///
 /// @returns the parsed array shape for the grid shape properties. The caller
 ///     should ensure that this function was successful by calling
-///     ArrayShape_is_valid on the returned value.
+///     ``out.is_valid()`` on the returned value.
 ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
                                  AttrNameRecorder* name_recorder) {
   hid_t attr_id = H5Aopen_name(dset_id, "Rank");
@@ -734,7 +734,7 @@ GridTableProps parse_GridTableProps_helper(hid_t dset_id, const char* dset_name,
   // infer the shape of the table from the attributes
   ArrayShape inferred_shape =
       shape_from_grid_attrs(dset_id, dset_name, name_recorder);
-  if (!ArrayShape_is_valid(inferred_shape)) {
+  if (!inferred_shape.is_valid()) {
     return out;
   }
 
@@ -867,7 +867,7 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
   hid_t space_id = H5Dget_space(dset_id);
   ArrayShape actual_shape = shape_from_space(space_id);
   H5Sclose(space_id);
-  if (!ArrayShape_is_null(actual_shape) &&
+  if (!actual_shape.is_null() &&
       !ArrayShape_is_equal(out.table_shape, actual_shape)) {
     drop_GridTableProps(&out);
     H5Dclose(dset_id);

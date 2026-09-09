@@ -93,7 +93,7 @@ int read_str_attribute(hid_t attr_id, int bufsz, char* buffer);
 int read_str_dataset(hid_t file_id, const char* dset_name, int bufsz,
                      char* buffer);
 
-/// represents a contiguous array shape
+/// @brief represents a contiguous array shape
 ///
 /// @note
 /// An ndim of -1 corresponds to a null dataset (i.e. ``H5S_NULL``). Any other
@@ -101,16 +101,16 @@ int read_str_dataset(hid_t file_id, const char* dset_name, int bufsz,
 struct ArrayShape {
   int ndim;
   std::int64_t shape[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+
+  /// @brief checks whether shape is valid
+  bool is_valid() const { return ndim >= -1; }
+
+  /// @brief checks whether shape refers to a scalar
+  bool is_scalar() const { return ndim == 0; }
+
+  /// @brief checks whether the shape is null
+  bool is_null() const { return ndim == -1; }
 };
-
-/// checks whether shape is valid
-inline bool ArrayShape_is_valid(ArrayShape shape) { return shape.ndim >= -1; }
-
-/// checks whether shape refers to a scalar
-inline bool ArrayShape_is_scalar(ArrayShape shape) { return shape.ndim == 0; }
-
-/// checks whether shape is null
-inline bool ArrayShape_is_null(ArrayShape shape) { return shape.ndim == -1; }
 
 /// calculates the total number of elements in the array
 inline std::int64_t ArrayShape_elem_count(ArrayShape shape) {
@@ -129,7 +129,7 @@ inline std::int64_t ArrayShape_elem_count(ArrayShape shape) {
 ///
 /// returns false if the either shape is invalid
 inline bool ArrayShape_is_equal(ArrayShape shape_a, ArrayShape shape_b) {
-  if ((!ArrayShape_is_valid(shape_a)) || (shape_a.ndim != shape_b.ndim)) {
+  if ((!shape_a.is_valid()) || (shape_a.ndim != shape_b.ndim)) {
     return false;
   }
   for (int i = 0; i < shape_a.ndim; i++) {
@@ -162,7 +162,7 @@ struct GridTableProps {
 };
 
 inline bool GridTableProps_is_valid(GridTableProps grid_props) {
-  return ArrayShape_is_valid(grid_props.table_shape);
+  return grid_props.table_shape.is_valid();
 }
 
 /// acts as a destructor for the contents within ptr
