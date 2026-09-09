@@ -878,16 +878,8 @@ bool GridTableProps_is_equal(GridTableProps props_a, GridTableProps props_b) {
     return false;
   }
   for (int i = 0; i < props_a.table_shape.ndim; i++) {
-    if (props_a.axes[i].name != props_b.axes[i].name) {
-      return false;
-    }
-    std::int64_t length = props_a.table_shape.shape[i];
-    std::int64_t n_equal = 0;
-    for (std::int64_t j = 0; j < length; j++) {
-      bool is_equal = (props_a.axes[i].values[j] == props_b.axes[i].values[j]);
-      n_equal += static_cast<std::int64_t>(is_equal);
-    }
-    if (n_equal != length) {
+    if (props_a.axes[i].name != props_b.axes[i].name ||
+        props_a.axes[i].values != props_b.axes[i].values) {
       return false;
     }
   }
