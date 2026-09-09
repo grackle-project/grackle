@@ -885,8 +885,8 @@ bool GridTableProps::operator==(const GridTableProps& o) const {
   return true;
 }
 
-int assert_has_consistent_GridTableProps(hid_t file_id, const char* dset_name,
-                                         GridTableProps expected) {
+bool GridTableProps::assert_is_consistent(hid_t file_id,
+                                          const char* dset_name) const {
   // the current implementation is crude (we may be able to do better)
 
   GridTableProps actual = parse_GridTableProps(file_id, dset_name);
@@ -895,17 +895,17 @@ int assert_has_consistent_GridTableProps(hid_t file_id, const char* dset_name,
     fprintf(stderr,
             "Error constructing the grid properties for the \"%s\" dataset\n",
             dset_name);
-    return GR_FAIL;
+    return false;
   }
 
-  if (!(actual == expected)) {
+  if (!(actual == *this)) {
     fprintf(stderr,
             "the \"%s\" dataset doesn't have the expected grid properties\n",
             dset_name);
-    return GR_FAIL;
+    return false;
   }
 
-  return GR_SUCCESS;
+  return true;
 }
 
 }  // namespace h5io

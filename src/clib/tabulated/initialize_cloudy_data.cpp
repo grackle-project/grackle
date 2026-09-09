@@ -184,8 +184,7 @@ int GRIMPL_NS::initialize_cloudy_data(
                   group_name);
 
     // validate that Heating table has have identical GridTableProps
-    if (h5io::assert_has_consistent_GridTableProps(file_id, dset_name,
-                                                   grid_props) != GR_SUCCESS){
+    if (!grid_props.assert_is_consistent(file_id, dset_name)) {
       H5Fclose(file_id);
       return GR_FAIL;
     }
@@ -203,8 +202,7 @@ int GRIMPL_NS::initialize_cloudy_data(
     const char* mmw_dset_name = "/CoolingRates/Primordial/MMW";
 
     // validate that MMW table has have identical GridTableProps
-    if (h5io::assert_has_consistent_GridTableProps(file_id, mmw_dset_name,
-                                                   grid_props) != GR_SUCCESS){
+    if (!grid_props.assert_is_consistent(file_id, mmw_dset_name)) {
       H5Fclose(file_id);
       return GR_FAIL;
     }

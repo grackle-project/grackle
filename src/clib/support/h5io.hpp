@@ -168,6 +168,11 @@ struct GridTableProps {
   ///
   /// @note returns false if the either object is invalid
   bool operator==(const GridTableProps& o) const;
+
+  /// @brief checks whether the specified dataset has consistent grid properties
+  ///
+  /// @returns `true` indicates that the dataset has consistent properties
+  bool assert_is_consistent(hid_t file_id, const char* dset_name) const;
 };
 
 /// parses the GridTableProps from dataset attributes
@@ -178,13 +183,6 @@ struct GridTableProps {
 /// @returns Returns the appropriate GridTableProps object. The caller should
 ///     use ``out.is_valid()`` to confirm that the function was successful.
 GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name);
-
-/// checks whether the specified dataset has consistent grid properties
-///
-/// @returns GR_SUCCESS if the specified dataset has equivalent properties and
-///     a different value in all other cases
-int assert_has_consistent_GridTableProps(hid_t file_id, const char* dset_name,
-                                         GridTableProps expected);
 
 }  // namespace h5io
 }  // namespace GRIMPL_NAMESPACE_DECL
