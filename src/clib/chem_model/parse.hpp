@@ -114,6 +114,43 @@ inline constexpr Expected<std::pair<std::size_t, int>, Err> roman_from_right(
   return std::pair<std::size_t, int>(pos, total);
 }
 
+/// @brief try to parse a positive integer from the string @p s
+///
+/// This assumes decimal notation and forbids leading zeros. For the sake of
+/// clarity, this is a very deliberate choice.
+///
+/// @param s string to be parsed
+/// @param pos Index in @p s of where the integer starts.
+/// @param s_stop Index in @p s where the substring ends
+/// @returns On success, produces a pair holding the first position after the
+///     parsed integer and the parsed integer.
+template <typename IntegerT>
+constexpr Expected<std::pair<std::size_t, IntegerT>, Err> positive_int(
+    std::string_view s, std::size_t pos = 0,
+    std::size_t s_stop = std::string_view::npos) {
+  constexpr IntegerT max_val = std::numeric_limits<IntegerT>::max();
+  constexpr IntegerT max_div_10 = max_val / 10;
+  constexpr IntegerT digit_sentinal = max_val - max_div_10;
+
+  std::size_t stop = std::min(s_stop, s.size());
+
+  if (pos >= s_stop) {
+    return Unexpected(Err::Custom(s_stop - 1, "s_stop must exceed pos"));
+  } else if (s[pos] == '0') {
+    return Unexpected(Err::Custom(pos, "leading digit of a number can't be 0"));
+  }
+  IntegerT accum = 0;
+  std::size_t orig = pos;
+  for (pos = orig; pos < stop && isdigit_(s[pos]); pos++) {
+    IntegerT digit = static_cast<IntegerT>(s[pos] - '0');
+    if (accum > max_div_10 || (accum == max_div_10 && digit > digit_sentinal)) {
+      return Unexpected(Err::Custom(orig, "number exceeds max allowed value"));
+    }
+    accum = accum * static_cast<IntegerT>(10) + digit;
+  }
+  return std::pair<std::size_t, IntegerT>(pos, accum);
+}
+
 }  // namespace parse
 }  // namespace GRIMPL_NAMESPACE_DECL
 
