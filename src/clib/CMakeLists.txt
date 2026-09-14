@@ -144,7 +144,7 @@ add_library(Grackle_Grackle
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
   support/config.hpp
-  support/error.hpp
+  support/error.cpp support/error.hpp
   support/error_detail.hpp
   support/FrozenKeyIdxBiMap.hpp
   support/FrozenKeyIdxBiMap_detail.hpp
