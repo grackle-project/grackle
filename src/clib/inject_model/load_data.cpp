@@ -22,6 +22,7 @@
 #include "../opaque_storage.hpp"
 #include "../ratequery.hpp"
 #include "../support/error.hpp"
+#include "../support/expected.hpp"
 #include "../support/status_reporting.hpp"  // GrPrintAndReturnErr
 #include "../support/FrozenKeyIdxBiMap.hpp"
 
@@ -140,24 +141,23 @@ static ratequery::Entry grain_yield_recipe(chemistry_data_storage* my_rates,
   }
 }
 
-static int configure_RegBuilder(const chemistry_data_storage* my_rates,
-                                ratequery::RegBuilder* reg_builder,
-                                const char* const* inj_path_name_l,
-                                int n_pathways) {
+static Expected<void, Error> configure_RegBuilder(
+    const chemistry_data_storage* my_rates, ratequery::RegBuilder* reg_builder,
+    const char* const* inj_path_name_l, int n_pathways) {
   // make list of pathway names available to users through the ratequery API
   if (reg_builder->copied_str_arr1d("inject_model_names", inj_path_name_l,
                                     n_pathways) != GR_SUCCESS) {
-    return GrPrintAndReturnErr(
-        "There was an issue making names of inject pathways queryable");
+    return Unexpected(
+        Error::msg_literal("issue making names of inject pathways queryable"));
   }
 
   // the length of each gas nuclide yield array is equal to the number of
   // injection pathways
   if (reg_builder->recipe_1d(7, &nuclide_gas_yield_recipe, n_pathways) !=
       GR_SUCCESS) {
-    return GrPrintAndReturnErr(
-        "There was an issue making nuclide gas yield fractions (for each "
-        "injection pathway) queryable");
+    return Unexpected(Error::msg_literal(
+        "issue making nuclide gas yield fractions (for each injection pathway) "
+        "queryable"));
   }
 
   if ((my_rates->opaque_storage != nullptr) &&
@@ -169,13 +169,13 @@ static int configure_RegBuilder(const chemistry_data_storage* my_rates,
     // injection pathways
     if (reg_builder->recipe_1d(n_grain_species, &grain_yield_recipe,
                                n_pathways) != GR_SUCCESS) {
-      return GrPrintAndReturnErr(
-          "There was an issue making nuclide gas yield fractions (for each "
-          "injection pathway) queryable");
+      return Unexpected(Error::msg_literal(
+          "issue making nuclide gas yield fractions (for each injection "
+          "pathway) queryable"));
     }
   }
 
-  return GR_SUCCESS;
+  return {};
 }
 
 /// names of all injection pathways known to grackle listed in the order
@@ -546,9 +546,13 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
 
   // Before we finish, let's register some of these it can be queried by
   // Grackle-users
-  if (configure_RegBuilder(my_rates, reg_builder, inj_path_name_l,
-                           n_pathways) != GR_SUCCESS) {
-    return GrPrintAndReturnErr("error making injection pathway info queryable");
+  Expected<void, Error> conf_rslt =
+      configure_RegBuilder(my_rates, reg_builder, inj_path_name_l, n_pathways);
+  if (!conf_rslt.has_value()) {
+    Error err = conf_rslt.error().context_literal(
+        "problem making injection pathway info queryable");
+    err.write(stderr);
+    return GR_FAIL;
   }
 
   return GR_SUCCESS;
