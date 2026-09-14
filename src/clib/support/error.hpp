@@ -36,6 +36,14 @@ class Error {
   std::shared_ptr<ErrImpl_> impl_;  ///< internal representation of Error
 
   Error() = default;  // <- this is private to force use of factory methods
+
+  Error& context_helper_(ErrImpl_ new_ctx_err) {
+    std::shared_ptr<ErrImpl_> tmp = std::make_shared<ErrImpl_>(new_ctx_err);
+    tmp->err_cause_ = this->impl_;
+    this->impl_ = tmp;
+    return *this;
+  }
+
 public:
   Error(Error&&) = default;
   Error(const Error&) = default;
@@ -45,13 +53,21 @@ public:
 
   /// @brief wrap the existing err info in additional context
   ///
-  /// @note returns a reference to this for convenience
+  /// returns a reference to `this` for convenience
   Error& context(std::string msg) {
-    std::shared_ptr<ErrImpl_> tmp =
-        std::make_shared<ErrImpl_>(nullptr, std::move(msg), nullptr);
-    tmp->err_cause_ = this->impl_;
-    this->impl_ = tmp;
-    return *this;
+    return context_helper_(ErrImpl_{nullptr, std::move(msg), nullptr});
+  }
+
+  /// @brief wrap the existing err info in additional context
+  ///
+  /// returns a reference to `this` for convenience
+  ///
+  /// @note
+  /// This exists because the vast majority of Grackle's error messages are
+  /// string literals (if we don't coerce to a std::string that reduces heap
+  /// usage)
+  Error& context_literal(const char* msg) {
+    return context_helper_(ErrImpl_{msg, "", nullptr});
   }
 
   /// @brief convenience method to make it easier to write to stderr
@@ -66,6 +82,11 @@ public:
   }
 
   /// @brief Construct an error from a string-literal message
+  ///
+  /// @note
+  /// This exists because the vast majority of Grackle's error messages are
+  /// string literals (if we don't coerce to a std::string that reduces heap
+  /// usage)
   static Error msg_literal(const char* msg_literal) {
     Error out;
     out.impl_ = std::make_shared<ErrImpl_>(msg_literal, "", nullptr);
