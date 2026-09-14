@@ -6,11 +6,8 @@ All tables come from the grackle_data_files repository.
 
 Only HM2012_metal_new.h5 and HM2012_shielded_metal_new.h5 carry a
 HydrogenFractionByMass attribute on the /CoolingRates/Primordial group.
-Its value, 0.715768377353088514, records the H mass fraction assumed when
-those primordial heating/cooling tables were generated
-(n_He/n_H = 0.1, m_He = 3.971 m_H). Grackle does not yet read this attribute;
+Grackle does not yet read this attribute;
 tabulated mode (primordial_chemistry = 0) uses the historical fixed value.
-The existing data files are unchanged.
 
 Tables
 ------
