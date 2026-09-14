@@ -261,53 +261,11 @@ public:  // interface methods
   /// Returns an instance holding 0 elements.
   FrozenKeyIdxBiMap() { alloc_(0, 0, BiMapMode::REFS_KEYDATA); }
 
-  // for now, lets disble copy construction and assignment (its usually a
-  // mistake when that happens and this is important to transitioning towards
-  // acting more like a class)
-  FrozenKeyIdxBiMap(const FrozenKeyIdxBiMap&) = delete;
-  FrozenKeyIdxBiMap& operator=(const FrozenKeyIdxBiMap&) = delete;
-
-  /// @brief Move Constructor
-  ///
-  /// Constructs a new instance and transfers the contents from @p other into
-  /// the new instance. @p other is left in an undefined state.
-  ///
-  /// @param other The source of contents for the newly constructed instance
-  FrozenKeyIdxBiMap(FrozenKeyIdxBiMap&& other) noexcept : FrozenKeyIdxBiMap() {
-    swap(other);
-  }
-
-  /// @brief Move Assignment
-  ///
-  /// Transfers the contents from @p other into `this`. @p other is left in an
-  /// undefined state.
-  ///
-  /// @param other The source of contents for the newly constructed instance
-  FrozenKeyIdxBiMap& operator=(FrozenKeyIdxBiMap&& other) {
-    if (this != &other) {
-      swap(other);
-    }
-    return *this;
-  }
-
-  inline ~FrozenKeyIdxBiMap() noexcept = default;
-
-  /// @brief Makes a clone of this
-  ///
-  /// The clone inherits the original's BiMapMode value. If it held
-  /// BiMapMode::COPIES_KEYDATA, then fresh copies of the strings are made
-  ///
-  /// @warning
-  /// Callers should pass the returned value to @ref FrozenKeyIdxBiMap::is_ok
-  /// to check whether there was an error during creation. This is pretty
-  /// ugly/clunky, but it's the only practical way to achieve comparable
-  /// behavior to other internal data types. The best alternatives involve
-  /// things like std::optional or C++23's std::expected.
-  ///
-  /// @note
-  /// If we wanted slightly more idiomatic C++, we would fold this into the
-  /// copy constructor and copy assignment methods.
-  FrozenKeyIdxBiMap clone() const;
+  FrozenKeyIdxBiMap(const FrozenKeyIdxBiMap&) = default;
+  FrozenKeyIdxBiMap& operator=(const FrozenKeyIdxBiMap&) = default;
+  FrozenKeyIdxBiMap(FrozenKeyIdxBiMap&&) noexcept = default;
+  FrozenKeyIdxBiMap& operator=(FrozenKeyIdxBiMap&&) noexcept = default;
+  ~FrozenKeyIdxBiMap() noexcept = default;
 
   /// @brief swaps contents
   void swap(FrozenKeyIdxBiMap& other) noexcept {
@@ -440,41 +398,6 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
 
   return out;
 }
-
-inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::clone() const {
-  if (!is_ok()) {
-    return FrozenKeyIdxBiMap::make_invalid_();
-  }
-
-  FrozenKeyIdxBiMap out;
-  out.alloc_(length, capacity, mode);
-  out.max_probe = max_probe;
-
-  if (length == 0) {
-    return out;
-  }
-
-  // give the compiler/linter a hint that out.table_rows is not a nullptr
-  // (this is guaranteed by the preceding early exit)
-  GR_INTERNAL_REQUIRE(
-      (out.table_rows != nullptr) && (out.ordered_row_indices != nullptr),
-      "something is very wrong!");
-
-  bool copy_key_data = out.mode == BiMapMode::COPIES_KEYDATA;
-  for (bimap_detail::rowidx_type i = 0; i < capacity; i++) {
-    const bimap_StrU16_detail::Row& ref_row = table_rows[i];
-    if (ref_row.keylen > 0) {
-      bimap_StrU16_detail::overwrite_row(out.table_rows + i, ref_row.key,
-                                         ref_row.keylen, ref_row.value,
-                                         copy_key_data);
-    }
-  }
-
-  for (bimap_detail::rowidx_type i = 0; i < length; i++) {
-    out.ordered_row_indices[i] = ordered_row_indices[i];
-  }
-  return out;
-};
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
