@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <optional>
 #include <utility>  // std::swap
 
@@ -148,7 +149,38 @@ enum class BiMapMode {
 /// detail! Always prefer the associated functions (they are defined in such
 /// a way that they should be inlined)
 class FrozenKeyIdxBiMap {
-  // don't forget to update the clone method when changing data members
+  using rowidx_type = bimap_detail::rowidx_type;
+
+  // represents the heap-allocated data (only used if length > 0)
+  struct Allocation {
+    rowidx_type n_key_delete_attempt;
+    bimap_StrU16_detail::Row* table_rows;
+    rowidx_type* ordered_row_indices;
+
+    Allocation() = delete;
+
+    Allocation(rowidx_type length, rowidx_type capacity, BiMapMode mode)
+        : table_rows{new bimap_StrU16_detail::Row[capacity]},
+          ordered_row_indices{new rowidx_type[length]} {
+      n_key_delete_attempt = (mode == BiMapMode::COPIES_KEYDATA) ? capacity : 0;
+      for (rowidx_type i = 0; i < capacity; i++) {
+        table_rows[i].keylen = 0;
+      }
+    }
+
+    ~Allocation() noexcept {
+      for (rowidx_type i = 0; i < n_key_delete_attempt; i++) {
+        if (table_rows[i].keylen > 0) {
+          delete[] table_rows[i].key;
+        }
+      }
+      delete[] table_rows;
+      delete[] ordered_row_indices;
+    }
+  };
+
+  // list the data members
+  // ----------------------
 
   /// the number of contained strings
   bimap_detail::rowidx_type length;
@@ -159,6 +191,10 @@ class FrozenKeyIdxBiMap {
   /// specifies ownership of keys, @see BiMapMode
   BiMapMode mode;
 
+  /// the actual data (it's reference-counted)
+  std::shared_ptr<Allocation> allocation_;
+
+  // these are just copies of the pointers in alloc_ (to avoid a ptr deref)
   /// actual hash table data
   bimap_StrU16_detail::Row* table_rows;
   /// tracks the row indices to make iteration faster
@@ -171,17 +207,18 @@ class FrozenKeyIdxBiMap {
     // memory, but that gets tricky. Essentially, we would allocate
     // uninitialized memory and manually use placement-new (and the
     // corresponding `delete`)
-    using bimap_detail::rowidx_type;
-    using bimap_StrU16_detail::Row;
     length = target_length;
     capacity = target_capacity;
     max_probe = target_capacity;
     mode = target_mode;
-    table_rows = (target_capacity > 0) ? new Row[target_capacity] : nullptr;
-    ordered_row_indices =
-        (target_length > 0) ? new rowidx_type[target_length] : nullptr;
-    for (uint16_t i = 0; i < target_capacity; i++) {
-      table_rows[i].keylen = 0;
+    if (target_length == 0) {
+      table_rows = nullptr;
+      ordered_row_indices = nullptr;
+    } else {
+      allocation_ = std::make_shared<Allocation>(target_length, target_capacity,
+                                                 target_mode);
+      table_rows = allocation_->table_rows;
+      ordered_row_indices = allocation_->ordered_row_indices;
     }
   }
 
@@ -253,8 +290,7 @@ public:  // interface methods
     return *this;
   }
 
-  /// @brief Destuctor
-  inline ~FrozenKeyIdxBiMap() noexcept;
+  inline ~FrozenKeyIdxBiMap() noexcept = default;
 
   /// @brief Makes a clone of this
   ///
@@ -279,6 +315,7 @@ public:  // interface methods
     std::swap(capacity, other.capacity);
     std::swap(max_probe, other.max_probe);
     std::swap(mode, other.mode);
+    allocation_.swap(other.allocation_);
     std::swap(table_rows, other.table_rows);
     std::swap(ordered_row_indices, other.ordered_row_indices);
   }
@@ -334,25 +371,6 @@ public:  // interface methods
 };
 
 /** @}*/  // end of group
-
-inline FrozenKeyIdxBiMap::~FrozenKeyIdxBiMap() noexcept {
-  if (is_ok()) {
-    if (length > 0) {
-      if (mode == BiMapMode::COPIES_KEYDATA) {
-        for (bimap_detail::rowidx_type i = 0; i < capacity; i++) {
-          bimap_StrU16_detail::Row* row = table_rows + i;
-          // casting from (const char*) to (char*) should be legal (as long as
-          // there were no bugs modifying the value of ptr->mode)
-          if (row->keylen > 0) {
-            delete[] row->key;
-          }
-        }
-      }
-      delete[] table_rows;
-      delete[] ordered_row_indices;
-    }  // ptr->length > 0
-  }
-}
 
 inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
                                                    int key_count,
