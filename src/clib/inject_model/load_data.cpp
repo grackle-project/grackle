@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <cstring>  // std::strcmp
+
 #include "../dust/grain_species_info.hpp"
 #include "grackle_chemistry_data.h"
 #include "load_data.hpp"  // forward declarations
@@ -20,6 +21,7 @@
 #include "../LUT.hpp"
 #include "../opaque_storage.hpp"
 #include "../ratequery.hpp"
+#include "../support/error.hpp"
 #include "../support/status_reporting.hpp"  // GrPrintAndReturnErr
 #include "../support/FrozenKeyIdxBiMap.hpp"
 
@@ -263,6 +265,9 @@ struct SetupCallbackCtx {
   /// maps the names of the grain species for which data will be loaded to the
   /// appropriate grain species index
   const GRIMPL_NS::FrozenKeyIdxBiMap* grain_species_names;
+
+  /// used to hold an error
+  std::optional<GRIMPL_NS::Error> maybe_err;
 };
 
 /// a callback function that sets up the appropriate parts of
@@ -282,6 +287,9 @@ extern "C" int setup_yield_table_callback(
   namespace inj_input = ::GRIMPL_NS::inj_model_input;
 
   SetupCallbackCtx* my_ctx = static_cast<SetupCallbackCtx*>(ctx);
+  if (my_ctx->maybe_err.has_value()) {
+    return GR_FAIL;
+  }
 
   // lookup the pathway associated with the current injection pathway name
   // and report an error if there is one
@@ -306,8 +314,9 @@ extern "C" int setup_yield_table_callback(
     double *total_yield, *gas_yield;
     if (!lookup_metal_yield_ptrs(inject_pathway_props, yield_info.name,
                                  &total_yield, &gas_yield)) {
-      return GrPrintAndReturnErr("`%s` not a known metal nuclide",
-                                 yield_info.name);
+      my_ctx->maybe_err = GRIMPL_NS::Error::msgf(
+          "`%s` not a known metal nuclide", yield_info.name);
+      return GR_FAIL;
     }
 
     total_yield[pathway_idx] = yield_info.total_yield;
@@ -515,20 +524,20 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
                                       : &grain_species_info->name_map();
 
   SetupCallbackCtx ctx = {
-      /* inject_pathway_props = */ my_rates->opaque_storage
-          ->inject_pathway_props,
-      /* counter = */ 0,
-      /* inj_path_names = */ &inj_path_names,
-      /* grain_species_names = */ grain_species_names,
-  };
+      .inject_pathway_props = my_rates->opaque_storage->inject_pathway_props,
+      .counter = 0,
+      .inj_path_names = &inj_path_names,
+      .grain_species_names = grain_species_names,
+      .maybe_err = std::nullopt};
 
   int ret = inj_model_input::input_inject_model_iterate(
       &setup_yield_table_callback, static_cast<void*>(&ctx));
 
   if (ret != GR_SUCCESS) {
-    return GrPrintAndReturnErr(
-        "some kind of unspecified error occured when loading data from each "
-        "injection pathway");
+    Error err = ctx.maybe_err.value_or(Error::msg_literal("unspecified error"));
+    err.context_literal("problem while loading data from injection pathway");
+    err.write(stderr);
+    return GR_FAIL;
   } else if (ctx.counter != n_pathways) {
     return GrPrintAndReturnErr(
         "Only loaded data for %d of the %d available pathways", ctx.counter,
