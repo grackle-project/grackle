@@ -19,9 +19,11 @@
 #include <optional>
 #include <utility>  // std::swap
 
-#include "config.hpp"
-#include "support/status_reporting.hpp"
-#include "FrozenKeyIdxBiMap_detail.hpp"
+#include "./config.hpp"
+#include "./error.hpp"
+#include "./expected.hpp"
+#include "./status_reporting.hpp"
+#include "./FrozenKeyIdxBiMap_detail.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -253,8 +255,9 @@ public:  // interface methods
   /// ugly/clunky, but it's the only practical way to achieve comparable
   /// behavior to other internal data types. The best alternatives involve the
   /// use of std::optional or C++23's std::expected.
-  static FrozenKeyIdxBiMap create(const char* const keys[], int key_count,
-                                  BiMapMode mode);
+  static Expected<FrozenKeyIdxBiMap, Error> create(const char* const keys[],
+                                                   int key_count,
+                                                   BiMapMode mode);
 
   /// @brief Default Constructor
   ///
@@ -330,21 +333,18 @@ public:  // interface methods
 
 /** @}*/  // end of group
 
-inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
-                                                   int key_count,
-                                                   BiMapMode mode) {
+inline Expected<FrozenKeyIdxBiMap, Error> FrozenKeyIdxBiMap::create(
+    const char* const keys[], int key_count, BiMapMode mode) {
   int64_t max_len = static_cast<int64_t>(bimap_cap_detail::max_key_count());
   if (keys == nullptr && key_count == 0) {
     FrozenKeyIdxBiMap out;
     out.alloc_(0, 0, mode);
-    return out;
+    return {out};
   } else if (keys == nullptr) {
-    GrPrintErrMsg("keys must not be a nullptr");
-    return FrozenKeyIdxBiMap::make_invalid_();
+    return Unexpected(Error::msg_literal("keys must not be a nullptr"));
   } else if (key_count < 1 || static_cast<int64_t>(key_count) > max_len) {
-    GrPrintErrMsg("key_count must be positive & can't exceed %lld",
-                  static_cast<long long int>(max_len));
-    return FrozenKeyIdxBiMap::make_invalid_();
+    return Unexpected(
+        Error::msgf("key_count must be positive & can't exceed %lld", max_len));
   }
 
   // based on the preceding check, this shouldn't be able to fail
@@ -358,17 +358,15 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
     std::size_t n_chrs_without_nul = std::strlen(keys[i]);
     if (n_chrs_without_nul == 0 ||
         n_chrs_without_nul > bimap_detail::KEYLEN_MAX) {
-      GrPrintErrMsg(
+      return Unexpected(Error::msgf(
           "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
           "exceeding %d",
-          keys[i], i, bimap_detail::KEYLEN_MAX);
-      return FrozenKeyIdxBiMap::make_invalid_();
+          keys[i], i, bimap_detail::KEYLEN_MAX));
     }
     // check uniqueness
     for (int j = 0; j < i; j++) {
       if (strcmp(keys[i], keys[j]) == 0) {
-        GrPrintErrMsg("\"%s\" key repeats", keys[i]);
-        return FrozenKeyIdxBiMap::make_invalid_();
+        return Unexpected(Error::msgf("\"%s\" key repeats", keys[i]));
       }
     }
   }

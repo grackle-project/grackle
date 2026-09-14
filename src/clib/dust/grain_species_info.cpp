@@ -293,17 +293,18 @@ Expected<GrainSpeciesInfo*, Error> GrainSpeciesInfo::create_ptr(
         /* growth_ingredients = */ nullptr);
   }
 
-  FrozenKeyIdxBiMap name_map =
+  Expected<FrozenKeyIdxBiMap, Error> name_map_rslt =
       FrozenKeyIdxBiMap::create(names, n_species, BiMapMode::COPIES_KEYDATA);
 
-  if (!name_map.is_ok()) {
+  if (!name_map_rslt.has_value()) {
     GrainSpeciesInfo::cleanup_array_(n_species, species_info);
-    return Unexpected(Error::msg_literal("issue building name_map"));
+    return Unexpected(
+        name_map_rslt.error().context_literal("can't build name_map"));
   } else {
     GrainSpeciesInfo* out = new GrainSpeciesInfo;
     out->n_species_ = n_species;
     out->species_info_ = species_info;
-    out->name_map_.swap(name_map);
+    out->name_map_.swap(name_map_rslt.value());
     return out;
   }
 }
