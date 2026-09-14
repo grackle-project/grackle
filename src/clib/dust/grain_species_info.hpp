@@ -15,6 +15,8 @@
 
 #include "../support/FrozenKeyIdxBiMap.hpp"
 #include "../support/config.hpp"
+#include "../support/error.hpp"
+#include "../support/expected.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -135,10 +137,8 @@ private:  // helper methods
     }
   }
 
+  explicit GrainSpeciesInfo() noexcept = default;  // <- used by factory method
 public:
-  /// @brief checks whether instance is valid
-  explicit operator bool() const { return n_species_ > 0; }
-
   /// @brief number of grain species considered in current Grackle configuration
   int n_species() const { return n_species_; }
 
@@ -148,16 +148,15 @@ public:
   /// @brief returns mapping between grain species names and associated indices
   const FrozenKeyIdxBiMap& name_map() const { return name_map_; }
 
-  /// @brief Primary Constructor
+  /// @brief Factory Method
   ///
-  /// It is the caller's responsibility to check whether the resulting object
-  /// is valid (e.g. by checking `if (obj)`).
+  /// This never producess a nullptr.
   ///
   /// @note
-  /// In the future, we could use a factory method that returns a std::optional
-  /// or a C++23's std::expected. This would let us ensure that instance of
-  /// this class only exists if it's valid
-  explicit GrainSpeciesInfo(int dust_species_parameter);
+  /// The choice to make this return a pointer is motivated by the fact that
+  /// copy-construction and copy-assignment aren't currently defined.
+  static Expected<GrainSpeciesInfo*, Error> create_ptr(
+      int dust_species_parameter);
 
   // the following are disabled because the default implementations won't
   // properly handle species_info

@@ -21,6 +21,7 @@
 #include "LUT.hpp"
 #include "dust/grain_species_info.hpp"
 #include "support/FrozenKeyIdxBiMap.hpp"
+#include "support/expected.hpp"
 
 namespace {  // stuff in an anonymous namespace is local to this file
 
@@ -102,12 +103,14 @@ constexpr int MAX_dust_species_VAL = 3;
 using unique_GrainSpeciesInfo_ptr =
     std::unique_ptr<GRIMPL_NS::GrainSpeciesInfo>;
 
-/// creates a unique_ptr holding a grackle::impl::GrainSpeciesInfo
+/// creates a unique_ptr holding a GRIMPL_NS::GrainSpeciesInfo
 ///
 /// This is useful for preventing memory leaks when tests fail
 unique_GrainSpeciesInfo_ptr make_unique_GrainSpeciesInfo(
     int dust_species_param) {
-  return std::make_unique<GRIMPL_NS::GrainSpeciesInfo>(dust_species_param);
+  GRIMPL_NS::Expected<GRIMPL_NS::GrainSpeciesInfo*, GRIMPL_NS::Error> tmp =
+      GRIMPL_NS::GrainSpeciesInfo::create_ptr(dust_species_param);
+  return std::unique_ptr<GRIMPL_NS::GrainSpeciesInfo>(tmp.value_or(nullptr));
 }
 
 }  // anonymous namespace
@@ -362,17 +365,12 @@ INSTANTIATE_TEST_SUITE_P(
 // parameters that hold extreme values
 TEST(GrainSpeciesInfoTestMisc, DustSpeciesExtremeValues) {
   int invalid_dust_species_values[3] = {-42423, 0, MAX_dust_species_VAL + 1};
-  for (auto dust_species_param : invalid_dust_species_values) {
-    unique_GrainSpeciesInfo_ptr ptr =
-        make_unique_GrainSpeciesInfo(dust_species_param);
-    EXPECT_LE(ptr->n_species(), -1)
-        << "GrainSpeciesInfo::n_species should be negative when the "
-        << "dust_species parameter is " << dust_species_param << " (i.e. an "
-        << "invalid value).";
-    EXPECT_EQ(ptr->species_info(), nullptr)
-        << "GrainSpeciesInfo::species_info member should be a nullptr when the "
-        << "dust_species parameter is " << dust_species_param << " (i.e. an "
-        << "invalid value).";
+  for (int dust_species_param : invalid_dust_species_values) {
+    GRIMPL_NS::Expected<GRIMPL_NS::GrainSpeciesInfo*, GRIMPL_NS::Error> rslt =
+        GRIMPL_NS::GrainSpeciesInfo::create_ptr(dust_species_param);
+    ASSERT_FALSE(rslt.has_value())
+        << "GrainSpeciesInfo::create_ptr should fail when dust_species param "
+        << "is " << dust_species_param << " (i.e. an invalid value).";
   }
 
   int n_known_grain_species = number_known_grain_species();
