@@ -114,21 +114,19 @@ TEST(FrozenKeyIdxBiMap, EmptyBasicOps) {
 }
 
 // validate behavior of clone for an empty bimap
-TEST(FrozenKeyIdxBiMap, EmptyClone) {
+TEST(FrozenKeyIdxBiMap, EmptyCopy) {
+  using GRIMPL_NS::FrozenKeyIdxBiMap;
   // make the original
-  grackle::impl::FrozenKeyIdxBiMap m = grackle::impl::FrozenKeyIdxBiMap::create(
+  FrozenKeyIdxBiMap m = FrozenKeyIdxBiMap::create(
       nullptr, 0, grackle::impl::BiMapMode::COPIES_KEYDATA);
   ASSERT_TRUE(m.is_ok())
       << "construction of a FrozenKeyIdxBiMap unexpectedly failed";
 
   // make the clone
-  grackle::impl::FrozenKeyIdxBiMap m_clone = m.clone();
+  FrozenKeyIdxBiMap m_clone = m;
 
-  bool success = m.is_ok();
-
-  if (!success) {
-    FAIL() << "cloning an empty mapping failed!";
-  }
+  EXPECT_TRUE(m.is_ok()) << "copy operation shouldn't affect original";
+  EXPECT_TRUE(m_clone.is_ok()) << "copy operation failed";
 }
 
 class BiMapCreate : public testing::TestWithParam<grackle::impl::BiMapMode> {
@@ -284,8 +282,8 @@ TEST_P(BiMapGeneral, KeyFromIdxValidIdx) {
   }
 }
 
-TEST_P(BiMapGeneral, Clone) {
-  grackle::impl::FrozenKeyIdxBiMap clone = bimap_p->clone();
+TEST_P(BiMapGeneral, Copy) {
+  grackle::impl::FrozenKeyIdxBiMap clone = *bimap_p;
   ASSERT_TRUE(bimap_p->is_ok());
   grackle::impl::FrozenKeyIdxBiMap* clone_p = &clone;
 
