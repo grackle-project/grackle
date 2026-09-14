@@ -14,7 +14,7 @@
 #define SUPPORT_EXPECTED_HPP
 
 #include <concepts>
-#include <type_traits>
+#include <optional>
 #include <variant>
 
 #include "config.hpp"
@@ -74,8 +74,6 @@ public:
 template <class T, class E>
   requires std::copyable<E>
 class Expected {
-  static_assert(!std::is_void_v<T>, "T isn't currently allowed to be void");
-
   std::variant<T, E> u_;  // a type-safe union holding either a value or error
 
 public:
@@ -122,6 +120,33 @@ public:
   constexpr const T& operator*() const noexcept { return std::get<0>(u_); }
   constexpr T* operator->() noexcept { return &std::get<0>(u_); }
   constexpr const T* operator->() const noexcept { return &std::get<0>(u_); }
+};
+
+// partial specialization Expected for writing `Expected<void, E>`:
+template <class E>
+  requires std::copyable<E>
+class Expected<void, E> {
+  std::optional<E> u_;
+
+public:
+  constexpr Expected() = default;
+
+  // the following allow implicit casts from T and Unexpected<E> objects
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr Expected(Unexpected<E> e) : u_(std::move(e.error())) {}
+
+  constexpr bool has_value() const { return !u_.has_value(); }
+  constexpr explicit operator bool() const { return !u_.has_value(); }
+
+  constexpr E& error() { return u_.value(); }
+  constexpr const E& error() const { return u_.value(); }
+
+  // the following are all defined for consistency with general form of Expected
+  constexpr void value() const {}
+  Expected(Expected&&) = delete;
+  Expected& operator=(Expected&&) = delete;
+  constexpr void operator*() noexcept {}
+  constexpr void operator*() const noexcept {}
 };
 
 }  // namespace GRIMPL_NAMESPACE_DECL
