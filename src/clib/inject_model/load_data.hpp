@@ -15,8 +15,9 @@
 
 #include "grackle.h"
 #include "../ratequery.hpp"
+#include "../support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// loads the model data for the various injection pathways and update
 /// @p my_rates, accordingly
@@ -26,6 +27,6 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
                           chemistry_data_storage* my_rates,
                           ratequery::RegBuilder* reg_builder);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* INJECT_MODEL_LOAD_DATA_HPP */
