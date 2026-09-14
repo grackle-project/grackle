@@ -174,6 +174,103 @@ potential_nuclide_sym(std::string_view s, std::size_t pos = 0,
   }
 }
 
+/// @brief Represents an array of coefficient-string_view pairs
+///
+/// The array is short enough that no heap allocations are used.
+struct CoefSViewPairArray {
+  // as a potential optimization, we could replace CoefSViewPair with a type
+  //   struct CoefSView{ uint16_t s_start; uint8_t s_count; uint8_t coef; };
+  // that only uses up 4 bytes (rather than 24 bytes)
+  using CoefSViewPair = std::pair<uint8_t, std::string_view>;
+  static constexpr std::size_t CAPACITY = 4;
+
+private:
+  std::size_t len_ = 0;
+  CoefSViewPair arr_[CAPACITY];
+
+public:
+  /// @brief Overloads array subscript operation
+  ///
+  /// @note For less-experienced C++ developers, this is like python's
+  /// `__getitem__` magic method
+  constexpr const CoefSViewPair& operator[](int idx) const { return arr_[idx]; }
+
+  /// @brief Returns the size of the vector
+  constexpr std::size_t size() const { return len_; }
+
+  /// @brief try to construct an element in-place at the back
+  constexpr bool try_emplace_back(uint8_t coef, std::string_view s_view) {
+    if (len_ == CAPACITY) {
+      return false;
+    }
+    arr_[len_].first = coef;
+    arr_[len_].second = s_view;
+    ++len_;
+    return true;
+  }
+};
+
+/// Represents the parsed components of a chemical formula
+struct FormulaComps {
+  /// tracks the value of the roman numeral
+  uint8_t roman_numeral_val;
+
+  /// tracks subscripts of a nuclide symbol and the symbol itself
+  CoefSViewPairArray subscript_symbol_pairs;
+};
+
+/// @brief try to parse components of a chemical formula from the string @p s
+///
+/// The function fails if all characters in the range
+///   [`s.data() + pos`, `s.data() + stop`)
+/// aren't all part of a single chemical formula
+///
+/// @param[in]  s string to be parsed.
+/// @param[in]  pos Index in @p s of where the formula starts.
+/// @param[in]  stop Index in @p s where the substring ends
+constexpr inline Expected<FormulaComps, Err> formula_comps(
+    std::string_view s, std::size_t pos = 0,
+    std::size_t stop = std::string_view::npos) {
+  // try to parse a roman numeral starting from the right edge of s
+  Expected<std::pair<std::size_t, int>, Err> retval =
+      roman_from_right(s, 1, stop);
+  if (!retval.has_value()) {
+    return Unexpected(
+        Err::Custom(pos, "must end in a roman numeral (with value under 100)"));
+  }
+
+  FormulaComps comps;
+  // update `stop` to point to the leftmost character in the roman numeral (we
+  // took care to ensure this is always at least pos+1) and store numeral value
+  std::tie(stop, comps.roman_numeral_val) = retval.value();
+  while (pos < stop) {
+    // try to parse a nuclide symbol
+    Expected<std::pair<std::size_t, std::string_view>, Err> rv_a =
+        potential_nuclide_sym(s, pos, stop);
+    if (!rv_a.has_value()) {
+      return Unexpected(rv_a.error());
+    }
+    std::string_view sym;
+    std::tie(pos, sym) = rv_a.value();
+
+    // determine subscript associated with the symbol
+    Expected<std::pair<std::size_t, uint8_t>, Err> rv_b =
+        positive_int<uint8_t>(s, pos, stop);
+    if (pos != stop && !rv_b.has_value() && !rv_b.error().is_InvalidChar()) {
+      return Unexpected(rv_b.error());
+    }
+    uint8_t subscript;
+    std::tie(pos, subscript) = rv_b.value_or({pos, 1});
+
+    // record the subscript-symbol pair
+    if (!comps.subscript_symbol_pairs.try_emplace_back(subscript, sym)) {
+      return Unexpected(Err::Custom(pos, "too many nuclide symbols"));
+    }
+  }
+
+  return comps;
+}
+
 }  // namespace parse
 }  // namespace GRIMPL_NAMESPACE_DECL
 
