@@ -62,3 +62,24 @@ TEST(ExpectedSample, ErrInvalidInput) {
   ASSERT_FALSE((bool)rslt);
   EXPECT_EQ(rslt.error(), ParseErr::InvalidInput);
 }
+
+// a simple set of tests for the partial void overload of Expected
+// ==============================================================
+TEST(ExpectedVoid, FromUnexpected) {
+  auto fn = []() -> Expected<void, ParseErr> {
+    return Unexpected(ParseErr::InvalidInput);
+  };
+
+  Expected<void, ParseErr> rslt = fn();
+  ASSERT_FALSE(rslt.has_value());
+  ASSERT_FALSE((bool)rslt);
+  EXPECT_EQ(rslt.error(), ParseErr::InvalidInput);
+}
+
+TEST(ExpectedVoid, Success) {
+  auto fn = []() -> Expected<void, ParseErr> { return {}; };
+
+  Expected<void, ParseErr> rslt = fn();
+  ASSERT_TRUE(rslt.has_value());
+  ASSERT_TRUE((bool)rslt);
+}
