@@ -66,12 +66,6 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
     my_uvb_rates.temp_xray = my_rates->temp_xray;
   }
 
-  /* Check for a metal field. */
-
-  int metal_field_present = TRUE;
-  if (my_fields->metal_density == NULL)
-    metal_field_present = FALSE;
-
   GRIMPL_NS::InternalGrUnits internalu = GRIMPL_NS::new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
@@ -84,7 +78,7 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
   /* Call the routine to solve cooling equations. */
 
   int ierr = grackle::impl::solve_rate_cool(
-    metal_field_present, dt_value, internalu,
+    dt_value, internalu,
     my_chemistry, my_rates, my_fields, &my_uvb_rates
   );
 

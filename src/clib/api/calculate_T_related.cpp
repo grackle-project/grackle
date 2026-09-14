@@ -49,8 +49,6 @@ static int calc_T_related_(Fn callback,
                    cloudy_data cloudy_primordial, grackle_field_data* my_fields,
                    InternalGrUnits internalu)
 {
-  const int imetal = (my_fields->metal_density != NULL) ? 1 : 0;
-
   const DensityUnitKind du_kind = (internalu.extfields_in_comoving == 1) ?
     DensityUnitKind::COMOVING : DensityUnitKind::PROPER;
 
@@ -82,7 +80,7 @@ static int calc_T_related_(Fn callback,
 
       // calculate the basic gas properties (tgas, mmw, rhoH)
       basic_gas_props(
-          tgas.data(), mmw.data(), rhoH.data(), imetal, itmask.data(),
+          tgas.data(), mmw.data(), rhoH.data(), itmask.data(),
           my_chemistry, &cloudy_primordial, my_fields, internalu, idx_range,
           du_kind);
 

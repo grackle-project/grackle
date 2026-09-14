@@ -40,7 +40,6 @@ namespace time_deriv_0d {
 /// time derivative calculations
 struct FrozenSimpleArgs {
   // the following batch of args are all forwarded
-  int imetal;
   double dom;
   double chunit;
   double dx_cgs;
@@ -491,7 +490,7 @@ inline void derivatives(
                        pack.other_scratch_buf.metallicity,
                        pack.other_scratch_buf.nelec_times_mH,
                        pack.main_scratch_buf.logTlininterp_buf,
-                       pack.fwd_args.imetal, pack.other_scratch_buf.itmask,
+                       pack.other_scratch_buf.itmask,
                        my_chemistry, &my_rates->cloudy_primordial, &pack.fields,
                        internalu, pack.idx_range_1_element,
                        // passing nullptr means that values in
@@ -510,7 +509,7 @@ inline void derivatives(
     mask::fill_itmask_metal(&pack.local_itmask_metal,
                             pack.other_scratch_buf.itmask,
                             pack.other_scratch_buf.metallicity,
-                            pack.fwd_args.imetal, pack.idx_range_1_element,
+                            pack.idx_range_1_element,
                             my_chemistry);
 
     // initialize the edot buffer

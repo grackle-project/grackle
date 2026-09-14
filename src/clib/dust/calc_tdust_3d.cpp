@@ -35,7 +35,7 @@
 namespace GRIMPL_NAMESPACE_DECL {
 
 void calc_tdust_3d(
-  gr_float* dust_temp_data_, int imetal,
+  gr_float* dust_temp_data_,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, InternalGrUnits internalu
 )
@@ -59,7 +59,7 @@ void calc_tdust_3d(
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
     scale_fields_dust(
-        my_chemistry, my_fields, imetal, factor,
+        my_chemistry, my_fields, factor,
         get_n_inject_pathway_density_ptrs(my_rates));
   }
 
@@ -171,13 +171,13 @@ void calc_tdust_3d(
 
         extended_gas_props(tgas.data(), dummy_mmw, dummy_rhoH,
                            metallicity.data(), dummy_nelec_times_mH,
-                           logTlininterp_buf, imetal, itmask.data(),
+                           logTlininterp_buf, itmask.data(),
                            my_chemistry, &my_rates->cloudy_primordial,
                            my_fields, internalu, idx_range, nullptr);
       }
 
       mask::fill_itmask_metal(itmask_metal.data(), itmask.data(),
-                              metallicity.data(), imetal, idx_range,
+                              metallicity.data(), idx_range,
                               my_chemistry);
 
       // Compute grain size increment
@@ -301,7 +301,7 @@ void calc_tdust_3d(
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)std::pow(internalu.a_value,3);
     scale_fields_dust(
-        my_chemistry, my_fields, imetal, factor,
+        my_chemistry, my_fields, factor,
         get_n_inject_pathway_density_ptrs(my_rates));
   }
 
