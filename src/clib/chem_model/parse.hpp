@@ -151,6 +151,29 @@ constexpr Expected<std::pair<std::size_t, IntegerT>, Err> positive_int(
   return std::pair<std::size_t, IntegerT>(pos, accum);
 }
 
+/// @brief try to extract characters in the format of a nuclide symbol
+///
+/// This function deliberately doesn't check whether extracted symbols map to
+/// to a known nuclide symbol
+///
+/// @param s string to be parsed
+/// @param pos Index in @p s of where the symbol starts.
+/// @param s_stop Index in @p s where the substring ends
+/// @returns On success, produces a pair holding the first position after the
+///     symbol-candidate and a view of the symbol-candidate.
+constexpr Expected<std::pair<std::size_t, std::string_view>, Err>
+potential_nuclide_sym(std::string_view s, std::size_t pos = 0,
+                      std::size_t s_stop = std::string_view::npos) {
+  std::size_t stop = std::min(s_stop, s.size());
+  if (!isupper_(s[pos])) {
+    return Unexpected(Err::InvalidChar(pos));
+  } else if (pos + 1 == stop || !islower_(s[pos + 1])) {
+    return std::pair<std::size_t, std::string_view>(pos + 1, s.substr(pos, 1));
+  } else {
+    return std::pair<std::size_t, std::string_view>(pos + 2, s.substr(pos, 2));
+  }
+}
+
 }  // namespace parse
 }  // namespace GRIMPL_NAMESPACE_DECL
 
