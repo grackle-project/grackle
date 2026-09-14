@@ -54,6 +54,9 @@ public:
     return *this;
   }
 
+  /// @brief convenience method to make it easier to write to stderr
+  void write(std::FILE* stream, bool append_newline = true) const;
+
   // factory methods (we may add more in the future!)
   /// @brief Construct an error from an arbitrary message
   static Error msg(std::string msg) {
