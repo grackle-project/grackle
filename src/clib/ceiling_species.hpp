@@ -25,7 +25,7 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
+inline void ceiling_species(chemistry_data* my_chemistry,
                             grackle_field_data* my_fields) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
@@ -242,7 +242,7 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
       }
     }
   }
-  if (imetal == 1) {
+  if (my_chemistry->metal_cooling == 1) {
     for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
       for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {

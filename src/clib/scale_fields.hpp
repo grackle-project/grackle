@@ -33,12 +33,11 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
 ///
 /// @param[in] my_chemistry holds a number of configuration parameters
 /// @param[inout] my_fields holds the fields that will be updated in-place
-/// @param[in] imetal Specifies whether the metal_density was specified
 /// @param[in] factor The factor that is multiplied by the fields
 /// @param[in] n_inj_path_ptrs The number of pointers tracked by
 ///     `my_fields->inject_pathway_metal_density`
 inline void scale_fields_dust(chemistry_data* my_chemistry,
-                              grackle_field_data* my_fields, int imetal,
+                              grackle_field_data* my_fields,
                               gr_float factor, int n_inj_path_ptrs) {
   FortranView<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
@@ -98,7 +97,7 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
     const int k = idx_range.k;
     const int j = idx_range.j;
 
-    if (imetal == 1) {
+    if (my_chemistry->metal_cooling == 1) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         metal(i, j, k) = metal(i, j, k) * factor;
       }
@@ -137,13 +136,12 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
 
 /// Scales fields related to computing dust temperature
 ///
-/// @param[in] imetal Specifies whether the metal_density was specified
 /// @param[in] factor The factor that is multiplied by the fields
 /// @param[in] my_chemistry holds a number of configuration parameters
 /// @param[inout] my_fields holds the fields that will be updated in-place
 /// @param[in] n_inj_path_ptrs The number of pointers tracked by
 ///     `my_fields->inject_pathway_metal_density`
-void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
+void scale_fields(gr_float factor, chemistry_data* my_chemistry,
                   grackle_field_data* my_fields, int n_inj_path_ptrs);
 
 }  // namespace grackle::impl

@@ -145,8 +145,6 @@ static void enforce_max_heatcool_subcycle_dt_(
 /// @param[out] imp_eng Buffer for `idx_range` where the choice of
 ///     energy-evolution handling is recorded for the Newton-Raphson scheme
 /// @param[in]  mask_len the length of the iteration masks
-/// @param[in]  imetal specifies whether or not the caller provided a metal
-///     density field
 /// @param[in]  min_metallicity specifies the minimum metallicity where we
 ///     consider metal chemistry/cooling
 /// @param[in]  ddom specifies precomputed product of mass density and the
@@ -156,14 +154,12 @@ static void enforce_max_heatcool_subcycle_dt_(
 static void setup_chem_scheme_masks_(
   GRIMPL_NS::IndexRange idx_range, const gr_mask_type* itmask,
   gr_mask_type* itmask_gs, gr_mask_type* itmask_nr, int* imp_eng, int mask_len,
-  int imetal, double min_metallicity, const double* ddom, const double* tgas,
+  double min_metallicity, const double* ddom, const double* tgas,
   const double* metallicity, const chemistry_data* my_chemistry
 ) {
 
   std::memcpy(itmask_gs, itmask, sizeof(gr_mask_type)*mask_len);
   std::memcpy(itmask_nr, itmask, sizeof(gr_mask_type)*mask_len);
-
-  // would it be more robust to use my_chemistry->metal_cooling than imetal?
 
   // netwon-raphson solver can only coevolves energy when this is true
   const bool has_nr_coevolve_eint_prereqs = (
@@ -173,7 +169,7 @@ static void setup_chem_scheme_masks_(
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if ( itmask[i] != MASK_FALSE )  {
-      bool usemetal = (imetal == 1) && (metallicity[i] > min_metallicity);
+      bool usemetal = (my_chemistry->metal_cooling == 1) && (metallicity[i] > min_metallicity);
       bool is_hi_dens;
       if (my_chemistry->solver_method == 2) {
         // Force Gauss-Seidel
@@ -685,7 +681,7 @@ void drop_SpeciesRateSolverScratchBuf(SpeciesRateSolverScratchBuf* ptr) {
 
 
 int solve_rate_cool(
-  int imetal, double dt, InternalGrUnits internalu,
+  double dt, InternalGrUnits internalu,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 )
@@ -728,11 +724,11 @@ int solve_rate_cool(
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
     grackle::impl::scale_fields(
-        imetal, factor, my_chemistry, my_fields,
+        factor, my_chemistry, my_fields,
         grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
-  grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
+  grackle::impl::ceiling_species(my_chemistry, my_fields);
 
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
@@ -870,7 +866,7 @@ int solve_rate_cool(
         // and fill up logTlinterp_buf
         extended_gas_props(tgas.data(), mmw.data(), rhoH.data(),
                            metallicity.data(), nelec_times_mH.data(),
-                           logTlininterp_buf, imetal, itmask.data(),
+                           logTlininterp_buf, itmask.data(),
                            my_chemistry, &my_rates->cloudy_primordial,
                            my_fields, internalu, idx_range,
                            // if (iter == 1), we act as if there was a previous
@@ -885,7 +881,7 @@ int solve_rate_cool(
         mask::adjust_from_Tfloor(itmask.data(), tgas.data(), idx_range,
                                  my_chemistry, my_fields);
         mask::fill_itmask_metal(itmask_metal.data(), itmask.data(),
-                                metallicity.data(), imetal, idx_range,
+                                metallicity.data(), idx_range,
                                 my_chemistry);
 
         // Initialize edot
@@ -949,7 +945,7 @@ int solve_rate_cool(
           //    => high-density: Newton-Raphson scheme, tracked by itmask_nr
           setup_chem_scheme_masks_(
             idx_range, itmask.data(), spsolvbuf.itmask_gs, spsolvbuf.itmask_nr,
-            spsolvbuf.imp_eng, my_fields->grid_dimension[0], imetal,
+            spsolvbuf.imp_eng, my_fields->grid_dimension[0],
             min_metallicity, spsolvbuf.ddom, tgas.data(), metallicity.data(),
             my_chemistry
           );
@@ -1009,7 +1005,7 @@ int solve_rate_cool(
           // sweep of a backward Euler method (for all cells specified by
           // itmask_nr)
           grackle::impl::step_rate_newton_raphson(
-            imetal, idx_range, dom, chunit, dx_cgs, c_ljeans,
+            idx_range, dom, chunit, dx_cgs, c_ljeans,
             dtit.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
             nelec_times_mH.data(), edot.data(), anydust, spsolvbuf.itmask_nr,
@@ -1098,7 +1094,7 @@ int solve_rate_cool(
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
     grackle::impl::scale_fields(
-        imetal, factor, my_chemistry, my_fields,
+        factor, my_chemistry, my_fields,
         grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
@@ -1107,7 +1103,7 @@ int solve_rate_cool(
     // Correct the species to ensure consistency (i.e. type conservation)
 
     grackle::impl::make_consistent(
-        imetal, dom, my_chemistry,
+        dom, my_chemistry,
         my_rates->opaque_storage->inject_pathway_props, my_fields);
 
   }

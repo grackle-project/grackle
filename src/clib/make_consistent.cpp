@@ -28,7 +28,7 @@
 namespace grackle::impl {
 
 void make_consistent(
-    int imetal, double dom, chemistry_data* my_chemistry,
+    double dom, chemistry_data* my_chemistry,
     const grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
     grackle_field_data* my_fields) {
   // Arguments
@@ -266,7 +266,7 @@ void make_consistent(
       // Compute total densities of H and He
       //     (ensure non-negativity)
 
-      if ((imetal) == 1) {
+      if ((my_chemistry->metal_cooling) == 1) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metalfree[i] = d(i, j, k) - metal(i, j, k);
         }
@@ -518,8 +518,8 @@ void make_consistent(
           // !       if (d(i,j,k)*dom .lt.
           // !   &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
           // !   &       ,1.e6_DKIND)) then
-          if (((imetal == 0) && (d(i, j, k) * dom < 1.e8)) ||
-              ((imetal == 1) && (((metal(i, j, k) <= 1.e-9 * d(i, j, k)) &&
+          if (((my_chemistry->metal_cooling == 0) && (d(i, j, k) * dom < 1.e8)) ||
+              ((my_chemistry->metal_cooling == 1) && (((metal(i, j, k) <= 1.e-9 * d(i, j, k)) &&
                                   (d(i, j, k) * dom < 1.e8)) ||
                                  ((metal(i, j, k) > 1.e-9 * d(i, j, k)) &&
                                   (d(i, j, k) * dom < 1.e6))))) {
