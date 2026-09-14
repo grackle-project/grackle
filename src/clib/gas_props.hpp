@@ -183,8 +183,8 @@ inline void basic_gas_props(double* tgas, double* mmw, double* rhoH,
                                       ? dom
                                       : dom * std::pow(internalu.a_value, -3);
 
-    GRIMPL_NS::calc_temp1d_cloudy(rhoH, tgas, mmw, nHcgs_div_rhoH, zr,
-                                  itmask, my_chemistry, *primordial_cloudy_data,
+    GRIMPL_NS::calc_temp1d_cloudy(rhoH, tgas, mmw, nHcgs_div_rhoH, zr, itmask,
+                                  my_chemistry, *primordial_cloudy_data,
                                   my_fields, internalu, idx_range);
 
   } else {
@@ -501,11 +501,10 @@ inline void extended_gas_props(double* tgas, double* mmw, double* rhoH,
                                const grackle_field_data* my_fields,
                                InternalGrUnits internalu, IndexRange idx_range,
                                const LnTPreparer* lnT_preparer) {
-  basic_gas_props(tgas, mmw, rhoH, itmask, my_chemistry,
-                  primordial_cloudy_data, my_fields, internalu, idx_range);
+  basic_gas_props(tgas, mmw, rhoH, itmask, my_chemistry, primordial_cloudy_data,
+                  my_fields, internalu, idx_range);
   calc_metallicity_and_electron_density(metallicity, nelec_times_mH, idx_range,
-                                        itmask, mmw, my_chemistry,
-                                        my_fields);
+                                        itmask, mmw, my_chemistry, my_fields);
 
   // technically, we could skip the filling of lnT_lininterp_bufs if
   // primordial_chemistry == 0 AND dust_chemistry == 0.

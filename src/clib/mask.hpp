@@ -69,8 +69,7 @@ inline void adjust_from_Tfloor(gr_mask_type* itmask, const double* tgas,
 /// @param[in] my_chemistry holds a number of configuration parameters.
 inline void fill_itmask_metal(gr_mask_type* itmask_metal,
                               const gr_mask_type* itmask,
-                              const double* metallicity,
-                              IndexRange idx_range,
+                              const double* metallicity, IndexRange idx_range,
                               const chemistry_data* my_chemistry) {
   if (my_chemistry->metal_cooling == 1) {
     double min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
