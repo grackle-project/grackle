@@ -307,32 +307,28 @@ static int local_initialize_chemistry_data_(
     fprintf(stderr, "ERROR: HydrogenFractionByMass cannot exceed 1.0\n");
     return GR_FAIL;
   } else if (my_chemistry->primordial_chemistry == 0) {
-    /* In fully tabulated mode, the H mass fraction is fixed by the
-       abundances assumed by the heating/cooling tables. Newer data files
-       record it in a "HydrogenFractionByMass" root attribute. Older ones
-       (Cloudy runs with n_He / n_H = 0.1) don't, so fall back to
-       X = 1 / (1 + m_He * n_He / n_H), about 0.716. Using the other
-       default of 0.76 would give negative electron densities at low
-       temperature. */
+    /* In fully tabulated mode, set H mass fraction according to
+       the abundances in Cloudy, which assumes n_He / n_H = 0.1.
+       This gives a value of about 0.716. Using the other default value
+       of 0.76 will result in negative electron densities at low
+       temperature. Below, use X = 1 / (1 + m_He * n_He / n_H). */
 
-    // the fallback was precomputed (in enhanced precision) rather than
-    // computed on the fly so that users can specify it exactly (without
+    // we precomputed this value (in enhanced precision) rather than compute
+    // it on the fly to allow users to directly specify this value (without
     // worrying about round-off issues)
-    double default_Hfrac = 0.715768377353088514;
-    if (grackle::impl::read_cloudy_HydrogenFractionByMass(
-          my_chemistry->grackle_data_file, &default_Hfrac) < 0) {
-      return GR_FAIL;
-    }
+    const double default_Hfrac = 0.715768377353088514;
+    // TODO: at some point in the future, we should store the above value as
+    //       an attribute of the HDF5 table and read it in directly.
 
     if (my_chemistry->HydrogenFractionByMass < 0) {
       my_chemistry->HydrogenFractionByMass = default_Hfrac;
     } else if (my_chemistry->HydrogenFractionByMass != default_Hfrac) {
       fprintf(stderr,
               "ERROR: Invalid HydrogenFractionByMass value is specified.\n"
-              " -> when primordial_chemistry == 0, the value is fixed by\n"
-              "    the heating/cooling tables. You have 2 options: \n"
+              " -> when primordial_chemistry == 0, the allowed values are\n"
+              "    are strictly enforced. You have 2 options: \n"
               "      1. leave the value unset or set it to a negative number\n"
-              "         to have it set to the tables' value of %.18f\n"
+              "         to have it calculated internally as %.18f\n"
               "      2. set the value exactly to the above number\n"
               " -> NOTE: for primordial_chemistry == 0, prior versions of\n"
               "    Grackle would silently overwrite the value of\n"

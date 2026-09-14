@@ -643,9 +643,9 @@ photoionisation database
 <https://home.strw.leidenuniv.nl/~ewine/photo/cross_sections.html>`__
 (`Heays, Bosman & van Dishoeck 2017 <https://ui.adsabs.harvard.edu/abs/2017A%26A...602A.105H/abstract>`__;
 ``all_cross_sections_h5.zip``, datasets ``photoionisation`` and
-``photodissociation``). The integral is interpolating the spectrum
-logarithmically and the cross sections linearly (zero outside their
-tabulated range), and the result is interpolated in :math:`\log k`
+``photodissociation``). When evaluating the integral, the spectrum is
+interpolated logarithmically and the cross sections linearly (zero
+outside their tabulated range). The result is interpolated in :math:`\log k`
 versus :math:`\log(1+z)` onto the 59 table redshifts, all of which
 coincide with spectrum samples. The thresholds are the ionization
 potentials of C and O, the dissociation energy of CO (its cross section

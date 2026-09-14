@@ -27,16 +27,6 @@ int initialize_cloudy_data(chemistry_data* my_chemistry,
 int free_cloudy_data(cloudy_data* my_cloudy, chemistry_data* my_chemistry,
                      int primordial);
 
-/// Reads the "HydrogenFractionByMass" root attribute of the data file: the
-/// H mass fraction assumed when its heating/cooling tables were generated.
-///
-/// @param[in]  fname Path to the data file
-/// @param[out] hfrac Set to the attribute's value when it is present
-///
-/// @returns 1 if the attribute was read, 0 if the file has no such attribute
-///     (older data files), and -1 on error (a message is printed)
-int read_cloudy_HydrogenFractionByMass(const char* fname, double* hfrac);
-
 }  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* TABULATED_INITIALIZE_CLOUDY_DATA_HPP */
