@@ -31,6 +31,8 @@ namespace GRIMPL_NAMESPACE_DECL {
 class Error {
   friend struct std::formatter<GRIMPL_NS::Error>;
 
+  static constexpr const char* DFLT_MSG_ = "<UNKNOWN ERROR>";
+
   // This is wrapped by a shared_ptr (i.e. its heap-allocated with
   // atomic reference counting) in order to make it easier to
   std::shared_ptr<ErrImpl_> impl_;  ///< internal representation of Error
@@ -38,6 +40,9 @@ class Error {
   Error() = default;  // <- this is private to force use of factory methods
 
   Error& context_helper_(ErrImpl_ new_ctx_err) {
+    if (impl_.get() == nullptr) {  // <- possible after move-operation
+      *this = Error::msg_literal(Error::DFLT_MSG_);
+    }
     std::shared_ptr<ErrImpl_> tmp = std::make_shared<ErrImpl_>(new_ctx_err);
     tmp->err_cause_ = this->impl_;
     this->impl_ = tmp;
@@ -107,6 +112,10 @@ struct std::formatter<GRIMPL_NS::Error> {
 
   template <class FmtContext>
   auto format(const GRIMPL_NS::Error& error, FmtContext& ctx) const {
+    if (error.impl_.get() == nullptr) {  // <- possible after move operation
+      return std::format_to(ctx.out(), "{}", GRIMPL_NS::Error::DFLT_MSG_);
+    }
+
     using OutT = typename FmtContext::iterator;
     OutT out = std::format_to(ctx.out(), "{}", *error.impl_);
 
