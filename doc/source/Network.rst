@@ -652,8 +652,9 @@ potentials of C and O, the dissociation energy of CO (its cross section
 vanishes above 108 nm; the predissociating bands lie at 88.5--108 nm),
 and the OH and H\ :sub:`2`\ O values of Table 1 of Heays et al. (2017).
 
-The tables ``HM2012_metal_new.h5`` and ``HM2012_shielded_metal_new.h5``
-(see ``uvb_version.txt`` in the repository root) store each rate as a
+The version 2 tables ``CloudyData_UVB=HM2012.h5`` and
+``CloudyData_UVB=HM2012_shielded.h5`` (see ``input/uvb_version.txt`` in the
+``grackle_data_files`` repository) store each rate as a
 59-element ``float64`` array in s\ :sup:`-1` on ``/UVBRates/z``, with
 ``units`` and ``provenance`` attributes; the shielded table also carries
 ``/UVBRates/CrossSections`` for :c:data:`self_shielding_method`. Only
