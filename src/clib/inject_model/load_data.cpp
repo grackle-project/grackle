@@ -418,9 +418,9 @@ static void zero_out_dust_inject_props(
   }
 }
 
-int load_inject_path_data(const chemistry_data* my_chemistry,
-                          chemistry_data_storage* my_rates,
-                          ratequery::RegBuilder* reg_builder) {
+Expected<void, Error> load_inject_path_data(
+    const chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    ratequery::RegBuilder* reg_builder) {
   // Currently, this function "loads" injection pathway data from data that is
   // directly embedded as part of the Grackle library in a manner controlled
   // by raw_data.hpp and raw_data.cpp
@@ -428,7 +428,7 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
   // Longer term, the goal is to "load" the data from an external HDF5 file
 
   if (my_chemistry->metal_chemistry == 0) {
-    return GR_SUCCESS;
+    return {};
   }
 
   // an upper bound on the number of allowed injection pathways
@@ -446,9 +446,9 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
        (my_chemistry->metal_abundances < max_n_pathways));
 
   if ((my_chemistry->multi_metals == 0) && !valid_metal_abundances) {
-    return GrPrintAndReturnErr(
+    return Unexpected(Error::msgf(
         "the metal_abundances parameter must not be negative or exceed %d",
-        max_n_pathways - 1);
+        max_n_pathways - 1));
   } else if (my_chemistry->multi_metals == 0) {
     inj_path_name_l = known_inj_path_names + my_chemistry->metal_abundances;
     n_pathways = 1;
@@ -456,7 +456,8 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
     inj_path_name_l = known_inj_path_names;
     n_pathways = max_n_pathways;
   } else {
-    return GrPrintAndReturnErr("the multi_metals parameter isn't 0 or 1");
+    return Unexpected(
+        Error::msg_literal("multi_metals parameter isn't 0 or 1"));
   }
 
   // construct a mapping of the injection pathway names
@@ -468,10 +469,8 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
       FrozenKeyIdxBiMap::create(inj_path_name_l, n_pathways,
                                 BiMapMode::REFS_KEYDATA);
   if (!inj_path_names_rslt.has_value()) {
-    Error err = inj_path_names_rslt.error().context_literal(
-        "problem building map of model names");
-    err.write(stderr);
-    return GR_FAIL;
+    return Unexpected(inj_path_names_rslt.error().context_literal(
+        "problem building map of model names"));
   }
   FrozenKeyIdxBiMap inj_path_names = inj_path_names_rslt.value();
 
@@ -487,7 +486,8 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
       my_rates->opaque_storage->inject_pathway_props;
 
   if (!GrainMetalInjectPathways_is_valid(inject_pathway_props)) {
-    return GR_FAIL;
+    return Unexpected(
+        Error::msg_literal("issue in new_GrainMetalInjectPathways"));
   }
 
   // initialize the grid of dust temperatures associated with the opacity table
@@ -500,10 +500,8 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
     Expected<InterpGridProps, Error> interp_props_rslt =
         InterpGridProps::create(1, &dim_scale);
     if (!interp_props_rslt.has_value()) {
-      Error err = interp_props_rslt.error().context_literal(
-          "problem initializing opacity table's dust temperature grid");
-      err.write(stderr);
-      return GR_FAIL;
+      return Unexpected(interp_props_rslt.error().context_literal(
+          "problem initializing opacity table's dust temperature grid"));
     }
     inject_pathway_props->log10Tdust_interp_props =
         std::move(interp_props_rslt).value();
@@ -535,13 +533,12 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
 
   if (ret != GR_SUCCESS) {
     Error err = ctx.maybe_err.value_or(Error::msg_literal("unspecified error"));
-    err.context_literal("problem while loading data from injection pathway");
-    err.write(stderr);
-    return GR_FAIL;
+    return Unexpected(err.context_literal(
+        "problem while loading data from injection pathway"));
   } else if (ctx.counter != n_pathways) {
-    return GrPrintAndReturnErr(
-        "Only loaded data for %d of the %d available pathways", ctx.counter,
-        n_pathways);
+    return Unexpected(
+        Error::msgf("Only loaded data for %d of the %d available pathways",
+                    ctx.counter, n_pathways));
   }
 
   // Before we finish, let's register some of these it can be queried by
@@ -549,13 +546,11 @@ int load_inject_path_data(const chemistry_data* my_chemistry,
   Expected<void, Error> conf_rslt =
       configure_RegBuilder(my_rates, reg_builder, inj_path_name_l, n_pathways);
   if (!conf_rslt.has_value()) {
-    Error err = conf_rslt.error().context_literal(
-        "problem making injection pathway info queryable");
-    err.write(stderr);
-    return GR_FAIL;
+    return Unexpected(conf_rslt.error().context_literal(
+        "problem making injection pathway info queryable"));
   }
 
-  return GR_SUCCESS;
+  return {};  // <- success!
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL

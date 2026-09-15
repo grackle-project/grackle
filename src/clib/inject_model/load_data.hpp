@@ -16,16 +16,19 @@
 #include "grackle.h"
 #include "../ratequery.hpp"
 #include "../support/config.hpp"
+#include "../support/error.hpp"
+#include "../support/expected.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
 /// loads the model data for the various injection pathways and update
 /// @p my_rates, accordingly
 ///
-/// @returns GR_SUCCESS if successful
-int load_inject_path_data(const chemistry_data* my_chemistry,
-                          chemistry_data_storage* my_rates,
-                          ratequery::RegBuilder* reg_builder);
+/// @todo
+/// It might be nice if we returned the constructed injection_pathway object
+Expected<void, Error> load_inject_path_data(const chemistry_data* my_chemistry,
+                                            chemistry_data_storage* my_rates,
+                                            ratequery::RegBuilder* reg_builder);
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
