@@ -605,6 +605,16 @@ inline void apply_misc_shield_factors(
               kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
         }
 
+        // Scale O I photo-ionization (13.62 eV) using the same scaling as
+        // HI. The C I ionization and CO dissociation rates are left
+        // optically thin: they are driven by photons below the Lyman limit.
+        if (my_uvb_rates.kphOI_bg < tiny8) {
+          kph_buf[PhotoRxnLUT::kphOI][i] = 0.;
+        } else {
+          kph_buf[PhotoRxnLUT::kphOI][i] =
+              kph_buf[PhotoRxnLUT::kphOI][i] * tmp.f_shield_H;
+        }
+
         kph_buf[PhotoRxnLUT::k25][i] = my_uvb_rates.k25;
         kph_buf[PhotoRxnLUT::k26][i] = my_uvb_rates.k26;
       }
@@ -637,6 +647,16 @@ inline void apply_misc_shield_factors(
         } else {
           kph_buf[PhotoRxnLUT::k29][i] =
               kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
+        }
+
+        // Scale O I photo-ionization (13.62 eV) using the same scaling as
+        // HI. The C I ionization and CO dissociation rates are left
+        // optically thin: they are driven by photons below the Lyman limit.
+        if (my_uvb_rates.kphOI_bg < tiny8) {
+          kph_buf[PhotoRxnLUT::kphOI][i] = 0.;
+        } else {
+          kph_buf[PhotoRxnLUT::kphOI][i] =
+              kph_buf[PhotoRxnLUT::kphOI][i] * tmp.f_shield_H;
         }
 
         // Apply same equations to HeI (assumes HeI closely follows HI)
@@ -687,6 +707,16 @@ inline void apply_misc_shield_factors(
         } else {
           kph_buf[PhotoRxnLUT::k29][i] =
               kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
+        }
+
+        // Scale O I photo-ionization (13.62 eV) using the same scaling as
+        // HI. The C I ionization and CO dissociation rates are left
+        // optically thin: they are driven by photons below the Lyman limit.
+        if (my_uvb_rates.kphOI_bg < tiny8) {
+          kph_buf[PhotoRxnLUT::kphOI][i] = 0.;
+        } else {
+          kph_buf[PhotoRxnLUT::kphOI][i] =
+              kph_buf[PhotoRxnLUT::kphOI][i] * tmp.f_shield_H;
         }
 
         // Apply same equations to HeI (assumes HeI closely follows HI)
@@ -847,6 +877,23 @@ inline void lookup_cool_rates1d(
       kph_buf[PhotoRxnLUT::k29][i] = my_uvb_rates.k29;
       kph_buf[PhotoRxnLUT::k30][i] = my_uvb_rates.k30;
       // k31 is handled separately
+
+      // metal photo-ionization/photo-dissociation rates. Each buffer holds
+      // the total rate: the UV background part set here plus the
+      // radiative-transfer part folded in further below. Only the O I
+      // background rate is self-shielded (in apply_misc_shield_factors):
+      // O I ionization (13.62 eV) uses the same photons as H I, while C I
+      // ionization (11.26 eV) and the CO (11.2-13.6 eV), OH (4.44 eV) and
+      // H2O (5.12 eV) dissociations sit below the Lyman limit, where the
+      // gas is transparent.
+      kph_buf[PhotoRxnLUT::kphCI][i] = my_uvb_rates.kphCI_bg;
+      kph_buf[PhotoRxnLUT::kphOI][i] = my_uvb_rates.kphOI_bg;
+      kph_buf[PhotoRxnLUT::kdissCO][i] = my_uvb_rates.kdissCO_bg;
+      kph_buf[PhotoRxnLUT::kdissOH][i] = my_uvb_rates.kdissOH_bg;
+      // TODO: the Leiden H2O cross section has two dissociation branches
+      // (H2O -> OH + H and H2O -> O + H2/2H). The table stores the total
+      // and grackle only implements the OH + H channel; revisit this.
+      kph_buf[PhotoRxnLUT::kdissH2O][i] = my_uvb_rates.kdissH2O_bg;
     }
   }
 
@@ -865,6 +912,52 @@ inline void lookup_cool_rates1d(
     apply_misc_shield_factors(kph_buf, idx_range, itmask,
                               my_chemistry->self_shielding_method, my_uvb_rates,
                               &calculator);
+  }
+
+  // add the radiative-transfer rates for metal species to the background
+  // rates (after shielding, which only applies to the background)
+  if ((my_chemistry->use_radiative_transfer == 1) &&
+      (my_chemistry->metal_chemistry == 1)) {
+    if (my_chemistry->radiative_transfer_metal_ionization > 0) {
+      FortranView<const gr_float***> kphCI(
+          my_fields->RT_CI_ionization_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      FortranView<const gr_float***> kphOI(
+          my_fields->RT_OI_ionization_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          kph_buf[PhotoRxnLUT::kphCI][i] = kph_buf[PhotoRxnLUT::kphCI][i] +
+                                           kphCI(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kphOI][i] = kph_buf[PhotoRxnLUT::kphOI][i] +
+                                           kphOI(i, idx_range.j, idx_range.k);
+        }
+      }
+    }
+    if (my_chemistry->radiative_transfer_metal_dissociation > 0) {
+      FortranView<const gr_float***> kdissCO(
+          my_fields->RT_CO_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      FortranView<const gr_float***> kdissOH(
+          my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      FortranView<const gr_float***> kdissH2O(
+          my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          kph_buf[PhotoRxnLUT::kdissCO][i] =
+              kph_buf[PhotoRxnLUT::kdissCO][i] +
+              kdissCO(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kdissOH][i] =
+              kph_buf[PhotoRxnLUT::kdissOH][i] +
+              kdissOH(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kdissH2O][i] =
+              kph_buf[PhotoRxnLUT::kdissH2O][i] +
+              kdissH2O(i, idx_range.j, idx_range.k);
+        }
+      }
+    }
   }
 
 #ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED

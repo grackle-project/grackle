@@ -35,6 +35,11 @@ void initialize_empty_UVBtable_struct(UVBtable *table)
   table->k29    = nullptr;
   table->k30    = nullptr;
   table->k31    = nullptr;
+  table->kphCI  = nullptr;
+  table->kphOI  = nullptr;
+  table->kdissCO = nullptr;
+  table->kdissOH = nullptr;
+  table->kdissH2O = nullptr;
   table->piHI   = nullptr;
   table->piHeI  = nullptr;
   table->piHeII = nullptr;
@@ -114,6 +119,14 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
     my_rates->UVbackground_table.k29 = new double[Nz];
     my_rates->UVbackground_table.k30 = new double[Nz];
     my_rates->UVbackground_table.k31 = new double[Nz];
+  }
+
+  if (my_chemistry->metal_chemistry > 0) {
+    my_rates->UVbackground_table.kphCI = new double[Nz];
+    my_rates->UVbackground_table.kphOI = new double[Nz];
+    my_rates->UVbackground_table.kdissCO = new double[Nz];
+    my_rates->UVbackground_table.kdissOH = new double[Nz];
+    my_rates->UVbackground_table.kdissH2O = new double[Nz];
   }
 
   my_rates->UVbackground_table.piHI = new double[Nz];
@@ -212,6 +225,43 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
       std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k31' in %s.\n",
               my_chemistry->grackle_data_file);
       return GR_FAIL;
+    }
+
+  }
+
+  if (my_chemistry->metal_chemistry > 0) {
+
+    // *** kphCI, kphOI, kdissCO, kdissOH & kdissH2O ***
+    // For backward compatibility with UV background tables that predate the
+    // metal photo-ionization/photo-dissociation rates, missing datasets are
+    // not an error: the rates are set to zero and a warning is printed.
+    const char* metal_dset_names[] = {"/UVBRates/Chemistry/kphCI",
+                                      "/UVBRates/Chemistry/kphOI",
+                                      "/UVBRates/Chemistry/kdissCO",
+                                      "/UVBRates/Chemistry/kdissOH",
+                                      "/UVBRates/Chemistry/kdissH2O"};
+    double* metal_dset_buffers[] = {my_rates->UVbackground_table.kphCI,
+                                    my_rates->UVbackground_table.kphOI,
+                                    my_rates->UVbackground_table.kdissCO,
+                                    my_rates->UVbackground_table.kdissOH,
+                                    my_rates->UVbackground_table.kdissH2O};
+    for (int idset = 0; idset < 5; idset++) {
+      if (H5Lexists(file_id, metal_dset_names[idset], H5P_DEFAULT) <= 0) {
+        std::fprintf(stderr,
+                "WARNING: dataset '%s' not found in %s.\n"
+                "         The corresponding UV background rate will be set "
+                "to zero.\n",
+                metal_dset_names[idset], my_chemistry->grackle_data_file);
+        for (long long iz = 0; iz < Nz; iz++) {
+          metal_dset_buffers[idset][iz] = 0.;
+        }
+      } else if (! read_dataset(file_id, metal_dset_names[idset],
+                                metal_dset_buffers[idset],
+                                /* expected_shape = */ &common_shape) ) {
+        std::fprintf(stderr, "Error reading dataset '%s' in %s.\n",
+                metal_dset_names[idset], my_chemistry->grackle_data_file);
+        return GR_FAIL;
+      }
     }
 
   }
@@ -345,6 +395,11 @@ void grackle::impl::free_UVBtable(UVBtable *table)
   cleanup_fn(table->k29);
   cleanup_fn(table->k30);
   cleanup_fn(table->k31);
+  cleanup_fn(table->kphCI);
+  cleanup_fn(table->kphOI);
+  cleanup_fn(table->kdissCO);
+  cleanup_fn(table->kdissOH);
+  cleanup_fn(table->kdissH2O);
   cleanup_fn(table->piHI);
   cleanup_fn(table->piHeII);
   cleanup_fn(table->piHeI);
