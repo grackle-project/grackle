@@ -108,9 +108,12 @@ using unique_GrainSpeciesInfo_ptr =
 /// This is useful for preventing memory leaks when tests fail
 unique_GrainSpeciesInfo_ptr make_unique_GrainSpeciesInfo(
     int dust_species_param) {
-  GRIMPL_NS::Expected<GRIMPL_NS::GrainSpeciesInfo*, GRIMPL_NS::Error> tmp =
-      GRIMPL_NS::GrainSpeciesInfo::create_ptr(dust_species_param);
-  return std::unique_ptr<GRIMPL_NS::GrainSpeciesInfo>(tmp.value_or(nullptr));
+  GRIMPL_NS::Expected<GRIMPL_NS::GrainSpeciesInfo, GRIMPL_NS::Error> tmp =
+      GRIMPL_NS::GrainSpeciesInfo::create(dust_species_param);
+  if (!tmp.has_value()) {
+    return nullptr;
+  }
+  return std::make_unique<GRIMPL_NS::GrainSpeciesInfo>(std::move(tmp).value());
 }
 
 }  // anonymous namespace
@@ -366,8 +369,8 @@ INSTANTIATE_TEST_SUITE_P(
 TEST(GrainSpeciesInfoTestMisc, DustSpeciesExtremeValues) {
   int invalid_dust_species_values[3] = {-42423, 0, MAX_dust_species_VAL + 1};
   for (int dust_species_param : invalid_dust_species_values) {
-    GRIMPL_NS::Expected<GRIMPL_NS::GrainSpeciesInfo*, GRIMPL_NS::Error> rslt =
-        GRIMPL_NS::GrainSpeciesInfo::create_ptr(dust_species_param);
+    GRIMPL_NS::Expected<GRIMPL_NS::GrainSpeciesInfo, GRIMPL_NS::Error> rslt =
+        GRIMPL_NS::GrainSpeciesInfo::create(dust_species_param);
     ASSERT_FALSE(rslt.has_value())
         << "GrainSpeciesInfo::create_ptr should fail when dust_species param "
         << "is " << dust_species_param << " (i.e. an invalid value).";
