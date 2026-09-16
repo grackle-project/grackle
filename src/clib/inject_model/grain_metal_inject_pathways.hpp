@@ -16,7 +16,8 @@
 #include "../internal_types.hpp"
 #include "../interp_grid.hpp"  // InterpGridProps
 #include "../support/config.hpp"
-#include "../support/status_reporting.hpp"
+#include "../support/error.hpp"
+#include "../support/expected.hpp"
 #include "../visitor/common.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -266,7 +267,8 @@ public:
 
   /// @brief factory method
   ///
-  /// This only allocates storage, it doesn't initialize contents
+  /// This only allocates storage, it doesn't initialize contents. Upon
+  /// success, the returned value will **NEVER** be a ``nullptr``.
   ///
   /// @param[in] n_pathways Number of modelled injection pathways
   /// @param[in] n_log10Tdust_vals Number of log10(Tdust) values that are
@@ -277,20 +279,16 @@ public:
   /// @todo
   /// If we implement move construction and move assignment, this should stop
   /// returning a pointer
-  static GrainMetalInjectPathways* create_ptr(int n_pathways,
-                                              int n_log10Tdust_vals,
-                                              int n_opac_poly_coef) {
+  static Expected<GrainMetalInjectPathways*, Error> create_ptr(
+      int n_pathways, int n_log10Tdust_vals, int n_opac_poly_coef) {
     if (n_pathways <= 0) {
-      GrPrintErrMsg("n_pathways must be positive\n");
-      return nullptr;
+      return Unexpected(Error::msg_literal("n_pathways must be positive"));
     } else if (n_log10Tdust_vals <= 1) {
-      GrPrintErrMsg("n_log10Tdust_vals must exceed 1\n");
-      return nullptr;
+      return Unexpected(Error::msg_literal("n_log10Tdust_vals must exceed 1"));
     } else if (n_opac_poly_coef != 4) {
-      GrPrintErrMsg(
+      return Unexpected(Error::msg_literal(
           "the logic that uses the opacity table is hardcoded to assume that "
-          "the number of opacity polynomial coefficients is exactly 4\n");
-      return nullptr;
+          "the number of opacity polynomial coefficients is exactly 4"));
     }
 
     GrainMetalInjectPathways* out = new GrainMetalInjectPathways;
