@@ -136,16 +136,20 @@ static int setup_cool_interp_grid_(InterpGrid* grid,
                                    const double* data,
                                    double log_coolrate)
 {
-  InterpGridProps grid_props(rank, parameters);
-  if (!grid_props) {
+  Expected<InterpGridProps, Error> grid_props_rslt =
+      InterpGridProps::create(rank, parameters);
+  if (!grid_props_rslt.has_value()) {
+    Error err = grid_props_rslt.error().context_literal(
+        "problem initializing interp grid props");
+    err.write(stderr);
     return GR_FAIL;
   }
-  const long long data_size = grid_props.data_size;
+  const long long data_size = grid_props_rslt->data_size;
   double* grid_data = new double[data_size];
   for(long long i = 0; i < data_size; i++) {
     grid_data[i] = data[i] + log_coolrate;
   }
-  *grid = InterpGrid(std::move(grid_props), grid_data);
+  *grid = InterpGrid(std::move(grid_props_rslt).value(), grid_data);
 
   return GR_SUCCESS;
 }
@@ -1557,6 +1561,7 @@ extern "C" int initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemist
 extern "C" int initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
   using GRIMPL_NS::InterpDimScale;
+  using GRIMPL_NS::InterpGridProps;
   const int rank = 2;
   const InterpDimScale params[2] = {
     InterpDimScale::Linear(15, -16.0, 1.0), // log10(mass-density)
@@ -1594,9 +1599,10 @@ extern "C" int initialize_primordial_opacity(chemistry_data *my_chemistry, chemi
    ,{ -6.13,  -5.13,  -4.13,  -3.13,  -2.13, -1.15, -0.25,  0.68,   1.67,   2.67,   3.66,  10.00,  10.00,  10.00,  10.00}
    ,{ -6.45,  -5.45,  -4.45,  -3.45,  -2.45, -1.45, -0.45,  0.53,   1.46,   2.42,   3.41,  10.00,  10.00,  10.00,  10.00}};
 
-  GRIMPL_NS::InterpGridProps grid_props(rank, params);
-  if (grid_props) {
-    double* grid_data = new double[grid_props.data_size];
+  GRIMPL_NS::Expected<InterpGridProps, GRIMPL_NS::Error> grid_props_rslt =
+      InterpGridProps::create(rank, params);
+  if (grid_props_rslt.has_value()) {
+    double* grid_data = new double[grid_props_rslt->data_size];
     for(int iD=0; iD<params[0].count; iD++) {
       double log_rho = params[0].start + iD*params[0].step;
       for(int iT=0; iT<params[1].count; iT++) {
@@ -1605,10 +1611,13 @@ extern "C" int initialize_primordial_opacity(chemistry_data *my_chemistry, chemi
       }
     }
     my_rates->opaque_storage->alphap =
-        GRIMPL_NS::InterpGrid(std::move(grid_props), grid_data);
+        GRIMPL_NS::InterpGrid(std::move(grid_props_rslt).value(), grid_data);
 
     return GR_SUCCESS;
   } else {
+    GRIMPL_NS::Error err = grid_props_rslt.error().context_literal(
+        "problem initializing interp grid props");
+    err.write(stderr);
     return GR_FAIL;
   }
 }

@@ -18,7 +18,8 @@
 
 #include "grackle.h"  // GRACKLE_CLOUDY_TABLE_MAX_DIMENSION
 #include "support/config.hpp"
-#include "support/status_reporting.hpp"
+#include "support/error.hpp"
+#include "support/expected.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -69,8 +70,8 @@ struct InterpDimScale {
 ///   a dimension have constant spacing.
 /// - It would be more elegant if this class didn't have a "null-state" (i.e.,
 ///   any instance of this class is in a fully valid state). To accomplish that
-///   without exceptions, we would probably need to convert the constructor
-///   to a factory method that returns std::optional or std::expected.
+///   without exceptions, we need to make the default constructor of this type
+///   private (i.e. we only use it within the factory method)
 struct InterpGridProps {
   /// Rank of dataset
   int64_t rank;
@@ -98,37 +99,29 @@ public:  // interface methods
     }
   }
 
-  /// @brief primary constructor
-  ///
-  /// The caller should use ``if (obj)`` on the returned object to check if
-  /// there were any issues (for better error-handling, we should probably move
-  /// to static factory methods)
-  InterpGridProps(int n_dim, const GRIMPL_NS::InterpDimScale* dim_scales)
-      : InterpGridProps() {
+  /// @brief factory method
+  static Expected<InterpGridProps, Error> create(
+      int n_dim, const InterpDimScale* dim_scales) {
     if (n_dim > GRACKLE_CLOUDY_TABLE_MAX_DIMENSION) {
-      GrPrintErrMsg("n_dim exceeds %d",
-                    static_cast<int>(GRACKLE_CLOUDY_TABLE_MAX_DIMENSION));
-      return;
+      return Unexpected(
+          Error::msgf("n_dim exceeds %d", GRACKLE_CLOUDY_TABLE_MAX_DIMENSION));
     } else if (n_dim <= 0) {
-      GrPrintErrMsg("n_dim must be positive");
-      return;
+      return Unexpected(Error::msg_literal("n_dim must be positive"));
     } else if (dim_scales == nullptr) {
-      GrPrintErrMsg("dim_scales must not be a nullptr");
-      return;
+      return Unexpected(Error::msg_literal("dim_scales must not be a nullptr"));
     }
 
+    InterpGridProps out;
     int64_t tmp_data_size = 1;
     for (int i = 0; i < n_dim; i++) {
-      const GRIMPL_NS::InterpDimScale& dim_scale = dim_scales[i];
+      const InterpDimScale& dim_scale = dim_scales[i];
 
       if (dim_scale.count < 2) {
-        GrPrintErrMsg("dim_scales[%d] has less than 2 elements", i);
-        *this = InterpGridProps();  // <- indicates a failure
-        return;
+        return Unexpected(
+            Error::msgf("dim_scales[%d] has less than 2 elements", i));
       } else if (dim_scale.step == 0) {
-        GrPrintErrMsg("dim_scales[%d] has a step size of exactly 0", i);
-        *this = InterpGridProps();  // <- indicates a failure
-        return;
+        return Unexpected(
+            Error::msgf("dim_scales[%d] has a step size of exactly 0", i));
       }
 
       double* arr = new double[dim_scale.count];
@@ -138,14 +131,15 @@ public:  // interface methods
         arr[j] = dim_scale.start + (double)j * dim_scale.step;
       }
 
-      dimension[i] = dim_scale.count;
-      parameters[i] = arr;
-      parameter_spacing[i] = dim_scale.step;
+      out.dimension[i] = dim_scale.count;
+      out.parameters[i] = arr;
+      out.parameter_spacing[i] = dim_scale.step;
 
       tmp_data_size *= static_cast<int64_t>(dim_scale.count);
     }
-    data_size = tmp_data_size;
-    rank = n_dim;
+    out.data_size = tmp_data_size;
+    out.rank = n_dim;
+    return out;
   }
 
   /// returns whether the instance is valid
