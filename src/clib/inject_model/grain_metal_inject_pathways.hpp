@@ -246,54 +246,63 @@ struct GrainMetalInjectPathways {
   /// (This could certainly be done for the description of the size increment)
   GrainSpeciesCollection opacity_coef_table;
 
-  GrainMetalInjectPathways() = default;
+private:
+  GrainMetalInjectPathways() = default;  // <- invoked by factory method
 
+public:
   // it isn't very tractable to implement the following methods, right now
   GrainMetalInjectPathways(const GrainMetalInjectPathways&) = delete;
   GrainMetalInjectPathways(GrainMetalInjectPathways&&) = delete;
   GrainMetalInjectPathways& operator=(const GrainMetalInjectPathways&) = delete;
   GrainMetalInjectPathways& operator=(GrainMetalInjectPathways&&) = delete;
-};
 
-/// allocates the contents of a new GrainMetalInjectPathways
-///
-/// @param[in] n_pathways Number of modelled injection pathways
-/// @param[in] n_log10Tdust_vals Number of log10(Tdust) values that are relevant
-///     for the opacity coefficient table.
-/// @param[in] n_opac_poly_coef Number of opacity coefficients that are
-///     computed from the opacity coefficient table.
-inline GrainMetalInjectPathways* new_GrainMetalInjectPathways(
-    int n_pathways, int n_log10Tdust_vals, int n_opac_poly_coef) {
-  if (n_pathways <= 0) {
-    GrPrintErrMsg("n_pathways must be positive\n");
-    return nullptr;
-  } else if (n_log10Tdust_vals <= 1) {
-    GrPrintErrMsg("n_log10Tdust_vals must exceed 1\n");
-    return nullptr;
-  } else if (n_opac_poly_coef != 4) {
-    GrPrintErrMsg(
-        "the logic that uses the opacity table is hardcoded to assume that "
-        "the number of opacity polynomial coefficients is exactly 4\n");
-    return nullptr;
+  /// @brief factory method
+  ///
+  /// This only allocates storage, it doesn't initialize contents
+  ///
+  /// @param[in] n_pathways Number of modelled injection pathways
+  /// @param[in] n_log10Tdust_vals Number of log10(Tdust) values that are
+  ///     relevant for the opacity coefficient table.
+  /// @param[in] n_opac_poly_coef Number of opacity coefficients that are
+  ///     computed from the opacity coefficient table.
+  ///
+  /// @todo
+  /// If we implement move construction and move assignment, this should stop
+  /// returning a pointer
+  static GrainMetalInjectPathways* create_ptr(int n_pathways,
+                                              int n_log10Tdust_vals,
+                                              int n_opac_poly_coef) {
+    if (n_pathways <= 0) {
+      GrPrintErrMsg("n_pathways must be positive\n");
+      return nullptr;
+    } else if (n_log10Tdust_vals <= 1) {
+      GrPrintErrMsg("n_log10Tdust_vals must exceed 1\n");
+      return nullptr;
+    } else if (n_opac_poly_coef != 4) {
+      GrPrintErrMsg(
+          "the logic that uses the opacity table is hardcoded to assume that "
+          "the number of opacity polynomial coefficients is exactly 4\n");
+      return nullptr;
+    }
+
+    GrainMetalInjectPathways* out = new GrainMetalInjectPathways;
+
+    out->n_pathways = n_pathways;
+
+    out->total_metal_nuclide_yields = yields::new_MetalTables(n_pathways);
+    out->gas_metal_nuclide_yields = yields::new_MetalTables(n_pathways);
+
+    out->grain_yields = new_GrainSpeciesCollection(n_pathways);
+    out->size_moments = new_GrainSpeciesCollection(3 * n_pathways);
+
+    out->n_opac_poly_coef = n_opac_poly_coef;
+
+    out->opacity_coef_table = new_GrainSpeciesCollection(
+        n_pathways * n_log10Tdust_vals * n_opac_poly_coef);
+
+    return out;
   }
-
-  GrainMetalInjectPathways* out = new GrainMetalInjectPathways;
-
-  out->n_pathways = n_pathways;
-
-  out->total_metal_nuclide_yields = yields::new_MetalTables(n_pathways);
-  out->gas_metal_nuclide_yields = yields::new_MetalTables(n_pathways);
-
-  out->grain_yields = new_GrainSpeciesCollection(n_pathways);
-  out->size_moments = new_GrainSpeciesCollection(3 * n_pathways);
-
-  out->n_opac_poly_coef = n_opac_poly_coef;
-
-  out->opacity_coef_table = new_GrainSpeciesCollection(
-      n_pathways * n_log10Tdust_vals * n_opac_poly_coef);
-
-  return out;
-}
+};
 
 /// Queries the specified GrainMetalInjectPathways instance for the number of
 /// log10(Tdust) values that are relevant for the opacity coefficient table.

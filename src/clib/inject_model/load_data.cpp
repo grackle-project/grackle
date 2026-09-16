@@ -477,8 +477,9 @@ Expected<void, Error> load_inject_path_data(
   // initialize the object that will hold the loaded data
   int n_log10Tdust_vals = inj_model_input::N_Tdust_Opacity_Table;
   int n_opac_poly_coef = inj_model_input::N_Opacity_Coef;
-  my_rates->opaque_storage->inject_pathway_props = new_GrainMetalInjectPathways(
-      n_pathways, n_log10Tdust_vals, n_opac_poly_coef);
+  my_rates->opaque_storage->inject_pathway_props =
+      GrainMetalInjectPathways::create_ptr(n_pathways, n_log10Tdust_vals,
+                                           n_opac_poly_coef);
 
   GrainMetalInjectPathways* inject_pathway_props =
       my_rates->opaque_storage->inject_pathway_props;
