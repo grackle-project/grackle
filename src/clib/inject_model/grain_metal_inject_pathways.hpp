@@ -256,6 +256,14 @@ public:
   GrainMetalInjectPathways& operator=(const GrainMetalInjectPathways&) = delete;
   GrainMetalInjectPathways& operator=(GrainMetalInjectPathways&&) = delete;
 
+  ~GrainMetalInjectPathways() noexcept {
+    yields::drop_MetalTables(&total_metal_nuclide_yields);
+    yields::drop_MetalTables(&gas_metal_nuclide_yields);
+    drop_GrainSpeciesCollection(&grain_yields);
+    drop_GrainSpeciesCollection(&size_moments);
+    drop_GrainSpeciesCollection(&opacity_coef_table);
+  }
+
   /// @brief factory method
   ///
   /// This only allocates storage, it doesn't initialize contents
@@ -320,17 +328,6 @@ public:
 inline int GrainMetalInjectPathways_get_n_log10Tdust_vals(
     const GrainMetalInjectPathways* ptr) {
   return (ptr == nullptr) ? 0 : ptr->log10Tdust_interp_props.dimension[0];
-}
-
-/// performs cleanup of the contents of GrainMetalInjectPathways
-///
-/// This effectively acts like a destructor
-inline void drop_GrainMetalInjectPathways(GrainMetalInjectPathways* ptr) {
-  yields::drop_MetalTables(&ptr->total_metal_nuclide_yields);
-  yields::drop_MetalTables(&ptr->gas_metal_nuclide_yields);
-  drop_GrainSpeciesCollection(&ptr->grain_yields);
-  drop_GrainSpeciesCollection(&ptr->size_moments);
-  drop_GrainSpeciesCollection(&ptr->opacity_coef_table);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
