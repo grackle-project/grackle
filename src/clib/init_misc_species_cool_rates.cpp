@@ -36,6 +36,8 @@ struct NDRateTableInitFnInfo{
   init_nd_rate_table fn;
 };
 
+namespace GRIMPL_NAMESPACE_DECL {
+
 /// calculate CIE H2 cooling rate from Yoshida et al. (2006)
 ///
 /// @note
@@ -79,13 +81,10 @@ static int add_cieY06_cool_rate(double **rate_ptr, double coolunit,
   return GR_SUCCESS;
 }
 
-int grackle::impl::init_misc_species_cool_rates(
+int init_misc_species_cool_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
   code_units *my_units)
 {
-
-  // TO-DO: k125 - k153 are primordial_chemistry=4.
-  // These should be moved to initialize_rates.c so this is only metal species
   if (my_chemistry->primordial_chemistry == 0) {
     return GR_SUCCESS;
   }
@@ -118,8 +117,8 @@ int grackle::impl::init_misc_species_cool_rates(
   return GR_SUCCESS;
 }
 
-int grackle::impl::free_misc_species_cool_rates(chemistry_data *my_chemistry,
-                                                chemistry_data_storage *my_rates)
+int free_misc_species_cool_rates(chemistry_data *my_chemistry,
+                                 chemistry_data_storage *my_rates)
 {
   if (my_chemistry->primordial_chemistry == 0) {
     return GR_SUCCESS;
@@ -131,13 +130,13 @@ int grackle::impl::free_misc_species_cool_rates(chemistry_data *my_chemistry,
 }
 
 /// helper function to assist with setting up a interp_grid for cooling
-static int setup_cool_interp_grid_(GRIMPL_NS::InterpGrid* grid,
+static int setup_cool_interp_grid_(InterpGrid* grid,
                                    int rank,
-                                   const GRIMPL_NS::InterpDimScale* parameters,
+                                   const InterpDimScale* parameters,
                                    const double* data,
                                    double log_coolrate)
 {
-  GRIMPL_NS::InterpGridProps grid_props(rank, parameters);
+  InterpGridProps grid_props(rank, parameters);
   if (!grid_props) {
     return GR_FAIL;
   }
@@ -146,10 +145,12 @@ static int setup_cool_interp_grid_(GRIMPL_NS::InterpGrid* grid,
   for(long long i = 0; i < data_size; i++) {
     grid_data[i] = data[i] + log_coolrate;
   }
-  *grid = GRIMPL_NS::InterpGrid(std::move(grid_props), grid_data);
+  *grid = InterpGrid(std::move(grid_props), grid_data);
 
   return GR_SUCCESS;
 }
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 // all of the following functions are declared extern "C" because (at the time
 // of writing) 
@@ -342,7 +343,7 @@ extern "C" int initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistr
      33.98,  33.23,  32.34,  31.37,  30.44,  29.57,  28.59,  27.59,  26.60,  25.63,  24.79,  24.33,  29.02,  29.01,  28.85,  28.64,  28.59,  28.59,  28.59,  28.59,  28.59, 
      33.32,  32.46,  31.50,  30.54,  29.66,  28.72,  27.73,  26.73,  25.75,  24.93,  23.98,  23.66,  28.70,  28.60,  28.26,  28.03,  27.99,  27.99,  27.99,  27.99,  27.99}; 
 
-  return setup_cool_interp_grid_(&my_rates->opaque_storage->LH2, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LH2, rank, params, L, log10(coolunit));
 }
 
 
@@ -534,7 +535,7 @@ extern "C" int initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistr
       35.07,  34.09,  33.20,  32.88,  32.88,  32.88,  32.88,  32.88,  32.88,  32.88,  32.88,  32.86,  32.71,  32.17,  31.40,  30.33,  29.41,  29.07,  29.00,  28.99,  28.99, 
       34.83,  33.85,  33.03,  32.83,  32.83,  32.83,  32.83,  32.83,  32.83,  32.83,  32.82,  32.79,  32.57,  31.94,  31.13,  29.99,  29.10,  28.84,  28.78,  28.78,  28.78};
 
-  return setup_cool_interp_grid_(&my_rates->opaque_storage->LHD, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LHD, rank, params, L, log10(coolunit));
 }
 
 
@@ -758,7 +759,7 @@ extern "C" int initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistr
       32.95,  32.00,  31.10,  30.33,  29.71,  29.19,  28.71,  28.34,  28.17,  28.13,  28.13,  28.13,  28.13,  28.13,  28.13,  28.13,  28.13, 
       32.90,  31.95,  31.06,  30.29,  29.68,  29.15,  28.67,  28.26,  28.06,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01}; 
 
-  return setup_cool_interp_grid_(&my_rates->opaque_storage->LCI, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LCI, rank, params, L, log10(coolunit));
 }
 
 
@@ -982,7 +983,7 @@ extern "C" int initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemist
       32.61,  31.62,  30.65,  29.81,  29.17,  28.64,  28.18,  27.84,  27.69,  27.67,  27.66,  27.66,  27.66,  27.66,  27.66,  27.66,  27.66, 
       32.59,  31.60,  30.63,  29.80,  29.16,  28.62,  28.14,  27.74,  27.52,  27.47,  27.46,  27.46,  27.46,  27.46,  27.46,  27.46,  27.46};
 
-  return setup_cool_interp_grid_(&my_rates->opaque_storage->LCII, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LCII, rank, params, L, log10(coolunit));
 }
 
 
@@ -1206,7 +1207,7 @@ extern "C" int initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistr
       27.75,  27.04,  26.47,  26.03,  25.76,  25.68,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67, 
       27.63,  26.93,  26.37,  25.91,  25.60,  25.48,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46}; 
 
-  return setup_cool_interp_grid_(&my_rates->opaque_storage->LOI, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LOI, rank, params, L, log10(coolunit));
 }
 
 
@@ -1343,7 +1344,7 @@ extern "C" int initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistr
       26.11,  25.11,  24.11,  23.11,  22.13,  21.17,  20.28,  19.54,  18.97,  18.59,  18.37,  18.28,  18.25,  18.23, 
       25.91,  24.91,  23.91,  22.92,  21.93,  20.97,  20.07,  19.28,  18.65,  18.24,  18.03,  17.96,  17.94,  17.93};
 
-  return setup_cool_interp_grid_(&my_rates->opaque_storage->LCO, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LCO, rank, params, L, log10(coolunit));
 }
 
 
@@ -1413,7 +1414,7 @@ extern "C" int initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistr
       22.27,  21.29,  20.32,  19.38,  18.53,  17.82,  17.34,  17.12,  17.05,  17.03,  17.02,  17.02,  17.02,  17.02, 
       22.06,  21.08,  20.11,  19.17,  18.30,  17.55,  17.01,  16.74,  16.66,  16.64,  16.64,  16.63,  16.63,  16.63}; 
 
-  return setup_cool_interp_grid_(&my_rates->opaque_storage->LOH, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LOH, rank, params, L, log10(coolunit));
 }
 
 
@@ -1549,7 +1550,7 @@ extern "C" int initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemist
       23.89,  22.89,  21.90,  20.93,  19.97,  19.04,  18.17,  17.35,  16.58,  15.89,  15.34,  15.05,  14.97,  14.95,  14.94,  14.94, 
       23.63,  22.64,  21.65,  20.67,  19.71,  18.77,  17.86,  17.01,  16.20,  15.48,  14.94,  14.70,  14.64,  14.62,  14.62,  14.62}; 
 
-  return setup_cool_interp_grid_(&my_rates->opaque_storage->LH2O, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LH2O, rank, params, L, log10(coolunit));
 }
 
 
