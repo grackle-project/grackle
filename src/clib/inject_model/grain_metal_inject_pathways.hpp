@@ -15,12 +15,14 @@
 #include "../LUT.hpp"
 #include "../internal_types.hpp"
 #include "../interp_grid.hpp"  // InterpGridProps
+#include "../support/config.hpp"
 #include "../support/status_reporting.hpp"
 #include "../visitor/common.hpp"
 
+namespace GRIMPL_NAMESPACE_DECL {
 // this is a separate namespace because we are probably going to delete the
 // contents (when we deal with GH Issue #446)
-namespace grackle::impl::yields {
+namespace yields {
 
 /// Tables of values for each metal nuclide known to Grackle. Each table
 /// has an entry for each injection pathway modelled in the current
@@ -85,9 +87,7 @@ inline void MetalTables_zero_out(MetalTables* ptr, int nelem) {
   }
 }
 
-}  // namespace grackle::impl::yields
-
-namespace grackle::impl {
+}  // namespace yields
 
 /// The basic premise is that this tracks tables of data pertaining to the
 /// list of injection pathways for dust grains and metal species
@@ -332,6 +332,6 @@ inline void drop_GrainMetalInjectPathways(GrainMetalInjectPathways* ptr) {
   }
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // GRAIN_METAL_INJECT_PATHWAYS_HPP
