@@ -16,6 +16,7 @@
 #include <concepts>
 #include <optional>
 #include <variant>
+#include <utility>
 
 #include "config.hpp"
 
@@ -92,7 +93,12 @@ class Expected {
 public:
   // the following allow implicit casts from T and Unexpected<E> objects
   // NOLINTBEGIN(google-explicit-constructor)
-  constexpr Expected(T v) : u_(std::in_place_index<0>, v) {}
+  constexpr Expected(const T& v)
+    requires std::copy_constructible<T>
+      : u_(std::in_place_index<0>, v) {}
+  constexpr Expected(T&& v)
+    requires std::move_constructible<T>
+      : u_(std::in_place_index<0>, std::move(v)) {}
   constexpr Expected(Unexpected<E> e)
       : u_(std::in_place_index<1>, std::move(e.error())) {}
   // NOLINTEND(google-explicit-constructor)
@@ -118,13 +124,13 @@ public:
   constexpr explicit operator bool() const { return u_.index() == 0; }
 
   constexpr T& value() & { return std::get<0>(u_); }
-  constexpr T&& value() && { return std::get<0>(u_); }
+  constexpr T&& value() && { return std::get<0>(std::move(u_)); }
   constexpr const T& value() const& { return std::get<0>(u_); }
-  constexpr const T&& value() const&& { return std::get<0>(u_); }
+  constexpr const T&& value() const&& { return std::get<0>(std::move(u_)); }
   constexpr E& error() & { return std::get<1>(u_); }
-  constexpr E&& error() && { return std::get<1>(u_); }
+  constexpr E&& error() && { return std::get<1>(std::move(u_)); }
   constexpr const E& error() const& { return std::get<1>(u_); }
-  constexpr const E& error() const&& { return std::get<1>(u_); }
+  constexpr const E& error() const&& { return std::get<1>(std::move(u_)); }
 
   constexpr T value_or(T dflt_val) const&
     requires std::copy_constructible<T>
@@ -136,9 +142,11 @@ public:
   // doesn't contain a value (the fact that the current implementation aborts
   // the program is an implementation detail that can/will change)
   constexpr T& operator*() & noexcept { return std::get<0>(u_); }
-  constexpr T&& operator*() && noexcept { return std::get<0>(u_); }
+  constexpr T&& operator*() && noexcept { return std::get<0>(std::move(u_)); }
   constexpr const T& operator*() const& noexcept { return std::get<0>(u_); }
-  constexpr const T&& operator*() const&& noexcept { return std::get<0>(u_); }
+  constexpr const T&& operator*() const&& noexcept {
+    return std::get<0>(std::move(u_));
+  }
   constexpr T* operator->() noexcept { return &std::get<0>(u_); }
   constexpr const T* operator->() const noexcept { return &std::get<0>(u_); }
 };
