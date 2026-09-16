@@ -54,9 +54,22 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
+template <class T>
+concept CopyAssignable_ =
+    std::assignable_from<T&, T&> && std::assignable_from<T&, const T&> &&
+    std::assignable_from<T&, const T>;
+
+// for simplicity, all error types must satisfiy these requirements
+// (it's like std::copyable<T>, without requiring std::swappable<T>)
+template <class E>
+concept ErrorConcept_ =
+    std::move_constructible<E> && std::copy_constructible<E> &&
+    std::assignable_from<E&, E> &&  // <- move assignable
+    CopyAssignable_<E>;
+
 // This facillitate creation of an Expected object holding an error
 template <class E>
-  requires std::copyable<E>
+  requires ErrorConcept_<E>
 class Unexpected {
   E err_;
 
@@ -72,7 +85,7 @@ public:
 //     template<class E> Unexpected(E) -> Unexpected<E>;
 
 template <class T, class E>
-  requires std::copyable<E>
+  requires ErrorConcept_<E>
 class Expected {
   std::variant<T, E> u_;  // a type-safe union holding either a value or error
 
@@ -91,23 +104,29 @@ public:
   constexpr Expected(const Expected&)
     requires std::copy_constructible<T>
   = default;
-  constexpr Expected& operator=(const Expected&)
-    requires std::assignable_from<T&, const T&>
+  constexpr Expected(Expected&& other)
+    requires std::move_constructible<T>
   = default;
-
-  // the following pair of operations are skipped for now (they're tricky!)
-  Expected(Expected&&) = delete;
-  Expected& operator=(Expected&&) = delete;
+  constexpr Expected& operator=(const Expected&)
+    requires CopyAssignable_<T>
+  = default;
+  constexpr Expected& operator=(Expected&&)
+    requires std::assignable_from<T&, T>
+  = default;
 
   constexpr bool has_value() const { return u_.index() == 0; }
   constexpr explicit operator bool() const { return u_.index() == 0; }
 
-  constexpr T& value() { return std::get<0>(u_); }
-  constexpr const T& value() const { return std::get<0>(u_); }
-  constexpr E& error() { return std::get<1>(u_); }
-  constexpr const E& error() const { return std::get<1>(u_); }
+  constexpr T& value() & { return std::get<0>(u_); }
+  constexpr T&& value() && { return std::get<0>(u_); }
+  constexpr const T& value() const& { return std::get<0>(u_); }
+  constexpr const T&& value() const&& { return std::get<0>(u_); }
+  constexpr E& error() & { return std::get<1>(u_); }
+  constexpr E&& error() && { return std::get<1>(u_); }
+  constexpr const E& error() const& { return std::get<1>(u_); }
+  constexpr const E& error() const&& { return std::get<1>(u_); }
 
-  constexpr T value_or(T dflt_val) const
+  constexpr T value_or(T dflt_val) const&
     requires std::copy_constructible<T>
   {
     return has_value() ? value() : dflt_val;
@@ -116,15 +135,17 @@ public:
   // usage of the following functions trigger undefined behavior if `this`
   // doesn't contain a value (the fact that the current implementation aborts
   // the program is an implementation detail that can/will change)
-  constexpr T& operator*() noexcept { return std::get<0>(u_); }
-  constexpr const T& operator*() const noexcept { return std::get<0>(u_); }
+  constexpr T& operator*() & noexcept { return std::get<0>(u_); }
+  constexpr T&& operator*() && noexcept { return std::get<0>(u_); }
+  constexpr const T& operator*() const& noexcept { return std::get<0>(u_); }
+  constexpr const T&& operator*() const&& noexcept { return std::get<0>(u_); }
   constexpr T* operator->() noexcept { return &std::get<0>(u_); }
   constexpr const T* operator->() const noexcept { return &std::get<0>(u_); }
 };
 
 // partial specialization Expected for writing `Expected<void, E>`:
 template <class E>
-  requires std::copyable<E>
+  requires ErrorConcept_<E>
 class Expected<void, E> {
   std::optional<E> u_;
 
@@ -138,14 +159,13 @@ public:
   constexpr bool has_value() const { return !u_.has_value(); }
   constexpr explicit operator bool() const { return !u_.has_value(); }
 
-  constexpr E& error() { return u_.value(); }
-  constexpr const E& error() const { return u_.value(); }
+  constexpr E& error() & { return u_.value(); }
+  constexpr E&& error() && { return std::move(u_).value(); }
+  constexpr const E&& error() const& { return u_.value(); }
+  constexpr const E&& error() const&& { return std::move(u_).value(); }
 
-  // the following are all defined for consistency with general form of Expected
+  // following are all defined for consistency with general form of Expected
   constexpr void value() const {}
-  Expected(Expected&&) = delete;
-  Expected& operator=(Expected&&) = delete;
-  constexpr void operator*() noexcept {}
   constexpr void operator*() const noexcept {}
 };
 
