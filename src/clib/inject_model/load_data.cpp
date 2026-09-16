@@ -23,7 +23,6 @@
 #include "../ratequery.hpp"
 #include "../support/error.hpp"
 #include "../support/expected.hpp"
-#include "../support/status_reporting.hpp"  // GrPrintAndReturnErr
 #include "../support/FrozenKeyIdxBiMap.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {

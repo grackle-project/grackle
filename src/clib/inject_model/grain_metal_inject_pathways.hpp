@@ -12,13 +12,11 @@
 #ifndef GRAIN_METAL_INJECT_PATHWAYS_HPP
 #define GRAIN_METAL_INJECT_PATHWAYS_HPP
 
-#include "../LUT.hpp"
 #include "../internal_types.hpp"
 #include "../interp_grid.hpp"  // InterpGridProps
 #include "../support/config.hpp"
 #include "../support/error.hpp"
 #include "../support/expected.hpp"
-#include "../visitor/common.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 // this is a separate namespace because we are probably going to delete the
