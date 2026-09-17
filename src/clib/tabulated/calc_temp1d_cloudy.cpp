@@ -26,7 +26,7 @@
 namespace GRIMPL_NAMESPACE_DECL {
 
 void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
-                        double nHcgs_div_rhoH, double zr, int imetal,
+                        double nHcgs_div_rhoH, double zr,
                         const gr_mask_type* itmask,
                         const chemistry_data* my_chemistry,
                         cloudy_data cloudy_table,
@@ -123,7 +123,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
 
           // Add metal species to mean molecular weight
 
-          if (imetal == 1) {
+          if (my_chemistry->metal_cooling == 1) {
             munew = d(i, idx_range.j, idx_range.k) /
                     ((d(i, idx_range.j, idx_range.k) -
                       metal(i, idx_range.j, idx_range.k)) /
