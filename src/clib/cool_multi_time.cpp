@@ -80,6 +80,7 @@ void cool_multi_time(
     std::vector<double> rhoH(my_fields->grid_dimension[0]);
     std::vector<double> nelec_times_mH(my_fields->grid_dimension[0]);
     std::vector<double> edot(my_fields->grid_dimension[0]);
+    std::vector<double> alpha_continuum(my_fields->grid_dimension[0]);
 
     // Iteration mask for multi_cool
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
@@ -127,24 +128,35 @@ void cool_multi_time(
                               metallicity.data(), imetal, idx_range,
                               my_chemistry);
 
-      // Initialize edot
+      // Initialize edot (and alpha_continuum)
       // -> we're setting edot to tiny_fortran_val to avoid a divide-by-zero
       //    when Tfloor is relevant. The more robust solution is explicitly
       //    avoid dividing by zero when computing cooltime
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         edot[i] = (itmask[i] == MASK_FALSE) ? tiny_fortran_val : 0.0;
+        alpha_continuum[i] = 0.0;  // <- this is redundant (its already 0)
       }
+
+      // now, handle specifics of our dust model. This includes:
+      // - computing Tdust (tdust or grain_temperatures may be filled)
+      // - computing dust2gas (for some dust models)
+      // - add contributions to alpha_continuum (for some dust models)
+      // - add contributions to edot from dust
+      // (we skip calculation of reaction rates)
+      my_rates->opaque_storage->dust_solver.calc_Tdust_and_chem_contrib(
+          edot.data(), alpha_continuum.data(), nullptr, dust2gas.data(),
+          tdust.data(), grain_temperatures, tgas.data(), rhoH.data(),
+          nelec_times_mH.data(), metallicity.data(), itmask.data(),
+          itmask_metal.data(), my_chemistry, my_rates, my_fields,
+          species_densities, internalu, idx_range, logTlininterp_buf);
 
       // compute edot
       cool1d_multi_g(
-        edot.data(), tgas.data(),
-        mmw.data(), tdust.data(), metallicity.data(),
-        dust2gas.data(), rhoH.data(), nelec_times_mH.data(), 
-        itmask.data(), itmask_metal.data(),
-        my_chemistry, my_rates, my_fields, species_densities,
-        my_uvb_rates, internalu, idx_range,
-        grain_temperatures, logTlininterp_buf, coolingheating_buf
-      );
+          edot.data(), alpha_continuum.data(), tgas.data(), mmw.data(),
+          metallicity.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),
+          itmask_metal.data(), my_chemistry, my_rates, my_fields,
+          species_densities, my_uvb_rates, internalu, idx_range,
+          logTlininterp_buf, coolingheating_buf);
 
       // Compute the cooling time on the slice
       //   (the gamma used here is the same as used to calculate the pressure

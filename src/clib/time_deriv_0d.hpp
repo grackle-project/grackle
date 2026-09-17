@@ -473,8 +473,13 @@ inline void derivatives(
     = pack.field_adaptor_mgr.get_species_data(pack.idx_range_1_element);
 
   if (pack.local_edot_handling != 1) {
-    // in this branch, we're effectively ignoring the dependence of temperature
-    // on species number density.
+    // in this branch, we're effectively assuming that the time derivative of
+    // temperature is 0. This assumption derives from the current choice to
+    // assume that the time derivative of specific internal energy is 0 while
+    // evolving chemistry.
+    // 
+    // Note that by assuming dT/dt = 0, we're effectively assuming that
+    // temperature is independent of species number density.
     // -> strictly speaking, this is false since gamma and the mean molecular
     //    weight vary with respect to species densities
 
@@ -483,6 +488,26 @@ inline void derivatives(
         pack.main_scratch_buf.logTlininterp_buf, pack.idx_range_1_element,
         *my_chemistry, pack.other_scratch_buf.itmask,
         pack.other_scratch_buf.tgas);
+
+    
+    // Lookup rate for H2 formation on dust & (when relevant) grain growth rates
+    // -> these calculations reuse the precomputed dust temperature and (when
+    //    relevant) the precomputed dust2gas buffer
+    // -> strictly speaking, in models where the the dust species densities are
+    //    allowed to vary, it would be more correct to recompute the dust
+    //    temperature (since dust absorption will vary)
+    // -> we don't do that right now for historical consistency and because it
+    //    would probably be computationally demanding
+    if (DustSolver::any_dust_rxn_rates(*my_chemistry)) {
+      my_rates->opaque_storage->dust_solver.lookup_dust_rxn_rates1d(
+          pack.idx_range_1_element, pack.other_scratch_buf.tdust,
+          pack.other_scratch_buf.dust2gas, pack.fwd_args.dom,
+          &pack.local_itmask_metal, my_chemistry, my_rates,
+          &pack.fields, sp_densities, pack.main_scratch_buf.grain_temperatures,
+          pack.main_scratch_buf.logTlininterp_buf,
+          pack.main_scratch_buf.rxn_rate_buf,
+          pack.main_scratch_buf.internal_dust_prop_scratch_buf);
+    }
   } else {
     // compute gas properties (tgas, mmw, rhoH, metallicity, nelec_times_mH)
     // and fill up logTlinterp_buf
@@ -519,18 +544,37 @@ inline void derivatives(
     pack.other_scratch_buf.edot[0] =
         (pack.other_scratch_buf.itmask[0] == MASK_FALSE) ? tiny_fortran_val : 0.0;
 
+    double alpha_continuum[1] = {0.0};
+
+
+    // the next function call:
+    // - compute Tdust (tdust or grain_temperatures may be filled)
+    // - compute dust2gas (depending on dust model)
+    // - add contributions to alpha_continuum (depends on dust model)
+    // - add contributions to edot from dust
+    // - compute and store dust-related reaction rates in rxn_rate_buf
+    my_rates->opaque_storage->dust_solver.calc_Tdust_and_chem_contrib(
+        pack.other_scratch_buf.edot, alpha_continuum,
+        &pack.main_scratch_buf.rxn_rate_buf, pack.other_scratch_buf.dust2gas,
+        pack.other_scratch_buf.tdust, pack.main_scratch_buf.grain_temperatures,
+        pack.other_scratch_buf.tgas, pack.other_scratch_buf.rhoH,
+        pack.other_scratch_buf.nelec_times_mH,
+        pack.other_scratch_buf.metallicity, pack.other_scratch_buf.itmask,
+        &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
+        sp_densities, internalu, pack.idx_range_1_element,
+        pack.main_scratch_buf.logTlininterp_buf);
+
     // Compute the edot values (so we can get the cooling time)
     // -> at this time the function also fillls dust2gas and tdust
     // -> (we plan to factor out the extra calculations)
     cool1d_multi_g(
-      pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
-      pack.other_scratch_buf.mmw,
-      pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
-      pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
+      pack.other_scratch_buf.edot, alpha_continuum,
+      pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
+      pack.other_scratch_buf.metallicity, pack.other_scratch_buf.rhoH,
       pack.other_scratch_buf.nelec_times_mH,
       pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
       sp_densities,
-      my_uvb_rates, internalu, pack.idx_range_1_element, pack.main_scratch_buf.grain_temperatures,
+      my_uvb_rates, internalu, pack.idx_range_1_element,
       pack.main_scratch_buf.logTlininterp_buf,
       pack.main_scratch_buf.coolingheating_buf
     );
@@ -538,18 +582,15 @@ inline void derivatives(
 
   // uses the temperature to look up the chemical rates (they are interpolated
   // with respect to log temperature from input tables)
-  grackle::impl::lookup_cool_rates1d(
-    pack.idx_range_1_element, pack.fwd_args.anydust,
+  GRIMPL_NS::lookup_cool_rates1d(
+    pack.idx_range_1_element,
     pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
-    pack.other_scratch_buf.tdust, pack.other_scratch_buf.dust2gas,
     pack.fwd_args.dom, pack.fwd_args.dx_cgs, pack.fwd_args.c_ljeans,
-    pack.other_scratch_buf.itmask, &pack.local_itmask_metal, dt_FIXME,
-    my_chemistry, my_rates, &pack.fields, sp_densities, my_uvb_rates,
-    internalu, pack.main_scratch_buf.grain_temperatures,
+    pack.other_scratch_buf.itmask, &pack.local_itmask_metal,
+    my_chemistry, my_rates, &pack.fields, sp_densities, my_uvb_rates, internalu,
     pack.main_scratch_buf.logTlininterp_buf,
     pack.main_scratch_buf.rxn_rate_buf,
-    pack.main_scratch_buf.chemheatrates_buf,
-    pack.main_scratch_buf.internal_dust_prop_scratch_buf
+    pack.main_scratch_buf.chemheatrates_buf
   );
 
 

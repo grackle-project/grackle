@@ -15,15 +15,11 @@
 
 #include <vector>
 
-#include "dust/grain_species_info.hpp"
 #include "cool1d_multi_g.hpp"
-#include "dust/gas_heat_cool.hpp"
-#include "dust/multi_grain_species/dust_props.hpp"
 #include "dust/solver.hpp"
 #include "grackle.h"
 #include "internal_units.hpp"
 #include "interpolate.hpp"
-#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
 #include "opaque_storage.hpp"
@@ -45,16 +41,18 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
       interp_grid.props.data_size, interp_grid.data);
 }
 
-void cool1d_multi_g(
-    double* edot, const double* tgas, const double* mmw, double* tdust,
-    const double* metallicity, double* dust2gas, const double* rhoH,
-    const double* nelec_times_mH, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    SpeciesMultiView<const gr_float> sp_densities,
-    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-    IndexRange idx_range, GrainSpeciesCollection grain_temperatures,
-    LnTLinInterpBuf logTlininterp_buf, CoolHeatScratchBuf coolingheating_buf) {
+void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
+                    const double* mmw, const double* metallicity,
+                    const double* rhoH, const double* nelec_times_mH,
+                    const gr_mask_type* itmask,
+                    const gr_mask_type* itmask_metal,
+                    chemistry_data* my_chemistry,
+                    chemistry_data_storage* my_rates,
+                    grackle_field_data* my_fields,
+                    SpeciesMultiView<const gr_float> sp_densities,
+                    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+                    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf,
+                    CoolHeatScratchBuf coolingheating_buf) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
@@ -177,7 +175,6 @@ void cool1d_multi_g(
   std::vector<double> LCO(my_fields->grid_dimension[0]);
   std::vector<double> LOH(my_fields->grid_dimension[0]);
   std::vector<double> LH2O(my_fields->grid_dimension[0]);
-  std::vector<double> alpha_continuum(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
@@ -206,23 +203,6 @@ void cool1d_multi_g(
 
   // multiplicative factor for including/excluding H2 cooling
   ih2cox = (double)(my_chemistry->ih2co);
-
-  // zero-out the continuum absorption coefficients
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    alpha_continuum[i] = 0.0;
-  }
-
-  // based on configuration precise configuration, perform a subset of:
-  // - compute Tdust, dust2gas
-  // - add contributions to alpha_continuum, edot from dust
-  //
-  // in the immediate future, the plan is to hoist this function call out of
-  // cool1d_multi_g
-  handle_dust_cooling_contributions(
-      edot, dust2gas, tdust, grain_temperatures, alpha_continuum.data(), tgas,
-      rhoH, nelec_times_mH, metallicity, itmask, itmask_metal, my_chemistry,
-      my_rates, my_fields, sp_densities, internalu, idx_range,
-      logTlininterp_buf);
 
   // Compute log densities
 
