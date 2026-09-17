@@ -127,11 +127,11 @@ void lookup_dust_rates1d(IndexRange idx_range, const double* tdust,
 
     // Compute grain size increment
     if (my_chemistry->dust_model == 0) {
-      calc_grain_size_increment_1d(dom, idx_range, itmask_metal, my_chemistry,
-                                   my_rates->opaque_storage->grain_species_info,
-                                   my_rates->opaque_storage->inject_pathway_props,
-                                   my_fields, sp_densities,
-                                   internal_dust_prop_scratch_buf);
+      calc_grain_size_increment_1d(
+          dom, idx_range, itmask_metal, my_chemistry,
+          my_rates->opaque_storage->grain_species_info,
+          my_rates->opaque_storage->inject_pathway_props, my_fields,
+          sp_densities, internal_dust_prop_scratch_buf);
     }
 
     FortranView<const gr_float***> d(

@@ -244,9 +244,8 @@ void make_consistent(
   // gas/dust/total nuclide arrays (Cg/Cd/Ct etc.) are populated directly
   // from our tracked metal_density_X + dust species fields, overriding the
   // SN-yield-derived computation below. Views are constructed once here.
-  FortranView<const gr_float***> mC_view, mO_view, mMg_view, mSi_view,
-      mFe_view, dust_sil_view, dust_mg_sil_view, dust_fe_sil_view,
-      dust_carb_view;
+  FortranView<const gr_float***> mC_view, mO_view, mMg_view, mSi_view, mFe_view,
+      dust_sil_view, dust_mg_sil_view, dust_fe_sil_view, dust_carb_view;
   if (my_chemistry->dust_species_track == 1) {
     mC_view = FortranView<const gr_float***>(
         const_cast<const gr_float*>(my_fields->metal_density_carbon),
