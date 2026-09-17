@@ -77,6 +77,8 @@ def main(args=None):
         my_chemistry.primordial_chemistry = 0
         my_chemistry.metal_cooling = 1
         my_chemistry.UVbackground = 1
+        my_chemistry.dust_model = 1
+        my_chemistry.dust_species_track = 0
         my_chemistry.grackle_data_file = \
           os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
 
