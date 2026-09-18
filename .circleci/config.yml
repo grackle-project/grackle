@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  codecov: codecov/codecov@5.4.3
 
 commands:
   set-env:
@@ -305,6 +307,7 @@ jobs:
     steps:
       - checkout
       - install-cmake-dependencies
+      - run: sudo apt-get install lcov
       - run:
           name: "update CMake to newer version"
           command: |
@@ -316,11 +319,17 @@ jobs:
       - run:
           name: "Build libgrackle and all of the core library's tests"
           command: |
-            cmake --preset ci-linux
-            cmake --build build_ci-linux
+            cmake --preset ci-linux-coverage
+            cmake --build build_ci-linux-coverage
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
-          command: ctest --test-dir build_ci-linux --output-on-failure
+          command: ctest --test-dir build_ci-linux-coverage --output-on-failure
+      - run:
+          name: "Generate a coverage report"
+          command: lcov --capture --directory build_ci-linux-coverage --output-file coverage.info
+      - codecov/upload:
+          disable_search: true
+          files: coverage.info
       - run:
           name: "Build libgrackle with OpenMP enabled"
           command: |
