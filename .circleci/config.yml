@@ -194,7 +194,9 @@ commands:
             source $HOME/venv/bin/activate
             pip uninstall --yes gracklepy # it's ok if gracklepy wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
-            pip install -e .
+            # the -v flag prints out compilation progress
+            # -> prevent time-outs from builds taking too long without output
+            pip install -v -e .
             rm -rf ./my-test_answers # in case answers have already been generated
       - restore_cache:
           name: "Restore gold standard answers from cache."
@@ -280,7 +282,11 @@ jobs:
           command: |
             source $HOME/venv/bin/activate
             git checkout $CIRCLE_BRANCH
-            pip install -e .
+            # the -v flag prints out compilation progress
+            # -> prevent time-outs from builds taking too long without output
+            # -> its not clear why this ever helps... A build normally takes
+            #    well under 10 minutes
+            pip install -v -e .
       - run-gracklepy-tests:
           omp: 'false'
           build_kind: 'standalone-gracklepy'
