@@ -269,4 +269,3 @@ int GRIMPL_NS::free_cloudy_data(cloudy_data *my_cloudy,
   }
   return GR_SUCCESS;
 }
-

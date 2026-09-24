@@ -218,6 +218,31 @@ various parameters.
      - k31
      - none
      - :c:data:`primordial_chemistry` > 1
+   * - C + :math:`{\gamma}`
+     - C\ :sup:`+` + |e-|
+     - kphCI
+     - See :ref:`UVBPhotoRates`
+     - :c:data:`metal_chemistry` = 1
+   * - O + :math:`{\gamma}`
+     - O\ :sup:`+` + |e-|
+     - kphOI
+     - See :ref:`UVBPhotoRates`
+     - :c:data:`metal_chemistry` = 1
+   * - CO + :math:`{\gamma}`
+     - C + O
+     - kdissCO
+     - See :ref:`UVBPhotoRates`
+     - :c:data:`metal_chemistry` = 1
+   * - OH + :math:`{\gamma}`
+     - O + H
+     - kdissOH
+     - See :ref:`UVBPhotoRates`
+     - :c:data:`metal_chemistry` = 1
+   * - H\ :sub:`2`\ O + :math:`{\gamma}`
+     - OH + H
+     - kdissH2O
+     - See :ref:`UVBPhotoRates`
+     - :c:data:`metal_chemistry` = 1
    * - H + H + grain
      - H\ :sub:`2` + grain
      - k2dust
@@ -539,16 +564,120 @@ various parameters.
      - `Millar et al. (1997) <https://ui.adsabs.harvard.edu/abs/1997A%26AS..121..139M/abstract>`__
      - :c:data:`metal_chemistry` = 1
 
-.. note:: 
-   For equations with :math:`{\gamma}` on the LHS, the rate for this
-   equation come sfrom the choice of UV background models. See
-   :c:data:`UVBackground` for more information.
+.. note::
 
-This table below maps the chemical species used above to the relevent Grackle field pointers.
+   For reactions with :math:`{\gamma}` on the LHS, the UV background
+   contribution depends on the selected background model. See
+   :c:data:`UVbackground` and :ref:`UVBPhotoRates` for more information.
+
+.. _UVBPhotoRates:
+
+=============================
+UV Background Photo-Reactions
+=============================
+
+When :c:data:`UVbackground` = 1 and :c:data:`metal_chemistry` = 1, the
+photo-ionization and photo-dissociation rates of the metal species below
+are read from :c:data:`grackle_data_file` (datasets
+``/UVBRates/Chemistry/<Rate>``). A missing dataset gives a zero rate and
+a warning. With :c:data:`use_radiative_transfer` = 1 and
+``radiative_transfer_metal_ionization`` or
+``radiative_transfer_metal_dissociation`` enabled, the rates supplied
+through the radiative-transfer fields are added on top.
+
+.. list-table::
+   :widths: auto
+   :header-rows: 1
+
+   * - LHS
+     - RHS
+     - Rate
+     - Threshold (eV)
+     - Threshold (nm)
+     - Cross section
+   * - C + :math:`{\gamma}`
+     - C\ :sup:`+` + |e-|
+     - kphCI
+     - 11.26
+     - 110.1
+     - ``C.h5``: TOPbase, Cunto & Mendoza (1992)
+   * - O + :math:`{\gamma}`
+     - O\ :sup:`+` + |e-|
+     - kphOI
+     - 13.62
+     - 91.03
+     - ``O.h5``: TOPbase, Mendoza (1996); Huebner & Mukherjee (2015)
+   * - CO + :math:`{\gamma}`
+     - C + O
+     - kdissCO
+     - 11.09
+     - 111.8
+     - ``CO.h5``: `Visser, van Dishoeck & Black (2009) <https://ui.adsabs.harvard.edu/abs/2009A%26A...503..323V/abstract>`__; `Chan, Cooper & Brion (1993) <https://ui.adsabs.harvard.edu/abs/1993CP....170..123C/abstract>`__
+   * - OH + :math:`{\gamma}`
+     - O + H
+     - kdissOH
+     - 4.44
+     - 279.2
+     - ``OH.h5``: `van Dishoeck & Dalgarno (1984) <https://ui.adsabs.harvard.edu/abs/1984ApJ...277..576V/abstract>`__, updated with `Heays et al. (2018) <https://arxiv.org/abs/1709.02509>`__
+   * - H\ :sub:`2`\ O + :math:`{\gamma}`
+     - OH + H
+     - kdissH2O
+     - 5.12
+     - 242.2
+     - ``H2O.h5``: compilation of Heays et al. (2017), Sect. 4.3.33
+
+The rates are the optically thin values
+
+.. math::
+
+   k(z) = 4\pi \int_{E_{\rm th}/h}^{\infty}
+   \frac{J_\nu(\nu, z)}{h\nu}\,\sigma(\nu)\,{\rm d}\nu ,
+
+with the galaxies-plus-quasars spectrum :math:`J_\nu` of
+`Haardt & Madau (2012) <https://ui.adsabs.harvard.edu/abs/2012ApJ...746..125H/abstract>`__
+(``UVB.out`` from `CUBA <https://www.ucolick.org/~pmadau/CUBA/DOWNLOADS.html>`__;
+:math:`J_\nu` in erg s\ :sup:`-1` cm\ :sup:`-2` Hz\ :sup:`-1` sr\ :sup:`-1`
+tabulated against rest-frame wavelength in Angstrom) and the cross
+sections :math:`\sigma` from the `Leiden photodissociation and
+photoionisation database
+<https://home.strw.leidenuniv.nl/~ewine/photo/cross_sections.html>`__
+(`Heays, Bosman & van Dishoeck 2017 <https://ui.adsabs.harvard.edu/abs/2017A%26A...602A.105H/abstract>`__;
+``all_cross_sections_h5.zip``, datasets ``photoionisation`` and
+``photodissociation``). When evaluating the integral, the spectrum is
+interpolated logarithmically and the cross sections linearly (zero
+outside their tabulated range). The result is interpolated in :math:`\log k`
+versus :math:`\log(1+z)` onto the 59 table redshifts, all of which
+coincide with spectrum samples. The thresholds are the ionization
+potentials of C and O, the dissociation energy of CO (its cross section
+vanishes above 108 nm; the predissociating bands lie at 88.5--108 nm),
+and the OH and H\ :sub:`2`\ O values of Table 1 of Heays et al. (2017).
+
+The version 2 tables ``CloudyData_UVB=HM2012.h5`` and
+``CloudyData_UVB=HM2012_shielded.h5`` (see ``input/uvb_version.txt`` in the
+``grackle_data_files`` repository) store each rate as a
+59-element ``float64`` array in s\ :sup:`-1` on ``/UVBRates/z``, with
+``units`` and ``provenance`` attributes; the shielded table also carries
+``/UVBRates/CrossSections`` for :c:data:`self_shielding_method`. Only
+``kphOI`` is attenuated by the H I self-shielding factor; the other four
+rates are applied optically thin, with no dust attenuation or molecular
+self-shielding.
+
+.. note::
+
+   ``kdissH2O`` is computed from the total H\ :sub:`2`\ O
+   photodissociation cross section but applied only to
+   H\ :sub:`2`\ O + :math:`{\gamma}` -> OH + H. The O + H\ :sub:`2` and
+   O + 2H products are not represented separately, although Leiden
+   provides `partial cross sections for the OH and O branches
+   <https://home.strw.leidenuniv.nl/~ewine/photo/H2O_photodissociation_branching.html>`__.
 
 ================
 Chemical Species
 ================
+
+The table below maps the chemical species used above to the relevant
+Grackle field pointers.
+
 ======================== ========================
 variable                 Reaction Network
 ======================== ========================
