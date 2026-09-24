@@ -10,15 +10,19 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef UTILS_H5IO_HPP
-#define UTILS_H5IO_HPP
+#ifndef SUPPORT_H5IO_HPP
+#define SUPPORT_H5IO_HPP
 
 #include <cstdint>
+#include <string>
+#include <vector>
 
 #include "hdf5.h"
 #include "grackle.h"
+#include "config.hpp"
 
-namespace grackle::impl::h5io {
+namespace GRIMPL_NAMESPACE_DECL {
+namespace h5io {
 
 /// copies the string encoded in the specified hdf5 dataset into ``buffer`` as
 /// a null-terminated string, and returns ``min_req_bufsz`` (if successful).
@@ -91,7 +95,7 @@ int read_str_attribute(hid_t attr_id, int bufsz, char* buffer);
 int read_str_dataset(hid_t file_id, const char* dset_name, int bufsz,
                      char* buffer);
 
-/// represents a contiguous array shape
+/// @brief represents a contiguous array shape
 ///
 /// @note
 /// An ndim of -1 corresponds to a null dataset (i.e. ``H5S_NULL``). Any other
@@ -99,44 +103,44 @@ int read_str_dataset(hid_t file_id, const char* dset_name, int bufsz,
 struct ArrayShape {
   int ndim;
   std::int64_t shape[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
-};
 
-/// checks whether shape is valid
-inline bool ArrayShape_is_valid(ArrayShape shape) { return shape.ndim >= -1; }
+  /// @brief checks whether shape is valid
+  bool is_valid() const { return ndim >= -1; }
 
-/// checks whether shape refers to a scalar
-inline bool ArrayShape_is_scalar(ArrayShape shape) { return shape.ndim == 0; }
+  /// @brief checks whether shape refers to a scalar
+  bool is_scalar() const { return ndim == 0; }
 
-/// checks whether shape is null
-inline bool ArrayShape_is_null(ArrayShape shape) { return shape.ndim == -1; }
+  /// @brief checks whether the shape is null
+  bool is_null() const { return ndim == -1; }
 
-/// calculates the total number of elements in the array
-inline std::int64_t ArrayShape_elem_count(ArrayShape shape) {
-  if (shape.ndim < 0) {
-    return -1;
-  } else {  // this works even if shape.ndim is 0
-    std::int64_t product = 1;
-    for (int i = 0; i < shape.ndim; i++) {
-      product *= shape.shape[i];
+  /// @brief calculates the total number of elements in the array
+  int64_t elem_count() const {
+    if (ndim < 0) {
+      return -1;
+    } else {  // this works even if shape.ndim is 0
+      int64_t product = 1;
+      for (int i = 0; i < ndim; i++) {
+        product *= shape[i];
+      }
+      return product;
     }
-    return product;
   }
-}
 
-/// checks whether shape_a and shape_b are the same
-///
-/// returns false if the either shape is invalid
-inline bool ArrayShape_is_equal(ArrayShape shape_a, ArrayShape shape_b) {
-  if ((!ArrayShape_is_valid(shape_a)) || (shape_a.ndim != shape_b.ndim)) {
-    return false;
-  }
-  for (int i = 0; i < shape_a.ndim; i++) {
-    if (shape_a.shape[i] != shape_b.shape[i]) {
+  /// @brief overloads the equality comparison (``==``) operation
+  ///
+  /// @note returns false if the either shape is invalid
+  bool operator==(const ArrayShape& other) const {
+    if ((!is_valid()) || (ndim != other.ndim)) {
       return false;
     }
+    for (int i = 0; i < ndim; i++) {
+      if (shape[i] != other.shape[i]) {
+        return false;
+      }
+    }
+    return true;
   }
-  return true;
-}
+};
 
 /// load the shape of the dataset
 ArrayShape read_dataset_shape(hid_t file_id, const char* dset_name);
@@ -149,33 +153,27 @@ int read_dataset(hid_t file_id, const char* dset_name, double* buffer,
                  const ArrayShape* expected_shape = nullptr);
 
 struct GridTableAxis {
-  char* name;
-  double* values;
+  std::string name;
+  std::vector<double> values;
 };
 
 /// Used to represent properties of an interpolation table
 struct GridTableProps {
   ArrayShape table_shape;
   GridTableAxis axes[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+
+  bool is_valid() const { return table_shape.is_valid(); }
+
+  /// @brief overloads the equality comparison (``==``) operation
+  ///
+  /// @note returns false if the either object is invalid
+  bool operator==(const GridTableProps& o) const;
+
+  /// @brief checks whether the specified dataset has consistent grid properties
+  ///
+  /// @returns `true` indicates that the dataset has consistent properties
+  bool assert_is_consistent(hid_t file_id, const char* dset_name) const;
 };
-
-inline bool GridTableProps_is_valid(GridTableProps grid_props) {
-  return ArrayShape_is_valid(grid_props.table_shape);
-}
-
-/// acts as a destructor for the contents within ptr
-inline void drop_GridTableProps(GridTableProps* ptr) {
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
-    if (ptr->axes[i].name != nullptr) {
-      delete[] ptr->axes[i].name;
-    }
-    if (ptr->axes[i].values != nullptr) {
-      delete[] ptr->axes[i].values;
-    }
-    ptr->axes[i].name = nullptr;
-    ptr->axes[i].values = nullptr;
-  }
-}
 
 /// parses the GridTableProps from dataset attributes
 ///
@@ -183,23 +181,10 @@ inline void drop_GridTableProps(GridTableProps* ptr) {
 /// @param[in] dset_name The name of the dataset to read attributes from.
 ///
 /// @returns Returns the appropriate GridTableProps object. The caller should
-///     use the GridTableProps_is_valid function to confirm that the function
-///     was successful.
+///     use ``out.is_valid()`` to confirm that the function was successful.
 GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name);
 
-/// checks whether props_a and props_b hold equivalent values
-///
-/// @returns true if objects are equal and false in all other cases (including
-///     when either object is invalid)
-bool GridTableProps_is_equal(GridTableProps props_a, GridTableProps props_b);
+}  // namespace h5io
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-/// checks whether the specified dataset has consistent grid properties
-///
-/// @returns GR_SUCCESS if the specified dataset has equivalent properties and
-///     a different value in all other cases
-int assert_has_consistent_GridTableProps(hid_t file_id, const char* dset_name,
-                                         GridTableProps expected);
-
-}  // namespace grackle::impl::h5io
-
-#endif /* UTILS_H5IO_HPP */
+#endif  // SUPPORT_H5IO_HPP
