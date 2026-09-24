@@ -25,17 +25,13 @@
 // -> these were moved out of the grackle_macros.h header
 // -> most of these are unnecessary!
 
-#define HDF5_FILE_I4 H5T_STD_I32BE
-#define HDF5_FILE_I8 H5T_STD_I64BE
-#define HDF5_FILE_R4 H5T_IEEE_F32BE
-#define HDF5_FILE_R8 H5T_IEEE_F64BE
-#define HDF5_FILE_B8 H5T_STD_B8BE
-
 #define HDF5_I4 H5T_NATIVE_INT
 #define HDF5_I8 H5T_NATIVE_LLONG
 #define HDF5_R4 H5T_NATIVE_FLOAT
 #define HDF5_R8 H5T_NATIVE_DOUBLE
 
+namespace GRIMPL_NAMESPACE_DECL {
+namespace h5io {
 namespace {  // stuff inside an anonymous namespace is local to this file
 
 /// Determines whether the specified buffer contains a null-terminated byte
@@ -198,13 +194,12 @@ int read_str_data_helper_(hid_t id, bool is_attr, int bufsz, char* buffer) {
 
 }  // anonymous namespace
 
-int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
-                                            char* buffer) {
+int read_str_attribute(hid_t attr_id, int bufsz, char* buffer) {
   return read_str_data_helper_(attr_id, true, bufsz, buffer);
 }
 
-int grackle::impl::h5io::read_str_dataset(hid_t file_id, const char* dset_name,
-                                          int bufsz, char* buffer) {
+int read_str_dataset(hid_t file_id, const char* dset_name, int bufsz,
+                     char* buffer) {
   if (dset_name == nullptr) {
     std::fprintf(stderr, "dset_name is a nullptr");
     return GR_FAIL;
@@ -224,8 +219,8 @@ int grackle::impl::h5io::read_str_dataset(hid_t file_id, const char* dset_name,
 namespace {  // stuff inside an anonymous namespace is local to this file
 
 /// Construct an ArrayShape instance from a HDF5 dataspace
-grackle::impl::h5io::ArrayShape shape_from_space(hid_t space_id) {
-  grackle::impl::h5io::ArrayShape out;
+ArrayShape shape_from_space(hid_t space_id) {
+  ArrayShape out;
   out.ndim = -2;  // set up an output value that denotes an error
   if (space_id == H5I_INVALID_HID) {
     return out;
@@ -275,27 +270,18 @@ grackle::impl::h5io::ArrayShape shape_from_space(hid_t space_id) {
   }
 }
 
-/// Construct an ArrayShape object that represents an invalid instance
-///
-/// @note
-/// This is useful for encoding that a function produced an error
-grackle::impl::h5io::ArrayShape mk_invalid_array_shape() {
-  return shape_from_space(H5I_INVALID_HID);
-}
-
 }  // anonymous namespace
 
-grackle::impl::h5io::ArrayShape grackle::impl::h5io::read_dataset_shape(
-    hid_t file_id, const char* name) {
+std::optional<ArrayShape> read_dataset_shape(hid_t file_id, const char* name) {
   if (name == nullptr) {
     std::fprintf(stderr, "name is a nullptr");
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   hid_t dset_id = H5Dopen(file_id, name);
   if (dset_id == H5I_INVALID_HID) {
     std::fprintf(stderr, "Failed to open dataset \"%s\".\n", name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   hid_t space_id = H5Dget_space(dset_id);
@@ -304,16 +290,15 @@ grackle::impl::h5io::ArrayShape grackle::impl::h5io::read_dataset_shape(
   ArrayShape out = shape_from_space(space_id);
   H5Sclose(space_id);
 
-  if (ArrayShape_is_null(out)) {
+  if (out.is_null()) {
     std::fprintf(stderr, "Error reading the dataspace of \"%s\".\n", name);
   }
-  return out;
+  return {out};
 }
 
 /// read the dataset named dset_name from file_id into buffer
-int grackle::impl::h5io::read_dataset(
-    hid_t file_id, const char* dset_name, double* buffer,
-    const grackle::impl::h5io::ArrayShape* expected_shape) {
+int read_dataset(hid_t file_id, const char* dset_name, double* buffer,
+                 const ArrayShape* expected_shape) {
   if (dset_name == nullptr) {
     std::fprintf(stderr, "dset_name is a nullptr");
     return GR_FAIL;
@@ -331,7 +316,7 @@ int grackle::impl::h5io::read_dataset(
     ArrayShape actual_shape = shape_from_space(space_id);
     H5Sclose(space_id);
 
-    if (!ArrayShape_is_equal(*expected_shape, actual_shape)) {
+    if (!(*expected_shape == actual_shape)) {
       H5Dclose(dset_id);
       std::fprintf(stderr, "The \"%s\" dataset has an unexpected shape.\n",
                    dset_name);
@@ -500,17 +485,15 @@ int AttrNameRecorder_stringify_attr_names(char* buffer, std::size_t buf_size,
 /// @param[inout] name_recorder Updated to track each attribute involved
 ///     in parsing a dataset's grid table properties.
 ///
-/// @returns the parsed array shape for the grid shape properties. The caller
-///     should ensure that this function was successful by calling
-///     ArrayShape_is_valid on the returned value.
-grackle::impl::h5io::ArrayShape shape_from_grid_attrs(
+/// @returns the parsed array shape for the grid shape properties.
+std::optional<ArrayShape> shape_from_grid_attrs(
     hid_t dset_id, const char* dset_name, AttrNameRecorder* name_recorder) {
   hid_t attr_id = H5Aopen_name(dset_id, "Rank");
   if (attr_id == H5I_INVALID_HID) {
     std::fprintf(stderr,
                  "Failed to open \"Rank\" attribute of \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   long long rank;
   if (H5Aread(attr_id, HDF5_I8, &rank) < 0) {
@@ -518,7 +501,7 @@ grackle::impl::h5io::ArrayShape shape_from_grid_attrs(
     std::fprintf(stderr,
                  "Failed to read \"Rank\" attribute of \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   H5Aclose(attr_id);
   if ((rank < 0) || (GRACKLE_CLOUDY_TABLE_MAX_DIMENSION < rank)) {
@@ -528,14 +511,14 @@ grackle::impl::h5io::ArrayShape shape_from_grid_attrs(
         "\"Rank\" attribute of \"%s\" dataset, %lld, is negative or exceeds "
         "the hardcoded maximum, %d.\n",
         dset_name, rank, GRACKLE_CLOUDY_TABLE_MAX_DIMENSION);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   if (AttrNameRecorder_record_name(name_recorder, "Rank") != GR_SUCCESS) {
     std::fprintf(
         stderr,
         "issue recording access of \"Rank\" attribute of \"%s\" dataset.",
         dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   // read in the Dimension attribute
@@ -550,13 +533,13 @@ grackle::impl::h5io::ArrayShape shape_from_grid_attrs(
     std::fprintf(stderr,
                  "Failed to open \"Dimension\" attribute in \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   if (H5Aread(attr_id, HDF5_I8, grid_dimensions) < 0) {
     std::fprintf(stderr,
                  "Failed to read \"Dimension\" attribute in \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   H5Aclose(attr_id);
   // a quick check
@@ -566,7 +549,7 @@ grackle::impl::h5io::ArrayShape shape_from_grid_attrs(
           stderr,
           "\"Dimension\" attribute of \"%s\" dataset has non-positive value\n",
           dset_name);
-      return mk_invalid_array_shape();
+      return std::nullopt;
     }
   }
   if (AttrNameRecorder_record_name(name_recorder, "Dimension") != GR_SUCCESS) {
@@ -574,18 +557,16 @@ grackle::impl::h5io::ArrayShape shape_from_grid_attrs(
         stderr,
         "issue recording access of \"Dimension\" attribute of \"%s\" dataset.",
         dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   // finally, let's format the output
-  // -> we use mk_invalid_array_shape to suppress compiler warnings that out
-  //    may be uninitialized
-  grackle::impl::h5io::ArrayShape out = mk_invalid_array_shape();
+  ArrayShape out;
   out.ndim = static_cast<int>(rank);
   for (int i = 0; i < out.ndim; i++) {
     out.shape[i] = grid_dimensions[i];
   }
-  return out;
+  return {out};
 }
 
 static constexpr int max_attr_name_length = 64;
@@ -602,11 +583,8 @@ static constexpr int max_attr_name_length = 64;
 ///
 /// @returns GR_SUCCESS if successful. Any other value denotes an issue
 int set_grid_axes_props(hid_t dset_id, const char* dset_name,
-                        grackle::impl::h5io::ArrayShape grid_shape,
-                        grackle::impl::h5io::GridTableAxis* axes,
+                        ArrayShape grid_shape, GridTableAxis* axes,
                         AttrNameRecorder* name_recorder) {
-  using grackle::impl::h5io::read_str_attribute;
-
   bool legacy_mode = H5Aexists(dset_id, "Temperature") > 0;
 
   for (int i = 0; i < grid_shape.ndim; i++) {
@@ -616,8 +594,7 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
     char val_attr_name[max_attr_name_length];
 
     if (legacy_mode && ((i + 1) == grid_shape.ndim)) {
-      axes[i].name = new char[12];
-      std::snprintf(axes[i].name, 12, "Temperature");
+      axes[i].name = "Temperature";
 
       std::snprintf(val_attr_name, max_attr_name_length, "Temperature");
     } else {
@@ -641,14 +618,16 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
             tmp_attr_name, dset_name);
         return GR_FAIL;
       }
-      axes[i].name = new char[min_buf_length];
-      if (read_str_attribute(attr_id, min_buf_length, axes[i].name) < 0) {
+      axes[i].name.resize(min_buf_length);
+      if (read_str_attribute(attr_id, min_buf_length, axes[i].name.data()) <
+          0) {
         std::fprintf(stderr,
                      "error loading the \"%s\" attr from \"%s\" dataset\n",
                      tmp_attr_name, dset_name);
         return GR_FAIL;
       }
       H5Aclose(attr_id);
+      axes[i].name.resize(std::strlen(axes[i].name.c_str()));
 
       if (AttrNameRecorder_record_name(name_recorder, tmp_attr_name) !=
           GR_SUCCESS) {
@@ -671,7 +650,7 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
     }
 
     hid_t space_id = H5Aget_space(attr_id);
-    grackle::impl::h5io::ArrayShape axis_shape = shape_from_space(space_id);
+    ArrayShape axis_shape = shape_from_space(space_id);
     H5Sclose(space_id);
     if (axis_shape.ndim != 1) {
       std::fprintf(stderr, "The \"%s\" dataset's \"%s\" attr isn't 1D\n",
@@ -687,8 +666,8 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
       return GR_FAIL;
     }
 
-    axes[i].values = new double[grid_shape.shape[i]];
-    if (H5Aread(attr_id, HDF5_R8, axes[i].values) < 0) {
+    axes[i].values.resize(grid_shape.shape[i]);
+    if (H5Aread(attr_id, HDF5_R8, axes[i].values.data()) < 0) {
       H5Aclose(attr_id);
       std::fprintf(stderr, "failed to read \"%s\" attr of \"%s\" dataset.\n",
                    val_attr_name, dset_name);
@@ -706,16 +685,6 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
   return GR_SUCCESS;
 }
 
-grackle::impl::h5io::GridTableProps mk_invalid_GridTableProps() {
-  grackle::impl::h5io::GridTableProps out;
-  out.table_shape = mk_invalid_array_shape();
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
-    out.axes[i].name = nullptr;
-    out.axes[i].values = nullptr;
-  }
-  return out;
-}
-
 /// helper function that parses the GridTableProps from dataset attributes
 ///
 /// @param[in] dset_id The dataset identifier
@@ -723,41 +692,33 @@ grackle::impl::h5io::GridTableProps mk_invalid_GridTableProps() {
 ///     nicer error messages)
 /// @param[inout] name_recorder Updated to track each attribute involved
 ///     in parsing a dataset's grid table properties.
-///
-/// @returns Returns the appropriate GridTableProps object. The caller should
-///     use the GridTableProps_is_valid function to confirm that the function
-///     was successful.
-grackle::impl::h5io::GridTableProps parse_GridTableProps_helper(
+std::optional<GridTableProps> parse_GridTableProps_helper(
     hid_t dset_id, const char* dset_name, AttrNameRecorder* name_recorder) {
-  // setup the output object so that we're always prepared to return an object
-  // - the default object is constructed to denote a failure
-  grackle::impl::h5io::GridTableProps out = mk_invalid_GridTableProps();
-
   // if optional Description attribute is present, record that we accessed it
   // (this is done purely for error-handling purposes).
   if ((H5Aexists(dset_id, "Description") > 0) &&
       (AttrNameRecorder_record_name(name_recorder, "Description") !=
        GR_SUCCESS)) {
-    return out;
+    return std::nullopt;
   }
 
   // infer the shape of the table from the attributes
-  grackle::impl::h5io::ArrayShape inferred_shape =
+  std::optional<ArrayShape> inferred_shape =
       shape_from_grid_attrs(dset_id, dset_name, name_recorder);
-  if (!ArrayShape_is_valid(inferred_shape)) {
-    return out;
+  if (!inferred_shape.has_value()) {
+    return std::nullopt;
   }
+
+  GridTableProps out;
+  out.table_shape = *inferred_shape;
 
   // parse the quantities along each axis
-  if (set_grid_axes_props(dset_id, dset_name, inferred_shape, out.axes,
-                          name_recorder) != GR_SUCCESS) {
-    drop_GridTableProps(&out);
-    return out;
+  if (set_grid_axes_props(dset_id, dset_name, *inferred_shape, out.axes,
+                          name_recorder) == GR_SUCCESS) {
+    return {out};
+  } else {
+    return std::nullopt;
   }
-
-  out.table_shape = inferred_shape;  // we intentionally do this as the very
-                                     // last step!
-  return out;
 }
 
 int get_num_attrs(hid_t dset_id, const char* dset_name) {
@@ -787,32 +748,32 @@ int get_num_attrs(hid_t dset_id, const char* dset_name) {
 
 }  // anonymous namespace
 
-grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
-    hid_t file_id, const char* dset_name) {
+std::optional<GridTableProps> parse_GridTableProps(hid_t file_id,
+                                                   const char* dset_name) {
   if (dset_name == nullptr) {  // sanity check!
     std::fprintf(stderr, "dset_name is a nullptr");
-    return mk_invalid_GridTableProps();
+    return std::nullopt;
   }
 
   hid_t dset_id = H5Dopen(file_id, dset_name);
   if (dset_id == H5I_INVALID_HID) {
     std::fprintf(stderr, "Can't open \"%s\" dataset.\n", dset_name);
-    return mk_invalid_GridTableProps();
+    return std::nullopt;
   }
 
   // construct object to count accessed attributes
   AttrNameRecorder attr_counter = new_AttrNameRecorder(true);
   // actually parse GridTableProps
-  GridTableProps out =
+  std::optional<GridTableProps> out =
       parse_GridTableProps_helper(dset_id, dset_name, &attr_counter);
   // get the attribute count and cleanup the counter
   int total_accessed_attrs_count = AttrNameRecorder_length(&attr_counter);
   drop_AttrNameRecorder(&attr_counter);
 
-  if (!GridTableProps_is_valid(out)) {
+  if (!out.has_value()) {
     H5Dclose(dset_id);
     // parse_GridTableProps_helper already printed appropriate errors messages
-    return out;
+    return std::nullopt;
   }
 
   // now, we will perform a check validating that dataset doesn't have
@@ -825,18 +786,16 @@ grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
     // the number of attributes... So, we just bypass the validation check
   } else if (num_attrs == -1) {
     H5Dclose(dset_id);
-    drop_GridTableProps(&out);
     // get_num_attrs already printed error messages in this case
-    return out;
+    return std::nullopt;
   } else if (num_attrs != total_accessed_attrs_count) {
-    drop_GridTableProps(&out);
     // to provide a detailed error message that will make it straight-forward
     // to debug the underlying problem, we are going to call
     // parse_GridTableProps_helper, but this time, we are going to actually
     // record every accessed name.
     AttrNameRecorder attr_name_recorder = new_AttrNameRecorder(false);
     // let's parse GridTableProps (again)
-    GridTableProps tmp =
+    [[maybe_unused]] auto dummy =
         parse_GridTableProps_helper(dset_id, dset_name, &attr_name_recorder);
 
     int bufsz_without_nullchr =
@@ -862,84 +821,70 @@ grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
     } else {
       std::fprintf(
           stderr,
-          "while parsing the %dD grid table properties from attributes of the "
+          "while parsing the grid table properties from attributes of the "
           "\"%s\" dataset, encountered (one or more) unrecognized attributes. "
           "Recognized attributes include: %s\n",
-          tmp.table_shape.ndim, dset_name, stringified_attr_list);
+          dset_name, stringified_attr_list);
       delete[] stringified_attr_list;
     }
-    drop_GridTableProps(&tmp);
     drop_AttrNameRecorder(&attr_name_recorder);
     H5Dclose(dset_id);
-    return mk_invalid_GridTableProps();
+    return std::nullopt;
   }
 
   // check for consistency between the GridTableProps and the dataset shape
   hid_t space_id = H5Dget_space(dset_id);
   ArrayShape actual_shape = shape_from_space(space_id);
   H5Sclose(space_id);
-  if (!ArrayShape_is_null(actual_shape) &&
-      !ArrayShape_is_equal(out.table_shape, actual_shape)) {
-    drop_GridTableProps(&out);
+  if (!actual_shape.is_null() && !(out->table_shape == actual_shape)) {
     H5Dclose(dset_id);
     std::fprintf(
         stderr,
         "The grid table properties parsed from the attributes of the \"%s\" "
         "dataset are inconsistent with the dataset's shape.\n",
         dset_name);
-    return mk_invalid_GridTableProps();
+    return std::nullopt;
   }
 
   H5Dclose(dset_id);
   return out;
 }
 
-bool grackle::impl::h5io::GridTableProps_is_equal(
-    grackle::impl::h5io::GridTableProps props_a,
-    grackle::impl::h5io::GridTableProps props_b) {
-  if (!ArrayShape_is_equal(props_a.table_shape, props_b.table_shape)) {
+bool GridTableProps::operator==(const GridTableProps& o) const {
+  if (!(table_shape == o.table_shape)) {
     return false;
   }
-  for (int i = 0; i < props_a.table_shape.ndim; i++) {
-    if (std::strcmp(props_a.axes[i].name, props_b.axes[i].name) != 0) {
-      return false;
-    }
-    std::int64_t length = props_a.table_shape.shape[i];
-    std::int64_t n_equal = 0;
-    for (std::int64_t j = 0; j < length; j++) {
-      bool is_equal = (props_a.axes[i].values[j] == props_b.axes[i].values[j]);
-      n_equal += static_cast<std::int64_t>(is_equal);
-    }
-    if (n_equal != length) {
+  for (int i = 0; i < table_shape.ndim; i++) {
+    if (axes[i].name != o.axes[i].name || axes[i].values != o.axes[i].values) {
       return false;
     }
   }
   return true;
 }
 
-int grackle::impl::h5io::assert_has_consistent_GridTableProps(
-    hid_t file_id, const char* dset_name,
-    grackle::impl::h5io::GridTableProps expected) {
+bool GridTableProps::assert_is_consistent(hid_t file_id,
+                                          const char* dset_name) const {
   // the current implementation is crude (we may be able to do better)
 
-  GridTableProps actual = parse_GridTableProps(file_id, dset_name);
+  std::optional<GridTableProps> actual =
+      parse_GridTableProps(file_id, dset_name);
 
-  if (!GridTableProps_is_valid(actual)) {
-    drop_GridTableProps(&actual);
+  if (!actual.has_value()) {
     fprintf(stderr,
             "Error constructing the grid properties for the \"%s\" dataset\n",
             dset_name);
-    return GR_FAIL;
+    return false;
   }
 
-  bool is_equal = GridTableProps_is_equal(actual, expected);
-  drop_GridTableProps(&actual);
-  if (!is_equal) {
+  if (!(actual == *this)) {
     fprintf(stderr,
             "the \"%s\" dataset doesn't have the expected grid properties\n",
             dset_name);
-    return GR_FAIL;
+    return false;
   }
 
-  return GR_SUCCESS;
+  return true;
 }
+
+}  // namespace h5io
+}  // namespace GRIMPL_NAMESPACE_DECL
