@@ -33,7 +33,7 @@
 namespace GRIMPL_NAMESPACE_DECL {
 
 void cool_multi_time(
-  gr_float* cooltime_data_, int imetal, InternalGrUnits internalu,
+  gr_float* cooltime_data_, InternalGrUnits internalu,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates
 )
@@ -44,7 +44,7 @@ void cool_multi_time(
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
     scale_fields(
-        imetal, factor, my_chemistry, my_fields,
+        factor, my_chemistry, my_fields,
         get_n_inject_pathway_density_ptrs(my_rates));
   }
 
@@ -117,7 +117,7 @@ void cool_multi_time(
       // and fill up logTlinterp_buf
       extended_gas_props(tgas.data(), mmw.data(), rhoH.data(),
                          metallicity.data(), nelec_times_mH.data(),
-                         logTlininterp_buf, imetal, itmask.data(),
+                         logTlininterp_buf, itmask.data(),
                          my_chemistry, &my_rates->cloudy_primordial,
                          my_fields, internalu, idx_range, nullptr);
 
@@ -125,7 +125,7 @@ void cool_multi_time(
       mask::adjust_from_Tfloor(itmask.data(), tgas.data(), idx_range,
                                my_chemistry, my_fields);
       mask::fill_itmask_metal(itmask_metal.data(), itmask.data(),
-                              metallicity.data(), imetal, idx_range,
+                              metallicity.data(), idx_range,
                               my_chemistry);
 
       // Initialize edot (and alpha_continuum)
@@ -185,7 +185,7 @@ void cool_multi_time(
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
     scale_fields(
-        imetal, factor, my_chemistry, my_fields,
+        factor, my_chemistry, my_fields,
         get_n_inject_pathway_density_ptrs(my_rates));
   }
 

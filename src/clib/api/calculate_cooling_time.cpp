@@ -74,9 +74,6 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
     my_uvb_rates.temp_xray = my_rates->temp_xray;
   }
 
-  /* Check for a metal field. */
-  int metal_field_present = (my_fields->metal_density != NULL) ? TRUE : FALSE;
-
   GRIMPL_NS::InternalGrUnits internalu = GRIMPL_NS::new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
@@ -88,7 +85,7 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
 
   /* Solve cooling equations. */
   GRIMPL_NS::cool_multi_time(
-    cooling_time, metal_field_present, internalu, my_chemistry, my_rates,
+    cooling_time, internalu, my_chemistry, my_rates,
     my_fields, my_uvb_rates
   );
  
