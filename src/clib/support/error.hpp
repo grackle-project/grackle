@@ -32,16 +32,20 @@ namespace error_detail {
 //    string is consistent with the number of specified values to be formatted
 //    and with their types (compiler manually perform comparable checks for
 //    printf)
-// -> this ifdef statement directly recommended by the report introducing this
-//    retroactive change
+// -> this ifdef statement is based on the recommendation made by the report
+//    introducing this retroactive change
 // -> when we adopt C++ 23 as a minimum version, we can assume that
 //    std::format_string is always provided
 #if __cpp_lib_format >= 202207L
 template <typename... Args>
 using my_format_string = std::format_string<std::type_identity_t<Args>...>;
+
+inline std::string_view get_sv_(const auto& fmt) { return fmt.get(); }
 #else
 template <typename... Args>
 using my_format_string = std::string_view;
+
+inline std::string_view get_sv_(const std::string_view& fmt) { return fmt; }
 #endif
 }  // namespace error_detail
 
@@ -90,6 +94,8 @@ public:
   ///
   /// @param fmt The format-string. This **MUST** be a string literal.
   /// @param args optional arguments to be formatted
+  /// @return Returns a reference to `this` for convenience (e.g. to facillitate
+  ///     chaining of operations)
   ///
   /// @warning
   /// Passing a non-literal string as @p fmt introduces undefined behavior.
@@ -102,20 +108,22 @@ public:
   /// constructed) is to call `err.context("{}", s);`
   template <typename... Args>
   Error& context(error_detail::my_format_string<Args...> fmt, Args&&... args) {
-#if __cpp_lib_format >= 202207L
-    std::string_view fmt_sv = fmt.get();
-#else
-    std::string_view& fmt_sv = fmt;
-#endif
-    // in the future (with a little refactoring):
-    //   if (sizeof...(Types) == 0) -> we can skip allocating a std::string
-    std::string msg = std::vformat(fmt_sv, std::make_format_args(args...));
-    return context_helper_(ErrImpl_(nullptr, std::move(msg), nullptr));
+    std::string_view fmt_sv = error_detail::get_sv_(fmt);
+    if (sizeof...(Args) == 0) {
+      // just record the string-literal (no need to heap allocate a string)
+      return context_helper_(ErrImpl_(fmt_sv, "", nullptr));
+    } else {
+      std::string msg = std::vformat(fmt_sv, std::make_format_args(args...));
+      return context_helper_(ErrImpl_("", std::move(msg), nullptr));
+    }
   }
 
   /// @brief wrap the existing err info in additional context
   ///
-  /// returns a reference to `this` for convenience
+  /// This method exists to allow
+  ///
+  /// @return Returns a reference to `this` for convenience (e.g. to facillitate
+  ///     chaining of operations)
   ///
   /// @note
   /// This exists because the vast majority of Grackle's error messages are
@@ -156,17 +164,15 @@ public:
   template <typename... Args>
   static Error msg(error_detail::my_format_string<Args...> fmt,
                    Args&&... args) {
-    // in future: if sizeof...(Types) == 0, we can skip allocating a std::string
-#if __cpp_lib_format >= 202207L
-    std::string_view fmt_sv = fmt.get();
-#else
-    std::string_view& fmt_sv = fmt;
-#endif
-    // in the future (with a little refactoring):
-    //   if (sizeof...(Types) == 0) -> we can skip allocating a std::string
+    std::string_view fmt_sv = error_detail::get_sv_(fmt);
     Error out;
-    std::string msg = std::vformat(fmt_sv, std::make_format_args(args...));
-    out.impl_ = std::make_shared<ErrImpl_>(nullptr, std::move(msg), nullptr);
+    if (sizeof...(Args) == 0) {
+      // just store the string-literal (no need to heap allocate a string)
+      out.impl_ = std::make_shared<ErrImpl_>(fmt_sv, "", nullptr);
+    } else {
+      std::string msg = std::vformat(fmt_sv, std::make_format_args(args...));
+      out.impl_ = std::make_shared<ErrImpl_>("", std::move(msg), nullptr);
+    }
     return out;
   }
 
