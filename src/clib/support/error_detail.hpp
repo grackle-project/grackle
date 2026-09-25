@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include <format>
+#include <memory>
+#include <string>
 #include "./config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
