@@ -13,6 +13,9 @@
 #include <format>
 #include <memory>
 #include <string>
+#include <string_view>
+#include <variant>
+
 #include "./config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -27,7 +30,7 @@ struct ErrImpl_ {
   //   less memory than a full string
   // - if we do that, we may want to track the error info inside a std::variant
   //   (i.e. a type-safe union)
-  const char* msg_literal;
+  std::string_view msg_literal;
   std::string msg;
 
   /// @brief may point to the cause of this error
@@ -49,7 +52,7 @@ struct std::formatter<GRIMPL_NS::ErrImpl_> {
 
   template <class FmtContext>
   auto format(const GRIMPL_NS::ErrImpl_& e, FmtContext& ctx) const {
-    if (e.msg_literal != nullptr) {
+    if (e.msg_literal.size() != 0) {
       return std::format_to(ctx.out(), "{}", e.msg_literal);
     } else {
       return std::format_to(ctx.out(), "{}", e.msg);
