@@ -30,14 +30,15 @@ TEST(Error, ErroneousOpen) {
 
 static Error erroneous_read_data(std::string path) {
   Error err = erroneous_open(path);
-  err.context("problem loading data from " + path);
+  err.context("problem loading data from {}", path);
   return err;
 }
 
 TEST(Error, ErroneousReadData) {
   Error obj = erroneous_read_data("path/to/file");
-  std::string err_msg = std::format("{}", obj);
-  const char* expected = R"""(problem loading data from path/to/file
+  std::string err_msg = std::format("\n{}", obj);
+  const char* expected = R"""(
+problem loading data from path/to/file
 
 Caused By:
      File not found)""";
@@ -46,14 +47,15 @@ Caused By:
 
 static Error erroneous_read_InterpTable(std::string path) {
   Error err = erroneous_read_data(path);
-  err.context("unable to create InterpTable");
+  err.context_literal("unable to create InterpTable");
   return err;
 }
 
 TEST(Error, ErroneousReadInterpTable) {
   Error obj = erroneous_read_InterpTable("path/to/file");
-  std::string err_msg = std::format("{}", obj);
-  const char* expected = R"""(unable to create InterpTable
+  std::string err_msg = std::format("\n{}", obj);
+  const char* expected = R"""(
+unable to create InterpTable
 
 Caused By:
   1: problem loading data from path/to/file

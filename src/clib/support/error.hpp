@@ -15,12 +15,35 @@
 #include <cstdio>
 #include <format>
 #include <memory>  // std::shared_ptr;
+#include <type_traits>
 #include <string>
+#include <string_view>
 
 #include "./config.hpp"
 #include "./error_detail.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
+
+namespace error_detail {
+
+// std::format_string was retroactively exposted in C++ 20.
+// -> this facillitates compile-time for wrapped calls to std::format and
+//    std::vformat that explicitly check (at compile-time) whether the format
+//    string is consistent with the number of specified values to be formatted
+//    and with their types (compiler manually perform comparable checks for
+//    printf)
+// -> this ifdef statement directly recommended by the report introducing this
+//    retroactive change
+// -> when we adopt C++ 23 as a minimum version, we can assume that
+//    std::format_string is always provided
+#if __cpp_lib_format >= 202207L
+template <typename... Args>
+using my_format_string = std::format_string<std::type_identity_t<Args>...>;
+#else
+template <typename... Args>
+using my_format_string = std::string_view;
+#endif
+}  // namespace error_detail
 
 /// @brief Represents a generic Error type
 ///
@@ -56,11 +79,38 @@ public:
   Error& operator=(const Error&) = default;
   ~Error() = default;
 
-  /// @brief wrap the existing err info in additional context
+  /// @brief wraps the existing err information in additional context
   ///
-  /// returns a reference to `this` for convenience
-  Error& context(std::string msg) {
-    return context_helper_(ErrImpl_{nullptr, std::move(msg), nullptr});
+  /// This uses C++'s modern string formatting syntax (equivalent to python's
+  /// formatting mini-language). Given a error object `err`, invoking
+  ///    ``err.context("{} is a {}", 1, "number");``
+  /// introduces context comparable to invoking
+  ///    ``err.context_literal("1 is a number");``
+  /// (under the hood, the way
+  ///
+  /// @param fmt The format-string. This **MUST** be a string literal.
+  /// @param args optional arguments to be formatted
+  ///
+  /// @warning
+  /// Passing a non-literal string as @p fmt introduces undefined behavior.
+  /// (While older C++ compilers may compile the code, newer compilers will
+  /// explicitly refuse to compile the program).
+  ///
+  /// @note
+  /// The proper way to wrap an error object `err` in a context message encoded
+  /// in a std::string object called `s` (this object may have been dynamically
+  /// constructed) is to call `err.context("{}", s);`
+  template <typename... Args>
+  Error& context(error_detail::my_format_string<Args...> fmt, Args&&... args) {
+#if __cpp_lib_format >= 202207L
+    std::string_view fmt_sv = fmt.get();
+#else
+    std::string_view& fmt_sv = fmt;
+#endif
+    // in the future (with a little refactoring):
+    //   if (sizeof...(Types) == 0) -> we can skip allocating a std::string
+    std::string msg = std::vformat(fmt_sv, std::make_format_args(args...));
+    return context_helper_(ErrImpl_(nullptr, std::move(msg), nullptr));
   }
 
   /// @brief wrap the existing err info in additional context
@@ -79,9 +129,43 @@ public:
   void write(std::FILE* stream, bool append_newline = true) const;
 
   // factory methods (we may add more in the future!)
-  /// @brief Construct an error from an arbitrary message
-  static Error msg(std::string msg) {
+  // ================================================
+
+  /// @brief Construct an error object by formatting an error message
+  ///
+  /// This uses C++'s modern string formatting syntax (equivalent to python's
+  /// formatting mini-language). For example, invoking
+  ///    ``Error::msg("{} is a {}", 1, "number");``
+  /// represent a error-message analogous to
+  ///    ``Error::msg_literal("1 is a number");``
+  /// (under the hood, the internal representation is different)
+  ///
+  /// @param fmt The format-string. This **MUST** be a string literal.
+  /// @param args optional arguments to be formatted
+  /// @returns An error object
+  ///
+  /// @warning
+  /// Passing a non-literal string as @p fmt introduces undefined behavior.
+  /// (While older C++ compilers may compile the code, newer compilers will
+  /// explicitly refuse to compile the program).
+  ///
+  /// @note
+  /// The proper way to create an error object encoding a message copied from
+  /// a string `s` (this object may have been dynamically constructed) is to
+  /// call `Error::msg("{}", s);`
+  template <typename... Args>
+  static Error msg(error_detail::my_format_string<Args...> fmt,
+                   Args&&... args) {
+    // in future: if sizeof...(Types) == 0, we can skip allocating a std::string
+#if __cpp_lib_format >= 202207L
+    std::string_view fmt_sv = fmt.get();
+#else
+    std::string_view& fmt_sv = fmt;
+#endif
+    // in the future (with a little refactoring):
+    //   if (sizeof...(Types) == 0) -> we can skip allocating a std::string
     Error out;
+    std::string msg = std::vformat(fmt_sv, std::make_format_args(args...));
     out.impl_ = std::make_shared<ErrImpl_>(nullptr, std::move(msg), nullptr);
     return out;
   }
