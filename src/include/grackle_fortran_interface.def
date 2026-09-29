@@ -67,23 +67,23 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: HeHII_density
          TYPE(C_PTR) :: CI_density
          TYPE(C_PTR) :: CII_density
-         TYPE(C_PTR) :: CO_density
-         TYPE(C_PTR) :: CO2_density
          TYPE(C_PTR) :: OI_density
-         TYPE(C_PTR) :: OH_density
-         TYPE(C_PTR) :: H2O_density
-         TYPE(C_PTR) :: O2_density
+         TYPE(C_PTR) :: OII_density
+         TYPE(C_PTR) :: CHI_density
+         TYPE(C_PTR) :: CH2I_density
+         TYPE(C_PTR) :: COI_density
+         TYPE(C_PTR) :: COII_density
+         TYPE(C_PTR) :: CO2I_density
+         TYPE(C_PTR) :: O2I_density
+         TYPE(C_PTR) :: O2II_density
+         TYPE(C_PTR) :: OHI_density
+         TYPE(C_PTR) :: OHII_density
+         TYPE(C_PTR) :: H2OI_density
+         TYPE(C_PTR) :: H2OII_density
+         TYPE(C_PTR) :: H3OII_density
          TYPE(C_PTR) :: SiI_density
          TYPE(C_PTR) :: SiOI_density
          TYPE(C_PTR) :: SiO2I_density
-         TYPE(C_PTR) :: CH_density
-         TYPE(C_PTR) :: CH2_density
-         TYPE(C_PTR) :: COII_density
-         TYPE(C_PTR) :: OII_density
-         TYPE(C_PTR) :: OHII_density
-         TYPE(C_PTR) :: H2OII_density
-         TYPE(C_PTR) :: H3OII_density
-         TYPE(C_PTR) :: O2II_density
          TYPE(C_PTR) :: Mg_density
          TYPE(C_PTR) :: Al_density
          TYPE(C_PTR) :: S_density

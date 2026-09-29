@@ -87,23 +87,23 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
   FortranView<gr_float***> CII(
       my_fields->CII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CO(
-      my_fields->CO_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> COI(
+      my_fields->COI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CO2(
-      my_fields->CO2_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> CO2I(
+      my_fields->CO2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> OI(
       my_fields->OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OH(
-      my_fields->OH_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> OHI(
+      my_fields->OHI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2O(
-      my_fields->H2O_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> H2OI(
+      my_fields->H2OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> O2(
-      my_fields->O2_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> O2I(
+      my_fields->O2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> SiI(
       my_fields->SiI_density, my_fields->grid_dimension[0],
@@ -114,11 +114,11 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
   FortranView<gr_float***> SiO2I(
       my_fields->SiO2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CH(
-      my_fields->CH_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> CHI(
+      my_fields->CHI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CH2(
-      my_fields->CH2_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> CH2I(
+      my_fields->CH2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> COII(
       my_fields->COII_density, my_fields->grid_dimension[0],
@@ -263,17 +263,17 @@ inline void ceiling_species(int imetal, chemistry_data* my_chemistry,
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           CI(i, j, k) = std::fmax(CI(i, j, k), tiny_fortran_val);
           CII(i, j, k) = std::fmax(CII(i, j, k), tiny_fortran_val);
-          CO(i, j, k) = std::fmax(CO(i, j, k), tiny_fortran_val);
-          CO2(i, j, k) = std::fmax(CO2(i, j, k), tiny_fortran_val);
+          COI(i, j, k) = std::fmax(COI(i, j, k), tiny_fortran_val);
+          CO2I(i, j, k) = std::fmax(CO2I(i, j, k), tiny_fortran_val);
           OI(i, j, k) = std::fmax(OI(i, j, k), tiny_fortran_val);
-          OH(i, j, k) = std::fmax(OH(i, j, k), tiny_fortran_val);
-          H2O(i, j, k) = std::fmax(H2O(i, j, k), tiny_fortran_val);
-          O2(i, j, k) = std::fmax(O2(i, j, k), tiny_fortran_val);
+          OHI(i, j, k) = std::fmax(OHI(i, j, k), tiny_fortran_val);
+          H2OI(i, j, k) = std::fmax(H2OI(i, j, k), tiny_fortran_val);
+          O2I(i, j, k) = std::fmax(O2I(i, j, k), tiny_fortran_val);
           SiI(i, j, k) = std::fmax(SiI(i, j, k), tiny_fortran_val);
           SiOI(i, j, k) = std::fmax(SiOI(i, j, k), tiny_fortran_val);
           SiO2I(i, j, k) = std::fmax(SiO2I(i, j, k), tiny_fortran_val);
-          CH(i, j, k) = std::fmax(CH(i, j, k), tiny_fortran_val);
-          CH2(i, j, k) = std::fmax(CH2(i, j, k), tiny_fortran_val);
+          CHI(i, j, k) = std::fmax(CHI(i, j, k), tiny_fortran_val);
+          CH2I(i, j, k) = std::fmax(CH2I(i, j, k), tiny_fortran_val);
           COII(i, j, k) = std::fmax(COII(i, j, k), tiny_fortran_val);
           OII(i, j, k) = std::fmax(OII(i, j, k), tiny_fortran_val);
           OHII(i, j, k) = std::fmax(OHII(i, j, k), tiny_fortran_val);

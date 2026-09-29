@@ -116,23 +116,23 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
   FortranView<gr_float***> CII(
       my_fields->CII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CO(
-      my_fields->CO_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> COI(
+      my_fields->COI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CO2(
-      my_fields->CO2_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> CO2I(
+      my_fields->CO2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> OI(
       my_fields->OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OH(
-      my_fields->OH_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> OHI(
+      my_fields->OHI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2O(
-      my_fields->H2O_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> H2OI(
+      my_fields->H2OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> O2(
-      my_fields->O2_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> O2I(
+      my_fields->O2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> SiI(
       my_fields->SiI_density, my_fields->grid_dimension[0],
@@ -143,11 +143,11 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
   FortranView<gr_float***> SiO2I(
       my_fields->SiO2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CH(
-      my_fields->CH_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> CHI(
+      my_fields->CHI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CH2(
-      my_fields->CH2_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> CH2I(
+      my_fields->CH2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> COII(
       my_fields->COII_density, my_fields->grid_dimension[0],
@@ -282,17 +282,17 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           CI(i, j, k) = CI(i, j, k) * factor;
           CII(i, j, k) = CII(i, j, k) * factor;
-          CO(i, j, k) = CO(i, j, k) * factor;
-          CO2(i, j, k) = CO2(i, j, k) * factor;
+          COI(i, j, k) = COI(i, j, k) * factor;
+          CO2I(i, j, k) = CO2I(i, j, k) * factor;
           OI(i, j, k) = OI(i, j, k) * factor;
-          OH(i, j, k) = OH(i, j, k) * factor;
-          H2O(i, j, k) = H2O(i, j, k) * factor;
-          O2(i, j, k) = O2(i, j, k) * factor;
+          OHI(i, j, k) = OHI(i, j, k) * factor;
+          H2OI(i, j, k) = H2OI(i, j, k) * factor;
+          O2I(i, j, k) = O2I(i, j, k) * factor;
           SiI(i, j, k) = SiI(i, j, k) * factor;
           SiOI(i, j, k) = SiOI(i, j, k) * factor;
           SiO2I(i, j, k) = SiO2I(i, j, k) * factor;
-          CH(i, j, k) = CH(i, j, k) * factor;
-          CH2(i, j, k) = CH2(i, j, k) * factor;
+          CHI(i, j, k) = CHI(i, j, k) * factor;
+          CH2I(i, j, k) = CH2I(i, j, k) * factor;
           COII(i, j, k) = COII(i, j, k) * factor;
           OII(i, j, k) = OII(i, j, k) * factor;
           OHII(i, j, k) = OHII(i, j, k) * factor;
