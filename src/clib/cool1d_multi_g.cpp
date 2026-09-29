@@ -233,7 +233,8 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
           logOI[i] = std::log10(OI(i, idx_range.j, idx_range.k) * dom / 16.0);
           logCO[i] = std::log10(COI(i, idx_range.j, idx_range.k) * dom / 28.0);
           logOH[i] = std::log10(OHI(i, idx_range.j, idx_range.k) * dom / 17.0);
-          logH2O[i] = std::log10(H2OI(i, idx_range.j, idx_range.k) * dom / 18.0);
+          logH2O[i] =
+              std::log10(H2OI(i, idx_range.j, idx_range.k) * dom / 18.0);
         }
       }
 
