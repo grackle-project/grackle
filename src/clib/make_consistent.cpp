@@ -394,10 +394,10 @@ void make_consistent(
           OHII(i, j, k) = std::fabs(OHII(i, j, k));
           H2OII(i, j, k) = std::fabs(H2OII(i, j, k));
           H3OII(i, j, k) = std::fabs(H3OII(i, j, k));
-          totalH[i] = totalH[i] + OHI(i, j, k) / 17. + H2OI(i, j, k) / 18. * 2. +
-                      CHI(i, j, k) / 13. + CH2I(i, j, k) / 14. * 2. +
-                      OHII(i, j, k) / 17. + H2OII(i, j, k) / 18. * 2. +
-                      H3OII(i, j, k) / 19. * 3.;
+          totalH[i] = totalH[i] + OHI(i, j, k) / 17. +
+                      H2OI(i, j, k) / 18. * 2. + CHI(i, j, k) / 13. +
+                      CH2I(i, j, k) / 14. * 2. + OHII(i, j, k) / 17. +
+                      H2OII(i, j, k) / 18. * 2. + H3OII(i, j, k) / 19. * 3.;
           // endif
         }
       }
