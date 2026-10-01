@@ -156,7 +156,7 @@ inline void wrapped_calc_derivatives(
 /// - this has **ALWAYS** been the case. Historically these buffers have been
 ///   reused when computing finite differences
 inline void step_rate_newton_raphson(
-    int imetal, IndexRange idx_range, double dom, double chunit, double dx_cgs,
+    IndexRange idx_range, double dom, double chunit, double dx_cgs,
     double c_ljeans, double* dtit, double* tgas, double* tdust,
     double* metallicity, double* dust2gas, double* rhoH, double* mmw,
     double* nelec_times_mH, double* edot, gr_mask_type anydust,
@@ -227,7 +227,7 @@ inline void step_rate_newton_raphson(
   // collect args that are forwarded to the time-derivative calculation and are
   // effectively frozen between various calls
   t_deriv::FrozenSimpleArgs frozen_tderiv_args = {
-    imetal, dom, chunit, dx_cgs, c_ljeans, anydust, my_chemistry,
+    dom, chunit, dx_cgs, c_ljeans, anydust, my_chemistry,
     my_rates, my_uvb_rates, internalu
   };
 
