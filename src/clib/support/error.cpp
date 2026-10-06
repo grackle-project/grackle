@@ -22,4 +22,6 @@ void Error::write(std::FILE* stream, bool append_newline) const {
   std::fprintf(stream, "%s", tmp.c_str());
 }
 
+std::string Error::to_string() const { return std::format("{}", *this); }
+
 }  // namespace GRIMPL_NAMESPACE_DECL

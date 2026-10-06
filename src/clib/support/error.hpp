@@ -12,6 +12,7 @@
 #ifndef SUPPORT_ERROR_HPP
 #define SUPPORT_ERROR_HPP
 
+#include <cstdarg>
 #include <cstdio>
 #include <format>
 #include <memory>  // std::shared_ptr;
@@ -57,6 +58,7 @@
 
 #include "./config.hpp"
 #include "./error_detail.hpp"
+#include "./formatf.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -128,6 +130,45 @@ public:
     }
   }
 
+  /// @brief wraps the existing err information in additional context
+  ///
+  /// The additional context is specified as a printf-style message
+  ///
+  /// @param format The format-string. This **MUST** be a string literal.
+  /// @param ... optional arguments to be formatted
+  /// @return Returns a reference to `this` for convenience (e.g. to facillitate
+  ///     chaining of operations)
+  ///
+  /// @warning
+  /// Passing a non-literal string as @p format introduces undefined behavior.
+  /// Compilers should generally warn about this
+  ///
+  /// @note
+  /// The proper way to wrap an error object `err` in a context message encoded
+  /// in a `std::string` object called `s` (this object may have been
+  /// dynamically constructed) is to call `err.contextf("%s", s.data());`
+  ///
+  /// Implementaton Note
+  /// ------------------
+  /// For less experienced c++ developers: ``[[gnu::format(printf, 2, 3)]]``
+  /// is a compiler-specific attribute that instructs gcc (or clang++) to check
+  /// at compile-time that the arguments are consistent with the printf style
+  /// format string `format`. It **SHOULD** also check that `format` is a
+  /// string-literal. If a compiler doesn't recognize the attribute, it simply
+  /// ignores (that's mandated by the C++ standard)
+  [[gnu::format(printf, 2, 3)]] Error& contextf(const char* format, ...) {
+    // the gnu::format attribute is told that s is argument 2 (rather than arg
+    // 1) and that the first variadic argument is argument 3 (rather than arg 2)
+    // because `this` is an implicit 1st argument for non-static member
+    // functions like this
+    std::va_list vlist;
+    va_start(vlist, format);
+    std::string msg = vstr_formatf(format, vlist);
+    va_end(vlist);
+    Error out;
+    return context_helper_(ErrImpl_("", std::move(msg), nullptr));
+  }
+
   /// @brief wrap the existing err info in additional context
   ///
   /// This method exists to allow
@@ -184,6 +225,42 @@ public:
       std::string msg = std::vformat(fmt.get(), std::make_format_args(args...));
       out.impl_ = std::make_shared<ErrImpl_>("", std::move(msg), nullptr);
     }
+    return out;
+  }
+
+  /// @brief Construct an error from a printf-style message
+  ///
+  /// @param format The format-string. This **MUST** be a string literal.
+  /// @param ... optional arguments to be formatted
+  /// @returns An error object
+  ///
+  /// @warning
+  /// Passing a non-literal string as @p format introduces undefined behavior.
+  /// Compilers should generally warn about this
+  ///
+  /// @note
+  /// The proper way to create an error object encoding a message copied from
+  /// a std::string `s` (this object may have been dynamically constructed) is
+  /// to call `Error::msgf("%s", s.c_str());`
+  ///
+  /// Implementaton Note
+  /// ------------------
+  /// For less experienced c++ developers: ``[[gnu::format(printf, 1, 2)]]``
+  /// is a compiler-specific attribute that instructs gcc (or clang++) to check
+  /// at compile-time that the arguments are consistent with the printf style
+  /// format string `format`. It **SHOULD** also check that `format` is a
+  /// string-literal. If a compiler doesn't recognize the attribute, it simply
+  /// ignores (that's mandated by the C++ standard)
+  [[gnu::format(printf, 1, 2)]] static Error msgf(const char* format, ...) {
+    // theoretically, we could iterate through characters in s. If we encounter
+    // any occurrence of `%` other than `%%`, then we continue to implement
+    // the current behavior. Otherwise, we could just treat it as a literal
+    std::va_list vlist;
+    va_start(vlist, format);
+    std::string msg = vstr_formatf(format, vlist);
+    va_end(vlist);
+    Error out;
+    out.impl_ = std::make_shared<ErrImpl_>("", std::move(msg), nullptr);
     return out;
   }
 

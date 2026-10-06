@@ -30,7 +30,7 @@ TEST(ErrorFmt, ErroneousOpen) {
 
 static Error erroneous_read_data(std::string path) {
   Error err = erroneous_open(path);
-  err.context("problem loading data from {}", path);
+  err.contextf("problem loading data from %s", path.c_str());
   return err;
 }
 
@@ -69,14 +69,13 @@ TEST(Error, EquivMsg) {
 
   constexpr int N_APPROACH = 4;
   Error errs[N_APPROACH] = {
-      Error::msg("{} is a {}", 1, "number"),
-      Error::msg("{}", std::string("1 is a number")),
-      Error::msg("1 is a number"),
-      Error::msg_literal("1 is a number"),
+      Error::msgf("%d is a %s", 1, "number"),
+      Error::msgf("%s", "1 is a number"), Error::msgf("1 is a number"),
+      Error::msg_literal("1 is a number"),  // <- no heap allocations
   };
 
   for (int i = 0; i < N_APPROACH; i++) {
-    std::string msg = std::format("{}", Error::msg("{} is a {}", 1, "number"));
+    std::string msg = std::format("{}", errs[i]);
     EXPECT_EQ(msg, "1 is a number") << "issue with approach " << i;
   }
 }
@@ -105,7 +104,7 @@ static std::optional<std::string> read_full_file_(std::FILE& f) {
 }
 
 TEST(Error, Write) {
-  Error err = Error::msg("{} is a {}", 1, "number");
+  Error err = Error::msgf("%d is a %s", 1, "number");
 
   // write error message to a temporary file
   std::FILE* fp = std::tmpfile();
