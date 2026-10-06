@@ -146,6 +146,7 @@ add_library(Grackle_Grackle
   support/config.hpp
   support/error.cpp support/error.hpp
   support/error_detail.hpp
+  support/formatf.cpp support/formatf.cpp
   support/FrozenKeyIdxBiMap.hpp
   support/FrozenKeyIdxBiMap_detail.hpp
   support/fnv1a_hash.hpp
