@@ -98,40 +98,6 @@ public:
 
   /// @brief wraps the existing err information in additional context
   ///
-  /// This uses C++'s modern string formatting syntax (equivalent to python's
-  /// formatting mini-language). Given a error object `err`, invoking
-  ///    ``err.context("{} is a {}", 1, "number");``
-  /// introduces context comparable to invoking
-  ///    ``err.context_literal("1 is a number");``
-  /// (under the hood, the way
-  ///
-  /// @param fmt The format-string. This **MUST** be a string literal.
-  /// @param args optional arguments to be formatted
-  /// @return Returns a reference to `this` for convenience (e.g. to facillitate
-  ///     chaining of operations)
-  ///
-  /// @warning
-  /// Passing a non-literal string as @p fmt introduces undefined behavior.
-  /// (While older C++ compilers may compile the code, newer compilers will
-  /// explicitly refuse to compile the program).
-  ///
-  /// @note
-  /// The proper way to wrap an error object `err` in a context message encoded
-  /// in a std::string object called `s` (this object may have been dynamically
-  /// constructed) is to call `err.context("{}", s);`
-  template <typename... Args>
-  Error& context(std::format_string<Args...> fmt, Args&&... args) {
-    if (sizeof...(Args) == 0) {
-      // just record the string-literal (no need to heap allocate a string)
-      return context_helper_(ErrImpl_(fmt.get(), "", nullptr));
-    } else {
-      std::string msg = std::vformat(fmt.get(), std::make_format_args(args...));
-      return context_helper_(ErrImpl_("", std::move(msg), nullptr));
-    }
-  }
-
-  /// @brief wraps the existing err information in additional context
-  ///
   /// The additional context is specified as a printf-style message
   ///
   /// @param format The format-string. This **MUST** be a string literal.
@@ -192,41 +158,6 @@ public:
 
   // factory methods (we may add more in the future!)
   // ================================================
-
-  /// @brief Construct an error object by formatting an error message
-  ///
-  /// This uses C++'s modern string formatting syntax (equivalent to python's
-  /// formatting mini-language). For example, invoking
-  ///    ``Error::msg("{} is a {}", 1, "number");``
-  /// represent a error-message analogous to
-  ///    ``Error::msg_literal("1 is a number");``
-  /// (under the hood, the internal representation is different)
-  ///
-  /// @param fmt The format-string. This **MUST** be a string literal.
-  /// @param args optional arguments to be formatted
-  /// @returns An error object
-  ///
-  /// @warning
-  /// Passing a non-literal string as @p fmt introduces undefined behavior.
-  /// (While older C++ compilers may compile the code, newer compilers will
-  /// explicitly refuse to compile the program).
-  ///
-  /// @note
-  /// The proper way to create an error object encoding a message copied from
-  /// a string `s` (this object may have been dynamically constructed) is to
-  /// call `Error::msg("{}", s);`
-  template <typename... Args>
-  static Error msg(std::format_string<Args...> fmt, Args&&... args) {
-    Error out;
-    if (sizeof...(Args) == 0) {
-      // just store the string-literal (no need to heap allocate a string)
-      out.impl_ = std::make_shared<ErrImpl_>(fmt.get(), "", nullptr);
-    } else {
-      std::string msg = std::vformat(fmt.get(), std::make_format_args(args...));
-      out.impl_ = std::make_shared<ErrImpl_>("", std::move(msg), nullptr);
-    }
-    return out;
-  }
 
   /// @brief Construct an error from a printf-style message
   ///
