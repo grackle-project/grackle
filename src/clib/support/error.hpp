@@ -19,35 +19,46 @@
 #include <string>
 #include <string_view>
 
+// it would be a lot simpler (and idiomatic) to implement string-conversion
+// logic in terms of c++ 20's std::format machinery, but this was one of the
+// last C++ 20 features that compilers implemented
+//
+// There's an added wrinkle that if we use std::format we would really like
+// to use machinery retroactively introduced to the C++ 20 standard in a "defect
+// report" called P2508R1 (A link to this report can be found here:
+// https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2508r1.html)
+// I'm pretty sure this isn't a big deal -- I think this report was written
+// before std::format was implemented in most cases (so if an implementation
+// supports std::format, it probably includes this retroactive change)
+//
+// -> to support this we need to require minimum compiler versions based on when
+//    the associated standard library added support
+//    -> gcc 13: libstdc++ first added support for std::format in that release
+//       https://gcc.gnu.org/onlinedocs/libstdc++/manual/status.html#status.iso.2020
+//    -> clang 17: libcxx made std::format non-experimental in that release
+//       https://releases.llvm.org/17.0.1/projects/libcxx/docs/ReleaseNotes.html
+//    -> (I think clang15 actually experimentally supported it)
+//    -> I think apple-clang supports it starting with xcode 15.3
+//       (https://developer.apple.com/documentation/Xcode-Release-Notes/xcode-15_3-release-notes)
+// -> a more informative table can be found here: (see the row for P2508R1):
+//    https://en.cppreference.com/cpp/compiler_support/23
+//    -> don't be surprised that the table technically describes C++ 23 features
+//       -- P2508r1 is DEFINITELY applicable for C++20
+//    -> interestingly that table claims that xcode 14.0.3 (if you hover over
+//       the entry it says 14.3) supports the feature even though it's not in
+//       the release notes
+//
+// ASIDE: from reading the standard, it seems like this *SHOULD* all be as easy
+//        as checking whether the __cpp_lib_format macro is defined and if it
+//        has a value >=202207L, but clang's libcxx runtime library doesn't
+//        define this macro at all in certain versions (e.g. clang++ 17 and 18)
+//        because some edge cases aren't fully implemented (this probably also
+//        applies to apple-clang)
+
 #include "./config.hpp"
 #include "./error_detail.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
-
-namespace error_detail {
-
-// std::format_string was retroactively exposted in C++ 20.
-// -> this facillitates compile-time for wrapped calls to std::format and
-//    std::vformat that explicitly check (at compile-time) whether the format
-//    string is consistent with the number of specified values to be formatted
-//    and with their types (compiler manually perform comparable checks for
-//    printf)
-// -> this ifdef statement is based on the recommendation made by the report
-//    introducing this retroactive change
-// -> when we adopt C++ 23 as a minimum version, we can assume that
-//    std::format_string is always provided
-#if __cpp_lib_format >= 202207L
-template <typename... Args>
-using my_format_string = std::format_string<std::type_identity_t<Args>...>;
-
-inline std::string_view get_sv_(const auto& fmt) { return fmt.get(); }
-#else
-template <typename... Args>
-using my_format_string = std::string_view;
-
-inline std::string_view get_sv_(const std::string_view& fmt) { return fmt; }
-#endif
-}  // namespace error_detail
 
 /// @brief Represents a generic Error type
 ///
@@ -107,13 +118,12 @@ public:
   /// in a std::string object called `s` (this object may have been dynamically
   /// constructed) is to call `err.context("{}", s);`
   template <typename... Args>
-  Error& context(error_detail::my_format_string<Args...> fmt, Args&&... args) {
-    std::string_view fmt_sv = error_detail::get_sv_(fmt);
+  Error& context(std::format_string<Args...> fmt, Args&&... args) {
     if (sizeof...(Args) == 0) {
       // just record the string-literal (no need to heap allocate a string)
-      return context_helper_(ErrImpl_(fmt_sv, "", nullptr));
+      return context_helper_(ErrImpl_(fmt.get(), "", nullptr));
     } else {
-      std::string msg = std::vformat(fmt_sv, std::make_format_args(args...));
+      std::string msg = std::vformat(fmt.get(), std::make_format_args(args...));
       return context_helper_(ErrImpl_("", std::move(msg), nullptr));
     }
   }
@@ -135,6 +145,9 @@ public:
 
   /// @brief convenience method to make it easier to write to stderr
   void write(std::FILE* stream, bool append_newline = true) const;
+
+  /// @brief get a string representation of the error
+  std::string to_string() const;
 
   // factory methods (we may add more in the future!)
   // ================================================
@@ -162,15 +175,13 @@ public:
   /// a string `s` (this object may have been dynamically constructed) is to
   /// call `Error::msg("{}", s);`
   template <typename... Args>
-  static Error msg(error_detail::my_format_string<Args...> fmt,
-                   Args&&... args) {
-    std::string_view fmt_sv = error_detail::get_sv_(fmt);
+  static Error msg(std::format_string<Args...> fmt, Args&&... args) {
     Error out;
     if (sizeof...(Args) == 0) {
       // just store the string-literal (no need to heap allocate a string)
-      out.impl_ = std::make_shared<ErrImpl_>(fmt_sv, "", nullptr);
+      out.impl_ = std::make_shared<ErrImpl_>(fmt.get(), "", nullptr);
     } else {
-      std::string msg = std::vformat(fmt_sv, std::make_format_args(args...));
+      std::string msg = std::vformat(fmt.get(), std::make_format_args(args...));
       out.impl_ = std::make_shared<ErrImpl_>("", std::move(msg), nullptr);
     }
     return out;
