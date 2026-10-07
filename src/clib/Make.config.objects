@@ -49,6 +49,7 @@ OBJS_CONFIG_LIB = \
         math/solve_cubic_equation.lo \
         solve_rate_cool.lo \
         support/error.lo \
+        support/formatf.lo \
         support/status_reporting.lo \
         update_UVbackground_rates.lo \
         rate_functions.lo \
