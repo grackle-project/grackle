@@ -96,6 +96,20 @@ class Error {
   }
 
 public:
+  // function names/signatures reserved for later
+  // - the idea is that these methods would use replace Error::msgf and
+  //   Error::contextf. They would use std::format-style printing
+  // - if you go back to the commits just as Error::msgf and Error::contextf
+  //   were being introduced, you can find examples of how to implement these
+  //   functions
+  template <typename... Args>
+  static Error msg(std::string_view fmt, Args&&... args) = delete;
+  template <typename... Args>
+  Error& context(std::string_view fmt, Args&&... args) = delete;
+
+  // The actual interface
+  // --------------------
+
   Error(Error&&) = default;
   Error(const Error&) = default;
   Error& operator=(Error&&) = default;
