@@ -14,11 +14,13 @@
 
 #include <cstdarg>
 #include <cstdio>
-#include <format>
 #include <memory>  // std::shared_ptr;
-#include <type_traits>
 #include <string>
 #include <string_view>
+
+#include "./config.hpp"
+#include "./error_detail.hpp"
+#include "./formatf.hpp"
 
 // it would be a lot simpler (and idiomatic) to implement string-conversion
 // logic in terms of c++ 20's std::format machinery, but this was one of the
@@ -55,10 +57,16 @@
 //        define this macro at all in certain versions (e.g. clang++ 17 and 18)
 //        because some edge cases aren't fully implemented (this probably also
 //        applies to apple-clang)
-
-#include "./config.hpp"
-#include "./error_detail.hpp"
-#include "./formatf.hpp"
+//
+// TODO: revisit this in 2027 when we want to start assuming that people are
+//       using at least ubuntu 24.04, rather than 22.04 (since 24.04 packages
+//       gcc 13).
+//   -> Alternatively, once we stop supporting the classic build-system we
+//      could take fmtlib as a dependency (i.e. a small library where the
+//      std::format machinery was originally implemented)
+//   -> to see a sample of what the std::format logic looks like, you should
+//      look back at this file in the commit just before this TODO message was
+//      written
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -69,8 +77,6 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// rust crate. The idea of wrapping the implementation in a shared pointer
 /// was inspired by the Error type in the jiff rust crate
 class Error {
-  friend struct std::formatter<GRIMPL_NS::Error>;
-
   static constexpr const char* DFLT_MSG_ = "<UNKNOWN ERROR>";
 
   // This is wrapped by a shared_ptr (i.e. its heap-allocated with
@@ -209,41 +215,5 @@ public:
 };
 
 }  // namespace GRIMPL_NAMESPACE_DECL
-
-// by specializing std::formatter for GRIMPL_NS::Error, you can use std::format
-// to get a string representation of GRIMPL_NS::Error.
-template <>
-struct std::formatter<GRIMPL_NS::Error> {
-  template <typename ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    return ctx.begin();
-  }
-
-  template <class FmtContext>
-  auto format(const GRIMPL_NS::Error& error, FmtContext& ctx) const {
-    if (error.impl_.get() == nullptr) {  // <- possible after move operation
-      return std::format_to(ctx.out(), "{}", GRIMPL_NS::Error::DFLT_MSG_);
-    }
-
-    using OutT = typename FmtContext::iterator;
-    OutT out = std::format_to(ctx.out(), "{}", *error.impl_);
-
-    // print out the chain of causes (if any)
-    GRIMPL_NS::ErrImpl_* c = error.impl_->err_cause_.get();
-    if (c != nullptr) {
-      ctx.advance_to(out);
-      out = std::format_to(ctx.out(), "\n\nCaused By:");
-      for (int count = 1; c != nullptr; c = c->err_cause_.get(), count++) {
-        ctx.advance_to(out);
-        if (count > 1 || c->err_cause_.get() != nullptr) {
-          out = std::format_to(out, "\n  {}: {}", count, *c);
-        } else {
-          out = std::format_to(out, "\n     {}", *c);
-        }
-      }
-    }
-    return out;
-  }
-};
 
 #endif  // SUPPORT_ERROR_HPP

@@ -24,8 +24,7 @@ static Error erroneous_open(std::string path) {
 
 TEST(ErrorFmt, ErroneousOpen) {
   Error obj = erroneous_open("path/to/file");
-  std::string err_msg = std::format("{}", obj);
-  ASSERT_EQ(err_msg, "File not found");
+  ASSERT_EQ(obj.to_string(), "File not found");
 }
 
 static Error erroneous_read_data(std::string path) {
@@ -36,13 +35,12 @@ static Error erroneous_read_data(std::string path) {
 
 TEST(ErrorFmt, ErroneousReadData) {
   Error obj = erroneous_read_data("path/to/file");
-  std::string err_msg = std::format("\n{}", obj);
   const char* expected = R"""(
 problem loading data from path/to/file
 
 Caused By:
      File not found)""";
-  ASSERT_EQ(err_msg, expected);
+  ASSERT_EQ("\n" + obj.to_string(), expected);
 }
 
 static Error erroneous_read_InterpTable(std::string path) {
@@ -53,14 +51,13 @@ static Error erroneous_read_InterpTable(std::string path) {
 
 TEST(ErrorFmt, ErroneousReadInterpTable) {
   Error obj = erroneous_read_InterpTable("path/to/file");
-  std::string err_msg = std::format("\n{}", obj);
   const char* expected = R"""(
 unable to create InterpTable
 
 Caused By:
   1: problem loading data from path/to/file
   2: File not found)""";
-  ASSERT_EQ(err_msg, expected);
+  ASSERT_EQ("\n" + obj.to_string(), expected);
 }
 
 TEST(Error, EquivMsg) {
@@ -75,8 +72,8 @@ TEST(Error, EquivMsg) {
   };
 
   for (int i = 0; i < N_APPROACH; i++) {
-    std::string msg = std::format("{}", errs[i]);
-    EXPECT_EQ(msg, "1 is a number") << "issue with approach " << i;
+    EXPECT_EQ(errs[i].to_string(), "1 is a number")
+        << "issue with approach " << i;
   }
 }
 

@@ -10,7 +10,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <format>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -38,23 +37,23 @@ struct ErrImpl_ {
   // in the future, we could also consider tracking information like the
   // location (file, line number, function name?) where the error occurred or
   // perhaps even a stack-trace
-};
 
-}  // namespace GRIMPL_NAMESPACE_DECL
-
-template <>
-struct std::formatter<GRIMPL_NS::ErrImpl_> {
-  template <typename ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    return ctx.begin();
-  }
-
-  template <class FmtContext>
-  auto format(const GRIMPL_NS::ErrImpl_& e, FmtContext& ctx) const {
-    if (e.msg_literal.size() != 0) {
-      return std::format_to(ctx.out(), "{}", e.msg_literal);
+  /// @brief return a view of the error message
+  ///
+  /// @warning
+  /// Undefined behavior occurs if the returned string_view outlives ``this``
+  ///
+  /// @note
+  /// If we make it possible to encode errors in alternative ways (without
+  /// internally tracking a string message), we may need to replace this
+  /// function
+  std::string_view get_string_view() const {
+    if (msg_literal.size() != 0) {
+      return msg_literal;
     } else {
-      return std::format_to(ctx.out(), "{}", e.msg);
+      return msg;
     }
   }
 };
+
+}  // namespace GRIMPL_NAMESPACE_DECL
