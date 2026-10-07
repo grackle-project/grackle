@@ -47,7 +47,6 @@
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
 #include "collisional_rate_props.hpp"  // init_extra_collisional_rates
-#include "dust/grain_species_info.hpp"
 #include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
 #include "inject_model/load_data.hpp"  // load_inject_path_data
 #include "initialize_rates.hpp"
@@ -787,21 +786,6 @@ int grackle::impl::initialize_rates(
     if (grackle::impl::init_misc_species_cool_rates(my_chemistry, my_rates, my_units) != GR_SUCCESS) {
       fprintf(stderr, "Error in initialize_metal_chemistry_rates.\n");
       return GR_FAIL;
-    }
-
-    // Dust Grain Species Information
-    // (it may make sense want to handle more of the dust separately)
-    if (my_chemistry->dust_species > 0) {
-      Expected<GrainSpeciesInfo, Error> rslt
-          = GrainSpeciesInfo::create(my_chemistry->dust_species);
-      if (rslt.has_value()) {
-        my_rates->opaque_storage->grain_species_info = new GrainSpeciesInfo(
-            std::move(rslt).value());
-      } else {
-        rslt.error().context_literal("Unable to build GrainSpeciesInfo")
-            .write(stderr);
-        return GR_FAIL;
-      }
     }
 
     // Load injection pathway data

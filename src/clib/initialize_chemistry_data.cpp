@@ -20,6 +20,7 @@
 #include "grackle_macros.h"
 #include "auto_general.hpp"
 #include "chem_model/nuclide_model.hpp"
+#include "dust/grain_species_info.hpp"
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.hpp"
@@ -28,6 +29,7 @@
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.hpp"
 #include "ratequery.hpp"
+#include "support/expected.hpp"
 #include "support/status_reporting.hpp"
 #include "tabulated/initialize_cloudy_data.hpp"
 
@@ -152,6 +154,9 @@ extern "C" int local_initialize_chemistry_data(
     chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
     code_units *my_units)
 {
+  using GRIMPL_NS::Error;
+  using GRIMPL_NS::Expected;
+
   // Here we will default construct an empty RegBuilder
   // -> as we move through this function, we will register various
   //    kinds of rate-related quantities
@@ -368,6 +373,25 @@ extern "C" int local_initialize_chemistry_data(
 
   // perform some basic allocations
   my_rates->opaque_storage = new gr_opaque_storage;
+
+  // lets start determining the species that are actually involved in the
+  // calculation
+  // -> first we need to infer whether any dust grain species are involved
+  // -> this is encoded within GrainSpeciesInfo
+  if (my_chemistry->dust_species > 0) {
+    using GRIMPL_NS::GrainSpeciesInfo;
+    GRIMPL_NS::Expected<GrainSpeciesInfo, Error> rslt
+        = GrainSpeciesInfo::create(my_chemistry->dust_species);
+    if (rslt.has_value()) {
+      my_rates->opaque_storage->grain_species_info = new GrainSpeciesInfo(
+          std::move(rslt).value());
+    } else {
+      rslt.error().context_literal("Unable to build GrainSpeciesInfo")
+          .write(stderr);
+      return GR_FAIL;
+    }
+  }
+  // TODO: infer the other grain species that are involved!
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
