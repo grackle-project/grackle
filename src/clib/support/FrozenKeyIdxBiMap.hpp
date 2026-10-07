@@ -343,8 +343,8 @@ inline Expected<FrozenKeyIdxBiMap, Error> FrozenKeyIdxBiMap::create(
   } else if (keys == nullptr) {
     return Unexpected(Error::msg_literal("keys must not be a nullptr"));
   } else if (key_count < 1 || static_cast<int64_t>(key_count) > max_len) {
-    return Unexpected(
-        Error::msgf("key_count must be positive & can't exceed %lld", max_len));
+    return Unexpected(Error::msgf(
+        "key_count must be positive & can't exceed %lld", (long long)max_len));
   }
 
   // based on the preceding check, this shouldn't be able to fail
