@@ -174,28 +174,21 @@ class PartMap {
   int right_idx_bounds_[partmap_detail::MAX_LEN];
 
 public:
-  /// default constructor
-  ///
-  /// The instance is in an invalid "null state" this is a necessary evil
-  /// unless we want to add constructors to all structs that own a PartMap
-  /// (overall, this would be a good thing, but let's take it one step at a
-  /// time)
+  /// @brief default constructor (constructs a map with 0 partitions)
   PartMap() {
-    n_parts_ = -1;
+    n_parts_ = 0;
     for (int i = 0; i < partmap_detail::MAX_LEN; i++) {
       pd_array_[i] = 0;
       right_idx_bounds_[i] = 0;
     }
+    pd_array_[0] = -1;
   }
 
-  /// Construct a PartMap from the sizes of each partition.
+  /// @brief Construct a PartMap from the sizes of each partition.
   ///
   /// @param[in] pds Array of unique partition descriptors
   /// @param[in] sizes Holds the number of indices for each partition.
   /// @param[in] n_parts The number of partitions
-  ///
-  /// @note
-  /// Use the @ref is_ok method to check whether the constructor faced an error
   static Expected<PartMap, Error> create(const partition_descr_type* pds,
                                          const int* sizes, int n_parts) {
     // (in reality, any error here points to an internal logic-error)
@@ -208,9 +201,12 @@ public:
                       partmap_detail::MAX_LEN));
     }
 
-    int running_sum = 0;
-
     PartMap out;
+    if (n_parts == 0) {
+      return out;
+    }
+
+    int running_sum = 0;
     out.n_parts_ = n_parts;
     for (int i = 0; i < n_parts; i++) {
       // error checks:
@@ -228,10 +224,6 @@ public:
       running_sum += sizes[i];
       out.right_idx_bounds_[i] = running_sum;
     }
-
-    if (n_parts == 0) {
-      out.pd_array_[0] = -1;
-    }
     return out;
   }
 
@@ -240,9 +232,6 @@ public:
   PartMap(PartMap&&) = default;
   PartMap& operator=(const PartMap&) = default;
   PartMap& operator=(PartMap&&) = default;
-
-  /// checks whether the constructor produced a valid partition map
-  bool is_ok() const { return (n_parts_ >= 0); }
 
   /// number of partitions in the partition map
   int n_partitions() const { return n_parts_; }
