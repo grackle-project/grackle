@@ -13,6 +13,8 @@
 #define SUPPORT_PARTMAP_HPP
 #include "support/config.hpp"
 #include "support/status_reporting.hpp"
+#include "support/error.hpp"
+#include "support/expected.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 namespace partmap_detail {
@@ -84,7 +86,7 @@ struct IdxSearch {
 /// PartitionName::B  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 /// @endcode
 ///
-/// The names of the partitions are typically be declared as an enum (ideally,
+/// The names of the partitions typically be declared as an enum (ideally,
 /// they would be "scoped enums," but that is tricky for reasons explained
 /// later). The declaration might look like:
 ///
@@ -98,16 +100,19 @@ struct IdxSearch {
 ///   /* Construct the partition map */
 ///   int pds[3] = {PartitionName::A, PartitionMap::C, PartitionMap::B};
 ///   int size[3] = {4, 2, 3};
-///   PartMap m = new_PartitionMap(pds, sizes, 3);
-///   if (!PartitionMap_is_ok(&m)) { /* <error-propagation ...> */ }
+///   Expected<PartMap, Error> rslt = PartMap::create(pds, sizes, 3);
+///   if (!rslt.has_value()) { /* <error-propagation ...> */ }
 ///
-///   /* query the bounds associated with PartitionMap::C */
-///   IdxInterval bounds = PartMap_part_bounds(&m, PartitionMap::C);
+///   /* move PartMap out of rslt (deepcopies of PartMap are also cheap) */
+///   PartMap m = std::move(rslt).value();
+///
+///   /* query the bounds associated with PartitionName::C */
+///   IdxInterval bounds = PartMap_part_bounds(&m, PartitionName::C);
 ///   assert(bounds.start == 4);
 ///   assert(bounds.stop == 6); /
 ///
 ///   /* query the partition associated with index 7 */
-///   partmap::IdxSearch search_rslt = PartMap_search_idx(&m, 7);
+///   partmap::IdxSearch search_rslt = m.search_idx(&m, 7);
 ///   assert(search_rslt.has_val);
 ///   assert(search_rslt.pd == PartitionName::B);
 /// @endcode
@@ -191,42 +196,43 @@ public:
   ///
   /// @note
   /// Use the @ref is_ok method to check whether the constructor faced an error
-  PartMap(const partition_descr_type* pds, const int* sizes, int n_parts)
-      : PartMap() {
+  static Expected<PartMap, Error> create(const partition_descr_type* pds,
+                                         const int* sizes, int n_parts) {
     // (in reality, any error here points to an internal logic-error)
     if (n_parts != 0 && (pds == nullptr || sizes == nullptr)) {
-      GrPrintErrMsg("pds and sizes can only be a nullptr when n_parts is 0");
-      return;  // constructed object is invalid since n_parts_ isn't changed
+      return Unexpected(Error::msg_literal(
+          "pds and sizes can only be a nullptr when n_parts is 0"));
     } else if (n_parts < 0 || n_parts > partmap_detail::MAX_LEN) {
-      GrPrintErrMsg("n_parts doesn't satisfy 0 <= n_parts <= %d",
-                    partmap_detail::MAX_LEN);
-      return;  // constructed object is invalid since n_parts_ isn't changed
+      return Unexpected(
+          Error::msgf("n_parts doesn't satisfy 0 <= n_parts <= %d",
+                      partmap_detail::MAX_LEN));
     }
 
     int running_sum = 0;
+
+    PartMap out;
+    out.n_parts_ = n_parts;
     for (int i = 0; i < n_parts; i++) {
       // error checks:
       for (int j = 0; j < i; j++) {
         if (pds[i] == pds[j]) {
-          GrPrintErrMsg("pds[%d] and pds[%d] hold the same descriptor", i, j);
-          return;  // constructed object is invalid since n_parts_ isn't changed
+          return Unexpected(Error::msgf(
+              "pds[%d] and pds[%d] hold the same descriptor", i, j));
         }
       }
       if (sizes[i] < 0) {
-        GrPrintErrMsg("sizes[%d] is negative", i);
-        return;  // constructed object is invalid since n_parts_ isn't changed
+        return Unexpected(Error::msgf("sizes[%d] is negative", i));
       }
 
-      pd_array_[i] = pds[i];
+      out.pd_array_[i] = pds[i];
       running_sum += sizes[i];
-      right_idx_bounds_[i] = running_sum;
+      out.right_idx_bounds_[i] = running_sum;
     }
 
     if (n_parts == 0) {
-      pd_array_[0] = -1;
+      out.pd_array_[0] = -1;
     }
-
-    n_parts_ = n_parts;  // <- this signals that the constructed object is valid
+    return out;
   }
 
   // use default move/copy constructors & assignment operations

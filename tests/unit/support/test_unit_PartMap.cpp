@@ -16,6 +16,8 @@
 #include "support/config.hpp"
 #include "support/PartMap.hpp"
 
+using CreateRslt = GRIMPL_NS::Expected<GRIMPL_NS::PartMap, GRIMPL_NS::Error>;
+
 // teach GoogleTest how to print GRIMPL_NS::partmap::IdxSearch for more
 // informative errors (otherwise it just shows the memory's raw byte values)
 namespace GRIMPL_NS::partmap {
@@ -35,9 +37,10 @@ using ::testing::Field;
 using ::testing::Lt;
 
 // this is a simple case
-TEST(PartSeq, Empty) {
-  GRIMPL_NS::PartMap m(nullptr, nullptr, 0);
-  ASSERT_TRUE(m.is_ok());
+TEST(PartMap, Empty) {
+  CreateRslt rslt = GRIMPL_NS::PartMap::create(nullptr, nullptr, 0);
+  ASSERT_TRUE(rslt.has_value());
+  GRIMPL_NS::PartMap m = std::move(rslt).value();
 
   EXPECT_EQ(m.n_partitions(), 0);
   EXPECT_EQ(m.n_idx(), 0);
@@ -63,12 +66,13 @@ enum { A, B, C };
 }  // namespace PartitionName
 
 // this is the case illustrated in PartMap's docstring
-TEST(PartSeq, DocString) {
+TEST(PartMap, DocString) {
   const int pds[3] = {PartitionName::A, PartitionName::C, PartitionName::B};
   const int sizes[3] = {4, 2, 3};
 
-  GRIMPL_NS::PartMap m(pds, sizes, 3);
-  ASSERT_TRUE(m.is_ok());
+  CreateRslt rslt = GRIMPL_NS::PartMap::create(pds, sizes, 3);
+  ASSERT_TRUE(rslt.has_value());
+  GRIMPL_NS::PartMap m = std::move(rslt).value();
 
   EXPECT_EQ(m.n_partitions(), 3);
   EXPECT_EQ(m.n_idx(), 9);
@@ -120,4 +124,18 @@ TEST(PartSeq, DocString) {
   // extra sanity check!
   EXPECT_THAT(m.search_idx(9999),
               Field("is_valid", &IdxSearch::has_val, Eq(false)));
+}
+
+// test a failure mode of the factory method:
+TEST(PartMap, Nullptrs) {
+  const int pds[3] = {PartitionName::A, PartitionName::C, PartitionName::B};
+  const int sizes[3] = {4, 2, 3};
+  {
+    CreateRslt rslt = GRIMPL_NS::PartMap::create(nullptr, sizes, 3);
+    EXPECT_FALSE(rslt.has_value()) << "pds argument was false";
+  }
+  {
+    CreateRslt rslt = GRIMPL_NS::PartMap::create(pds, nullptr, 3);
+    EXPECT_FALSE(rslt.has_value()) << "sizes argument was false";
+  }
 }
