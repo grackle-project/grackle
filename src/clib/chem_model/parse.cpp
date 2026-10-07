@@ -10,7 +10,9 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <format>
+#include <iomanip>  // std::setw
+#include <sstream>  // std::ostringstream
+#include <utility>  // std::move
 
 #include "parse.hpp"
 
@@ -25,15 +27,20 @@ std::string Err::to_string(std::string_view parsed_s) const {
     descr = descr_;
   }
 
-  // -> first line specifies the parsing error
-  // -> second line shows the line being parsed
-  // -> final line uses a carrot, '^', to point to point to the position where
-  //    the parsing error actually occured
   std::size_t padding_width = pos_ + 1;
-  return std::format("parsing error: {}\n   |{}\n   |{:>{}c}",
-                     descr,     // <- describes the error
-                     parsed_s,  // <- shows the line being parsed
-                     '^', padding_width);
+  std::ostringstream s;
+  // -> first line specifies the parsing error
+  s << "parsing error: " << descr
+    << '\n'
+    // -> second line shows the line being parsed
+    << "   |" << parsed_s
+    << '\n'
+    // -> final line uses a carrot, '^', to point to the position where the
+    //    parsing error actually occured
+    << "    " << std::setw(padding_width) << '^';
+
+  // we try to move string buffer out of the stringstream rather than copy it
+  return std::move(s).str();
 }
 
 }  // namespace parse
