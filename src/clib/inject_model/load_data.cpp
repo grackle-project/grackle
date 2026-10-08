@@ -449,12 +449,16 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   //    BiMapMode::REFS_KEYDATA to instruct the map to avoid making copies.
   // -> In the future, when model names are dynamically specified by an HDF5
   //    file, we'll need to use BiMapMode::COPIES_KEYDATA.
-  FrozenKeyIdxBiMap inj_path_names = FrozenKeyIdxBiMap::create(
-      inj_path_name_l, n_pathways, BiMapMode::REFS_KEYDATA);
-  if (!inj_path_names.is_ok()) {
-    return GrPrintAndReturnErr(
-        "there was a problem building the map of model names");
+  Expected<FrozenKeyIdxBiMap, Error> inj_path_names_rslt =
+      FrozenKeyIdxBiMap::create(inj_path_name_l, n_pathways,
+                                BiMapMode::REFS_KEYDATA);
+  if (!inj_path_names_rslt.has_value()) {
+    Error err = inj_path_names_rslt.error().context_literal(
+        "problem building map of model names");
+    err.write(stderr);
+    return GR_FAIL;
   }
+  FrozenKeyIdxBiMap inj_path_names = inj_path_names_rslt.value();
 
   // initialize the object that will hold the loaded data
   int n_log10Tdust_vals = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
@@ -473,15 +477,22 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   }
 
   // initialize the grid of dust temperatures associated with the opacity table
-  double log10Tdust_lo = 0.0;
-  double log10Tdust_step = 0.1;
+  {
+    double log10Tdust_lo = 0.0;
+    double log10Tdust_step = 0.1;
 
-  InterpDimScale dim_scale =
-      InterpDimScale::Linear(n_log10Tdust_vals, log10Tdust_lo, log10Tdust_step);
-  inject_pathway_props->log10Tdust_interp_props =
-      InterpGridProps(1, &dim_scale);
-  if (!inject_pathway_props->log10Tdust_interp_props) {
-    return GR_FAIL;
+    InterpDimScale dim_scale = InterpDimScale::Linear(
+        n_log10Tdust_vals, log10Tdust_lo, log10Tdust_step);
+    Expected<InterpGridProps, Error> interp_props_rslt =
+        InterpGridProps::create(1, &dim_scale);
+    if (!interp_props_rslt.has_value()) {
+      Error err = interp_props_rslt.error().context_literal(
+          "problem initializing opacity table's dust temperature grid");
+      err.write(stderr);
+      return GR_FAIL;
+    }
+    inject_pathway_props->log10Tdust_interp_props =
+        std::move(interp_props_rslt).value();
   }
 
   // zero-out all metal injection yield fractions and dust grain properties

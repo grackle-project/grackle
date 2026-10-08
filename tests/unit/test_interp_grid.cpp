@@ -83,6 +83,9 @@ MATCHER_P(HoldsDimScales, v, matcher_descr_(v, negation)) {
   }
 }
 
+using GRIMPL_NS::InterpGridProps;
+using CreateRslt = GRIMPL_NS::Expected<InterpGridProps, GRIMPL_NS::Error>;
+
 TEST(InterpGridProps, Empty) {
   GRIMPL_NS::InterpGridProps grid_props;
   EXPECT_FALSE(grid_props);
@@ -91,8 +94,10 @@ TEST(InterpGridProps, Empty) {
 TEST(InterpGridProps, Simple1D) {
   std::vector<GRIMPL_NS::InterpDimScale> dim_scales{
       GRIMPL_NS::InterpDimScale::Linear(4, 0.0, 1.0)};
-  GRIMPL_NS::InterpGridProps grid_props(dim_scales.size(), dim_scales.data());
-  EXPECT_TRUE(grid_props);
+  CreateRslt grid_props_rslt =
+      GRIMPL_NS::InterpGridProps::create(dim_scales.size(), dim_scales.data());
+  ASSERT_TRUE(grid_props_rslt.has_value());
+  InterpGridProps& grid_props = grid_props_rslt.value();
 
   EXPECT_EQ(grid_props.data_size, 4);
   EXPECT_THAT(grid_props, HoldsDimScales(dim_scales));
@@ -113,8 +118,10 @@ TEST(InterpGridProps, Simple2D) {
       GRIMPL_NS::InterpDimScale::Linear(4, 0.0, 1.0),
       GRIMPL_NS::InterpDimScale::Linear(2, 5.0, -10.0),
   };
-  GRIMPL_NS::InterpGridProps grid_props(dim_scales.size(), dim_scales.data());
-  EXPECT_TRUE(grid_props);
+  CreateRslt grid_props_rslt =
+      GRIMPL_NS::InterpGridProps::create(dim_scales.size(), dim_scales.data());
+  ASSERT_TRUE(grid_props_rslt.has_value());
+  InterpGridProps& grid_props = grid_props_rslt.value();
 
   EXPECT_EQ(grid_props.data_size, 8);
   EXPECT_THAT(grid_props, HoldsDimScales(dim_scales));
@@ -126,8 +133,10 @@ TEST(InterpGridProps, Simple3D) {
       GRIMPL_NS::InterpDimScale::Linear(2, 5.0, -10.0),
       GRIMPL_NS::InterpDimScale::Linear(5, 30.0, 100.0),
   };
-  GRIMPL_NS::InterpGridProps grid_props(dim_scales.size(), dim_scales.data());
-  EXPECT_TRUE(grid_props);
+  CreateRslt grid_props_rslt =
+      GRIMPL_NS::InterpGridProps::create(dim_scales.size(), dim_scales.data());
+  ASSERT_TRUE(grid_props_rslt.has_value());
+  InterpGridProps& grid_props = grid_props_rslt.value();
 
   EXPECT_EQ(grid_props.data_size, 40);
   EXPECT_THAT(grid_props, HoldsDimScales(dim_scales));
@@ -139,8 +148,10 @@ TEST(InterpGridProps, MoveConstruct) {
       GRIMPL_NS::InterpDimScale::Linear(2, 5.0, -10.0),
       GRIMPL_NS::InterpDimScale::Linear(5, 30.0, 100.0),
   };
-  GRIMPL_NS::InterpGridProps original(dim_scales.size(), dim_scales.data());
-  EXPECT_TRUE(original);
+  CreateRslt original_rslt =
+      GRIMPL_NS::InterpGridProps::create(dim_scales.size(), dim_scales.data());
+  ASSERT_TRUE(original_rslt.has_value());
+  InterpGridProps& original = original_rslt.value();
 
   // grid_props is move-constructed
   GRIMPL_NS::InterpGridProps grid_props(std::move(original));
@@ -157,8 +168,10 @@ TEST(InterpGridProps, MoveAssign) {
       GRIMPL_NS::InterpDimScale::Linear(2, 5.0, -10.0),
       GRIMPL_NS::InterpDimScale::Linear(5, 30.0, 100.0),
   };
-  GRIMPL_NS::InterpGridProps original(dim_scales.size(), dim_scales.data());
-  EXPECT_TRUE(original);
+  CreateRslt original_rslt =
+      GRIMPL_NS::InterpGridProps::create(dim_scales.size(), dim_scales.data());
+  ASSERT_TRUE(original_rslt.has_value());
+  InterpGridProps& original = original_rslt.value();
 
   GRIMPL_NS::InterpGridProps grid_props;  // <- default constructed
   grid_props = std::move(original);       // <- move assignment
@@ -189,7 +202,10 @@ TEST(InterpGrid, Simple1D) {
   // create grid_props
   std::vector<GRIMPL_NS::InterpDimScale> dim_scales{
       GRIMPL_NS::InterpDimScale::Linear(2, 0.0, 1.0)};
-  GRIMPL_NS::InterpGridProps grid_props(1, dim_scales.data());
+  CreateRslt grid_props_rslt =
+      GRIMPL_NS::InterpGridProps::create(dim_scales.size(), dim_scales.data());
+  ASSERT_TRUE(grid_props_rslt.has_value());
+  InterpGridProps& grid_props = grid_props_rslt.value();
 
   // create pointer with values
   double* data = new double[2];
