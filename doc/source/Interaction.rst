@@ -577,8 +577,10 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
 
 .. c:var:: gr_float* dust_density
 
-   Pointer to the dust density field array.  Used when
-   :c:data:`use_dust_density_field` is set to 1.
+   Pointer to the dust density field array.  Used with the following
+   parameter combinations (:c:data:`dust_chemistry` = 1 and
+   :c:data:`use_dust_density_field` = 1); (:c:data:`dust_chemistry` =
+   2 and :c:data:`chiaki_dust_model_dust_species` = 0).
 
 .. c:var:: gr_float* internal_energy
 
@@ -654,7 +656,60 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    used with radiative transfer.  Rates should be in units of
    1/:c:data:`time_units`.  Used when
    :c:data:`use_radiative_transfer` is set to 1 and
-   :c:data:`primordial_chemistry` is either 2 or 3.
+   :c:data:`primordial_chemistry` > 1.
+
+.. c:var:: gr_float *RT_HDI_dissociation_rate
+
+   Pointer to the HD photo-dissociation rate field enabled by setting
+   :c:data:`radiative_transfer_HDI_dissociation` to 1. Rates should be
+   in units of 1/:c:data:`time_units`. Also requires
+   :c:data:`use_radiative_transfer` = 1 and
+   :c:data:`primordial_chemistry` > 2.
+
+.. c:var:: gr_float *RT_CI_ionization_rate
+
+   Pointer to the CI photo-ionization rate field enabled by setting
+   :c:data:`radiative_transfer_metal_ionization` to 1. Rates should be
+   in units of 1/:c:data:`time_units`. Also requires
+   :c:data:`use_radiative_transfer` = 1,
+   :c:data:`primordial_chemistry` > 1, and :c:data:`metal_chemistry` =
+   1.
+
+.. c:var:: gr_float *RT_OI_ionization_rate
+
+   Pointer to the OI photo-ionization rate field enabled by setting
+   :c:data:`radiative_transfer_metal_ionization` to 1. Rates should be
+   in units of 1/:c:data:`time_units`. Also requires
+   :c:data:`use_radiative_transfer` = 1,
+   :c:data:`primordial_chemistry` > 1, and :c:data:`metal_chemistry` =
+   1.
+
+.. c:var:: gr_float *RT_CO_dissociation_rate
+
+   Pointer to the CO photo-dissociation rate field enabled by setting
+   :c:data:`radiative_transfer_metal_dissociation` to 1. Rates should be
+   in units of 1/:c:data:`time_units`. Also requires
+   :c:data:`use_radiative_transfer` = 1,
+   :c:data:`primordial_chemistry` > 1, and :c:data:`metal_chemistry` =
+   1.
+
+.. c:var:: gr_float *RT_OH_dissociation_rate
+
+   Pointer to the OH photo-dissociation rate field enabled by setting
+   :c:data:`radiative_transfer_metal_dissociation` to 1. Rates should be
+   in units of 1/:c:data:`time_units`. Also requires
+   :c:data:`use_radiative_transfer` = 1,
+   :c:data:`primordial_chemistry` > 1, and :c:data:`metal_chemistry` =
+   1.
+
+.. c:var:: gr_float *RT_H2O_dissociation_rate
+
+   Pointer to the H\ :sub:`2`:\ O photo-dissociation rate field
+   enabled by setting :c:data:`radiative_transfer_metal_dissociation`
+   to 1. Rates should be in units of 1/:c:data:`time_units`. Also
+   requires :c:data:`use_radiative_transfer` = 1,
+   :c:data:`primordial_chemistry` > 1, and :c:data:`metal_chemistry` =
+   1.
 
 .. c:var:: gr_float *H2_self_shielding_length
 
@@ -678,6 +733,203 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    :c:data:`use_isrf_field` is set to 1. The units
    of this field should be the same as those of the
    :c:data:`interstellar_radiation_field` parameter.
+
+.. c:var:: gr_float *CI_density
+
+   Pointer to the CI density field array. Required when
+   setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *CII_density
+
+   Pointer to the CII (C\ :sup:`+`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *CH_density
+
+   Pointer to the CH density field array. Required when setting
+   :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *CH2_density
+
+   Pointer to the CH2 (CH\ :sub:`2`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *CO_density
+
+   Pointer to the CO density field array. Required when setting
+   :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *COII_density
+
+   Pointer to the COII (CO\ :sup:`+`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *CO2_density
+
+   Pointer to the CO2 (CO\ :sub:`2`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *OI_density
+
+   Pointer to the OI density field array. Required when setting
+   :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *OII_density
+
+   Pointer to the OII (O\ :sup:`+`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *OH_density
+
+   Pointer to the OH density field array. Required when setting
+   :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *OHII_density
+
+   Pointer to the OHII (OH\ :sup:`+`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *H2O_density
+
+   Pointer to the H2O (H\ :sub:`2`\ O) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *H2OII_density
+
+   Pointer to the H2OII (H\ :sub:`2`\ O\ :sup:`+`\ ) density field
+   array. Required when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *H3OII_density
+
+   Pointer to the H3OII (H\ :sub:`3`\ O\ :sup:`+`\ ) density field
+   array. Required when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *O2_density
+
+   Pointer to the O2 (O\ :sub:`2`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *O2II_density
+
+   Pointer to the O2II (O\ :sub:`2`\ :sup:`+`\ ) density field
+   array. Required when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *SiI_density
+
+   Pointer to the SiI density field array. Required when setting
+   :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *SiOI_density
+
+   Pointer to the SiOI density field array. Required when setting
+   :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *SiO2I_density
+
+   Pointer to the SiO2I (SiO\ :sub:`2`\ ) density field
+   array. Required when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *MgSiO3_dust_density
+
+   Pointer to the enstatite dust density field array. Required when
+   setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 0.
+
+.. c:var:: gr_float *AC_dust_density
+
+   Pointer to the amorphous carbon dust density field array. Required
+   when setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 0.
+
+.. c:var:: gr_float *Mg_density
+
+   Pointer to the Mg density field array. Required when setting
+   :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 0.
+
+.. c:var:: gr_float *SiM_dust_density
+
+   Pointer to the metallic silicon dust density field array. Required
+   when setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *FeM_dust_density
+
+   Pointer to the metallic iron dust density field array. Required
+   when setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *Mg2SiO4_dust_density
+
+   Pointer to the forsterite (Mg\ :sub:`2`\ SiO\ :sub:`4`\ ) dust
+   density field array. Required when setting :c:data:`dust_chemistry`
+   = 2 and :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *Fe3O4_dust_density
+
+   Pointer to the magnetite (Fe\ :sub:`3`\ O\ :sub:`4`\ ) dust density
+   field array. Required when setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *SiO2_dust_density
+
+   Pointer to the silica (SiO\ :sub:`2`\ ) dust density field
+   array. Required when setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *MgO_dust_density
+
+   Pointer to the magnesia (MgO) dust density field array. Required
+   when setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *FeS_dust_density
+
+   Pointer to the troilite (FeS) dust density field array. Required
+   when setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *Al2O3_dust_density
+
+   Pointer to the alumina (Al\ :sub:`2`\ O\ :sub:`3`\ ) dust density
+   field array. Required when setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *Al_density
+
+   Pointer to the Al density field array. Required when setting
+   :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *S_density
+
+   Pointer to the S density field array. Required when setting
+   :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *Fe_density
+
+   Pointer to the Fe density field array. Required when setting
+   :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 1.
+
+.. c:var:: gr_float *H2O_dust_density
+
+   Pointer to the water ice dust density field array. Required when
+   setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 2.
+
+.. c:var:: gr_float *vol_org_dust_density
+
+   Pointer to the volatile organics dust density field array. Required
+   when setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 2.
+
+.. c:var:: gr_float *ref_org_dust_density
+
+   Pointer to the refractory organics dust density field
+   array. Required when setting :c:data:`dust_chemistry` = 2 and
+   :c:data:`chiaki_dust_model_dust_species` > 2.
 
 It is not necessary to attach a pointer to any field that you do
 not intend to use.
