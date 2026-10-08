@@ -35,6 +35,11 @@ add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
 target_link_libraries(runGrainSpeciesIntoTests testdeps)
 gtest_discover_tests(runGrainSpeciesIntoTests)
 
+add_executable(runChemModelTests
+  chem_model/test_sp_lut_consistency.cpp)
+target_link_libraries(runChemModelTests testdeps)
+gtest_discover_tests(runChemModelTests)
+
 add_executable(testPartMap support/test_unit_PartMap.cpp)
 target_link_libraries(testPartMap testdeps)
 gtest_discover_tests(testPartMap)

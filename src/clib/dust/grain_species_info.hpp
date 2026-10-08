@@ -145,6 +145,8 @@ public:
   /// @brief number of grain species considered in current Grackle configuration
   int n_species() const { return n_species_; }
 
+  int dust_species_parameter() const { return dust_species_parameter_; }
+
   /// @brief returns sequence of entries describing each grain species
   const GrainSpeciesInfoEntry* species_info() const { return species_info_; }
 
