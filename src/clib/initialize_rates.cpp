@@ -290,12 +290,15 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
     InterpDimScale::Linear(n_Tgas, logtem_start, dlogtem),
   };
 
-  GRIMPL_NS::InterpGridProps& grid_props = my_rates->opaque_storage->h2dust_grain_interp_props;
-  grid_props = GRIMPL_NS::InterpGridProps(2, params);
-  if (!grid_props) {
+  GRIMPL_NS::Expected<GRIMPL_NS::InterpGridProps, GRIMPL_NS::Error> tmp =
+      GRIMPL_NS::InterpGridProps::create(2, params);
+  if (!tmp.has_value()) {
+    GRIMPL_NS::Error err = tmp.error().context_literal(
+        "issue creating my_rates->opaque_storage->h2dust_grain_interp_props");
+    err.write(stderr);
     return GR_FAIL;
   }
-
+  my_rates->opaque_storage->h2dust_grain_interp_props = std::move(tmp).value();
   return GR_SUCCESS;
 }
 
@@ -792,21 +795,26 @@ int grackle::impl::initialize_rates(
     // Dust Grain Species Information
     // (it may make sense want to handle more of the dust separately)
     if (my_chemistry->dust_species > 0) {
-      my_rates->opaque_storage->grain_species_info = 
-          new GRIMPL_NS::GrainSpeciesInfo(my_chemistry->dust_species);
-      if (! bool(*my_rates->opaque_storage->grain_species_info)) {
-        // it's ok for us to not clean up the grain_species_info, the
-        // destructor for opaque_storage will handle that for us
-        return GrPrintAndReturnErr(
-          "Error determining grain species information (this probably denotes "
-          "an issue with the dust_species parameter");
+      Expected<GrainSpeciesInfo, Error> rslt
+          = GrainSpeciesInfo::create(my_chemistry->dust_species);
+      if (rslt.has_value()) {
+        my_rates->opaque_storage->grain_species_info = new GrainSpeciesInfo(
+            std::move(rslt).value());
+      } else {
+        rslt.error().context_literal("Unable to build GrainSpeciesInfo")
+            .write(stderr);
+        return GR_FAIL;
       }
     }
 
     // Load injection pathway data
-    if (grackle::impl::load_inject_path_data(
-        my_chemistry, my_rates, reg_builder) != GR_SUCCESS) {
-      return GrPrintAndReturnErr("Error in load_inject_path_data.");
+    Expected<void, Error> inject_path_rslt = load_inject_path_data(
+        my_chemistry, my_rates, reg_builder);
+    if (!inject_path_rslt.has_value()) {
+      inject_path_rslt.error()
+                      .context_literal("unable to load inject_path data")
+                      .write(stderr);
+      return GR_FAIL;
     }
 
     return SUCCESS;

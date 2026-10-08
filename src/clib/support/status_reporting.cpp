@@ -16,6 +16,7 @@
 #include <cstdlib>  // std::abort
 #include <vector>
 
+#include "formatf.hpp"
 #include "status_reporting.hpp"
 #include "grackle.h" // GR_FAIL
 
@@ -28,26 +29,13 @@ static void vprint_err_(int internal_error, SourceLocation locinfo,
     ? "{unspecified}" : locinfo.fn_name;
 
   const char* fallback_msg_ = "{nullptr encountered instead of error message}";
-  std::vector<char> dynamic_msg_buf;
+  std::string dynamic_msg_buf;
   const char* msg_buf;
   if (msg == nullptr) {
     msg_buf = fallback_msg_;
   } else {
-    // make a copy of the variadic function arguments
-    std::va_list vlist_copy;
-    va_copy(vlist_copy, vlist);
-
-    // get the total size of the formatted message
-    std::size_t msg_len = std::vsnprintf(nullptr, 0, msg, vlist_copy) + 1;
-    va_end(vlist_copy);
-
-    // allocate the buffer to hold the message
-    dynamic_msg_buf.resize(msg_len);
-
-    // actually format the message
-    std::vsnprintf(dynamic_msg_buf.data(), msg_len, msg, vlist);
-
-    msg_buf = dynamic_msg_buf.data();
+    dynamic_msg_buf = vstr_formatf(msg, vlist);
+    msg_buf = dynamic_msg_buf.c_str();
   }
 
   const char* descr = (internal_error == 1) ? "FATAL" : "ERROR";
