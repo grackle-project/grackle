@@ -25,76 +25,25 @@
 namespace GRIMPL_NAMESPACE_DECL {
 namespace h5io {
 
-/// copies the string encoded in the specified hdf5 dataset into ``buffer`` as
-/// a null-terminated string, and returns ``min_req_bufsz`` (if successful).
+/// @brief retrieve a copy the string encoded in the specified hdf5 attribute
 ///
-/// @param[in] attr_id Attribute identifier
-/// @param[in] bufsz Number of ascii characters (including the null terminating
-///   character) that can be written to @p buffer
-/// @param[out] buffer Pointer to the buffer where characters are written. This
-///   can **only** be a nullptr if @p bufsz is 0.
-///
-/// @returns If successful, returns ``min_req_bufsz`` (see below). Otherwise,
-///   returns a negative value.
-///
-/// ``min_req_bufsz`` is the minimum required @p bufsz that this function must
-/// receive for it to attempt to load the string.
-/// - this is the maximum length of the string (including the null character).
-///   Thus, after succesfully calling this function
-///   ``std::strlen(buffer) + 1 <= min_req_bufsz``.
-/// - this function's behavoir is described in terms of ``min_req_bufsz``,
-///   rather than the exact required buffer length because the exact length
-///   can't be determined without loading the buffer.
-///
-/// This function fails if @p bufsz is smaller than ``min_req_bufsz``, unless
-/// @p bufsz is zero. In that case, nothing is written to @p buffer and the
-/// returns ``min_req_bufsz``. The function reports an error if the user tries
-/// to reads a utf8-encoded string that contains non-ASCII characters.
+/// @param attr_id Attribute identifier
 ///
 /// @note
-/// If we are more willing to embrace C++, we could return a std::string or
-/// std::vector rather than requiring a pre-allocated buffer
-int read_str_attribute(hid_t attr_id, int bufsz, char* buffer);
+/// The function reports an error if the user tries to reads a utf8-encoded
+/// string that contains non-ASCII characters.
+std::optional<std::string> read_str_attribute(hid_t attr_id);
 
-/// copies the string encoded in the specified hdf5 dataset into ``buffer`` as
-/// a null-terminated string, and returns ``min_req_bufsz`` (if successful).
+/// @brief retrieve a copy of the string encoded in the specified hdf5 dataset
 ///
-/// @param[in] file_id File identifier
-/// @param[in] dset_name The name of the dataset to read attributes from.
-/// @param[in] bufsz Number of ascii characters (including the null terminating
-///   character) that can be written to @p buffer
-/// @param[out] buffer Pointer to the buffer where characters are written. This
-///   can **only** be a nullptr if @p bufsz is 0.
-///
-/// @returns If successful, returns ``min_req_bufsz`` (see below). Otherwise,
-///   returns a negative value.
-///
-/// ``min_req_bufsz`` is the minimum required @p bufsz that this function must
-/// receive for it to attempt to load the string.
-/// - this is the maximum length of the string (including the null character).
-///   Thus, after succesfully calling this function
-///   ``std::strlen(buffer) + 1 <= min_req_bufsz``.
-/// - this function's behavoir is described in terms of ``min_req_bufsz``,
-///   rather than the exact required buffer length because the exact length
-///   can't be determined without loading the buffer.
-///
-/// This function fails if @p bufsz is smaller than ``min_req_bufsz``, unless
-/// @p bufsz is zero. In that case, nothing is written to @p buffer and the
-/// returns ``min_req_bufsz``. The function reports an error if the user tries
-/// to reads a utf8-encoded string that contains non-ASCII characters.
+/// @param file_id File identifier
+/// @param dset_name The name of the dataset to read attributes from.
 ///
 /// @note
-/// If we are more willing to embrace C++, we could return a std::string or
-/// std::vector rather than requiring a pre-allocated buffer
-///
-/// @note
-/// The choice to accept @p file_id and @p dset_name, rather than an already
-/// open dataset identifier, was made for consistency with the interfaces of
-/// read_dataset and read_dataset_shape. However, the choice is a little
-/// "clunky" because this function is usually called twice (once to query
-/// ``min_req_bufsz`` and once to load the string).
-int read_str_dataset(hid_t file_id, const char* dset_name, int bufsz,
-                     char* buffer);
+/// The function reports an error if the user tries to reads a utf8-encoded
+/// string that contains non-ASCII characters.
+std::optional<std::string> read_str_dataset(hid_t file_id,
+                                            const char* dset_name);
 
 /// @brief represents a contiguous array shape
 ///
