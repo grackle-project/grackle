@@ -22,8 +22,6 @@ namespace partmap_detail {
 inline constexpr int MAX_LEN = 4;
 }  // namespace partmap_detail
 
-using partition_descr_type = int;
-
 /// @todo Perhaps we should reconcile with FieldFlatIndexRange?
 struct IdxInterval {
   int start;
@@ -34,6 +32,7 @@ namespace partmap {
 /// @brief encodes the result of a search for an index
 ///
 /// See @ref PartMap::search_idx for more details
+template <class PartitionDescrT>
 struct IdxSearch {
   /// The index being searched
   ///
@@ -43,7 +42,7 @@ struct IdxSearch {
   int index;
 
   /// the partition descriptor
-  partition_descr_type pd;
+  PartitionDescrT pd;
 
   /// offset of the index relative to the start of the partition
   int start_offset;
@@ -53,7 +52,7 @@ struct IdxSearch {
 };
 }  // namespace partmap
 
-/// @brief This type encodes a table of partitions
+/// @brief This class template encodes a table of partitions
 ///
 /// The premise of this type is extremely simple:
 /// - we may work with sequences of data that we need to access by index.
@@ -65,6 +64,11 @@ struct IdxSearch {
 ///   - each partition spans 0 or more contiguous indices
 /// - Instances of this type exist to provide information about the indices
 ///   bounding a partition **AND** to find the partition containing an index
+///
+/// @tparam PartitionDescrT the type of the partition descriptior. This should
+///      generally be a type like an `int` or a scoped enum. Using a scoped
+///      enum is generally preferable as it reduces the likelihood of
+///      programming errors.
 ///
 /// @par Basic Vocabulary
 /// To avoid confusion (especially with abbreviations):
@@ -93,28 +97,31 @@ struct IdxSearch {
 /// later). The declaration might look like:
 ///
 /// @code{C++}
-/// namespace PartitionName { enum {A, B, C}; }
+/// enum class PartitionName {A, B, C};
 /// @endcode
 ///
 /// The code that constructs the enum would look something like:
 ///
 /// @code{C++}
 ///   /* Construct the partition map */
-///   int pds[3] = {PartitionName::A, PartitionMap::C, PartitionMap::B};
+///   PartitionName pds[3] = {
+///       PartitionName::A, PartitionName::C, PartitionName::B};
 ///   int size[3] = {4, 2, 3};
-///   Expected<PartMap, Error> rslt = PartMap::create(pds, sizes, 3);
+///   Expected<PartMap<PartitionName>, Error> rslt
+///       = PartMap<PartitionName>::create(pds, sizes, 3);
 ///   if (!rslt.has_value()) { /* <error-propagation ...> */ }
 ///
 ///   /* move PartMap out of rslt (deepcopies of PartMap are also cheap) */
-///   PartMap m = std::move(rslt).value();
+///   PartMap<PartitionName> m = std::move(rslt).value();
 ///
 ///   /* query the bounds associated with PartitionName::C */
-///   IdxInterval bounds = PartMap_part_bounds(&m, PartitionName::C);
+///   IdxInterval bounds = m.part_bounds(PartitionName::C);
 ///   assert(bounds.start == 4);
-///   assert(bounds.stop == 6); /
+///   assert(bounds.stop == 6);
 ///
 ///   /* query the partition associated with index 7 */
-///   partmap::IdxSearch search_rslt = m.search_idx(&m, 7);
+///   std::optional<partmap::IdxSearch<PartitionName>> search_rslt =
+///       m.search_idx(&m, 7);
 ///   assert(search_rslt.has_value());
 ///   assert(search_rslt.value().pd == PartitionName::B);
 /// @endcode
@@ -146,32 +153,19 @@ struct IdxSearch {
 ///    path metal density, etc.)
 ///
 /// @par Ideas for improvement
-/// There are 2 ideas:
-/// 1. Make this machinery compatible with "scoped enums."
-///    - For context, regular C-style enums implicitly converts to and from
-///      integer datatypes, whereas scoped enums (aka "class enums") require
-///      explicit casts. This produces nice behaviors:
-///      1. if a function argument has type `E`, where `E` is a scoped enum,
-///         the compiler reports an error if you try to pass anything other
-///         than an enumerator declared within the declaration of `E`.
-///      2. if you try to pass an enumerator that was declared as part of a
-///         scoped enum, `E`, to a function argument with a type other than
-///         `E`, the compiler will report an error.
-///    - To make this machinery compatible with scoped enums, we would need to
-///      make PartMap into a template struct where `partition_descr_type` is a
-///      template parameter
-/// 2. Better Performance: We can almost always assume a particular ordering
-///    of the partition descriptors.
-///    - There are a few ways we can take advantage of this.
-///    - It's probably wise to hold off on this until we start using this type
-///      in a bunch of places and performance is a demonstrated issue (I'm a
-///      little skeptical, since this probably won't be used deep within any
-///      nested loops)
+/// Better Performance: We can almost always assume a particular ordering
+/// of the partition descriptors.
+/// - There are a few ways we can take advantage of this.
+/// - It's probably wise to hold off on this until we start using this type
+///   in a bunch of places and performance is a demonstrated issue (I'm a
+///   little skeptical, since this probably won't be used deep within any
+///   nested loops)
+template <class PartitionDescrT>
 class PartMap {
   /// number of partitions
   int n_parts_;
   /// the list of partition descriptors associated with each partition
-  partition_descr_type pd_array_[partmap_detail::MAX_LEN];
+  PartitionDescrT pd_array_[partmap_detail::MAX_LEN];
   /// the upper bounds on each partition
   int right_idx_bounds_[partmap_detail::MAX_LEN];
 
@@ -180,10 +174,8 @@ public:
   PartMap() {
     n_parts_ = 0;
     for (int i = 0; i < partmap_detail::MAX_LEN; i++) {
-      pd_array_[i] = 0;
       right_idx_bounds_[i] = 0;
     }
-    pd_array_[0] = -1;
   }
 
   /// @brief Construct a PartMap from the sizes of each partition.
@@ -191,7 +183,7 @@ public:
   /// @param[in] pds Array of unique partition descriptors
   /// @param[in] sizes Holds the number of indices for each partition.
   /// @param[in] n_parts The number of partitions
-  static Expected<PartMap, Error> create(const partition_descr_type* pds,
+  static Expected<PartMap, Error> create(const PartitionDescrT* pds,
                                          const int* sizes, int n_parts) {
     // (in reality, any error here points to an internal logic-error)
     if (n_parts != 0 && (pds == nullptr || sizes == nullptr)) {
@@ -255,7 +247,7 @@ public:
   /// @return An interval of indices that bound a partition. If @p pd is not
   ///     contained, the start and stop values of the range are set to a
   ///     negative value.
-  IdxInterval part_bounds(partition_descr_type pd) const {
+  IdxInterval part_bounds(PartitionDescrT pd) const {
     // simple, stupid, linear search
     for (int i = 0; i < n_parts_; i++) {
       if (pd == pd_array_[i]) {
@@ -277,13 +269,14 @@ public:
   /// After giving it some thought, I was reminded that unlike many other
   /// methods of this type, you don't want to execute this function on GPUs
   /// (you really just want to use it at startup while initializing Grackle)
-  std::optional<partmap::IdxSearch> search_idx(int idx) const {
+  std::optional<partmap::IdxSearch<PartitionDescrT>> search_idx(int idx) const {
     if (idx >= 0) {
       // simple, stupid, linear search
       for (int i = 0; i < n_parts_; i++) {
         if (idx < right_idx_bounds_[i]) {
           int part_start = (i == 0) ? 0 : right_idx_bounds_[i - 1];
-          return partmap::IdxSearch{idx, pd_array_[i], idx - part_start};
+          return partmap::IdxSearch<PartitionDescrT>{idx, pd_array_[i],
+                                                     idx - part_start};
         }
       }
     }

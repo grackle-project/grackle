@@ -14,16 +14,44 @@
 #include <gmock/gmock.h>
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "support/config.hpp"
 #include "support/PartMap.hpp"
 
-using CreateRslt = GRIMPL_NS::Expected<GRIMPL_NS::PartMap, GRIMPL_NS::Error>;
+using GRIMPL_NS::PartMap;
+template <typename PartitionDescrT>
+using CreateRslt =
+    GRIMPL_NS::Expected<PartMap<PartitionDescrT>, GRIMPL_NS::Error>;
+
+// define a set of enums to act as sample partition descriptors in our tests
+enum class PartitionName { A, B, C };
+// teach GoogleTest how to print our sample partition descriptors for more
+// informative errors
+void PrintTo(const PartitionName& pd, std::ostream* os) {
+  switch (pd) {
+    case PartitionName::A:
+      *os << "ParititionName::A";
+      return;
+    case PartitionName::B:
+      *os << "ParititionName::B";
+      return;
+    case PartitionName::C:
+      *os << "ParititionName::C";
+      return;
+    default:
+      *os << "ParititionName::<UNKNOWN>";
+      return;
+  }
+}
 
 // teach GoogleTest how to print GRIMPL_NS::partmap::IdxSearch for more
 // informative errors (otherwise it just shows the memory's raw byte values)
 namespace GRIMPL_NS::partmap {
-void PrintTo(const IdxSearch& search, std::ostream* os) {
-  *os << "{index=" << search.index << ", pd=" << search.pd
+
+template <typename PartitionDescrT>
+void PrintTo(const IdxSearch<PartitionDescrT>& search, std::ostream* os) {
+  *os << "{index=" << search.index
+      << ", pd=" << testing::PrintToString(search.pd)
       << ", start_offset=" << search.start_offset << '}';
 }
 }  // namespace GRIMPL_NS::partmap
@@ -35,7 +63,7 @@ using ::testing::Optional;
 
 // this is a simple case
 TEST(PartMap, Empty) {
-  CreateRslt rslt = GRIMPL_NS::PartMap::create(nullptr, nullptr, 0);
+  CreateRslt rslt = PartMap<PartitionName>::create(nullptr, nullptr, 0);
   ASSERT_TRUE(rslt.has_value());
   GRIMPL_NS::PartMap m = std::move(rslt).value();
 
@@ -43,29 +71,21 @@ TEST(PartMap, Empty) {
   EXPECT_EQ(m.n_idx(), 0);
 
   EXPECT_THAT(
-      m.part_bounds(0),
+      m.part_bounds(PartitionName::A),
       ::testing::AllOf(Field("start", &GRIMPL_NS::IdxInterval::start, Lt(0)),
                        Field("stop", &GRIMPL_NS::IdxInterval::stop, Lt(0))));
 
   EXPECT_EQ(m.search_idx(0), std::nullopt);
 }
 
-// these act as the names of the partition descriptors that are used in the
-// following test-case
-//
-// Ideally, these would be scoped-enums, but that makes use of PartMap very
-// clunky! (The only effective way to use a scoped-enum is to make PartMap
-// a class template, where partition_descr
-namespace PartitionName {
-enum { A, B, C };
-}  // namespace PartitionName
-
 // this is the case illustrated in PartMap's docstring
 TEST(PartMap, DocString) {
-  const int pds[3] = {PartitionName::A, PartitionName::C, PartitionName::B};
+  const PartitionName pds[3] = {PartitionName::A, PartitionName::C,
+                                PartitionName::B};
   const int sizes[3] = {4, 2, 3};
 
-  CreateRslt rslt = GRIMPL_NS::PartMap::create(pds, sizes, 3);
+  CreateRslt<PartitionName> rslt =
+      GRIMPL_NS::PartMap<PartitionName>::create(pds, sizes, 3);
   ASSERT_TRUE(rslt.has_value());
   GRIMPL_NS::PartMap m = std::move(rslt).value();
 
@@ -113,14 +133,17 @@ TEST(PartMap, DocString) {
 
 // test a failure mode of the factory method:
 TEST(PartMap, Nullptrs) {
-  const int pds[3] = {PartitionName::A, PartitionName::C, PartitionName::B};
+  const PartitionName pds[3] = {PartitionName::A, PartitionName::C,
+                                PartitionName::B};
   const int sizes[3] = {4, 2, 3};
   {
-    CreateRslt rslt = GRIMPL_NS::PartMap::create(nullptr, sizes, 3);
+    CreateRslt<PartitionName> rslt =
+        GRIMPL_NS::PartMap<PartitionName>::create(nullptr, sizes, 3);
     EXPECT_FALSE(rslt.has_value()) << "pds argument was false";
   }
   {
-    CreateRslt rslt = GRIMPL_NS::PartMap::create(pds, nullptr, 3);
+    CreateRslt<PartitionName> rslt =
+        GRIMPL_NS::PartMap<PartitionName>::create(pds, nullptr, 3);
     EXPECT_FALSE(rslt.has_value()) << "sizes argument was false";
   }
 }
