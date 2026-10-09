@@ -167,7 +167,7 @@ commands:
               ANSWER_DIR=./my-test_answers
               if [ '<< parameters.generate >>' == 'true' ]; then
                 if [[ '<< parameters.overwrite >>' == 'true' || ! -d ${ANSWER_DIR} ]]; then
-                  py.test --answer-dir=${ANSWER_DIR} --answer-store
+                  py.test -vv --answer-dir=${ANSWER_DIR} --answer-store
                 else
                   echo "Answers already exist; skipping."
                 fi
@@ -416,6 +416,7 @@ workflows:
             branches:
               only:
                 - main
+                - newchem-cpp
      jobs:
        - generate-gold-standard:
            name: "Generate the gold standard."
