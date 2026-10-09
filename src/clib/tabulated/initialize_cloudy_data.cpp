@@ -115,13 +115,14 @@ int GRIMPL_NS::initialize_cloudy_data(
                 group_name);
 
   // Parse the grid properties from the dataset's attributes
-  h5io::GridTableProps grid_props = h5io::parse_GridTableProps(file_id,
-                                                               dset_name);
-  if (!grid_props.is_valid()) {
+  std::optional<h5io::GridTableProps> maybe_grid_props =
+      h5io::parse_GridTableProps(file_id, dset_name);
+  if (!maybe_grid_props.has_value()) {
     H5Fclose (file_id);
     // error messages were already printed by h5io::parse_GridTableProps
     return GR_FAIL;
   }
+  h5io::GridTableProps grid_props = std::move(*maybe_grid_props);
 
   // use grid_props to initialize parts of my_cloudy
   // TODO: it would be really nice if we explicitly validated that each

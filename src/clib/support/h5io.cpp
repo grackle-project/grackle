@@ -270,26 +270,18 @@ ArrayShape shape_from_space(hid_t space_id) {
   }
 }
 
-/// Construct an ArrayShape object that represents an invalid instance
-///
-/// @note
-/// This is useful for encoding that a function produced an error
-ArrayShape mk_invalid_array_shape() {
-  return shape_from_space(H5I_INVALID_HID);
-}
-
 }  // anonymous namespace
 
-ArrayShape read_dataset_shape(hid_t file_id, const char* name) {
+std::optional<ArrayShape> read_dataset_shape(hid_t file_id, const char* name) {
   if (name == nullptr) {
     std::fprintf(stderr, "name is a nullptr");
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   hid_t dset_id = H5Dopen(file_id, name);
   if (dset_id == H5I_INVALID_HID) {
     std::fprintf(stderr, "Failed to open dataset \"%s\".\n", name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   hid_t space_id = H5Dget_space(dset_id);
@@ -301,7 +293,7 @@ ArrayShape read_dataset_shape(hid_t file_id, const char* name) {
   if (out.is_null()) {
     std::fprintf(stderr, "Error reading the dataspace of \"%s\".\n", name);
   }
-  return out;
+  return {out};
 }
 
 /// read the dataset named dset_name from file_id into buffer
@@ -493,17 +485,15 @@ int AttrNameRecorder_stringify_attr_names(char* buffer, std::size_t buf_size,
 /// @param[inout] name_recorder Updated to track each attribute involved
 ///     in parsing a dataset's grid table properties.
 ///
-/// @returns the parsed array shape for the grid shape properties. The caller
-///     should ensure that this function was successful by calling
-///     ``out.is_valid()`` on the returned value.
-ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
-                                 AttrNameRecorder* name_recorder) {
+/// @returns the parsed array shape for the grid shape properties.
+std::optional<ArrayShape> shape_from_grid_attrs(
+    hid_t dset_id, const char* dset_name, AttrNameRecorder* name_recorder) {
   hid_t attr_id = H5Aopen_name(dset_id, "Rank");
   if (attr_id == H5I_INVALID_HID) {
     std::fprintf(stderr,
                  "Failed to open \"Rank\" attribute of \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   long long rank;
   if (H5Aread(attr_id, HDF5_I8, &rank) < 0) {
@@ -511,7 +501,7 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
     std::fprintf(stderr,
                  "Failed to read \"Rank\" attribute of \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   H5Aclose(attr_id);
   if ((rank < 0) || (GRACKLE_CLOUDY_TABLE_MAX_DIMENSION < rank)) {
@@ -521,14 +511,14 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
         "\"Rank\" attribute of \"%s\" dataset, %lld, is negative or exceeds "
         "the hardcoded maximum, %d.\n",
         dset_name, rank, GRACKLE_CLOUDY_TABLE_MAX_DIMENSION);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   if (AttrNameRecorder_record_name(name_recorder, "Rank") != GR_SUCCESS) {
     std::fprintf(
         stderr,
         "issue recording access of \"Rank\" attribute of \"%s\" dataset.",
         dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   // read in the Dimension attribute
@@ -543,13 +533,13 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
     std::fprintf(stderr,
                  "Failed to open \"Dimension\" attribute in \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   if (H5Aread(attr_id, HDF5_I8, grid_dimensions) < 0) {
     std::fprintf(stderr,
                  "Failed to read \"Dimension\" attribute in \"%s\" dataset.\n",
                  dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
   H5Aclose(attr_id);
   // a quick check
@@ -559,7 +549,7 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
           stderr,
           "\"Dimension\" attribute of \"%s\" dataset has non-positive value\n",
           dset_name);
-      return mk_invalid_array_shape();
+      return std::nullopt;
     }
   }
   if (AttrNameRecorder_record_name(name_recorder, "Dimension") != GR_SUCCESS) {
@@ -567,18 +557,16 @@ ArrayShape shape_from_grid_attrs(hid_t dset_id, const char* dset_name,
         stderr,
         "issue recording access of \"Dimension\" attribute of \"%s\" dataset.",
         dset_name);
-    return mk_invalid_array_shape();
+    return std::nullopt;
   }
 
   // finally, let's format the output
-  // -> we use mk_invalid_array_shape to suppress compiler warnings that out
-  //    may be uninitialized
-  ArrayShape out = mk_invalid_array_shape();
+  ArrayShape out;
   out.ndim = static_cast<int>(rank);
   for (int i = 0; i < out.ndim; i++) {
     out.shape[i] = grid_dimensions[i];
   }
-  return out;
+  return {out};
 }
 
 static constexpr int max_attr_name_length = 64;
@@ -697,12 +685,6 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
   return GR_SUCCESS;
 }
 
-GridTableProps mk_invalid_GridTableProps() {
-  GridTableProps out;
-  out.table_shape = mk_invalid_array_shape();
-  return out;
-}
-
 /// helper function that parses the GridTableProps from dataset attributes
 ///
 /// @param[in] dset_id The dataset identifier
@@ -710,39 +692,33 @@ GridTableProps mk_invalid_GridTableProps() {
 ///     nicer error messages)
 /// @param[inout] name_recorder Updated to track each attribute involved
 ///     in parsing a dataset's grid table properties.
-///
-/// @returns Returns the appropriate GridTableProps object. The caller should
-///     use ``out.is_valid()`` to confirm that the function was successful.
-GridTableProps parse_GridTableProps_helper(hid_t dset_id, const char* dset_name,
-                                           AttrNameRecorder* name_recorder) {
-  // setup the output object so that we're always prepared to return an object
-  // - the default object is constructed to denote a failure
-  GridTableProps out = mk_invalid_GridTableProps();
-
+std::optional<GridTableProps> parse_GridTableProps_helper(
+    hid_t dset_id, const char* dset_name, AttrNameRecorder* name_recorder) {
   // if optional Description attribute is present, record that we accessed it
   // (this is done purely for error-handling purposes).
   if ((H5Aexists(dset_id, "Description") > 0) &&
       (AttrNameRecorder_record_name(name_recorder, "Description") !=
        GR_SUCCESS)) {
-    return out;
+    return std::nullopt;
   }
 
   // infer the shape of the table from the attributes
-  ArrayShape inferred_shape =
+  std::optional<ArrayShape> inferred_shape =
       shape_from_grid_attrs(dset_id, dset_name, name_recorder);
-  if (!inferred_shape.is_valid()) {
-    return out;
+  if (!inferred_shape.has_value()) {
+    return std::nullopt;
   }
+
+  GridTableProps out;
+  out.table_shape = *inferred_shape;
 
   // parse the quantities along each axis
-  if (set_grid_axes_props(dset_id, dset_name, inferred_shape, out.axes,
-                          name_recorder) != GR_SUCCESS) {
-    return out;
+  if (set_grid_axes_props(dset_id, dset_name, *inferred_shape, out.axes,
+                          name_recorder) == GR_SUCCESS) {
+    return {out};
+  } else {
+    return std::nullopt;
   }
-
-  out.table_shape = inferred_shape;  // we intentionally do this as the very
-                                     // last step!
-  return out;
 }
 
 int get_num_attrs(hid_t dset_id, const char* dset_name) {
@@ -772,31 +748,32 @@ int get_num_attrs(hid_t dset_id, const char* dset_name) {
 
 }  // anonymous namespace
 
-GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
+std::optional<GridTableProps> parse_GridTableProps(hid_t file_id,
+                                                   const char* dset_name) {
   if (dset_name == nullptr) {  // sanity check!
     std::fprintf(stderr, "dset_name is a nullptr");
-    return mk_invalid_GridTableProps();
+    return std::nullopt;
   }
 
   hid_t dset_id = H5Dopen(file_id, dset_name);
   if (dset_id == H5I_INVALID_HID) {
     std::fprintf(stderr, "Can't open \"%s\" dataset.\n", dset_name);
-    return mk_invalid_GridTableProps();
+    return std::nullopt;
   }
 
   // construct object to count accessed attributes
   AttrNameRecorder attr_counter = new_AttrNameRecorder(true);
   // actually parse GridTableProps
-  GridTableProps out =
+  std::optional<GridTableProps> out =
       parse_GridTableProps_helper(dset_id, dset_name, &attr_counter);
   // get the attribute count and cleanup the counter
   int total_accessed_attrs_count = AttrNameRecorder_length(&attr_counter);
   drop_AttrNameRecorder(&attr_counter);
 
-  if (!out.is_valid()) {
+  if (!out.has_value()) {
     H5Dclose(dset_id);
     // parse_GridTableProps_helper already printed appropriate errors messages
-    return out;
+    return std::nullopt;
   }
 
   // now, we will perform a check validating that dataset doesn't have
@@ -810,7 +787,7 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
   } else if (num_attrs == -1) {
     H5Dclose(dset_id);
     // get_num_attrs already printed error messages in this case
-    return out;
+    return std::nullopt;
   } else if (num_attrs != total_accessed_attrs_count) {
     // to provide a detailed error message that will make it straight-forward
     // to debug the underlying problem, we are going to call
@@ -818,7 +795,7 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
     // record every accessed name.
     AttrNameRecorder attr_name_recorder = new_AttrNameRecorder(false);
     // let's parse GridTableProps (again)
-    GridTableProps tmp =
+    [[maybe_unused]] auto dummy =
         parse_GridTableProps_helper(dset_id, dset_name, &attr_name_recorder);
 
     int bufsz_without_nullchr =
@@ -844,29 +821,29 @@ GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name) {
     } else {
       std::fprintf(
           stderr,
-          "while parsing the %dD grid table properties from attributes of the "
+          "while parsing the grid table properties from attributes of the "
           "\"%s\" dataset, encountered (one or more) unrecognized attributes. "
           "Recognized attributes include: %s\n",
-          tmp.table_shape.ndim, dset_name, stringified_attr_list);
+          dset_name, stringified_attr_list);
       delete[] stringified_attr_list;
     }
     drop_AttrNameRecorder(&attr_name_recorder);
     H5Dclose(dset_id);
-    return mk_invalid_GridTableProps();
+    return std::nullopt;
   }
 
   // check for consistency between the GridTableProps and the dataset shape
   hid_t space_id = H5Dget_space(dset_id);
   ArrayShape actual_shape = shape_from_space(space_id);
   H5Sclose(space_id);
-  if (!actual_shape.is_null() && !(out.table_shape == actual_shape)) {
+  if (!actual_shape.is_null() && !(out->table_shape == actual_shape)) {
     H5Dclose(dset_id);
     std::fprintf(
         stderr,
         "The grid table properties parsed from the attributes of the \"%s\" "
         "dataset are inconsistent with the dataset's shape.\n",
         dset_name);
-    return mk_invalid_GridTableProps();
+    return std::nullopt;
   }
 
   H5Dclose(dset_id);
@@ -889,9 +866,10 @@ bool GridTableProps::assert_is_consistent(hid_t file_id,
                                           const char* dset_name) const {
   // the current implementation is crude (we may be able to do better)
 
-  GridTableProps actual = parse_GridTableProps(file_id, dset_name);
+  std::optional<GridTableProps> actual =
+      parse_GridTableProps(file_id, dset_name);
 
-  if (!actual.is_valid()) {
+  if (!actual.has_value()) {
     fprintf(stderr,
             "Error constructing the grid properties for the \"%s\" dataset\n",
             dset_name);

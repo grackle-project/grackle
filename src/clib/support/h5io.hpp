@@ -14,6 +14,7 @@
 #define SUPPORT_H5IO_HPP
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -98,14 +99,18 @@ int read_str_dataset(hid_t file_id, const char* dset_name, int bufsz,
 /// @brief represents a contiguous array shape
 ///
 /// @note
-/// An ndim of -1 corresponds to a null dataset (i.e. ``H5S_NULL``). Any other
-/// negative value denotes an invalid shape. An ndim of 0 denotes a scalar
+/// An ndim of -1 corresponds to a null dataset (i.e. ``H5S_NULL``). An ndim of
+/// 0 denotes a scalar
 struct ArrayShape {
   int ndim;
   std::int64_t shape[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
-  /// @brief checks whether shape is valid
-  bool is_valid() const { return ndim >= -1; }
+  // this only exists to avoid warnings about potentially uninitialized members
+  ArrayShape() : ndim{0} {
+    for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
+      shape[i] = 0;
+    }
+  }
 
   /// @brief checks whether shape refers to a scalar
   bool is_scalar() const { return ndim == 0; }
@@ -127,12 +132,7 @@ struct ArrayShape {
   }
 
   /// @brief overloads the equality comparison (``==``) operation
-  ///
-  /// @note returns false if the either shape is invalid
   bool operator==(const ArrayShape& other) const {
-    if ((!is_valid()) || (ndim != other.ndim)) {
-      return false;
-    }
     for (int i = 0; i < ndim; i++) {
       if (shape[i] != other.shape[i]) {
         return false;
@@ -143,7 +143,8 @@ struct ArrayShape {
 };
 
 /// load the shape of the dataset
-ArrayShape read_dataset_shape(hid_t file_id, const char* dset_name);
+std::optional<ArrayShape> read_dataset_shape(hid_t file_id,
+                                             const char* dset_name);
 
 /// read the dataset named dset_name from file_id into buffer
 ///
@@ -162,8 +163,6 @@ struct GridTableProps {
   ArrayShape table_shape;
   GridTableAxis axes[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
-  bool is_valid() const { return table_shape.is_valid(); }
-
   /// @brief overloads the equality comparison (``==``) operation
   ///
   /// @note returns false if the either object is invalid
@@ -180,9 +179,9 @@ struct GridTableProps {
 /// @param[in] file_id File identifier
 /// @param[in] dset_name The name of the dataset to read attributes from.
 ///
-/// @returns Returns the appropriate GridTableProps object. The caller should
-///     use ``out.is_valid()`` to confirm that the function was successful.
-GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name);
+/// @returns Returns the appropriate GridTableProps object.
+std::optional<GridTableProps> parse_GridTableProps(hid_t file_id,
+                                                   const char* dset_name);
 
 }  // namespace h5io
 }  // namespace GRIMPL_NAMESPACE_DECL
