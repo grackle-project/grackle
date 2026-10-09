@@ -54,7 +54,7 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
   }
 }
 
-void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
+void scale_fields(gr_float factor, chemistry_data* my_chemistry,
                   grackle_field_data* my_fields, int n_inj_path_ptrs) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
@@ -272,7 +272,7 @@ void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
         }
       }
 
-      if (imetal == 1) {
+      if (my_chemistry->metal_cooling == 1) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metal(i, j, k) = metal(i, j, k) * factor;
         }

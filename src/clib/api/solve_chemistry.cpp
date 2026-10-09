@@ -35,7 +35,10 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
 
   my_uvb_rates.k24 = my_uvb_rates.k25 = my_uvb_rates.k26 =
     my_uvb_rates.k27 = my_uvb_rates.k28 = my_uvb_rates.k29 =
-    my_uvb_rates.k30 = my_uvb_rates.k31 = my_uvb_rates.piHI =
+    my_uvb_rates.k30 = my_uvb_rates.k31 =
+    my_uvb_rates.kphCI_bg = my_uvb_rates.kphOI_bg =
+    my_uvb_rates.kdissCO_bg = my_uvb_rates.kdissOH_bg =
+    my_uvb_rates.kdissH2O_bg = my_uvb_rates.piHI =
     my_uvb_rates.piHeI = my_uvb_rates.piHeII = my_uvb_rates.crsHI =
     my_uvb_rates.crsHeI = my_uvb_rates.crsHeII =
     my_uvb_rates.comp_xray = my_uvb_rates.temp_xray = 0.;
@@ -56,6 +59,11 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
     my_uvb_rates.k29       = my_rates->k29;
     my_uvb_rates.k30       = my_rates->k30;
     my_uvb_rates.k31       = my_rates->k31;
+    my_uvb_rates.kphCI_bg  = my_rates->kphCI_bg;
+    my_uvb_rates.kphOI_bg  = my_rates->kphOI_bg;
+    my_uvb_rates.kdissCO_bg = my_rates->kdissCO_bg;
+    my_uvb_rates.kdissOH_bg = my_rates->kdissOH_bg;
+    my_uvb_rates.kdissH2O_bg = my_rates->kdissH2O_bg;
     my_uvb_rates.piHI      = my_rates->piHI;
     my_uvb_rates.piHeI     = my_rates->piHeI;
     my_uvb_rates.piHeII    = my_rates->piHeII;
@@ -65,12 +73,6 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
     my_uvb_rates.comp_xray = my_rates->comp_xray;
     my_uvb_rates.temp_xray = my_rates->temp_xray;
   }
-
-  /* Check for a metal field. */
-
-  int metal_field_present = TRUE;
-  if (my_fields->metal_density == NULL)
-    metal_field_present = FALSE;
 
   GRIMPL_NS::InternalGrUnits internalu = GRIMPL_NS::new_internalu_(my_units);
 
@@ -84,7 +86,7 @@ extern "C" int local_solve_chemistry(chemistry_data *my_chemistry,
   /* Call the routine to solve cooling equations. */
 
   int ierr = grackle::impl::solve_rate_cool(
-    metal_field_present, dt_value, internalu,
+    dt_value, internalu,
     my_chemistry, my_rates, my_fields, &my_uvb_rates
   );
 
