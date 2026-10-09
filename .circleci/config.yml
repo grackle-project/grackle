@@ -416,6 +416,7 @@ workflows:
             branches:
               only:
                 - main
+                - newchem-cpp
      jobs:
        - generate-gold-standard:
            name: "Generate the gold standard."
