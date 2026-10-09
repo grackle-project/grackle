@@ -12,9 +12,9 @@
 #ifndef SUPPORT_PARTMAP_HPP
 #define SUPPORT_PARTMAP_HPP
 #include "support/config.hpp"
-#include "support/status_reporting.hpp"
 #include "support/error.hpp"
 #include "support/expected.hpp"
+#include "support/index_helper.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 namespace partmap_detail {

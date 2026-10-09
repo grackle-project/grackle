@@ -43,13 +43,12 @@ struct IndexHelper {
   int outer_ind_size;
 };
 
-/// @brief Specifies a range of indices for grackle's 3D fields, for use when
-/// you treat the fields as flattened 1d arrays
+/// @brief Specifies a 1d index intervals
 ///
 /// To create an instance, you should use @ref build_index_helper_
-struct FieldFlatIndexRange {
+struct IndexInterval1D {
   int start;
-  int end;
+  int stop;
 };
 
 /// Specifies the range of indices for grackle's 3D fields.
@@ -63,7 +62,7 @@ struct FieldFlatIndexRange {
 ///   in the underlying flat 1d buffer that holds a field's data. In some cases
 ///   (e.g. Fortran Arrays) the remapping is done behind the scenes and in
 ///   cases, it is more explicit (but the logic is always somewhere)
-/// - For context, the `FieldFlatIndexRange` can be used to specify the same
+/// - For context, the `IndexInterval1D` can be used to specify the same
 ///   range for 3D fields, but the remapping logic is pre-applied (this makes
 ///   it much less useful when you have these custom buffers)
 ///
@@ -122,19 +121,19 @@ struct IndexRange {
   int i_end;
 };
 
-/// @brief Construct a @ref FieldFlatIndexRange from a @ref IndexHelper
+/// @brief Construct a @ref IndexInterval1D from a @ref IndexHelper
 ///
 /// @ref
 /// to help the compiler optimize the associated for-loops, this function:
 /// - is implemented inline (to allow the compiler to inline this function)
 /// - returns results as a struct rather than by modifying pointer arguments
-inline FieldFlatIndexRange inner_flat_range_(int outer_index,
-                                             const IndexHelper* ind_helper) {
+inline IndexInterval1D inner_flat_range_(int outer_index,
+                                         const IndexHelper* ind_helper) {
   int k = (outer_index / ind_helper->num_j_inds) + ind_helper->k_start;
   int j = (outer_index % ind_helper->num_j_inds) + ind_helper->j_start;
   int outer_offset = ind_helper->i_dim * (j + ind_helper->j_dim * k);
-  FieldFlatIndexRange out = {ind_helper->i_start + outer_offset,
-                             ind_helper->i_end + outer_offset};
+  IndexInterval1D out = {.start = ind_helper->i_start + outer_offset,
+                         .stop = ind_helper->i_end + outer_offset + 1};
   return out;
 }
 
