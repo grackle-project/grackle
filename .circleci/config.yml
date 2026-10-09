@@ -47,6 +47,7 @@ commands:
           command: |
             source $HOME/venv/bin/activate
             git checkout << parameters.tag >>
+            git submodule update
 
             # First, try resetting things to a pristine condition (in the event
             # that grackle was previously built
@@ -104,6 +105,7 @@ commands:
           command: |
             source $HOME/venv/bin/activate
             git checkout << parameters.tag >>
+            git submodule update
             pip install -e .
 
   install-docs-dependencies:
@@ -165,7 +167,7 @@ commands:
               ANSWER_DIR=./my-test_answers
               if [ '<< parameters.generate >>' == 'true' ]; then
                 if [[ '<< parameters.overwrite >>' == 'true' || ! -d ${ANSWER_DIR} ]]; then
-                  py.test --answer-dir=${ANSWER_DIR} --answer-store
+                  py.test -vv --answer-dir=${ANSWER_DIR} --answer-store
                 else
                   echo "Answers already exist; skipping."
                 fi
@@ -182,7 +184,7 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-nccv24"
+        default: "gold-standard-nccv25"
       cache-tag:
         description: "A unique tag to append to the cache name"
         type: string
@@ -194,6 +196,7 @@ commands:
             source $HOME/venv/bin/activate
             pip uninstall --yes gracklepy # it's ok if gracklepy wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
+            git submodule update
             pip install -e .
             rm -rf ./my-test_answers # in case answers have already been generated
       - restore_cache:
@@ -280,6 +283,7 @@ jobs:
           command: |
             source $HOME/venv/bin/activate
             git checkout $CIRCLE_BRANCH
+            git submodule update
             pip install -e .
       - run-gracklepy-tests:
           omp: 'false'
@@ -412,6 +416,7 @@ workflows:
             branches:
               only:
                 - main
+                - newchem-cpp
      jobs:
        - generate-gold-standard:
            name: "Generate the gold standard."
