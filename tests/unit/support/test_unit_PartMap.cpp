@@ -70,10 +70,10 @@ TEST(PartMap, Empty) {
   EXPECT_EQ(m.n_partitions(), 0);
   EXPECT_EQ(m.n_idx(), 0);
 
-  EXPECT_THAT(
-      m.part_bounds(PartitionName::A),
-      ::testing::AllOf(Field("start", &GRIMPL_NS::IdxInterval::start, Lt(0)),
-                       Field("stop", &GRIMPL_NS::IdxInterval::stop, Lt(0))));
+  EXPECT_THAT(m.part_bounds(PartitionName::A),
+              ::testing::AllOf(
+                  Field("start", &GRIMPL_NS::IndexInterval1D::start, Lt(0)),
+                  Field("stop", &GRIMPL_NS::IndexInterval1D::stop, Lt(0))));
 
   EXPECT_EQ(m.search_idx(0), std::nullopt);
 }
@@ -92,18 +92,18 @@ TEST(PartMap, DocString) {
   EXPECT_EQ(m.n_partitions(), 3);
   EXPECT_EQ(m.n_idx(), 9);
 
-  EXPECT_THAT(
-      m.part_bounds(PartitionName::A),
-      ::testing::AllOf(Field("start", &GRIMPL_NS::IdxInterval::start, Eq(0)),
-                       Field("stop", &GRIMPL_NS::IdxInterval::stop, Eq(4))));
-  EXPECT_THAT(
-      m.part_bounds(PartitionName::C),
-      ::testing::AllOf(Field("start", &GRIMPL_NS::IdxInterval::start, Eq(4)),
-                       Field("stop", &GRIMPL_NS::IdxInterval::stop, Eq(6))));
-  EXPECT_THAT(
-      m.part_bounds(PartitionName::B),
-      ::testing::AllOf(Field("start", &GRIMPL_NS::IdxInterval::start, Eq(6)),
-                       Field("stop", &GRIMPL_NS::IdxInterval::stop, Eq(9))));
+  EXPECT_THAT(m.part_bounds(PartitionName::A),
+              ::testing::AllOf(
+                  Field("start", &GRIMPL_NS::IndexInterval1D::start, Eq(0)),
+                  Field("stop", &GRIMPL_NS::IndexInterval1D::stop, Eq(4))));
+  EXPECT_THAT(m.part_bounds(PartitionName::C),
+              ::testing::AllOf(
+                  Field("start", &GRIMPL_NS::IndexInterval1D::start, Eq(4)),
+                  Field("stop", &GRIMPL_NS::IndexInterval1D::stop, Eq(6))));
+  EXPECT_THAT(m.part_bounds(PartitionName::B),
+              ::testing::AllOf(
+                  Field("start", &GRIMPL_NS::IndexInterval1D::start, Eq(6)),
+                  Field("stop", &GRIMPL_NS::IndexInterval1D::stop, Eq(9))));
 
   using GRIMPL_NS::partmap::IdxSearch;
   EXPECT_THAT(m.search_idx(2),

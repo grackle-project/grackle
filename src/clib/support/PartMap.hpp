@@ -22,12 +22,6 @@ namespace partmap_detail {
 inline constexpr int MAX_LEN = 4;
 }  // namespace partmap_detail
 
-/// @todo Perhaps we should reconcile with FieldFlatIndexRange?
-struct IdxInterval {
-  int start;
-  int stop;
-};
-
 namespace partmap {
 /// @brief encodes the result of a search for an index
 ///
@@ -115,7 +109,7 @@ struct IdxSearch {
 ///   PartMap<PartitionName> m = std::move(rslt).value();
 ///
 ///   /* query the bounds associated with PartitionName::C */
-///   IdxInterval bounds = m.part_bounds(PartitionName::C);
+///   IndexInterval1D bounds = m.part_bounds(PartitionName::C);
 ///   assert(bounds.start == 4);
 ///   assert(bounds.stop == 6);
 ///
@@ -247,15 +241,15 @@ public:
   /// @return An interval of indices that bound a partition. If @p pd is not
   ///     contained, the start and stop values of the range are set to a
   ///     negative value.
-  IdxInterval part_bounds(PartitionDescrT pd) const {
+  IndexInterval1D part_bounds(PartitionDescrT pd) const {
     // simple, stupid, linear search
     for (int i = 0; i < n_parts_; i++) {
       if (pd == pd_array_[i]) {
-        return IdxInterval{/*start=*/(i == 0) ? 0 : right_idx_bounds_[i - 1],
-                           /*stop=*/right_idx_bounds_[i]};
+        return IndexInterval1D{.start = (i == 0) ? 0 : right_idx_bounds_[i - 1],
+                               .stop = right_idx_bounds_[i]};
       }
     }
-    return IdxInterval{-1, -1};
+    return IndexInterval1D{.start = -1, .stop = -1};
   }
 
   /// @brief search for the partition containing an index
