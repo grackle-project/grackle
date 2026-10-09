@@ -31,11 +31,10 @@ struct IdxInterval {
 };
 
 namespace partmap {
-/// holds info pertaining to the partition holding an index
+/// @brief encodes the result of a search for an index
+///
+/// See @ref PartMap::search_idx for more details
 struct IdxSearch {
-  /// indicates whether the index was found
-  bool has_val;
-
   /// The index being searched
   ///
   /// @note
@@ -48,10 +47,13 @@ struct IdxSearch {
 
   /// offset of the index relative to the start of the partition
   int start_offset;
+
+  /// @brief overloads equality operation (for testing purposes)
+  bool operator==(const IdxSearch&) const = default;
 };
 }  // namespace partmap
 
-/// This type encodes a table of partitions
+/// @brief This type encodes a table of partitions
 ///
 /// The premise of this type is extremely simple:
 /// - we may work with sequences of data that we need to access by index.
@@ -113,8 +115,8 @@ struct IdxSearch {
 ///
 ///   /* query the partition associated with index 7 */
 ///   partmap::IdxSearch search_rslt = m.search_idx(&m, 7);
-///   assert(search_rslt.has_val);
-///   assert(search_rslt.pd == PartitionName::B);
+///   assert(search_rslt.has_value());
+///   assert(search_rslt.value().pd == PartitionName::B);
 /// @endcode
 ///
 /// @par Motivation
@@ -241,9 +243,18 @@ public:
     return (n_parts_ == 0) ? 0 : right_idx_bounds_[n_parts_ - 1];
   }
 
-  /// Query the interval of indices that bound a partition
+  /// @brief Query the interval of indices that bound a partition
   ///
-  /// @param[in] pd The partition descriptor to query
+  /// This function is explicitly written such that the start and stop values
+  /// of the returned interval are equal to each other if @p pd
+  /// - corresponds to a contained partition with a length of 0
+  /// - isn't a contained partition
+  /// Often times, the caller won't care about this distinction
+  ///
+  /// @param pd The partition descriptor to query
+  /// @return An interval of indices that bound a partition. If @p pd is not
+  ///     contained, the start and stop values of the range are set to a
+  ///     negative value.
   IdxInterval part_bounds(partition_descr_type pd) const {
     // simple, stupid, linear search
     for (int i = 0; i < n_parts_; i++) {
@@ -255,20 +266,28 @@ public:
     return IdxInterval{-1, -1};
   }
 
-  /// search for the partition containing an index
+  /// @brief search for the partition containing an index
   ///
   /// @param[in] idx The index to search for
-  inline partmap::IdxSearch search_idx(int idx) {
+  ///
+  /// @note
+  /// Originally I was a little hesitant to return a std::optional from this
+  /// function, since it could theoretically give GPUs some trouble (in
+  /// practice, it would probably work on most platforms, but might be slow).
+  /// After giving it some thought, I was reminded that unlike many other
+  /// methods of this type, you don't want to execute this function on GPUs
+  /// (you really just want to use it at startup while initializing Grackle)
+  std::optional<partmap::IdxSearch> search_idx(int idx) const {
     if (idx >= 0) {
       // simple, stupid, linear search
       for (int i = 0; i < n_parts_; i++) {
         if (idx < right_idx_bounds_[i]) {
           int part_start = (i == 0) ? 0 : right_idx_bounds_[i - 1];
-          return partmap::IdxSearch{true, idx, pd_array_[i], idx - part_start};
+          return partmap::IdxSearch{idx, pd_array_[i], idx - part_start};
         }
       }
     }
-    return {false, idx, pd_array_[0], -1};
+    return std::nullopt;
   }
 };
 

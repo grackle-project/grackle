@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "gmock/gmock.h"
 #include "support/config.hpp"
 #include "support/PartMap.hpp"
 
@@ -22,19 +23,15 @@ using CreateRslt = GRIMPL_NS::Expected<GRIMPL_NS::PartMap, GRIMPL_NS::Error>;
 // informative errors (otherwise it just shows the memory's raw byte values)
 namespace GRIMPL_NS::partmap {
 void PrintTo(const IdxSearch& search, std::ostream* os) {
-  bool valid = search.has_val;
-  std::string index = (valid) ? std::to_string(search.index) : "<garbage>";
-  std::string pd = (valid) ? std::to_string(search.pd) : "<garbage>";
-  std::string start_offset =
-      (valid) ? std::to_string(search.start_offset) : "<garbage>";
-  *os << "{has_val=" << valid << ", index=" << index << ", pd=" << pd
-      << ", start_offset=" << start_offset << '}';
+  *os << "{index=" << search.index << ", pd=" << search.pd
+      << ", start_offset=" << search.start_offset << '}';
 }
 }  // namespace GRIMPL_NS::partmap
 
 using ::testing::Eq;
 using ::testing::Field;
 using ::testing::Lt;
+using ::testing::Optional;
 
 // this is a simple case
 TEST(PartMap, Empty) {
@@ -50,9 +47,7 @@ TEST(PartMap, Empty) {
       ::testing::AllOf(Field("start", &GRIMPL_NS::IdxInterval::start, Lt(0)),
                        Field("stop", &GRIMPL_NS::IdxInterval::stop, Lt(0))));
 
-  using GRIMPL_NS::partmap::IdxSearch;
-  EXPECT_THAT(m.search_idx(0),
-              Field("has_val", &IdxSearch::has_val, Eq(false)));
+  EXPECT_EQ(m.search_idx(0), std::nullopt);
 }
 
 // these act as the names of the partition descriptors that are used in the
@@ -91,39 +86,29 @@ TEST(PartMap, DocString) {
                        Field("stop", &GRIMPL_NS::IdxInterval::stop, Eq(9))));
 
   using GRIMPL_NS::partmap::IdxSearch;
-  EXPECT_THAT(
-      m.search_idx(2),
-      ::testing::AllOf(Field("has_val", &IdxSearch::has_val, Eq(true)),
-                       Field("index", &IdxSearch::index, Eq(2)),
-                       Field("pd", &IdxSearch::pd, Eq(PartitionName::A)),
-                       Field("start_offset", &IdxSearch::start_offset, Eq(2))))
+  EXPECT_THAT(m.search_idx(2),
+              Optional(Eq(IdxSearch{
+                  .index = 2, .pd = PartitionName::A, .start_offset = 2})))
       << "index 2 should be in the partition with pd = PartitionName::A & "
          "start_offset "
       << "should be 2";
 
-  EXPECT_THAT(
-      m.search_idx(5),
-      ::testing::AllOf(Field("has_val", &IdxSearch::has_val, Eq(true)),
-                       Field("index", &IdxSearch::index, Eq(5)),
-                       Field("pd", &IdxSearch::pd, Eq(PartitionName::C)),
-                       Field("start_offset", &IdxSearch::start_offset, Eq(1))))
+  EXPECT_THAT(m.search_idx(5),
+              Optional(Eq(IdxSearch{
+                  .index = 5, .pd = PartitionName::C, .start_offset = 1})))
       << "index 5 should be in the partition with pd = PartitionName::C & "
          "start_offset "
       << "should be 1";
 
-  EXPECT_THAT(
-      m.search_idx(6),
-      ::testing::AllOf(Field("has_val", &IdxSearch::has_val, Eq(true)),
-                       Field("index", &IdxSearch::index, Eq(6)),
-                       Field("pd", &IdxSearch::pd, Eq(PartitionName::B)),
-                       Field("start_offset", &IdxSearch::start_offset, Eq(0))))
+  EXPECT_THAT(m.search_idx(6),
+              Optional(Eq(IdxSearch{
+                  .index = 6, .pd = PartitionName::B, .start_offset = 0})))
       << "index 6 should be in the partition with pd = PartitionName::B & "
          "start_offset "
       << "should be 0";
 
   // extra sanity check!
-  EXPECT_THAT(m.search_idx(9999),
-              Field("is_valid", &IdxSearch::has_val, Eq(false)));
+  EXPECT_EQ(m.search_idx(9999), std::nullopt);
 }
 
 // test a failure mode of the factory method:
