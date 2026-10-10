@@ -600,88 +600,18 @@ inline void step_rate_newton_raphson(
       );
 
       // overwrite the fields tracked by my_fields with the evolved values
-      // -> in the future, we will be able write the next ~80 lines as
-      //    a concise 4-line for-loop when we start to use the
-      //    SpeciesMultiView type
 
-      if ( my_chemistry->primordial_chemistry > 0 )  {
-        my_fields->e_density[field_idx1d]       = dsp[SpLUT::e];
-        my_fields->HI_density[field_idx1d]      = dsp[SpLUT::HI];
-        my_fields->HII_density[field_idx1d]     = dsp[SpLUT::HII];
-        my_fields->HeI_density[field_idx1d]     = dsp[SpLUT::HeI];
-        my_fields->HeII_density[field_idx1d]    = dsp[SpLUT::HeII];
-        my_fields->HeIII_density[field_idx1d]   = dsp[SpLUT::HeIII];
+      for (int sp_idx = primsp_idx_bounds.start; sp_idx < primsp_idx_bounds.stop; sp_idx++) {
+        sp_densities(i, sp_idx) = dsp[sp_idx];
       }
-      if ( my_chemistry->primordial_chemistry > 1 )  {
-        my_fields->HM_density[field_idx1d]      = dsp[SpLUT::HM];
-        my_fields->H2I_density[field_idx1d]     = dsp[SpLUT::H2I];
-        my_fields->H2II_density[field_idx1d]    = dsp[SpLUT::H2II];
-      }
-      if ( my_chemistry->primordial_chemistry > 2 )  {
-        my_fields->DI_density[field_idx1d]      = dsp[SpLUT::DI];
-        my_fields->DII_density[field_idx1d]     = dsp[SpLUT::DII];
-        my_fields->HDI_density[field_idx1d]     = dsp[SpLUT::HDI];
-      }
-      if ( my_chemistry->primordial_chemistry > 3 )  {
-        my_fields->DM_density[field_idx1d]      = dsp[SpLUT::DM];
-        my_fields->HDII_density[field_idx1d]    = dsp[SpLUT::HDII];
-        my_fields->HeHII_density[field_idx1d]   = dsp[SpLUT::HeHII];
-      }
-      if ( itmask_metal[i] != MASK_FALSE )  {
-        if ( my_chemistry->metal_chemistry == 1 )  {
-          my_fields->CI_density[field_idx1d]      = dsp[SpLUT::CI];
-          my_fields->CII_density[field_idx1d]     = dsp[SpLUT::CII];
-          my_fields->COI_density[field_idx1d]     = dsp[SpLUT::COI];
-          my_fields->CO2I_density[field_idx1d]    = dsp[SpLUT::CO2I];
-          my_fields->OI_density[field_idx1d]      = dsp[SpLUT::OI];
-          my_fields->OHI_density[field_idx1d]     = dsp[SpLUT::OHI];
-          my_fields->H2OI_density[field_idx1d]    = dsp[SpLUT::H2OI];
-          my_fields->O2I_density[field_idx1d]     = dsp[SpLUT::O2I];
-          my_fields->SiI_density[field_idx1d]     = dsp[SpLUT::SiI];
-          my_fields->SiOI_density[field_idx1d]    = dsp[SpLUT::SiOI];
-          my_fields->SiO2I_density[field_idx1d]   = dsp[SpLUT::SiO2I];
-          my_fields->CHI_density[field_idx1d]     = dsp[SpLUT::CHI];
-          my_fields->CH2I_density[field_idx1d]    = dsp[SpLUT::CH2I];
-          my_fields->COII_density[field_idx1d]    = dsp[SpLUT::COII];
-          my_fields->OII_density[field_idx1d]     = dsp[SpLUT::OII];
-          my_fields->OHII_density[field_idx1d]    = dsp[SpLUT::OHII];
-          my_fields->H2OII_density[field_idx1d]   = dsp[SpLUT::H2OII];
-          my_fields->H3OII_density[field_idx1d]   = dsp[SpLUT::H3OII];
-          my_fields->O2II_density[field_idx1d]    = dsp[SpLUT::O2II];
-          if (chiaki_model_dust_evolution)  {
-            if (my_chemistry->dust_species > 0)  {
-              my_fields->Mg_density[field_idx1d]      = dsp[SpLUT::Mg];
-            }
-            if (my_chemistry->dust_species > 1)  {
-              my_fields->Al_density[field_idx1d]      = dsp[SpLUT::Al];
-              my_fields->S_density[field_idx1d]       = dsp[SpLUT::S];
-              my_fields->Fe_density[field_idx1d]      = dsp[SpLUT::Fe];
-            }
-          }
+      if ( itmask_metal[i] != MASK_FALSE ) {
+        for (int sp_idx = metalsp_idx_bounds.start; sp_idx < metalsp_idx_bounds.stop; sp_idx++) {
+           sp_densities(i, sp_idx) = dsp[sp_idx];
         }
-        if (chiaki_model_dust_evolution)  {
-          if (my_chemistry->dust_species > 0)  {
-            my_fields->MgSiO3_dust_density[field_idx1d]  = dsp[SpLUT::MgSiO3_dust];
-            my_fields->AC_dust_density[field_idx1d]      = dsp[SpLUT::AC_dust];
-          }
-          if (my_chemistry->dust_species > 1)  {
-            my_fields->SiM_dust_density[field_idx1d]     = dsp[SpLUT::SiM_dust];
-            my_fields->FeM_dust_density[field_idx1d]     = dsp[SpLUT::FeM_dust];
-            my_fields->Mg2SiO4_dust_density[field_idx1d] = dsp[SpLUT::Mg2SiO4_dust];
-            my_fields->Fe3O4_dust_density[field_idx1d]   = dsp[SpLUT::Fe3O4_dust];
-            my_fields->SiO2_dust_density[field_idx1d]   = dsp[SpLUT::SiO2_dust];
-            my_fields->MgO_dust_density[field_idx1d]     = dsp[SpLUT::MgO_dust];
-            my_fields->FeS_dust_density[field_idx1d]     = dsp[SpLUT::FeS_dust];
-            my_fields->Al2O3_dust_density[field_idx1d]   = dsp[SpLUT::Al2O3_dust];
-          }
-          if (my_chemistry->dust_species > 2)  {
-            my_fields->ref_org_dust_density[field_idx1d]  = dsp[SpLUT::ref_org_dust];
-            my_fields->vol_org_dust_density[field_idx1d]  = dsp[SpLUT::vol_org_dust];
-            my_fields->H2O_ice_dust_density[field_idx1d]  = dsp[SpLUT::H2O_ice_dust];
-          }
+        for (int sp_idx = dustsp_idx_bounds.start; sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+          sp_densities(i, sp_idx) = dsp[sp_idx];
         }
       }
-
       e(i,j,k)     = dsp[i_eng-1];
 
       idsp.clear();
