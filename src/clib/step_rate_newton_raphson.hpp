@@ -288,7 +288,7 @@ inline void step_rate_newton_raphson(
         }
       }
       nsp = nsp + imp_eng[i];
-      idsp.reserve(nsp);
+      idsp.resize(nsp);
 
       // copy values into dsp from my_fields
       // -> in the future, we will be able write the next ~80 lines as
