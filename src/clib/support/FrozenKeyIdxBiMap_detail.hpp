@@ -196,6 +196,12 @@ inline SearchRslt search(const Row* rows, const char* key, int capacity,
   return search_helper_(rows, key, capacity, max_probe, h);
 }
 
+inline SearchRslt search(const Row* rows, std::string_view key, int capacity,
+                         int max_probe) {
+  HashRsltPack h = FNV1aHasher<bimap_detail::KEYLEN_MAX>::calc(key);
+  return search_helper_(rows, key.data(), capacity, max_probe, h);
+}
+
 }  // namespace bimap_StrU16_detail
 }  // namespace GRIMPL_NAMESPACE_DECL
 #endif  // SUPPORT_FROZENKEYIDXBIMAP_DETAIL_HPP
