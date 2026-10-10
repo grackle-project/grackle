@@ -404,6 +404,10 @@ extern "C" int local_initialize_chemistry_data(
     return GR_FAIL;
   }
 
+  // make a deep copy of the species kind map (this is very cheap)
+  my_rates->opaque_storage->sp_kind_map =
+      species_initialize_info_rslt.value().kind_map;
+
   // TODO: we should make an effort to start using the information within
   //       species_initialize_info_rslt
 
