@@ -63,7 +63,8 @@ using ::testing::Optional;
 
 // this is a simple case
 TEST(PartMap, Empty) {
-  CreateRslt rslt = PartMap<PartitionName>::create(nullptr, nullptr, 0);
+  CreateRslt<PartitionName> rslt =
+      PartMap<PartitionName>::create(nullptr, nullptr, 0);
   ASSERT_TRUE(rslt.has_value());
   GRIMPL_NS::PartMap m = std::move(rslt).value();
 
