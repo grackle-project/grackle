@@ -211,10 +211,13 @@ void DustSolver::lookup_dust_rxn_rates1d(
       //    newton-raphson solver), but we really only support the chiaki
       //    dust-model without grain growth for the sake of debugging
       for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+        double* ptr = grain_growth_rates[gsp_idx];
         for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          if (itmask_metal[i] != MASK_FALSE) {
-            grain_growth_rates[gsp_idx][i] = 0.0;
-          }
+          // ignoring itmask_metal isn't great, but its ok in this case because
+          // the buffers are ALWAYS 0 (since growth is disabled)
+          // -> the impetus for the choice to bypass the itmask_metal check was
+          //    the fact that our tests keep on timing out on circleci
+          ptr[i] = 0.0;
         }
       }
     } else if (my_chemistry->grain_growth == 1) {
