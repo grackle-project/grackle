@@ -46,22 +46,37 @@ struct FNV1aHasher {
                     MaxKeyLen <= std::numeric_limits<std::uint16_t>::max(),
                 "MaxKeyLen can't be encoded by HashRsltPack");
 
+  static constexpr std::uint32_t FNV1A_PRIME = 16777619;
+  static constexpr std::uint32_t FNV1A_OFFSET = 2166136261;
+
   /// @brief calculate the hash value
   ///
   /// @param key the null-terminated string. Behavior is deliberately undefined
   ///     when passed a `nullptr`
   static constexpr HashRsltPack calc(const char* key) {
-    constexpr std::uint32_t prime = 16777619;
-    constexpr std::uint32_t offset = 2166136261;
-
-    std::uint32_t hash = offset;
+    std::uint32_t hash = FNV1A_OFFSET;
     for (int i = 0; i <= MaxKeyLen; i++) {  // the `<=` is intentional
       if (key[i] == '\0') {
-        return HashRsltPack{true, static_cast<std::uint16_t>(i), hash};
+        return {.success = true,
+                .keylen = static_cast<std::uint16_t>(i),
+                .hash = hash};
       }
-      hash = (hash ^ key[i]) * prime;
+      hash = (hash ^ static_cast<std::uint8_t>(key[i])) * FNV1A_PRIME;
     }
-    return HashRsltPack{false, 0, 0};
+    return {.success = false, .keylen = 0, .hash = 0};
+  }
+
+  static constexpr HashRsltPack calc(std::string_view key) {
+    int len = key.size();
+    if (len > MaxKeyLen) {
+      return {.success = false, .keylen = 0, .hash = 0};
+    }
+    std::uint32_t hash = FNV1A_OFFSET;
+    for (int i = 0; i < len; i++) {
+      hash = (hash ^ static_cast<std::uint8_t>(key[i])) * FNV1A_PRIME;
+    }
+    return {
+        .success = true, .keylen = static_cast<uint16_t>(len), .hash = hash};
   }
 };
 
