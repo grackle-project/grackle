@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <optional>
 #include <utility>  // std::swap
 
@@ -148,7 +149,38 @@ enum class BiMapMode {
 /// detail! Always prefer the associated functions (they are defined in such
 /// a way that they should be inlined)
 class FrozenKeyIdxBiMap {
-  // don't forget to update the clone method when changing data members
+  using rowidx_type = bimap_detail::rowidx_type;
+
+  // represents the heap-allocated data (only used if length > 0)
+  struct Allocation {
+    rowidx_type n_key_delete_attempt;
+    bimap_StrU16_detail::Row* table_rows;
+    rowidx_type* ordered_row_indices;
+
+    Allocation() = delete;
+
+    Allocation(rowidx_type length, rowidx_type capacity, BiMapMode mode)
+        : table_rows{new bimap_StrU16_detail::Row[capacity]},
+          ordered_row_indices{new rowidx_type[length]} {
+      n_key_delete_attempt = (mode == BiMapMode::COPIES_KEYDATA) ? capacity : 0;
+      for (rowidx_type i = 0; i < capacity; i++) {
+        table_rows[i].keylen = 0;
+      }
+    }
+
+    ~Allocation() noexcept {
+      for (rowidx_type i = 0; i < n_key_delete_attempt; i++) {
+        if (table_rows[i].keylen > 0) {
+          delete[] table_rows[i].key;
+        }
+      }
+      delete[] table_rows;
+      delete[] ordered_row_indices;
+    }
+  };
+
+  // list the data members
+  // ----------------------
 
   /// the number of contained strings
   bimap_detail::rowidx_type length;
@@ -159,6 +191,10 @@ class FrozenKeyIdxBiMap {
   /// specifies ownership of keys, @see BiMapMode
   BiMapMode mode;
 
+  /// the actual data (it's reference-counted)
+  std::shared_ptr<Allocation> allocation_;
+
+  // these are just copies of the pointers in alloc_ (to avoid a ptr deref)
   /// actual hash table data
   bimap_StrU16_detail::Row* table_rows;
   /// tracks the row indices to make iteration faster
@@ -171,17 +207,18 @@ class FrozenKeyIdxBiMap {
     // memory, but that gets tricky. Essentially, we would allocate
     // uninitialized memory and manually use placement-new (and the
     // corresponding `delete`)
-    using bimap_detail::rowidx_type;
-    using bimap_StrU16_detail::Row;
     length = target_length;
     capacity = target_capacity;
     max_probe = target_capacity;
     mode = target_mode;
-    table_rows = (target_capacity > 0) ? new Row[target_capacity] : nullptr;
-    ordered_row_indices =
-        (target_length > 0) ? new rowidx_type[target_length] : nullptr;
-    for (uint16_t i = 0; i < target_capacity; i++) {
-      table_rows[i].keylen = 0;
+    if (target_length == 0) {
+      table_rows = nullptr;
+      ordered_row_indices = nullptr;
+    } else {
+      allocation_ = std::make_shared<Allocation>(target_length, target_capacity,
+                                                 target_mode);
+      table_rows = allocation_->table_rows;
+      ordered_row_indices = allocation_->ordered_row_indices;
     }
   }
 
@@ -224,54 +261,11 @@ public:  // interface methods
   /// Returns an instance holding 0 elements.
   FrozenKeyIdxBiMap() { alloc_(0, 0, BiMapMode::REFS_KEYDATA); }
 
-  // for now, lets disble copy construction and assignment (its usually a
-  // mistake when that happens and this is important to transitioning towards
-  // acting more like a class)
-  FrozenKeyIdxBiMap(const FrozenKeyIdxBiMap&) = delete;
-  FrozenKeyIdxBiMap& operator=(const FrozenKeyIdxBiMap&) = delete;
-
-  /// @brief Move Constructor
-  ///
-  /// Constructs a new instance and transfers the contents from @p other into
-  /// the new instance. @p other is left in an undefined state.
-  ///
-  /// @param other The source of contents for the newly constructed instance
-  FrozenKeyIdxBiMap(FrozenKeyIdxBiMap&& other) noexcept : FrozenKeyIdxBiMap() {
-    swap(other);
-  }
-
-  /// @brief Move Assignment
-  ///
-  /// Transfers the contents from @p other into `this`. @p other is left in an
-  /// undefined state.
-  ///
-  /// @param other The source of contents for the newly constructed instance
-  FrozenKeyIdxBiMap& operator=(FrozenKeyIdxBiMap&& other) {
-    if (this != &other) {
-      swap(other);
-    }
-    return *this;
-  }
-
-  /// @brief Destuctor
-  inline ~FrozenKeyIdxBiMap() noexcept;
-
-  /// @brief Makes a clone of this
-  ///
-  /// The clone inherits the original's BiMapMode value. If it held
-  /// BiMapMode::COPIES_KEYDATA, then fresh copies of the strings are made
-  ///
-  /// @warning
-  /// Callers should pass the returned value to @ref FrozenKeyIdxBiMap::is_ok
-  /// to check whether there was an error during creation. This is pretty
-  /// ugly/clunky, but it's the only practical way to achieve comparable
-  /// behavior to other internal data types. The best alternatives involve
-  /// things like std::optional or C++23's std::expected.
-  ///
-  /// @note
-  /// If we wanted slightly more idiomatic C++, we would fold this into the
-  /// copy constructor and copy assignment methods.
-  FrozenKeyIdxBiMap clone() const;
+  FrozenKeyIdxBiMap(const FrozenKeyIdxBiMap&) = default;
+  FrozenKeyIdxBiMap& operator=(const FrozenKeyIdxBiMap&) = default;
+  FrozenKeyIdxBiMap(FrozenKeyIdxBiMap&&) noexcept = default;
+  FrozenKeyIdxBiMap& operator=(FrozenKeyIdxBiMap&&) noexcept = default;
+  ~FrozenKeyIdxBiMap() noexcept = default;
 
   /// @brief swaps contents
   void swap(FrozenKeyIdxBiMap& other) noexcept {
@@ -279,6 +273,7 @@ public:  // interface methods
     std::swap(capacity, other.capacity);
     std::swap(max_probe, other.max_probe);
     std::swap(mode, other.mode);
+    allocation_.swap(other.allocation_);
     std::swap(table_rows, other.table_rows);
     std::swap(ordered_row_indices, other.ordered_row_indices);
   }
@@ -334,25 +329,6 @@ public:  // interface methods
 };
 
 /** @}*/  // end of group
-
-inline FrozenKeyIdxBiMap::~FrozenKeyIdxBiMap() noexcept {
-  if (is_ok()) {
-    if (length > 0) {
-      if (mode == BiMapMode::COPIES_KEYDATA) {
-        for (bimap_detail::rowidx_type i = 0; i < capacity; i++) {
-          bimap_StrU16_detail::Row* row = table_rows + i;
-          // casting from (const char*) to (char*) should be legal (as long as
-          // there were no bugs modifying the value of ptr->mode)
-          if (row->keylen > 0) {
-            delete[] row->key;
-          }
-        }
-      }
-      delete[] table_rows;
-      delete[] ordered_row_indices;
-    }  // ptr->length > 0
-  }
-}
 
 inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
                                                    int key_count,
@@ -422,41 +398,6 @@ inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::create(const char* const keys[],
 
   return out;
 }
-
-inline FrozenKeyIdxBiMap FrozenKeyIdxBiMap::clone() const {
-  if (!is_ok()) {
-    return FrozenKeyIdxBiMap::make_invalid_();
-  }
-
-  FrozenKeyIdxBiMap out;
-  out.alloc_(length, capacity, mode);
-  out.max_probe = max_probe;
-
-  if (length == 0) {
-    return out;
-  }
-
-  // give the compiler/linter a hint that out.table_rows is not a nullptr
-  // (this is guaranteed by the preceding early exit)
-  GR_INTERNAL_REQUIRE(
-      (out.table_rows != nullptr) && (out.ordered_row_indices != nullptr),
-      "something is very wrong!");
-
-  bool copy_key_data = out.mode == BiMapMode::COPIES_KEYDATA;
-  for (bimap_detail::rowidx_type i = 0; i < capacity; i++) {
-    const bimap_StrU16_detail::Row& ref_row = table_rows[i];
-    if (ref_row.keylen > 0) {
-      bimap_StrU16_detail::overwrite_row(out.table_rows + i, ref_row.key,
-                                         ref_row.keylen, ref_row.value,
-                                         copy_key_data);
-    }
-  }
-
-  for (bimap_detail::rowidx_type i = 0; i < length; i++) {
-    out.ordered_row_indices[i] = ordered_row_indices[i];
-  }
-  return out;
-};
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
