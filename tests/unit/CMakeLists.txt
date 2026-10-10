@@ -2,6 +2,13 @@
 # ==================================
 
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
+add_executable(testError support/test_error.cpp)
+target_link_libraries(testError testdeps)
+gtest_discover_tests(testError)
+
+add_executable(testExpected support/test_expected.cpp)
+target_link_libraries(testExpected testdeps)
+gtest_discover_tests(testExpected)
 
 add_executable(testFrozenKeyIdxBiMap
   support/test_unit_hash.cpp support/test_unit_FrozenKeyIdxBiMap.cpp)
@@ -27,6 +34,11 @@ gtest_discover_tests(runMathTests)
 add_executable(runGrainSpeciesIntoTests test_grain_species_info.cpp)
 target_link_libraries(runGrainSpeciesIntoTests testdeps)
 gtest_discover_tests(runGrainSpeciesIntoTests)
+
+add_executable(runChemModelTests
+  chem_model/test_sp_lut_consistency.cpp)
+target_link_libraries(runChemModelTests testdeps)
+gtest_discover_tests(runChemModelTests)
 
 add_executable(testPartMap support/test_unit_PartMap.cpp)
 target_link_libraries(testPartMap testdeps)

@@ -202,7 +202,25 @@ void DustSolver::lookup_dust_rxn_rates1d(
     int64_t nratec_single_elem_arr[1] = {
         static_cast<int64_t>(my_chemistry->NumberOfTemperatureBins)};
 
-    if (my_chemistry->grain_growth == 1) {
+    if (my_chemistry->grain_growth != 1) {
+      // explicitly set the the grain growth rates to zero
+      // -> this simplifies bookkeeping in other parts of the code. In other
+      //    words, we are either using the chiaki dust model or we aren't
+      // -> strictly speaking, skipping updates of dust grain species when
+      //    grain_growth would be faster (especially in the context of the
+      //    newton-raphson solver), but we really only support the chiaki
+      //    dust-model without grain growth for the sake of debugging
+      for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+        double* ptr = grain_growth_rates[gsp_idx];
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          // ignoring itmask_metal isn't great, but its ok in this case because
+          // the buffers are ALWAYS 0 (since growth is disabled)
+          // -> the impetus for the choice to bypass the itmask_metal check was
+          //    the fact that our tests keep on timing out on circleci
+          ptr[i] = 0.0;
+        }
+      }
+    } else if (my_chemistry->grain_growth == 1) {
       // NOTE: an earlier version of this logic included a large block of
       //       commented code that appeared to calculate growth rates for
       //       the MgSiO3 dust grain species
