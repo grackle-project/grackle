@@ -19,6 +19,7 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "auto_general.hpp"
+#include "chem_model/infer_species.hpp"
 #include "chem_model/nuclide_model.hpp"
 #include "dust/grain_species_info.hpp"
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
@@ -391,7 +392,20 @@ extern "C" int local_initialize_chemistry_data(
       return GR_FAIL;
     }
   }
-  // TODO: infer the other grain species that are involved!
+
+  // let's infer information about all species
+  Expected<GRIMPL_NS::SpInitializeInfo, Error> species_initialize_info_rslt
+      = infer_species_maps(my_chemistry->primordial_chemistry,
+                           my_chemistry->metal_chemistry,
+                           my_rates->opaque_storage->grain_species_info);
+  if (!species_initialize_info_rslt.has_value()) {
+    species_initialize_info_rslt.error().context_literal("problem inferring species information")
+          .write(stderr);
+    return GR_FAIL;
+  }
+
+  // TODO: we should make an effort to start using the information within
+  //       species_initialize_info_rslt
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
