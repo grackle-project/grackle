@@ -173,7 +173,7 @@ inline SearchRslt search(const Row* rows, const char* key, int capacity,
   GR_INTERNAL_REQUIRE(key != nullptr, "Major programming oversight");
   max_probe = (max_probe <= 0 || max_probe > capacity) ? capacity : max_probe;
 
-  HashRsltPack h = fnv1a_hash<bimap_detail::KEYLEN_MAX>(key);
+  HashRsltPack h = FNV1aHasher<bimap_detail::KEYLEN_MAX>::calc(key);
   int i = -1;  // <- set to a dummy value
   int launched_probes = 0;
   if (h.keylen > 0 && h.success && max_probe > 0) {
