@@ -30,7 +30,6 @@
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
 #include "time_deriv_0d.hpp"
-#include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -182,9 +181,14 @@ inline void step_rate_newton_raphson(
 
   // Local variable
   int nsp, isp, id;
-  // flag for if Gen Chiaki's dust model is enabled with grain growth
-  const bool chiaki_model_dust_evolution =
-    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
+  // flag for if Gen Chiaki's dust model is enabled
+  // -> historically we would set this to false if my_chemistry->grain_growth
+  //    wasn't enabled since it reduces the amount of work that must be done in
+  //    the calculation... But, that makes our life much harder at present
+  // -> we can revisit this optimization in the future (but, it honestly
+  //    doesn't seem super important -- we really only allow disabling of
+  //    grain_growth for debugging purposes)
+  const bool chiaki_model_dust_evolution = my_chemistry->dust_chemistry == 2;
 
   // the following specifies the historical 1-based index that we would use to
   // hold energy
