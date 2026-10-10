@@ -20,6 +20,7 @@
 
 #include "support/config.hpp"
 #include "support/expected.hpp"
+#include "support/inplace_vector.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 namespace parse {
@@ -174,41 +175,8 @@ potential_nuclide_sym(std::string_view s, std::size_t pos = 0,
   }
 }
 
-/// @brief Represents an array of coefficient-string_view pairs
-///
-/// The array is short enough that no heap allocations are used.
-struct CoefSViewPairArray {
-  // as a potential optimization, we could replace CoefSViewPair with a type
-  //   struct CoefSView{ uint16_t s_start; uint8_t s_count; uint8_t coef; };
-  // that only uses up 4 bytes (rather than 24 bytes)
-  using CoefSViewPair = std::pair<uint8_t, std::string_view>;
-  static constexpr std::size_t CAPACITY = 4;
-
-private:
-  std::size_t len_ = 0;
-  CoefSViewPair arr_[CAPACITY];
-
-public:
-  /// @brief Overloads array subscript operation
-  ///
-  /// @note For less-experienced C++ developers, this is like python's
-  /// `__getitem__` magic method
-  constexpr const CoefSViewPair& operator[](int idx) const { return arr_[idx]; }
-
-  /// @brief Returns the size of the vector
-  constexpr std::size_t size() const { return len_; }
-
-  /// @brief try to construct an element in-place at the back
-  constexpr bool try_emplace_back(uint8_t coef, std::string_view s_view) {
-    if (len_ == CAPACITY) {
-      return false;
-    }
-    arr_[len_].first = coef;
-    arr_[len_].second = s_view;
-    ++len_;
-    return true;
-  }
-};
+// encodes a coefficient-string_view pair
+using CoefSViewPair = std::pair<uint8_t, std::string_view>;
 
 /// Represents the parsed components of a chemical formula
 struct FormulaComps {
@@ -216,7 +184,7 @@ struct FormulaComps {
   uint8_t roman_numeral_val;
 
   /// tracks subscripts of a nuclide symbol and the symbol itself
-  CoefSViewPairArray subscript_symbol_pairs;
+  InplaceVector<CoefSViewPair, 4> subscript_symbol_pairs;
 };
 
 /// @brief try to parse components of a chemical formula from the string @p s

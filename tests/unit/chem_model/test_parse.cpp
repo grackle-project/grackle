@@ -18,7 +18,7 @@
 
 using ExpectedFormulaComps =
     GRIMPL_NS::Expected<GRIMPL_NS::parse::FormulaComps, GRIMPL_NS::parse::Err>;
-using CoefSViewPair = GRIMPL_NS::parse::CoefSViewPairArray::CoefSViewPair;
+using GRIMPL_NS::parse::CoefSViewPair;
 
 TEST(FormulaCompsErrs, EmptyString) {
   EXPECT_FALSE(GRIMPL_NS::parse::formula_comps("").has_value());
