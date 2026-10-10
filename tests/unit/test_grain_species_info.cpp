@@ -272,13 +272,13 @@ std::map<std::string, std::vector<CoefNamePair>> get_ingredients(
 
   if (dust_chemistry_parameter > 0) {
     out["MgSiO3_dust"] =
-        std::vector<CoefNamePair>{{1, "Mg"}, {1, "SiOI"}, {2, "H2O"}};
+        std::vector<CoefNamePair>{{1, "Mg"}, {1, "SiOI"}, {2, "H2OI"}};
     out["AC_dust"] = std::vector<CoefNamePair>{{1, "CI"}};
   }
   if (dust_chemistry_parameter > 1) {
     out["SiM_dust"] = std::vector<CoefNamePair>{{1, "SiI"}};
     // skip a few!
-    out["Fe3O4_dust"] = std::vector<CoefNamePair>{{3, "Fe"}, {4, "H2O"}};
+    out["Fe3O4_dust"] = std::vector<CoefNamePair>{{3, "Fe"}, {4, "H2OI"}};
     // skip a bunch more
   }
   if (dust_chemistry_parameter > 2) {
