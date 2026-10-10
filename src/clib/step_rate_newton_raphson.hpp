@@ -163,6 +163,7 @@ inline void step_rate_newton_raphson(
     const gr_mask_type* itmask_nr, const gr_mask_type* itmask_metal,
     const int* imp_eng, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    SpeciesMultiView<gr_float> sp_densities,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
@@ -249,16 +250,14 @@ inline void step_rate_newton_raphson(
   // if SpKind::METAL or SpKind::DUST don't correspond to any species in the
   // current configuration, then the corresponding IndexInterval1D object's
   // start & stop data members will be equal to each other
-  const IndexInterval1D species_idx_bounds[3] = {
-    sp_kind_map.part_bounds(SpKind::PRIMORDIAL),
-    sp_kind_map.part_bounds(SpKind::METAL),
-    sp_kind_map.part_bounds(SpKind::DUST)
-  };
-  const int nsp_primordial = species_idx_bounds[0].stop - species_idx_bounds[0].start;
+  const IndexInterval1D primsp_idx_bounds = sp_kind_map.part_bounds(SpKind::PRIMORDIAL);
+  const IndexInterval1D metalsp_idx_bounds = sp_kind_map.part_bounds(SpKind::METAL);
+  const IndexInterval1D dustsp_idx_bounds = sp_kind_map.part_bounds(SpKind::DUST);
+  const int nsp_primordial = primsp_idx_bounds.stop - primsp_idx_bounds.start;
   const int nsp_all = (
     nsp_primordial +
-    (species_idx_bounds[1].stop - species_idx_bounds[1].start) +
-    (species_idx_bounds[2].stop - species_idx_bounds[2].start));
+    (metalsp_idx_bounds.stop - metalsp_idx_bounds.start) +
+    (dustsp_idx_bounds.stop - dustsp_idx_bounds.start));
 
   // the following check was inspired by a compiler warning indicating that
   // nsp won't be initialized if this condition isn't met
@@ -300,81 +299,15 @@ inline void step_rate_newton_raphson(
       //    a concise 4-line for-loop when we start to use the
       //    SpeciesMultiView type
 
-      if ( my_chemistry->primordial_chemistry > 0 )  {
-        dsp[SpLUT::e] = my_fields->e_density[field_idx1d];
-        dsp[SpLUT::HI] = my_fields->HI_density[field_idx1d];
-        dsp[SpLUT::HII] = my_fields->HII_density[field_idx1d];
-        dsp[SpLUT::HeI] = my_fields->HeI_density[field_idx1d];
-        dsp[SpLUT::HeII] = my_fields->HeII_density[field_idx1d];
-        dsp[SpLUT::HeIII] = my_fields->HeIII_density[field_idx1d];
+      for (int sp_idx = primsp_idx_bounds.start; sp_idx < primsp_idx_bounds.stop; sp_idx++) {
+        dsp[sp_idx] = sp_densities(i, sp_idx);
       }
-      if ( my_chemistry->primordial_chemistry > 1 )  {
-        dsp[SpLUT::HM] = my_fields->HM_density[field_idx1d];
-        dsp[SpLUT::H2I] = my_fields->H2I_density[field_idx1d];
-        dsp[SpLUT::H2II] = my_fields->H2II_density[field_idx1d];
-      }
-      if ( my_chemistry->primordial_chemistry > 2 )  {
-        dsp[SpLUT::DI] = my_fields->DI_density[field_idx1d];
-        dsp[SpLUT::DII] = my_fields->DII_density[field_idx1d];
-        dsp[SpLUT::HDI] = my_fields->HDI_density[field_idx1d];
-      }
-      if ( my_chemistry->primordial_chemistry > 3 )  {
-        dsp[SpLUT::DM] = my_fields->DM_density[field_idx1d];
-        dsp[SpLUT::HDII] = my_fields->HDII_density[field_idx1d];
-        dsp[SpLUT::HeHII] = my_fields->HeHII_density[field_idx1d];
-      }
-      if ( itmask_metal[i] != MASK_FALSE )  {
-        if ( my_chemistry->metal_chemistry == 1 )  {
-          dsp[SpLUT::CI] = my_fields->CI_density[field_idx1d];
-          dsp[SpLUT::CII] = my_fields->CII_density[field_idx1d];
-          dsp[SpLUT::COI] = my_fields->COI_density[field_idx1d];
-          dsp[SpLUT::CO2I] = my_fields->CO2I_density[field_idx1d];
-          dsp[SpLUT::OI] = my_fields->OI_density[field_idx1d];
-          dsp[SpLUT::OHI] = my_fields->OHI_density[field_idx1d];
-          dsp[SpLUT::H2OI] = my_fields->H2OI_density[field_idx1d];
-          dsp[SpLUT::O2I] = my_fields->O2I_density[field_idx1d];
-          dsp[SpLUT::SiI] = my_fields->SiI_density[field_idx1d];
-          dsp[SpLUT::SiOI] = my_fields->SiOI_density[field_idx1d];
-          dsp[SpLUT::SiO2I] = my_fields->SiO2I_density[field_idx1d];
-          dsp[SpLUT::CHI] = my_fields->CHI_density[field_idx1d];
-          dsp[SpLUT::CH2I] = my_fields->CH2I_density[field_idx1d];
-          dsp[SpLUT::COII] = my_fields->COII_density[field_idx1d];
-          dsp[SpLUT::OII] = my_fields->OII_density[field_idx1d];
-          dsp[SpLUT::OHII] = my_fields->OHII_density[field_idx1d];
-          dsp[SpLUT::H2OII] = my_fields->H2OII_density[field_idx1d];
-          dsp[SpLUT::H3OII] = my_fields->H3OII_density[field_idx1d];
-          dsp[SpLUT::O2II] = my_fields->O2II_density[field_idx1d];
-          if (chiaki_model_dust_evolution) {
-            if (my_chemistry->dust_species > 0)  {
-              dsp[SpLUT::Mg] = my_fields->Mg_density[field_idx1d];
-            }
-            if (my_chemistry->dust_species > 1)  {
-              dsp[SpLUT::Al] = my_fields->Al_density[field_idx1d];
-              dsp[SpLUT::S] = my_fields->S_density[field_idx1d];
-              dsp[SpLUT::Fe] = my_fields->Fe_density[field_idx1d];
-            }
-          }
+      if ( itmask_metal[i] != MASK_FALSE ) {
+        for (int sp_idx = metalsp_idx_bounds.start; sp_idx < metalsp_idx_bounds.stop; sp_idx++) {
+          dsp[sp_idx] = sp_densities(i, sp_idx);
         }
-        if (chiaki_model_dust_evolution) {
-          if (my_chemistry->dust_species > 0)  {
-            dsp[SpLUT::MgSiO3_dust] = my_fields->MgSiO3_dust_density[field_idx1d];
-            dsp[SpLUT::AC_dust] = my_fields->AC_dust_density[field_idx1d];
-          }
-          if (my_chemistry->dust_species > 1)  {
-            dsp[SpLUT::SiM_dust] = my_fields->SiM_dust_density[field_idx1d];
-            dsp[SpLUT::FeM_dust] = my_fields->FeM_dust_density[field_idx1d];
-            dsp[SpLUT::Mg2SiO4_dust] = my_fields->Mg2SiO4_dust_density[field_idx1d];
-            dsp[SpLUT::Fe3O4_dust] = my_fields->Fe3O4_dust_density[field_idx1d];
-            dsp[SpLUT::SiO2_dust] = my_fields->SiO2_dust_density[field_idx1d];
-            dsp[SpLUT::MgO_dust] = my_fields->MgO_dust_density[field_idx1d];
-            dsp[SpLUT::FeS_dust] = my_fields->FeS_dust_density[field_idx1d];
-            dsp[SpLUT::Al2O3_dust] = my_fields->Al2O3_dust_density[field_idx1d];
-          }
-          if (my_chemistry->dust_species > 2)  {
-            dsp[SpLUT::ref_org_dust] = my_fields->ref_org_dust_density[field_idx1d];
-            dsp[SpLUT::vol_org_dust] = my_fields->vol_org_dust_density[field_idx1d];
-            dsp[SpLUT::H2O_ice_dust] = my_fields->H2O_ice_dust_density[field_idx1d];
-          }
+        for (int sp_idx = dustsp_idx_bounds.start; sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+          dsp[sp_idx] = sp_densities(i, sp_idx);
         }
       }
       dsp[i_eng-1] = e(i,j,k);
