@@ -178,13 +178,15 @@ potential_nuclide_sym(std::string_view s, std::size_t pos = 0,
 // encodes a coefficient-string_view pair
 using CoefSViewPair = std::pair<uint8_t, std::string_view>;
 
+inline constexpr std::size_t MaxSymsPerFormula = 4;
+
 /// Represents the parsed components of a chemical formula
 struct FormulaComps {
   /// tracks the value of the roman numeral
   uint8_t roman_numeral_val;
 
   /// tracks subscripts of a nuclide symbol and the symbol itself
-  InplaceVector<CoefSViewPair, 4> subscript_symbol_pairs;
+  InplaceVector<CoefSViewPair, MaxSymsPerFormula> subscript_symbol_pairs;
 };
 
 /// @brief try to parse components of a chemical formula from the string @p s

@@ -93,6 +93,7 @@ add_library(Grackle_Grackle
   api/solve_chemistry.cpp
   api/units.cpp
   ceiling_species.hpp
+  chem_model/chemsp_props.hpp
   chem_model/nuclide_model.cpp chem_model/nuclide_model.hpp
   chem_model/parse.cpp chem_model/parse.hpp
   cie_thin_cooling_rate_tables.hpp
