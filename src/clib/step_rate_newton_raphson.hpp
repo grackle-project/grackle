@@ -18,6 +18,7 @@
 
 #include <vector>
 
+#include "chem_model/infer_species.hpp"
 #include "grackle.h"             // gr_float
 #include "field_adaptor.hpp"
 #include "fortran_func_decls.h"  // gr_mask_int
@@ -180,7 +181,7 @@ inline void step_rate_newton_raphson(
   FortranView<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Local variable
-  int nsp, isp, id;
+  int isp, id;
   // flag for if Gen Chiaki's dust model is enabled
   // -> historically we would set this to false if my_chemistry->grain_growth
   //    wasn't enabled since it reduces the amount of work that must be done in
@@ -244,6 +245,21 @@ inline void step_rate_newton_raphson(
   grackle::impl::SpeciesCollection rhosp_dot =
     grackle::impl::new_SpeciesCollection(1);
 
+  const PartMap<SpKind>& sp_kind_map = my_rates->opaque_storage->sp_kind_map;
+  // if SpKind::METAL or SpKind::DUST don't correspond to any species in the
+  // current configuration, then the corresponding IndexInterval1D object's
+  // start & stop data members will be equal to each other
+  const IndexInterval1D species_idx_bounds[3] = {
+    sp_kind_map.part_bounds(SpKind::PRIMORDIAL),
+    sp_kind_map.part_bounds(SpKind::METAL),
+    sp_kind_map.part_bounds(SpKind::DUST)
+  };
+  const int nsp_primordial = species_idx_bounds[0].stop - species_idx_bounds[0].start;
+  const int nsp_all = (
+    nsp_primordial +
+    (species_idx_bounds[1].stop - species_idx_bounds[1].start) +
+    (species_idx_bounds[2].stop - species_idx_bounds[2].start));
+
   // the following check was inspired by a compiler warning indicating that
   // nsp won't be initialized if this condition isn't met
   GRIMPL_REQUIRE((my_chemistry->primordial_chemistry > 0),
@@ -273,25 +289,10 @@ inline void step_rate_newton_raphson(
       }
 
       // initialize arrays
-      nsp = 6; // (my_chemistry->primordial_chemistry >= 1)
-      if (my_chemistry->primordial_chemistry > 1) { nsp = nsp + 3; }
-      if (my_chemistry->primordial_chemistry > 2) { nsp = nsp + 3; }
-      if (my_chemistry->primordial_chemistry > 3) { nsp = nsp + 3; }
-      if (itmask_metal[i] != MASK_FALSE)  {
-        if (my_chemistry->metal_chemistry == 1)  {
-          nsp = nsp + 19;
-          if (chiaki_model_dust_evolution)  {
-            if (my_chemistry->dust_species > 0) { nsp = nsp + 1; }
-            if (my_chemistry->dust_species > 1) { nsp = nsp + 3; }
-          }
-        }
-        if (chiaki_model_dust_evolution)  {
-          if (my_chemistry->dust_species > 0) { nsp = nsp + 2; }
-          if (my_chemistry->dust_species > 1) { nsp = nsp + 8; }
-          if (my_chemistry->dust_species > 2) { nsp = nsp + 3; }
-        }
-      }
-      nsp = nsp + imp_eng[i];
+      const int nsp = (
+          imp_eng[i] +
+          ((itmask_metal[i] != MASK_FALSE) ? nsp_all : nsp_primordial)
+      );
       idsp.reserve(nsp);
 
       // copy values into dsp from my_fields
