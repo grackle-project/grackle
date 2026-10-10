@@ -265,7 +265,7 @@ void DustSolver::lookup_dust_rxn_rates1d(
                 interp_props.parameters[1], dlogtem, nratec_single_elem_arr[0],
                 my_rates->grain_growth_rate);
 
-            grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][i] =
+            grain_growth_rates[gsp_idx][i] =
                 kd * grain_sigma_per_gas_mass[i] *
                 d(i, idx_range.j, idx_range.k) * limiting_factor;
           }
