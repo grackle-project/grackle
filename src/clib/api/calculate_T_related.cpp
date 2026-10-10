@@ -147,9 +147,9 @@ extern "C" int local_calculate_gamma(chemistry_data *my_chemistry,
     const GRIMPL_NS::IndexHelper ind_helper
         = GRIMPL_NS::build_index_helper_(my_fields);
     for (int outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
-      const GRIMPL_NS::FieldFlatIndexRange range = GRIMPL_NS::inner_flat_range_
+      const GRIMPL_NS::IndexInterval1D range = GRIMPL_NS::inner_flat_range_
           (outer_ind, &ind_helper);
-      for (int index = range.start; index <= range.end; index++) {
+      for (int index = range.start; index < range.stop; index++) {
         my_gamma[index] = my_chemistry->Gamma;
       }
     }
@@ -219,10 +219,10 @@ extern "C" int local_calculate_pressure(chemistry_data *my_chemistry,
 # pragma omp parallel for schedule( runtime )
 # endif
     for (int outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
-      GRIMPL_NS::FieldFlatIndexRange range = GRIMPL_NS::inner_flat_range_(
+      GRIMPL_NS::IndexInterval1D range = GRIMPL_NS::inner_flat_range_(
           outer_ind, &ind_helper);
 
-      for (int index = range.start; index <= range.end; index++) {
+      for (int index = range.start; index < range.stop; index++) {
         double p = gm1 * (rho[index] * eint[index]);
         pressure[index] = std::fmax(static_cast<gr_float>(p), MIN_PRESSURE);
       }
