@@ -122,7 +122,7 @@ Expected<GrainSpeciesInfo, Error> GrainSpeciesInfo::create(
         // {coef, species_idx, particle mass}
         {1, SpLUT::Mg, 24.},
         {1, SpLUT::SiOI, 44.},
-        {2, SpLUT::H2O, 18.},
+        {2, SpLUT::H2OI, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[0] = "MgSiO3_dust";
     species_info[0] = mk_gsp_info_entry_helper_(
@@ -178,7 +178,7 @@ Expected<GrainSpeciesInfo, Error> GrainSpeciesInfo::create(
         // {coef, species_idx, particle mass}
         {2, SpLUT::Mg, 24.},
         {1, SpLUT::SiOI, 44.},
-        {3, SpLUT::H2O, 18.},
+        {3, SpLUT::H2OI, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[4] = "Mg2SiO4_dust";
     species_info[4] = mk_gsp_info_entry_helper_(
@@ -192,7 +192,7 @@ Expected<GrainSpeciesInfo, Error> GrainSpeciesInfo::create(
     const GrainGrowthIngredient Fe3O4_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {3, SpLUT::Fe, 56.},
-        {4, SpLUT::H2O, 18.},
+        {4, SpLUT::H2OI, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[5] = "Fe3O4_dust";
     species_info[5] = mk_gsp_info_entry_helper_(
@@ -219,7 +219,7 @@ Expected<GrainSpeciesInfo, Error> GrainSpeciesInfo::create(
     const GrainGrowthIngredient MgO_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::Mg, 24.},
-        {1, SpLUT::H2O, 18.},
+        {1, SpLUT::H2OI, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[7] = "MgO_dust";
     species_info[7] = mk_gsp_info_entry_helper_(
@@ -247,7 +247,7 @@ Expected<GrainSpeciesInfo, Error> GrainSpeciesInfo::create(
     const GrainGrowthIngredient Al2O3_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {2, SpLUT::Al, 27.},
-        {3, SpLUT::H2O, 18.},
+        {3, SpLUT::H2OI, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     names[9] = "Al2O3_dust";
     species_info[9] = mk_gsp_info_entry_helper_(

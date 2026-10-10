@@ -61,10 +61,10 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
   // It's worth emphasizing that the mapping is frozen when its constructed &
   // contents can't be changed (even if you reorder the original)
   const char* keys[34] = {
-      "e",   "HI",   "HII", "HeI",  "HeII",  "HeIII", "HM",   "H2I",   "H2II",
-      "DI",  "DII",  "HDI", "DM",   "HDII",  "HeHII", "CI",   "CII",   "CO",
-      "CO2", "OI",   "OH",  "H2O",  "O2",    "SiI",   "SiOI", "SiO2I", "CH",
-      "CH2", "COII", "OII", "OHII", "H2OII", "H3OII", "O2II"};
+      "e",    "HI",   "HII", "HeI",  "HeII",  "HeIII", "HM",   "H2I",   "H2II",
+      "DI",   "DII",  "HDI", "DM",   "HDII",  "HeHII", "CI",   "CII",   "COI",
+      "CO2I", "OI",   "OHI", "H2OI", "O2I",   "SiI",   "SiOI", "SiO2I", "CHI",
+      "CH2I", "COII", "OII", "OHII", "H2OII", "H3OII", "O2II"};
 
   // PART 1: build a FrozenKeyIdxBiMap from this list
   // the 3rd argument tells the string to make copies of each string
