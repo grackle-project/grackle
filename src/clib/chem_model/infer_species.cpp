@@ -68,7 +68,7 @@ Expected<CanonicalSpList, Error> canonical_prim_sp(int primordial_chemistry) {
   } else if (primordial_chemistry == 4) {
     out.actual_len = canonical_primsp_.size();
   } else {
-    return Unexpected(Error::msgf("invalid primordial chemsitry value: %d",
+    return Unexpected(Error::msgf("invalid primordial_chemsitry value: %d",
                                   primordial_chemistry));
   }
   return out;
@@ -129,6 +129,14 @@ Expected<SpInitializeInfo, Error> infer_species_maps(
     const GrainSpeciesInfo* grain_info) {
   // ugh, this function is so ugly...
   // -> in the future, we'll probably be better off adopting a builder pattern
+  if (primordial_chemistry == 0) {
+    if (metal_chemistry > 0 || grain_info != nullptr) {
+      return Unexpected(Error::msgf(
+          "can't have metal or grain species if primordial_chemistry==0"));
+    }
+    return SpInitializeInfo();  // <- return species maps that are empty
+  }
+
   std::vector<SpKind> sp_kinds;
   std::vector<int> sp_kind_counts;
   std::vector<const char*> sp_names;
