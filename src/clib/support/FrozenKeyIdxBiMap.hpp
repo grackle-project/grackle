@@ -17,6 +17,7 @@
 #include <cstring>
 #include <memory>
 #include <optional>
+#include <string_view>
 #include <utility>  // std::swap
 
 #include "./config.hpp"
@@ -293,6 +294,13 @@ public:  // interface methods
   /// @param[in] key A null-terminated string
   /// @return An optional that contains the value if the key can be found
   std::optional<uint16_t> find(const char* key) const noexcept {
+    uint16_t tmp =
+        bimap_StrU16_detail::search(table_rows, key, capacity, max_probe).val;
+    bool success = tmp != bimap_detail::INVALID_VAL;
+    return (success) ? std::make_optional(tmp) : std::nullopt;
+  }
+
+  std::optional<uint16_t> find(std::string_view key) const noexcept {
     uint16_t tmp =
         bimap_StrU16_detail::search(table_rows, key, capacity, max_probe).val;
     bool success = tmp != bimap_detail::INVALID_VAL;

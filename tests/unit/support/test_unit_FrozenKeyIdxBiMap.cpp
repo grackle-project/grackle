@@ -12,6 +12,7 @@
 
 #include <iostream>  // needed to teach googletest how to print
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -79,12 +80,18 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
 
   // Equivalent Python:  `2 == m["HII"]`
   EXPECT_THAT(m.find("HII"), Optional(2));
+  EXPECT_THAT(m.find(std::string("HII")), Optional(2));
+  EXPECT_THAT(m.find(std::string_view("HII")), Optional(2));
 
   // Equivalent Python/idiomatic C++:  `33 == m["O2II"]`
   EXPECT_THAT(m.find("O2II"), Optional(33));
+  EXPECT_THAT(m.find(std::string("O2II")), Optional(33));
+  EXPECT_THAT(m.find(std::string_view("O2II")), Optional(33));
 
   // for unknown key, returns AccessRslt{has_value=false, value=<garbage>}
   EXPECT_EQ(m.find("Dummy"), std::nullopt);
+  EXPECT_EQ(m.find(std::string("Dummy")), std::nullopt);
+  EXPECT_EQ(m.find(std::string_view("Dummy")), std::nullopt);
 
   // PART 3: let's show the reverse of the previous lookups
   EXPECT_STREQ("HII", m.inverse_find(2));
