@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "chem_model/infer_species.hpp"
+#include "chem_model/species.hpp"
 #include "dust/grain_species_info.hpp"
 #include "LUT.hpp"
 #include "gtest/gtest.h"

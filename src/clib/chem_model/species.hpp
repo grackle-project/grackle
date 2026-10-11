@@ -6,11 +6,9 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// <add a short description>
+/// declare information pertaining to dynamically evolved species
 ///
 //===----------------------------------------------------------------------===//
-
-// TODO: maybe rename this file after the primary function declared here?
 
 #ifndef CHEM_MODEL_SPECIES_HPP
 #define CHEM_MODEL_SPECIES_HPP
@@ -70,6 +68,8 @@ struct SpInitializeInfo {
 };
 
 /// @brief infer the species properties
+///
+/// Under the hood this makes use of @ref SpeciesBuilder
 ///
 /// In more detail, this constructs:
 /// 1. a @ref PartMap that describes the kinds of species that are dynamically

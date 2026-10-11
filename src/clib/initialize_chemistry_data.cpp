@@ -19,8 +19,8 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "auto_general.hpp"
-#include "chem_model/infer_species.hpp"
 #include "chem_model/nuclide_model.hpp"
+#include "chem_model/species.hpp"
 #include "dust/grain_species_info.hpp"
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_rates.hpp"

@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "LUT.hpp"
-#include "chem_model/infer_species.hpp"
+#include "chem_model/species.hpp"
 #include "support/config.hpp"
 #include "support/error.hpp"
 #include "support/expected.hpp"
