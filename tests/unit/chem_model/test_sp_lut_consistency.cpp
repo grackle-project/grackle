@@ -213,8 +213,11 @@ Expected<GRIMPL_NS::SpInitializeInfo, Error> infer_species_maps(
     grain_info = &maybe_grainsp_info.value();
   }
 
+  GRIMPL_NS::NuclideModel nuclide_model;
+
   return GRIMPL_NS::infer_species_maps(spec.primordial_chemistry,
-                                       spec.metal_chemistry, grain_info);
+                                       spec.metal_chemistry, grain_info,
+                                       nuclide_model);
 }
 
 class SpeciesLUT : public testing::TestWithParam<ParameterSpec> {};

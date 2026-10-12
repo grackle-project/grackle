@@ -17,7 +17,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 
 Expected<SpInitializeInfo, Error> infer_species_maps(
     int primordial_chemistry, int metal_chemistry,
-    const GrainSpeciesInfo* grain_info) {
+    const GrainSpeciesInfo* grain_info, const NuclideModel& nuclide_model) {
   SpeciesBuilder builder;
 
   // configure the primordial species
@@ -136,7 +136,7 @@ Expected<SpInitializeInfo, Error> infer_species_maps(
     }
   }
 
-  return builder.build();
+  return builder.build(nuclide_model);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL

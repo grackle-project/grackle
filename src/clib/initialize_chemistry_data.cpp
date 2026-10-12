@@ -362,13 +362,11 @@ extern "C" int local_initialize_chemistry_data(
   //    because in the near future, the plan is to use nuclide_model to help us
   //    do some setup in order to approach make_consistent in a dynamic way
   //    (i.e. to minimize the number of edits every time a new species is added)
-  {
-    GRIMPL_NS::NuclideModel nuclide_model;  // <- default constructed
-    // the following copies some data into the reg_builder (it will get
-    // transferred to the registry). If we are worried about this, we can
-    // create a new parameter to disable this behavior
-    nuclide_model.copy_info_to_RegBuilder(reg_builder);
-  }
+  GRIMPL_NS::NuclideModel nuclide_model;  // <- default constructed
+  // the following copies some data into the reg_builder (it will get
+  // transferred to the registry). If we are worried about this, we can
+  // create a new parameter to disable this behavior
+  nuclide_model.copy_info_to_RegBuilder(reg_builder);
 
   // it's time to start initializing values in my_rates
 
@@ -397,7 +395,8 @@ extern "C" int local_initialize_chemistry_data(
   Expected<GRIMPL_NS::SpInitializeInfo, Error> species_initialize_info_rslt
       = infer_species_maps(my_chemistry->primordial_chemistry,
                            my_chemistry->metal_chemistry,
-                           my_rates->opaque_storage->grain_species_info);
+                           my_rates->opaque_storage->grain_species_info,
+                           nuclide_model);
   if (!species_initialize_info_rslt.has_value()) {
     species_initialize_info_rslt.error().context_literal("problem inferring species information")
           .write(stderr);

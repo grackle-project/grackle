@@ -14,11 +14,13 @@
 #define CHEM_MODEL_SPECIES_HPP
 
 #include "../dust/grain_species_info.hpp"
+#include "./chemsp_props.hpp"
 #include "../support/config.hpp"
 #include "../support/error.hpp"
 #include "../support/expected.hpp"
 #include "../support/FrozenKeyIdxBiMap.hpp"
 #include "../support/PartMap.hpp"
+#include "chem_model/nuclide_model.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -61,25 +63,49 @@ enum class SpKind {
   FILLER_B     ///< right now, this is temporary
 };
 
-/// @brief aggregates objects build by @ref infer_species_maps
+/// @brief aggregates queryable information about the species model
+///
+/// The species model describes dynamically evolved species. Importantly, each
+/// species index is associated with a species name.
+///
+/// Whereas @ref kind_map has applications during the core calculations, the
+/// other data members are primarily intended to help set up a Grackle
+/// configuration
 struct SpInitializeInfo {
+  /// @brief describes the kinds of species that are dynamically evolved
+  ///
+  /// Specifically, this maps between species index and the species kind. See
+  /// @ref SpKind for more information about the species kinds.
   PartMap<SpKind> kind_map;
+
+  /// @brief maps between species names and indices
+  ///
+  /// @note
+  /// As long the codebase continues to make use of @ref SpLUT there may be
+  /// ranges of indices (denoted by the @ref SpKind::FILLER_A and
+  /// @ref SpKind::FILLER_B partitions in @ref kind_map) that hold garbage
+  /// values. This is necessary to ensure consistency of index-name mappings
+  /// with @ref SpLUT in certain cases when grackle is configured to not use
+  /// all possible primordial species or not use all possible metal species
   FrozenKeyIdxBiMap name_map;
+
+  /// @brief holds a ChemSpeciesProps for chemical species
+  ///
+  /// The value at index `i` describes the species associated with that index
+  /// by @ref name_map. Importantly, accessing an index that isn't associated
+  /// with a @ref SpKind::PRIMORDIAL or @ref SpKind::METAL (see @ref kind_map)
+  /// will trigger undefined behavior.
+  ///
+  /// @note
+  /// At the time of writing this does **NOT** specify entries for dust species
+  ChemSpeciesPropsVec chem_species_props;
 };
 
 /// @brief infer the species properties
 ///
-/// Under the hood this makes use of @ref SpeciesBuilder
-///
-/// In more detail, this constructs:
-/// 1. a @ref PartMap that describes the kinds of species that are dynamically
-///    evolved dynamically evolved. See @ref SpKind for more information about
-///    the species kinds.
-/// 2. a @ref FrozenKeyIdxBiMap mapping species names and indices. This is
-///    primarily intended to help with setting things up. Note: for as long the
-///    codebase continues to make use of @ref SpLUT there may be ranges of
-///    indices (denoted by the @ref SpKind::FILLER_A and @ref SpKind::FILLER_B
-///    partitions in the PartMap) that hold garbage values.
+/// Under the hood this makes use of @ref SpeciesBuilder. However, this function
+/// takes care to ensure that the mapping between a species name and its index
+/// remain consistent with compile-time lookup tables.
 ///
 /// @par Future Thoughts
 /// It's a little weird to pass a @ref GrainSpeciesInfo directly into this
@@ -87,7 +113,7 @@ struct SpInitializeInfo {
 /// other dust models are implemented that affect the dynamical species fields)
 Expected<SpInitializeInfo, Error> infer_species_maps(
     int primordial_chemistry, int metal_chemistry,
-    const GrainSpeciesInfo* grain_info);
+    const GrainSpeciesInfo* grain_info, const NuclideModel& nuclide_model);
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 

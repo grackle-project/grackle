@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "LUT.hpp"
+#include "nuclide_model.hpp"
 #include "chem_model/species.hpp"
 #include "support/config.hpp"
 #include "support/error.hpp"
@@ -153,13 +154,14 @@ public:
 
   /// @brief build the resulting species initialization information
   ///
-  /// Near Future Plan
-  /// ----------------
-  /// In the near future, the goal is to pass in a reference to a
-  /// @ref NuclideModel as an argument and use it to construct a
-  /// collection holding @ref ChemSpeciesProps objects that will be stored as
-  /// part of the output object
-  Expected<SpInitializeInfo, Error> build() const;
+  /// @note
+  /// The builder should definitely be responsible for building the
+  /// @ref NuclideModel. It doesn't really make sense to have that object stand
+  /// alone (it's primarily useful in the context of the other members of
+  /// @ref SpInitializeInfo) and if we ever want to support customization, this
+  /// builder seems like the natural place to do it
+  Expected<SpInitializeInfo, Error> build(
+      const NuclideModel& nuclide_model) const;
 };
 
 }  // namespace GRIMPL_NAMESPACE_DECL
