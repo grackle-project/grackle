@@ -13,6 +13,7 @@
 #define CHEM_MODEL_PARSE_HPP
 
 #include <cstdint>
+#include <limits>  // std::numeric_limits
 #include <string>
 #include <string_view>
 #include <tuple>  // std::tie
