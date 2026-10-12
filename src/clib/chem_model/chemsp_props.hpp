@@ -87,7 +87,7 @@ public:
     ChemSpeciesProps out;
     out.mass_factor = 0.0;
     int n_protons = 0;
-    for (int i = 0; i < comps.subscript_symbol_pairs.size(); i++) {
+    for (std::size_t i = 0; i < comps.subscript_symbol_pairs.size(); i++) {
       auto [coef, name] = comps.subscript_symbol_pairs[i];
 
       // lookup the id associated with the nuclide specified by name
@@ -109,7 +109,7 @@ public:
         // shouldn't be reachable since that max capacity should be identical
         return Unexpected(Error::msgf(
             "coef_nuclide_id_pairs doesn't have adequate capacity to hold "
-            "data for nuclide symbol %d",
+            "data for nuclide symbol %zu",
             i));
       }
     }
