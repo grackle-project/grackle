@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <array>
+#include <cstdint>
 #include <iostream>  // needed to teach googletest how to print
 #include <vector>
 #include <set>
@@ -19,6 +20,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "chem_model/chemsp_props.hpp"
 #include "chem_model/species.hpp"
 #include "dust/grain_species_info.hpp"
 #include "LUT.hpp"
@@ -213,30 +215,41 @@ Expected<GRIMPL_NS::SpInitializeInfo, Error> infer_species_maps(
     grain_info = &maybe_grainsp_info.value();
   }
 
-  GRIMPL_NS::NuclideModel nuclide_model;
-
   return GRIMPL_NS::infer_species_maps(spec.primordial_chemistry,
-                                       spec.metal_chemistry, grain_info,
-                                       nuclide_model);
+                                       spec.metal_chemistry, grain_info);
 }
 
-class SpeciesLUT : public testing::TestWithParam<ParameterSpec> {};
+class SpeciesInfo : public testing::TestWithParam<ParameterSpec> {
+protected:
+  GRIMPL_NS::SpInitializeInfo* species_info = nullptr;
 
-TEST_P(SpeciesLUT, Consistency) {
-  using GRIMPL_NS::SpKind;
-  ParameterSpec spec = GetParam();
-  Expected<GRIMPL_NS::SpInitializeInfo, Error> tmp = infer_species_maps(spec);
-  if (!tmp.has_value()) {
-    GTEST_FAIL() << "unable to build species maps\n\n"
-                 << "  for: " << testing::PrintToString(spec) << '\n'
-                 << "  error:\n"
-                 << tmp.error().to_string();
+  void SetUp() override {
+    // we perform setup here (rather than in a constructor) since it lets us
+    // fail the test
+    ParameterSpec spec = GetParam();
+    Expected<GRIMPL_NS::SpInitializeInfo, Error> tmp = infer_species_maps(spec);
+    if (!tmp.has_value()) {
+      GTEST_FAIL() << "unable to build species maps\n\n"
+                   << "  for: " << testing::PrintToString(spec) << '\n'
+                   << "  error:\n"
+                   << tmp.error().to_string();
+    }
+    species_info = new GRIMPL_NS::SpInitializeInfo(std::move(tmp).value());
   }
 
-  const GRIMPL_NS::FrozenKeyIdxBiMap name_map = tmp.value().name_map;
-  const GRIMPL_NS::PartMap<SpKind> kind_map = tmp.value().kind_map;
+  ~SpeciesInfo() override {
+    delete species_info;  // reminder: it's ok to delete a nullptr
+  }
+};
+
+TEST_P(SpeciesInfo, LUTConsistency) {
+  using GRIMPL_NS::SpKind;
+
+  const GRIMPL_NS::FrozenKeyIdxBiMap name_map = species_info->name_map;
+  const GRIMPL_NS::PartMap<SpKind> kind_map = species_info->kind_map;
 
   // prepare for comparisons agains our expectations
+  ParameterSpec spec = GetParam();
   ExpectedSpData expected = get_expected_sp_data(spec);
 
   using CmpProps =
@@ -328,6 +341,95 @@ TEST_P(SpeciesLUT, Consistency) {
   }
 }
 
+// this test checks inferred species info
+TEST_P(SpeciesInfo, PropertyCheckFreeElectron) {
+  using GRIMPL_NS::ChemSpeciesProps;
+
+  // check the entry for free electrons
+  std::optional<uint16_t> maybe_e_id = species_info->name_map.find("e");
+  if (!maybe_e_id.has_value()) {
+    GTEST_FAIL() << "unable to lookup id associated with 'e'";
+  }
+  int electron_id = maybe_e_id.value();
+  const ChemSpeciesProps& prop = species_info->chem_species_props[electron_id];
+  EXPECT_EQ(prop.elementary_charge, -1);
+  EXPECT_FALSE(prop.composed_of_nuclides());
+  EXPECT_EQ(prop.mass_factor, GRIMPL_NS::mass_factor::e);
+}
+
+TEST_P(SpeciesInfo, PropertyCheckSingleNuclide) {
+  using GRIMPL_NS::ChemSpeciesProps;
+  // let's spot check a few normal cases and then explicitly check each special
+  // species that is composed of nuclides
+
+  struct SingleNuclideChecks {
+    const char* name;
+    const char* single_nuclide;
+    int charge;
+  };
+
+  const SingleNuclideChecks cases_to_check[] = {
+      {"HI", "H", 0},
+      {"HeIII", "He", 2},
+      {"DII", "D", 1},
+      {"CI", "C", 0},
+
+      // special primordial cases
+      {"HM", "H", -1},
+      {"DM", "D", -1},
+
+      // special metal cases
+      {"Mg", "Mg", 0},
+      {"Al", "Al", 0},
+      {"S", "S", 0},
+      {"Fe", "Fe", 0},
+  };
+
+  const GRIMPL_NS::NuclideModel& nuclide_model = species_info->nuclide_model;
+
+  for (const SingleNuclideChecks& c : cases_to_check) {
+    std::optional<uint16_t> maybe_species_id =
+        species_info->name_map.find(c.name);
+    if (!maybe_species_id) {
+      continue;
+    }
+    int species_id = maybe_species_id.value();
+    const ChemSpeciesProps& prop = species_info->chem_species_props[species_id];
+
+    EXPECT_TRUE(prop.composed_of_nuclides())
+        << "properties of \"" << c.name
+        << "\" should indicate it's composed of nuclides";
+    EXPECT_EQ(prop.elementary_charge, c.charge)
+        << "properties of \"" << c.name << "\" reports wrong charge";
+
+    std::optional<uint16_t> maybe_nuclide_id =
+        nuclide_model.symbol_map().find(c.single_nuclide);
+    if (!maybe_nuclide_id.has_value()) {
+      GTEST_FAIL() << "unable to lookup nuclide id associated with the \""
+                   << c.single_nuclide << "\" nuclide";
+    }
+    uint16_t nuclide_id = maybe_nuclide_id.value();
+
+    EXPECT_EQ(prop.mass_factor, nuclide_model.get(nuclide_id).mass_factor)
+        << "properties of \"" << c.name << "\" report the wrong mass_factor";
+    if (prop.coef_nuclide_id_pairs.size() != 1) {
+      ADD_FAILURE()
+          << "properties of \"" << c.name << "\" indicate it's composed of "
+          << prop.coef_nuclide_id_pairs.size()
+          << " different types of nuclides. It's only composed of 1 type";
+    } else if (prop.coef_nuclide_id_pairs[0].first != 1 ||
+               prop.coef_nuclide_id_pairs[0].second != nuclide_id) {
+      std::string tmp = nuclide_model.symbol_map().inverse_find(
+          prop.coef_nuclide_id_pairs[0].second);
+      ADD_FAILURE() << "properties of \"" << c.name
+                    << "\" indicate it's composed of "
+                    << prop.coef_nuclide_id_pairs[0].first << " \"" << tmp
+                    << "\" nuclide(s). It's actually composed of 1 \""
+                    << c.single_nuclide << "\" nuclide";
+    }
+  }
+}
+
 // we are intentionally trying to be very rigorous about covering as many cases
 // as we possibly can (any errors that might arise here would be quite annoying
 // to debug if we don't catch them here)
@@ -338,4 +440,4 @@ static constexpr std::array<ParameterSpec, 20> param_spec_arr({
     {3, 1, 3}, {4, 0, 0}, {4, 1, 0}, {4, 1, 1}, {4, 1, 2}, {4, 1, 3},
 });
 INSTANTIATE_TEST_SUITE_P(,  // First argument deliberately left empty
-                         SpeciesLUT, testing::ValuesIn(param_spec_arr));
+                         SpeciesInfo, testing::ValuesIn(param_spec_arr));
