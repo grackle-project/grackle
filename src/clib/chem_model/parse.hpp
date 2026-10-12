@@ -13,6 +13,7 @@
 #define CHEM_MODEL_PARSE_HPP
 
 #include <cstdint>
+#include <limits>  // std::numeric_limits
 #include <string>
 #include <string_view>
 #include <tuple>  // std::tie
@@ -75,39 +76,42 @@ constexpr bool isdigit_(char c) { return '0' <= c && c <= '9'; }
 inline constexpr Expected<std::pair<std::size_t, int>, Err> roman_from_right(
     std::string_view s, std::size_t min_start = 0,
     std::size_t s_stop = std::string_view::npos) {
-  // summarizes roman numeral table for a given decimal place
-  struct DecimalInfo {
-    char tally;          // <- acts like tally marks
-    char tally_cluster;  // <- acts like the 5-tally mark
-    int pow_of_10;
-  };
-  constexpr unsigned N = 3;
-  DecimalInfo di_table[N] = {{'I', 'V', 1}, {'X', 'L', 10}, {'C', '\0', 100}};
-
+  // pos tracks the most recently parsed character in the numeral
   std::size_t pos = std::min(s_stop, s.size());
-  int total = 0;
 
-  for (unsigned row = 0; row < N - 1 && pos > min_start; row++) {
-    const DecimalInfo& di = di_table[row];
-    bool maybe_subtractive = (pos >= min_start + 1) && (s[pos - 2] == di.tally);
+  // lambda function that checks if `c` is the last character before `pos`
+  auto is_last = [&](char c) {
+    return (pos >= (min_start + 1) && s[pos - 1] == c);
+  };
 
-    if (maybe_subtractive && s[pos - 1] == di_table[row + 1].tally) {
-      total += 9 * di.pow_of_10;
+  // lambda function that reads all symbols (i.e. updates `pos` accordingly)
+  // that contribute to a single decimal place digit & returns the digit
+  auto read_decimal_digit = [&](char sym_1, char sym_5, char sym_10) -> int {
+    bool maybe_subtractive = (pos >= (min_start + 2)) && (s[pos - 2] == sym_1);
+    if (maybe_subtractive && is_last(sym_10)) {
       pos -= 2;
-    } else if (maybe_subtractive && s[pos - 1] == di.tally_cluster) {
-      total += 4 * di.pow_of_10;
+      return 9;
+    } else if (maybe_subtractive && is_last(sym_5)) {
       pos -= 2;
+      return 4;
     } else {
-      for (int c = 0; c < 3 && pos > min_start && di.tally == s[pos - 1]; c++) {
-        total += di.pow_of_10;
+      int sum = 0;
+      for (int i = 0; i < 3 && is_last(sym_1); i++) {
         pos--;
+        sum++;
       }
-      if (pos > min_start && s[pos - 1] == di.tally_cluster) {
-        total += 5 * di.pow_of_10;
+      if (is_last(sym_5)) {
         pos--;
+        sum += 5;
       }
+      return sum;
     }
-  }
+  };
+
+  int total = 0;
+  total += read_decimal_digit('I', 'V', 'X');
+  total += 10 * read_decimal_digit('X', 'L', 'C');
+  // total += 100 * read_decimal_digit('C', 'D', 'M');  // <- not needed!
 
   if (total == 0) {
     return Unexpected(Err::InvalidChar(s.size() - 1));
