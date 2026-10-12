@@ -153,15 +153,7 @@ public:
   }
 
   /// @brief build the resulting species initialization information
-  ///
-  /// @note
-  /// The builder should definitely be responsible for building the
-  /// @ref NuclideModel. It doesn't really make sense to have that object stand
-  /// alone (it's primarily useful in the context of the other members of
-  /// @ref SpInitializeInfo) and if we ever want to support customization, this
-  /// builder seems like the natural place to do it
-  Expected<SpInitializeInfo, Error> build(
-      const NuclideModel& nuclide_model) const;
+  Expected<SpInitializeInfo, Error> build() const;
 };
 
 }  // namespace GRIMPL_NAMESPACE_DECL

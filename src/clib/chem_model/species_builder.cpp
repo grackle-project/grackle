@@ -102,11 +102,14 @@ static InferRslt infer_(SpecialCaseSpecies s, const char*& species_name,
 
 }  // anonymous namespace
 
-Expected<SpInitializeInfo, Error> SpeciesBuilder::build(
-    const NuclideModel& nuclide_model) const {
+Expected<SpInitializeInfo, Error> SpeciesBuilder::build() const {
   if (primordial_vec_.empty() && metal_vec_.empty() && dust_vec_.empty()) {
     return SpInitializeInfo();  // <- return species maps that are empty
   }
+
+  // construct the nuclide model (in the future, the builder could conceivably
+  // support customizing the model)
+  NuclideModel nuclide_model;
 
   std::vector<SpKind> sp_kinds;
   std::vector<int> sp_kind_counts;
@@ -215,7 +218,8 @@ Expected<SpInitializeInfo, Error> SpeciesBuilder::build(
 
   return SpInitializeInfo{.kind_map = std::move(kind_map_rslt).value(),
                           .name_map = std::move(name_map_rslt).value(),
-                          .chem_species_props = std::move(chem_species_props)};
+                          .chem_species_props = std::move(chem_species_props),
+                          .nuclide_model = std::move(nuclide_model)};
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL

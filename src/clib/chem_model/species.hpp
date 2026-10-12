@@ -99,6 +99,9 @@ struct SpInitializeInfo {
   /// @note
   /// At the time of writing this does **NOT** specify entries for dust species
   ChemSpeciesPropsVec chem_species_props;
+
+  /// @brief associates properties with each "nuclide symbol"
+  NuclideModel nuclide_model;
 };
 
 /// @brief infer the species properties
@@ -113,7 +116,7 @@ struct SpInitializeInfo {
 /// other dust models are implemented that affect the dynamical species fields)
 Expected<SpInitializeInfo, Error> infer_species_maps(
     int primordial_chemistry, int metal_chemistry,
-    const GrainSpeciesInfo* grain_info, const NuclideModel& nuclide_model);
+    const GrainSpeciesInfo* grain_info);
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
