@@ -14,6 +14,8 @@
 #define CHEM_MODEL_CHEMSP_PROPS_HPP
 
 #include <cstdint>
+#include <map>
+
 #include "chem_model/nuclide_model.hpp"
 #include "chem_model/parse.hpp"
 #include "phys_constants.hpp"
@@ -21,6 +23,7 @@
 #include "support/error.hpp"
 #include "support/expected.hpp"
 #include "support/inplace_vector.hpp"
+#include "support/status_reporting.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -122,6 +125,51 @@ public:
           out.elementary_charge, n_protons));
     }
     return out;
+  }
+};
+
+// forward declaration of SpeciesBuilder
+class SpeciesBuilder;
+
+/// @brief a vector like-container for accessing a @ref ChemSpeciesProps
+///
+/// Essentially, this lives alongside a @ref FrozenKeyIdxBiMap that is in
+/// charge of mapping (bidirectionally) between species names and integer ids.
+/// This container maps between the integer and chemical species properties.
+///
+/// This looks pretty silly (that's because it is silly).
+/// - Essentially, it implements a random-access method for accessing a
+///   @ref ChemSpeciesProps object
+/// - In the future, the intention is just to replace this with a
+///   ``std::vector<ChemSpeciesProps>``
+/// - But we can't do that until we completely remove @ref SpLUT from the
+///   codebase since there may be some unused species ids (e.g. if using
+///   `primordial_chemistry < 4` and `metal_chemistry==1`)
+class ChemSpeciesPropsVec {
+  // declare SpeciesBuilder as a friend (it constructs objects of this type)
+  friend SpeciesBuilder;
+
+  using MapType_ = std::map<std::size_t, ChemSpeciesProps>;
+
+  // actually tracks the data
+  std::map<std::size_t, ChemSpeciesProps> m_;
+
+public:
+  /// @brief Overloads array subscript operation
+  ///
+  /// The caller is expected to know ahead of time whether an index is valid.
+  /// We return a fatal error for debugging purposes (in the future, when this
+  /// type is converted to a regular std::vector<ChemSpeciesProps>, this error
+  /// check will no longer happen
+  ///
+  /// @note For less-experienced C++ developers, this is like python's
+  /// `__getitem__` magic method
+  const ChemSpeciesProps& operator[](std::size_t idx) const {
+    std::map<std::size_t, ChemSpeciesProps>::const_iterator tmp = m_.find(idx);
+    if (tmp == m_.cend()) {
+      GR_INTERNAL_ERROR("programming error: %zu is an invalid index", idx);
+    }
+    return tmp->second;
   }
 };
 
