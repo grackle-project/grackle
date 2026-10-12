@@ -62,6 +62,8 @@ public:
 
   constexpr std::size_t size() const { return len_; }
   static constexpr std::size_t capacity() noexcept { return N; }
+  constexpr bool empty() const { return len_ == 0; }
+
   // these are used for iterating
   constexpr iterator begin() { return data_; }
   constexpr const_iterator begin() const { return data_; }

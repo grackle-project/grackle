@@ -56,11 +56,20 @@ public:
   static constexpr Err Custom(std::size_t pos, const char* descr) noexcept {
     return {pos, descr};
   }
+
+  static constexpr Err DanglingCoef(std::size_t pos) noexcept {
+    return {pos, "the coefficient isn't associated with a name"};
+  }
+
+  static constexpr Err TooManySpecies(std::size_t pos) noexcept {
+    return {pos, "too many species in the reaction equation"};
+  }
 };
 
 // these functions assumes that c is an ascii character
 constexpr bool islower_(char c) { return 'a' <= c && c <= 'z'; }
 constexpr bool isupper_(char c) { return 'A' <= c && c <= 'Z'; }
+constexpr bool isletter_(char c) { return islower_(c) || isupper_(c); }
 constexpr bool isdigit_(char c) { return '0' <= c && c <= '9'; }
 
 /// @brief try to parse a right-justified roman numeral from the string @p s
@@ -245,6 +254,133 @@ constexpr inline Expected<FormulaComps, Err> formula_comps(
     }
   }
 
+  return comps;
+}
+
+/// @brief try to extract characters corresponding to a species name
+///
+/// This function deliberately doesn't check whether the species name is known
+///
+/// @param[in]  s string to be parsed
+/// @param[out] name is updated (only upon success) to hold the extracted chars
+/// @param[in]  pos Index in @p s of where the symbol starts.
+/// @param[in]  s_stop Index in @p s where the substring ends
+/// @returns A pair holding the error object and the first position after the
+///     parsed potential species name. If the error object denotes an error,
+///     then the second element holds garbage
+constexpr Expected<std::pair<std::size_t, std::string_view>, Err>
+potential_species_name(std::string_view s, std::size_t pos = 0,
+                       std::size_t s_stop = std::string_view::npos) {
+  std::size_t stop = std::min(s_stop, s.size());
+
+  auto valid_following_char = [](char c) -> bool {
+    return isletter_(c) || isdigit_(c) || (c == '_');
+  };
+
+  if (!isletter_(s[pos])) {
+    return Unexpected(Err::InvalidChar(pos));
+  }
+
+  std::size_t start = pos;
+  pos++;
+  while (pos < stop && valid_following_char(s[pos])) {
+    pos++;
+  }
+  return std::pair<std::size_t, std::string_view>(pos,
+                                                  s.substr(start, pos - start));
+}
+
+constexpr std::size_t next_non_space_(
+    std::string_view s, std::size_t pos = 0,
+    std::size_t s_stop = std::string_view::npos) {
+  std::size_t stop = std::min(s_stop, s.size());
+  for (; pos < stop; pos++) {
+    char c = s[pos];
+    if (c != ' ' && c != '\t' && c != '\n') {
+      break;
+    }
+  }
+  return pos;
+}
+
+inline constexpr std::size_t MaxSpeciesPerEqnSide = 4;
+
+/// Represents the parsed components of a reaction formula
+struct RxnEqnComps {
+  /// tracks coefficients, species-name pairs for the LHS of the equation
+  InplaceVector<SViewCoefPair, MaxSpeciesPerEqnSide> lhs_sp_coef_pairs;
+
+  /// tracks coefficients, species-name pairs for the RHS of the equation
+  InplaceVector<SViewCoefPair, MaxSpeciesPerEqnSide> rhs_sp_coef_pairs;
+};
+
+/// @brief try to parse a reaction equation.
+///
+/// @param[in]  s string to be parsed
+/// @returns A pair holding the error object and the first position after the
+///     parsed potential species name. If the error object denotes an error,
+///     then the second element holds garbage
+constexpr Expected<RxnEqnComps, Err> rxn_eqn(std::string_view s) {
+  std::size_t stop = s.size();
+  if (stop == 0) {
+    return Unexpected(Err::InvalidChar(0));
+  }
+
+  RxnEqnComps comps;
+  std::size_t pos = 0;
+
+  // iterate over both sides of the equation
+  for (int side = 0; side < 2; side++) {
+    InplaceVector<SViewCoefPair, MaxSpeciesPerEqnSide>& coef_sp_pairs =
+        (side == 0) ? comps.lhs_sp_coef_pairs : comps.rhs_sp_coef_pairs;
+
+    while (true) {
+      if (!coef_sp_pairs.empty() && (pos < stop) && s[pos] == '+') {
+        pos++;
+        pos = next_non_space_(s, pos, stop);  // skip any subsequent whitespace
+      } else if (!coef_sp_pairs.empty()) {
+        break;
+      }
+
+      // determine coefficient associated with the next species name
+      Expected<std::pair<std::size_t, uint8_t>, Err> rv_a =
+          positive_int<uint8_t>(s, pos, stop);
+      if (!rv_a.has_value() && !rv_a.error().is_InvalidChar()) {
+        return Unexpected(rv_a.error());
+      }
+      uint8_t coef;
+      std::tie(pos, coef) = rv_a.value_or({pos, 1});
+      pos = next_non_space_(s, pos, stop);  // skip any subsequent whitespace
+
+      // now try to parse the species name
+      Expected<std::pair<std::size_t, std::string_view>, Err> rv_b =
+          potential_species_name(s, pos, stop);
+      if (!rv_b.has_value()) {
+        return Unexpected(rv_b.error());
+      }
+      std::string_view spname;
+      std::tie(pos, spname) = rv_b.value();
+
+      // record the subscript-symbol pair
+      if (!coef_sp_pairs.try_emplace_back(spname, coef)) {
+        return Unexpected(Err::TooManySpecies(pos));
+      }
+      pos = next_non_space_(s, pos, stop);  // skip any subsequent whitespace
+    }
+
+    if (side == 0) {  // check for the arrow
+      if ((pos + 1) < stop && s[pos] == '-' && s[pos + 1] == '>') {
+        pos += 2;
+        pos = next_non_space_(s, pos, stop);  // skip any subsequent whitespace
+      } else {
+        return Unexpected(Err::InvalidChar(pos));
+      }
+    }
+  }
+
+  if (pos != stop) {
+    return Unexpected(Err::InvalidChar(pos));
+  }
   return comps;
 }
 
