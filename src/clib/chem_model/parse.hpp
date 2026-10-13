@@ -153,6 +153,9 @@ constexpr Expected<std::pair<std::size_t, IntegerT>, Err> positive_int(
     }
     accum = accum * static_cast<IntegerT>(10) + digit;
   }
+  if (accum == 0) {
+    return Unexpected(Err::InvalidChar(orig));
+  }
   return std::pair<std::size_t, IntegerT>(pos, accum);
 }
 
