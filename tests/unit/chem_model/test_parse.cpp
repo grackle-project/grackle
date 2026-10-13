@@ -88,6 +88,17 @@ TEST(FormulaComps, IonizedDiatomicSpecies) {
   EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(2, "H"));
 }
 
+TEST(FormulaComps, MolecularSpeciesNoSubscript) {
+  // this scenario previously had a bug
+  std::string s = "HDI";
+  ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
+  ASSERT_TRUE(rslt.has_value());
+  EXPECT_EQ(rslt->roman_numeral_val, 1);
+  ASSERT_EQ(rslt->subscript_symbol_pairs.size(), 2);
+  EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(1, "H"));
+  EXPECT_EQ(rslt->subscript_symbol_pairs[1], CoefSViewPair(1, "D"));
+}
+
 TEST(FormulaComps, MoleculeSpecies) {
   std::string s = "H2OII";
   ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
