@@ -12,86 +12,26 @@
 
 #include "chem_model/species.hpp"
 #include "chem_model/species_builder.hpp"
+#include "support/expected.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
 Expected<SpInitializeInfo, Error> infer_species_maps(
     int primordial_chemistry, int metal_chemistry,
     const GrainSpeciesInfo* grain_info) {
-  SpeciesBuilder builder;
-
-  // configure the primordial species
-  // ================================
   if ((primordial_chemistry == 0) &&
       (metal_chemistry > 0 || grain_info != nullptr)) {
     return Unexpected(Error::msgf(
         "can't have metal or grain species if primordial_chemistry==0"));
   }
 
-  // a case could be made for introducing a method for introducing a method
-  // (perhaps called `SpeciesBuilder::primordial_from_primordial_chem`) that
-  // implements this logic for adding the primordial species based on the value
-  // of the primordial_chemistry parameter
-  if (primordial_chemistry >= 1) {
-    builder.chemical<SpKind::PRIMORDIAL>(SpecialCaseSpecies::e)
-        .chemical<SpKind::PRIMORDIAL>("HI")
-        .chemical<SpKind::PRIMORDIAL>("HII")
-        .chemical<SpKind::PRIMORDIAL>("HeI")
-        .chemical<SpKind::PRIMORDIAL>("HeII")
-        .chemical<SpKind::PRIMORDIAL>("HeIII");
+  // configure primordial and metal species from the preset
+  Expected<SpeciesBuilder, Error> tmp =
+      SpeciesBuilder::from_preset(primordial_chemistry, metal_chemistry);
+  if (!tmp.has_value()) {
+    return Unexpected(tmp.error());
   }
-  if (primordial_chemistry >= 2) {
-    builder.chemical<SpKind::PRIMORDIAL>(SpecialCaseSpecies::HM)
-        .chemical<SpKind::PRIMORDIAL>("H2I")
-        .chemical<SpKind::PRIMORDIAL>("H2II");
-  }
-  if (primordial_chemistry >= 3) {
-    builder.chemical<SpKind::PRIMORDIAL>("DI")
-        .chemical<SpKind::PRIMORDIAL>("DII")
-        .chemical<SpKind::PRIMORDIAL>("HDI");
-  }
-  if (primordial_chemistry >= 4) {
-    builder.chemical<SpKind::PRIMORDIAL>(SpecialCaseSpecies::DM)
-        .chemical<SpKind::PRIMORDIAL>("HDII")
-        .chemical<SpKind::PRIMORDIAL>("HeHII");
-  }
-  if (primordial_chemistry > 4 || primordial_chemistry < 0) {
-    return Unexpected(Error::msgf("invalid primordial_chemsitry value: %d",
-                                  primordial_chemistry));
-  }
-
-  // configure metal species pertaining to the metal_chemistry flag
-  // ==============================================================
-  // a case could be made for introducing a method for introducing a method
-  // (perhaps called `SpeciesBuilder::metal_from_metal_chem`) that
-  // implements this logic for adding the primordial species based on the value
-  // of the metal_chemistry parameter
-  if (metal_chemistry == 0) {
-    // do nothing!
-  } else if (metal_chemistry == 1) {
-    builder.chemical<SpKind::METAL>("CI")
-        .chemical<SpKind::METAL>("CII")
-        .chemical<SpKind::METAL>("COI")
-        .chemical<SpKind::METAL>("CO2I")
-        .chemical<SpKind::METAL>("OI")
-        .chemical<SpKind::METAL>("OHI")
-        .chemical<SpKind::METAL>("H2OI")
-        .chemical<SpKind::METAL>("O2I")
-        .chemical<SpKind::METAL>("SiI")
-        .chemical<SpKind::METAL>("SiOI")
-        .chemical<SpKind::METAL>("SiO2I")
-        .chemical<SpKind::METAL>("CHI")
-        .chemical<SpKind::METAL>("CH2I")
-        .chemical<SpKind::METAL>("COII")
-        .chemical<SpKind::METAL>("OII")
-        .chemical<SpKind::METAL>("OHII")
-        .chemical<SpKind::METAL>("H2OII")
-        .chemical<SpKind::METAL>("H3OII")
-        .chemical<SpKind::METAL>("O2II");
-  } else {
-    return Unexpected(
-        Error::msgf("invalid metal_chemistry value: %d", metal_chemistry));
-  }
+  SpeciesBuilder builder = std::move(tmp).value();
 
   // perform configurations based dust chemistry
   // ===========================================

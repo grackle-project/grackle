@@ -30,6 +30,74 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
+Expected<SpeciesBuilder, Error> SpeciesBuilder::from_preset(
+    int primordial_chemistry, int metal_chemistry) {
+  SpeciesBuilder builder;
+  // in this function, we're going to hold ourselves to just use
+  // SpeciesBuilder's public interface functions
+  // -> the one exception is that we will reserve space in the underlying
+  //    vectors to reduce reallocations
+  builder.primordial_vec_.reserve(PrimordialSpLUT::NUM_ENTRIES);
+  builder.metal_vec_.reserve(MetalSpLUT::NUM_ENTRIES);
+
+  if (primordial_chemistry >= 1) {
+    builder.chemical<SpKind::PRIMORDIAL>(SpecialCaseSpecies::e)
+        .chemical<SpKind::PRIMORDIAL>("HI")
+        .chemical<SpKind::PRIMORDIAL>("HII")
+        .chemical<SpKind::PRIMORDIAL>("HeI")
+        .chemical<SpKind::PRIMORDIAL>("HeII")
+        .chemical<SpKind::PRIMORDIAL>("HeIII");
+  }
+  if (primordial_chemistry >= 2) {
+    builder.chemical<SpKind::PRIMORDIAL>(SpecialCaseSpecies::HM)
+        .chemical<SpKind::PRIMORDIAL>("H2I")
+        .chemical<SpKind::PRIMORDIAL>("H2II");
+  }
+  if (primordial_chemistry >= 3) {
+    builder.chemical<SpKind::PRIMORDIAL>("DI")
+        .chemical<SpKind::PRIMORDIAL>("DII")
+        .chemical<SpKind::PRIMORDIAL>("HDI");
+  }
+  if (primordial_chemistry >= 4) {
+    builder.chemical<SpKind::PRIMORDIAL>(SpecialCaseSpecies::DM)
+        .chemical<SpKind::PRIMORDIAL>("HDII")
+        .chemical<SpKind::PRIMORDIAL>("HeHII");
+  }
+  if (primordial_chemistry > 4 || primordial_chemistry < 0) {
+    return Unexpected(Error::msgf("invalid primordial_chemsitry value: %d",
+                                  primordial_chemistry));
+  }
+
+  if (metal_chemistry == 0) {
+    // do nothing!
+  } else if (metal_chemistry == 1) {
+    builder.chemical<SpKind::METAL>("CI")
+        .chemical<SpKind::METAL>("CII")
+        .chemical<SpKind::METAL>("COI")
+        .chemical<SpKind::METAL>("CO2I")
+        .chemical<SpKind::METAL>("OI")
+        .chemical<SpKind::METAL>("OHI")
+        .chemical<SpKind::METAL>("H2OI")
+        .chemical<SpKind::METAL>("O2I")
+        .chemical<SpKind::METAL>("SiI")
+        .chemical<SpKind::METAL>("SiOI")
+        .chemical<SpKind::METAL>("SiO2I")
+        .chemical<SpKind::METAL>("CHI")
+        .chemical<SpKind::METAL>("CH2I")
+        .chemical<SpKind::METAL>("COII")
+        .chemical<SpKind::METAL>("OII")
+        .chemical<SpKind::METAL>("OHII")
+        .chemical<SpKind::METAL>("H2OII")
+        .chemical<SpKind::METAL>("H3OII")
+        .chemical<SpKind::METAL>("O2II");
+  } else {
+    return Unexpected(
+        Error::msgf("invalid metal_chemistry value: %d", metal_chemistry));
+  }
+
+  return builder;
+}
+
 namespace {  // stuff inside an anonymous namespace is local to this file
 
 // these are dummy names that won't collide with known species names

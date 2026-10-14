@@ -126,11 +126,17 @@ class SpeciesBuilder {
   }
 
 public:
-  SpeciesBuilder() {
-    primordial_vec_.reserve(PrimordialSpLUT::NUM_ENTRIES);
-    metal_vec_.reserve(MetalSpLUT::NUM_ENTRIES);
-    dust_vec_.reserve(DustSpLUT::NUM_ENTRIES);
-  }
+  SpeciesBuilder() = default;
+
+  /// @brief factory method that creates a preset builder configuration
+  ///
+  /// The factory method will configure the builder with primordial & chemical
+  /// species one of the standard presets encoded by the arguments. Both
+  /// arguments come directly from the @ref chemistry_data struct.
+  ///
+  /// The caller is free to mutate the returned builder object
+  static Expected<SpeciesBuilder, Error> from_preset(int primordial_chemistry,
+                                                     int metal_chemistry);
 
   /// @brief specify a standard primordial or chemical species
   template <SpKind kind>
