@@ -20,6 +20,9 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "chem_model/nuclide_model.hpp"
+#include "grtestutils/googletest/chem_model_tools.hpp"
+
 #include "chem_model/chemsp_props.hpp"
 #include "chem_model/species.hpp"
 #include "dust/grain_species_info.hpp"
@@ -341,7 +344,7 @@ TEST_P(SpeciesInfo, LUTConsistency) {
   }
 }
 
-// this test checks inferred species info
+// check inferred species properties properties free electrons
 TEST_P(SpeciesInfo, PropertyCheckFreeElectron) {
   using GRIMPL_NS::ChemSpeciesProps;
 
@@ -357,76 +360,58 @@ TEST_P(SpeciesInfo, PropertyCheckFreeElectron) {
   EXPECT_EQ(prop.mass_factor, GRIMPL_NS::mass_factor::e);
 }
 
-TEST_P(SpeciesInfo, PropertyCheckSingleNuclide) {
+// check inferred species properties for assorted species
+TEST_P(SpeciesInfo, PropertyCheckAssorted) {
   using GRIMPL_NS::ChemSpeciesProps;
-  // let's spot check a few normal cases and then explicitly check each special
-  // species that is composed of nuclides
+  using grtest::HasChemProps;
 
-  struct SingleNuclideChecks {
-    const char* name;
-    const char* single_nuclide;
-    int charge;
-  };
+  ParameterSpec spec = GetParam();
+  const GRIMPL_NS::NuclideModel& nm = species_info->nuclide_model;
 
-  const SingleNuclideChecks cases_to_check[] = {
-      {"HI", "H", 0},
-      {"HeIII", "He", 2},
-      {"DII", "D", 1},
-      {"CI", "C", 0},
+  // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
+  using check_triple =
+      std::tuple<const char*, testing::Matcher<ChemSpeciesProps>, bool>;
+  const check_triple cases_to_check[] = {
+      // assorted normal primordial cases
+      {"HI", HasChemProps(nm, 0, {{"H", 1}}), spec.primordial_chemistry >= 1},
+      {"HeIII", HasChemProps(nm, 2, {{"He", 1}}),
+       spec.primordial_chemistry >= 1},
+      {"H2I", HasChemProps(nm, 0, {{"H", 2}}), spec.primordial_chemistry >= 2},
+      {"DII", HasChemProps(nm, 1, {{"D", 1}}), spec.primordial_chemistry >= 3},
+
+      // assorted normal metal cases
+      {"CI", HasChemProps(nm, 0, {{"C", 1}}), spec.metal_chemistry >= 1},
+      {"OHI", HasChemProps(nm, 0, {{"O", 1}, {"H", 1}}),
+       spec.metal_chemistry >= 1},
+      {"H2OII", HasChemProps(nm, 1, {{"H", 2}, {"O", 1}}),
+       spec.metal_chemistry >= 1},
 
       // special primordial cases
-      {"HM", "H", -1},
-      {"DM", "D", -1},
+      {"HM", HasChemProps(nm, -1, {{"H", 1}}), spec.primordial_chemistry >= 2},
+      {"DM", HasChemProps(nm, -1, {{"D", 1}}), spec.primordial_chemistry >= 4},
 
       // special metal cases
-      {"Mg", "Mg", 0},
-      {"Al", "Al", 0},
-      {"S", "S", 0},
-      {"Fe", "Fe", 0},
-  };
+      {"Mg", HasChemProps(nm, 0, {{"Mg", 1}}), spec.dust_species >= 1},
+      {"Al", HasChemProps(nm, 0, {{"Al", 1}}), spec.dust_species >= 2},
+      {"S", HasChemProps(nm, 0, {{"S", 1}}), spec.dust_species >= 2},
+      {"Fe", HasChemProps(nm, 0, {{"Fe", 1}}), spec.dust_species >= 2}};
+  // NOLINTEND(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-  const GRIMPL_NS::NuclideModel& nuclide_model = species_info->nuclide_model;
-
-  for (const SingleNuclideChecks& c : cases_to_check) {
-    std::optional<uint16_t> maybe_species_id =
-        species_info->name_map.find(c.name);
-    if (!maybe_species_id) {
+  for (const check_triple& triple : cases_to_check) {
+    if (!std::get<2>(triple)) {
       continue;
     }
-    int species_id = maybe_species_id.value();
-    const ChemSpeciesProps& prop = species_info->chem_species_props[species_id];
 
-    EXPECT_TRUE(prop.composed_of_nuclides())
-        << "properties of \"" << c.name
-        << "\" should indicate it's composed of nuclides";
-    EXPECT_EQ(prop.elementary_charge, c.charge)
-        << "properties of \"" << c.name << "\" reports wrong charge";
-
-    std::optional<uint16_t> maybe_nuclide_id =
-        nuclide_model.symbol_map().find(c.single_nuclide);
-    if (!maybe_nuclide_id.has_value()) {
-      GTEST_FAIL() << "unable to lookup nuclide id associated with the \""
-                   << c.single_nuclide << "\" nuclide";
+    const char* species_name = std::get<0>(triple);
+    std::optional<uint16_t> tmp = species_info->name_map.find(species_name);
+    if (!tmp.has_value()) {
+      ADD_FAILURE() << '"' << species_name << "\" missing from name_map";
+      continue;
     }
-    uint16_t nuclide_id = maybe_nuclide_id.value();
-
-    EXPECT_EQ(prop.mass_factor, nuclide_model.get(nuclide_id).mass_factor)
-        << "properties of \"" << c.name << "\" report the wrong mass_factor";
-    if (prop.nuclide_id_coef_pairs.size() != 1) {
-      ADD_FAILURE()
-          << "properties of \"" << c.name << "\" indicate it's composed of "
-          << prop.nuclide_id_coef_pairs.size()
-          << " different types of nuclides. It's only composed of 1 type";
-    } else if (prop.nuclide_id_coef_pairs[0].coef != 1 ||
-               prop.nuclide_id_coef_pairs[0].id != nuclide_id) {
-      std::string tmp = nuclide_model.symbol_map().inverse_find(
-          prop.nuclide_id_coef_pairs[0].id);
-      ADD_FAILURE() << "properties of \"" << c.name
-                    << "\" indicate it's composed of "
-                    << prop.nuclide_id_coef_pairs[0].coef << " \"" << tmp
-                    << "\" nuclide(s). It's actually composed of 1 \""
-                    << c.single_nuclide << "\" nuclide";
-    }
+    int species_id = tmp.value();
+    const testing::Matcher<ChemSpeciesProps>& matcher = std::get<1>(triple);
+    EXPECT_THAT(species_info->chem_species_props[species_id], matcher)
+        << '"' << species_name << "\" species has incorrect properties";
   }
 }
 
