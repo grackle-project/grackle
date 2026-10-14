@@ -15,9 +15,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <cstdint>
 #include <ostream>
 #include <string>
 
+#include "chem_model/parse.hpp"
 #include "chem_model/chemsp_props.hpp"
 #include "support/inplace_vector.hpp"
 
@@ -47,10 +49,33 @@ namespace grtest {
 struct NameCoefPair {
   std::string name;
   int64_t coef;
+
+  bool operator==(const NameCoefPair&) const = default;
 };
 
-// a polymorphic matcher for comparing a vector of NameCoefPair objects
-// against a collection of IdCoefPair objects
+inline void PrintTo(const NameCoefPair& p, std::ostream* os) {
+  *os << "{name=" << p.name << ",coef=" << int64_t(p.coef) << '}';
+}
+
+// allow comparisons between NameCoefPair and GRIMPL_NS::parse::SViewCoefPair
+inline bool operator==(const NameCoefPair& lhs,
+                       const GRIMPL_NS::parse::SViewCoefPair& rhs) {
+  return lhs.name == rhs.first && lhs.coef == static_cast<int64_t>(rhs.second);
+}
+inline bool operator==(const GRIMPL_NS::parse::SViewCoefPair& lhs,
+                       const NameCoefPair& rhs) {
+  return rhs == lhs;
+}
+
+/// compares a NameCoefPair objects against a of GRIMPL_NS::IdCoefPair object
+///
+/// Without this, checking validity of a GRIMPL_NS::IdCoefPair is messy:
+/// - when specifying the expected value, you need to figure out what the
+///   expected id is (usually involves a function call or 2)
+/// - when there is an error, it can be hard to judge what went wrong from id
+///   values, alone
+///
+/// This works around both of these values by mapping between names and ids
 class NameCoefMatcher {
   GRIMPL_NS::FrozenKeyIdxBiMap name_map_;
   NameCoefPair ref_;
@@ -92,9 +117,11 @@ public:
     }
   }
 
-  // for the sake of convenience, the plan is to introduce a second overload of
-  // bool MatchAndExplain to handle an argument that directly specifies a
-  // name-map pair
+  // this overload mostly exists for completeness
+  bool MatchAndExplain(const ::GRIMPL_NS::parse::SViewCoefPair& pair,
+                       std::ostream* os) const {
+    return pair == ref_;
+  }
 
   // Describes the property of a value matching this matcher.
   void DescribeTo(std::ostream* os) const {
