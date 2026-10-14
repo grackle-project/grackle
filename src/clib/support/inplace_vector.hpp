@@ -33,6 +33,19 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// https://en.cppreference.com/cpp/container/inplace_vector
 template <class T, std::size_t N>
 class InplaceVector {
+public:
+  // these are type definitions that all standard library containers possess
+  // (we are defining these to make use of googletest machinery that depends
+  // on these typedefs)
+  using value_type = T;
+  using reference = T&;
+  using const_reference = T&;
+  using iterator = T*;
+  using const_iterator = const T*;
+  using difference_type = std::ptrdiff_t;
+  using size_type = std::size_t;
+
+private:
   std::size_t len_ = 0;
   T data_[N];
 
@@ -49,6 +62,11 @@ public:
 
   constexpr std::size_t size() const { return len_; }
   static constexpr std::size_t capacity() noexcept { return N; }
+  // these are used for iterating
+  constexpr iterator begin() { return data_; }
+  constexpr const_iterator begin() const { return data_; }
+  constexpr iterator end() { return begin() + len_; }
+  constexpr const_iterator end() const { return begin() + len_; }
 
   /// @brief try to construct an element in-place at the back
   ///

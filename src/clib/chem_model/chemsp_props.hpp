@@ -27,6 +27,11 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
+struct IdCoefPair {
+  uint16_t id;
+  uint8_t coef;
+};
+
 /// @brief An internal data structure used to track chemical species
 ///
 /// @note We could potentially track other properties like the actual particle
@@ -35,8 +40,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// other properties don't actually seem all that useful
 struct ChemSpeciesProps {
   /// tracks coefficient-nuclide pairs (if any) that make up the species
-  InplaceVector<std::pair<uint8_t, uint16_t>, parse::MaxSymsPerFormula>
-      coef_nuclide_id_pairs;
+  InplaceVector<IdCoefPair, parse::MaxSymsPerFormula> nuclide_id_coef_pairs;
 
   /// The elementary charge per particle
   ///
@@ -53,7 +57,7 @@ private:
 
 public:
   /// @brief check whether the species is composed of nuclides
-  bool composed_of_nuclides() const { return coef_nuclide_id_pairs.size() > 0; }
+  bool composed_of_nuclides() const { return nuclide_id_coef_pairs.size() > 0; }
 
   // Define the factory methods
   // --------------------------
@@ -90,8 +94,8 @@ public:
     ChemSpeciesProps out;
     out.mass_factor = 0.0;
     int n_protons = 0;
-    for (std::size_t i = 0; i < comps.subscript_symbol_pairs.size(); i++) {
-      auto [coef, name] = comps.subscript_symbol_pairs[i];
+    for (std::size_t i = 0; i < comps.symbol_subscript_pairs.size(); i++) {
+      auto [name, coef] = comps.symbol_subscript_pairs[i];
 
       // lookup the id associated with the nuclide specified by name
       std::optional<uint16_t> maybe_id = model.symbol_map().find(name);
@@ -108,10 +112,10 @@ public:
       // now, let's update total number of protons and update out
       n_protons += static_cast<int>(coef) * nuclide_prop.n_proton;
       out.mass_factor += static_cast<double>(coef) * nuclide_prop.mass_factor;
-      if (!out.coef_nuclide_id_pairs.try_emplace_back(coef, nuclide_id)) {
+      if (!out.nuclide_id_coef_pairs.try_emplace_back(nuclide_id, coef)) {
         // shouldn't be reachable since that max capacity should be identical
         return Unexpected(Error::msgf(
-            "coef_nuclide_id_pairs doesn't have adequate capacity to hold "
+            "nuclide_id_coef_pairs doesn't have adequate capacity to hold "
             "data for nuclide symbol %zu",
             i));
       }

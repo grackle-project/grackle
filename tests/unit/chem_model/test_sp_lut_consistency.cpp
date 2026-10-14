@@ -412,18 +412,18 @@ TEST_P(SpeciesInfo, PropertyCheckSingleNuclide) {
 
     EXPECT_EQ(prop.mass_factor, nuclide_model.get(nuclide_id).mass_factor)
         << "properties of \"" << c.name << "\" report the wrong mass_factor";
-    if (prop.coef_nuclide_id_pairs.size() != 1) {
+    if (prop.nuclide_id_coef_pairs.size() != 1) {
       ADD_FAILURE()
           << "properties of \"" << c.name << "\" indicate it's composed of "
-          << prop.coef_nuclide_id_pairs.size()
+          << prop.nuclide_id_coef_pairs.size()
           << " different types of nuclides. It's only composed of 1 type";
-    } else if (prop.coef_nuclide_id_pairs[0].first != 1 ||
-               prop.coef_nuclide_id_pairs[0].second != nuclide_id) {
+    } else if (prop.nuclide_id_coef_pairs[0].coef != 1 ||
+               prop.nuclide_id_coef_pairs[0].id != nuclide_id) {
       std::string tmp = nuclide_model.symbol_map().inverse_find(
-          prop.coef_nuclide_id_pairs[0].second);
+          prop.nuclide_id_coef_pairs[0].id);
       ADD_FAILURE() << "properties of \"" << c.name
                     << "\" indicate it's composed of "
-                    << prop.coef_nuclide_id_pairs[0].first << " \"" << tmp
+                    << prop.nuclide_id_coef_pairs[0].coef << " \"" << tmp
                     << "\" nuclide(s). It's actually composed of 1 \""
                     << c.single_nuclide << "\" nuclide";
     }
