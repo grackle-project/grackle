@@ -18,7 +18,7 @@
 
 using ExpectedFormulaComps =
     GRIMPL_NS::Expected<GRIMPL_NS::parse::FormulaComps, GRIMPL_NS::parse::Err>;
-using GRIMPL_NS::parse::CoefSViewPair;
+using GRIMPL_NS::parse::SViewCoefPair;
 
 TEST(FormulaCompsErrs, EmptyString) {
   EXPECT_FALSE(GRIMPL_NS::parse::formula_comps("").has_value());
@@ -38,8 +38,8 @@ TEST(FormulaComps, NeutralAtomicH) {
   ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
   ASSERT_TRUE(rslt.has_value());
   EXPECT_EQ(rslt->roman_numeral_val, 1);
-  ASSERT_EQ(rslt->subscript_symbol_pairs.size(), 1);
-  EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(1, "H"));
+  ASSERT_EQ(rslt->symbol_subscript_pairs.size(), 1);
+  EXPECT_EQ(rslt->symbol_subscript_pairs[0], SViewCoefPair("H", 1));
 }
 
 TEST(FormulaComps, Proton) {
@@ -48,8 +48,8 @@ TEST(FormulaComps, Proton) {
   ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
   ASSERT_TRUE(rslt.has_value());
   EXPECT_EQ(rslt->roman_numeral_val, 2);
-  ASSERT_EQ(rslt->subscript_symbol_pairs.size(), 1);
-  EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(1, "H"));
+  ASSERT_EQ(rslt->symbol_subscript_pairs.size(), 1);
+  EXPECT_EQ(rslt->symbol_subscript_pairs[0], SViewCoefPair("H", 1));
 }
 
 TEST(FormulaComps, NeutralMonatomicSpecies) {
@@ -57,8 +57,8 @@ TEST(FormulaComps, NeutralMonatomicSpecies) {
   ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
   ASSERT_TRUE(rslt.has_value());
   EXPECT_EQ(rslt->roman_numeral_val, 1);
-  ASSERT_EQ(rslt->subscript_symbol_pairs.size(), 1);
-  EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(1, "He"));
+  ASSERT_EQ(rslt->symbol_subscript_pairs.size(), 1);
+  EXPECT_EQ(rslt->symbol_subscript_pairs[0], SViewCoefPair("He", 1));
 }
 
 TEST(FormulaComps, IonizedMonatomicSpecies) {
@@ -66,8 +66,8 @@ TEST(FormulaComps, IonizedMonatomicSpecies) {
   ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
   ASSERT_TRUE(rslt.has_value());
   EXPECT_EQ(rslt->roman_numeral_val, 3);
-  ASSERT_EQ(rslt->subscript_symbol_pairs.size(), 1);
-  EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(1, "He"));
+  ASSERT_EQ(rslt->symbol_subscript_pairs.size(), 1);
+  EXPECT_EQ(rslt->symbol_subscript_pairs[0], SViewCoefPair("He", 1));
 }
 
 TEST(FormulaComps, NeutralDiatomicSpecies) {
@@ -75,8 +75,8 @@ TEST(FormulaComps, NeutralDiatomicSpecies) {
   ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
   ASSERT_TRUE(rslt.has_value());
   EXPECT_EQ(rslt->roman_numeral_val, 1);
-  ASSERT_EQ(rslt->subscript_symbol_pairs.size(), 1);
-  EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(2, "H"));
+  ASSERT_EQ(rslt->symbol_subscript_pairs.size(), 1);
+  EXPECT_EQ(rslt->symbol_subscript_pairs[0], SViewCoefPair("H", 2));
 }
 
 TEST(FormulaComps, IonizedDiatomicSpecies) {
@@ -84,8 +84,8 @@ TEST(FormulaComps, IonizedDiatomicSpecies) {
   ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
   ASSERT_TRUE(rslt.has_value());
   EXPECT_EQ(rslt->roman_numeral_val, 3);
-  ASSERT_EQ(rslt->subscript_symbol_pairs.size(), 1);
-  EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(2, "H"));
+  ASSERT_EQ(rslt->symbol_subscript_pairs.size(), 1);
+  EXPECT_EQ(rslt->symbol_subscript_pairs[0], SViewCoefPair("H", 2));
 }
 
 TEST(FormulaComps, MolecularSpeciesNoSubscript) {
@@ -94,9 +94,9 @@ TEST(FormulaComps, MolecularSpeciesNoSubscript) {
   ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
   ASSERT_TRUE(rslt.has_value());
   EXPECT_EQ(rslt->roman_numeral_val, 1);
-  ASSERT_EQ(rslt->subscript_symbol_pairs.size(), 2);
-  EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(1, "H"));
-  EXPECT_EQ(rslt->subscript_symbol_pairs[1], CoefSViewPair(1, "D"));
+  ASSERT_EQ(rslt->symbol_subscript_pairs.size(), 2);
+  EXPECT_EQ(rslt->symbol_subscript_pairs[0], SViewCoefPair("H", 1));
+  EXPECT_EQ(rslt->symbol_subscript_pairs[1], SViewCoefPair("D", 1));
 }
 
 TEST(FormulaComps, MoleculeSpecies) {
@@ -104,18 +104,18 @@ TEST(FormulaComps, MoleculeSpecies) {
   ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
   ASSERT_TRUE(rslt.has_value());
   EXPECT_EQ(rslt->roman_numeral_val, 2);
-  ASSERT_EQ(rslt->subscript_symbol_pairs.size(), 2);
-  EXPECT_EQ(rslt->subscript_symbol_pairs[0], CoefSViewPair(2, "H"));
-  EXPECT_EQ(rslt->subscript_symbol_pairs[1], CoefSViewPair(1, "O"));
+  ASSERT_EQ(rslt->symbol_subscript_pairs.size(), 2);
+  EXPECT_EQ(rslt->symbol_subscript_pairs[0], SViewCoefPair("H", 2));
+  EXPECT_EQ(rslt->symbol_subscript_pairs[1], SViewCoefPair("O", 1));
 }
 
 constexpr bool matches_expectation_() {
   std::string_view s = "H2OII";
   ExpectedFormulaComps rslt = GRIMPL_NS::parse::formula_comps(s);
   return (rslt.has_value() && rslt->roman_numeral_val == 2 &&
-          rslt->subscript_symbol_pairs.size() == 2 &&
-          rslt->subscript_symbol_pairs[0] == CoefSViewPair(2, "H") &&
-          rslt->subscript_symbol_pairs[1] == CoefSViewPair(1, "O"));
+          rslt->symbol_subscript_pairs.size() == 2 &&
+          rslt->symbol_subscript_pairs[0] == SViewCoefPair("H", 2) &&
+          rslt->symbol_subscript_pairs[1] == SViewCoefPair("O", 1));
 }
 
 TEST(FormulaComps, CompileTimeParse) {

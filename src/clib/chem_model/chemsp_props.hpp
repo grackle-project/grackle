@@ -91,8 +91,8 @@ public:
     ChemSpeciesProps out;
     out.mass_factor = 0.0;
     int n_protons = 0;
-    for (std::size_t i = 0; i < comps.subscript_symbol_pairs.size(); i++) {
-      auto [coef, name] = comps.subscript_symbol_pairs[i];
+    for (std::size_t i = 0; i < comps.symbol_subscript_pairs.size(); i++) {
+      auto [name, coef] = comps.symbol_subscript_pairs[i];
 
       // lookup the id associated with the nuclide specified by name
       std::optional<uint16_t> maybe_id = model.symbol_map().find(name);

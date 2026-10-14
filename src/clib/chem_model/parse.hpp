@@ -182,8 +182,8 @@ potential_nuclide_sym(std::string_view s, std::size_t pos = 0,
   }
 }
 
-// encodes a coefficient-string_view pair
-using CoefSViewPair = std::pair<uint8_t, std::string_view>;
+// encodes a string_view-coefficient pair
+using SViewCoefPair = std::pair<std::string_view, uint8_t>;
 
 inline constexpr std::size_t MaxSymsPerFormula = 4;
 
@@ -193,7 +193,7 @@ struct FormulaComps {
   uint8_t roman_numeral_val;
 
   /// tracks subscripts of a nuclide symbol and the symbol itself
-  InplaceVector<CoefSViewPair, MaxSymsPerFormula> subscript_symbol_pairs;
+  InplaceVector<SViewCoefPair, MaxSymsPerFormula> symbol_subscript_pairs;
 };
 
 /// @brief try to parse components of a chemical formula from the string @p s
@@ -240,7 +240,7 @@ constexpr inline Expected<FormulaComps, Err> formula_comps(
     std::tie(pos, subscript) = rv_b.value_or({pos, 1});
 
     // record the subscript-symbol pair
-    if (!comps.subscript_symbol_pairs.try_emplace_back(subscript, sym)) {
+    if (!comps.symbol_subscript_pairs.try_emplace_back(sym, subscript)) {
       return Unexpected(Err::Custom(pos, "too many nuclide symbols"));
     }
   }
