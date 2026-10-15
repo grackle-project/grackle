@@ -91,7 +91,7 @@ def get_gfortran(depend_dir):
 
 
 def get_hdf5(depend_dir, compile_hl_api=False, build_type="Release"):
-    # this logic could ostensibly be placed into src/python/CMakeLists.txt (to be
+    # this logic could ostensibly be placed into python/CMakeLists.txt (to be
     # invoked by scikit-build-core)
     # -> if we do that, we need to make it **VERY** clear not to use the logic within
     #    the CMake build of the core grackle-library (people almost never want that
