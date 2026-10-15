@@ -30,8 +30,6 @@ using ExpectedFormulaComps =
 using GRIMPL_NS::ChemSpeciesProps;
 using CreationRslt = GRIMPL_NS::Expected<ChemSpeciesProps, GRIMPL_NS::Error>;
 using ::grtest::HasChemProps;
-using ::grtest::NameCoefPair;
-using ::testing::ElementsAre;
 
 // first we'll just preform some basic parsing tests
 // -> the parsing logic constructs a GRIMPL_NS::parse::FormulaComps object
@@ -81,7 +79,7 @@ TEST(ParseFormulaComps, TrickyFromulae) {
   struct CmpPack {
     std::string formula;
     int roman_numeral_val;
-    std::vector<NameCoefPair> name_subscript_pairs;
+    std::vector<GRIMPL_NS::parse::SViewCoefPair> name_subscript_pairs;
   };
 
   CmpPack cmp_packs[] = {

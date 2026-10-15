@@ -19,7 +19,6 @@
 #include <ostream>
 #include <string>
 
-#include "chem_model/parse.hpp"
 #include "chem_model/chemsp_props.hpp"
 #include "support/inplace_vector.hpp"
 
@@ -55,16 +54,6 @@ struct NameCoefPair {
 
 inline void PrintTo(const NameCoefPair& p, std::ostream* os) {
   *os << "{name=" << p.name << ",coef=" << int64_t(p.coef) << '}';
-}
-
-// allow comparisons between NameCoefPair and GRIMPL_NS::parse::SViewCoefPair
-inline bool operator==(const NameCoefPair& lhs,
-                       const GRIMPL_NS::parse::SViewCoefPair& rhs) {
-  return lhs.name == rhs.first && lhs.coef == static_cast<int64_t>(rhs.second);
-}
-inline bool operator==(const GRIMPL_NS::parse::SViewCoefPair& lhs,
-                       const NameCoefPair& rhs) {
-  return rhs == lhs;
 }
 
 /// compares a NameCoefPair objects against a of GRIMPL_NS::IdCoefPair object
@@ -117,12 +106,6 @@ public:
     }
   }
 
-  // this overload mostly exists for completeness
-  bool MatchAndExplain(const ::GRIMPL_NS::parse::SViewCoefPair& pair,
-                       std::ostream* os) const {
-    return pair == ref_;
-  }
-
   // Describes the property of a value matching this matcher.
   void DescribeTo(std::ostream* os) const {
     *os << "consistent with {name=\"" << ref_.name << "\" (id=" << ref_id_
@@ -136,14 +119,24 @@ public:
   }
 };
 
-// ok, so the better plan is to replace NameCoefSeqMatcher with NameCoefMatcher
-// (i.e. that just compares a single NameCoefPair) and then define
+// create a matcher to checks if an IdCoefPair is consistent with a specified
+// NameCoefPair (the name_map is used to translate between a name and an id)
+inline ::testing::Matcher<const GRIMPL_NS::IdCoefPair&> IsNameCoefPair(
+    const GRIMPL_NS::FrozenKeyIdxBiMap& name_map, const NameCoefPair& pair) {
+  return NameCoefMatcher(name_map, pair);
+}
 
+// create a matcher to checks if a sequence of IdCoefPair is consistent with
+// the contents of a vector of NameCoefPair (the name_map is used to translate
+// between a name and an id)
+//
+// the return type is auto here because the gmock doesn't establish a stable
+// return-type for `::testing::ElementsAreArray` as part of the API
 inline auto NameCoefSeq(const GRIMPL_NS::FrozenKeyIdxBiMap& name_map,
                         const std::vector<NameCoefPair>& v) {
-  std::vector<NameCoefMatcher> tmp;
+  std::vector<::testing::Matcher<const GRIMPL_NS::IdCoefPair&>> tmp;
   for (const NameCoefPair& element : v) {
-    tmp.emplace_back(name_map, element);
+    tmp.push_back(IsNameCoefPair(name_map, element));
   }
   return ::testing::ElementsAreArray(std::move(tmp));
 }
