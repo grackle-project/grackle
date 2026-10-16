@@ -248,14 +248,14 @@ inline void step_rate_newton_raphson(
   // if SpKind::METAL or SpKind::DUST don't correspond to any species in the
   // current configuration, then the corresponding IndexInterval1D object's
   // start & stop data members will be equal to each other
-  const IndexInterval1D primsp_idx_bounds = sp_kind_map.part_bounds(SpKind::PRIMORDIAL);
-  const IndexInterval1D metalsp_idx_bounds = sp_kind_map.part_bounds(SpKind::METAL);
-  const IndexInterval1D dustsp_idx_bounds = sp_kind_map.part_bounds(SpKind::DUST);
-  const int nsp_primordial = primsp_idx_bounds.stop - primsp_idx_bounds.start;
-  const int nsp_all = (
-    nsp_primordial +
-    (metalsp_idx_bounds.stop - metalsp_idx_bounds.start) +
-    (dustsp_idx_bounds.stop - dustsp_idx_bounds.start));
+  const IndexInterval1D species_idx_bounds_arr[3] = {
+    sp_kind_map.part_bounds(SpKind::PRIMORDIAL),
+    sp_kind_map.part_bounds(SpKind::METAL),
+    sp_kind_map.part_bounds(SpKind::DUST)
+  };
+
+  int n_species_idx_bounds_nometal = 1;
+  int n_species_idx_bounds_all = 3;
 
   // the following check was inspired by a compiler warning indicating that
   // nsp won't be initialized if this condition isn't met
@@ -285,25 +285,21 @@ inline void step_rate_newton_raphson(
         }
       }
 
+      const int n_species_idx_bounds = (itmask_metal[i] != MASK_FALSE)
+          ? n_species_idx_bounds_all : n_species_idx_bounds_nometal;
+
       // initialize arrays
-      const int nsp = (
-          imp_eng[i] +
-          ((itmask_metal[i] != MASK_FALSE) ? nsp_all : nsp_primordial)
-      );
+      int nsp = imp_eng[i];
+      for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
+        const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
+        nsp += (bounds.stop - bounds.start);
+      }
       idsp.resize(nsp);
 
-      // copy values into dsp from my_fields
-      for (int sp_idx = primsp_idx_bounds.start;
-           sp_idx < primsp_idx_bounds.stop; sp_idx++) {
-        dsp[sp_idx] = sp_densities(sp_idx, i);
-      }
-      if ( itmask_metal[i] != MASK_FALSE )  {
-        for (int sp_idx = metalsp_idx_bounds.start;
-             sp_idx < metalsp_idx_bounds.stop; sp_idx++) {
-          dsp[sp_idx] = sp_densities(sp_idx, i);
-        }
-        for (int sp_idx = dustsp_idx_bounds.start;
-             sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+      // copy values into dsp from sp_densities
+      for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
+        const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
+        for (int sp_idx = bounds.start; sp_idx < bounds.stop; sp_idx++) {
           dsp[sp_idx] = sp_densities(sp_idx, i);
         }
       }
@@ -321,29 +317,17 @@ inline void step_rate_newton_raphson(
       //       the reverse (we can cut ~70 lines in each place)
       {
         int offset = 0;
-        for (int sp_idx = primsp_idx_bounds.start;
-             sp_idx < primsp_idx_bounds.stop; sp_idx++) {
-          idsp[sp_idx - primsp_idx_bounds.start + offset] = sp_idx;
-        }
-        offset += (primsp_idx_bounds.stop - primsp_idx_bounds.start);
-        if ( itmask_metal[i] != MASK_FALSE )  {
-          for (int sp_idx = metalsp_idx_bounds.start;
-               sp_idx < metalsp_idx_bounds.stop; sp_idx++) {
-            idsp[sp_idx - metalsp_idx_bounds.start + offset] = sp_idx;
+        for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
+          const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
+          int n_to_add = bounds.stop - bounds.start;
+          for (int index = 0; index < n_to_add; index++) {
+            idsp[index + offset] = index + bounds.start;
           }
-          offset += (metalsp_idx_bounds.stop - metalsp_idx_bounds.start);
-
-          for (int sp_idx = dustsp_idx_bounds.start;
-               sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
-            idsp[sp_idx - dustsp_idx_bounds.start + offset] = sp_idx;
-          }
-          offset += (dustsp_idx_bounds.stop - dustsp_idx_bounds.start);
+          offset += n_to_add;
         }
-
         if ( imp_eng[i] ==1 )  {
           idsp[offset++] = i_eng-1;
         }
-
         GRIMPL_REQUIRE((offset == nsp), "SANITY CHECK FAILED");
       }
 
