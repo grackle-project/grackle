@@ -792,14 +792,15 @@ int grackle::impl::initialize_rates(
     // Dust Grain Species Information
     // (it may make sense want to handle more of the dust separately)
     if (my_chemistry->dust_species > 0) {
-      my_rates->opaque_storage->grain_species_info = 
-          new GRIMPL_NS::GrainSpeciesInfo(my_chemistry->dust_species);
-      if (! bool(*my_rates->opaque_storage->grain_species_info)) {
-        // it's ok for us to not clean up the grain_species_info, the
-        // destructor for opaque_storage will handle that for us
-        return GrPrintAndReturnErr(
-          "Error determining grain species information (this probably denotes "
-          "an issue with the dust_species parameter");
+      Expected<GrainSpeciesInfo, Error> rslt
+          = GrainSpeciesInfo::create(my_chemistry->dust_species);
+      if (rslt.has_value()) {
+        my_rates->opaque_storage->grain_species_info = new GrainSpeciesInfo(
+            std::move(rslt).value());
+      } else {
+        rslt.error().context_literal("Unable to build GrainSpeciesInfo")
+            .write(stderr);
+        return GR_FAIL;
       }
     }
 
