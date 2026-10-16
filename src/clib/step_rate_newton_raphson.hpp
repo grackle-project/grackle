@@ -163,6 +163,7 @@ inline void step_rate_newton_raphson(
     const gr_mask_type* itmask_nr, const gr_mask_type* itmask_metal,
     const int* imp_eng, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    SpeciesMultiView<gr_float> sp_densities,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
