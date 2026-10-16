@@ -182,9 +182,12 @@ inline void step_rate_newton_raphson(
 
   // Local variable
   int nsp, isp, id;
-  // flag for if Gen Chiaki's dust model is enabled with grain growth
-  const bool chiaki_model_dust_evolution =
-    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
+
+  // flag for if Gen Chiaki's dust model is enabled
+  // -> to simplify bookkeeping, we ignore whether the grain_growth flag was
+  //    enabled, (if it's not enabled, the relevant reaction rates are
+  //    explicitly set to 0)
+  const bool chiaki_model_dust_evolution = my_chemistry->dust_chemistry == 2;
 
   // the following specifies the historical 1-based index that we would use to
   // hold energy

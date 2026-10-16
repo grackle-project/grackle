@@ -176,9 +176,11 @@ inline void species_density_updates_gauss_seidel(
   const double* const* grain_growth_rates =
     FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
   const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
-  // flag for if Gen Chiaki's dust model is enabled with grain growth
-  const bool chiaki_model_dust_evolution =
-    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
+  // flag for if Gen Chiaki's dust model is enabled
+  // -> to simplify bookkeeping in other parts of the code, we ignore whether
+  //    the grain_growth flag was enabled, (the logic for setting the relevant
+  //    reaction rates, explicitly sets the rates to 0 if disabled)
+  const bool chiaki_model_dust_evolution = my_chemistry->dust_chemistry == 2;
 
   int i;
   double scoef, acoef;
@@ -1516,9 +1518,11 @@ inline void species_density_derivatives_0d(
   const double* const* grain_growth_rates =
     FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
   const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
-  // flag for if Gen Chiaki's dust model is enabled with grain growth
-  const bool chiaki_model_dust_evolution =
-    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
+  // flag for if Gen Chiaki's dust model is enabled
+  // -> to simplify bookkeeping in other parts of the code, we ignore whether
+  //    the grain_growth flag was enabled, (the logic for setting the relevant
+  //    reaction rates, explicitly sets the rates to 0 if disabled)
+  const bool chiaki_model_dust_evolution = my_chemistry->dust_chemistry == 2;
 
   double scoef, acoef;
 
