@@ -449,12 +449,16 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   //    BiMapMode::REFS_KEYDATA to instruct the map to avoid making copies.
   // -> In the future, when model names are dynamically specified by an HDF5
   //    file, we'll need to use BiMapMode::COPIES_KEYDATA.
-  FrozenKeyIdxBiMap inj_path_names = FrozenKeyIdxBiMap::create(
-      inj_path_name_l, n_pathways, BiMapMode::REFS_KEYDATA);
-  if (!inj_path_names.is_ok()) {
-    return GrPrintAndReturnErr(
-        "there was a problem building the map of model names");
+  Expected<FrozenKeyIdxBiMap, Error> inj_path_names_rslt =
+      FrozenKeyIdxBiMap::create(inj_path_name_l, n_pathways,
+                                BiMapMode::REFS_KEYDATA);
+  if (!inj_path_names_rslt.has_value()) {
+    Error err = inj_path_names_rslt.error().context_literal(
+        "problem building map of model names");
+    err.write(stderr);
+    return GR_FAIL;
   }
+  FrozenKeyIdxBiMap inj_path_names = inj_path_names_rslt.value();
 
   // initialize the object that will hold the loaded data
   int n_log10Tdust_vals = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
