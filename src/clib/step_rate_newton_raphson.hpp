@@ -51,7 +51,6 @@ namespace GRIMPL_NAMESPACE_DECL {
 ///   This allows to finish polishing time_deriv_0d::derivatives without
 ///   refactoring the newton-raphson scheme)
 inline void wrapped_calc_derivatives(
-  double dt,
   const double* dsp,
   double* dspdot,
   grackle::impl::time_deriv_0d::ContextPack& pack,
@@ -72,7 +71,7 @@ inline void wrapped_calc_derivatives(
 
   // 2. call the wrapped function
   grackle::impl::time_deriv_0d::derivatives(
-    dt, rhosp_grflt.data(), rhosp_dot, local_eint, eint_dot_specific, pack
+    rhosp_grflt.data(), rhosp_dot, local_eint, eint_dot_specific, pack
   );
 
   // 3. copy the computed derivatives into dspdot
@@ -263,28 +262,6 @@ inline void step_rate_newton_raphson(
         GRIMPL_REQUIRE((offset == nsp), "SANITY CHECK FAILED");
       }
 
-      // setup the dt_FIXME variable (this obviously needs some attention)
-      // -> as in solve_rate_cool_g, dt represents the total timestep that we
-      //    are evolving the system of equations over
-      // -> here, we are saying defining dt as a reference to the current
-      //    subcycle timestep at the current zone (we define it as a
-      //    reference because it needs to match the value of dtit[i] if we
-      //    choose to modify it)
-      // -> This sure seems inconsistent!
-      // -> OK, in more detail:
-      //    -> the only purpose of this variable is to be passed into the
-      //       time-derivative calculation.
-      //    -> within the time derivative calculation, the variable is ONLY
-      //       used as an argument forwarded to the `dt` argument of
-      //       lookup_cool_rates1d_g
-      //    -> at present, the other callsite of `lookup_cool_rates1d_g`
-      //       passes in the total timestep to dt
-      //    -> for now, we're just going to maintain compatability but this
-      //       NEEDS to be addressed (see the C++ docstring of
-      //       `lookup_cool_rates1d_g` for more discussion). We actually have
-      //       been doing things correctly here and incorrectly elsewhere
-      double& dt_FIXME = dtit[i];
-
       // configure pack for use during the current index
       t_deriv::configure_ContextPack(
         &pack, my_fields, field_idx1d, itmask_metal[i], imp_eng[i]
@@ -343,7 +320,7 @@ inline void step_rate_newton_raphson(
       // Important: index `i` in these buffers correspond to the `i`th variable
       //            being evolved in the current timestep. The corresponding
       //            entry in `dsp` is at the index `idsp[isp]`.
-      const auto calc_f_and_jacobian = [&, dt_FIXME](
+      const auto calc_f_and_jacobian = [&](
           const double* reduced_dsp, double* reduced_dspdot,
           View<double**>& jacobian) -> void {
 
@@ -352,7 +329,7 @@ inline void step_rate_newton_raphson(
           full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
         }
 
-        wrapped_calc_derivatives(dt_FIXME, full_dsp_buf.data(),
+        wrapped_calc_derivatives(full_dsp_buf.data(),
                                  full_dspdot_buf.data(), pack,
                                  rhosp_grflt, rhosp_dot);
 
@@ -376,7 +353,7 @@ inline void step_rate_newton_raphson(
             }
           }
 
-          wrapped_calc_derivatives(dt_FIXME, full_dsp_buf.data(),
+          wrapped_calc_derivatives(full_dsp_buf.data(),
                                    full_dspdot_buf1.data(),
                                    pack, rhosp_grflt, rhosp_dot);
 

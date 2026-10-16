@@ -414,9 +414,6 @@ inline void scratchbufs_copy_from_pack(
 
 /// calculate the time derivatives
 ///
-/// @param[in] dt_FIXME Specifies the timestep passed to the
-///   lookup_cool_rates1d function. See the docstring for that function
-///   for more details (this needs to be revisited)
 /// @param[in] rhosp Specifies the species mass densities to use for computing
 ///   the time derivatives. This always has enough space for each species (it
 ///   is indexed by SpLUT), even if some entries are not evolved.
@@ -444,8 +441,8 @@ inline void scratchbufs_copy_from_pack(
 /// If we ever redefine `SpeciesCollection` to be a class template, it would be
 /// natural to represent `rhosp` with `SpeciesCollection<gr_float>`
 inline void derivatives(
-  double dt_FIXME, const gr_float* rhosp, SpeciesCollection rhosp_dot,
-  const gr_float* eint, double* eint_dot_specific, ContextPack& pack
+  const gr_float* rhosp, SpeciesCollection rhosp_dot, const gr_float* eint,
+  double* eint_dot_specific, ContextPack& pack
 ) {
 
   // introduce some namespace abbreviations for use within this function
