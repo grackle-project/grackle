@@ -182,7 +182,7 @@ inline void step_rate_newton_raphson(
   FortranView<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Local variable
-  int nsp, isp, id;
+  int isp;
 
   // flag for if Gen Chiaki's dust model is enabled
   // -> to simplify bookkeeping, we ignore whether the grain_growth flag was
@@ -386,90 +386,33 @@ inline void step_rate_newton_raphson(
       //    -> using this array with SpeciesMultiView lets us cut out
       //       (duplicated) logic when we copy values from my_fields to dsp and
       //       the reverse (we can cut ~70 lines in each place)
-      id = 0;
-      if ( my_chemistry->primordial_chemistry > 0 )  {
-        idsp[id++] = SpLUT::e;
-        idsp[id++] = SpLUT::HI;
-        idsp[id++] = SpLUT::HII;
-        idsp[id++] = SpLUT::HeI;
-        idsp[id++] = SpLUT::HeII;
-        idsp[id++] = SpLUT::HeIII;
-      }
-      if ( my_chemistry->primordial_chemistry > 1 )  {
-        idsp[id++] = SpLUT::HM;
-        idsp[id++] = SpLUT::H2I;
-        idsp[id++] = SpLUT::H2II;
-      }
-      if ( my_chemistry->primordial_chemistry > 2 )  {
-        idsp[id++] = SpLUT::DI;
-        idsp[id++] = SpLUT::DII;
-        idsp[id++] = SpLUT::HDI;
-      }
-      if ( my_chemistry->primordial_chemistry > 3 )  {
-        idsp[id++] = SpLUT::DM;
-        idsp[id++] = SpLUT::HDII;
-        idsp[id++] = SpLUT::HeHII;
-      }
-      if ( itmask_metal[i] != MASK_FALSE )  {
-        if ( my_chemistry->metal_chemistry == 1 )  {
-          idsp[id++] = SpLUT::CI;
-          idsp[id++] = SpLUT::CII;
-          idsp[id++] = SpLUT::COI;
-          idsp[id++] = SpLUT::CO2I;
-          idsp[id++] = SpLUT::OI;
-          idsp[id++] = SpLUT::OHI;
-          idsp[id++] = SpLUT::H2OI;
-          idsp[id++] = SpLUT::O2I;
-          idsp[id++] = SpLUT::SiI;
-          idsp[id++] = SpLUT::SiOI;
-          idsp[id++] = SpLUT::SiO2I;
-          idsp[id++] = SpLUT::CHI;
-          idsp[id++] = SpLUT::CH2I;
-          idsp[id++] = SpLUT::COII;
-          idsp[id++] = SpLUT::OII;
-          idsp[id++] = SpLUT::OHII;
-          idsp[id++] = SpLUT::H2OII;
-          idsp[id++] = SpLUT::H3OII;
-          idsp[id++] = SpLUT::O2II;
-          if (chiaki_model_dust_evolution)  {
-            if (my_chemistry->dust_species > 0)  {
-              idsp[id++] = SpLUT::Mg;
-            }
-            if (my_chemistry->dust_species > 1)  {
-              idsp[id++] = SpLUT::Al;
-              idsp[id++] = SpLUT::S;
-              idsp[id++] = SpLUT::Fe;
-            }
-          }
+      {
+        int offset = 0;
+        for (int sp_idx = primsp_idx_bounds.start;
+             sp_idx < primsp_idx_bounds.stop; sp_idx++) {
+          idsp[sp_idx - primsp_idx_bounds.start + offset] = sp_idx;
         }
-        if (chiaki_model_dust_evolution)  {
-          if (my_chemistry->dust_species > 0)  {
-            idsp[id++] = SpLUT::MgSiO3_dust;
-            idsp[id++] = SpLUT::AC_dust;
+        offset += (primsp_idx_bounds.stop - primsp_idx_bounds.start);
+        if ( itmask_metal[i] != MASK_FALSE )  {
+          for (int sp_idx = metalsp_idx_bounds.start;
+               sp_idx < metalsp_idx_bounds.stop; sp_idx++) {
+            idsp[sp_idx - metalsp_idx_bounds.start + offset] = sp_idx;
           }
-          if (my_chemistry->dust_species > 1)  {
-            idsp[id++] = SpLUT::SiM_dust;
-            idsp[id++] = SpLUT::FeM_dust;
-            idsp[id++] = SpLUT::Mg2SiO4_dust;
-            idsp[id++] = SpLUT::Fe3O4_dust;
-            idsp[id++] = SpLUT::SiO2_dust;
-            idsp[id++] = SpLUT::MgO_dust;
-            idsp[id++] = SpLUT::FeS_dust;
-            idsp[id++] = SpLUT::Al2O3_dust;
+          offset += (metalsp_idx_bounds.stop - metalsp_idx_bounds.start);
+
+          for (int sp_idx = dustsp_idx_bounds.start;
+               sp_idx < dustsp_idx_bounds.stop; sp_idx++) {
+            idsp[sp_idx - dustsp_idx_bounds.start + offset] = sp_idx;
           }
-          if (my_chemistry->dust_species > 2)  {
-            idsp[id++] = SpLUT::ref_org_dust;
-            idsp[id++] = SpLUT::vol_org_dust;
-            idsp[id++] = SpLUT::H2O_ice_dust;
-          }
+          offset += (dustsp_idx_bounds.stop - dustsp_idx_bounds.start);
         }
-      }
 
-      if ( imp_eng[i] ==1 )  {
-        idsp[id++] = i_eng-1;
-      }
+        if ( imp_eng[i] ==1 )  {
+          idsp[offset++] = i_eng-1;
+        }
 
-      GRIMPL_REQUIRE((id == nsp), "SANITY CHECK FAILED");
+        GRIMPL_REQUIRE((offset == nsp), "SANITY CHECK FAILED");
+      }
 
       // setup the dt_FIXME variable (this obviously needs some attention)
       // -> as in solve_rate_cool_g, dt represents the total timestep that we
