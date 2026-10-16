@@ -360,58 +360,6 @@ inline void scratchbufs_copy_into_pack(
   pack->other_scratch_buf.edot[0] = edot[index];
 }
 
-/// here we copy the values into the scratch buffers (used by grackle's main
-/// loop) at a single index from the corresponding buffers tracked by the
-/// ContextPack.
-///
-/// @note
-/// This function should **NOT** exist and should be removed (it only exists
-/// right now as we pursue transcription).
-inline void scratchbufs_copy_from_pack(
-  int index, ContextPack* pack, double* tgas,
-  double* tdust, double* metallicity, double* dust2gas, double* rhoH,
-  double* mmw, double* nelec_times_mH, double* edot,
-  grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-  grackle::impl::CoolHeatScratchBuf coolingheating_buf,
-  grackle::impl::ChemHeatingRates chemheatrates_buf
-) {
-
-  // first, we copy the values from the buffers of pack->main_scratch_buf
-  {
-    // to help out, we define a lambda function (it captures index by value)
-    auto copy_fn = [index](
-      const char* name, auto*& pack_buf, auto*& external_buf,
-      const grackle::impl::visitor::BufLenSpec& spec
-    ) { external_buf[index] = pack_buf[0]; };
-
-    visit_member_pair(
-      pack->main_scratch_buf.logTlininterp_buf, logTlininterp_buf, copy_fn
-    );
-    visit_member_pair(
-      pack->main_scratch_buf.grain_temperatures, grain_temperatures, copy_fn
-    );
-    visit_member_pair(
-      pack->main_scratch_buf.coolingheating_buf, coolingheating_buf, copy_fn
-    );
-    visit_member_pair(
-      pack->main_scratch_buf.chemheatrates_buf, chemheatrates_buf, copy_fn
-    );
-  }
-
-  // second, we copy the remaining values
-  tgas[index] = pack->other_scratch_buf.tgas[0];
-  tdust[index] = pack->other_scratch_buf.tdust[0];
-  metallicity[index] = pack->other_scratch_buf.metallicity[0];
-  dust2gas[index] = pack->other_scratch_buf.dust2gas[0];
-  rhoH[index] = pack->other_scratch_buf.rhoH[0];
-  mmw[index] = pack->other_scratch_buf.mmw[0];
-  nelec_times_mH[index] = pack->other_scratch_buf.nelec_times_mH[0];
-  edot[index] = pack->other_scratch_buf.edot[0];
-
-}
-
-
 /// calculate the time derivatives
 ///
 /// @param[in] rhosp Specifies the species mass densities to use for computing

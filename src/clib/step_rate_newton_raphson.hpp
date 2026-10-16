@@ -420,19 +420,6 @@ inline void step_rate_newton_raphson(
         dsp[idsp[isp]] = reduced_dsp[isp];
       } 
 
-
-      // overwrite the scratch-buffer values
-      // -> It makes no logical sense for us to do this, but we do it for the
-      //    sake of backwards compatability
-      // -> we should totally delete this function (we may already be able to
-      //    do so)
-      t_deriv::scratchbufs_copy_from_pack(
-        i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw, nelec_times_mH,
-        edot, grain_temperatures, logTlininterp_buf,
-        coolingheating_buf, chemheatrates_buf
-      );
-
-
       // overwrite the fields tracked by my_fields with the evolved values
       for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
         const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
