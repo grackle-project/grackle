@@ -206,25 +206,23 @@ inline void step_rate_newton_raphson(
     );
 
     if (itmask_nr[i] != MASK_FALSE)  {
+      bool coupled_e_evolution = (imp_eng[i] == 1);
 
       // If density and temperature are low, update gas energy explicitly
-
-      if (my_chemistry->with_radiative_cooling == 1)  {
-        if (imp_eng[i] == 0)  {
-          e(i,j,k)  = e(i,j,k) +
-               (gr_float)(edot[i]/d(i,j,k)*dtit[i] );
-        }
+      if (my_chemistry->with_radiative_cooling == 1 && !coupled_e_evolution) {
+        e(i,j,k)  = e(i,j,k) + (gr_float)(edot[i]/d(i,j,k)*dtit[i] );
       }
 
       const int n_species_idx_bounds = (itmask_metal[i] != MASK_FALSE)
           ? n_species_idx_bounds_all : n_species_idx_bounds_nometal;
 
       // initialize arrays
-      int nsp = imp_eng[i];
+      int nsp = 0;
       for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
         const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
         nsp += (bounds.stop - bounds.start);
       }
+      nsp += coupled_e_evolution;
       idsp.resize(nsp);
 
       // copy values into dsp from sp_densities
@@ -256,7 +254,7 @@ inline void step_rate_newton_raphson(
           }
           offset += n_to_add;
         }
-        if ( imp_eng[i] ==1 )  {
+        if (coupled_e_evolution)  {
           idsp[offset++] = i_eng-1;
         }
         GRIMPL_REQUIRE((offset == nsp), "SANITY CHECK FAILED");
@@ -264,7 +262,7 @@ inline void step_rate_newton_raphson(
 
       // configure pack for use during the current index
       t_deriv::configure_ContextPack(
-        &pack, my_fields, field_idx1d, itmask_metal[i], imp_eng[i]
+        &pack, my_fields, field_idx1d, itmask_metal[i], coupled_e_evolution
       );
 
       // copy values at the current index from the external scratch buffers

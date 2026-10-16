@@ -142,9 +142,8 @@ struct Assorted1ElemBuf {
 struct ContextPack {
   /// holds the local value of itmask_metal
   gr_mask_type local_itmask_metal;
-  /// specifies how we handling edot in the calculation. This comes from
-  /// an array historically known as imp_eng
-  int local_edot_handling;
+  /// specifies whether we should compute edot
+  bool calculate_edot;
 
   /// this represents the precomputed index-range
   /// - if we transition to an implementation where we compute the time
@@ -258,14 +257,13 @@ inline ContextPack new_ContextPack(
 /// @param[in] field_idx1d the index where we will be performing the calculation
 ///    (it has already been remapped from multiple dimensions to 1D).
 /// @param[in] local_itmask_metal specifies the local values of itmask_metal
-/// @param[in] local_edot_handling Specifies how we handle energy evolution.
-///    This is read from an array historically known as `imp_eng`
+/// @param[in] calculate_edot Indicates whether to compute edot
 inline void configure_ContextPack(
   ContextPack* pack, const grackle_field_data* my_fields,
-  int field_idx1d, gr_mask_type local_itmask_metal, int local_edot_handling
+  int field_idx1d, gr_mask_type local_itmask_metal, bool calculate_edot
 ) {
   pack->local_itmask_metal = local_itmask_metal;
-  pack->local_edot_handling = local_edot_handling;
+  pack->calculate_edot = calculate_edot;
   pack->fields.grid_dx = my_fields->grid_dx;
 
   // here, we overwrite each field in pack.fields with pointers from each field
@@ -416,7 +414,7 @@ inline void derivatives(
   SpeciesMultiView<const gr_float> sp_densities
     = pack.field_adaptor_mgr.get_species_data(pack.idx_range_1_element);
 
-  if (pack.local_edot_handling != 1) {
+  if (!pack.calculate_edot) {
     // in this branch, we're effectively assuming that the time derivative of
     // temperature is 0. This assumption derives from the current choice to
     // assume that the time derivative of specific internal energy is 0 while
@@ -543,7 +541,7 @@ inline void derivatives(
   // -> we don't care about these quantities (we recompute them later)
   // -> I'm pretty sure we care about how the following function also modifies
   //    edot
-  if (pack.local_edot_handling == 1)  {
+  if (pack.calculate_edot)  {
 
     grackle::impl::rate_timestep_g(
       pack.other_scratch_buf.dedot, pack.other_scratch_buf.HIdot,
