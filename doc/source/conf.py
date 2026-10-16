@@ -17,7 +17,7 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('./_ext'))
 
 sys.path.insert(0, os.path.abspath('../../scripts'))
 
@@ -31,7 +31,8 @@ from query_version import query_version
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.extlinks',
-              'sphinx_tabs.tabs']
+              'sphinx_tabs.tabs',
+              'embed_cli_output']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -263,6 +264,10 @@ _GITHUB_BASE = 'https://github.com/grackle-project/grackle'
 _SRC_BASE = f'{_GITHUB_BASE}/tree/main'
 extlinks = {
     'source': (_SRC_BASE + '/%s', '%s'),
+    # even though the url template is currently the same for a source file and
+    # a repository-dir, its worth maintaining a distinction just in case
+    # something changes in the future
+    'repository-dir': (_SRC_BASE + '/%s', '%s'),
     'code-example' : (_SRC_BASE + '/src/example/%s', '%s'),
     'gh-issue' : (_GITHUB_BASE + '/issues/%s', 'gh-issue#%s'),
     'gh-pr' : (_GITHUB_BASE + '/pull/%s', 'gh-pr#%s')
