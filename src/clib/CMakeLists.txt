@@ -94,6 +94,7 @@ add_library(Grackle_Grackle
   api/units.cpp
   ceiling_species.hpp
   chem_model/nuclide_model.cpp chem_model/nuclide_model.hpp
+  chem_model/parse.cpp chem_model/parse.hpp
   cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
@@ -144,11 +145,15 @@ add_library(Grackle_Grackle
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
   support/config.hpp
+  support/error.cpp support/error.hpp
+  support/error_detail.hpp
+  support/formatf.cpp support/formatf.cpp
   support/FrozenKeyIdxBiMap.hpp
   support/FrozenKeyIdxBiMap_detail.hpp
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
   support/index_helper.hpp
+  support/inplace_vector.hpp
   support/PartMap.hpp
   support/status_reporting.cpp support/status_reporting.hpp
   support/View.hpp
