@@ -93,6 +93,7 @@ add_library(Grackle_Grackle
   api/solve_chemistry.cpp
   api/units.cpp
   ceiling_species.hpp
+  chem_model/infer_species.cpp chem_model/infer_species.hpp
   chem_model/nuclide_model.cpp chem_model/nuclide_model.hpp
   cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
@@ -144,6 +145,9 @@ add_library(Grackle_Grackle
   step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
   support/config.hpp
+  support/error.cpp support/error.hpp
+  support/error_detail.hpp
+  support/formatf.cpp support/formatf.cpp
   support/FrozenKeyIdxBiMap.hpp
   support/FrozenKeyIdxBiMap_detail.hpp
   support/fnv1a_hash.hpp
