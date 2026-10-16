@@ -160,8 +160,7 @@ public:
   explicit GrainSpeciesInfo(int dust_species_parameter);
 
   // the following are disabled because the default implementations won't
-  // properly handle FrozenKeyIdxBiMap (since it doesn't act like a class) or
-  // species_info
+  // properly handle species_info
   GrainSpeciesInfo(const GrainSpeciesInfo&) = delete;
   GrainSpeciesInfo(GrainSpeciesInfo&&) = delete;
   GrainSpeciesInfo& operator=(const GrainSpeciesInfo&) = delete;
