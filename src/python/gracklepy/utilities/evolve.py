@@ -14,12 +14,88 @@
 from collections import defaultdict
 import numpy as np
 
-from gracklepy.fluid_container import _indirectly_calculated_fields
+from gracklepy.fluid_container import FluidContainer, _indirectly_calculated_fields
 
 from .physical_constants import \
     gravitational_constant_cgs, \
     sec_per_year
 
+class StateRecorder:
+    """
+    Aggregate many batches of field-states while evolving a FluidContainer
+
+    The premise is that we can subsequently compute the derived properties
+    all at once (for sufficiently complex systems, computing all derived
+    properties after a call to fc.solve_chemistry can be more expensive than
+    the call to fc.solve_chemistry)
+    """
+
+    # number of recordings before object must be reset
+    n_recordings_per_reset_: int
+    # current number of recordings
+    n_recordings_: int
+
+    # number of values copied out of each field when a `FluidContainer` is recorded
+    # (if we plan to record a FluidContainer, `fc`, this is `fc.n_vals`)
+    field_register_len_: int
+    # buffers for recorded field data
+    field_data_: dict[str, np.ndarray]
+    # tracks recorded times
+    time_data_: np.ndarray
+
+    def __init__(
+        self,
+        n_recordings_per_reset: int,
+        field_register_len: int,
+        field_names: list[str]
+    ):
+        # field_names specifies the field names that will be recorded. This should
+        # generally just be the input field names (the recorder will NOT compute
+        # derived fields)
+        assert n_recordings_per_reset > 0
+        self.n_recordings_per_reset_ = n_recordings_per_reset
+        assert field_register_len > 0
+        self.field_register_len_ = field_register_len
+        self.n_recordings_ = 0
+
+        field_shape = (n_recordings_per_reset * field_register_len,)
+        self.field_data_ = {name: np.empty(shape=field_shape, dtype=np.float64)
+                            for name in field_names}
+        self.time_data_ = np.empty(shape=field_shape, dtype=np.float64)
+
+    def is_full(self) -> bool:
+        return self.n_recordings_ == self.n_recordings_per_reset_
+
+    def is_empty(self) -> bool:
+        return self.n_recordings_ == 0
+
+    def record(self, time: float, fc: FluidContainer) -> bool:
+        """Record the current state
+
+        This does NOT compute derived fields.
+        """
+        assert fc.n_vals == self.field_register_len_
+        if self.is_full():
+            return False
+
+        dst_start = self.n_recordings_ * self.field_register_len_
+        dst_stop = dst_start + self.field_register_len_
+        for key, dst_buf in self.field_data_.items():
+            dst_buf[dst_start:dst_stop] = fc[key]
+
+        self.time_data_[self.n_recordings_] = time
+
+        self.n_recordings_+=1
+        return True
+
+    def reset(self):
+        self.n_recordings_=0
+
+    def recorded_times_and_fields(self) -> tuple[np.ndarray, dict[str,np.ndarray]]:
+        times = self.time_data_[:self.n_recordings_]
+        slc = slice(0, self.n_recordings_*self.field_register_len_)
+        fields = {k:buf[slc] for k,buf in self.field_data_.items()}
+        return (times, fields)
 
 
 def evolve_freefall(fc, final_density, safety_factor=0.01,
@@ -122,6 +198,12 @@ def evolve_constant_density(fc, final_temperature=None,
         raise RuntimeError("Must specify either final_temperature " +
                            "or final_time.")
 
+    state_recorder = StateRecorder(
+        n_recordings_per_reset=100,
+        field_register_len=fc.n_vals,
+        field_names=fc.input_fields
+    )
+
     data = defaultdict(list)
     current_time = 0.0
     fc.calculate_cooling_time()
@@ -140,12 +222,20 @@ def evolve_constant_density(fc, final_temperature=None,
                fc["temperature"][0]))
         fc.solve_chemistry(dt)
 
-        add_to_data(fc, data, extra={"time": current_time})
+        state_recorder.record(time=current_time, fc=fc)
+        if state_recorder.is_full():
+            add_to_data2(fc.chemistry_data, state_recorder, data)
+            state_recorder.reset() # <- clear out contents
+
         current_time += dt
+
+    if not state_recorder.is_empty():
+        add_to_data2(fc.chemistry_data, state_recorder, data)
 
     for field in data:
         data[field] = np.squeeze(np.array(data[field]))
     return fc.finalize_data(data=data)
+
 
 def add_to_data(fc, data, extra=None):
     """
@@ -176,3 +266,40 @@ def add_to_data(fc, data, extra=None):
     if extra is not None:
         for field in extra:
             data[field].append(extra[field])
+
+def add_to_data2(chemistry_data, state_recorder, data):
+    """
+    Add current state_recorder values to the data structure.
+    """
+
+    if state_recorder.is_empty():
+        return
+
+    times, field_data = state_recorder.recorded_times_and_fields()
+    n_vals = field_data["density"].size
+
+    fc = FluidContainer(chemistry_data=chemistry_data, n_vals=n_vals)
+    for field_name, buf in field_data.items():
+        fc[field_name][:] = buf
+
+    # for indirectly calculated fields, we get more than one field from a call.
+    # keep a list of what we've called so we don't have to call them again.
+    called = []
+
+    for field in fc.all_fields:
+        if field not in fc.input_fields:
+            if field in _indirectly_calculated_fields:
+                fname = _indirectly_calculated_fields[field]
+            else:
+                fname = f"calculate_{field}"
+
+            func = getattr(fc, fname, None)
+            if func is None:
+                raise RuntimeError(f"No function for calculating {field}.")
+
+            if fname not in called:
+                func()
+                called.append(fname)
+
+        data[field].extend(fc[field])
+    data["time"].extend(times)
