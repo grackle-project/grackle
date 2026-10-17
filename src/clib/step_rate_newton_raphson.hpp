@@ -54,9 +54,16 @@ struct StateLayoutAndE {
   /// the fixed internal energy
   std::optional<double> fixed_specific_energy;
 
-  bool energy_in_state_vec() const {return !fixed_specific_energy.has_value();}
+  /// return state-vector index (if any) holding the specific internal energy
+  std::optional<int> energy_index() const {
+    if (!fixed_specific_energy.has_value()) {
+      return n_contained_species;
+    }
+    return std::nullopt;
+  }
+
   bool state_vec_len() const {
-    return n_contained_species + energy_in_state_vec();
+    return n_contained_species + energy_index().has_value();
   }
 };
 
@@ -446,21 +453,15 @@ inline void step_rate_newton_raphson(
         }
       }
 
-      // copy values from reduced_dsp back to dsp
-      for (int isp = 0; isp < nsp; isp++) {
-        dsp[idsp[isp]] = reduced_dsp[isp];
-      } 
-
-      // overwrite the fields tracked by my_fields with the evolved values
-      for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
-        const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
-        for (int sp_idx = bounds.start; sp_idx < bounds.stop; sp_idx++) {
-          sp_densities(sp_idx, i) = dsp[sp_idx];
-        }
+      // overwrite the dynamically evolved species fields (tracked by my_fields
+      // and accessed thru sp_densities) with the evolved values
+      for (int isp = 0; isp < state_layout.n_contained_species; isp++) {
+        sp_densities(state_layout.species_ids[isp], i) = reduced_dsp[isp];
       }
 
-      if (coupled_e_evolution)  {
-        e(i,j,k)     = dsp[i_eng-1];
+      std::optional<int> maybe_e_idx = state_layout.energy_index();
+      if (maybe_e_idx.has_value()) {
+        e(i,j,k) = reduced_dsp[maybe_e_idx.value()];
       }
 
       idsp.clear();
