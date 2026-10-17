@@ -339,17 +339,6 @@ inline void step_rate_newton_raphson(
       //   `idsp` buffer.
       // - this reduced set of variables corresponds to `y(t)`
 
-      // initialize full_dsp_buf with copies of all entries in dsp
-      // -> this buffer is used internally by the callback function. It has
-      //    space for every variable that the current grackle configuration
-      //    evolves.
-      // -> the basic idea, is that the callback will overwrite the elements
-      //    corresponding to the subset of variables being evolved in the
-      //    current timestep, won't mutate other elements (if any), and will
-      //    pass this to the buffer that does the heavy lifting of computing
-      //    derivatives.
-      std::memcpy(full_dsp_buf.data(), dsp.data(), sizeof(double)*i_eng);
-
       // actually define the callback function:
       // - reduced_dsp corresponds to the current value of the variable y
       // - reduced_dspdot is an output buffer for holding f(y)
