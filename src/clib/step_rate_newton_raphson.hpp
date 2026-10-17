@@ -30,6 +30,7 @@
 #include "support/View.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
+#include "support/status_reporting.hpp"
 #include "time_deriv_0d.hpp"
 #include "utils-cpp.hpp"
 
@@ -54,16 +55,22 @@ struct StateLayoutAndE {
   /// the fixed internal energy
   std::optional<double> fixed_specific_energy;
 
-  /// return state-vector index (if any) holding the specific internal energy
-  std::optional<int> energy_index() const {
-    if (!fixed_specific_energy.has_value()) {
+  /// returns whether the specific internal energy is tracked as part of the
+  /// dynamically evolved state vector (i.e. whether energy evolution is
+  /// coupled to chemistry evolution)
+  bool coupled_e_evolution() const {return !fixed_specific_energy.has_value();}
+
+  /// return state-vector index holding the specific internal energy
+  int energy_index() const {
+    if (!coupled_e_evolution()) {
+      GR_INTERNAL_ERROR("SANITY CHECK FAILED!");
+    } else {
       return n_contained_species;
     }
-    return std::nullopt;
   }
 
   bool state_vec_len() const {
-    return n_contained_species + energy_index().has_value();
+    return n_contained_species + coupled_e_evolution();
   }
 };
 
@@ -101,7 +108,12 @@ inline void wrapped_calc_derivatives(
   for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
     rhosp_grflt[sp_idx] = static_cast<gr_float>(dsp[sp_idx]);
   }
-  local_eint[0] = static_cast<gr_float>(dsp[MAX_EVOLVED_SPECIES_FIELDS]);
+  if (state_layout.fixed_specific_energy.has_value()) {
+    local_eint[0] =
+        static_cast<gr_float>(state_layout.fixed_specific_energy.value());
+  } else {
+    local_eint[0] = static_cast<gr_float>(dsp[MAX_EVOLVED_SPECIES_FIELDS]);
+  }
 
   // 2. call the wrapped function
   grackle::impl::time_deriv_0d::derivatives(
@@ -266,7 +278,11 @@ inline void step_rate_newton_raphson(
           dsp[sp_idx] = sp_densities(sp_idx, i);
         }
       }
-      dsp[i_eng-1] = e(i,j,k);
+      if (coupled_e_evolution) {
+        dsp[i_eng-1] = e(i,j,k);
+      } else {
+        dsp[i_eng-1] = NAN;
+      }
 
       // here, we fill in the idsp array
       // -> the idsp array is used for mapping between the compressed vector
@@ -448,9 +464,8 @@ inline void step_rate_newton_raphson(
         sp_densities(state_layout.species_ids[isp], i) = reduced_dsp[isp];
       }
 
-      std::optional<int> maybe_e_idx = state_layout.energy_index();
-      if (maybe_e_idx.has_value()) {
-        e(i,j,k) = reduced_dsp[maybe_e_idx.value()];
+      if (coupled_e_evolution) {
+        e(i,j,k) = reduced_dsp[state_layout.energy_index()];
       }
 
       idsp.clear();
