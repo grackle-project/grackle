@@ -16,6 +16,7 @@
 #ifndef STEP_RATE_NEWTON_RAPHSON_HPP
 #define STEP_RATE_NEWTON_RAPHSON_HPP
 
+#include <optional>
 #include <vector>
 
 #include "grackle.h"             // gr_float
@@ -33,6 +34,31 @@
 #include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
+
+/// Describes the layout of the state vector evolved by newton-raphson solver
+/// and if energy-evolution is decoupled from chemistry, specifies the fixed
+/// energy
+///
+/// The first @ref n_contained_species of a state vector hold densities of
+/// dynamically evolved species. If internal energy is in the state-vector
+/// (it is stored as the last entry of the vector). If energy is not tracked
+/// as part of the state-vector, an object of this type should then track
+/// the fixed_specific_energy for the current timestep
+struct StateLayoutAndE {
+
+  int n_contained_species;
+  /// `species_ids[idx]` gives the `species_id` stored at index `idx` of the
+  /// state-vector
+  int* species_ids;
+  /// If energy evolution is decoupled from energy evolution, this specifies
+  /// the fixed internal energy
+  std::optional<double> fixed_specific_energy;
+
+  bool energy_in_state_vec() const {return !fixed_specific_energy.has_value();}
+  bool state_vec_len() const {
+    return n_contained_species + energy_in_state_vec();
+  }
+};
 
 /// acts as a temporary adaptor layer for time_deriv_0d::derivatives:
 ///
@@ -53,6 +79,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 inline void wrapped_calc_derivatives(
   const double* dsp,
   double* dspdot,
+  const StateLayoutAndE& state_layout,
   grackle::impl::time_deriv_0d::ContextPack& pack,
   std::vector<gr_float>& rhosp_grflt,         // <- preallocated temp buffer
   grackle::impl::SpeciesCollection& rhosp_dot // <- preallocated temp buffer
@@ -260,6 +287,12 @@ inline void step_rate_newton_raphson(
         GRIMPL_REQUIRE((offset == nsp), "SANITY CHECK FAILED");
       }
 
+      StateLayoutAndE state_layout{
+        .n_contained_species = nsp - coupled_e_evolution,
+        .species_ids = idsp.data(),
+        .fixed_specific_energy = coupled_e_evolution ? std::nullopt : std::optional<double>(e(i,j,k))
+      };
+
       // configure pack for use during the current index
       t_deriv::configure_ContextPack(
         &pack, my_fields, field_idx1d, itmask_metal[i], coupled_e_evolution
@@ -328,7 +361,7 @@ inline void step_rate_newton_raphson(
         }
 
         wrapped_calc_derivatives(full_dsp_buf.data(),
-                                 full_dspdot_buf.data(), pack,
+                                 full_dspdot_buf.data(), state_layout, pack,
                                  rhosp_grflt, rhosp_dot);
 
         // copy the reduced set of values that we care about from
@@ -352,7 +385,7 @@ inline void step_rate_newton_raphson(
           }
 
           wrapped_calc_derivatives(full_dsp_buf.data(),
-                                   full_dspdot_buf1.data(),
+                                   full_dspdot_buf1.data(), state_layout,
                                    pack, rhosp_grflt, rhosp_dot);
 
           for (int isp = 0; isp < nsp; isp++) {
