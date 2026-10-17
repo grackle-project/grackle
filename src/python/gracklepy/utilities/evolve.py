@@ -114,6 +114,12 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
     last3_density = np.full(shape=(3, fc.n_vals), fill_value=np.nan, dtype=np.float64)
     last3_pressure = np.full(shape=(3, fc.n_vals), fill_value=np.nan, dtype=np.float64)
 
+    state_recorder = StateRecorder(
+        n_recordings_per_reset=100,
+        field_register_len=fc.n_vals,
+        field_names=fc.input_fields
+    )
+
     data = defaultdict(list)
     current_time = 0.0
     while fc["density"][0] * my_chemistry.density_units < final_density:
@@ -123,7 +129,10 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
                     (32. * gravitational_constant *
                      fc["density"][0])), 0.5)
 
-        add_to_data(fc, data, extra={"time": current_time})
+        state_recorder.record(time=current_time, fc=fc)
+        if state_recorder.is_full():
+            add_to_data2(fc.chemistry_data, state_recorder, data)
+            state_recorder.reset() # <- clear out contents
 
         # compute the new density using the modified
         # free-fall collapse as per Omukai et al. (2005)
@@ -172,6 +181,9 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
 
         # update time
         current_time += dt
+
+    if not state_recorder.is_empty():
+        add_to_data2(fc.chemistry_data, state_recorder, data)
 
     for field in data:
         data[field] = np.squeeze(np.array(data[field]))
