@@ -92,7 +92,7 @@ struct StateLayoutAndE {
 ///   refactoring the newton-raphson scheme)
 inline void wrapped_calc_derivatives(
   const double* reduced_dsp,
-  double* dspdot,
+  double* reduced_dspdot,
   const StateLayoutAndE& state_layout,
   grackle::impl::time_deriv_0d::ContextPack& pack,
   std::vector<gr_float>& rhosp_grflt,         // <- preallocated temp buffer
@@ -125,11 +125,14 @@ inline void wrapped_calc_derivatives(
     rhosp_grflt.data(), rhosp_dot, local_eint, eint_dot_specific, pack
   );
 
-  // 3. copy the computed derivatives into dspdot
-  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
-    dspdot[sp_idx] = rhosp_dot.data[sp_idx][0];
+  // 3. copy the computed derivatives into reduced_dspdot
+  for (int vec_i = 0; vec_i < state_layout.n_contained_species; vec_i++) {
+    int species_id = state_layout.species_ids[vec_i];
+    reduced_dspdot[vec_i] = rhosp_dot.data[species_id][0];
   }
-  dspdot[MAX_EVOLVED_SPECIES_FIELDS] = eint_dot_specific[0];
+  if (!state_layout.fixed_specific_energy.has_value()) {
+    reduced_dspdot[state_layout.energy_index()] = eint_dot_specific[0];
+  }
 }
 
 
@@ -180,8 +183,7 @@ inline void step_rate_newton_raphson(
   std::vector<double> dsp(i_eng);
   std::vector<double> reduced_dsp(i_eng);
   std::vector<double> reduced_dsp1(i_eng);
-  std::vector<double> full_dspdot_buf(i_eng);
-  std::vector<double> full_dspdot_buf1(i_eng);
+  std::vector<double> reduced_dspdot_buf1(i_eng);
 
   // initialize the ode_solver
   // -> a solution is considered converged when the max relative difference
@@ -372,15 +374,8 @@ inline void step_rate_newton_raphson(
           const double* reduced_dsp, double* reduced_dspdot,
           View<double**>& jacobian) -> void {
 
-        wrapped_calc_derivatives(reduced_dsp,
-                                 full_dspdot_buf.data(), state_layout, pack,
-                                 rhosp_grflt, rhosp_dot);
-
-        // copy the reduced set of values that we care about from
-        // full_dspdot_buf into dspdot
-        for (int isp = 0; isp < nsp; isp++) {
-          reduced_dspdot[isp] = full_dspdot_buf[idsp[isp]];
-        }
+        wrapped_calc_derivatives(reduced_dsp, reduced_dspdot, state_layout,
+                                 pack, rhosp_grflt, rhosp_dot);
 
         // fill in the jacobian matrix for the time derivative
         // -> to accomplish this, we use finite differences to estimate
@@ -397,12 +392,12 @@ inline void step_rate_newton_raphson(
           }
 
           wrapped_calc_derivatives(reduced_dsp1.data(),
-                                   full_dspdot_buf1.data(), state_layout,
+                                   reduced_dspdot_buf1.data(), state_layout,
                                    pack, rhosp_grflt, rhosp_dot);
 
           for (int isp = 0; isp < nsp; isp++) {
-            double tderiv = full_dspdot_buf[idsp[isp]];
-            double offset_tderiv = full_dspdot_buf1[idsp[isp]];
+            double tderiv = reduced_dspdot[isp];
+            double offset_tderiv = reduced_dspdot_buf1[isp];
             if ((reduced_dsp[isp] == 0.0) && (offset_tderiv == tderiv)) {
               jacobian(isp, jsp) = 0.0;
             } else {
