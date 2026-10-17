@@ -458,7 +458,10 @@ inline void step_rate_newton_raphson(
           sp_densities(sp_idx, i) = dsp[sp_idx];
         }
       }
-      e(i,j,k)     = dsp[i_eng-1];
+
+      if (coupled_e_evolution)  {
+        e(i,j,k)     = dsp[i_eng-1];
+      }
 
       idsp.clear();
     }
