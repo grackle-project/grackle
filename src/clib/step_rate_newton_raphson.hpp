@@ -91,7 +91,7 @@ struct StateLayoutAndE {
 ///   This allows to finish polishing time_deriv_0d::derivatives without
 ///   refactoring the newton-raphson scheme)
 inline void wrapped_calc_derivatives(
-  const double* dsp,
+  const double* reduced_dsp,
   double* dspdot,
   const StateLayoutAndE& state_layout,
   grackle::impl::time_deriv_0d::ContextPack& pack,
@@ -102,17 +102,22 @@ inline void wrapped_calc_derivatives(
   gr_float local_eint[1];
   double eint_dot_specific[1];
 
+  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
+    rhosp_grflt[sp_idx] = static_cast<gr_float>(0.0);
+  }
+
   // 1. copy values out of dsp into rhosp_grflt and local_eint
   //    - at some point, we need to add some logic to deal with edge cases
   //      that can arise when `sizeof(gr_float) < sizeof(double)
-  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
-    rhosp_grflt[sp_idx] = static_cast<gr_float>(dsp[sp_idx]);
+  for (int vec_i = 0; vec_i < state_layout.n_contained_species; vec_i++) {
+    int species_id = state_layout.species_ids[vec_i];
+    rhosp_grflt[species_id] = static_cast<gr_float>(reduced_dsp[vec_i]);
   }
   if (state_layout.fixed_specific_energy.has_value()) {
     local_eint[0] =
         static_cast<gr_float>(state_layout.fixed_specific_energy.value());
   } else {
-    local_eint[0] = static_cast<gr_float>(dsp[MAX_EVOLVED_SPECIES_FIELDS]);
+    local_eint[0] = static_cast<gr_float>(reduced_dsp[state_layout.energy_index()]);
   }
 
   // 2. call the wrapped function
@@ -174,7 +179,7 @@ inline void step_rate_newton_raphson(
   // level function, but we will leave that for after transcription
   std::vector<double> dsp(i_eng);
   std::vector<double> reduced_dsp(i_eng);
-  std::vector<double> full_dsp_buf(i_eng);
+  std::vector<double> reduced_dsp1(i_eng);
   std::vector<double> full_dspdot_buf(i_eng);
   std::vector<double> full_dspdot_buf1(i_eng);
 
@@ -367,12 +372,7 @@ inline void step_rate_newton_raphson(
           const double* reduced_dsp, double* reduced_dspdot,
           View<double**>& jacobian) -> void {
 
-        // copy values out of reduced_dsp into full_dsp_buf
-        for (int isp = 0; isp < nsp; isp++) {
-          full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
-        }
-
-        wrapped_calc_derivatives(full_dsp_buf.data(),
+        wrapped_calc_derivatives(reduced_dsp,
                                  full_dspdot_buf.data(), state_layout, pack,
                                  rhosp_grflt, rhosp_dot);
 
@@ -390,13 +390,13 @@ inline void step_rate_newton_raphson(
           double dspj = eps * reduced_dsp[jsp];
           for (int isp = 0; isp < nsp; isp++) {
             if (isp == jsp) {
-              full_dsp_buf[idsp[isp]] = reduced_dsp[isp] + dspj;
+              reduced_dsp1[isp] = reduced_dsp[isp] + dspj;
             } else {
-              full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
+              reduced_dsp1[isp] = reduced_dsp[isp];
             }
           }
 
-          wrapped_calc_derivatives(full_dsp_buf.data(),
+          wrapped_calc_derivatives(reduced_dsp1.data(),
                                    full_dspdot_buf1.data(), state_layout,
                                    pack, rhosp_grflt, rhosp_dot);
 
