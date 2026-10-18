@@ -36,6 +36,8 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
+namespace step_nr_detail {
+
 /// Describes the layout of the state vector evolved by newton-raphson solver
 /// and if energy-evolution is decoupled from chemistry, specifies the fixed
 /// energy
@@ -50,7 +52,7 @@ struct StateLayoutAndE {
   int n_contained_species;
   /// `species_ids[idx]` gives the `species_id` stored at index `idx` of the
   /// state-vector
-  int* species_ids;
+  const int* species_ids;
   /// If energy evolution is decoupled from energy evolution, this specifies
   /// the fixed internal energy
   std::optional<double> fixed_specific_energy;
@@ -135,6 +137,7 @@ inline void wrapped_calc_derivatives(
   }
 }
 
+}  // namespace step_nr_detail
 
 /// An alternative to step_rate_g for evolving the species rate equations that
 /// employs the Newton-Raphson scheme rather than Gauss-Seidel
@@ -175,15 +178,13 @@ inline void step_rate_newton_raphson(
   // Local variable
   int isp;
 
-  // the following specifies the historical 1-based index that we would use to
-  // hold energy
-  const int i_eng = MAX_EVOLVED_SPECIES_FIELDS + 1;
+  const int max_y_len = MAX_EVOLVED_SPECIES_FIELDS + 1;
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
-  std::vector<double> y_initial(i_eng);
-  std::vector<double> y(i_eng);
-  std::vector<double> y_buf1(i_eng);
-  std::vector<double> ydot_buf1(i_eng);
+  std::vector<double> y_initial(max_y_len);
+  std::vector<double> y(max_y_len);
+  std::vector<double> y_buf1(max_y_len);
+  std::vector<double> ydot_buf1(max_y_len);
 
   // initialize the ode_solver
   // -> a solution is considered converged when the max relative difference
@@ -191,13 +192,11 @@ inline void step_rate_newton_raphson(
   double max_rtol = 1.e-8;
   // -> maximum number of iterations before giving up on a provided timestep
   int maxiter_per_dt = 20;
-  integrate::StiffNewtonRaphson ode_solver(i_eng, max_rtol, maxiter_per_dt);
+  integrate::StiffNewtonRaphson ode_solver(max_y_len, max_rtol, maxiter_per_dt);
 
   std::vector<double> ode_scratch_buf(ode_solver.num_scratch_buf_elements());
 
-  // (In the future, we may want to reconsider when/how we allocate
-  // the following 3 variables)
-  std::vector<int> idsp(i_eng);
+  std::vector<int> idsp(max_y_len);
   int n_contained_species_prim;
   int n_contained_species_all;
   {
@@ -278,7 +277,7 @@ inline void step_rate_newton_raphson(
         e(i,j,k)  = e(i,j,k) + (gr_float)(edot[i]/d(i,j,k)*dtit[i] );
       }
 
-      StateLayoutAndE state_layout{
+      step_nr_detail::StateLayoutAndE state_layout{
         .n_contained_species = (itmask_metal[i] != MASK_FALSE)
           ? n_contained_species_all : n_contained_species_prim,
         .species_ids = idsp.data(),
