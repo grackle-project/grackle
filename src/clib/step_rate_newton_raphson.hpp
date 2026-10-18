@@ -198,6 +198,31 @@ inline void step_rate_newton_raphson(
   // (In the future, we may want to reconsider when/how we allocate
   // the following 3 variables)
   std::vector<int> idsp(i_eng);
+  int n_contained_species_prim;
+  int n_contained_species_all;
+  {
+    const PartMap<SpKind>& sp_kind_map = my_rates->opaque_storage->sp_kind_map;
+    // if SpKind::METAL or SpKind::DUST don't correspond to any species in the
+    // current configuration, then the corresponding IndexInterval1D object's
+    // start & stop data members will be equal to each other
+    const IndexInterval1D species_idx_bounds_arr[3] = {
+      sp_kind_map.part_bounds(SpKind::PRIMORDIAL),
+      sp_kind_map.part_bounds(SpKind::METAL),
+      sp_kind_map.part_bounds(SpKind::DUST)
+    };
+    n_contained_species_prim = (
+      species_idx_bounds_arr[0].stop - species_idx_bounds_arr[0].start);
+
+    int offset = 0;
+    for (const IndexInterval1D& bounds: species_idx_bounds_arr) {
+      int n_to_add = bounds.stop - bounds.start;
+      for (int index = 0; index < n_to_add; index++) {
+        idsp[index + offset] = index + bounds.start;
+      }
+      offset += n_to_add;
+    }
+    n_contained_species_all = offset;
+  }
   // Another parameter
   const double eps = 1.e-4;
 
@@ -228,19 +253,6 @@ inline void step_rate_newton_raphson(
   grackle::impl::SpeciesCollection rhosp_dot =
     grackle::impl::new_SpeciesCollection(1);
 
-  const PartMap<SpKind>& sp_kind_map = my_rates->opaque_storage->sp_kind_map;
-  // if SpKind::METAL or SpKind::DUST don't correspond to any species in the
-  // current configuration, then the corresponding IndexInterval1D object's
-  // start & stop data members will be equal to each other
-  const IndexInterval1D species_idx_bounds_arr[3] = {
-    sp_kind_map.part_bounds(SpKind::PRIMORDIAL),
-    sp_kind_map.part_bounds(SpKind::METAL),
-    sp_kind_map.part_bounds(SpKind::DUST)
-  };
-
-  int n_species_idx_bounds_nometal = 1;
-  int n_species_idx_bounds_all = 3;
-
   // the following check was inspired by a compiler warning indicating that
   // y_len won't be initialized if this condition isn't met
   GRIMPL_REQUIRE((my_chemistry->primordial_chemistry > 0),
@@ -266,39 +278,13 @@ inline void step_rate_newton_raphson(
         e(i,j,k)  = e(i,j,k) + (gr_float)(edot[i]/d(i,j,k)*dtit[i] );
       }
 
-      const int n_species_idx_bounds = (itmask_metal[i] != MASK_FALSE)
-          ? n_species_idx_bounds_all : n_species_idx_bounds_nometal;
-
-      // initialize arrays
-      int y_len = 0;
-      for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
-        const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
-        y_len += (bounds.stop - bounds.start);
-      }
-      y_len += coupled_e_evolution;
-
-      // here, we fill in the idsp array
-      // -> the idsp array is used for mapping between the state vector (`y`), 
-      //    which only has `y_len` and the species_id, which is used to index
-      //    `sp_densities`
-      {
-        int offset = 0;
-        for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
-          const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
-          int n_to_add = bounds.stop - bounds.start;
-          for (int index = 0; index < n_to_add; index++) {
-            idsp[index + offset] = index + bounds.start;
-          }
-          offset += n_to_add;
-        }
-        GRIMPL_REQUIRE((offset + coupled_e_evolution == y_len), "SANITY CHECK FAILED");
-      }
-
       StateLayoutAndE state_layout{
-        .n_contained_species = y_len - coupled_e_evolution,
+        .n_contained_species = (itmask_metal[i] != MASK_FALSE)
+          ? n_contained_species_all : n_contained_species_prim,
         .species_ids = idsp.data(),
         .fixed_specific_energy = coupled_e_evolution ? std::nullopt : std::optional<double>(e(i,j,k))
       };
+      int y_len = state_layout.state_vec_len();
 
       // copy values into y_initial
       for (int isp = 0; isp < state_layout.n_contained_species; isp++) {
