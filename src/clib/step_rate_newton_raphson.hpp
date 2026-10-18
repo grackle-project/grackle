@@ -197,7 +197,7 @@ inline void step_rate_newton_raphson(
 
   // (In the future, we may want to reconsider when/how we allocate
   // the following 3 variables)
-  std::vector<int> idsp;
+  std::vector<int> idsp(i_eng);
   // Another parameter
   const double eps = 1.e-4;
 
@@ -276,7 +276,6 @@ inline void step_rate_newton_raphson(
         y_len += (bounds.stop - bounds.start);
       }
       y_len += coupled_e_evolution;
-      idsp.resize(y_len);
 
       // here, we fill in the idsp array
       // -> the idsp array is used for mapping between the state vector (`y`), 
@@ -292,10 +291,7 @@ inline void step_rate_newton_raphson(
           }
           offset += n_to_add;
         }
-        if (coupled_e_evolution)  {
-          idsp[offset++] = i_eng-1;
-        }
-        GRIMPL_REQUIRE((offset == y_len), "SANITY CHECK FAILED");
+        GRIMPL_REQUIRE((offset + coupled_e_evolution == y_len), "SANITY CHECK FAILED");
       }
 
       StateLayoutAndE state_layout{
@@ -452,8 +448,6 @@ inline void step_rate_newton_raphson(
       if (coupled_e_evolution) {
         e(i,j,k) = y[state_layout.energy_index()];
       }
-
-      idsp.clear();
     }
   }
 
