@@ -180,7 +180,6 @@ inline void step_rate_newton_raphson(
   const int i_eng = MAX_EVOLVED_SPECIES_FIELDS + 1;
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
-  std::vector<double> dsp(i_eng);
   std::vector<double> reduced_dsp_initial(i_eng);
   std::vector<double> reduced_dsp(i_eng);
   std::vector<double> reduced_dsp1(i_eng);
@@ -311,19 +310,13 @@ inline void step_rate_newton_raphson(
         .fixed_specific_energy = coupled_e_evolution ? std::nullopt : std::optional<double>(e(i,j,k))
       };
 
-      // copy values into dsp from sp_densities
-      for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
-        const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
-        for (int sp_idx = bounds.start; sp_idx < bounds.stop; sp_idx++) {
-          dsp[sp_idx] = sp_densities(sp_idx, i);
-        }
+      // copy values into reduced_dsp_initial
+      for (int isp = 0; isp < state_layout.n_contained_species; isp++) {
+        int species_id = state_layout.species_ids[isp];
+        reduced_dsp_initial[isp] = sp_densities(species_id, i);
       }
       if (coupled_e_evolution) {
-        dsp[i_eng-1] = e(i,j,k);
-      }
-
-      for (int isp = 0; isp < nsp; isp++) {
-        reduced_dsp_initial[isp] = dsp[idsp[isp]];
+        reduced_dsp_initial[state_layout.energy_index()] = e(i,j,k);
       }
 
       // configure pack for use during the current index
