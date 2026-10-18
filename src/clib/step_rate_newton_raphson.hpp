@@ -278,19 +278,6 @@ inline void step_rate_newton_raphson(
       nsp += coupled_e_evolution;
       idsp.resize(nsp);
 
-      // copy values into dsp from sp_densities
-      for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
-        const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
-        for (int sp_idx = bounds.start; sp_idx < bounds.stop; sp_idx++) {
-          dsp[sp_idx] = sp_densities(sp_idx, i);
-        }
-      }
-      if (coupled_e_evolution) {
-        dsp[i_eng-1] = e(i,j,k);
-      } else {
-        dsp[i_eng-1] = NAN;
-      }
-
       // here, we fill in the idsp array
       // -> the idsp array is used for mapping between the compressed vector
       //    form (that only has nsp elements) and dsp (that always has
@@ -322,6 +309,17 @@ inline void step_rate_newton_raphson(
         .species_ids = idsp.data(),
         .fixed_specific_energy = coupled_e_evolution ? std::nullopt : std::optional<double>(e(i,j,k))
       };
+
+      // copy values into dsp from sp_densities
+      for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
+        const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
+        for (int sp_idx = bounds.start; sp_idx < bounds.stop; sp_idx++) {
+          dsp[sp_idx] = sp_densities(sp_idx, i);
+        }
+      }
+      if (coupled_e_evolution) {
+        dsp[i_eng-1] = e(i,j,k);
+      }
 
       // configure pack for use during the current index
       t_deriv::configure_ContextPack(
