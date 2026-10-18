@@ -165,6 +165,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
                                 (0.5 * freefall_time_constant * dt *
                                  np.power((1 - force_factor), 0.5))), -2.)
 
+        fc.calculate_temperature()
         print("Evolve Freefall - t: %e yr, rho: %e g/cm^3, T: %e K." %
               ((current_time * my_chemistry.time_units / sec_per_year),
                (fc["density"][0] * my_chemistry.density_units),
@@ -241,14 +242,13 @@ def evolve_constant_density(fc, final_temperature=None,
     current_time = 0.0
     fc.calculate_cooling_time()
     dt = safety_factor * np.abs(fc["cooling_time"][0])
-    fc.calculate_temperature()
     while True:
+        fc.calculate_temperature()
         if final_temperature is not None and fc["temperature"][0] <= final_temperature:
             break
         if final_time is not None and current_time >= final_time:
             break
 
-        fc.calculate_temperature()
         print("Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." %
               (current_time * my_chemistry.time_units / sec_per_year,
                fc["density"][0] * my_chemistry.density_units,
