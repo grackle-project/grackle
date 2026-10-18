@@ -91,8 +91,8 @@ struct StateLayoutAndE {
 ///   This allows to finish polishing time_deriv_0d::derivatives without
 ///   refactoring the newton-raphson scheme)
 inline void wrapped_calc_derivatives(
-  const double* reduced_dsp,
-  double* reduced_dspdot,
+  const double* y,
+  double* ydot,
   const StateLayoutAndE& state_layout,
   grackle::impl::time_deriv_0d::ContextPack& pack,
   std::vector<gr_float>& rhosp_grflt,         // <- preallocated temp buffer
@@ -106,18 +106,18 @@ inline void wrapped_calc_derivatives(
     rhosp_grflt[sp_idx] = static_cast<gr_float>(0.0);
   }
 
-  // 1. copy values out of dsp into rhosp_grflt and local_eint
+  // 1. copy values out of y into rhosp_grflt & (if applicable) local_eint
   //    - at some point, we need to add some logic to deal with edge cases
   //      that can arise when `sizeof(gr_float) < sizeof(double)
   for (int vec_i = 0; vec_i < state_layout.n_contained_species; vec_i++) {
     int species_id = state_layout.species_ids[vec_i];
-    rhosp_grflt[species_id] = static_cast<gr_float>(reduced_dsp[vec_i]);
+    rhosp_grflt[species_id] = static_cast<gr_float>(y[vec_i]);
   }
   if (state_layout.fixed_specific_energy.has_value()) {
     local_eint[0] =
         static_cast<gr_float>(state_layout.fixed_specific_energy.value());
   } else {
-    local_eint[0] = static_cast<gr_float>(reduced_dsp[state_layout.energy_index()]);
+    local_eint[0] = static_cast<gr_float>(y[state_layout.energy_index()]);
   }
 
   // 2. call the wrapped function
@@ -125,13 +125,13 @@ inline void wrapped_calc_derivatives(
     rhosp_grflt.data(), rhosp_dot, local_eint, eint_dot_specific, pack
   );
 
-  // 3. copy the computed derivatives into reduced_dspdot
+  // 3. copy the computed derivatives into ydot
   for (int vec_i = 0; vec_i < state_layout.n_contained_species; vec_i++) {
     int species_id = state_layout.species_ids[vec_i];
-    reduced_dspdot[vec_i] = rhosp_dot.data[species_id][0];
+    ydot[vec_i] = rhosp_dot.data[species_id][0];
   }
   if (!state_layout.fixed_specific_energy.has_value()) {
-    reduced_dspdot[state_layout.energy_index()] = eint_dot_specific[0];
+    ydot[state_layout.energy_index()] = eint_dot_specific[0];
   }
 }
 
@@ -180,10 +180,10 @@ inline void step_rate_newton_raphson(
   const int i_eng = MAX_EVOLVED_SPECIES_FIELDS + 1;
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
-  std::vector<double> reduced_dsp_initial(i_eng);
-  std::vector<double> reduced_dsp(i_eng);
-  std::vector<double> reduced_dsp1(i_eng);
-  std::vector<double> reduced_dspdot_buf1(i_eng);
+  std::vector<double> y_initial(i_eng);
+  std::vector<double> y(i_eng);
+  std::vector<double> y_buf1(i_eng);
+  std::vector<double> ydot_buf1(i_eng);
 
   // initialize the ode_solver
   // -> a solution is considered converged when the max relative difference
@@ -242,7 +242,7 @@ inline void step_rate_newton_raphson(
   int n_species_idx_bounds_all = 3;
 
   // the following check was inspired by a compiler warning indicating that
-  // nsp won't be initialized if this condition isn't met
+  // y_len won't be initialized if this condition isn't met
   GRIMPL_REQUIRE((my_chemistry->primordial_chemistry > 0),
     "this function can't support primordial_chemistry == %d",
     my_chemistry->primordial_chemistry
@@ -270,24 +270,18 @@ inline void step_rate_newton_raphson(
           ? n_species_idx_bounds_all : n_species_idx_bounds_nometal;
 
       // initialize arrays
-      int nsp = 0;
+      int y_len = 0;
       for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
         const IndexInterval1D& bounds = species_idx_bounds_arr[bound_i];
-        nsp += (bounds.stop - bounds.start);
+        y_len += (bounds.stop - bounds.start);
       }
-      nsp += coupled_e_evolution;
-      idsp.resize(nsp);
+      y_len += coupled_e_evolution;
+      idsp.resize(y_len);
 
       // here, we fill in the idsp array
-      // -> the idsp array is used for mapping between the compressed vector
-      //    form (that only has nsp elements) and dsp (that always has
-      //    `MAX_EVOLVED_SPECIES_FIELDS + 1` entries)
-      // -> in the future, we should construct this array first (before doing
-      //    anything else):
-      //    -> it gives us the value of nsp for free!
-      //    -> using this array with SpeciesMultiView lets us cut out
-      //       (duplicated) logic when we copy values from my_fields to dsp and
-      //       the reverse (we can cut ~70 lines in each place)
+      // -> the idsp array is used for mapping between the state vector (`y`), 
+      //    which only has `y_len` and the species_id, which is used to index
+      //    `sp_densities`
       {
         int offset = 0;
         for (int bound_i = 0; bound_i < n_species_idx_bounds; bound_i++) {
@@ -301,22 +295,22 @@ inline void step_rate_newton_raphson(
         if (coupled_e_evolution)  {
           idsp[offset++] = i_eng-1;
         }
-        GRIMPL_REQUIRE((offset == nsp), "SANITY CHECK FAILED");
+        GRIMPL_REQUIRE((offset == y_len), "SANITY CHECK FAILED");
       }
 
       StateLayoutAndE state_layout{
-        .n_contained_species = nsp - coupled_e_evolution,
+        .n_contained_species = y_len - coupled_e_evolution,
         .species_ids = idsp.data(),
         .fixed_specific_energy = coupled_e_evolution ? std::nullopt : std::optional<double>(e(i,j,k))
       };
 
-      // copy values into reduced_dsp_initial
+      // copy values into y_initial
       for (int isp = 0; isp < state_layout.n_contained_species; isp++) {
         int species_id = state_layout.species_ids[isp];
-        reduced_dsp_initial[isp] = sp_densities(species_id, i);
+        y_initial[isp] = sp_densities(species_id, i);
       }
       if (coupled_e_evolution) {
-        reduced_dsp_initial[state_layout.energy_index()] = e(i,j,k);
+        y_initial[state_layout.energy_index()] = e(i,j,k);
       }
 
       // configure pack for use during the current index
@@ -351,7 +345,7 @@ inline void step_rate_newton_raphson(
       //   f(y) and the Jacobian matrix for f(y).
       //
       // From a more practical perspective:
-      // - the `dsp` buffer holds all variables actively evolved by the current
+      // - the `y` buffer holds all variables actively evolved by the current
       //   grackle configuration.
       // - for the current timestep, only a subset of the variables may be
       //    evolved. The selection of evolved variables is tracked by the
@@ -359,42 +353,42 @@ inline void step_rate_newton_raphson(
       // - this reduced set of variables corresponds to `y(t)`
 
       // actually define the callback function:
-      // - reduced_dsp corresponds to the current value of the variable y
-      // - reduced_dspdot is an output buffer for holding f(y)
-      // - jacobian is an output buffer for holding the Jacobian of f
+      // - `y` corresponds to the current value of the variable y
+      // - `ydot` is an output buffer for holding f(y)
+      // - `jacobian` is an output buffer for holding the Jacobian of f
       //
       // Important: index `i` in these buffers correspond to the `i`th variable
       //            being evolved in the current timestep. The corresponding
       //            entry in `dsp` is at the index `idsp[isp]`.
       const auto calc_f_and_jacobian = [&](
-          const double* reduced_dsp, double* reduced_dspdot,
+          const double* y, double* ydot,
           View<double**>& jacobian) -> void {
 
-        wrapped_calc_derivatives(reduced_dsp, reduced_dspdot, state_layout,
+        wrapped_calc_derivatives(y, ydot, state_layout,
                                  pack, rhosp_grflt, rhosp_dot);
 
         // fill in the jacobian matrix for the time derivative
         // -> to accomplish this, we use finite differences to estimate
         //    partial derivative for each evolved variable (i.e. the species
         //    densities and possibly the total energy)
-        for (int jsp = 0; jsp < nsp; jsp++) {
-          double dspj = eps * reduced_dsp[jsp];
-          for (int isp = 0; isp < nsp; isp++) {
+        for (int jsp = 0; jsp < y_len; jsp++) {
+          double dspj = eps * y[jsp];
+          for (int isp = 0; isp < y_len; isp++) {
             if (isp == jsp) {
-              reduced_dsp1[isp] = reduced_dsp[isp] + dspj;
+              y_buf1[isp] = y[isp] + dspj;
             } else {
-              reduced_dsp1[isp] = reduced_dsp[isp];
+              y_buf1[isp] = y[isp];
             }
           }
 
-          wrapped_calc_derivatives(reduced_dsp1.data(),
-                                   reduced_dspdot_buf1.data(), state_layout,
+          wrapped_calc_derivatives(y_buf1.data(),
+                                   ydot_buf1.data(), state_layout,
                                    pack, rhosp_grflt, rhosp_dot);
 
-          for (int isp = 0; isp < nsp; isp++) {
-            double tderiv = reduced_dspdot[isp];
-            double offset_tderiv = reduced_dspdot_buf1[isp];
-            if ((reduced_dsp[isp] == 0.0) && (offset_tderiv == tderiv)) {
+          for (int isp = 0; isp < y_len; isp++) {
+            double tderiv = ydot[isp];
+            double offset_tderiv = ydot_buf1[isp];
+            if ((y[isp] == 0.0) && (offset_tderiv == tderiv)) {
               jacobian(isp, jsp) = 0.0;
             } else {
               jacobian(isp, jsp) = (offset_tderiv - tderiv) / dspj;
@@ -407,16 +401,16 @@ inline void step_rate_newton_raphson(
       // -> First, we try to use the current timestep value tracked by dtit[i].
       //    If the answer doesn't converge, we will try again with shorter and
       //    shorter timesteps until chemistry converges
-      // -> when we exit this loop, reduced_dsp will hold the values of all of
+      // -> when we exit this loop, y will hold the values of all of
       //    the evolved variables
       bool is_converged = false;
       while (!is_converged) {
 
-        // copy values into reduced_dsp for variables that are being evolved
-        // (we need to do this each time we enter the loop since reduced_dsp
+        // copy values into y for variables that are being evolved
+        // (we need to do this each time we enter the loop since y
         // is mutated in place as we try to evolve things)
         for (int isp = 0; isp < state_layout.state_vec_len(); isp++) {
-          reduced_dsp[isp] = reduced_dsp_initial[isp];
+          y[isp] = y_initial[isp];
         }
 
         // Iteration to solve ODEs
@@ -428,14 +422,14 @@ inline void step_rate_newton_raphson(
       (my_chemistry->with_radiative_cooling == 1);
 
         integrate::IntegrateResult rslt = ode_solver.step(
-            reduced_dsp.data(), dtit[i], calc_f_and_jacobian, nsp,
+            y.data(), dtit[i], calc_f_and_jacobian, y_len,
             ode_scratch_buf.data(), enforce_positive_non_NaN, d(i, j, k));
         is_converged = rslt.converged();
 
         // Check if the fractions are valid after an iteration
         if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
-          for (isp = 0; isp<nsp; isp++) {
-            if ( std::isnan(reduced_dsp[isp]) || (reduced_dsp[isp] <= 0.) )  {
+          for (isp = 0; isp<y_len; isp++) {
+            if ( std::isnan(y[isp]) || (y[isp] <= 0.) )  {
               is_converged = false;
             }
           }
@@ -452,11 +446,11 @@ inline void step_rate_newton_raphson(
       // overwrite the dynamically evolved species fields (tracked by my_fields
       // and accessed thru sp_densities) with the evolved values
       for (int isp = 0; isp < state_layout.n_contained_species; isp++) {
-        sp_densities(state_layout.species_ids[isp], i) = reduced_dsp[isp];
+        sp_densities(state_layout.species_ids[isp], i) = y[isp];
       }
 
       if (coupled_e_evolution) {
-        e(i,j,k) = reduced_dsp[state_layout.energy_index()];
+        e(i,j,k) = y[state_layout.energy_index()];
       }
 
       idsp.clear();
