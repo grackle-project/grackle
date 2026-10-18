@@ -76,6 +76,64 @@ struct StateLayoutAndE {
   }
 };
 
+
+inline constexpr int MAX_Y_LEN = MAX_EVOLVED_SPECIES_FIELDS + 1;
+
+class StateLayoutFactory {
+  std::vector<int> idsp_;
+  int n_sp_prim_;
+  int n_sp_all_;
+
+  public:
+
+  StateLayoutFactory(const StateLayoutFactory&)=delete;
+  StateLayoutFactory& operator=(const StateLayoutFactory&)=delete;
+
+  explicit StateLayoutFactory(const PartMap<SpKind>& sp_kind_map) {
+    idsp_.resize(MAX_Y_LEN);
+    // if SpKind::METAL or SpKind::DUST don't correspond to any species in the
+    // current configuration, then the corresponding IndexInterval1D object's
+    // start & stop data members will be equal to each other
+    const IndexInterval1D species_idx_bounds_arr[3] = {
+      sp_kind_map.part_bounds(SpKind::PRIMORDIAL),
+      sp_kind_map.part_bounds(SpKind::METAL),
+      sp_kind_map.part_bounds(SpKind::DUST)
+    };
+    n_sp_prim_ = species_idx_bounds_arr[0].stop - species_idx_bounds_arr[0].start;
+
+    int offset = 0;
+    for (const IndexInterval1D& bounds: species_idx_bounds_arr) {
+      int n_to_add = bounds.stop - bounds.start;
+      for (int index = 0; index < n_to_add; index++) {
+        idsp_[index + offset] = index + bounds.start;
+      }
+      offset += n_to_add;
+    }
+    n_sp_all_ = offset;
+  }
+
+  // it's the caller's responsibility to ensure that the StateLayoutAndE objects
+  // constructed by the following methods don't outlive the factory (otherwise,
+  // the species_ids pointer will be a dangling)
+
+  StateLayoutAndE create_coupled_e_evo(bool include_metal) const {
+    return StateLayoutAndE{
+        .n_contained_species = include_metal ? n_sp_all_ : n_sp_prim_,
+        .species_ids = idsp_.data(),
+        .fixed_specific_energy = std::nullopt
+      };
+  }
+
+  StateLayoutAndE create_fixed_e(bool include_metal,
+                                 double fixed_specific_energy) const {
+    return StateLayoutAndE{
+        .n_contained_species = include_metal ? n_sp_all_ : n_sp_prim_,
+        .species_ids = idsp_.data(),
+        .fixed_specific_energy = std::optional<double>(fixed_specific_energy)
+      };
+  }
+};
+
 /// acts as a temporary adaptor layer for time_deriv_0d::derivatives:
 ///
 /// @note
@@ -178,13 +236,12 @@ inline void step_rate_newton_raphson(
   // Local variable
   int isp;
 
-  const int max_y_len = MAX_EVOLVED_SPECIES_FIELDS + 1;
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
-  std::vector<double> y_initial(max_y_len);
-  std::vector<double> y(max_y_len);
-  std::vector<double> y_buf1(max_y_len);
-  std::vector<double> ydot_buf1(max_y_len);
+  std::vector<double> y_initial(step_nr_detail::MAX_Y_LEN);
+  std::vector<double> y(step_nr_detail::MAX_Y_LEN);
+  std::vector<double> y_buf1(step_nr_detail::MAX_Y_LEN);
+  std::vector<double> ydot_buf1(step_nr_detail::MAX_Y_LEN);
 
   // initialize the ode_solver
   // -> a solution is considered converged when the max relative difference
@@ -192,36 +249,14 @@ inline void step_rate_newton_raphson(
   double max_rtol = 1.e-8;
   // -> maximum number of iterations before giving up on a provided timestep
   int maxiter_per_dt = 20;
-  integrate::StiffNewtonRaphson ode_solver(max_y_len, max_rtol, maxiter_per_dt);
+  integrate::StiffNewtonRaphson ode_solver(step_nr_detail::MAX_Y_LEN, max_rtol,
+                                           maxiter_per_dt);
 
   std::vector<double> ode_scratch_buf(ode_solver.num_scratch_buf_elements());
 
-  std::vector<int> idsp(max_y_len);
-  int n_contained_species_prim;
-  int n_contained_species_all;
-  {
-    const PartMap<SpKind>& sp_kind_map = my_rates->opaque_storage->sp_kind_map;
-    // if SpKind::METAL or SpKind::DUST don't correspond to any species in the
-    // current configuration, then the corresponding IndexInterval1D object's
-    // start & stop data members will be equal to each other
-    const IndexInterval1D species_idx_bounds_arr[3] = {
-      sp_kind_map.part_bounds(SpKind::PRIMORDIAL),
-      sp_kind_map.part_bounds(SpKind::METAL),
-      sp_kind_map.part_bounds(SpKind::DUST)
-    };
-    n_contained_species_prim = (
-      species_idx_bounds_arr[0].stop - species_idx_bounds_arr[0].start);
+  const step_nr_detail::StateLayoutFactory ylayout_factory(
+    my_rates->opaque_storage->sp_kind_map);
 
-    int offset = 0;
-    for (const IndexInterval1D& bounds: species_idx_bounds_arr) {
-      int n_to_add = bounds.stop - bounds.start;
-      for (int index = 0; index < n_to_add; index++) {
-        idsp[index + offset] = index + bounds.start;
-      }
-      offset += n_to_add;
-    }
-    n_contained_species_all = offset;
-  }
   // Another parameter
   const double eps = 1.e-4;
 
@@ -277,12 +312,10 @@ inline void step_rate_newton_raphson(
         e(i,j,k)  = e(i,j,k) + (gr_float)(edot[i]/d(i,j,k)*dtit[i] );
       }
 
-      step_nr_detail::StateLayoutAndE state_layout{
-        .n_contained_species = (itmask_metal[i] != MASK_FALSE)
-          ? n_contained_species_all : n_contained_species_prim,
-        .species_ids = idsp.data(),
-        .fixed_specific_energy = coupled_e_evolution ? std::nullopt : std::optional<double>(e(i,j,k))
-      };
+      bool include_metal = (itmask_metal[i] != MASK_FALSE);
+      step_nr_detail::StateLayoutAndE state_layout = (coupled_e_evolution)
+        ? ylayout_factory.create_coupled_e_evo(include_metal)
+        : ylayout_factory.create_fixed_e(include_metal, e(i,j,k));
       int y_len = state_layout.state_vec_len();
 
       // copy values into y_initial
