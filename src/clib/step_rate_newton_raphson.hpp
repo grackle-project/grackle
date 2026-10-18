@@ -69,7 +69,7 @@ struct StateLayoutAndE {
     }
   }
 
-  bool state_vec_len() const {
+  int state_vec_len() const {
     return n_contained_species + coupled_e_evolution();
   }
 };
@@ -181,6 +181,7 @@ inline void step_rate_newton_raphson(
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
   std::vector<double> dsp(i_eng);
+  std::vector<double> reduced_dsp_initial(i_eng);
   std::vector<double> reduced_dsp(i_eng);
   std::vector<double> reduced_dsp1(i_eng);
   std::vector<double> reduced_dspdot_buf1(i_eng);
@@ -321,6 +322,10 @@ inline void step_rate_newton_raphson(
         dsp[i_eng-1] = e(i,j,k);
       }
 
+      for (int isp = 0; isp < nsp; isp++) {
+        reduced_dsp_initial[isp] = dsp[idsp[isp]];
+      }
+
       // configure pack for use during the current index
       t_deriv::configure_ContextPack(
         &pack, my_fields, field_idx1d, itmask_metal[i], coupled_e_evolution
@@ -417,8 +422,8 @@ inline void step_rate_newton_raphson(
         // copy values into reduced_dsp for variables that are being evolved
         // (we need to do this each time we enter the loop since reduced_dsp
         // is mutated in place as we try to evolve things)
-        for (int isp = 0; isp < nsp; isp++) {
-          reduced_dsp[isp] = dsp[idsp[isp]];
+        for (int isp = 0; isp < state_layout.state_vec_len(); isp++) {
+          reduced_dsp[isp] = reduced_dsp_initial[isp];
         }
 
         // Iteration to solve ODEs
