@@ -114,6 +114,27 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
     last3_density = np.full(shape=(3, fc.n_vals), fill_value=np.nan, dtype=np.float64)
     last3_pressure = np.full(shape=(3, fc.n_vals), fill_value=np.nan, dtype=np.float64)
 
+    def calc_force_factor(fc):
+        nonlocal last_n_recorded
+        if include_pressure:
+            last3_density[-3:-1, :] = last3_density[-2:, :]
+            last3_pressure[-3:-1, :] = last3_pressure[-2:, :]
+            fc.calculate_pressure()
+            last3_density[-1, :] = fc["density"]
+            last3_pressure[-1, :] = fc["pressure"]
+
+            if last_n_recorded < 3:
+                last_n_recorded += 1
+
+            fc.calculate_pressure()
+            last3_density[-1,:] = fc["density"]
+            last3_pressure[-1,:] = fc["pressure"]
+            return calculate_collapse_factor(last3_pressure[-last_n_recorded:],
+                                             last3_density[-last_n_recorded:])
+        else:
+            return 0.
+
+
     state_recorder = StateRecorder(
         n_recordings_per_reset=100,
         field_register_len=fc.n_vals,
@@ -131,28 +152,12 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
 
         state_recorder.record(time=current_time, fc=fc)
         if state_recorder.is_full():
-            add_to_data2(fc.chemistry_data, state_recorder, data)
+            add_to_data(fc.chemistry_data, state_recorder, data)
             state_recorder.reset() # <- clear out contents
 
         # compute the new density using the modified
         # free-fall collapse as per Omukai et al. (2005)
-        if include_pressure:
-            last3_density[-3:-1, :] = last3_density[-2:, :]
-            last3_pressure[-3:-1, :] = last3_pressure[-2:, :]
-            fc.calculate_pressure()
-            last3_density[-1, :] = fc["density"]
-            last3_pressure[-1, :] = fc["pressure"]
-
-            if last_n_recorded < 3:
-                last_n_recorded += 1
-
-            fc.calculate_pressure()
-            last3_density[-1,:] = fc["density"]
-            last3_pressure[-1,:] = fc["pressure"]
-            force_factor = calculate_collapse_factor(last3_pressure[-last_n_recorded:],
-                                                     last3_density[-last_n_recorded:])
-        else:
-            force_factor = 0.
+        force_factor = calc_force_factor(fc)
         data["force_factor"].append(force_factor)
 
         # calculate new density from altered free-fall solution
@@ -183,7 +188,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         current_time += dt
 
     if not state_recorder.is_empty():
-        add_to_data2(fc.chemistry_data, state_recorder, data)
+        add_to_data(fc.chemistry_data, state_recorder, data)
 
     for field in data:
         data[field] = np.squeeze(np.array(data[field]))
@@ -252,50 +257,20 @@ def evolve_constant_density(fc, final_temperature=None,
 
         state_recorder.record(time=current_time, fc=fc)
         if state_recorder.is_full():
-            add_to_data2(fc.chemistry_data, state_recorder, data)
+            add_to_data(fc.chemistry_data, state_recorder, data)
             state_recorder.reset() # <- clear out contents
 
         current_time += dt
 
     if not state_recorder.is_empty():
-        add_to_data2(fc.chemistry_data, state_recorder, data)
+        add_to_data(fc.chemistry_data, state_recorder, data)
 
     for field in data:
         data[field] = np.squeeze(np.array(data[field]))
     return fc.finalize_data(data=data)
 
 
-def add_to_data(fc, data, extra=None):
-    """
-    Add current fluid container values to the data structure.
-    """
-
-    # for indirectly calculated fields, we get more than one field from a call.
-    # keep a list of what we've called so we don't have to call them again.
-    called = []
-
-    for field in fc.all_fields:
-        if field not in fc.input_fields:
-            if field in _indirectly_calculated_fields:
-                fname = _indirectly_calculated_fields[field]
-            else:
-                fname = f"calculate_{field}"
-
-            func = getattr(fc, fname, None)
-            if func is None:
-                raise RuntimeError(f"No function for calculating {field}.")
-
-            if fname not in called:
-                func()
-                called.append(fname)
-
-        data[field].append(fc[field].copy())
-
-    if extra is not None:
-        for field in extra:
-            data[field].append(extra[field])
-
-def add_to_data2(chemistry_data, state_recorder, data):
+def add_to_data(chemistry_data, state_recorder, data):
     """
     Add current state_recorder values to the data structure.
     """
