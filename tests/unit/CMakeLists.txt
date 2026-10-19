@@ -2,6 +2,9 @@
 # ==================================
 
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
+add_executable(testError support/test_error.cpp)
+target_link_libraries(testError testdeps)
+gtest_discover_tests(testError)
 
 add_executable(testExpected support/test_expected.cpp)
 target_link_libraries(testExpected testdeps)
