@@ -47,11 +47,38 @@ namespace step_nr_detail {
 /// (it is stored as the last entry of the vector). If energy is not tracked
 /// as part of the state-vector, an object of this type should then track
 /// the fixed_specific_energy for the current timestep
+///
+/// Implementation Note
+/// -------------------
+/// @ref StateLayoutAndE::species_ids is an array-like object that maps the
+/// `i`th index of the state-vector (for `i < n_contained_species`) to a
+/// species_id.
+///
+/// This needs to be an array-like object because grackle currently associates
+/// species ids with species at compile-time even if the species is not used.
+/// Thus, it's possible for grackle to be configured in a way where the
+/// species_ids of actively evolved species are not contiguous. For example:
+/// - if `primordial_chemistry = 3` & `metal_chemistry = 1`, the species_id
+///   associated with certain primordial species (e.g. `DM`) aren't used
+/// - if `metal_chemistry = 1`, `dust_chemistry = 2` & `dust_species = 1`:
+///   the species_ids of certain metal species (e.g. `Fe`) aren't used
+///
+/// After we eliminate @ref SpLUT from the codebase, some light refactoring
+/// will be possible to configure the precise mapping between species ids and
+/// species at configuration time (this while preserving relative orderings of
+/// species that are encoded in objects like @ref PrimoridalSpLUT,
+/// @ref MetalSpLUT, and @ref DustSpLUT). This will make it possible to ensure
+/// that all active species ids have contiguous values. At that point, we'll be
+/// able to convert the @ref StateLayoutAndE::species_ids will no longer need
+/// to be an array-like object
 struct StateLayoutAndE {
 
+  /// the number of indices of the state-vector that encode the density of a
+  /// dynamically evolved species
   int n_contained_species;
   /// `species_ids[idx]` gives the `species_id` stored at index `idx` of the
-  /// state-vector
+  /// state-vector for the first @ref n_contained_species indices of the state
+  /// vector
   const int* species_ids;
   /// If energy evolution is decoupled from energy evolution, this specifies
   /// the fixed internal energy
@@ -76,9 +103,42 @@ struct StateLayoutAndE {
   }
 };
 
-
+/// @brief max length of a state vector evolved with the newton raphson solver
+///
+/// For context:
+/// - the state vector is typically referred to by the variable name `y`
+/// - the state vector has distinct components for each evolved species and may
+///   have a component to track the specific internal energy
 inline constexpr int MAX_Y_LEN = MAX_EVOLVED_SPECIES_FIELDS + 1;
 
+/// @brief Creates a @ref StateLayoutAndE object describing the state vector for
+///    the current calculation.
+///
+/// At the time of writing, a given grackle configuration generally has 4
+/// possible layouts for the state vector:
+/// 1. exclude metal-related chemistry with operator-split energy evolution
+/// 2. exclude metal-related chemistry with coupled energy evolution
+/// 3. include metal-related chemistry with operator-split energy evolution
+/// 4. include metal-related chemistry with coupled energy evolution
+///
+/// Obviously the fourth case is most general-purpose, but the state vector
+/// is definitely the longest. In the current configuration, coupling energy
+/// evolution also significantly increases the cost of the calculation (this
+/// is definitely fixable -- especially if we compute analytic derivatives)
+///
+/// Implementation Note
+/// -------------------
+/// For the initial implementation this is intended to be an ephemeral object
+/// that is temporarily constructed during each invocation of
+/// @ref step_rate_newton_raphson. If the cost of rebuilding this object is a
+/// concern, we could prebuild this object and store it inside of opaque
+/// storage.
+///
+/// It's worth mentioning that once we finish eliminating all references of
+/// @ref SpLUT from the codebase, the optimizations described in the docstring
+/// for @ref StateLayoutAndE will become possible. If we implement those
+/// optimizations, constructing a @ref StateLayoutFactory object will become
+/// EXTREMELY cheap
 class StateLayoutFactory {
   std::vector<int> idsp_;
   int n_sp_prim_;
