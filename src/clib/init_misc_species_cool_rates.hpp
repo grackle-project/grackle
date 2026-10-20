@@ -14,8 +14,9 @@
 #define INIT_MISC_SPECIES_COOL_RATES_HPP
 
 #include "grackle.h"
+#include "support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 int init_misc_species_cool_rates(chemistry_data* my_chemistry,
                                  chemistry_data_storage* my_rates,
@@ -23,6 +24,6 @@ int init_misc_species_cool_rates(chemistry_data* my_chemistry,
 
 int free_misc_species_cool_rates(chemistry_data* my_chemistry,
                                  chemistry_data_storage* my_rates);
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* INIT_MISC_SPECIES_COOL_RATES_HPP */
