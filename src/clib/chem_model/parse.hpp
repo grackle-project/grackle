@@ -326,6 +326,18 @@ constexpr Expected<RxnEqnComps, Err> rxn_eqn(std::string_view s) {
     return Unexpected(Err::InvalidChar(0));
   }
 
+  using SViewCoefPairVec = InplaceVector<SViewCoefPair, MaxSpeciesPerEqnSide>;
+
+  // a lambda function that checks whether a name is a repeat
+  auto is_repeat = [](std::string_view name, const SViewCoefPairVec& v) {
+    for (const SViewCoefPair& elem : v) {
+      if (name == elem.first) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   RxnEqnComps comps;
   std::size_t pos = 0;
 
@@ -348,6 +360,7 @@ constexpr Expected<RxnEqnComps, Err> rxn_eqn(std::string_view s) {
       if (!rv_a.has_value() && !rv_a.error().is_InvalidChar()) {
         return Unexpected(rv_a.error());
       }
+      bool has_explicit_coef = rv_a.has_value();
       uint8_t coef;
       std::tie(pos, coef) = rv_a.value_or({pos, 1});
       pos = next_non_space_(s, pos, stop);  // skip any subsequent whitespace
@@ -358,8 +371,13 @@ constexpr Expected<RxnEqnComps, Err> rxn_eqn(std::string_view s) {
       if (!rv_b.has_value()) {
         return Unexpected(rv_b.error());
       }
-      std::string_view spname;
-      std::tie(pos, spname) = rv_b.value();
+      std::string_view spname = rv_b.value().second;
+      if (is_repeat(spname, coef_sp_pairs)) {
+        Unexpected(Err::Custom(pos, "name must appear once per equation side"));
+      } else if (spname == "photon" && has_explicit_coef) {
+        Unexpected(Err::Custom(pos, "\"photon\" must not have a coefficient"));
+      }
+      pos = rv_b.value().first;
 
       // record the subscript-symbol pair
       if (!coef_sp_pairs.try_emplace_back(spname, coef)) {
