@@ -216,12 +216,22 @@ struct DerivativeCalculator {
 
   /// @brief the functional call operation
   ///
+  /// @param y[in] the current value of the state vector
+  /// @param ydot[out] holds the computed time derivatives
+  ///
   /// @note
-  /// In an ideal world, the scratch space that is mutated for the calculation
-  /// might be specified as an argument so that we can mark this function as
-  /// `const`. However, there isn't tremendous value to doing this unless we
-  /// hoist the relevant scratch memory out of @ref time_deriv_0d::ContextPack
-  void operator()(const double* y, double* ydot) {
+  /// This is `const` in the sense that nothing about internal state changes
+  /// that would affect the results (i.e. the scratch-space is the only thing
+  /// to change). In the future, it *might* make sense to pass in the scratch
+  /// space as a separate argument to get rid of this ambiguity.  However, there
+  /// isn't tremendous value to doing this unless we hoist the relevant scratch
+  /// memory out of @ref time_deriv_0d::ContextPack
+  ///
+  /// @warning
+  /// This method is expressly NOT thread-safe. If 2 threads invoke this method
+  /// for the same object (i.e. any scratch-space is shared), there WILL be
+  /// problems
+  void operator()(const double* y, double* ydot) const {
     // for less experienced C++ devs: this is like python's __call__ method
 
     gr_float local_eint[1];
@@ -259,6 +269,76 @@ struct DerivativeCalculator {
     }
     if (!state_layout.fixed_specific_energy.has_value()) {
       ydot[state_layout.energy_index()] = eint_dot_specific[0];
+    }
+  }
+};
+
+/// @brief function-like adaptor object to help compute Jacobian matrix
+///
+/// This wraps a function-like object for computing time derivatives for a state
+/// vector. Calling the resulting function
+/// this is an adaptor that takes a function for computing time derivatives and
+/// uses it (with finite differences) to compute the time derivative and the
+/// jacobian matrix
+///
+/// @note
+/// This could be implemented as a lambda function
+template<typename Fn>
+struct FiniteDiffJacobianAdaptor{
+  int n_eqns;           ///< the number of equations being evolved
+  double eps;           ///< governs the finite difference
+  Fn& deriv_fn;         ///< function-object that computes time derivative
+  double* scratch_ptr;  ///< must have space allocated for `2*n_eqns` elements
+
+  /// @brief computes the time derivative and estimates the jacobian matrix
+  ///
+  /// @param y[in] the current value of the state vector
+  /// @param ydot[out] holds the computed time derivatives
+  /// @param jaobian[out] holds the computed jacobian matrix
+  ///
+  /// @note
+  /// This is marked const because that's a requirement of
+  /// @ref integrate::StiffNewtonRaphson. This is `const` in the sense that
+  /// nothing about internal state changes that would affect the results (i.e.
+  /// the scratch-space is the only thing to change). In the future, it *might*
+  /// make sense to modify ref integrate::StiffNewtonRaphson so that it forwards
+  /// on a scratch-space argument to this function in order to get rid of this
+  /// ambiguity
+  ///
+  /// @warning
+  /// This method is expressly NOT thread-safe. If 2 threads invoke this method
+  /// for the same object (i.e. any scratch-space is shared), there WILL be
+  /// problems
+  void operator()(const double* y, double* ydot, View<double**>& jacobian) const {
+
+    // calculate time derivative of y and store the answer in ydot
+    deriv_fn(y, ydot);
+
+    double* y_buf1 = scratch_ptr;
+    double* ydot_buf1 = scratch_ptr + n_eqns;
+
+    // fill in the jacobian matrix for the time derivative
+    for (int j = 0; j < n_eqns; j++) {
+      double dspj = eps * y[j];
+      for (int i = 0; i < n_eqns; i++) {
+        if (i == j) {
+          y_buf1[i] = y[i] + dspj;
+        } else {
+          y_buf1[i] = y[i];
+        }
+      }
+
+      deriv_fn(y_buf1, ydot_buf1);
+
+      for (int i = 0; i < n_eqns; i++) {
+        double tderiv = ydot[i];
+        double offset_tderiv = ydot_buf1[i];
+        if ((y[i] == 0.0) && (offset_tderiv == tderiv)) {
+          jacobian(i, j) = 0.0;
+        } else {
+          jacobian(i, j) = (offset_tderiv - tderiv) / dspj;
+        }
+      }
     }
   }
 };
@@ -308,8 +388,6 @@ inline void step_rate_newton_raphson(
   // level function, but we will leave that for after transcription
   std::vector<double> y_initial(step_nr_detail::MAX_Y_LEN);
   std::vector<double> y(step_nr_detail::MAX_Y_LEN);
-  std::vector<double> y_buf1(step_nr_detail::MAX_Y_LEN);
-  std::vector<double> ydot_buf1(step_nr_detail::MAX_Y_LEN);
 
   // initialize the ode_solver
   // -> a solution is considered converged when the max relative difference
@@ -354,6 +432,8 @@ inline void step_rate_newton_raphson(
   // allocate scratch-space used by step_nr_detail::DerivativeCalculator
   std::vector<gr_float> scratch_rhosp(MAX_EVOLVED_SPECIES_FIELDS);
   SpeciesCollection scratch_rhosp_dot = new_SpeciesCollection(1);
+
+  std::vector<double> jacobian_adaptor_scratch(2*step_nr_detail::MAX_Y_LEN);
 
   // the following check was inspired by a compiler warning indicating that
   // y_len won't be initialized if this condition isn't met
@@ -444,46 +524,11 @@ inline void step_rate_newton_raphson(
       // - this reduced set of variables corresponds to `y(t)`
 
       // actually define the callback function:
-      // - `y` corresponds to the current value of the variable y
-      // - `ydot` is an output buffer for holding f(y)
-      // - `jacobian` is an output buffer for holding the Jacobian of f
-      //
-      // Important: index `i` in these buffers correspond to the `i`th variable
-      //            being evolved in the current timestep. The corresponding
-      //            entry in `dsp` is at the index `idsp[isp]`.
-      const auto calc_f_and_jacobian = [&](
-          const double* y, double* ydot,
-          View<double**>& jacobian) -> void {
-
-        // calculate time derivative of y and store the answer in ydot
-        deriv_fn(y, ydot);
-
-        // fill in the jacobian matrix for the time derivative
-        // -> to accomplish this, we use finite differences to estimate
-        //    partial derivative for each evolved variable (i.e. the species
-        //    densities and possibly the total energy)
-        for (int jsp = 0; jsp < y_len; jsp++) {
-          double dspj = eps * y[jsp];
-          for (int isp = 0; isp < y_len; isp++) {
-            if (isp == jsp) {
-              y_buf1[isp] = y[isp] + dspj;
-            } else {
-              y_buf1[isp] = y[isp];
-            }
-          }
-
-          deriv_fn(y_buf1.data(), ydot_buf1.data());
-
-          for (int isp = 0; isp < y_len; isp++) {
-            double tderiv = ydot[isp];
-            double offset_tderiv = ydot_buf1[isp];
-            if ((y[isp] == 0.0) && (offset_tderiv == tderiv)) {
-              jacobian(isp, jsp) = 0.0;
-            } else {
-              jacobian(isp, jsp) = (offset_tderiv - tderiv) / dspj;
-            }
-          }
-        }
+      step_nr_detail::FiniteDiffJacobianAdaptor calc_f_and_jacobian{
+        .n_eqns = y_len,
+        .eps = eps,
+        .deriv_fn = deriv_fn,
+        .scratch_ptr = jacobian_adaptor_scratch.data()
       };
 
       // iteratively try to evolve chemistry equations until answer converges
