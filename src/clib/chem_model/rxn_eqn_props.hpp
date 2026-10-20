@@ -33,10 +33,13 @@ inline const char* to_string(EqnSide v) {
 /// @brief An internal data structure used to track properties about a reaction
 ///     equation
 struct RxnEqnProps {
+  using InplaceIdCoefPairVec =
+      InplaceVector<IdCoefPair, parse::MaxSpeciesPerEqnSide>;
+
   /// species_id, coefficient pairs for the left hand side of the equation
-  InplaceVector<IdCoefPair, parse::MaxSpeciesPerEqnSide> lhs_entries;
+  InplaceIdCoefPairVec lhs_entries;
   /// species_id, coefficient pairs for the right hand side of the equation
-  InplaceVector<IdCoefPair, parse::MaxSpeciesPerEqnSide> rhs_entries;
+  InplaceIdCoefPairVec rhs_entries;
 
   /// tracks whether "photon" was in the equation (and what side it was on)
   std::optional<EqnSide> has_photon;
