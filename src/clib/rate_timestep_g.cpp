@@ -90,11 +90,11 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
   FortranView<gr_float***> OI(
       my_fields->OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OH(
-      my_fields->OH_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> OHI(
+      my_fields->OHI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2O(
-      my_fields->H2O_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> H2OI(
+      my_fields->H2OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   FortranView<gr_float***> kdissHDI(
@@ -412,9 +412,9 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
                        OI(i, idx_range.j, idx_range.k) / 16.0;
         HIdot[i] = HIdot[i] +
                    kph_buf[PhotoRxnLUT::kdissOH][i] *
-                       OH(i, idx_range.j, idx_range.k) / 17.0 +
+                       OHI(i, idx_range.j, idx_range.k) / 17.0 +
                    kph_buf[PhotoRxnLUT::kdissH2O][i] *
-                       H2O(i, idx_range.j, idx_range.k) / 18.0;
+                       H2OI(i, idx_range.j, idx_range.k) / 18.0;
       }
     }
   }

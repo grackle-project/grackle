@@ -61,7 +61,7 @@ Caused By:
 }
 
 TEST(Error, EquivMsg) {
-  // let's verify the consistency of results for 3 different approaches that
+  // let's verify the consistency of results for the following approaches that
   // should encode equivalent error messages
 
   constexpr int N_APPROACH = 4;
