@@ -415,7 +415,7 @@ grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
   //   constants (excluding CollisionalRxnLUT::NUM_ENTRIES) in the enum
   switch (i) {
 #define TO_STR(s) #s
-#define ENTRY(NAME)                                                            \
+#define ENTRY(NAME, DUMMY)                                                     \
   case CollisionalRxnLUT::NAME: { return new_Entry(data[i], TO_STR(NAME)); }
 #include "collisional_rxn_rate_members.def"
 

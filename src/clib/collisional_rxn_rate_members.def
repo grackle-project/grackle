@@ -1,52 +1,54 @@
-/***********************************************************************
-/
-/ this file lists each member of the collisional species reaction rates
-/ that we interpolate in 1d as a function of temperature. This list is
-/ intended to be used with X-Macros (to reduce the amount of code
-/ required to interact with these data-members)
-/
-/ Currently, we just specify each rate name. In the future, we will
-/ probably add other metadata to track the initializer function.
-/
-/ Copyright (c) 2013, Enzo/Grackle Development Team.
-/
-/ Distributed under the terms of the Enzo Public Licence.
-/
-/ The full license is in the file LICENSE, distributed with this
-/ software.
-************************************************************************/
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// this file lists each member of the collisional species reaction rates
+/// that we interpolate in 1d as a function of temperature. This list is
+/// intended to be used with X-Macros (to reduce the amount of code
+/// required to interact with these data-members)
+///
+/// Currently, we specify each rate's name and a string encoding the associated
+/// reaction.
+///
+//===----------------------------------------------------------------------===//
 
 
 /**********************************
  * primordial chemistry rate data *
  **********************************/
 
+// All "Classic" rates are labelled as in Abel et al., 1996 (astro-ph/9608040)
+
 /* 6 species rates */
-ENTRY(k1)
-ENTRY(k2)
-ENTRY(k3)
-ENTRY(k4)
-ENTRY(k5)
-ENTRY(k6)
+ENTRY(k1, "HI + e -> HII + 2e")
+ENTRY(k2, "HII + e -> HI + photon")
+ENTRY(k3, "HeI + e -> HeII + 2e")
+ENTRY(k4, "HeII + e -> HeI + photon")
+ENTRY(k5, "HeII + e -> HeIII + 2e")
+ENTRY(k6, "HeIII + e -> HeII + photon")
 
 /* 9 species rates (including H2) */
-ENTRY(k7)
-ENTRY(k8)
-ENTRY(k9)
-ENTRY(k10)
-ENTRY(k11)
-ENTRY(k12)
-ENTRY(k13)
-ENTRY(k14)
-ENTRY(k15)
-ENTRY(k16)
-ENTRY(k17)
-ENTRY(k18)
-ENTRY(k19)
-ENTRY(k20)  /* currently not used */
-ENTRY(k21)  /* currently not used */
-ENTRY(k22)  /* 3-body H2 formation */
-ENTRY(k23)  /* H2-H2 dissociation */
+ENTRY(k7, "HI + e -> HM + photon")
+ENTRY(k8, "HI + HM -> H2I* + e")
+ENTRY(k9, "HI + HII -> H2II + photon")
+ENTRY(k10, "H2II + HI -> H2I* + HII")
+ENTRY(k11, "H2I + HII -> H2II + HI")
+ENTRY(k12, "H2I + e -> 2HI + e")
+ENTRY(k13, "H2I + HI -> 3HI")
+ENTRY(k14, "HM + e -> HI + 2e")
+ENTRY(k15, "HM + HI -> 2HI + e")
+ENTRY(k16, "HM + HI -> 2HI")
+ENTRY(k17, "HM + HI -> H2I + e")
+ENTRY(k18, "H2I + e -> 2HI")
+ENTRY(k19, "H2I + HM -> H2I + HI")
+ENTRY(k20, nullptr)                   /* currently not used */
+ENTRY(k21, "2HI + H2I -> H2I + H2I")  /* currently not used */
+ENTRY(k22, "2HI + HI -> H2I + HI")    /* 3-body H2 formation */
+ENTRY(k23, nullptr)                   /* H2-H2 dissociation */
 
 // k13dd is currently omitted from this list. It holds the density dependent
 // version of k13 (collisional H2 dissociation)
@@ -55,78 +57,80 @@ ENTRY(k23)  /* H2-H2 dissociation */
 // radiative rates for 9-species (k27, k28, k29, k30, k31) are omitted
 
 // 12 species rates (with Deuterium)
-ENTRY(k50)
-ENTRY(k51)
-ENTRY(k52)
-ENTRY(k53)
-ENTRY(k54)
-ENTRY(k55)
-ENTRY(k56)
+ENTRY(k50, "HII + DI -> HI + DII")
+ENTRY(k51, "HI + DII -> HII + DI")
+ENTRY(k52, "H2I + DII -> HDI + HII")
+ENTRY(k53, "HDI + HII -> H2I + DII")
+ENTRY(k54, "H2I + DI -> HDI + HI")
+ENTRY(k55, "HDI + HI -> H2I + DI")
+ENTRY(k56, "DI + HM -> HDI + e")
+
+// (in practice we also use k56 as the rate for "DM + HI --> HDI + e")
 
 // New H-ionizing reactions, used for 6, 9 & 12 species chemistry
-ENTRY(k57)
-ENTRY(k58)
+ENTRY(k57, "HI + HI -> HII + HI + e")
+ENTRY(k58, "HI + HeI -> HII + HeI + e")
 
 // 15 species rates (with DM, HDII, HeHII)
-ENTRY(k125)
-ENTRY(k129)
-ENTRY(k130)
-ENTRY(k131)
-ENTRY(k132)
-ENTRY(k133)
-ENTRY(k134)
-ENTRY(k135)
-ENTRY(k136)
-ENTRY(k137)
-ENTRY(k148)
-ENTRY(k149)
-ENTRY(k150)
-ENTRY(k151)
-ENTRY(k152)
-ENTRY(k153)
+ENTRY(k125, "HDII +  HI   ->  HII  +  HDI")
+ENTRY(k129, "DI   +  HII  ->  HDII +  photon")
+ENTRY(k130, "DII  +  HI   ->  HDII +  photon")
+ENTRY(k131, "HDII +  e    ->  HI   +  DI")
+ENTRY(k132, "DI   +  e    ->  DM   +  photon")
+ENTRY(k133, "DII  +  DM   ->  DI   +  DI")
+ENTRY(k134, "HII  +  DM   ->  DI   +  HI")
+ENTRY(k135, "HM   +  DI   ->  HI   +  DM")
+ENTRY(k136, "DM   +  HI   ->  DI   +  HM")
+ENTRY(k137, "DM   +  HI   ->  HDI  +  e")
+ENTRY(k148, "HeI    +  HII  ->  HeHII  +  photon")
+ENTRY(k149, "HeI    +  HII  ->  HeHII  +  photon")
+ENTRY(k150, "HeI    +  H2II ->  HeHII  +  HI")
+ENTRY(k151, "HeII   +  HI   ->  HeHII  +  photon")
+ENTRY(k152, "HeHII  +  HI   ->  HeI    +  H2II")
+ENTRY(k153, "HeHII  +  e    ->  HeI    +  HI")
 
 // Metal species chemistry rate data
 // ---------------------------------
 
-ENTRY(kz15)
-ENTRY(kz16)
-ENTRY(kz17)
-ENTRY(kz18)
-ENTRY(kz19)
-ENTRY(kz20)
-ENTRY(kz21)
-ENTRY(kz22)
-ENTRY(kz23)
-ENTRY(kz24)
-ENTRY(kz25)
-ENTRY(kz26)
-ENTRY(kz27)
-ENTRY(kz28)
-ENTRY(kz29)
-ENTRY(kz30)
-ENTRY(kz31)
-ENTRY(kz32)
-ENTRY(kz33)
-ENTRY(kz34)
-ENTRY(kz35)
-ENTRY(kz36)
-ENTRY(kz37)
-ENTRY(kz38)
-ENTRY(kz39)
-ENTRY(kz40)
-ENTRY(kz41)
-ENTRY(kz42)
-ENTRY(kz43)
-ENTRY(kz44)
-ENTRY(kz45)
-ENTRY(kz46)
-ENTRY(kz47)
-ENTRY(kz48)
-ENTRY(kz49)
-ENTRY(kz50)
-ENTRY(kz51)
-ENTRY(kz52)
-ENTRY(kz53)
-ENTRY(kz54)
 
+ENTRY(kz15, "HI     +  CHI  ->  CI     +  H2I")
+ENTRY(kz16, "HI     +  CH2I ->  CHI    +  H2I")
+ENTRY(kz17, "HI     +  OHI  ->  H2I    +  OI")
+ENTRY(kz18, "HI     +  H2OI ->  OHI    +  H2I")
+ENTRY(kz19, "HI     +  O2I  ->  OHI    +  OI")
+ENTRY(kz20, "CI     +  H2I  ->  CHI    +  HI")
+ENTRY(kz21, "OI     +  H2I  ->  OHI    +  HI")
+ENTRY(kz22, "HII    +  OI   ->  OII    +  HI")
+ENTRY(kz23, "H2I    +  CHI  ->  CH2I   +  HI")
+ENTRY(kz24, "H2I    +  OHI  ->  H2OI   +  HI")
+ENTRY(kz25, "OHI    +  OHI  ->  H2OI   +  OI")
+ENTRY(kz26, "OHI    +  COI  ->  CO2I   +  HI")
+ENTRY(kz27, "CI     +  HI   ->  CHI    +  photon")
+ENTRY(kz28, "CI     +  OHI  ->  COI    +  HI")
+ENTRY(kz29, "CI     +  O2I  ->  COI    +  OI")
+ENTRY(kz30, "OI     +  HI   ->  OHI    +  photon")
+ENTRY(kz31, "OI     +  OI   ->  O2I    +  photon")
+ENTRY(kz32, "OI     +  CHI  ->  COI    +  HI")
+ENTRY(kz33, "OI     +  OHI  ->  O2I    +  HI")
+ENTRY(kz34, "HII    +  OHI  ->  OHII   +  HI")
+ENTRY(kz35, "HII    +  H2OI ->  H2OII  +  HI")
+ENTRY(kz36, "HII    +  O2I  ->  O2II   +  HI")
+ENTRY(kz37, "CII    +  OHI  ->  COII   +  HI")
+ENTRY(kz38, "CII    +  O2I  ->  OII    +  CO")
+ENTRY(kz39, "OII    +  HI   ->  HII    +  OI")
+ENTRY(kz40, "OII    +  H2I  ->  OHII   +  HI")
+ENTRY(kz41, "OHII   +  H2I  ->  H2OII  +  HI")
+ENTRY(kz42, "H2OII  +  H2I  ->  H3OII  +  HI")
+ENTRY(kz43, "COII   +  HI   ->  HII    +  CO")
+ENTRY(kz44, "CII    +  e    ->  CI     +  photon")
+ENTRY(kz45, "OII    +  e    ->  OI     +  photon")
+ENTRY(kz46, "H2OII  +  e    ->  OHI    +  HI")
+ENTRY(kz47, "H2OII  +  e    ->  OI     +  H2I")
+ENTRY(kz48, "H3OII  +  e    ->  H2OI   +  HI")
+ENTRY(kz49, "H3OII  +  e    ->  OHI    +  HI")
+ENTRY(kz50, "O2II   +  e    ->  OI     +  OI")
+ENTRY(kz51, "H2I    +  CI   ->  CH2I   +  photon")
+ENTRY(kz52, "SiI    +  OHI  ->  SiOI   +  HI")
+ENTRY(kz53, "SiI    +  O2I  ->  SiOI   +  OI")
+ENTRY(kz54, "SiOI   +  OHI  ->  SiO2I  +  HI")
 
