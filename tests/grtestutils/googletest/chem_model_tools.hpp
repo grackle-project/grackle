@@ -20,7 +20,11 @@
 #include <string>
 
 #include "chem_model/chemsp_props.hpp"
+#include "chem_model/parse.hpp"
+#include "chem_model/species.hpp"
 #include "support/inplace_vector.hpp"
+#include "support/error.hpp"
+#include "support/expected.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -41,9 +45,69 @@ inline void PrintTo(const IdCoefPair& p, std::ostream* os) {
   *os << "{id=" << p.id << ",coef=" << int64_t(p.coef) << '}';
 }
 
+// teach GoogleTest how to print our SpKind enum for more informative errors
+inline void PrintTo(const SpKind& kind, std::ostream* os) {
+  switch (kind) {
+    case SpKind::PRIMORDIAL:
+      *os << "SpKind::PRIMORDIAL";
+      return;
+    case SpKind::METAL:
+      *os << "SpKind::METAL";
+      return;
+    case SpKind::DUST:
+      *os << "SpKind::DUST";
+      return;
+    case SpKind::FILLER_A:
+      *os << "SpKind::FILLER_A";
+      return;
+    case SpKind::FILLER_B:
+      *os << "SpKind::FILLER_B";
+      return;
+    default:
+      *os << "SpKind::<UNKNOWN>";
+      return;
+  }
+}
+
 }  // namespace GRIMPL_NAMESPACE_DECL
 
 namespace grtest {
+
+struct ParameterSpec {
+  int primordial_chemistry;
+  int metal_chemistry;
+  int dust_species;
+};
+
+// teach GoogleTest how to print our sample partition descriptors for more
+// informative errors
+inline void PrintTo(ParameterSpec spec, std::ostream* os) {
+  *os << "{prim=" << spec.primordial_chemistry
+      << ",metal=" << spec.metal_chemistry << ",dustsp=" << spec.dust_species
+      << '}';
+}
+
+// a helper function to help with constrrucing the species maps for the tests
+inline GRIMPL_NS::Expected<GRIMPL_NS::SpInitializeInfo, GRIMPL_NS::Error>
+infer_species_maps(ParameterSpec spec) {
+  using GRIMPL_NS::GrainSpeciesInfo;
+  std::optional<GrainSpeciesInfo> maybe_grainsp_info;
+  const GrainSpeciesInfo* grain_info = nullptr;
+  if (spec.dust_species > 0) {
+    using GRIMPL_NS::GrainSpeciesInfo;
+    GRIMPL_NS::Expected<GrainSpeciesInfo, GRIMPL_NS::Error> rslt =
+        GrainSpeciesInfo::create(spec.dust_species);
+    if (!rslt.has_value()) {
+      return GRIMPL_NS::Unexpected(
+          rslt.error().context_literal("unable to init GrainSpeciesInfo"));
+    }
+    maybe_grainsp_info = std::move(rslt).value();
+    grain_info = &maybe_grainsp_info.value();
+  }
+
+  return GRIMPL_NS::infer_species_maps(spec.primordial_chemistry,
+                                       spec.metal_chemistry, grain_info);
+}
 
 struct NameCoefPair {
   std::string name;
