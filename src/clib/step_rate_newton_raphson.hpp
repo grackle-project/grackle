@@ -486,9 +486,9 @@ inline void step_rate_newton_raphson(
       int y_len = state_layout.state_vec_len();
 
       // copy values into y_initial
-      for (int isp = 0; isp < state_layout.n_contained_species; isp++) {
-        int species_id = state_layout.species_ids[isp];
-        y_initial[isp] = sp_densities(species_id, i);
+      for (int index = 0; index < state_layout.n_contained_species; index++) {
+        int species_id = state_layout.species_ids[index];
+        y_initial[index] = sp_densities(species_id, i);
       }
       if (coupled_e_evolution) {
         y_initial[state_layout.energy_index()] = e(i,j,k);
@@ -544,8 +544,8 @@ inline void step_rate_newton_raphson(
         // copy values into y for variables that are being evolved
         // (we need to do this each time we enter the loop since y
         // is mutated in place as we try to evolve things)
-        for (int isp = 0; isp < state_layout.state_vec_len(); isp++) {
-          y[isp] = y_initial[isp];
+        for (int index = 0; index < state_layout.state_vec_len(); index++) {
+          y[index] = y_initial[index];
         }
 
         // Attempt to solve the ODEs
@@ -559,8 +559,8 @@ inline void step_rate_newton_raphson(
 
         // Check if the fractions are valid after an iteration
         if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
-          for (int isp = 0; isp<y_len; isp++) {
-            if ( std::isnan(y[isp]) || (y[isp] <= 0.) )  {
+          for (int index = 0; index<y_len; index++) {
+            if ( std::isnan(y[index]) || (y[index] <= 0.) )  {
               is_converged = false;
             }
           }
@@ -576,8 +576,8 @@ inline void step_rate_newton_raphson(
 
       // overwrite the dynamically evolved species fields (tracked by my_fields
       // and accessed thru sp_densities) with the evolved values
-      for (int isp = 0; isp < state_layout.n_contained_species; isp++) {
-        sp_densities(state_layout.species_ids[isp], i) = y[isp];
+      for (int index = 0; index < state_layout.n_contained_species; index++) {
+        sp_densities(state_layout.species_ids[index], i) = y[index];
       }
 
       if (coupled_e_evolution) {
