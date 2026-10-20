@@ -264,11 +264,16 @@ public:  // interface methods
   /// Returns an instance holding 0 elements.
   FrozenKeyIdxBiMap() { alloc_(0, 0, BiMapMode::REFS_KEYDATA); }
 
+  ~FrozenKeyIdxBiMap() noexcept = default;
   FrozenKeyIdxBiMap(const FrozenKeyIdxBiMap&) = default;
   FrozenKeyIdxBiMap& operator=(const FrozenKeyIdxBiMap&) = default;
-  FrozenKeyIdxBiMap(FrozenKeyIdxBiMap&&) noexcept = default;
-  FrozenKeyIdxBiMap& operator=(FrozenKeyIdxBiMap&&) noexcept = default;
-  ~FrozenKeyIdxBiMap() noexcept = default;
+  FrozenKeyIdxBiMap(FrozenKeyIdxBiMap&& o) noexcept : FrozenKeyIdxBiMap() {
+    swap(o);
+  }
+  FrozenKeyIdxBiMap& operator=(FrozenKeyIdxBiMap&& o) noexcept {
+    swap(o);
+    return *this;
+  }
 
   /// @brief swaps contents
   void swap(FrozenKeyIdxBiMap& other) noexcept {
