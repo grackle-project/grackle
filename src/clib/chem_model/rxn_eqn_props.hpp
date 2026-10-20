@@ -24,6 +24,12 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
+enum class EqnSide { LEFT, RIGHT };
+
+inline const char* to_string(EqnSide v) {
+  return (v == EqnSide::LEFT) ? "left" : "right";
+}
+
 /// @brief An internal data structure used to track properties about a reaction
 ///     equation
 struct RxnEqnProps {
@@ -32,8 +38,8 @@ struct RxnEqnProps {
   /// species_id, coefficient pairs for the right hand side of the equation
   InplaceVector<IdCoefPair, parse::MaxSpeciesPerEqnSide> rhs_entries;
 
-  // in the future we may want to start tracking a pair of booleans indicating
-  // whether "photon" appears on the lhs or the rhs
+  /// tracks whether "photon" was in the equation (and what side it was on)
+  std::optional<EqnSide> has_photon;
 
 private:
   RxnEqnProps() = default;  // <- only used by factory methods

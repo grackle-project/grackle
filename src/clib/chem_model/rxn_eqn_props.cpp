@@ -27,14 +27,13 @@ Expected<RxnEqnProps, Error> RxnEqnProps::from_eqn_comps(
   // the object that we are going to build
   RxnEqnProps out;
 
-  bool handle_lhs_choices[] = {true, false};
-  for (bool is_lhs : handle_lhs_choices) {
+  EqnSide eqn_sides[2] = {EqnSide::LEFT, EqnSide::RIGHT};
+  for (EqnSide side : eqn_sides) {
     const InplaceVector<parse::SViewCoefPair, parse::MaxSpeciesPerEqnSide>&
-        name_coef_pairs =
-            (is_lhs) ? comps.lhs_sp_coef_pairs : comps.rhs_sp_coef_pairs;
+        name_coef_pairs = (side == EqnSide::LEFT) ? comps.lhs_sp_coef_pairs
+                                                  : comps.rhs_sp_coef_pairs;
     InplaceVector<IdCoefPair, parse::MaxSpeciesPerEqnSide>& id_coef_pairs =
-        (is_lhs) ? out.lhs_entries : out.rhs_entries;
-    const char* eqn_side_name = (is_lhs) ? "left" : "right";
+        (side == EqnSide::LEFT) ? out.lhs_entries : out.rhs_entries;
 
     std::size_t n_entries = name_coef_pairs.size();
     for (std::size_t i = 0; i < n_entries; i++) {
@@ -43,11 +42,18 @@ Expected<RxnEqnProps, Error> RxnEqnProps::from_eqn_comps(
 
       // look up the species id
       std::optional<uint16_t> maybe_id = species_name_map.find(entity_name);
-      if (!maybe_id.has_value()) {
-        if (entity_name == "photon") {
-          return Unexpected(Error::msg_literal(
-              "no support for chemical equations involving \"photon\" (yet)"));
+      if (!maybe_id.has_value() && entity_name == "photon") {
+        if (coef != 1) {
+          return Unexpected(
+              Error::msg_literal("\"photon\" has a coefficient other than 1"));
+        } else if (out.has_photon.has_value()) {
+          return Unexpected(
+              Error::msg_literal("\"photon\" appears more than once"));
+        } else {
+          out.has_photon = side;
+          continue;
         }
+      } else if (!maybe_id.has_value()) {
         std::string tmp(entity_name);
         return Unexpected(
             Error::msgf("\"%s\" not in species_name_map", tmp.c_str()));
@@ -65,7 +71,7 @@ Expected<RxnEqnProps, Error> RxnEqnProps::from_eqn_comps(
           return Unexpected(
               Error::msgf("\"%s\" species appears multiple times on %s side of "
                           "chemical eqn",
-                          tmp.c_str(), eqn_side_name));
+                          tmp.c_str(), to_string(side)));
         }
       }
 
@@ -75,7 +81,7 @@ Expected<RxnEqnProps, Error> RxnEqnProps::from_eqn_comps(
             "the buffer that holds pairs of coefficient species-id for the "
             "%s side of the chemical equation doesn't have adequate capactiy "
             "entry with index %zu",
-            eqn_side_name, i));
+            to_string(side), i));
       }
     }
   }
