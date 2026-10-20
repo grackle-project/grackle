@@ -100,9 +100,9 @@ std::vector<double> fill_mask(const IndexRegion& idx_region, IndexingStrat s) {
   switch (s) {
     case IndexingStrat::FLAT: {
       for (int outer_idx = 0; outer_idx < outer_idx_size; outer_idx++) {
-        GRIMPL_NS::FieldFlatIndexRange flat_idx_range =
+        GRIMPL_NS::IndexInterval1D flat_idx_range =
             inner_flat_range_(outer_idx, &index_helper);
-        for (int i = flat_idx_range.start; i <= flat_idx_range.end; i++) {
+        for (int i = flat_idx_range.start; i < flat_idx_range.stop; i++) {
           out[i] += 1;
         }
       }

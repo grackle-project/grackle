@@ -16,6 +16,7 @@
 #ifndef STEP_RATE_NEWTON_RAPHSON_HPP
 #define STEP_RATE_NEWTON_RAPHSON_HPP
 
+#include <optional>
 #include <vector>
 
 #include "grackle.h"             // gr_float
@@ -29,117 +30,320 @@
 #include "support/View.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
+#include "support/status_reporting.hpp"
 #include "time_deriv_0d.hpp"
 #include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-int inline sanity_check_() {
-  GRIMPL_REQUIRE(((1+SpLUT::e)== 1), "index of e is %d", SpLUT::e);
-  GRIMPL_REQUIRE(((1+SpLUT::HI)== 2), "index of HI is %d", SpLUT::HI);
-  GRIMPL_REQUIRE(((1+SpLUT::HII)== 3), "index of HII is %d", SpLUT::HII);
-  GRIMPL_REQUIRE(((1+SpLUT::HeI)== 4), "index of HeI is %d", SpLUT::HeI);
-  GRIMPL_REQUIRE(((1+SpLUT::HeII)== 5), "index of HeII is %d", SpLUT::HeII);
-  GRIMPL_REQUIRE(((1+SpLUT::HeIII)== 6), "index of HeIII is %d", SpLUT::HeIII);
-  GRIMPL_REQUIRE(((1+SpLUT::HM)== 7), "index of HM is %d", SpLUT::HM);
-  GRIMPL_REQUIRE(((1+SpLUT::H2I)== 8), "index of H2I is %d", SpLUT::H2I);
-  GRIMPL_REQUIRE(((1+SpLUT::H2II)== 9), "index of H2II is %d", SpLUT::H2II);
-  GRIMPL_REQUIRE(((1+SpLUT::DI)==10), "index of DI is %d", SpLUT::DI);
-  GRIMPL_REQUIRE(((1+SpLUT::DII)==11), "index of DII is %d", SpLUT::DII);
-  GRIMPL_REQUIRE(((1+SpLUT::HDI)==12), "index of HDI is %d", SpLUT::HDI);
-  GRIMPL_REQUIRE(((1+SpLUT::DM)==13), "index of DM is %d", SpLUT::DM);
-  GRIMPL_REQUIRE(((1+SpLUT::HDII)==14), "index of HDII is %d", SpLUT::HDII);
-  GRIMPL_REQUIRE(((1+SpLUT::HeHII)==15), "index of HeHII is %d", SpLUT::HeHII);
-  GRIMPL_REQUIRE(((1+SpLUT::CI)==16), "index of CI is %d", SpLUT::CI);
-  GRIMPL_REQUIRE(((1+SpLUT::CII)==17), "index of CII is %d", SpLUT::CII);
-  GRIMPL_REQUIRE(((1+SpLUT::COI)==18), "index of COI is %d", SpLUT::COI);
-  GRIMPL_REQUIRE(((1+SpLUT::CO2I)==19), "index of CO2I is %d", SpLUT::CO2I);
-  GRIMPL_REQUIRE(((1+SpLUT::OI)==20), "index of OI is %d", SpLUT::OI);
-  GRIMPL_REQUIRE(((1+SpLUT::OHI)==21), "index of OHI is %d", SpLUT::OHI);
-  GRIMPL_REQUIRE(((1+SpLUT::H2OI)==22), "index of H2OI is %d", SpLUT::H2OI);
-  GRIMPL_REQUIRE(((1+SpLUT::O2I)==23), "index of O2I is %d", SpLUT::O2I);
-  GRIMPL_REQUIRE(((1+SpLUT::SiI)==24), "index of SiI is %d", SpLUT::SiI);
-  GRIMPL_REQUIRE(((1+SpLUT::SiOI)==25), "index of SiOI is %d", SpLUT::SiOI);
-  GRIMPL_REQUIRE(((1+SpLUT::SiO2I)==26), "index of SiO2I is %d", SpLUT::SiO2I);
-  GRIMPL_REQUIRE(((1+SpLUT::CHI)==27), "index of CHI is %d", SpLUT::CHI);
-  GRIMPL_REQUIRE(((1+SpLUT::CH2I)==28), "index of CH2I is %d", SpLUT::CH2I);
-  GRIMPL_REQUIRE(((1+SpLUT::COII)==29), "index of COII is %d", SpLUT::COII);
-  GRIMPL_REQUIRE(((1+SpLUT::OII)==30), "index of OII is %d", SpLUT::OII);
-  GRIMPL_REQUIRE(((1+SpLUT::OHII)==31), "index of OHII is %d", SpLUT::OHII);
-  GRIMPL_REQUIRE(((1+SpLUT::H2OII)==32), "index of H2OII is %d", SpLUT::H2OII);
-  GRIMPL_REQUIRE(((1+SpLUT::H3OII)==33), "index of H3OII is %d", SpLUT::H3OII);
-  GRIMPL_REQUIRE(((1+SpLUT::O2II)==34), "index of O2II is %d", SpLUT::O2II);
-  GRIMPL_REQUIRE(((1+SpLUT::Mg)==35), "index of Mg is %d", SpLUT::Mg);
-  GRIMPL_REQUIRE(((1+SpLUT::Al)==36), "index of Al is %d", SpLUT::Al);
-  GRIMPL_REQUIRE(((1+SpLUT::S)==37), "index of S is %d", SpLUT::S);
-  GRIMPL_REQUIRE(((1+SpLUT::Fe)==38), "index of Fe is %d", SpLUT::Fe);
-  GRIMPL_REQUIRE(((1+SpLUT::MgSiO3_dust)==39), "index of MgSiO3 is %d", SpLUT::MgSiO3_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::AC_dust)==40), "index of AC is %d", SpLUT::AC_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::SiM_dust)==41), "index of SiM is %d", SpLUT::SiM_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::FeM_dust)==42), "index of FeM is %d", SpLUT::FeM_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::Mg2SiO4_dust)==43), "index of Mg2SiO4 is %d", SpLUT::Mg2SiO4_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::Fe3O4_dust)==44), "index of Fe3O4 is %d", SpLUT::Fe3O4_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::SiO2_dust)==45), "index of SiO2_dust is %d", SpLUT::SiO2_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::MgO_dust)==46), "index of MgO is %d", SpLUT::MgO_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::FeS_dust)==47), "index of FeS is %d", SpLUT::FeS_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::Al2O3_dust)==48), "index of Al2O3 is %d", SpLUT::Al2O3_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::ref_org_dust)==49), "index of reforg is %d", SpLUT::ref_org_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::vol_org_dust)==50), "index of volorg is %d", SpLUT::vol_org_dust);
-  GRIMPL_REQUIRE(((1+SpLUT::H2O_ice_dust)==51), "index of H2Oice is %d", SpLUT::H2O_ice_dust);
+namespace step_nr_detail {
 
-  //GRIMPL_REQUIRE(false, "early abort");
+/// Describes the layout of the state vector evolved by newton-raphson solver
+/// and if energy-evolution is decoupled from chemistry, specifies the fixed
+/// energy
+///
+/// The first @ref n_contained_species of a state vector hold densities of
+/// dynamically evolved species. If internal energy is in the state-vector
+/// (it is stored as the last entry of the vector). If energy is not tracked
+/// as part of the state-vector, an object of this type should then track
+/// the fixed_specific_energy for the current timestep
+///
+/// Implementation Note
+/// -------------------
+/// @ref StateLayoutAndE::species_ids is an array-like object that maps the
+/// `i`th index of the state-vector (for `i < n_contained_species`) to a
+/// species_id.
+///
+/// This needs to be an array-like object because grackle currently associates
+/// species ids with species at compile-time even if the species is not used.
+/// Thus, it's possible for grackle to be configured in a way where the
+/// species_ids of actively evolved species are not contiguous. For example:
+/// - if `primordial_chemistry = 3` & `metal_chemistry = 1`, the species_id
+///   associated with certain primordial species (e.g. `DM`) aren't used
+/// - if `metal_chemistry = 1`, `dust_chemistry = 2` & `dust_species = 1`:
+///   the species_ids of certain metal species (e.g. `Fe`) aren't used
+///
+/// After we eliminate @ref SpLUT from the codebase, some light refactoring
+/// will be possible to configure the precise mapping between species ids and
+/// species at configuration time (this while preserving relative orderings of
+/// species that are encoded in objects like @ref PrimoridalSpLUT,
+/// @ref MetalSpLUT, and @ref DustSpLUT). This will make it possible to ensure
+/// that all active species ids have contiguous values. At that point, we'll be
+/// able to convert the @ref StateLayoutAndE::species_ids will no longer need
+/// to be an array-like object
+struct StateLayoutAndE {
 
-  return 1;
-}
+  /// the number of indices of the state-vector that encode the density of a
+  /// dynamically evolved species
+  int n_contained_species;
+  /// `species_ids[idx]` gives the `species_id` stored at index `idx` of the
+  /// state-vector for the first @ref n_contained_species indices of the state
+  /// vector
+  const int* species_ids;
+  /// If energy evolution is decoupled from energy evolution, this specifies
+  /// the fixed internal energy
+  std::optional<double> fixed_specific_energy;
 
-/// acts as a temporary adaptor layer for time_deriv_0d::derivatives:
+  /// returns whether the specific internal energy is tracked as part of the
+  /// dynamically evolved state vector (i.e. whether energy evolution is
+  /// coupled to chemistry evolution)
+  bool coupled_e_evolution() const {return !fixed_specific_energy.has_value();}
+
+  /// return state-vector index holding the specific internal energy
+  int energy_index() const {
+    if (!coupled_e_evolution()) {
+      GR_INTERNAL_ERROR("SANITY CHECK FAILED!");
+    } else {
+      return n_contained_species;
+    }
+  }
+
+  int state_vec_len() const {
+    return n_contained_species + coupled_e_evolution();
+  }
+};
+
+/// @brief max length of a state vector evolved with the newton raphson solver
+///
+/// For context:
+/// - the state vector is typically referred to by the variable name `y`
+/// - the state vector has distinct components for each evolved species and may
+///   have a component to track the specific internal energy
+inline constexpr int MAX_Y_LEN = MAX_EVOLVED_SPECIES_FIELDS + 1;
+
+/// @brief Creates a @ref StateLayoutAndE object describing the state vector for
+///    the current calculation.
+///
+/// At the time of writing, a given grackle configuration generally has 4
+/// possible layouts for the state vector:
+/// 1. exclude metal-related chemistry with operator-split energy evolution
+/// 2. exclude metal-related chemistry with coupled energy evolution
+/// 3. include metal-related chemistry with operator-split energy evolution
+/// 4. include metal-related chemistry with coupled energy evolution
+///
+/// Obviously the fourth case is most general-purpose, but the state vector
+/// is definitely the longest. In the current configuration, coupling energy
+/// evolution also significantly increases the cost of the calculation (this
+/// is definitely fixable -- especially if we compute analytic derivatives)
+///
+/// Implementation Note
+/// -------------------
+/// For the initial implementation this is intended to be an ephemeral object
+/// that is temporarily constructed during each invocation of
+/// @ref step_rate_newton_raphson. If the cost of rebuilding this object is a
+/// concern, we could prebuild this object and store it inside of opaque
+/// storage.
+///
+/// It's worth mentioning that once we finish eliminating all references of
+/// @ref SpLUT from the codebase, the optimizations described in the docstring
+/// for @ref StateLayoutAndE will become possible. If we implement those
+/// optimizations, constructing a @ref StateLayoutFactory object will become
+/// EXTREMELY cheap
+class StateLayoutFactory {
+  std::vector<int> idsp_;
+  int n_sp_prim_;
+  int n_sp_all_;
+
+  public:
+
+  StateLayoutFactory(const StateLayoutFactory&)=delete;
+  StateLayoutFactory& operator=(const StateLayoutFactory&)=delete;
+
+  explicit StateLayoutFactory(const PartMap<SpKind>& sp_kind_map) {
+    idsp_.resize(MAX_Y_LEN);
+    // if SpKind::METAL or SpKind::DUST don't correspond to any species in the
+    // current configuration, then the corresponding IndexInterval1D object's
+    // start & stop data members will be equal to each other
+    const IndexInterval1D species_idx_bounds_arr[3] = {
+      sp_kind_map.part_bounds(SpKind::PRIMORDIAL),
+      sp_kind_map.part_bounds(SpKind::METAL),
+      sp_kind_map.part_bounds(SpKind::DUST)
+    };
+    n_sp_prim_ = species_idx_bounds_arr[0].stop - species_idx_bounds_arr[0].start;
+
+    int offset = 0;
+    for (const IndexInterval1D& bounds: species_idx_bounds_arr) {
+      int n_to_add = bounds.stop - bounds.start;
+      for (int index = 0; index < n_to_add; index++) {
+        idsp_[index + offset] = index + bounds.start;
+      }
+      offset += n_to_add;
+    }
+    n_sp_all_ = offset;
+  }
+
+  // it's the caller's responsibility to ensure that the StateLayoutAndE objects
+  // constructed by the following methods don't outlive the factory (otherwise,
+  // the species_ids pointer will be a dangling)
+
+  StateLayoutAndE create_coupled_e_evo(bool include_metal) const {
+    return StateLayoutAndE{
+        .n_contained_species = include_metal ? n_sp_all_ : n_sp_prim_,
+        .species_ids = idsp_.data(),
+        .fixed_specific_energy = std::nullopt
+      };
+  }
+
+  StateLayoutAndE create_fixed_e(bool include_metal,
+                                 double fixed_specific_energy) const {
+    return StateLayoutAndE{
+        .n_contained_species = include_metal ? n_sp_all_ : n_sp_prim_,
+        .species_ids = idsp_.data(),
+        .fixed_specific_energy = std::optional<double>(fixed_specific_energy)
+      };
+  }
+};
+
+/// @brief function-like object that computes time derivative of state vector
+///
+/// Essentially, this is an adaptor layout that computes the time derivative for
+/// the state vector `y` (evolved by the newton-raphson solver) by calling
+/// @ref time_deriv_0d::derivatives
 ///
 /// @note
-/// Some additional context
-/// - during transcription, time_deriv_0d::derivatives (formerly called
-///   lookup_cool_rates0d) needed to be adapted to make use of data structures
-///   already adopted in other parts of the transcribed code
-///   - (recall that these data structures were introduced to remove HUNDREDS
-///     of function arguments and HUNDREDS of local variables)
-/// - since the newton-raphson solver already does a bunch of "translation"
-///   between data representations, it should directly map into these preferred
-///   data structures
-/// - as a short-term (and extremely temporary) solution, we this function
-///   to copy between formats & wrap the time_deriv_0d::derivatives function.
-///   This allows to finish polishing time_deriv_0d::derivatives without
-///   refactoring the newton-raphson scheme)
-inline void wrapped_calc_derivatives(
-  double dt,
-  const double* dsp,
-  double* dspdot,
-  grackle::impl::time_deriv_0d::ContextPack& pack,
-  std::vector<gr_float>& rhosp_grflt,         // <- preallocated temp buffer
-  grackle::impl::SpeciesCollection& rhosp_dot // <- preallocated temp buffer
-) {
+/// This is a temporary object constructed during @ref step_rate_newton_raphson
+/// and must be outlived by all of its data members (otherwise, there will be
+/// trouble).
+struct DerivativeCalculator {
+  /// encodes the layout of the state vector
+  StateLayoutAndE& state_layout;
+  /// encodes a lot of context
+  time_deriv_0d::ContextPack& pack;
+  /// holds scratch space with a length given by MAX_EVOLVED_SPECIES_FIELDS
+  gr_float* scratch_rhosp;
+  /// holds pre-allocated scratch space
+  SpeciesCollection& scratch_rhosp_dot;
 
-  gr_float local_eint[1];
-  double eint_dot_specific[1];
+  /// @brief the functional call operation
+  ///
+  /// @param y[in] the current value of the state vector
+  /// @param ydot[out] holds the computed time derivatives
+  ///
+  /// @note
+  /// This is `const` in the sense that nothing about internal state changes
+  /// that would affect the results (i.e. the scratch-space is the only thing
+  /// to change). In the future, it *might* make sense to pass in the scratch
+  /// space as a separate argument to get rid of this ambiguity.  However, there
+  /// isn't tremendous value to doing this unless we hoist the relevant scratch
+  /// memory out of @ref time_deriv_0d::ContextPack
+  ///
+  /// @warning
+  /// This method is expressly NOT thread-safe. If 2 threads invoke this method
+  /// for the same object (i.e. any scratch-space is shared), there WILL be
+  /// problems
+  void operator()(const double* y, double* ydot) const {
+    // for less experienced C++ devs: this is like python's __call__ method
 
-  // 1. copy values out of dsp into rhosp_grflt and local_eint
-  //    - at some point, we need to add some logic to deal with edge cases
-  //      that can arise when `sizeof(gr_float) < sizeof(double)
-  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
-    rhosp_grflt[sp_idx] = static_cast<gr_float>(dsp[sp_idx]);
+    gr_float local_eint[1];
+    double eint_dot_specific[1];
+    gr_float* rhosp = scratch_rhosp;
+    SpeciesCollection& rhosp_dot = scratch_rhosp_dot;
+
+    for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
+      rhosp[sp_idx] = static_cast<gr_float>(0.0);
+    }
+
+    // 1. copy values out of y into rhosp & (if applicable) local_eint
+    //    - at some point, we need to add some logic to deal with edge cases
+    //      that can arise when `sizeof(gr_float) < sizeof(double)
+    for (int vec_i = 0; vec_i < state_layout.n_contained_species; vec_i++) {
+      int species_id = state_layout.species_ids[vec_i];
+      rhosp[species_id] = static_cast<gr_float>(y[vec_i]);
+    }
+    if (state_layout.fixed_specific_energy.has_value()) {
+      local_eint[0] =
+          static_cast<gr_float>(state_layout.fixed_specific_energy.value());
+    } else {
+      local_eint[0] = static_cast<gr_float>(y[state_layout.energy_index()]);
+    }
+
+    // 2. call the wrapped function
+    time_deriv_0d::derivatives(
+      rhosp, rhosp_dot, local_eint, eint_dot_specific, pack
+    );
+
+    // 3. copy the computed derivatives into ydot
+    for (int vec_i = 0; vec_i < state_layout.n_contained_species; vec_i++) {
+      int species_id = state_layout.species_ids[vec_i];
+      ydot[vec_i] = rhosp_dot.data[species_id][0];
+    }
+    if (!state_layout.fixed_specific_energy.has_value()) {
+      ydot[state_layout.energy_index()] = eint_dot_specific[0];
+    }
   }
-  local_eint[0] = static_cast<gr_float>(dsp[MAX_EVOLVED_SPECIES_FIELDS]);
+};
 
-  // 2. call the wrapped function
-  grackle::impl::time_deriv_0d::derivatives(
-    dt, rhosp_grflt.data(), rhosp_dot, local_eint, eint_dot_specific, pack
-  );
+/// @brief function-like adaptor object to help compute Jacobian matrix
+///
+/// This wraps a function-like object for computing time derivatives for a state
+/// vector. Calling the resulting function
+/// this is an adaptor that takes a function for computing time derivatives and
+/// uses it (with finite differences) to compute the time derivative and the
+/// jacobian matrix
+///
+/// @note
+/// This could be implemented as a lambda function
+template<typename Fn>
+struct FiniteDiffJacobianAdaptor{
+  int n_eqns;           ///< the number of equations being evolved
+  double eps;           ///< governs the finite difference
+  Fn& deriv_fn;         ///< function-object that computes time derivative
+  double* scratch_ptr;  ///< must have space allocated for `2*n_eqns` elements
 
-  // 3. copy the computed derivatives into dspdot
-  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
-    dspdot[sp_idx] = rhosp_dot.data[sp_idx][0];
+  /// @brief computes the time derivative and estimates the jacobian matrix
+  ///
+  /// @param y[in] the current value of the state vector
+  /// @param ydot[out] holds the computed time derivatives
+  /// @param jaobian[out] holds the computed jacobian matrix
+  ///
+  /// @note
+  /// This is marked const because that's a requirement of
+  /// @ref integrate::StiffNewtonRaphson. This is `const` in the sense that
+  /// nothing about internal state changes that would affect the results (i.e.
+  /// the scratch-space is the only thing to change). In the future, it *might*
+  /// make sense to modify ref integrate::StiffNewtonRaphson so that it forwards
+  /// on a scratch-space argument to this function in order to get rid of this
+  /// ambiguity
+  ///
+  /// @warning
+  /// This method is expressly NOT thread-safe. If 2 threads invoke this method
+  /// for the same object (i.e. any scratch-space is shared), there WILL be
+  /// problems
+  void operator()(const double* y, double* ydot, View<double**>& jacobian) const {
+
+    // calculate time derivative of y and store the answer in ydot
+    deriv_fn(y, ydot);
+
+    double* y_buf1 = scratch_ptr;
+    double* ydot_buf1 = scratch_ptr + n_eqns;
+
+    // fill in the jacobian matrix for the time derivative
+    for (int j = 0; j < n_eqns; j++) {
+      double dspj = eps * y[j];
+      for (int i = 0; i < n_eqns; i++) {
+        if (i == j) {
+          y_buf1[i] = y[i] + dspj;
+        } else {
+          y_buf1[i] = y[i];
+        }
+      }
+
+      deriv_fn(y_buf1, ydot_buf1);
+
+      for (int i = 0; i < n_eqns; i++) {
+        double tderiv = ydot[i];
+        double offset_tderiv = ydot_buf1[i];
+        if ((y[i] == 0.0) && (offset_tderiv == tderiv)) {
+          jacobian(i, j) = 0.0;
+        } else {
+          jacobian(i, j) = (offset_tderiv - tderiv) / dspj;
+        }
+      }
+    }
   }
-  dspdot[MAX_EVOLVED_SPECIES_FIELDS] = eint_dot_specific[0];
-}
+};
 
+}  // namespace step_nr_detail
 
 /// An alternative to step_rate_g for evolving the species rate equations that
 /// employs the Newton-Raphson scheme rather than Gauss-Seidel
@@ -163,6 +367,7 @@ inline void step_rate_newton_raphson(
     const gr_mask_type* itmask_nr, const gr_mask_type* itmask_metal,
     const int* imp_eng, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+    SpeciesMultiView<gr_float> sp_densities,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
@@ -171,31 +376,40 @@ inline void step_rate_newton_raphson(
   // shorten `grackle::impl::time_deriv_0d` to `t_deriv` within this function
   namespace t_deriv = ::grackle::impl::time_deriv_0d;
 
-  // the following is a quick sanity check
-  // -> we can remove this once we finish transcribing lookup_cool_rate0d
-  sanity_check_();
-
-  // Density, energy and velocity fields fields
-
+  // Density & energy fields
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // Local variable
-  int nsp, isp, id;
-  // flag for if Gen Chiaki's dust model is enabled with grain growth
-  const bool chiaki_model_dust_evolution =
-    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
 
-  // the following specifies the historical 1-based index that we would use to
-  // hold energy
-  const int i_eng = MAX_EVOLVED_SPECIES_FIELDS + 1;
+  // we want to integrate a system of coupled stiff ODEs
+  //
+  // From a purely mathematical perspective:
+  // - `y(t)` specifies the (vector-valued) state of this system at time `t`
+  // - `dy/dt` (aka `ydot`) be equivalent to a (vector-valued) function `f(y)`.
+  // - If the current time is t₀, then we want to compute y(t₀ + Δt) from
+  //   y(t₀) for a timestep Δt.
+  // - To do this, all of this we'll construct a callback function that computes
+  //   f(y) and the Jacobian matrix for f(y) and pass it to
+  //   integrate::StiffNewtonRaphson
+  //
+  // From a more practical perspective:
+  // - the state vector `y` holds the densities of dynamically evolved species
+  //   and, in some cases, the specific internal energy
+  // - the layout of the state vector `y` is encoded by the
+  //   `step_nr_detail::StateLayoutAndE` object.
+  // - a `step_nr_detail::StateLayoutFactory` object is used to construct the
+  //   `step_nr_detail::StateLayoutAndE` objects because the precise contents
+  //   of the state vector is allowed to vary between cells (with the nominal
+  //   intention of speeding up the calculation) See the docstrings of those
+  //   types for more details
+
+  const step_nr_detail::StateLayoutFactory ylayout_factory(
+    my_rates->opaque_storage->sp_kind_map);
+
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
-  std::vector<double> dsp(i_eng);
-  std::vector<double> reduced_dsp(i_eng);
-  std::vector<double> full_dsp_buf(i_eng);
-  std::vector<double> full_dspdot_buf(i_eng);
-  std::vector<double> full_dspdot_buf1(i_eng);
+  std::vector<double> y_initial(step_nr_detail::MAX_Y_LEN);
+  std::vector<double> y(step_nr_detail::MAX_Y_LEN);
 
   // initialize the ode_solver
   // -> a solution is considered converged when the max relative difference
@@ -203,13 +417,11 @@ inline void step_rate_newton_raphson(
   double max_rtol = 1.e-8;
   // -> maximum number of iterations before giving up on a provided timestep
   int maxiter_per_dt = 20;
-  integrate::StiffNewtonRaphson ode_solver(i_eng, max_rtol, maxiter_per_dt);
+  integrate::StiffNewtonRaphson ode_solver(step_nr_detail::MAX_Y_LEN, max_rtol,
+                                           maxiter_per_dt);
 
   std::vector<double> ode_scratch_buf(ode_solver.num_scratch_buf_elements());
 
-  // (In the future, we may want to reconsider when/how we allocate
-  // the following 3 variables)
-  std::vector<int> idsp;
   // Another parameter
   const double eps = 1.e-4;
 
@@ -236,12 +448,14 @@ inline void step_rate_newton_raphson(
     frozen_tderiv_args, main_scratch_buf
   );
 
-  std::vector<gr_float> rhosp_grflt(MAX_EVOLVED_SPECIES_FIELDS);
-  grackle::impl::SpeciesCollection rhosp_dot =
-    grackle::impl::new_SpeciesCollection(1);
+  // allocate scratch-space used by step_nr_detail::DerivativeCalculator
+  std::vector<gr_float> scratch_rhosp(MAX_EVOLVED_SPECIES_FIELDS);
+  SpeciesCollection scratch_rhosp_dot = new_SpeciesCollection(1);
+
+  std::vector<double> jacobian_adaptor_scratch(2*step_nr_detail::MAX_Y_LEN);
 
   // the following check was inspired by a compiler warning indicating that
-  // nsp won't be initialized if this condition isn't met
+  // y_len won't be initialized if this condition isn't met
   GRIMPL_REQUIRE((my_chemistry->primordial_chemistry > 0),
     "this function can't support primordial_chemistry == %d",
     my_chemistry->primordial_chemistry
@@ -258,242 +472,31 @@ inline void step_rate_newton_raphson(
     );
 
     if (itmask_nr[i] != MASK_FALSE)  {
+      bool coupled_e_evolution = (imp_eng[i] == 1);
 
       // If density and temperature are low, update gas energy explicitly
-
-      if (my_chemistry->with_radiative_cooling == 1)  {
-        if (imp_eng[i] == 0)  {
-          e(i,j,k)  = e(i,j,k) +
-               (gr_float)(edot[i]/d(i,j,k)*dtit[i] );
-        }
+      if (my_chemistry->with_radiative_cooling == 1 && !coupled_e_evolution) {
+        e(i,j,k)  = e(i,j,k) + (gr_float)(edot[i]/d(i,j,k)*dtit[i] );
       }
 
-      // initialize arrays
-      nsp = 6; // (my_chemistry->primordial_chemistry >= 1)
-      if (my_chemistry->primordial_chemistry > 1) { nsp = nsp + 3; }
-      if (my_chemistry->primordial_chemistry > 2) { nsp = nsp + 3; }
-      if (my_chemistry->primordial_chemistry > 3) { nsp = nsp + 3; }
-      if (itmask_metal[i] != MASK_FALSE)  {
-        if (my_chemistry->metal_chemistry == 1)  {
-          nsp = nsp + 19;
-          if (chiaki_model_dust_evolution)  {
-            if (my_chemistry->dust_species > 0) { nsp = nsp + 1; }
-            if (my_chemistry->dust_species > 1) { nsp = nsp + 3; }
-          }
-        }
-        if (chiaki_model_dust_evolution)  {
-          if (my_chemistry->dust_species > 0) { nsp = nsp + 2; }
-          if (my_chemistry->dust_species > 1) { nsp = nsp + 8; }
-          if (my_chemistry->dust_species > 2) { nsp = nsp + 3; }
-        }
-      }
-      nsp = nsp + imp_eng[i];
-      idsp.resize(nsp);
+      bool include_metal = (itmask_metal[i] != MASK_FALSE);
+      step_nr_detail::StateLayoutAndE state_layout = (coupled_e_evolution)
+        ? ylayout_factory.create_coupled_e_evo(include_metal)
+        : ylayout_factory.create_fixed_e(include_metal, e(i,j,k));
+      int y_len = state_layout.state_vec_len();
 
-      // copy values into dsp from my_fields
-      // -> in the future, we will be able write the next ~80 lines as
-      //    a concise 4-line for-loop when we start to use the
-      //    SpeciesMultiView type
-
-      if ( my_chemistry->primordial_chemistry > 0 )  {
-        dsp[SpLUT::e] = my_fields->e_density[field_idx1d];
-        dsp[SpLUT::HI] = my_fields->HI_density[field_idx1d];
-        dsp[SpLUT::HII] = my_fields->HII_density[field_idx1d];
-        dsp[SpLUT::HeI] = my_fields->HeI_density[field_idx1d];
-        dsp[SpLUT::HeII] = my_fields->HeII_density[field_idx1d];
-        dsp[SpLUT::HeIII] = my_fields->HeIII_density[field_idx1d];
+      // copy values into y_initial
+      for (int index = 0; index < state_layout.n_contained_species; index++) {
+        int species_id = state_layout.species_ids[index];
+        y_initial[index] = sp_densities(species_id, i);
       }
-      if ( my_chemistry->primordial_chemistry > 1 )  {
-        dsp[SpLUT::HM] = my_fields->HM_density[field_idx1d];
-        dsp[SpLUT::H2I] = my_fields->H2I_density[field_idx1d];
-        dsp[SpLUT::H2II] = my_fields->H2II_density[field_idx1d];
+      if (coupled_e_evolution) {
+        y_initial[state_layout.energy_index()] = e(i,j,k);
       }
-      if ( my_chemistry->primordial_chemistry > 2 )  {
-        dsp[SpLUT::DI] = my_fields->DI_density[field_idx1d];
-        dsp[SpLUT::DII] = my_fields->DII_density[field_idx1d];
-        dsp[SpLUT::HDI] = my_fields->HDI_density[field_idx1d];
-      }
-      if ( my_chemistry->primordial_chemistry > 3 )  {
-        dsp[SpLUT::DM] = my_fields->DM_density[field_idx1d];
-        dsp[SpLUT::HDII] = my_fields->HDII_density[field_idx1d];
-        dsp[SpLUT::HeHII] = my_fields->HeHII_density[field_idx1d];
-      }
-      if ( itmask_metal[i] != MASK_FALSE )  {
-        if ( my_chemistry->metal_chemistry == 1 )  {
-          dsp[SpLUT::CI] = my_fields->CI_density[field_idx1d];
-          dsp[SpLUT::CII] = my_fields->CII_density[field_idx1d];
-          dsp[SpLUT::COI] = my_fields->COI_density[field_idx1d];
-          dsp[SpLUT::CO2I] = my_fields->CO2I_density[field_idx1d];
-          dsp[SpLUT::OI] = my_fields->OI_density[field_idx1d];
-          dsp[SpLUT::OHI] = my_fields->OHI_density[field_idx1d];
-          dsp[SpLUT::H2OI] = my_fields->H2OI_density[field_idx1d];
-          dsp[SpLUT::O2I] = my_fields->O2I_density[field_idx1d];
-          dsp[SpLUT::SiI] = my_fields->SiI_density[field_idx1d];
-          dsp[SpLUT::SiOI] = my_fields->SiOI_density[field_idx1d];
-          dsp[SpLUT::SiO2I] = my_fields->SiO2I_density[field_idx1d];
-          dsp[SpLUT::CHI] = my_fields->CHI_density[field_idx1d];
-          dsp[SpLUT::CH2I] = my_fields->CH2I_density[field_idx1d];
-          dsp[SpLUT::COII] = my_fields->COII_density[field_idx1d];
-          dsp[SpLUT::OII] = my_fields->OII_density[field_idx1d];
-          dsp[SpLUT::OHII] = my_fields->OHII_density[field_idx1d];
-          dsp[SpLUT::H2OII] = my_fields->H2OII_density[field_idx1d];
-          dsp[SpLUT::H3OII] = my_fields->H3OII_density[field_idx1d];
-          dsp[SpLUT::O2II] = my_fields->O2II_density[field_idx1d];
-          if (chiaki_model_dust_evolution) {
-            if (my_chemistry->dust_species > 0)  {
-              dsp[SpLUT::Mg] = my_fields->Mg_density[field_idx1d];
-            }
-            if (my_chemistry->dust_species > 1)  {
-              dsp[SpLUT::Al] = my_fields->Al_density[field_idx1d];
-              dsp[SpLUT::S] = my_fields->S_density[field_idx1d];
-              dsp[SpLUT::Fe] = my_fields->Fe_density[field_idx1d];
-            }
-          }
-        }
-        if (chiaki_model_dust_evolution) {
-          if (my_chemistry->dust_species > 0)  {
-            dsp[SpLUT::MgSiO3_dust] = my_fields->MgSiO3_dust_density[field_idx1d];
-            dsp[SpLUT::AC_dust] = my_fields->AC_dust_density[field_idx1d];
-          }
-          if (my_chemistry->dust_species > 1)  {
-            dsp[SpLUT::SiM_dust] = my_fields->SiM_dust_density[field_idx1d];
-            dsp[SpLUT::FeM_dust] = my_fields->FeM_dust_density[field_idx1d];
-            dsp[SpLUT::Mg2SiO4_dust] = my_fields->Mg2SiO4_dust_density[field_idx1d];
-            dsp[SpLUT::Fe3O4_dust] = my_fields->Fe3O4_dust_density[field_idx1d];
-            dsp[SpLUT::SiO2_dust] = my_fields->SiO2_dust_density[field_idx1d];
-            dsp[SpLUT::MgO_dust] = my_fields->MgO_dust_density[field_idx1d];
-            dsp[SpLUT::FeS_dust] = my_fields->FeS_dust_density[field_idx1d];
-            dsp[SpLUT::Al2O3_dust] = my_fields->Al2O3_dust_density[field_idx1d];
-          }
-          if (my_chemistry->dust_species > 2)  {
-            dsp[SpLUT::ref_org_dust] = my_fields->ref_org_dust_density[field_idx1d];
-            dsp[SpLUT::vol_org_dust] = my_fields->vol_org_dust_density[field_idx1d];
-            dsp[SpLUT::H2O_ice_dust] = my_fields->H2O_ice_dust_density[field_idx1d];
-          }
-        }
-      }
-      dsp[i_eng-1] = e(i,j,k);
-
-      // here, we fill in the idsp array
-      // -> the idsp array is used for mapping between the compressed vector
-      //    form (that only has nsp elements) and dsp (that always has
-      //    `MAX_EVOLVED_SPECIES_FIELDS + 1` entries)
-      // -> in the future, we should construct this array first (before doing
-      //    anything else):
-      //    -> it gives us the value of nsp for free!
-      //    -> using this array with SpeciesMultiView lets us cut out
-      //       (duplicated) logic when we copy values from my_fields to dsp and
-      //       the reverse (we can cut ~70 lines in each place)
-      id = 0;
-      if ( my_chemistry->primordial_chemistry > 0 )  {
-        idsp[id++] = SpLUT::e;
-        idsp[id++] = SpLUT::HI;
-        idsp[id++] = SpLUT::HII;
-        idsp[id++] = SpLUT::HeI;
-        idsp[id++] = SpLUT::HeII;
-        idsp[id++] = SpLUT::HeIII;
-      }
-      if ( my_chemistry->primordial_chemistry > 1 )  {
-        idsp[id++] = SpLUT::HM;
-        idsp[id++] = SpLUT::H2I;
-        idsp[id++] = SpLUT::H2II;
-      }
-      if ( my_chemistry->primordial_chemistry > 2 )  {
-        idsp[id++] = SpLUT::DI;
-        idsp[id++] = SpLUT::DII;
-        idsp[id++] = SpLUT::HDI;
-      }
-      if ( my_chemistry->primordial_chemistry > 3 )  {
-        idsp[id++] = SpLUT::DM;
-        idsp[id++] = SpLUT::HDII;
-        idsp[id++] = SpLUT::HeHII;
-      }
-      if ( itmask_metal[i] != MASK_FALSE )  {
-        if ( my_chemistry->metal_chemistry == 1 )  {
-          idsp[id++] = SpLUT::CI;
-          idsp[id++] = SpLUT::CII;
-          idsp[id++] = SpLUT::COI;
-          idsp[id++] = SpLUT::CO2I;
-          idsp[id++] = SpLUT::OI;
-          idsp[id++] = SpLUT::OHI;
-          idsp[id++] = SpLUT::H2OI;
-          idsp[id++] = SpLUT::O2I;
-          idsp[id++] = SpLUT::SiI;
-          idsp[id++] = SpLUT::SiOI;
-          idsp[id++] = SpLUT::SiO2I;
-          idsp[id++] = SpLUT::CHI;
-          idsp[id++] = SpLUT::CH2I;
-          idsp[id++] = SpLUT::COII;
-          idsp[id++] = SpLUT::OII;
-          idsp[id++] = SpLUT::OHII;
-          idsp[id++] = SpLUT::H2OII;
-          idsp[id++] = SpLUT::H3OII;
-          idsp[id++] = SpLUT::O2II;
-          if (chiaki_model_dust_evolution)  {
-            if (my_chemistry->dust_species > 0)  {
-              idsp[id++] = SpLUT::Mg;
-            }
-            if (my_chemistry->dust_species > 1)  {
-              idsp[id++] = SpLUT::Al;
-              idsp[id++] = SpLUT::S;
-              idsp[id++] = SpLUT::Fe;
-            }
-          }
-        }
-        if (chiaki_model_dust_evolution)  {
-          if (my_chemistry->dust_species > 0)  {
-            idsp[id++] = SpLUT::MgSiO3_dust;
-            idsp[id++] = SpLUT::AC_dust;
-          }
-          if (my_chemistry->dust_species > 1)  {
-            idsp[id++] = SpLUT::SiM_dust;
-            idsp[id++] = SpLUT::FeM_dust;
-            idsp[id++] = SpLUT::Mg2SiO4_dust;
-            idsp[id++] = SpLUT::Fe3O4_dust;
-            idsp[id++] = SpLUT::SiO2_dust;
-            idsp[id++] = SpLUT::MgO_dust;
-            idsp[id++] = SpLUT::FeS_dust;
-            idsp[id++] = SpLUT::Al2O3_dust;
-          }
-          if (my_chemistry->dust_species > 2)  {
-            idsp[id++] = SpLUT::ref_org_dust;
-            idsp[id++] = SpLUT::vol_org_dust;
-            idsp[id++] = SpLUT::H2O_ice_dust;
-          }
-        }
-      }
-
-      if ( imp_eng[i] ==1 )  {
-        idsp[id++] = i_eng-1;
-      }
-
-      GRIMPL_REQUIRE((id == nsp), "SANITY CHECK FAILED");
-
-      // setup the dt_FIXME variable (this obviously needs some attention)
-      // -> as in solve_rate_cool_g, dt represents the total timestep that we
-      //    are evolving the system of equations over
-      // -> here, we are saying defining dt as a reference to the current
-      //    subcycle timestep at the current zone (we define it as a
-      //    reference because it needs to match the value of dtit[i] if we
-      //    choose to modify it)
-      // -> This sure seems inconsistent!
-      // -> OK, in more detail:
-      //    -> the only purpose of this variable is to be passed into the
-      //       time-derivative calculation.
-      //    -> within the time derivative calculation, the variable is ONLY
-      //       used as an argument forwarded to the `dt` argument of
-      //       lookup_cool_rates1d_g
-      //    -> at present, the other callsite of `lookup_cool_rates1d_g`
-      //       passes in the total timestep to dt
-      //    -> for now, we're just going to maintain compatability but this
-      //       NEEDS to be addressed (see the C++ docstring of
-      //       `lookup_cool_rates1d_g` for more discussion). We actually have
-      //       been doing things correctly here and incorrectly elsewhere
-      double& dt_FIXME = dtit[i];
 
       // configure pack for use during the current index
       t_deriv::configure_ContextPack(
-        &pack, my_fields, field_idx1d, itmask_metal[i], imp_eng[i]
+        &pack, my_fields, field_idx1d, itmask_metal[i], coupled_e_evolution
       );
 
       // copy values at the current index from the external scratch buffers
@@ -511,126 +514,53 @@ inline void step_rate_newton_raphson(
         coolingheating_buf, chemheatrates_buf
       );
 
-      // we want to integrate a system of coupled stiff ODEs
-      //
-      // From a purely mathematical perspective:
-      // - let `y(t)` specifies the (vector-valued) state of this system at a
-      //   time `t`
-      // - let `dy/dt` be equivalent to a (vector-valued) function `f(y)`.
-      // - If the current time is t₀, then we want to compute y(t₀ + Δt) from
-      //   y(t₀) for a timestep Δt.
-      // - To do this, we must define a callback function that computes
-      //   f(y) and the Jacobian matrix for f(y).
-      //
-      // From a more practical perspective:
-      // - the `dsp` buffer holds all variables actively evolved by the current
-      //   grackle configuration.
-      // - for the current timestep, only a subset of the variables may be
-      //    evolved. The selection of evolved variables is tracked by the
-      //   `idsp` buffer.
-      // - this reduced set of variables corresponds to `y(t)`
+      // construct the callback function for computing the time derivative of
+      // the state vector y
+      step_nr_detail::DerivativeCalculator deriv_fn{
+        .state_layout = state_layout,
+        .pack = pack,
+        .scratch_rhosp = scratch_rhosp.data(),
+        .scratch_rhosp_dot = scratch_rhosp_dot
+      };
 
-      // initialize full_dsp_buf with copies of all entries in dsp
-      // -> this buffer is used internally by the callback function. It has
-      //    space for every variable that the current grackle configuration
-      //    evolves.
-      // -> the basic idea, is that the callback will overwrite the elements
-      //    corresponding to the subset of variables being evolved in the
-      //    current timestep, won't mutate other elements (if any), and will
-      //    pass this to the buffer that does the heavy lifting of computing
-      //    derivatives.
-      std::memcpy(full_dsp_buf.data(), dsp.data(), sizeof(double)*i_eng);
-
-      // actually define the callback function:
-      // - reduced_dsp corresponds to the current value of the variable y
-      // - reduced_dspdot is an output buffer for holding f(y)
-      // - jacobian is an output buffer for holding the Jacobian of f
-      //
-      // Important: index `i` in these buffers correspond to the `i`th variable
-      //            being evolved in the current timestep. The corresponding
-      //            entry in `dsp` is at the index `idsp[isp]`.
-      const auto calc_f_and_jacobian = [&, dt_FIXME](
-          const double* reduced_dsp, double* reduced_dspdot,
-          View<double**>& jacobian) -> void {
-
-        // copy values out of reduced_dsp into full_dsp_buf
-        for (int isp = 0; isp < nsp; isp++) {
-          full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
-        }
-
-        wrapped_calc_derivatives(dt_FIXME, full_dsp_buf.data(),
-                                 full_dspdot_buf.data(), pack,
-                                 rhosp_grflt, rhosp_dot);
-
-        // copy the reduced set of values that we care about from
-        // full_dspdot_buf into dspdot
-        for (int isp = 0; isp < nsp; isp++) {
-          reduced_dspdot[isp] = full_dspdot_buf[idsp[isp]];
-        }
-
-        // fill in the jacobian matrix for the time derivative
-        // -> to accomplish this, we use finite differences to estimate
-        //    partial derivative for each evolved variable (i.e. the species
-        //    densities and possibly the total energy)
-        for (int jsp = 0; jsp < nsp; jsp++) {
-          double dspj = eps * reduced_dsp[jsp];
-          for (int isp = 0; isp < nsp; isp++) {
-            if (isp == jsp) {
-              full_dsp_buf[idsp[isp]] = reduced_dsp[isp] + dspj;
-            } else {
-              full_dsp_buf[idsp[isp]] = reduced_dsp[isp];
-            }
-          }
-
-          wrapped_calc_derivatives(dt_FIXME, full_dsp_buf.data(),
-                                   full_dspdot_buf1.data(),
-                                   pack, rhosp_grflt, rhosp_dot);
-
-          for (int isp = 0; isp < nsp; isp++) {
-            double tderiv = full_dspdot_buf[idsp[isp]];
-            double offset_tderiv = full_dspdot_buf1[idsp[isp]];
-            if ((reduced_dsp[isp] == 0.0) && (offset_tderiv == tderiv)) {
-              jacobian(isp, jsp) = 0.0;
-            } else {
-              jacobian(isp, jsp) = (offset_tderiv - tderiv) / dspj;
-            }
-          }
-        }
+      // actually define the callback function for computing time derivative
+      // AND the jacobian matrix
+      step_nr_detail::FiniteDiffJacobianAdaptor calc_f_and_jacobian{
+        .n_eqns = y_len,
+        .eps = eps,
+        .deriv_fn = deriv_fn,
+        .scratch_ptr = jacobian_adaptor_scratch.data()
       };
 
       // iteratively try to evolve chemistry equations until answer converges
       // -> First, we try to use the current timestep value tracked by dtit[i].
       //    If the answer doesn't converge, we will try again with shorter and
       //    shorter timesteps until chemistry converges
-      // -> when we exit this loop, reduced_dsp will hold the values of all of
+      // -> when we exit this loop, y will hold the values of all of
       //    the evolved variables
       bool is_converged = false;
       while (!is_converged) {
 
-        // copy values into reduced_dsp for variables that are being evolved
-        // (we need to do this each time we enter the loop since reduced_dsp
+        // copy values into y for variables that are being evolved
+        // (we need to do this each time we enter the loop since y
         // is mutated in place as we try to evolve things)
-        for (int isp = 0; isp < nsp; isp++) {
-          reduced_dsp[isp] = dsp[idsp[isp]];
+        for (int index = 0; index < state_layout.state_vec_len(); index++) {
+          y[index] = y_initial[index];
         }
 
-        // Iteration to solve ODEs
-
-
-
+        // Attempt to solve the ODEs
         const bool enforce_positive_non_NaN =
-      (imp_eng[i] == 1) && (my_chemistry->primordial_chemistry > 0) &&
-      (my_chemistry->with_radiative_cooling == 1);
+            coupled_e_evolution && (my_chemistry->with_radiative_cooling == 1);
 
         integrate::IntegrateResult rslt = ode_solver.step(
-            reduced_dsp.data(), dtit[i], calc_f_and_jacobian, nsp,
+            y.data(), dtit[i], calc_f_and_jacobian, y_len,
             ode_scratch_buf.data(), enforce_positive_non_NaN, d(i, j, k));
         is_converged = rslt.converged();
 
         // Check if the fractions are valid after an iteration
         if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
-          for (isp = 0; isp<nsp; isp++) {
-            if ( std::isnan(reduced_dsp[isp]) || (reduced_dsp[isp] <= 0.) )  {
+          for (int index = 0; index<y_len; index++) {
+            if ( std::isnan(y[index]) || (y[index] <= 0.) )  {
               is_converged = false;
             }
           }
@@ -644,114 +574,20 @@ inline void step_rate_newton_raphson(
         }
       }
 
-      // copy values from reduced_dsp back to dsp
-      for (int isp = 0; isp < nsp; isp++) {
-        dsp[idsp[isp]] = reduced_dsp[isp];
-      } 
-
-
-      // overwrite the scratch-buffer values
-      // -> It makes no logical sense for us to do this, but we do it for the
-      //    sake of backwards compatability
-      // -> we should totally delete this function (we may already be able to
-      //    do so)
-      t_deriv::scratchbufs_copy_from_pack(
-        i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw, nelec_times_mH,
-        edot, grain_temperatures, logTlininterp_buf,
-        coolingheating_buf, chemheatrates_buf
-      );
-
-      // overwrite the fields tracked by my_fields with the evolved values
-      // -> in the future, we will be able write the next ~80 lines as
-      //    a concise 4-line for-loop when we start to use the
-      //    SpeciesMultiView type
-
-      if ( my_chemistry->primordial_chemistry > 0 )  {
-        my_fields->e_density[field_idx1d]       = dsp[SpLUT::e];
-        my_fields->HI_density[field_idx1d]      = dsp[SpLUT::HI];
-        my_fields->HII_density[field_idx1d]     = dsp[SpLUT::HII];
-        my_fields->HeI_density[field_idx1d]     = dsp[SpLUT::HeI];
-        my_fields->HeII_density[field_idx1d]    = dsp[SpLUT::HeII];
-        my_fields->HeIII_density[field_idx1d]   = dsp[SpLUT::HeIII];
-      }
-      if ( my_chemistry->primordial_chemistry > 1 )  {
-        my_fields->HM_density[field_idx1d]      = dsp[SpLUT::HM];
-        my_fields->H2I_density[field_idx1d]     = dsp[SpLUT::H2I];
-        my_fields->H2II_density[field_idx1d]    = dsp[SpLUT::H2II];
-      }
-      if ( my_chemistry->primordial_chemistry > 2 )  {
-        my_fields->DI_density[field_idx1d]      = dsp[SpLUT::DI];
-        my_fields->DII_density[field_idx1d]     = dsp[SpLUT::DII];
-        my_fields->HDI_density[field_idx1d]     = dsp[SpLUT::HDI];
-      }
-      if ( my_chemistry->primordial_chemistry > 3 )  {
-        my_fields->DM_density[field_idx1d]      = dsp[SpLUT::DM];
-        my_fields->HDII_density[field_idx1d]    = dsp[SpLUT::HDII];
-        my_fields->HeHII_density[field_idx1d]   = dsp[SpLUT::HeHII];
-      }
-      if ( itmask_metal[i] != MASK_FALSE )  {
-        if ( my_chemistry->metal_chemistry == 1 )  {
-          my_fields->CI_density[field_idx1d]      = dsp[SpLUT::CI];
-          my_fields->CII_density[field_idx1d]     = dsp[SpLUT::CII];
-          my_fields->COI_density[field_idx1d]     = dsp[SpLUT::COI];
-          my_fields->CO2I_density[field_idx1d]    = dsp[SpLUT::CO2I];
-          my_fields->OI_density[field_idx1d]      = dsp[SpLUT::OI];
-          my_fields->OHI_density[field_idx1d]     = dsp[SpLUT::OHI];
-          my_fields->H2OI_density[field_idx1d]    = dsp[SpLUT::H2OI];
-          my_fields->O2I_density[field_idx1d]     = dsp[SpLUT::O2I];
-          my_fields->SiI_density[field_idx1d]     = dsp[SpLUT::SiI];
-          my_fields->SiOI_density[field_idx1d]    = dsp[SpLUT::SiOI];
-          my_fields->SiO2I_density[field_idx1d]   = dsp[SpLUT::SiO2I];
-          my_fields->CHI_density[field_idx1d]     = dsp[SpLUT::CHI];
-          my_fields->CH2I_density[field_idx1d]    = dsp[SpLUT::CH2I];
-          my_fields->COII_density[field_idx1d]    = dsp[SpLUT::COII];
-          my_fields->OII_density[field_idx1d]     = dsp[SpLUT::OII];
-          my_fields->OHII_density[field_idx1d]    = dsp[SpLUT::OHII];
-          my_fields->H2OII_density[field_idx1d]   = dsp[SpLUT::H2OII];
-          my_fields->H3OII_density[field_idx1d]   = dsp[SpLUT::H3OII];
-          my_fields->O2II_density[field_idx1d]    = dsp[SpLUT::O2II];
-          if (chiaki_model_dust_evolution)  {
-            if (my_chemistry->dust_species > 0)  {
-              my_fields->Mg_density[field_idx1d]      = dsp[SpLUT::Mg];
-            }
-            if (my_chemistry->dust_species > 1)  {
-              my_fields->Al_density[field_idx1d]      = dsp[SpLUT::Al];
-              my_fields->S_density[field_idx1d]       = dsp[SpLUT::S];
-              my_fields->Fe_density[field_idx1d]      = dsp[SpLUT::Fe];
-            }
-          }
-        }
-        if (chiaki_model_dust_evolution)  {
-          if (my_chemistry->dust_species > 0)  {
-            my_fields->MgSiO3_dust_density[field_idx1d]  = dsp[SpLUT::MgSiO3_dust];
-            my_fields->AC_dust_density[field_idx1d]      = dsp[SpLUT::AC_dust];
-          }
-          if (my_chemistry->dust_species > 1)  {
-            my_fields->SiM_dust_density[field_idx1d]     = dsp[SpLUT::SiM_dust];
-            my_fields->FeM_dust_density[field_idx1d]     = dsp[SpLUT::FeM_dust];
-            my_fields->Mg2SiO4_dust_density[field_idx1d] = dsp[SpLUT::Mg2SiO4_dust];
-            my_fields->Fe3O4_dust_density[field_idx1d]   = dsp[SpLUT::Fe3O4_dust];
-            my_fields->SiO2_dust_density[field_idx1d]   = dsp[SpLUT::SiO2_dust];
-            my_fields->MgO_dust_density[field_idx1d]     = dsp[SpLUT::MgO_dust];
-            my_fields->FeS_dust_density[field_idx1d]     = dsp[SpLUT::FeS_dust];
-            my_fields->Al2O3_dust_density[field_idx1d]   = dsp[SpLUT::Al2O3_dust];
-          }
-          if (my_chemistry->dust_species > 2)  {
-            my_fields->ref_org_dust_density[field_idx1d]  = dsp[SpLUT::ref_org_dust];
-            my_fields->vol_org_dust_density[field_idx1d]  = dsp[SpLUT::vol_org_dust];
-            my_fields->H2O_ice_dust_density[field_idx1d]  = dsp[SpLUT::H2O_ice_dust];
-          }
-        }
+      // overwrite the dynamically evolved species fields (tracked by my_fields
+      // and accessed thru sp_densities) with the evolved values
+      for (int index = 0; index < state_layout.n_contained_species; index++) {
+        sp_densities(state_layout.species_ids[index], i) = y[index];
       }
 
-      e(i,j,k)     = dsp[i_eng-1];
-
-      idsp.clear();
+      if (coupled_e_evolution) {
+        e(i,j,k) = y[state_layout.energy_index()];
+      }
     }
   }
 
   t_deriv::drop_MainScratchBuf(&main_scratch_buf);
-  grackle::impl::drop_SpeciesCollection(&rhosp_dot);
+  drop_SpeciesCollection(&scratch_rhosp_dot);
 }
 
 } // namespace GRIMPL_NAMESPACE_DECL
