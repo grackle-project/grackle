@@ -21,7 +21,9 @@
 
 #include "chem_model/chemsp_props.hpp"
 #include "chem_model/parse.hpp"
+#include "chem_model/rxn_eqn_props.hpp"
 #include "chem_model/species.hpp"
+#include "support/FrozenKeyIdxBiMap.hpp"
 #include "support/inplace_vector.hpp"
 #include "support/error.hpp"
 #include "support/expected.hpp"
@@ -67,6 +69,11 @@ inline void PrintTo(const SpKind& kind, std::ostream* os) {
       *os << "SpKind::<UNKNOWN>";
       return;
   }
+}
+
+// teach GoogleTest how to print our SpKind enum for more informative errors
+inline void PrintTo(const EqnSide& side, std::ostream* os) {
+  *os << ((side == EqnSide::LEFT) ? "EqnSide::LEFT" : "EqnSide::RIGHT");
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
@@ -237,6 +244,24 @@ inline ::testing::Matcher<GRIMPL_NS::ChemSpeciesProps> HasChemProps(
       ::testing::Property("composed_of_nuclides",
                           &ChemSpeciesProps::composed_of_nuclides,
                           ::testing::Eq(composed_of_nuclides)));
+}
+
+// define a nice matcher for standard cases of GRIMPL_NS::RxnEqnProps
+inline ::testing::Matcher<GRIMPL_NS::RxnEqnProps> HasRxnEqnProps(
+    const GRIMPL_NS::FrozenKeyIdxBiMap& species_name_map,
+    const std::vector<NameCoefPair>& lhs_entries,
+    const std::vector<NameCoefPair>& rhs_entries,
+    std::optional<GRIMPL_NS::EqnSide> has_photon = std::nullopt) {
+  using ::GRIMPL_NS::RxnEqnProps;
+  using ::testing::Field;
+
+  auto lhs_matcher = NameCoefSeq(species_name_map, lhs_entries);
+  auto rhs_matcher = NameCoefSeq(species_name_map, rhs_entries);
+
+  return ::testing::AllOf(
+      Field("lhs_entries", &RxnEqnProps::lhs_entries, lhs_matcher),
+      Field("rhs_entries", &RxnEqnProps::rhs_entries, rhs_matcher),
+      Field("has_photon", &RxnEqnProps::has_photon, ::testing::Eq(has_photon)));
 }
 
 }  // namespace grtest
