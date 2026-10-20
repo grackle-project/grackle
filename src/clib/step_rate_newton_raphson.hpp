@@ -194,66 +194,74 @@ class StateLayoutFactory {
   }
 };
 
-/// acts as a temporary adaptor layer for time_deriv_0d::derivatives:
+/// @brief function-like object that computes time derivative of state vector
+///
+/// Essentially, this is an adaptor layout that computes the time derivative for
+/// the state vector `y` (evolved by the newton-raphson solver) by calling
+/// @ref time_deriv_0d::derivatives
 ///
 /// @note
-/// Some additional context
-/// - during transcription, time_deriv_0d::derivatives (formerly called
-///   lookup_cool_rates0d) needed to be adapted to make use of data structures
-///   already adopted in other parts of the transcribed code
-///   - (recall that these data structures were introduced to remove HUNDREDS
-///     of function arguments and HUNDREDS of local variables)
-/// - since the newton-raphson solver already does a bunch of "translation"
-///   between data representations, it should directly map into these preferred
-///   data structures
-/// - as a short-term (and extremely temporary) solution, we this function
-///   to copy between formats & wrap the time_deriv_0d::derivatives function.
-///   This allows to finish polishing time_deriv_0d::derivatives without
-///   refactoring the newton-raphson scheme)
-inline void wrapped_calc_derivatives(
-  const double* y,
-  double* ydot,
-  const StateLayoutAndE& state_layout,
-  grackle::impl::time_deriv_0d::ContextPack& pack,
-  std::vector<gr_float>& rhosp_grflt,         // <- preallocated temp buffer
-  grackle::impl::SpeciesCollection& rhosp_dot // <- preallocated temp buffer
-) {
+/// This is a temporary object constructed during @ref step_rate_newton_raphson
+/// and must be outlived by all of its data members (otherwise, there will be
+/// trouble).
+struct DerivativeCalculator {
+  /// encodes the layout of the state vector
+  StateLayoutAndE& state_layout;
+  /// encodes a lot of context
+  time_deriv_0d::ContextPack& pack;
+  /// holds scratch space with a length given by MAX_EVOLVED_SPECIES_FIELDS
+  gr_float* scratch_rhosp;
+  /// holds pre-allocated scratch space
+  SpeciesCollection& scratch_rhosp_dot;
 
-  gr_float local_eint[1];
-  double eint_dot_specific[1];
+  /// @brief the functional call operation
+  ///
+  /// @note
+  /// In an ideal world, the scratch space that is mutated for the calculation
+  /// might be specified as an argument so that we can mark this function as
+  /// `const`. However, there isn't tremendous value to doing this unless we
+  /// hoist the relevant scratch memory out of @ref time_deriv_0d::ContextPack
+  void operator()(const double* y, double* ydot) {
+    // for less experienced C++ devs: this is like python's __call__ method
 
-  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
-    rhosp_grflt[sp_idx] = static_cast<gr_float>(0.0);
-  }
+    gr_float local_eint[1];
+    double eint_dot_specific[1];
+    gr_float* rhosp = scratch_rhosp;
+    SpeciesCollection& rhosp_dot = scratch_rhosp_dot;
 
-  // 1. copy values out of y into rhosp_grflt & (if applicable) local_eint
-  //    - at some point, we need to add some logic to deal with edge cases
-  //      that can arise when `sizeof(gr_float) < sizeof(double)
-  for (int vec_i = 0; vec_i < state_layout.n_contained_species; vec_i++) {
-    int species_id = state_layout.species_ids[vec_i];
-    rhosp_grflt[species_id] = static_cast<gr_float>(y[vec_i]);
-  }
-  if (state_layout.fixed_specific_energy.has_value()) {
-    local_eint[0] =
-        static_cast<gr_float>(state_layout.fixed_specific_energy.value());
-  } else {
-    local_eint[0] = static_cast<gr_float>(y[state_layout.energy_index()]);
-  }
+    for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
+      rhosp[sp_idx] = static_cast<gr_float>(0.0);
+    }
 
-  // 2. call the wrapped function
-  grackle::impl::time_deriv_0d::derivatives(
-    rhosp_grflt.data(), rhosp_dot, local_eint, eint_dot_specific, pack
-  );
+    // 1. copy values out of y into rhosp & (if applicable) local_eint
+    //    - at some point, we need to add some logic to deal with edge cases
+    //      that can arise when `sizeof(gr_float) < sizeof(double)
+    for (int vec_i = 0; vec_i < state_layout.n_contained_species; vec_i++) {
+      int species_id = state_layout.species_ids[vec_i];
+      rhosp[species_id] = static_cast<gr_float>(y[vec_i]);
+    }
+    if (state_layout.fixed_specific_energy.has_value()) {
+      local_eint[0] =
+          static_cast<gr_float>(state_layout.fixed_specific_energy.value());
+    } else {
+      local_eint[0] = static_cast<gr_float>(y[state_layout.energy_index()]);
+    }
 
-  // 3. copy the computed derivatives into ydot
-  for (int vec_i = 0; vec_i < state_layout.n_contained_species; vec_i++) {
-    int species_id = state_layout.species_ids[vec_i];
-    ydot[vec_i] = rhosp_dot.data[species_id][0];
+    // 2. call the wrapped function
+    time_deriv_0d::derivatives(
+      rhosp, rhosp_dot, local_eint, eint_dot_specific, pack
+    );
+
+    // 3. copy the computed derivatives into ydot
+    for (int vec_i = 0; vec_i < state_layout.n_contained_species; vec_i++) {
+      int species_id = state_layout.species_ids[vec_i];
+      ydot[vec_i] = rhosp_dot.data[species_id][0];
+    }
+    if (!state_layout.fixed_specific_energy.has_value()) {
+      ydot[state_layout.energy_index()] = eint_dot_specific[0];
+    }
   }
-  if (!state_layout.fixed_specific_energy.has_value()) {
-    ydot[state_layout.energy_index()] = eint_dot_specific[0];
-  }
-}
+};
 
 }  // namespace step_nr_detail
 
@@ -343,9 +351,9 @@ inline void step_rate_newton_raphson(
     frozen_tderiv_args, main_scratch_buf
   );
 
-  std::vector<gr_float> rhosp_grflt(MAX_EVOLVED_SPECIES_FIELDS);
-  grackle::impl::SpeciesCollection rhosp_dot =
-    grackle::impl::new_SpeciesCollection(1);
+  // allocate scratch-space used by step_nr_detail::DerivativeCalculator
+  std::vector<gr_float> scratch_rhosp(MAX_EVOLVED_SPECIES_FIELDS);
+  SpeciesCollection scratch_rhosp_dot = new_SpeciesCollection(1);
 
   // the following check was inspired by a compiler warning indicating that
   // y_len won't be initialized if this condition isn't met
@@ -407,6 +415,15 @@ inline void step_rate_newton_raphson(
         coolingheating_buf, chemheatrates_buf
       );
 
+      // construct the callback function for computing the time derivative of
+      // the state vector y
+      step_nr_detail::DerivativeCalculator deriv_fn{
+        .state_layout = state_layout,
+        .pack = pack,
+        .scratch_rhosp = scratch_rhosp.data(),
+        .scratch_rhosp_dot = scratch_rhosp_dot
+      };
+
       // we want to integrate a system of coupled stiff ODEs
       //
       // From a purely mathematical perspective:
@@ -438,8 +455,8 @@ inline void step_rate_newton_raphson(
           const double* y, double* ydot,
           View<double**>& jacobian) -> void {
 
-        wrapped_calc_derivatives(y, ydot, state_layout,
-                                 pack, rhosp_grflt, rhosp_dot);
+        // calculate time derivative of y and store the answer in ydot
+        deriv_fn(y, ydot);
 
         // fill in the jacobian matrix for the time derivative
         // -> to accomplish this, we use finite differences to estimate
@@ -455,9 +472,7 @@ inline void step_rate_newton_raphson(
             }
           }
 
-          wrapped_calc_derivatives(y_buf1.data(),
-                                   ydot_buf1.data(), state_layout,
-                                   pack, rhosp_grflt, rhosp_dot);
+          deriv_fn(y_buf1.data(), ydot_buf1.data());
 
           for (int isp = 0; isp < y_len; isp++) {
             double tderiv = ydot[isp];
@@ -530,7 +545,7 @@ inline void step_rate_newton_raphson(
   }
 
   t_deriv::drop_MainScratchBuf(&main_scratch_buf);
-  grackle::impl::drop_SpeciesCollection(&rhosp_dot);
+  drop_SpeciesCollection(&scratch_rhosp_dot);
 }
 
 } // namespace GRIMPL_NAMESPACE_DECL
