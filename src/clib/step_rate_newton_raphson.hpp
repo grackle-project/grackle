@@ -376,13 +376,35 @@ inline void step_rate_newton_raphson(
   // shorten `grackle::impl::time_deriv_0d` to `t_deriv` within this function
   namespace t_deriv = ::grackle::impl::time_deriv_0d;
 
-  // Density, energy and velocity fields fields
-
+  // Density & energy fields
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // Local variable
-  int isp;
+
+  // we want to integrate a system of coupled stiff ODEs
+  //
+  // From a purely mathematical perspective:
+  // - `y(t)` specifies the (vector-valued) state of this system at time `t`
+  // - `dy/dt` (aka `ydot`) be equivalent to a (vector-valued) function `f(y)`.
+  // - If the current time is t₀, then we want to compute y(t₀ + Δt) from
+  //   y(t₀) for a timestep Δt.
+  // - To do this, all of this we'll construct a callback function that computes
+  //   f(y) and the Jacobian matrix for f(y) and pass it to
+  //   integrate::StiffNewtonRaphson
+  //
+  // From a more practical perspective:
+  // - the state vector `y` holds the densities of dynamically evolved species
+  //   and, in some cases, the specific internal energy
+  // - the layout of the state vector `y` is encoded by the
+  //   `step_nr_detail::StateLayoutAndE` object.
+  // - a `step_nr_detail::StateLayoutFactory` object is used to construct the
+  //   `step_nr_detail::StateLayoutAndE` objects because the precise contents
+  //   of the state vector is allowed to vary between cells (with the nominal
+  //   intention of speeding up the calculation) See the docstrings of those
+  //   types for more details
+
+  const step_nr_detail::StateLayoutFactory ylayout_factory(
+    my_rates->opaque_storage->sp_kind_map);
 
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
@@ -399,9 +421,6 @@ inline void step_rate_newton_raphson(
                                            maxiter_per_dt);
 
   std::vector<double> ode_scratch_buf(ode_solver.num_scratch_buf_elements());
-
-  const step_nr_detail::StateLayoutFactory ylayout_factory(
-    my_rates->opaque_storage->sp_kind_map);
 
   // Another parameter
   const double eps = 1.e-4;
@@ -504,26 +523,8 @@ inline void step_rate_newton_raphson(
         .scratch_rhosp_dot = scratch_rhosp_dot
       };
 
-      // we want to integrate a system of coupled stiff ODEs
-      //
-      // From a purely mathematical perspective:
-      // - let `y(t)` specifies the (vector-valued) state of this system at a
-      //   time `t`
-      // - let `dy/dt` be equivalent to a (vector-valued) function `f(y)`.
-      // - If the current time is t₀, then we want to compute y(t₀ + Δt) from
-      //   y(t₀) for a timestep Δt.
-      // - To do this, we must define a callback function that computes
-      //   f(y) and the Jacobian matrix for f(y).
-      //
-      // From a more practical perspective:
-      // - the `y` buffer holds all variables actively evolved by the current
-      //   grackle configuration.
-      // - for the current timestep, only a subset of the variables may be
-      //    evolved. The selection of evolved variables is tracked by the
-      //   `idsp` buffer.
-      // - this reduced set of variables corresponds to `y(t)`
-
-      // actually define the callback function:
+      // actually define the callback function for computing time derivative
+      // AND the jacobian matrix
       step_nr_detail::FiniteDiffJacobianAdaptor calc_f_and_jacobian{
         .n_eqns = y_len,
         .eps = eps,
@@ -547,13 +548,9 @@ inline void step_rate_newton_raphson(
           y[isp] = y_initial[isp];
         }
 
-        // Iteration to solve ODEs
-
-
-
+        // Attempt to solve the ODEs
         const bool enforce_positive_non_NaN =
-      (imp_eng[i] == 1) && (my_chemistry->primordial_chemistry > 0) &&
-      (my_chemistry->with_radiative_cooling == 1);
+            coupled_e_evolution && (my_chemistry->with_radiative_cooling == 1);
 
         integrate::IntegrateResult rslt = ode_solver.step(
             y.data(), dtit[i], calc_f_and_jacobian, y_len,
@@ -562,7 +559,7 @@ inline void step_rate_newton_raphson(
 
         // Check if the fractions are valid after an iteration
         if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
-          for (isp = 0; isp<y_len; isp++) {
+          for (int isp = 0; isp<y_len; isp++) {
             if ( std::isnan(y[isp]) || (y[isp] <= 0.) )  {
               is_converged = false;
             }
