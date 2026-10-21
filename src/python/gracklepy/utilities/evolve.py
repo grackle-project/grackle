@@ -398,6 +398,24 @@ def evolve_constant_density(fc, final_temperature=None,
     if final_temperature is None and final_time is None:
         raise RuntimeError("Must specify either final_temperature " +
                            "or final_time.")
+    elif final_temperature is None:
+        extra_stopper = None
+    else:
+        def extra_stopper(time, dt_IGNORE, fc):
+            fc.calculate_temperature()
+            return fc["temperature"][0] <= final_temperature
+
+    # prechem_update normally is used to apply an update -- this is a bit of a hack
+    # to retain consistent behavior
+    def prechem_update(time, dt, fc):
+        fc.calculate_temperature()
+        print("Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." %
+              (time * my_chemistry.time_units / sec_per_year,
+               fc["density"][0] * my_chemistry.density_units,
+               fc["temperature"][0]))
+
+
+    data = defaultdict(list)
 
     state_recorder = StateRecorder(
         n_recordings_per_reset=100,
@@ -405,29 +423,26 @@ def evolve_constant_density(fc, final_temperature=None,
         field_names=fc.input_fields
     )
 
-    data = defaultdict(list)
-    current_time = 0.0
-    fc.calculate_cooling_time()
-    dt = safety_factor * np.abs(fc["cooling_time"][0])
-    while True:
-        fc.calculate_temperature()
-        if final_temperature is not None and fc["temperature"][0] <= final_temperature:
-            break
-        if final_time is not None and current_time >= final_time:
-            break
-
-        print("Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." %
-              (current_time * my_chemistry.time_units / sec_per_year,
-               fc["density"][0] * my_chemistry.density_units,
-               fc["temperature"][0]))
-        fc.solve_chemistry(dt)
-
-        state_recorder.record(time=current_time, fc=fc)
+    def observer(time, dt, fc):
+        state_recorder.record(time=time, fc=fc)
         if state_recorder.is_full():
             add_to_data(fc.chemistry_data, state_recorder, data)
             state_recorder.reset() # <- clear out contents
 
-        current_time += dt
+    fc.calculate_cooling_time()
+    dt = safety_factor * np.abs(fc["cooling_time"][0])
+
+    evolver = _Evolver(
+        t0=0.0,
+        fc0=fc,
+        t_max=math.inf if final_time is None else final_time,
+        calc_dt=dt,
+        prechem_update=prechem_update,
+        observer=observer,
+        extra_stopper=extra_stopper
+    )
+    evolver.step()
+    evolver.copy_state(dst=fc)
 
     if not state_recorder.is_empty():
         add_to_data(fc.chemistry_data, state_recorder, data)
