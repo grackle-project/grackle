@@ -298,20 +298,18 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
     def extra_stopper(time, dt_IGNORE, fc):
         return fc["density"][0] * my_chemistry.density_units >= final_density
 
-    current_time = 0.0
-    observer(current_time, math.nan, fc)
-
-    while True:
-        if extra_stopper(current_time, math.nan, fc):
-            break
-        # calculate timestep based on free-fall solution
-        dt = calc_dt(current_time, math.nan, fc)
-
-        prechem_update(current_time, dt, fc)
-        fc.solve_chemistry(dt)
-
-        observer(current_time, dt, fc)
-        current_time += dt
+    evolver = _Evolver(
+        t0=0.0,
+        fc0=fc,
+        t_max=math.inf,
+        calc_dt=calc_dt,
+        prechem_update=prechem_update,
+        observer=observer,
+        extra_stopper=extra_stopper
+    )
+    evolver.observe_state() # <- observe t=0 state
+    evolver.step()
+    evolver.copy_state(dst=fc)
 
     if not state_recorder.is_empty():
         add_to_data(fc.chemistry_data, state_recorder, data)
