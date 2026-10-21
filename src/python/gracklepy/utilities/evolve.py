@@ -174,7 +174,7 @@ class _Evolver:
             self._fc[field][...] = fc0[field][...]
 
         if callable(calc_dt):
-            self._calc_dt
+            self._calc_dt = calc_dt
         elif float(calc_dt) <= 0:
             raise ValueError("when calc_dt isn't callable, it must exceed 0")
         else:
@@ -188,7 +188,6 @@ class _Evolver:
             _DummyCallback(ret_val=False) if extra_stopper is None else extra_stopper
         )
 
-    @property
     def t(self) -> float:
         """Returns the current time"""
         return self._t
