@@ -15,6 +15,7 @@ from collections import defaultdict
 import numpy as np
 
 from gracklepy.fluid_container import FluidContainer, _indirectly_calculated_fields
+from gracklepy import chemistry_data
 
 from .physical_constants import \
     gravitational_constant_cgs, \
@@ -101,39 +102,11 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
                     include_pressure=True):
     my_chemistry = fc.chemistry_data
 
-    # Set units of gravitational constant
-    gravitational_constant = (
-        4.0 * np.pi * gravitational_constant_cgs *
-        my_chemistry.density_units * my_chemistry.time_units**2)
+    ff_updater = FFDensityAndEnergyUpdate(
+        n_vals=fc.n_vals, include_pressure=include_pressure, my_chemistry=fc.chemistry_data
+    )
 
-    # some constants for the analytical free-fall solution
-    freefall_time_constant = np.power(((32. * gravitational_constant) /
-                                       (3. * np.pi)), 0.5)
-
-    last_n_recorded = 0
-    last3_density = np.full(shape=(3, fc.n_vals), fill_value=np.nan, dtype=np.float64)
-    last3_pressure = np.full(shape=(3, fc.n_vals), fill_value=np.nan, dtype=np.float64)
-
-    def calc_force_factor(fc):
-        nonlocal last_n_recorded
-        if include_pressure:
-            last3_density[-3:-1, :] = last3_density[-2:, :]
-            last3_pressure[-3:-1, :] = last3_pressure[-2:, :]
-            fc.calculate_pressure()
-            last3_density[-1, :] = fc["density"]
-            last3_pressure[-1, :] = fc["pressure"]
-
-            if last_n_recorded < 3:
-                last_n_recorded += 1
-
-            fc.calculate_pressure()
-            last3_density[-1,:] = fc["density"]
-            last3_pressure[-1,:] = fc["pressure"]
-            return calculate_collapse_factor(last3_pressure[-last_n_recorded:],
-                                             last3_density[-last_n_recorded:])
-        else:
-            return 0.
-
+    gravitational_constant = ff_updater.gravitational_constant
 
     state_recorder = StateRecorder(
         n_recordings_per_reset=100,
@@ -155,14 +128,68 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
             add_to_data(fc.chemistry_data, state_recorder, data)
             state_recorder.reset() # <- clear out contents
 
+        # perform analytic update from our free-fall model. Then, record force_factor
+        force_factor = ff_updater(current_time, dt, fc)
+        data["force_factor"].append(force_factor)
+
+
+        fc.solve_chemistry(dt)
+
+        # update time
+        current_time += dt
+
+    if not state_recorder.is_empty():
+        add_to_data(fc.chemistry_data, state_recorder, data)
+
+    for field in data:
+        data[field] = np.squeeze(np.array(data[field]))
+    return fc.finalize_data(data=data)
+
+class FFDensityAndEnergyUpdate:
+
+    def __init__(self, n_vals: int, include_pressure: bool, my_chemistry: chemistry_data):
+        self.last_n_recorded = 0
+        self.last3_density = np.full(shape=(3, n_vals), fill_value=np.nan, dtype=np.float64)
+        self.last3_pressure = np.full(shape=(3, n_vals), fill_value=np.nan, dtype=np.float64)
+        self.include_pressure = include_pressure
+
+        # Set units of gravitational constant
+        self.gravitational_constant = (
+            4.0 * np.pi * gravitational_constant_cgs *
+            my_chemistry.density_units * my_chemistry.time_units**2)
+
+        # some constants for the analytical free-fall solution
+        self.freefall_time_constant = np.power(((32. * self.gravitational_constant) /
+                                                (3. * np.pi)), 0.5)
+
+    def __call__(self, current_time: float, dt: float, fc: FluidContainer):
+        my_chemistry = fc.chemistry_data
+
+        if self.include_pressure:
+            self.last3_density[-3:-1, :] = self.last3_density[-2:, :]
+            self.last3_pressure[-3:-1, :] = self.last3_pressure[-2:, :]
+            fc.calculate_pressure()
+            self.last3_density[-1, :] = fc["density"]
+            self.last3_pressure[-1, :] = fc["pressure"]
+
+            if self.last_n_recorded < 3:
+                self.last_n_recorded += 1
+
+            fc.calculate_pressure()
+            self.last3_density[-1,:] = fc["density"]
+            self.last3_pressure[-1,:] = fc["pressure"]
+            force_factor = calculate_collapse_factor(
+                self.last3_pressure[-self.last_n_recorded:],
+                self.last3_density[-self.last_n_recorded:])
+        else:
+            force_factor = 0.0
+        
         # compute the new density using the modified
         # free-fall collapse as per Omukai et al. (2005)
-        force_factor = calc_force_factor(fc)
-        data["force_factor"].append(force_factor)
 
         # calculate new density from altered free-fall solution
         new_density = np.power((np.power(fc["density"][0], -0.5) -
-                                (0.5 * freefall_time_constant * dt *
+                                (0.5 * self.freefall_time_constant * dt *
                                  np.power((1 - force_factor), 0.5))), -2.)
 
         fc.calculate_temperature()
@@ -180,20 +207,11 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
 
         # now update energy for adiabatic heating from collapse
         fc["internal_energy"][0] += (my_chemistry.Gamma - 1.) * \
-          fc["internal_energy"][0] * freefall_time_constant * \
+          fc["internal_energy"][0] * self.freefall_time_constant * \
           np.power(fc["density"][0], 0.5) * dt
 
-        fc.solve_chemistry(dt)
+        return force_factor
 
-        # update time
-        current_time += dt
-
-    if not state_recorder.is_empty():
-        add_to_data(fc.chemistry_data, state_recorder, data)
-
-    for field in data:
-        data[field] = np.squeeze(np.array(data[field]))
-    return fc.finalize_data(data=data)
 
 def calculate_collapse_factor(pressure, density):
     # Calculate the effective adiabatic index, dlog(p)/dlog(rho).
