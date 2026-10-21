@@ -244,10 +244,10 @@ class _Evolver:
         return i + 1  # add one since the last step was complete
 
 class _DummyCallback:
-    def __init__(self, return_val = None):
-        self.return_val = return_val
+    def __init__(self, ret_val = None):
+        self.ret_val = ret_val
     def __call__(self, *args, **kwargs):
-        return self.return_val
+        return self.ret_val
 
 def evolve_freefall(fc, final_density, safety_factor=0.01,
                     include_pressure=True):
