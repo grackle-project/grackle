@@ -183,9 +183,6 @@ class FFDensityAndEnergyUpdate:
             if self.last_n_recorded < 3:
                 self.last_n_recorded += 1
 
-            fc.calculate_pressure()
-            self.last3_density[-1,:] = fc["density"]
-            self.last3_pressure[-1,:] = fc["pressure"]
             force_factor = calculate_collapse_factor(
                 self.last3_pressure[-self.last_n_recorded:],
                 self.last3_density[-self.last_n_recorded:])
