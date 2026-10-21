@@ -12,6 +12,9 @@
 ########################################################################
 
 from collections import defaultdict
+from collections.abc import Callable, Mapping
+import math
+
 import numpy as np
 
 from gracklepy.fluid_container import FluidContainer, _indirectly_calculated_fields
@@ -20,6 +23,10 @@ from gracklepy import chemistry_data
 from .physical_constants import \
     gravitational_constant_cgs, \
     sec_per_year
+
+_MAX_64BIT_SIGNED_INT = 2**63 - 1
+
+
 
 class StateRecorder:
     """
@@ -97,6 +104,150 @@ class StateRecorder:
         slc = slice(0, self.n_recordings_*self.field_register_len_)
         fields = {k:buf[slc] for k,buf in self.field_data_.items()}
         return (times, fields)
+
+class _Evolver:
+    """
+    Solves evolution of isolated zones
+
+    This has only been tested with evolving a single zone, but there's no
+    reason it can't support multiple zones
+
+    All callback functions take the same set of function arguments:
+    `(time, dt, fc)`.
+
+    Parameters
+    ----------
+    t0
+        Initial time.
+    fc0
+        Encodes the initial state of the system. The state will be copied out
+        of the provided object (i.e. updates in the state will **NOT** be
+        reflected in the object passed as this argument)
+    t_max
+        The max integration time
+    calc_dt
+        Specifies a fixed timestep or a callable for computing that computes
+        a timestep from ``fc`` (it should *NOT* mutate fc). If this is a callable
+        function, the ``dt`` argument should be ignored.
+    prechem_update
+        Optional callback function called before `solve_chemistry` during each
+        timestep. It is expected to mutate `fc`
+    observer
+        Optional callback function called after every timestep
+    extra_stopper
+        Optional callback function that is called at the start of each timestep.
+        The ``fc`` argument should **not** be mutated and the ``dt`` argument should
+        be ignored. The callable should return ``True`` to indicate that the stopping
+        condition has been met. If you want this to be the only stopping condition,
+        set ``t_max = math.inf``
+
+    Notes
+    -----
+    A lot of implementation choices for this class were made by a desire
+    to easily convert this core logic into C++.
+
+    It *might* be advantageous to decompose the observer callback into a
+    logger-callback function (responsible for reporting the current timestep)
+    and then always track ``StateRecorder`` object. In this scenario, the
+    caller of the ``step`` method would then be responsible for only running
+    ``step`` until the buffers of ``StateRecorder`` object are full and then
+    flushing the buffers. This would be at least slightly faster
+    """
+
+    def __init__(
+        self,
+        t0: float,
+        fc0: FluidContainer,
+        t_max: float,
+        calc_dt: Callable[[float, float, FluidContainer], float] | float,
+        *,
+        prechem_update: Callable[[float, float, FluidContainer], None] | None = None,
+        observer: Callable[[float, float, FluidContainer], None] | None,
+        extra_stopper: Callable[[float, float, FluidContainer], bool] | None
+    ):
+        self._t = float(t0)
+        self._t_max = float(t_max)
+        if (self._t > self._t_max):
+            raise ValueError("t0 cannot exceed t_max")
+        self._fc = FluidContainer(fc0.chemistry_data, n_vals=fc0.n_vals)
+        for field in self._fc.input_fields:
+            self._fc[field][...] = fc0[field][...]
+
+        if callable(calc_dt):
+            self._calc_dt
+        elif float(calc_dt) <= 0:
+            raise ValueError("when calc_dt isn't callable, it must exceed 0")
+        else:
+            self._calc_dt = _DummyCallback(ret_val=float(calc_dt))
+
+        self._prechem_update = (
+            _DummyCallback() if prechem_update is None else prechem_update
+        )
+        self._observer = _DummyCallback() if observer is None else observer
+        self._extra_stopper = (
+            _DummyCallback(ret_val=False) if extra_stopper is None else extra_stopper
+        )
+
+    @property
+    def t(self) -> float:
+        """Returns the current time"""
+        return self._t
+
+    def observe_state(self):
+        """Invoke observer callback function on the current state
+        """
+        # This is primarily intended to support observing the first timestep
+        dt = math.nan
+        self._observer(self.t(), dt, self._fc)
+
+    def copy_state(
+        self, dst: Mapping[str, np.ndarray] | None = None
+    ) -> Mapping[str, np.ndarray]:
+        """Return a copy of the current state
+        """
+        f_list = self._fc.input_fields # <- fields to copy
+        if dst is None:
+            return {f: np.copy(self._fc[f]) for f in f_list}
+        else:
+            shape = (self._fc.n_vals,)
+            for f in f_list:
+                if f not in dst:
+                    raise ValueError(f"dst doesn't have a key {f!r}")
+                elif getattr(dst[f], "shape") != shape:
+                    raise ValueError(f"dst[{f!r}] isn't an array with shape: {shape}")
+            for f in f_list:
+                dst[f][...] = self._fc[f][...]
+        return dst
+
+    def step(self, n_steps: int | None = None) -> int:
+        """Advance evolution for n_steps or until stopping condition is met
+
+        Returns the number of elapsed steps
+        """
+        _up_bound = _MAX_64BIT_SIGNED_INT  # <- for future c++ compat
+        n_steps = _up_bound if n_steps is None else n_steps
+        assert int(n_steps) == n_steps
+        assert 0 < n_steps <= _up_bound
+
+        _NAN = math.nan
+
+        for i in range(n_steps):
+            if self._t >= self._t_max or self._extra_stopper(self._t, _NAN, self._fc):
+                return i # <- intentionally don't add 1 to this
+            dt = self._calc_dt(self._t, _NAN, self._fc)  # <- get timestep
+            self._prechem_update(self._t, dt, self._fc)  # <-pre-chemistry update
+            self._fc.solve_chemistry(dt)  # <- perform the chemistry update
+
+            # does it make more sense to call observer after updating timestep?
+            self._observer(self._t, dt, self._fc)
+            self._t += dt
+        return i + 1  # add one since the last step was complete
+
+class _DummyCallback:
+    def __init__(self, return_val = None):
+        self.return_val = return_val
+    def __call__(self, *args, **kwargs):
+        return self.return_val
 
 def evolve_freefall(fc, final_density, safety_factor=0.01,
                     include_pressure=True):
