@@ -282,7 +282,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
 
         fc.calculate_temperature()
         print("Evolve Freefall - t: %e yr, rho: %e g/cm^3, T: %e K." %
-              ((current_time * my_chemistry.time_units / sec_per_year),
+              ((time * my_chemistry.time_units / sec_per_year),
                (fc["density"][0] * my_chemistry.density_units),
                fc["temperature"][0]))
 
