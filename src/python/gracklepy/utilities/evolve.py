@@ -129,9 +129,16 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
             state_recorder.reset() # <- clear out contents
 
         # perform analytic update from our free-fall model. Then, record force_factor
-        force_factor = ff_updater(current_time, dt, fc)
+        # and print the Temperature from before adiabatic heating
+        pre_adiabatic_heat_T, force_factor = ff_updater(current_time, dt, fc)
         data["force_factor"].append(force_factor)
 
+        # there doesn't appear to be a compelling reason for using the temperature
+        # from before adiabatic heating
+        print("Evolve Freefall - t: %e yr, rho: %e g/cm^3, T: %e K." %
+              ((current_time * my_chemistry.time_units / sec_per_year),
+               (fc["density"][0] * my_chemistry.density_units),
+               fc["temperature"][0]))
 
         fc.solve_chemistry(dt)
 
@@ -162,7 +169,10 @@ class FFDensityAndEnergyUpdate:
         self.freefall_time_constant = np.power(((32. * self.gravitational_constant) /
                                                 (3. * np.pi)), 0.5)
 
-    def __call__(self, current_time: float, dt: float, fc: FluidContainer):
+    def __call__(
+        self, current_time: float, dt: float, fc: FluidContainer
+    ) -> tuple[np.ndarray, np.ndarray]:
+        # returns the temperature without the impact of adiabatic heating & force-factor
         my_chemistry = fc.chemistry_data
 
         if self.include_pressure:
@@ -182,7 +192,7 @@ class FFDensityAndEnergyUpdate:
                 self.last3_pressure[-self.last_n_recorded:],
                 self.last3_density[-self.last_n_recorded:])
         else:
-            force_factor = 0.0
+            force_factor = np.zeros(shape=(fc.n_vals,), dtype=np.float64)
         
         # compute the new density using the modified
         # free-fall collapse as per Omukai et al. (2005)
@@ -192,11 +202,12 @@ class FFDensityAndEnergyUpdate:
                                 (0.5 * self.freefall_time_constant * dt *
                                  np.power((1 - force_factor), 0.5))), -2.)
 
+        # we ONLY compute and return the temperature from this point in the function
+        # so we can log the current temperature
+        # -> this is only being done for historical consistency
+        # -> I think we should stop doing this
         fc.calculate_temperature()
-        print("Evolve Freefall - t: %e yr, rho: %e g/cm^3, T: %e K." %
-              ((current_time * my_chemistry.time_units / sec_per_year),
-               (fc["density"][0] * my_chemistry.density_units),
-               fc["temperature"][0]))
+        pre_adiabatic_heat_T = np.copy(fc["temperature"])
 
         # use this to multiply by elemental densities if you are tracking those
         density_ratio = new_density / fc["density"][0]
@@ -210,7 +221,7 @@ class FFDensityAndEnergyUpdate:
           fc["internal_energy"][0] * self.freefall_time_constant * \
           np.power(fc["density"][0], 0.5) * dt
 
-        return force_factor
+        return pre_adiabatic_heat_T, force_factor
 
 
 def calculate_collapse_factor(pressure, density):
