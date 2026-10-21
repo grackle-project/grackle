@@ -252,12 +252,6 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
                     include_pressure=True):
     my_chemistry = fc.chemistry_data
 
-    ff_updater = FFDensityAndEnergyUpdate(
-        n_vals=fc.n_vals, include_pressure=include_pressure, my_chemistry=fc.chemistry_data
-    )
-
-    gravitational_constant = ff_updater.gravitational_constant
-
     state_recorder = StateRecorder(
         n_recordings_per_reset=100,
         field_register_len=fc.n_vals,
@@ -265,22 +259,26 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
     )
 
     data = defaultdict(list)
-    current_time = 0.0
-    while fc["density"][0] * my_chemistry.density_units < final_density:
-        # calculate timestep based on free-fall solution
-        dt = safety_factor * \
-          np.power(((3. * np.pi) /
-                    (32. * gravitational_constant *
-                     fc["density"][0])), 0.5)
 
-        state_recorder.record(time=current_time, fc=fc)
+
+    def observer(time, dt, fc):
+        state_recorder.record(time=time, fc=fc)
         if state_recorder.is_full():
             add_to_data(fc.chemistry_data, state_recorder, data)
             state_recorder.reset() # <- clear out contents
 
+    ff_updater = FFDensityAndEnergyUpdate(
+        n_vals=fc.n_vals, include_pressure=include_pressure, my_chemistry=fc.chemistry_data
+    )
+
+    force_factor_list = []
+    dt_list = []
+
+    def prechem_update(time, dt, fc):
+        dt_list.append(dt)
         # perform analytic update from our free-fall model. Then, record force_factor
-        force_factor = ff_updater(current_time, dt, fc)
-        data["force_factor"].append(force_factor)
+        force_factor = ff_updater(time, dt, fc)
+        force_factor_list.append(force_factor)
 
         fc.calculate_temperature()
         print("Evolve Freefall - t: %e yr, rho: %e g/cm^3, T: %e K." %
@@ -288,16 +286,40 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
                (fc["density"][0] * my_chemistry.density_units),
                fc["temperature"][0]))
 
+
+    gravitational_constant = ff_updater.gravitational_constant
+
+    def calc_dt(time, dt_IGNORE, fc):
+        return safety_factor * \
+          np.power(((3. * np.pi) /
+                    (32. * gravitational_constant *
+                     fc["density"][0])), 0.5)
+
+    def extra_stopper(time, dt_IGNORE, fc):
+        return fc["density"][0] * my_chemistry.density_units >= final_density
+
+    current_time = 0.0
+    observer(current_time, math.nan, fc)
+
+    while True:
+        if extra_stopper(current_time, math.nan, fc):
+            break
+        # calculate timestep based on free-fall solution
+        dt = calc_dt(current_time, math.nan, fc)
+
+        prechem_update(current_time, dt, fc)
         fc.solve_chemistry(dt)
 
-        # update time
+        observer(current_time, dt, fc)
         current_time += dt
 
     if not state_recorder.is_empty():
         add_to_data(fc.chemistry_data, state_recorder, data)
 
+    data["time"][1:] += np.array(dt_list)
     for field in data:
-        data[field] = np.squeeze(np.array(data[field]))
+        data[field] = np.squeeze(np.array(data[field]))[:-1]
+    data["force_factor"] = np.squeeze(np.array(force_factor_list))
     return fc.finalize_data(data=data)
 
 class FFDensityAndEnergyUpdate:
