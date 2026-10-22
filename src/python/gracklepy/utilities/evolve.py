@@ -139,20 +139,13 @@ class _Evolver:
     prechem_update
         Optional callback function called before `solve_chemistry` during each
         timestep. It is expected to mutate `fc`
-    observer
-        Optional callback function called after every timestep
+    recorder
+        A StateRecorder object that will be filled
 
     Notes
     -----
     A lot of implementation choices for this class were made by a desire
     to easily convert this core logic into C++.
-
-    It *might* be advantageous to decompose the observer callback into a
-    logger-callback function (responsible for reporting the current timestep)
-    and then always track ``StateRecorder`` object. In this scenario, the
-    caller of the ``step`` method would then be responsible for only running
-    ``step`` until the buffers of ``StateRecorder`` object are full and then
-    flushing the buffers. This would be at least slightly faster
     """
 
     def __init__(
@@ -163,7 +156,7 @@ class _Evolver:
         calc_dt: Callable[[float, float, FluidContainer], float] | float,
         *,
         prechem_update: Callable[[float, float, FluidContainer], None] | None = None,
-        observer: Callable[[float, float, FluidContainer], None] | None,
+        recorder: StateRecorder | None = None,
     ):
         self._t = float(t0)
         self._t_max = float(t_max)
@@ -183,18 +176,18 @@ class _Evolver:
         self._prechem_update = (
             _DummyCallback() if prechem_update is None else prechem_update
         )
-        self._observer = _DummyCallback() if observer is None else observer
+        self._recorder = recorder
 
     def t(self) -> float:
         """Returns the current time"""
         return self._t
 
-    def observe_state(self):
+    def record_state(self):
         """Invoke observer callback function on the current state
         """
         # This is primarily intended to support observing the first timestep
-        dt = math.nan
-        self._observer(self.t(), dt, self._fc)
+        if self._recorder is not None:
+            self._recorder.record(self.t(), self._fc)
 
     def copy_state(
         self, dst: Mapping[str, np.ndarray] | None = None
@@ -225,11 +218,11 @@ class _Evolver:
         assert int(n_steps) == n_steps
         assert 0 < n_steps <= _up_bound
 
-        _NAN = math.nan
+        has_recorder = self._recorder is not None
 
         for i in range(n_steps):
             t_at_tmax = self._t >= self._t_max
-            dt = -1 if t_at_tmax else self._calc_dt(self._t, _NAN, self._fc)
+            dt = -1 if t_at_tmax else self._calc_dt(self._t, math.nan, self._fc)
             if t_at_tmax or (dt < 0):
                 return i # <- intentionally don't add 1 to this
 
@@ -237,7 +230,8 @@ class _Evolver:
             self._fc.solve_chemistry(dt)  # <- perform the chemistry update
 
             # does it make more sense to call observer after updating timestep?
-            self._observer(self._t, dt, self._fc)
+            if has_recorder:
+                self._recorder.record(self._t, self._fc)
             self._t += dt
         return i + 1  # add one since the last step was complete
 
@@ -251,20 +245,15 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
                     include_pressure=True):
     my_chemistry = fc.chemistry_data
 
+    n_recordings_per_reset = 100
     state_recorder = StateRecorder(
-        n_recordings_per_reset=100,
+        n_recordings_per_reset=n_recordings_per_reset,
         field_register_len=fc.n_vals,
         field_names=fc.input_fields
     )
 
     data = defaultdict(list)
 
-
-    def observer(time, dt, fc):
-        state_recorder.record(time=time, fc=fc)
-        if state_recorder.is_full():
-            add_to_data(fc.chemistry_data, state_recorder, data)
-            state_recorder.reset() # <- clear out contents
 
     ff_updater = FFDensityAndEnergyUpdate(
         n_vals=fc.n_vals, include_pressure=include_pressure, my_chemistry=fc.chemistry_data
@@ -302,14 +291,17 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         t_max=math.inf,
         calc_dt=calc_dt,
         prechem_update=prechem_update,
-        observer=observer
+        recorder=state_recorder
     )
-    evolver.observe_state() # <- observe t=0 state
-    evolver.step()
-    evolver.copy_state(dst=fc)
+    evolver.record_state() # <- observe t=0 state
+    add_to_data(fc.chemistry_data, state_recorder, data)
+    state_recorder.reset() # <- clear out contents
 
-    if not state_recorder.is_empty():
+    while evolver.step(n_steps=n_recordings_per_reset) > 0:
         add_to_data(fc.chemistry_data, state_recorder, data)
+        state_recorder.reset() # <- clear out contents
+
+    evolver.copy_state(dst=fc)
 
     data["time"][1:] += np.array(dt_list)
     for field in data:
@@ -425,20 +417,14 @@ def evolve_constant_density(fc, final_temperature=None,
                fc["density"][0] * my_chemistry.density_units,
                fc["temperature"][0]))
 
-
+    n_recordings_per_reset = 100
     data = defaultdict(list)
 
     state_recorder = StateRecorder(
-        n_recordings_per_reset=100,
+        n_recordings_per_reset=n_recordings_per_reset,
         field_register_len=fc.n_vals,
         field_names=fc.input_fields
     )
-
-    def observer(time, dt, fc):
-        state_recorder.record(time=time, fc=fc)
-        if state_recorder.is_full():
-            add_to_data(fc.chemistry_data, state_recorder, data)
-            state_recorder.reset() # <- clear out contents
 
     # compute the fixed timestep
     fc.calculate_cooling_time()
@@ -458,13 +444,13 @@ def evolve_constant_density(fc, final_temperature=None,
         t_max=math.inf if final_time is None else final_time,
         calc_dt=calc_dt,
         prechem_update=prechem_update,
-        observer=observer,
+        recorder=state_recorder,
     )
-    evolver.step()
-    evolver.copy_state(dst=fc)
-
-    if not state_recorder.is_empty():
+    while evolver.step(n_steps=n_recordings_per_reset) > 0:
         add_to_data(fc.chemistry_data, state_recorder, data)
+        state_recorder.reset() # <- clear out contents
+
+    evolver.copy_state(dst=fc)
 
     for field in data:
         data[field] = np.squeeze(np.array(data[field]))
