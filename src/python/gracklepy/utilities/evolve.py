@@ -310,6 +310,9 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
 
     evolver.copy_state(dst=fc)
 
+    # the modifications to data[time] (and dropping the last entry of data[field])
+    # is done to retain consistency with historical output
+
     data["time"][1:] += np.array(dt_list)
     for field in data:
         data[field] = np.squeeze(np.array(data[field]))[:-1]
