@@ -109,6 +109,10 @@ class _Evolver:
     """
     Solves evolution of isolated zones
 
+    The system can be integrated until time reaches `t_max` or an
+    exit-condition optionally encoded in a callback passed to `calc_dt`
+    has been met.
+
     This has only been tested with evolving a single zone, but there's no
     reason it can't support multiple zones
 
@@ -124,22 +128,19 @@ class _Evolver:
         of the provided object (i.e. updates in the state will **NOT** be
         reflected in the object passed as this argument)
     t_max
-        The max integration time
+        The max integration time. Passing ``math.inf`` is means that the max
+        integration time is unbounded.
     calc_dt
         Specifies a fixed timestep or a callable for computing that computes
-        a timestep from ``fc`` (it should *NOT* mutate fc). If this is a callable
-        function, the ``dt`` argument should be ignored.
+        a timestep from ``fc`` (it should *NOT* mutate fc). If this is a
+        callable, the ``dt`` argument should be ignored. When a callable
+        returns a negative value that's considered an indication that
+        evolution should stop.
     prechem_update
         Optional callback function called before `solve_chemistry` during each
         timestep. It is expected to mutate `fc`
     observer
         Optional callback function called after every timestep
-    extra_stopper
-        Optional callback function that is called at the start of each timestep.
-        The ``fc`` argument should **not** be mutated and the ``dt`` argument should
-        be ignored. The callable should return ``True`` to indicate that the stopping
-        condition has been met. If you want this to be the only stopping condition,
-        set ``t_max = math.inf``
 
     Notes
     -----
@@ -163,7 +164,6 @@ class _Evolver:
         *,
         prechem_update: Callable[[float, float, FluidContainer], None] | None = None,
         observer: Callable[[float, float, FluidContainer], None] | None,
-        extra_stopper: Callable[[float, float, FluidContainer], bool] | None
     ):
         self._t = float(t0)
         self._t_max = float(t_max)
@@ -184,9 +184,6 @@ class _Evolver:
             _DummyCallback() if prechem_update is None else prechem_update
         )
         self._observer = _DummyCallback() if observer is None else observer
-        self._extra_stopper = (
-            _DummyCallback(ret_val=False) if extra_stopper is None else extra_stopper
-        )
 
     def t(self) -> float:
         """Returns the current time"""
@@ -231,9 +228,11 @@ class _Evolver:
         _NAN = math.nan
 
         for i in range(n_steps):
-            if self._t >= self._t_max or self._extra_stopper(self._t, _NAN, self._fc):
+            t_at_tmax = self._t >= self._t_max
+            dt = -1 if t_at_tmax else self._calc_dt(self._t, _NAN, self._fc)
+            if t_at_tmax or (dt < 0):
                 return i # <- intentionally don't add 1 to this
-            dt = self._calc_dt(self._t, _NAN, self._fc)  # <- get timestep
+
             self._prechem_update(self._t, dt, self._fc)  # <-pre-chemistry update
             self._fc.solve_chemistry(dt)  # <- perform the chemistry update
 
@@ -290,13 +289,12 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
     gravitational_constant = ff_updater.gravitational_constant
 
     def calc_dt(time, dt_IGNORE, fc):
+        if fc["density"][0] * my_chemistry.density_units >= final_density:
+            return -1  # <- indicates that evolution should stop now
         return safety_factor * \
           np.power(((3. * np.pi) /
                     (32. * gravitational_constant *
                      fc["density"][0])), 0.5)
-
-    def extra_stopper(time, dt_IGNORE, fc):
-        return fc["density"][0] * my_chemistry.density_units >= final_density
 
     evolver = _Evolver(
         t0=0.0,
@@ -304,8 +302,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         t_max=math.inf,
         calc_dt=calc_dt,
         prechem_update=prechem_update,
-        observer=observer,
-        extra_stopper=extra_stopper
+        observer=observer
     )
     evolver.observe_state() # <- observe t=0 state
     evolver.step()
@@ -418,12 +415,6 @@ def evolve_constant_density(fc, final_temperature=None,
     if final_temperature is None and final_time is None:
         raise RuntimeError("Must specify either final_temperature " +
                            "or final_time.")
-    elif final_temperature is None:
-        extra_stopper = None
-    else:
-        def extra_stopper(time, dt_IGNORE, fc):
-            fc.calculate_temperature()
-            return fc["temperature"][0] <= final_temperature
 
     # prechem_update normally is used to apply an update -- this is a bit of a hack
     # to retain consistent behavior
@@ -449,17 +440,25 @@ def evolve_constant_density(fc, final_temperature=None,
             add_to_data(fc.chemistry_data, state_recorder, data)
             state_recorder.reset() # <- clear out contents
 
+    # compute the fixed timestep
     fc.calculate_cooling_time()
-    dt = safety_factor * np.abs(fc["cooling_time"][0])
+    fixed_dt = safety_factor * np.abs(fc["cooling_time"][0])
+
+    def calc_dt(time, dt_IGNORE, fc):
+        if final_temperature is not None:
+            fc.calculate_temperature()
+            if fc["temperature"][0] <= final_temperature:
+                return -1  # <- indicates that evolution should stop now
+        return fixed_dt
+
 
     evolver = _Evolver(
         t0=0.0,
         fc0=fc,
         t_max=math.inf if final_time is None else final_time,
-        calc_dt=dt,
+        calc_dt=calc_dt,
         prechem_update=prechem_update,
         observer=observer,
-        extra_stopper=extra_stopper
     )
     evolver.step()
     evolver.copy_state(dst=fc)
