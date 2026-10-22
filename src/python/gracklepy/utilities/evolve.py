@@ -55,7 +55,8 @@ class StateRecorder:
         self,
         n_recordings_per_reset: int,
         field_register_len: int,
-        field_names: list[str]
+        field_names: list[str],
+        field_buf_src: Mapping[str, np.ndarray] | None = None
     ):
         # field_names specifies the field names that will be recorded. This should
         # generally just be the input field names (the recorder will NOT compute
@@ -67,8 +68,12 @@ class StateRecorder:
         self.n_recordings_ = 0
 
         field_shape = (n_recordings_per_reset * field_register_len,)
-        self.field_data_ = {name: np.empty(shape=field_shape, dtype=np.float64)
-                            for name in field_names}
+        if field_buf_src is None:
+            self.field_data_ = {name: np.empty(shape=field_shape, dtype=np.float64)
+                                for name in field_names}
+        else:
+            self.field_data_ = {name: field_buf_src[name] for name in field_names}
+            assert all(field_shape == arr.shape for arr in self.field_data_.values())
         self.time_data_ = np.empty(shape=field_shape, dtype=np.float64)
 
     def is_full(self) -> bool:
@@ -104,6 +109,9 @@ class StateRecorder:
         slc = slice(0, self.n_recordings_*self.field_register_len_)
         fields = {k:buf[slc] for k,buf in self.field_data_.items()}
         return (times, fields)
+
+    def field_register_len(self):
+        return self.field_register_len_
 
 class _Evolver:
     """
@@ -253,19 +261,80 @@ class _DummyCallback:
     def __call__(self, *args, **kwargs):
         return self.ret_val
 
+class OutputDictBuilder:
+    """
+    Responsible for constructing the output dictionary of a evolve_<kind> function
+    """
+
+    def __init__(
+        self,
+        my_chemistry: chemistry_data,
+        max_registers_per_extend: int,
+        field_register_len: int,
+    ):
+        # this is used for computing derived properties
+        self._fc = FluidContainer(
+            my_chemistry, n_vals=max_registers_per_extend*field_register_len
+        )
+        self.state_recorder = StateRecorder(
+            n_recordings_per_reset=max_registers_per_extend,
+            field_register_len=field_register_len,
+            field_names=self._fc.input_fields,
+            field_buf_src = self._fc
+        )
+        self.data = defaultdict(list)
+
+    def extend(self):
+        if self.state_recorder.is_empty():
+            return
+        times, _ = self.state_recorder.recorded_times_and_fields()
+        n_recordings = times.size
+        n_vals = self.state_recorder.field_register_len() * n_recordings
+
+        assert n_vals <= self._fc.n_vals
+
+        # the practice of overwriting self._fc.n_vals is a little questionable, but ok
+        old_n_vals = self._fc.n_vals
+        try:
+            self._fc.n_vals = n_vals
+
+            # for indirectly calculated fields, we get more than one field from a call.
+            # keep a list of what we've called so we don't have to call them again.
+            called = []
+
+            for field in self._fc.all_fields:
+                if field not in self._fc.input_fields:
+                    if field in _indirectly_calculated_fields:
+                        fname = _indirectly_calculated_fields[field]
+                    else:
+                        fname = f"calculate_{field}"
+
+                    func = getattr(self._fc, fname, None)
+                    if func is None:
+                        raise RuntimeError(f"No function for calculating {field}.")
+
+                    if fname not in called:
+                        func()
+                        called.append(fname)
+
+                self.data[field].extend(self._fc[field])
+            self.data["time"].extend(times)
+
+            self.state_recorder.reset()  # <- clear out contents
+        finally:
+            self._fc.n_vals = old_n_vals
+
+
 def evolve_freefall(fc, final_density, safety_factor=0.01,
                     include_pressure=True):
     my_chemistry = fc.chemistry_data
 
     n_recordings_per_reset = 100
-    state_recorder = StateRecorder(
-        n_recordings_per_reset=n_recordings_per_reset,
-        field_register_len=fc.n_vals,
-        field_names=fc.input_fields
+    output_builder = OutputDictBuilder(
+        my_chemistry=my_chemistry,
+        max_registers_per_extend=n_recordings_per_reset,
+        field_register_len=fc.n_vals
     )
-
-    data = defaultdict(list)
-
 
     ff_updater = FFDensityAndEnergyUpdate(
         n_vals=fc.n_vals, include_pressure=include_pressure, my_chemistry=fc.chemistry_data
@@ -297,15 +366,13 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         t_max=math.inf,
         calc_dt=calc_dt,
         prechem_update=prechem_update,
-        recorder=state_recorder
+        recorder=output_builder.state_recorder
     )
     evolver.record_state() # <- observe t=0 state
-    add_to_data(fc.chemistry_data, state_recorder, data)
-    state_recorder.reset() # <- clear out contents
+    output_builder.extend()
 
     while evolver.step(n_steps=n_recordings_per_reset) > 0:
-        add_to_data(fc.chemistry_data, state_recorder, data)
-        state_recorder.reset() # <- clear out contents
+        output_builder.extend()
         evolver.log_current_prop(msg_prefix="Evolve Freefall")
 
     evolver.copy_state(dst=fc)
@@ -313,6 +380,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
     # the modifications to data[time] (and dropping the last entry of data[field])
     # is done to retain consistency with historical output
 
+    data = output_builder.data
     data["time"][1:] += np.array(dt_list)
     for field in data:
         data[field] = np.squeeze(np.array(data[field]))[:-1]
@@ -419,12 +487,10 @@ def evolve_constant_density(fc, final_temperature=None,
                            "or final_time.")
 
     n_recordings_per_reset = 100
-    data = defaultdict(list)
-
-    state_recorder = StateRecorder(
-        n_recordings_per_reset=n_recordings_per_reset,
-        field_register_len=fc.n_vals,
-        field_names=fc.input_fields
+    output_builder = OutputDictBuilder(
+        my_chemistry=my_chemistry,
+        max_registers_per_extend=n_recordings_per_reset,
+        field_register_len=fc.n_vals
     )
 
     # compute the fixed timestep
@@ -444,53 +510,16 @@ def evolve_constant_density(fc, final_temperature=None,
         fc0=fc,
         t_max=math.inf if final_time is None else final_time,
         calc_dt=calc_dt,
-        recorder=state_recorder,
+        recorder=output_builder.state_recorder,
     )
     while evolver.step(n_steps=n_recordings_per_reset) > 0:
-        add_to_data(fc.chemistry_data, state_recorder, data)
-        state_recorder.reset() # <- clear out contents
+        output_builder.extend()
         evolver.log_current_prop(msg_prefix="Evolve constant density")
 
     evolver.copy_state(dst=fc)
 
+    data = output_builder.data
     for field in data:
         data[field] = np.squeeze(np.array(data[field]))
     return fc.finalize_data(data=data)
 
-
-def add_to_data(chemistry_data, state_recorder, data):
-    """
-    Add current state_recorder values to the data structure.
-    """
-
-    if state_recorder.is_empty():
-        return
-
-    times, field_data = state_recorder.recorded_times_and_fields()
-    n_vals = field_data["density"].size
-
-    fc = FluidContainer(chemistry_data=chemistry_data, n_vals=n_vals)
-    for field_name, buf in field_data.items():
-        fc[field_name][:] = buf
-
-    # for indirectly calculated fields, we get more than one field from a call.
-    # keep a list of what we've called so we don't have to call them again.
-    called = []
-
-    for field in fc.all_fields:
-        if field not in fc.input_fields:
-            if field in _indirectly_calculated_fields:
-                fname = _indirectly_calculated_fields[field]
-            else:
-                fname = f"calculate_{field}"
-
-            func = getattr(fc, fname, None)
-            if func is None:
-                raise RuntimeError(f"No function for calculating {field}.")
-
-            if fname not in called:
-                func()
-                called.append(fname)
-
-        data[field].extend(fc[field])
-    data["time"].extend(times)
