@@ -189,6 +189,18 @@ class _Evolver:
         if self._recorder is not None:
             self._recorder.record(self.t(), self._fc)
 
+    def log_current_prop(self, msg_prefix):
+        # frankly, I don't love that this is attached as a method, but we can revisit
+        # this choice in the future
+
+        self._fc.calculate_temperature()
+        my_chemistry = self._fc.chemistry_data
+        t = self._t * my_chemistry.time_units / sec_per_year
+        rho = float(self._fc["density"][0] * my_chemistry.density_units)
+        T = float(self._fc["temperature"][0])
+        print(f"{msg_prefix} - t: {t:e} yr, rho: {rho:e} g/cm^3, T: {T:e} K")
+
+
     def copy_state(
         self, dst: Mapping[str, np.ndarray] | None = None
     ) -> Mapping[str, np.ndarray]:
@@ -268,12 +280,6 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         force_factor = ff_updater(time, dt, fc)
         force_factor_list.append(force_factor)
 
-        fc.calculate_temperature()
-        print("Evolve Freefall - t: %e yr, rho: %e g/cm^3, T: %e K." %
-              ((time * my_chemistry.time_units / sec_per_year),
-               (fc["density"][0] * my_chemistry.density_units),
-               fc["temperature"][0]))
-
 
     gravitational_constant = ff_updater.gravitational_constant
 
@@ -300,6 +306,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
     while evolver.step(n_steps=n_recordings_per_reset) > 0:
         add_to_data(fc.chemistry_data, state_recorder, data)
         state_recorder.reset() # <- clear out contents
+        evolver.log_current_prop(msg_prefix="Evolve Freefall")
 
     evolver.copy_state(dst=fc)
 
@@ -408,15 +415,6 @@ def evolve_constant_density(fc, final_temperature=None,
         raise RuntimeError("Must specify either final_temperature " +
                            "or final_time.")
 
-    # prechem_update normally is used to apply an update -- this is a bit of a hack
-    # to retain consistent behavior
-    def prechem_update(time, dt, fc):
-        fc.calculate_temperature()
-        print("Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." %
-              (time * my_chemistry.time_units / sec_per_year,
-               fc["density"][0] * my_chemistry.density_units,
-               fc["temperature"][0]))
-
     n_recordings_per_reset = 100
     data = defaultdict(list)
 
@@ -443,12 +441,12 @@ def evolve_constant_density(fc, final_temperature=None,
         fc0=fc,
         t_max=math.inf if final_time is None else final_time,
         calc_dt=calc_dt,
-        prechem_update=prechem_update,
         recorder=state_recorder,
     )
     while evolver.step(n_steps=n_recordings_per_reset) > 0:
         add_to_data(fc.chemistry_data, state_recorder, data)
         state_recorder.reset() # <- clear out contents
+        evolver.log_current_prop(msg_prefix="Evolve constant density")
 
     evolver.copy_state(dst=fc)
 
