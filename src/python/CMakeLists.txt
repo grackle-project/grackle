@@ -80,7 +80,7 @@ else()
   # -> this is the most reliable/robust way to install gracklepy
   set(_GRACKLEPY_CONSUME_MODE "Embedded")
 
-  enable_language(Fortran) # <- needed for embedded CMake builds
+  enable_language(CXX) # <- needed for embedded CMake builds
   set(BUILD_SHARED_LIBS ON)
   add_subdirectory(${GRACKLE_REPO_ROOT} grackle_sub-build-dir)
   # NOTE: as grackle evolves (and gets more complex), it may be better to use

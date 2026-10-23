@@ -30,22 +30,21 @@ namespace { // stuff inside of an anonymous namespace is read-only
 /// Initializes an empty #cloudy_data struct with zeros and nullptrs.
 void initialize_empty_cloudy_data_struct(cloudy_data *my_cloudy)
 {
-  my_cloudy->grid_rank = 0LL;
-  for (long long i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
-    my_cloudy->grid_dimension[i] = 0LL;
+  my_cloudy->grid_rank = 0;
+  for (int64_t i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
+    my_cloudy->grid_dimension[i] = 0;
     my_cloudy->grid_parameters[i] = nullptr;
   }
   my_cloudy->heating_data = nullptr;
   my_cloudy->cooling_data = nullptr;
   my_cloudy->mmw_data = nullptr;
-  my_cloudy->data_size = 0LL;
+  my_cloudy->data_size = 0;
 }
 
 double* load_heatcool_data(hid_t file_id, const char* dset_name,
                            double CoolUnit,
                            grackle::impl::h5io::ArrayShape expected_shape) {
-  long long data_size =
-    grackle::impl::h5io::ArrayShape_elem_count(expected_shape);
+  int64_t data_size = expected_shape.elem_count();
   double* tmp_data = new double[data_size];
 
   if (grackle_verbose) {
@@ -58,7 +57,7 @@ double* load_heatcool_data(hid_t file_id, const char* dset_name,
   }
 
   double* out = new double[data_size];
-  for (long long q = 0LL; q < data_size; q++) {
+  for (int64_t q = 0; q < data_size; q++) {
     out[q] = tmp_data[q] > 0 ?
       (double) std::log10(tmp_data[q]) : (double) SMALL_LOG_VALUE;
 
@@ -116,36 +115,34 @@ int GRIMPL_NS::initialize_cloudy_data(
                 group_name);
 
   // Parse the grid properties from the dataset's attributes
-  h5io::GridTableProps grid_props = h5io::parse_GridTableProps(file_id,
-                                                               dset_name);
-  if (!h5io::GridTableProps_is_valid(grid_props)) {
-    h5io::drop_GridTableProps(&grid_props);
+  std::optional<h5io::GridTableProps> maybe_grid_props =
+      h5io::parse_GridTableProps(file_id, dset_name);
+  if (!maybe_grid_props.has_value()) {
     H5Fclose (file_id);
     // error messages were already printed by h5io::parse_GridTableProps
     return GR_FAIL;
   }
+  h5io::GridTableProps grid_props = std::move(*maybe_grid_props);
 
   // use grid_props to initialize parts of my_cloudy
   // TODO: it would be really nice if we explicitly validated that each
   //       grid_props.axes[i] held the expected values
-  my_cloudy->grid_rank = static_cast<long long>(grid_props.table_shape.ndim);
-  for (long long i = 0LL; i < my_cloudy->grid_rank; i++) {
+  my_cloudy->grid_rank = static_cast<int64_t>(grid_props.table_shape.ndim);
+  for (int64_t i = 0; i < my_cloudy->grid_rank; i++) {
     my_cloudy->grid_dimension[i]
-      = static_cast<long long>(grid_props.table_shape.shape[i]);
+      = static_cast<int64_t>(grid_props.table_shape.shape[i]);
     
     if (my_cloudy->grid_dimension[i] <= 0) {
       // the caller is responsible for calling free_cloudy_data
       // -> this will cleanup all partial initialization
-      h5io::drop_GridTableProps(&grid_props);
       H5Fclose(file_id);
       return GrPrintAndReturnErr("Encountered a non-positive grid dimension");
     }
 
-    bool is_temperature =
-      std::strcmp("Temperature", grid_props.axes[i].name) == 0;
+    bool is_temperature = grid_props.axes[i].name == "Temperature";
 
     double* buf = new double[my_cloudy->grid_dimension[i]];
-    for (long long w = 0LL; w < my_cloudy->grid_dimension[i]; w++) {
+    for (int64_t w = 0; w < my_cloudy->grid_dimension[i]; w++) {
       if (is_temperature) {
         buf[w] = std::log10(grid_props.axes[i].values[w]);
       } else {
@@ -157,27 +154,27 @@ int GRIMPL_NS::initialize_cloudy_data(
 
   if (grackle_verbose) {
     std::fprintf(stdout, "Cloudy cooling grid = {\n");
-    std::fprintf(stdout, "  rank: %lld,\n", my_cloudy->grid_rank);
-    for (long long i = 0LL; i < my_cloudy->grid_rank; i++) {
+    std::fprintf(
+        stdout, "  rank: %d,\n", static_cast<int>(my_cloudy->grid_rank));
+    for (int64_t i = 0; i < my_cloudy->grid_rank; i++) {
       std::fprintf(stdout,
           "  axis %lld (\"%s\"): %g to %g (%lld steps),\n",
-          i,
-          grid_props.axes[i].name,
+          static_cast<long long>(i),
+          grid_props.axes[i].name.c_str(),
           my_cloudy->grid_parameters[i][0],
           my_cloudy->grid_parameters[i][my_cloudy->grid_dimension[i]-1],
-          my_cloudy->grid_dimension[i]);
+          static_cast<long long>(my_cloudy->grid_dimension[i]));
     }
     fprintf(stdout, "}\n");
   }
   h5io::ArrayShape expected_shape = grid_props.table_shape;
 
   // Read Cooling data.
-  my_cloudy->data_size = h5io::ArrayShape_elem_count(expected_shape);
+  my_cloudy->data_size = expected_shape.elem_count();
   my_cloudy->cooling_data = load_heatcool_data(file_id, dset_name, CoolUnit,
                                                expected_shape);
 
   if (my_cloudy->cooling_data == nullptr) {
-    h5io::drop_GridTableProps(&grid_props);
     H5Fclose(file_id);
     return GR_FAIL;
   }
@@ -188,16 +185,13 @@ int GRIMPL_NS::initialize_cloudy_data(
                   group_name);
 
     // validate that Heating table has have identical GridTableProps
-    if (h5io::assert_has_consistent_GridTableProps(file_id, dset_name,
-                                                   grid_props) != GR_SUCCESS){
-      h5io::drop_GridTableProps(&grid_props);
+    if (!grid_props.assert_is_consistent(file_id, dset_name)) {
       H5Fclose(file_id);
       return GR_FAIL;
     }
     my_cloudy->heating_data = load_heatcool_data(file_id, dset_name, CoolUnit,
                                                  expected_shape);
     if (my_cloudy->heating_data == nullptr) {
-      h5io::drop_GridTableProps(&grid_props);
       H5Fclose(file_id);
       return GR_FAIL;
     }
@@ -209,9 +203,7 @@ int GRIMPL_NS::initialize_cloudy_data(
     const char* mmw_dset_name = "/CoolingRates/Primordial/MMW";
 
     // validate that MMW table has have identical GridTableProps
-    if (h5io::assert_has_consistent_GridTableProps(file_id, mmw_dset_name,
-                                                   grid_props) != GR_SUCCESS){
-      h5io::drop_GridTableProps(&grid_props);
+    if (!grid_props.assert_is_consistent(file_id, mmw_dset_name)) {
       H5Fclose(file_id);
       return GR_FAIL;
     }
@@ -219,7 +211,6 @@ int GRIMPL_NS::initialize_cloudy_data(
     my_cloudy->mmw_data = new double[my_cloudy->data_size];
     if (h5io::read_dataset(file_id, mmw_dset_name, my_cloudy->mmw_data,
                            &expected_shape) != GR_SUCCESS) {
-      h5io::drop_GridTableProps(&grid_props);
       H5Fclose(file_id);
       return GR_FAIL;
     }
@@ -268,4 +259,3 @@ int GRIMPL_NS::free_cloudy_data(cloudy_data *my_cloudy,
   }
   return GR_SUCCESS;
 }
-

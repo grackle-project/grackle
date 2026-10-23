@@ -10,8 +10,6 @@ target_link_libraries(_grackle_internals INTERFACE Grackle::Grackle)
 
 # short-term macro definitions (both will become unnecessary in the near future)
 target_compile_definitions(_grackle_internals
-  # currently required for functions declared by fortran_func_wrappers.hpp
-  INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>"
   # TODO: see what we can do to stop defining the following
   INTERFACE GRIMPL_COMPILING_CORE_LIB=1
 )

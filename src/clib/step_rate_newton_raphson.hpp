@@ -52,17 +52,17 @@ int inline sanity_check_() {
   GRIMPL_REQUIRE(((1+SpLUT::HeHII)==15), "index of HeHII is %d", SpLUT::HeHII);
   GRIMPL_REQUIRE(((1+SpLUT::CI)==16), "index of CI is %d", SpLUT::CI);
   GRIMPL_REQUIRE(((1+SpLUT::CII)==17), "index of CII is %d", SpLUT::CII);
-  GRIMPL_REQUIRE(((1+SpLUT::CO)==18), "index of CO is %d", SpLUT::CO);
-  GRIMPL_REQUIRE(((1+SpLUT::CO2)==19), "index of CO2 is %d", SpLUT::CO2);
+  GRIMPL_REQUIRE(((1+SpLUT::COI)==18), "index of COI is %d", SpLUT::COI);
+  GRIMPL_REQUIRE(((1+SpLUT::CO2I)==19), "index of CO2I is %d", SpLUT::CO2I);
   GRIMPL_REQUIRE(((1+SpLUT::OI)==20), "index of OI is %d", SpLUT::OI);
-  GRIMPL_REQUIRE(((1+SpLUT::OH)==21), "index of OH is %d", SpLUT::OH);
-  GRIMPL_REQUIRE(((1+SpLUT::H2O)==22), "index of H2O is %d", SpLUT::H2O);
-  GRIMPL_REQUIRE(((1+SpLUT::O2)==23), "index of O2 is %d", SpLUT::O2);
+  GRIMPL_REQUIRE(((1+SpLUT::OHI)==21), "index of OHI is %d", SpLUT::OHI);
+  GRIMPL_REQUIRE(((1+SpLUT::H2OI)==22), "index of H2OI is %d", SpLUT::H2OI);
+  GRIMPL_REQUIRE(((1+SpLUT::O2I)==23), "index of O2I is %d", SpLUT::O2I);
   GRIMPL_REQUIRE(((1+SpLUT::SiI)==24), "index of SiI is %d", SpLUT::SiI);
   GRIMPL_REQUIRE(((1+SpLUT::SiOI)==25), "index of SiOI is %d", SpLUT::SiOI);
   GRIMPL_REQUIRE(((1+SpLUT::SiO2I)==26), "index of SiO2I is %d", SpLUT::SiO2I);
-  GRIMPL_REQUIRE(((1+SpLUT::CH)==27), "index of CH is %d", SpLUT::CH);
-  GRIMPL_REQUIRE(((1+SpLUT::CH2)==28), "index of CH2 is %d", SpLUT::CH2);
+  GRIMPL_REQUIRE(((1+SpLUT::CHI)==27), "index of CHI is %d", SpLUT::CHI);
+  GRIMPL_REQUIRE(((1+SpLUT::CH2I)==28), "index of CH2I is %d", SpLUT::CH2I);
   GRIMPL_REQUIRE(((1+SpLUT::COII)==29), "index of COII is %d", SpLUT::COII);
   GRIMPL_REQUIRE(((1+SpLUT::OII)==30), "index of OII is %d", SpLUT::OII);
   GRIMPL_REQUIRE(((1+SpLUT::OHII)==31), "index of OHII is %d", SpLUT::OHII);
@@ -150,13 +150,13 @@ inline void wrapped_calc_derivatives(
 /// @note
 /// The values in the various buffers (tgas, tdust, metallicity, dust2gas,
 /// rhoH, mmw, edot, grain_temperatures, logTlininterp_buf,
-/// cool1dmulti_buf, coolingheating_buf, chemheatrates_buf), hold undefined
+/// coolingheating_buf, chemheatrates_buf), hold undefined
 /// values after this function call wherever `itmask_nr` indicates that this
 /// function runs.
 /// - this has **ALWAYS** been the case. Historically these buffers have been
 ///   reused when computing finite differences
 inline void step_rate_newton_raphson(
-    int imetal, IndexRange idx_range, double dom, double chunit, double dx_cgs,
+    IndexRange idx_range, double dom, double chunit, double dx_cgs,
     double c_ljeans, double* dtit, double* tgas, double* tdust,
     double* metallicity, double* dust2gas, double* rhoH, double* mmw,
     double* nelec_times_mH, double* edot, gr_mask_type anydust,
@@ -166,7 +166,6 @@ inline void step_rate_newton_raphson(
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
     grackle::impl::CoolHeatScratchBuf coolingheating_buf,
     grackle::impl::ChemHeatingRates chemheatrates_buf) {
   // shorten `grackle::impl::time_deriv_0d` to `t_deriv` within this function
@@ -183,9 +182,12 @@ inline void step_rate_newton_raphson(
 
   // Local variable
   int nsp, isp, id;
-  // flag for if Gen Chiaki's dust model is enabled with grain growth
-  const bool chiaki_model_dust_evolution =
-    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
+
+  // flag for if Gen Chiaki's dust model is enabled
+  // -> to simplify bookkeeping, we ignore whether the grain_growth flag was
+  //    enabled, (if it's not enabled, the relevant reaction rates are
+  //    explicitly set to 0)
+  const bool chiaki_model_dust_evolution = my_chemistry->dust_chemistry == 2;
 
   // the following specifies the historical 1-based index that we would use to
   // hold energy
@@ -228,7 +230,7 @@ inline void step_rate_newton_raphson(
   // collect args that are forwarded to the time-derivative calculation and are
   // effectively frozen between various calls
   t_deriv::FrozenSimpleArgs frozen_tderiv_args = {
-    imetal, dom, chunit, dx_cgs, c_ljeans, anydust, my_chemistry,
+    dom, chunit, dx_cgs, c_ljeans, anydust, my_chemistry,
     my_rates, my_uvb_rates, internalu
   };
 
@@ -289,7 +291,7 @@ inline void step_rate_newton_raphson(
         }
       }
       nsp = nsp + imp_eng[i];
-      idsp.reserve(nsp);
+      idsp.resize(nsp);
 
       // copy values into dsp from my_fields
       // -> in the future, we will be able write the next ~80 lines as
@@ -323,17 +325,17 @@ inline void step_rate_newton_raphson(
         if ( my_chemistry->metal_chemistry == 1 )  {
           dsp[SpLUT::CI] = my_fields->CI_density[field_idx1d];
           dsp[SpLUT::CII] = my_fields->CII_density[field_idx1d];
-          dsp[SpLUT::CO] = my_fields->CO_density[field_idx1d];
-          dsp[SpLUT::CO2] = my_fields->CO2_density[field_idx1d];
+          dsp[SpLUT::COI] = my_fields->COI_density[field_idx1d];
+          dsp[SpLUT::CO2I] = my_fields->CO2I_density[field_idx1d];
           dsp[SpLUT::OI] = my_fields->OI_density[field_idx1d];
-          dsp[SpLUT::OH] = my_fields->OH_density[field_idx1d];
-          dsp[SpLUT::H2O] = my_fields->H2O_density[field_idx1d];
-          dsp[SpLUT::O2] = my_fields->O2_density[field_idx1d];
+          dsp[SpLUT::OHI] = my_fields->OHI_density[field_idx1d];
+          dsp[SpLUT::H2OI] = my_fields->H2OI_density[field_idx1d];
+          dsp[SpLUT::O2I] = my_fields->O2I_density[field_idx1d];
           dsp[SpLUT::SiI] = my_fields->SiI_density[field_idx1d];
           dsp[SpLUT::SiOI] = my_fields->SiOI_density[field_idx1d];
           dsp[SpLUT::SiO2I] = my_fields->SiO2I_density[field_idx1d];
-          dsp[SpLUT::CH] = my_fields->CH_density[field_idx1d];
-          dsp[SpLUT::CH2] = my_fields->CH2_density[field_idx1d];
+          dsp[SpLUT::CHI] = my_fields->CHI_density[field_idx1d];
+          dsp[SpLUT::CH2I] = my_fields->CH2I_density[field_idx1d];
           dsp[SpLUT::COII] = my_fields->COII_density[field_idx1d];
           dsp[SpLUT::OII] = my_fields->OII_density[field_idx1d];
           dsp[SpLUT::OHII] = my_fields->OHII_density[field_idx1d];
@@ -413,17 +415,17 @@ inline void step_rate_newton_raphson(
         if ( my_chemistry->metal_chemistry == 1 )  {
           idsp[id++] = SpLUT::CI;
           idsp[id++] = SpLUT::CII;
-          idsp[id++] = SpLUT::CO;
-          idsp[id++] = SpLUT::CO2;
+          idsp[id++] = SpLUT::COI;
+          idsp[id++] = SpLUT::CO2I;
           idsp[id++] = SpLUT::OI;
-          idsp[id++] = SpLUT::OH;
-          idsp[id++] = SpLUT::H2O;
-          idsp[id++] = SpLUT::O2;
+          idsp[id++] = SpLUT::OHI;
+          idsp[id++] = SpLUT::H2OI;
+          idsp[id++] = SpLUT::O2I;
           idsp[id++] = SpLUT::SiI;
           idsp[id++] = SpLUT::SiOI;
           idsp[id++] = SpLUT::SiO2I;
-          idsp[id++] = SpLUT::CH;
-          idsp[id++] = SpLUT::CH2;
+          idsp[id++] = SpLUT::CHI;
+          idsp[id++] = SpLUT::CH2I;
           idsp[id++] = SpLUT::COII;
           idsp[id++] = SpLUT::OII;
           idsp[id++] = SpLUT::OHII;
@@ -505,12 +507,10 @@ inline void step_rate_newton_raphson(
       // -> in a lot of cases, the need to copy values is dictated by the value
       //    of imp_eng
       // -> in the future, we should really refactor so that this isn't
-      //    necessary (arguably, the only thing we should really consider
-      //    copying is the value of cool1dmulti_buf.tgasold -- and that doesn't
-      //    currently get used)
+      //    necessary
       t_deriv::scratchbufs_copy_into_pack(
         i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw, nelec_times_mH,
-        edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
+        edot, grain_temperatures, logTlininterp_buf,
         coolingheating_buf, chemheatrates_buf
       );
 
@@ -660,7 +660,7 @@ inline void step_rate_newton_raphson(
       //    do so)
       t_deriv::scratchbufs_copy_from_pack(
         i, &pack, tgas, tdust, metallicity, dust2gas, rhoH, mmw, nelec_times_mH,
-        edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
+        edot, grain_temperatures, logTlininterp_buf,
         coolingheating_buf, chemheatrates_buf
       );
 
@@ -696,17 +696,17 @@ inline void step_rate_newton_raphson(
         if ( my_chemistry->metal_chemistry == 1 )  {
           my_fields->CI_density[field_idx1d]      = dsp[SpLUT::CI];
           my_fields->CII_density[field_idx1d]     = dsp[SpLUT::CII];
-          my_fields->CO_density[field_idx1d]      = dsp[SpLUT::CO];
-          my_fields->CO2_density[field_idx1d]     = dsp[SpLUT::CO2];
+          my_fields->COI_density[field_idx1d]     = dsp[SpLUT::COI];
+          my_fields->CO2I_density[field_idx1d]    = dsp[SpLUT::CO2I];
           my_fields->OI_density[field_idx1d]      = dsp[SpLUT::OI];
-          my_fields->OH_density[field_idx1d]      = dsp[SpLUT::OH];
-          my_fields->H2O_density[field_idx1d]     = dsp[SpLUT::H2O];
-          my_fields->O2_density[field_idx1d]      = dsp[SpLUT::O2];
+          my_fields->OHI_density[field_idx1d]     = dsp[SpLUT::OHI];
+          my_fields->H2OI_density[field_idx1d]    = dsp[SpLUT::H2OI];
+          my_fields->O2I_density[field_idx1d]     = dsp[SpLUT::O2I];
           my_fields->SiI_density[field_idx1d]     = dsp[SpLUT::SiI];
           my_fields->SiOI_density[field_idx1d]    = dsp[SpLUT::SiOI];
           my_fields->SiO2I_density[field_idx1d]   = dsp[SpLUT::SiO2I];
-          my_fields->CH_density[field_idx1d]      = dsp[SpLUT::CH];
-          my_fields->CH2_density[field_idx1d]     = dsp[SpLUT::CH2];
+          my_fields->CHI_density[field_idx1d]     = dsp[SpLUT::CHI];
+          my_fields->CH2I_density[field_idx1d]    = dsp[SpLUT::CH2I];
           my_fields->COII_density[field_idx1d]    = dsp[SpLUT::COII];
           my_fields->OII_density[field_idx1d]     = dsp[SpLUT::OII];
           my_fields->OHII_density[field_idx1d]    = dsp[SpLUT::OHII];

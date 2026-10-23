@@ -77,7 +77,7 @@ struct SpLUT {
   // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
   // slightly revise the system?)
   enum {
-#define ENTRY(NAME) NAME,
+#define ENTRY(NAME, DUMMY_ARG) NAME,
 #include "field_data_evolved_species.def"
 #undef ENTRY
 
@@ -86,29 +86,65 @@ struct SpLUT {
 
 };  // SpLUT struct
 
-/// Define a LUT that ONLY contains grain species
-struct OnlyGrainSpLUT {
-  // in the future, we may want to reimplement the following in terms of the
-  // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
-  // slightly revise the system?)
+/// @brief Define a LUT that ONLY contains primordial species
+struct PrimordialSpLUT {
   enum {
-    MgSiO3_dust,
-    AC_dust,
-    SiM_dust,
-    FeM_dust,
-    Mg2SiO4_dust,
-    Fe3O4_dust,
-    SiO2_dust,
-    MgO_dust,
-    FeS_dust,
-    Al2O3_dust,
-    ref_org_dust,
-    vol_org_dust,
-    H2O_ice_dust,
+#define ENUMERATOR_Primordial(NAME) NAME,
+#define ENUMERATOR_Metal(NAME) /* ... */
+#define ENUMERATOR_Dust(NAME)  /* ... */
+#define ENTRY(NAME, KIND) ENUMERATOR_##KIND(NAME)
+
+#include "field_data_evolved_species.def"
+
+#undef ENUMERATOR_Primordial
+#undef ENUMERATOR_Metal
+#undef ENUMERATOR_Dust
+#undef ENTRY
 
     NUM_ENTRIES  // <- always last (so it specifies the number of species)
   };
-};  // struct OnlyGrainSpLUT
+};
+
+/// @brief Define a LUT that ONLY contains metal species
+struct MetalSpLUT {
+  enum {
+#define ENUMERATOR_Primordial(NAME) /* ... */
+#define ENUMERATOR_Metal(NAME) NAME,
+#define ENUMERATOR_Dust(NAME) /* ... */
+#define ENTRY(NAME, KIND) ENUMERATOR_##KIND(NAME)
+
+#include "field_data_evolved_species.def"
+
+#undef ENUMERATOR_Primordial
+#undef ENUMERATOR_Metal
+#undef ENUMERATOR_Dust
+#undef ENTRY
+
+    NUM_ENTRIES  // <- always last (so it specifies the number of species)
+  };
+};
+
+/// @brief Define a LUT that ONLY contains evolved dust grain species
+struct DustSpLUT {
+  enum {
+#define ENUMERATOR_Primordial(NAME) /* ... */
+#define ENUMERATOR_Metal(NAME)      /* ... */
+#define ENUMERATOR_Dust(NAME) NAME,
+#define ENTRY(NAME, KIND) ENUMERATOR_##KIND(NAME)
+
+#include "field_data_evolved_species.def"
+
+#undef ENUMERATOR_Primordial
+#undef ENUMERATOR_Metal
+#undef ENUMERATOR_Dust
+#undef ENTRY
+
+    NUM_ENTRIES  // <- always last (so it specifies the number of species)
+  };
+};
+
+/// This alias exists for historical consistency
+using OnlyGrainSpLUT = DustSpLUT;
 
 /// Defines the LUT for Standard Collisional reaction rates
 ///
@@ -145,6 +181,14 @@ struct PhotoRxnLUT {
     k29,
     k30,
     k31,
+    // Radiative rates for metal species. Each buffer holds the total rate:
+    // the UV background rate plus, when radiative transfer is in use, the
+    // user-supplied radiative-transfer rate.
+    kphCI,
+    kphOI,
+    kdissCO,
+    kdissOH,
+    kdissH2O,
 
     NUM_ENTRIES  // <- (specifies the number of shieldable radiative reactions)
   };  // enum

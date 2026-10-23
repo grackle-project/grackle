@@ -34,7 +34,7 @@ MACH_LIBTOOL   = libtool
 # compile HDF5 with --with-default-api-version=v16, or specify with
 # -DH5_USE_16_API.
 
-MACH_DEFINES   = -DH5_USE_16_API # Defines for the architecture; e.g. -DSUN, -DLINUX, etc.
+MACH_DEFINES   = -DH5_USE_16_API # Defines for the architecture
 
 #-----------------------------------------------------------------------
 # Compiler flag settings

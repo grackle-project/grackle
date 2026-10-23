@@ -15,6 +15,8 @@
 
 #include "../support/FrozenKeyIdxBiMap.hpp"
 #include "../support/config.hpp"
+#include "../support/error.hpp"
+#include "../support/expected.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -101,11 +103,11 @@ struct GrainSpeciesInfoEntry {
 /// different from the other grains, but this is easy to work around
 class GrainSpeciesInfo {
   /// number of grain species considered for the current Grackle configuration
-  int n_species_;
+  int n_species_ = 0;
 
   /// holds @ref n_species entries. Each entry holds info about a separate
   /// grain species
-  GrainSpeciesInfoEntry* species_info_;
+  GrainSpeciesInfoEntry* species_info_ = nullptr;
 
   /// maps between grain species names and the associated index. The mapping is
   /// **ALWAYS** consistent with ``OnlyGrainSpLUT``.
@@ -135,10 +137,8 @@ private:  // helper methods
     }
   }
 
+  explicit GrainSpeciesInfo() noexcept = default;  // <- used by factory method
 public:
-  /// @brief checks whether instance is valid
-  explicit operator bool() const { return n_species_ > 0; }
-
   /// @brief number of grain species considered in current Grackle configuration
   int n_species() const { return n_species_; }
 
@@ -148,29 +148,32 @@ public:
   /// @brief returns mapping between grain species names and associated indices
   const FrozenKeyIdxBiMap& name_map() const { return name_map_; }
 
-  /// @brief Primary Constructor
-  ///
-  /// It is the caller's responsibility to check whether the resulting object
-  /// is valid (e.g. by checking `if (obj)`).
-  ///
-  /// @note
-  /// In the future, we could use a factory method that returns a std::optional
-  /// or a C++23's std::expected. This would let us ensure that instance of
-  /// this class only exists if it's valid
-  explicit GrainSpeciesInfo(int dust_species_parameter);
+  /// @brief Factory Method
+  static Expected<GrainSpeciesInfo, Error> create(int dust_species_parameter);
 
-  // the following are disabled because the default implementations won't
-  // properly handle FrozenKeyIdxBiMap (since it doesn't act like a class) or
-  // species_info
+  // default implementations of copy construction/assignment won't properly
+  // handle species_info
   GrainSpeciesInfo(const GrainSpeciesInfo&) = delete;
-  GrainSpeciesInfo(GrainSpeciesInfo&&) = delete;
   GrainSpeciesInfo& operator=(const GrainSpeciesInfo&) = delete;
-  GrainSpeciesInfo& operator=(GrainSpeciesInfo&&) = delete;
+
+  // move operations
+  GrainSpeciesInfo(GrainSpeciesInfo&& o) : GrainSpeciesInfo() { swap(o); }
+  GrainSpeciesInfo& operator=(GrainSpeciesInfo&& o) {
+    swap(o);
+    return *this;
+  }
 
   ~GrainSpeciesInfo() {
     if (n_species_ > 0) {
       GrainSpeciesInfo::cleanup_array_(n_species_, species_info_);
     }
+  }
+
+  /// @brief swaps contents
+  void swap(GrainSpeciesInfo& other) noexcept {
+    std::swap(n_species_, other.n_species_);
+    std::swap(species_info_, other.species_info_);
+    name_map_.swap(other.name_map_);
   }
 };
 

@@ -10,6 +10,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include <cstdint>
 #include <cstring>  // std::strcmp, std::strlen, std::strcpy
 #include <limits>
 #include "grackle.h"
@@ -74,6 +75,16 @@ static Entry get_PhotoRxn_Entry(chemistry_data_storage* my_rates, int i) {
       return new_Entry(&my_rates->k30, "k30");
     case PhotoRxnLUT::k31:
       return new_Entry(&my_rates->k31, "k31");
+    case PhotoRxnLUT::kphCI:
+      return new_Entry(&my_rates->kphCI_bg, "kphCI_bg");
+    case PhotoRxnLUT::kphOI:
+      return new_Entry(&my_rates->kphOI_bg, "kphOI_bg");
+    case PhotoRxnLUT::kdissCO:
+      return new_Entry(&my_rates->kdissCO_bg, "kdissCO_bg");
+    case PhotoRxnLUT::kdissOH:
+      return new_Entry(&my_rates->kdissOH_bg, "kdissOH_bg");
+    case PhotoRxnLUT::kdissH2O:
+      return new_Entry(&my_rates->kdissH2O_bg, "kdissH2O_bg");
     default: {
       return mk_invalid_Entry();
     }
@@ -482,7 +493,7 @@ extern "C" int grunstable_ratequery_get_str(chemistry_data_storage* my_rates,
 
 extern "C" int grunstable_ratequery_prop(
     const chemistry_data_storage* my_rates, grunstable_rateid_type rate_id,
-    enum grunstable_ratequery_prop_kind prop_kind, long long* ptr) {
+    enum grunstable_ratequery_prop_kind prop_kind, int64_t* ptr) {
   namespace rate_q = grackle::impl::ratequery;
 
   // short-term hack! (it's bad practice to "cast away the const")
@@ -498,12 +509,12 @@ extern "C" int grunstable_ratequery_prop(
 
   switch (prop_kind) {
     case GRUNSTABLE_QPROP_NDIM: {
-      *ptr = static_cast<long long>(props.ndim);
+      *ptr = static_cast<int64_t>(props.ndim);
       return GR_SUCCESS;
     }
     case GRUNSTABLE_QPROP_SHAPE: {
       for (int i = 0; i < props.ndim; i++) {
-        ptr[i] = static_cast<long long>(props.shape[i]);
+        ptr[i] = static_cast<int64_t>(props.shape[i]);
       }
       return GR_SUCCESS;
     }
@@ -511,7 +522,7 @@ extern "C" int grunstable_ratequery_prop(
       switch (entry.data.tag()) {
         case rate_q::PtrKind::const_f64:
         case rate_q::PtrKind::mutable_f64: {
-          *ptr = static_cast<long long>(sizeof(double));
+          *ptr = static_cast<int64_t>(sizeof(double));
           return GR_SUCCESS;
         }
         case rate_q::PtrKind::const_str: {
@@ -523,7 +534,7 @@ extern "C" int grunstable_ratequery_prop(
             // max_size holds the max number of bytes per element
             max_size = std::max(max_size, std::strlen(str_list[i]) + 1);
           }
-          *ptr = static_cast<long long>(max_size);
+          *ptr = static_cast<int64_t>(max_size);
           return GR_SUCCESS;
         }
       }
@@ -531,18 +542,18 @@ extern "C" int grunstable_ratequery_prop(
       GR_INTERNAL_UNREACHABLE_ERROR();
     }
     case GRUNSTABLE_QPROP_WRITABLE: {
-      *ptr = static_cast<long long>(!entry.data.is_const_ptr());
+      *ptr = static_cast<int64_t>(!entry.data.is_const_ptr());
       return GR_SUCCESS;
     }
     case GRUNSTABLE_QPROP_DTYPE: {
       switch (entry.data.tag()) {
         case rate_q::PtrKind::const_f64:
         case rate_q::PtrKind::mutable_f64: {
-          *ptr = static_cast<long long>(GRUNSTABLE_TYPE_F64);
+          *ptr = static_cast<int64_t>(GRUNSTABLE_TYPE_F64);
           return GR_SUCCESS;
         }
         case rate_q::PtrKind::const_str: {
-          *ptr = static_cast<long long>(GRUNSTABLE_TYPE_STR);
+          *ptr = static_cast<int64_t>(GRUNSTABLE_TYPE_STR);
           return GR_SUCCESS;
         }
       }

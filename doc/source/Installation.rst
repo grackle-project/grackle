@@ -29,7 +29,7 @@ We include a :ref:`note on compiler toolchain compatability <compiler_toolchain_
 Dependencies
 ------------
 
-In addition to C/C++ and Fortran compilers, the following dependency must 
+In addition to a C++20 compilers, the following dependency must 
 also be installed:
 
 * `HDF5 <http://www.hdfgroup.org/HDF5/>`_, the hierarchical data format.
@@ -51,6 +51,7 @@ Although many systems already have them installed, both build systems have addit
 
 * the :ref:`classic build system <classic_build>`, employs the ``makedepend`` and the `libtool <https://www.gnu.org/software/libtool/>`_ utilities.
   It's often easiest to download these dependencies through your system's package manager.
+  These build-systems also require C and Fortran compilers to be installed.
 
 .. _download_grackle:
 
@@ -237,6 +238,15 @@ The order of ``-D`` and ``-C`` flags matters.
 If they are both used to specify values for a given variable, the last one to appear "wins."
 More information about writing host-files are provided :ref:`below <cmake_host-files>`.
 
+.. note::
+
+   As an aside, CMake is technically a "meta-build-tool" that uses an internal generator for creating configuration files understood by external build-tools; builds are actually driven by invoking the external build-tool.
+   The above command will create configuration files under the system's default generator (commonly Makefiles).
+
+   It's worth mentioning that the `Ninja built-tool <https://ninja-build.org>`__ is a popular alternative build-backend is to use in place of Makefiles (it's usually faster).
+   If the Ninja build-tool is installed on your machine, you can append ``-GNinja`` to the above command in order to use CMake's Ninja backend.
+   Caution should be exercised when using Ninja to compile versions of Grackle before 3.5; there are well-documented bugs between Fortran and CMake's (these seem more prominent if you are using a compiler other than gfortran).
+
 
 .. _available_cmake_options:
 
@@ -260,7 +270,7 @@ This first table describes the Grackle-specific options to configure the build.
    * - ``GRACKLE_USE_DOUBLE``
      - Turn off to build Grackle with single precision.
      - ``"ON"``
-   * - ``GRACKLE_USE_OPENMP``\ [#about-cmake-openmp]_
+   * - ``GRACKLE_USE_OPENMP``
      - Turn on to build Grackle with OpenMP
      - ``"OFF"``
    * - ``GRACKLE_BUILD_TESTS``
@@ -318,8 +328,6 @@ With that said, we also recognize that the need may arise where a user/developer
 You can use the standardized ``CMAKE_<LANG>_FLAGS`` variables for that purpose (where ``<LANG>`` is ``C``, ``CXX``, ``Fortran``).
 For example, passing ``-DCMAKE_C_FLAGS="-Wall -Wpedantic -funroll-loops"`` will pass these flags to every invocation of the C compiler (for compiling Grackle itself as well as any examples or tests).
 Technically, these flags are passed to every invocation of the C compiler-frontend (even during linking), but that usually isn't a problem.
-
-
 
 .. _cmake_shared_and_static:
 
@@ -410,63 +418,11 @@ CMake could not find the hdf5 installation.
 If you are on a local machine (not a cluster) consider the following scenarios:
 
 * Did you remember to install hdf5?
-* If you installed hdf5 with a package manager, did you make sure that the package includes files for development?
+* If you installed hdf5 with a package manager, did you make sure that you installed the development files?
   (For example, apt commonly supports a ``libhdf5-<vers>`` package that only contains a shared library and a ``libhdf5-dev`` package that supports everything you need).
 
 If you are confident that HDF5 is installed, you can provide a hint about its location with the ``HDF5_ROOT`` cmake-configuration variable (you can also use ``HDF5_DIR``, but the semantics are a little different).
 
-.. _ninja-openmp:
-
-"Fatal Error: omp_lib.h: No such file or directory"
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This error appears when configuring a CMake build using the `Ninja <https://ninja-build.org>`__ backend\ [#about-ninja]_ and with ``GRACKLE_USE_OPENMP=ON``.
-The most robust solution: **"have CMake use the default (Makefile) backend."**
-
-In more detail, this error seems related to a preprocessing step of Fortran source files that is related to Ninja.
-This preprocessing step may be for generating module dependency information (`as described here <https://cmake.org/cmake/help/latest/prop_tgt/Fortran_PREPROCESS.html>`__).
-
-.. note::
-
-   There are ongoing efforts to convert all internal source code from Fortran to C++.
-   By the 3.5 release, the core library should no longer contain any Fortran code (and this problem will be moot)
-
-.. COMMENT-BLOCK
-
-   I've only encountered this issue with gfortran (but I don't currently have any other Fortran compilers at my disposal).
-   It appears to be some kind of weird cross-reaction between the ``-fopenmp`` and ``-E`` flag.
-   I think we could probably work around this issue by injecting the following block of logic
-
-   .. code-block:: cmake
-
-     target_include_directories(Grackle_Grackle SYSTEM
-       PRIVATE $<$<BOOL:${GRACKLE_USE_OPENMP}>:${OpenMP_Fortran_INCLUDE_DIRS}>
-     )
-
-   But, I am not sure its worth the effort. As the next section notes, there are some generic issues with using Fortran
-
-Generic Fortran Compiler Errors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-There are some well-known bugs between Fortran and CMake's `Ninja <https://ninja-build.org>`__ backend\ [#about-ninja]_ (these seem more prominent if you are using a compiler other than gfortran).
-You could try to update CMake and Ninja to their latest versions.
-The most robust solution: **"have CMake use the default (Makefile) backend."**
-
-.. note::
-
-   There are ongoing efforts to convert all internal source code from Fortran to C++.
-   By the 3.5 release, the core library should no longer contain any Fortran code (and this problem will be moot)
-
-
-.. COMMENT-BLOCK
-
-   I'm not totally sure that these problems are "real."
-   I encountered these issues almost a year ago when the CMake build-system was less polished -- it's possible that I resolved the underlying issues as I refined things.
-   I don't currently have access to non-CMake build files to try to replicate things.
-   (I honestly forgot about it until describing the omp_lib.h issues since the problems went away when I used the Makefile-backend or gfortran with the Ninja-backend)
-
-   I've only encountered this issue with gfortran (but I don't currently have any other Fortran compilers at my disposal).
-   It appears to be some kind of weird cross-reaction between the ``-fopenmp`` and ``-E`` flag.
-   I think we could probably work around this issue by injecting the following block of logic
 
 .. _classic_build:
 
@@ -725,20 +681,20 @@ As a general rule of thumb, the easiest, most reliable thing to do is  to ensure
 
 This is only something you need to consider on platforms with multiple compiler toolchains present. 
 
-In practice, toolchain-compatibility generally **ISN'T** much of a concern for Grackle, when compiled without OpenMP.
-In this scenario, you need to use Fortran compilers with consistent runtime libraries (e.g. you might encounter issues if you use ``gfortran`` to compile Grackle and ``ifort`` to compile a downstream simulation code).
-If the downstream application doesn't use any Fortran, then there generally aren't any concerns at all.
+Toolchain-compatibility is generally straight-forward when compiling without OpenMP.
+In this scenario, you need to use c++ compilers with consistent runtime libraries (e.g. you might encounter issues if you use ``g++`` to compile Grackle and ``icpx`` to compile a downstream simulation code).
+If the downstream application (and all of its other dependencies) doesn't use any C++, then there generally aren't any concerns at all.
 
 Things are slightly more complex when compiling Grackle with OpenMP.
-You need to make sure that your C compiler and Fortran compiler use a compatible OpenMP runtime.
-Usually, your best bet is to try to use C and Fortran compilers from the same vendor (e.g. using ``gcc`` with ``gfortran`` will work or using ``icc`` with ``ifort`` will work).
+You need to make sure that all of you compilers used to compile code with OpenMP use a compatible OpenMP runtime.
+When working on multilanguage projects, your best bet is to try to use compilers from the same vendor (e.g. using ``g++`` with ``gcc/gfortran`` will work or using ``icpx`` with ``icc/ifort`` will work).
 You might be able to mix compilers from different vendors by passing special compiler and linker options, but this usually isn't well documented.
 If your downstream application is also compiled with OpenMP, you also need to ensure that the downstream application is compiled with a compatible runtime.
 
 You don't generally need to worry about OpenMP-compatability between Grackle and the rest of the software stack if Grackle is compiled without OpenMP or if it is the only part of the software stack that is compiled with OpenMP.
 
 **As Grackle continues to evolve, compiler toolchain compatability will become more of an issue.**
-For example, adding GPU-support with the likes of CUDA or HIP would involve linking to a C++ runtime library.
+For example, adding GPU-support with the likes of CUDA or HIP would involve linking to the appropriate runtime library.
 
 .. note::
 
@@ -754,14 +710,8 @@ For example, adding GPU-support with the likes of CUDA or HIP would involve link
 
 .. [#f2] CMake boolean variables map a variety of values to ``true`` (e.g. ``1``, ``ON``, ``TRUE``, ``YES``, ``Y``) and a variety of values to ``false`` (e.g. ``0``, ``OFF``, ``FALSE``, ``NO``, ``N``).
 
-.. [#about-cmake-openmp] Using Ninja with ``GRACKLE_USE_OPENMP=ON`` has been known to cause compilation problems (more detail provided :ref:`here <ninja-openmp>`).
-
 .. [#f3] If you are simply following the above compilation instructions, you definitely don't need to worry about the distinction between a single-configuration generator (e.g. Makefiles and standard Ninja) and multi-configuration generators.
 
 .. [#f4] Aside: performing these 2 separate CMake builds compiles the source files the same number of times as the Classic build system.
          Behind the scenes, the classic build system always compile each source file twice (once with position independent code and once without).
 
-.. [#about-ninja] For the uninitiated: if you're simply following the above compilation instructions, you probably aren't using CMake's Ninja backend.
-   In more detail, CMake can be configured with different backends; on the command line, it uses Makefiles (by default) or Ninja.
-   Many CMake guides suggest using Ninja since its faster than Makefile (since it's a more specialized tool).
-   However, as noted above, this may cause some esoteric Fortran issues.

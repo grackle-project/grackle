@@ -30,9 +30,8 @@ extern "C" int local_calculate_dust_temperature(
 
   GRIMPL_NS::InternalGrUnits internalu = GRIMPL_NS::new_internalu_(my_units);
 
-  int has_metal_field = (my_fields->metal_density == nullptr) ? FALSE : TRUE;
   GRIMPL_NS::calc_tdust_3d(
-    dust_temperature, has_metal_field, my_chemistry, my_rates,
+    dust_temperature, my_chemistry, my_rates,
     my_fields, internalu
   );
 

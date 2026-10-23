@@ -14,8 +14,9 @@
 #ifndef INTERPOLATE_HPP
 #define INTERPOLATE_HPP
 
-#include <cmath>                 // log
-#include "fortran_func_decls.h"  // gr_i64
+#include <cmath>      // log
+#include <cstdint>    // int64_t
+#include "grackle.h"  // cloudy_data
 #include "support/config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -23,11 +24,10 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @brief Encodes the result of @ref find_zindex
 ///
 /// @todo we should try to adjust the redshift index so that it is now
-///       zero-indexed. I also feel pretty strongly that we should also
-///       transition from using `long long` values to `int64_t`
+///       zero-indexed.
 struct CurZInterpInfo {
   /// The one-indexed redshift index
-  long long zindex;
+  int64_t zindex;
   /// Denotes whether the redshift is at the edge of the interpolation grid
   ///
   /// When `true`, we just interpolate from just the last redshift slice in the
@@ -56,7 +56,7 @@ calc_z_interp_info(double z, const cloudy_data& table) {
   // -> in a 3D table, axis 0 maps to density, axis 1 maps to redshift, &
   //    axis 2 maps to temperature
   const double* z_vals = table.grid_parameters[1];
-  const long long n_vals = table.grid_dimension[1];
+  const int64_t n_vals = table.grid_dimension[1];
   if (z <= z_vals[0]) {
     return {1LL, false};
   } else if (z >= z_vals[n_vals - 2]) {
@@ -64,10 +64,10 @@ calc_z_interp_info(double z, const cloudy_data& table) {
   } else if (z >= z_vals[n_vals - 3]) {
     return {n_vals - 2, false};
   } else {
-    long long zindex = 1;
-    long long zhighpt = n_vals - 2;
+    int64_t zindex = 1;
+    int64_t zhighpt = n_vals - 2;
     while ((zhighpt - zindex) > 1) {
-      long long zmidpt = (long long)((zhighpt + zindex) / 2);
+      int64_t zmidpt = (int64_t)((zhighpt + zindex) / 2);
       if (z >= z_vals[zmidpt - 1]) {
         zindex = zmidpt;
       } else {
@@ -81,10 +81,10 @@ calc_z_interp_info(double z, const cloudy_data& table) {
 /// helper function that determines the 1-indexed interpolation index
 ///
 /// This assumes that parameter is evenly spaced on the grid
-static inline gr_i64 get_index_(double input, gr_i64 parLen,
+static inline int64_t get_index_(double input, int64_t parLen,
                                 const double* gridPar, double dgridPar) {
-  gr_i64 index = (gr_i64)((input - gridPar[0]) / dgridPar) + 1;
-  gr_i64 index_with_floor = (index > 1) ? index : 1;
+  int64_t index = (int64_t)((input - gridPar[0]) / dgridPar) + 1;
+  int64_t index_with_floor = (index > 1) ? index : 1;
   return ((parLen - 1) < index_with_floor) ? (parLen - 1) : index_with_floor;
 };
 
@@ -106,10 +106,10 @@ static inline double interp_(double x, double xref0, double xref1, double yref0,
 
 inline double interpolate_1d(
     double input1,
-    const gr_i64* GRIMPL_RESTRICT gridDim,  // 1 elements
-    const double* GRIMPL_RESTRICT gridPar1, double dgridPar1, gr_i64 dataSize,
+    const int64_t* GRIMPL_RESTRICT gridDim,  // 1 elements
+    const double* GRIMPL_RESTRICT gridPar1, double dgridPar1, int64_t dataSize,
     const double* GRIMPL_RESTRICT dataField) {
-  const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const int64_t index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
 
   // interpolate over parameter 1
   return interp_(input1, gridPar1[index1 - 1], gridPar1[index1],
@@ -118,18 +118,18 @@ inline double interpolate_1d(
 
 inline double interpolate_2d(
     double input1, double input2,
-    const gr_i64* GRIMPL_RESTRICT gridDim,  // 2 elements
+    const int64_t* GRIMPL_RESTRICT gridDim,  // 2 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
-    const double* GRIMPL_RESTRICT gridPar2, double dgridPar2, gr_i64 dataSize,
+    const double* GRIMPL_RESTRICT gridPar2, double dgridPar2, int64_t dataSize,
     const double* GRIMPL_RESTRICT dataField) {
   double value2[2];
 
-  const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
-  const gr_i64 index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
+  const int64_t index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const int64_t index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
 
-  for (gr_i64 q = 0; q < 2; q++) {
+  for (int64_t q = 0; q < 2; q++) {
     // interpolate over parameter 2
-    gr_i64 int_index = (q + index1 - 1) * gridDim[1] + index2;
+    int64_t int_index = (q + index1 - 1) * gridDim[1] + index2;
 
     value2[q] = interp_(input2, gridPar2[index2 - 1], gridPar2[index2],
                         dataField[int_index - 1], dataField[int_index]);
@@ -141,21 +141,21 @@ inline double interpolate_2d(
 
 inline double interpolate_3d(
     double input1, double input2, double input3,
-    const gr_i64* GRIMPL_RESTRICT gridDim,  // 3 elements
+    const int64_t* GRIMPL_RESTRICT gridDim,  // 3 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
     const double* GRIMPL_RESTRICT gridPar2, double dgridPar2,
-    const double* GRIMPL_RESTRICT gridPar3, double dgridPar3, gr_i64 dataSize,
+    const double* GRIMPL_RESTRICT gridPar3, double dgridPar3, int64_t dataSize,
     const double* GRIMPL_RESTRICT dataField) {
   double value3[2], value2[2];
 
-  const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
-  const gr_i64 index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
-  const gr_i64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
+  const int64_t index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const int64_t index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
+  const int64_t index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
 
-  for (gr_i64 q = 0; q < 2; q++) {
-    for (gr_i64 w = 0; w < 2; w++) {
+  for (int64_t q = 0; q < 2; q++) {
+    for (int64_t w = 0; w < 2; w++) {
       // interpolate over parameter 3
-      gr_i64 int_index =
+      int64_t int_index =
           ((q + index1 - 1) * gridDim[1] + (w + index2 - 1)) * gridDim[2] +
           index3;
 
@@ -175,24 +175,24 @@ inline double interpolate_3d(
 
 inline double interpolate_4d(
     double input1, double input2, double input3, double input4,
-    const gr_i64* GRIMPL_RESTRICT gridDim,  // 4 elements
+    const int64_t* GRIMPL_RESTRICT gridDim,  // 4 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
     const double* GRIMPL_RESTRICT gridPar2, double dgridPar2,
     const double* GRIMPL_RESTRICT gridPar3, double dgridPar3,
-    const double* GRIMPL_RESTRICT gridPar4, double dgridPar4, gr_i64 dataSize,
+    const double* GRIMPL_RESTRICT gridPar4, double dgridPar4, int64_t dataSize,
     const double* GRIMPL_RESTRICT dataField) {
   double value4[2], value3[2], value2[2];
 
-  const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
-  const gr_i64 index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
-  const gr_i64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
-  const gr_i64 index4 = get_index_(input4, gridDim[3], gridPar4, dgridPar4);
+  const int64_t index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const int64_t index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
+  const int64_t index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
+  const int64_t index4 = get_index_(input4, gridDim[3], gridPar4, dgridPar4);
 
-  for (gr_i64 q = 0; q < 2; q++) {
-    for (gr_i64 w = 0; w < 2; w++) {
-      for (gr_i64 e = 0; e < 2; e++) {
+  for (int64_t q = 0; q < 2; q++) {
+    for (int64_t w = 0; w < 2; w++) {
+      for (int64_t e = 0; e < 2; e++) {
         // interpolate over parameter 4
-        gr_i64 int_index =
+        int64_t int_index =
             (((q + index1 - 1) * gridDim[1] + (w + index2 - 1)) * gridDim[2] +
              (e + index3 - 1)) *
                 gridDim[3] +
@@ -219,31 +219,31 @@ inline double interpolate_4d(
 
 inline double interpolate_5d(
     double input1, double input2, double input3, double input4, double input5,
-    const gr_i64* GRIMPL_RESTRICT gridDim,  // 5 elements
+    const int64_t* GRIMPL_RESTRICT gridDim,  // 5 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
     const double* GRIMPL_RESTRICT gridPar2, double dgridPar2,
     const double* GRIMPL_RESTRICT gridPar3, double dgridPar3,
     const double* GRIMPL_RESTRICT gridPar4, double dgridPar4,
-    const double* GRIMPL_RESTRICT gridPar5, double dgridPar5, gr_i64 dataSize,
+    const double* GRIMPL_RESTRICT gridPar5, double dgridPar5, int64_t dataSize,
     const double* GRIMPL_RESTRICT dataField) {
   double value5[2], value4[2], value3[2], value2[2];
 
-  const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
-  const gr_i64 index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
-  const gr_i64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
+  const int64_t index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const int64_t index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
+  const int64_t index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
 #define INDEX_4_BISECTION
 #ifdef INDEX_4_BISECTION
   // get index 4 with bisection, since not evenly spaced
-  gr_i64 index4;
+  int64_t index4;
   if (input4 <= gridPar4[0]) {
     index4 = 1;
   } else if (input4 >= gridPar4[gridDim[3] - 2]) {  // -2 isn't a typo
     index4 = gridDim[3] - 1;
   } else {
     index4 = 1;
-    gr_i64 highPt = gridDim[3];
+    int64_t highPt = gridDim[3];
     while ((highPt - index4) > 1) {
-      gr_i64 midPt = (gr_i64)((highPt + index4) / 2);
+      int64_t midPt = (int64_t)((highPt + index4) / 2);
       if (input4 >= gridPar4[midPt - 1]) {
         index4 = midPt;
       } else {
@@ -252,16 +252,16 @@ inline double interpolate_5d(
     }
   }
 #else
-  gr_i64 index4 = get_index_(input4, gridDim[3], gridPar4, dgridPar4);
+  int64_t index4 = get_index_(input4, gridDim[3], gridPar4, dgridPar4);
 #endif /* INDEX_4_BISECTION */
-  const gr_i64 index5 = get_index_(input5, gridDim[4], gridPar5, dgridPar5);
+  const int64_t index5 = get_index_(input5, gridDim[4], gridPar5, dgridPar5);
 
-  for (gr_i64 q = 0; q < 2; q++) {
-    for (gr_i64 w = 0; w < 2; w++) {
-      for (gr_i64 e = 0; e < 2; e++) {
-        for (gr_i64 r = 0; r < 2; r++) {
+  for (int64_t q = 0; q < 2; q++) {
+    for (int64_t w = 0; w < 2; w++) {
+      for (int64_t e = 0; e < 2; e++) {
+        for (int64_t r = 0; r < 2; r++) {
           // interpolate over parameter 5
-          gr_i64 int_index =
+          int64_t int_index =
               ((((q + index1 - 1) * gridDim[1] + (w + index2 - 1)) *
                     gridDim[2] +
                 (e + index3 - 1)) *
@@ -300,19 +300,19 @@ inline double interpolate_5d(
 // the UV background turns on.
 static inline double interpolate_2Df3D(
     double input1, double input3,
-    const gr_i64* GRIMPL_RESTRICT gridDim,  // 3 elements
-    const double* GRIMPL_RESTRICT gridPar1, double dgridPar1, gr_i64 index2,
-    const double* GRIMPL_RESTRICT gridPar3, double dgridPar3, gr_i64 dataSize,
+    const int64_t* GRIMPL_RESTRICT gridDim,  // 3 elements
+    const double* GRIMPL_RESTRICT gridPar1, double dgridPar1, int64_t index2,
+    const double* GRIMPL_RESTRICT gridPar3, double dgridPar3, int64_t dataSize,
     const double* dataField) {
   double value3[2];
 
   // Calculate interpolation indices
-  const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
-  const gr_i64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
+  const int64_t index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const int64_t index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
 
-  for (gr_i64 q = 0; q < 2; q++) {  // interpolate over parameter 3
+  for (int64_t q = 0; q < 2; q++) {  // interpolate over parameter 3
 
-    gr_i64 int_index =
+    int64_t int_index =
         ((q + index1 - 1) * gridDim[1] + (index2 - 1)) * gridDim[2] + index3;
 
     value3[q] = interp_(input3, gridPar3[index3 - 1], gridPar3[index1],
@@ -326,10 +326,10 @@ static inline double interpolate_2Df3D(
 
 inline double interpolate_3dz(
     double input1, double input2, double input3,
-    const gr_i64* GRIMPL_RESTRICT gridDim,  // 3 elements
+    const int64_t* GRIMPL_RESTRICT gridDim,  // 3 elements
     const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
     const double* GRIMPL_RESTRICT gridPar2, CurZInterpInfo z_interp_info,
-    const double* GRIMPL_RESTRICT gridPar3, double dgridPar3, gr_i64 dataSize,
+    const double* GRIMPL_RESTRICT gridPar3, double dgridPar3, int64_t dataSize,
     const double* GRIMPL_RESTRICT dataField) {
   if (z_interp_info.end_int) {
     return interpolate_2Df3D(input1, input3, gridDim, gridPar1, dgridPar1,
@@ -340,9 +340,9 @@ inline double interpolate_3dz(
   double value3[2], value2[2];
 
   // Calculate interpolation indices
-  const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
-  const gr_i64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
-  const gr_i64 index2 = z_interp_info.zindex;
+  const int64_t index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const int64_t index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
+  const int64_t index2 = z_interp_info.zindex;
 
   // it turns out that precomputing the following 2 variables reduces runtime
   // appreciably (because the C compiler can't automatically hoist these
@@ -354,10 +354,10 @@ inline double interpolate_3dz(
 
   // preliminary testing on gcc 9.4 suggests that unrolling the outer loop
   // could speed this function up by ~10%
-  for (gr_i64 q = 0; q < 2; q++) {
-    for (gr_i64 w = 0; w < 2; w++) {
+  for (int64_t q = 0; q < 2; q++) {
+    for (int64_t w = 0; w < 2; w++) {
       // interpolate over parameter 3
-      gr_i64 int_index =
+      int64_t int_index =
           ((q + index1 - 1) * gridDim[1] + (w + index2 - 1)) * gridDim[2] +
           index3;
 

@@ -25,6 +25,8 @@
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -130,9 +132,6 @@ typedef struct
      3. + water ice + volatile organics + refractory organics
   */
   int dust_species;
-
-  /* Flag to solve temperatures of multiple grain species */
-  int use_multiple_dust_temperatures;
 
   /* photo-electric heating from irradiated dust */
   int photoelectric_heating;
@@ -284,15 +283,6 @@ typedef struct
    */
   int gas_grain_cooling_rate;
 
-  /* Alternative formulations of interstellar radiation heating
-     rate of grains. Both are based on Goldsmith (2001) and
-     Krumholz (2014) and are in fact very similar. See
-     rate_functions.c for more details.
-   * 0: 3.9e-24 / mh / fgr, where fgr is local dust-to-gas ratio
-   * 1: 8.60892e-24 / (2.0 * mh) / fgr
-   */
-  int uniform_grain_isrf_heating_rate;
-
   /* maximum number of subcycle iterations for solve_chemistry */
   int max_iterations;
 
@@ -340,10 +330,10 @@ typedef struct
 {
 
   // Rank of dataset.
-  long long grid_rank;
+  int64_t grid_rank;
 
   // Dimension of dataset.
-  long long grid_dimension[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+  int64_t grid_dimension[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
   // Dataset parameter values.
   double *grid_parameters[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
@@ -358,7 +348,7 @@ typedef struct
   double *mmw_data;
 
   // Length of 1D flattened data
-  long long data_size;
+  int64_t data_size;
 
 } cloudy_data;
 
@@ -384,6 +374,13 @@ typedef struct
     double *k29;
     double *k30;
     double *k31;
+
+    /* Radiative rates for metal species. */
+    double *kphCI;
+    double *kphOI;
+    double *kdissCO;
+    double *kdissOH;
+    double *kdissH2O;
 
     double *piHI;
     double *piHeI;
@@ -434,6 +431,13 @@ typedef struct
   double k29;
   double k30;
   double k31;
+
+  /* Radiative rates for metal species (for external field). */
+  double kphCI_bg;
+  double kphOI_bg;
+  double kdissCO_bg;
+  double kdissOH_bg;
+  double kdissH2O_bg;
 
   /* H2 formation on dust grains */
   double *h2dust;
@@ -568,6 +572,13 @@ typedef struct
     double k29;
     double k30;
     double k31;
+
+    /* Radiative rates for metal species. */
+    double kphCI_bg;
+    double kphOI_bg;
+    double kdissCO_bg;
+    double kdissOH_bg;
+    double kdissH2O_bg;
 
     double piHI;
     double piHeI;

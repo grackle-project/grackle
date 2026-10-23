@@ -57,7 +57,8 @@ inline void copy_offset_fieldmember_ptrs_(grackle_field_data* dest,
       (src->MEMBER_NAME == NULL) ? NULL : src->MEMBER_NAME + offset;
 
 // part 1: handle species-field members that grackle can evolve
-#define ENTRY(SPECIES_NAME) GRIMPL_OFFSET_PTR_CPY(SPECIES_NAME##_density)
+#define ENTRY(SPECIES_NAME, DUMMY_ARG)                                         \
+  GRIMPL_OFFSET_PTR_CPY(SPECIES_NAME##_density)
 #include "field_data_evolved_species.def"
 #undef ENTRY
 
@@ -95,7 +96,7 @@ inline void copy_contigSpTable_fieldmember_ptrs_(grackle_field_data* my_fields,
   GRIMPL_REQUIRE(nelem_per_species > 0,
                  "The number of elements per species must exceed 0");
 
-#define ENTRY(SPECIES_NAME)                                                    \
+#define ENTRY(SPECIES_NAME, DUMMY_ARG)                                         \
   my_fields->SPECIES_NAME##_density =                                          \
       (&species_table[nelem_per_species * SpLUT::SPECIES_NAME]);
 #include "field_data_evolved_species.def"
@@ -183,7 +184,7 @@ public:
     // the following call does nothing if the size doesn't change
     sp_arr_of_ptrs_.resize(MAX_EVOLVED_SPECIES_FIELDS);
 
-#define ENTRY(SPECIES_NAME)                                                    \
+#define ENTRY(SPECIES_NAME, DUMMY_ARG)                                         \
   sp_arr_of_ptrs_[SpLUT::SPECIES_NAME] = field_data->SPECIES_NAME##_density;
 #include "field_data_evolved_species.def"
 #undef ENTRY

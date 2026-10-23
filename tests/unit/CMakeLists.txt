@@ -2,6 +2,13 @@
 # ==================================
 
 # NOTE: the testdeps target is defined within ../grtestutils/CMakeLists.txt
+add_executable(testError support/test_error.cpp)
+target_link_libraries(testError testdeps)
+gtest_discover_tests(testError)
+
+add_executable(testExpected support/test_expected.cpp)
+target_link_libraries(testExpected testdeps)
+gtest_discover_tests(testExpected)
 
 add_executable(testFrozenKeyIdxBiMap
   support/test_unit_hash.cpp support/test_unit_FrozenKeyIdxBiMap.cpp)
@@ -13,14 +20,14 @@ target_link_libraries(runIndexHelperTests testdeps)
 gtest_discover_tests(runIndexHelperTests)
 
 add_executable(runInterpolationTests
-  test_unit_interpolators_g.cpp test_interp_grid.cpp)
+  test_unit_interpolators.cpp test_interp_grid.cpp)
 target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
 
 add_executable(runMathTests
   math/test_integrate.cpp
   math/test_linalg.cpp
-  math/test_solve_cubic_equation.cpp)
+  math/test_cubic_eqn_root.cpp)
 target_link_libraries(runMathTests testdeps)
 gtest_discover_tests(runMathTests)
 

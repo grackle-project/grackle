@@ -15,9 +15,13 @@
 #include "grackle.h"
 #include "support/status_reporting.hpp"
 
+#include "./preset.hpp"
+
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -61,10 +65,10 @@ inline std::string stringify_type(enum grunstable_types kind) {
   GR_INTERNAL_UNREACHABLE_ERROR();
 }
 
-inline std::optional<enum grunstable_types> safe_type_enum_cast(long long val) {
-  if (static_cast<long long>(GRUNSTABLE_TYPE_F64) == val) {
+inline std::optional<enum grunstable_types> safe_type_enum_cast(int64_t val) {
+  if (static_cast<int64_t>(GRUNSTABLE_TYPE_F64) == val) {
     return std::make_optional(GRUNSTABLE_TYPE_F64);
-  } else if (static_cast<long long>(GRUNSTABLE_TYPE_STR) == val) {
+  } else if (static_cast<int64_t>(GRUNSTABLE_TYPE_STR) == val) {
     return std::make_optional(GRUNSTABLE_TYPE_STR);
   } else {
     return std::nullopt;
@@ -88,13 +92,13 @@ void print_standard_props_(const T& props, std::ostream* os) {
 
 /// summarizes details about rate properties
 struct RateProperties {
-  std::vector<long long> shape;
+  std::vector<int64_t> shape;
   std::size_t maxitemsize;
   enum grunstable_types dtype;
   bool writable;
 
-  long long n_items() const {
-    long long n_items = 1LL;
+  int64_t n_items() const {
+    int64_t n_items = 1;
     for (std::size_t i = 0; i < shape.size(); i++) {
       n_items *= shape[i];
     }
@@ -118,7 +122,7 @@ struct RateProperties {
 /// This is an ugly kludge. We may want to replace this with some kind of
 /// custom "matcher"...
 struct ExpectedRateProperties {
-  std::vector<long long> shape;
+  std::vector<int64_t> shape;
   enum grunstable_types dtype;
   bool writable;
 
@@ -171,38 +175,38 @@ inline bool operator==(const ExpectedRateProperties& a,
 /// should never need to include these sanity check!
 inline std::optional<RateProperties> try_query_RateProperties(
     chemistry_data_storage* my_rates, grunstable_rateid_type rateid) {
-  long long ndim = -1LL;
+  int64_t ndim = -1;
   if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_NDIM,
                                 &ndim) != GR_SUCCESS) {
     return std::nullopt;
   }
-  if (ndim < 0LL) {
+  if (ndim < 0) {
     return std::nullopt;  // sanity-check failed!
   }
 
-  std::vector<long long> shape;
-  if (ndim > 0LL) {
-    shape.assign(ndim, 0LL);
+  std::vector<int64_t> shape;
+  if (ndim > 0) {
+    shape.assign(ndim, 0);
     if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_SHAPE,
                                   shape.data()) != GR_SUCCESS) {
       return std::nullopt;
     }
   }
   if (std::count_if(shape.begin(), shape.end(),
-                    [](long long x) { return x <= 0; }) > 0) {
+                    [](int64_t x) { return x <= 0; }) > 0) {
     return std::nullopt;  // sanity check failed!
   }
 
-  long long maxitemsize = -1LL;
+  int64_t maxitemsize = -1;
   if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_MAXITEMSIZE,
                                 &maxitemsize) != GR_SUCCESS) {
     return std::nullopt;
   }
-  if (maxitemsize <= 0LL) {
+  if (maxitemsize <= 0) {
     return std::nullopt;  // sanity check failed!
   }
 
-  long long dtype_tmp;
+  int64_t dtype_tmp;
   if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_DTYPE,
                                 &dtype_tmp) != GR_SUCCESS) {
     return std::nullopt;
@@ -212,12 +216,12 @@ inline std::optional<RateProperties> try_query_RateProperties(
     return std::nullopt;  // sanity check failed!
   }
 
-  long long writable;
+  int64_t writable;
   if (grunstable_ratequery_prop(my_rates, rateid, GRUNSTABLE_QPROP_WRITABLE,
                                 &writable) != GR_SUCCESS) {
     return std::nullopt;
   }
-  if ((writable != 0LL) && (writable != 1LL)) {
+  if ((writable != 0) && (writable != 1)) {
     return std::nullopt;
   }
 

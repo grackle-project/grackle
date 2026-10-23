@@ -16,6 +16,7 @@
 #include "grackle.h"
 #include "support/index_helper.hpp"
 #include "internal_types.hpp"
+#include "lnT_prep.hpp"
 #include "support/status_reporting.hpp"
 #include "support/config.hpp"
 
@@ -209,7 +210,7 @@ inline void update_edot_dust_recombination(
 ///     former is used in some configurations to provide a 1D array of rates
 ///     for all dust. The latter is used in other configurations to provide
 ///     separate 1d dust temperature arrays for each modeled grain species.
-void update_edot_dust_cooling_rate(
+inline void update_edot_dust_cooling_rate(
     double* edot, const double* tgas, const double* tdust,
     const GrainSpeciesCollection& grain_temperatures, const double* dust2gas,
     const double* rhoH, const gr_mask_type* itmask_metal,

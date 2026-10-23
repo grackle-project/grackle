@@ -47,6 +47,7 @@ commands:
           command: |
             source $HOME/venv/bin/activate
             git checkout << parameters.tag >>
+            git submodule update
 
             # First, try resetting things to a pristine condition (in the event
             # that grackle was previously built
@@ -104,6 +105,7 @@ commands:
           command: |
             source $HOME/venv/bin/activate
             git checkout << parameters.tag >>
+            git submodule update
             pip install -e .
 
   install-docs-dependencies:
@@ -165,7 +167,7 @@ commands:
               ANSWER_DIR=./my-test_answers
               if [ '<< parameters.generate >>' == 'true' ]; then
                 if [[ '<< parameters.overwrite >>' == 'true' || ! -d ${ANSWER_DIR} ]]; then
-                  py.test --answer-dir=${ANSWER_DIR} --answer-store
+                  py.test -vv --answer-dir=${ANSWER_DIR} --answer-store
                 else
                   echo "Answers already exist; skipping."
                 fi
@@ -182,11 +184,11 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-nccv21"
+        default: "gold-standard-nccv28"
       cache-tag:
         description: "A unique tag to append to the cache name"
         type: string
-        default: "1"
+        default: "3"
     steps:
       - run:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
@@ -194,7 +196,10 @@ commands:
             source $HOME/venv/bin/activate
             pip uninstall --yes gracklepy # it's ok if gracklepy wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
-            pip install -e .
+            git submodule update
+            # the -v flag prints out compilation progress
+            # -> prevent time-outs from builds taking too long without output
+            pip install -v -e .
             rm -rf ./my-test_answers # in case answers have already been generated
       - restore_cache:
           name: "Restore gold standard answers from cache."
@@ -248,6 +253,11 @@ jobs:
       name: python
       tag: << parameters.tag >>
       resource_class: small  # <- 1 core
+    environment:
+      # it seemed like cmake (invoked via pip) may have been creating more jobs
+      # than there are cores (perhaps b/c we're in a container?). This is an
+      # attempt to manually fix the job count to the number of cores
+      CMAKE_BUILD_PARALLEL_LEVEL: 1
 
     working_directory: ~/grackle
 
@@ -267,6 +277,13 @@ jobs:
       tag: << parameters.tag >>
       resource_class: small  # <- 1 core
 
+
+    environment:
+      # it seemed like cmake (invoked via pip) may have been creating more jobs
+      # than there are cores (perhaps b/c we're in a container?). This is an
+      # attempt to manually fix the job count to the number of cores
+      CMAKE_BUILD_PARALLEL_LEVEL: 1
+
     working_directory: ~/grackle
 
     steps:
@@ -280,7 +297,12 @@ jobs:
           command: |
             source $HOME/venv/bin/activate
             git checkout $CIRCLE_BRANCH
-            pip install -e .
+            git submodule update
+            # the -v flag prints out compilation progress
+            # -> prevent time-outs from builds taking too long without output
+            # -> its not clear why this ever helps... A build normally takes
+            #    well under 10 minutes
+            pip install -v -e .
       - run-gracklepy-tests:
           omp: 'false'
           build_kind: 'standalone-gracklepy'
@@ -412,6 +434,7 @@ workflows:
             branches:
               only:
                 - main
+                - newchem-cpp
      jobs:
        - generate-gold-standard:
            name: "Generate the gold standard."

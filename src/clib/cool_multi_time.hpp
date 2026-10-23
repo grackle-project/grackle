@@ -30,8 +30,8 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// * modified2: October, 1996 by GB; moved to AMR
 /// * modified3: February, 2003 by Robert Harkness; iteration mask
 /// * modified4: December, 2024 by Matthew Abruzzo; ported to C++
-void cool_multi_time(gr_float* cooltime_data_, int imetal,
-                     InternalGrUnits internalu, chemistry_data* my_chemistry,
+void cool_multi_time(gr_float* cooltime_data_, InternalGrUnits internalu,
+                     chemistry_data* my_chemistry,
                      chemistry_data_storage* my_rates,
                      grackle_field_data* my_fields,
                      photo_rate_storage my_uvb_rates);

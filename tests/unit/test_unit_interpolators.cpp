@@ -7,7 +7,9 @@
 #include "grtestutils/coord_grid.hpp"
 #include "interp_grid.hpp"
 #include "interpolate.hpp"
-#include "utils-cpp.hpp"  // GRIMPL_NS::clamp
+#include "math/misc.hpp"  // GRIMPL_NS::clamp
+#include "support/expected.hpp"
+#include "support/status_reporting.hpp"
 
 
 TEST(InterpolationTest, Interpolate1D) {
@@ -15,7 +17,7 @@ TEST(InterpolationTest, Interpolate1D) {
     long long dataSize = 10;
     double input1 = 5.0;
     double dgridPar1 = 1.3;
-    std::vector<long long> gridDim(1,dataSize);
+    std::vector<int64_t> gridDim(1,dataSize);
     std::vector<double> gridPar1(dataSize);
     std::vector<double> dataField(dataSize);
 
@@ -44,7 +46,7 @@ TEST(InterpolationTest, Interpolate2D) {
     double dgridPar2 = 1.5;
     double input1 = 2.3;
     double input2 = 1.7;
-    std::vector<long long> gridDim = {dataSize1, dataSize2};
+    std::vector<int64_t> gridDim = {dataSize1, dataSize2};
     std::vector<double> gridPar1(dataSize1);
     std::vector<double> gridPar2(dataSize2);
     std::vector<double> dataField(dataSize);
@@ -85,7 +87,7 @@ TEST(InterpolationTest, Interpolate3D) {
     double input1 = 2.4;
     double input2 = 5.3;
     double input3 = 1.5;
-    std::vector<long long> gridDim = {dataSize1, dataSize2, dataSize3};
+    std::vector<int64_t> gridDim = {dataSize1, dataSize2, dataSize3};
     std::vector<double> gridPar1(dataSize1);
     std::vector<double> gridPar2(dataSize2);
     std::vector<double> gridPar3(dataSize3);
@@ -134,7 +136,7 @@ TEST(InterpolationTest, Interpolate3Dz) {
     double input1 = 2.4;
     double input2 = 5.3;
     double input3 = 1.5;
-    std::vector<long long> gridDim = {dataSize1, dataSize2, dataSize3};
+    std::vector<int64_t> gridDim = {dataSize1, dataSize2, dataSize3};
     std::vector<double> gridPar1(dataSize1);
     std::vector<double> gridPar2(dataSize2);
     std::vector<double> gridPar3(dataSize3);
@@ -195,7 +197,7 @@ TEST(InterpolationTest, Interpolate2Df3D) {
     double dgridPar3 = 2.5;
     double input1 = 2.4;
     double input3 = 1.5;
-    std::vector<long long> gridDim = {dataSize1, dataSize2, dataSize3};
+    std::vector<int64_t> gridDim = {dataSize1, dataSize2, dataSize3};
     std::vector<double> gridPar1(dataSize1);
     std::vector<double> gridPar2(dataSize2);
     std::vector<double> gridPar3(dataSize3);
@@ -244,7 +246,7 @@ TEST(InterpolationTest, Interpolate4D) {
     double input2 = 5.3;
     double input3 = 1.5;
     double input4 = 5.7;
-    std::vector<long long> gridDim = {dataSize1, dataSize2, dataSize3, dataSize4};
+    std::vector<int64_t> gridDim = {dataSize1, dataSize2, dataSize3, dataSize4};
     std::vector<double> gridPar1(dataSize1);
     std::vector<double> gridPar2(dataSize2);
     std::vector<double> gridPar3(dataSize3);
@@ -305,7 +307,7 @@ TEST(InterpolationTest, Interpolate5D) {
     double input3 = 1.5;
     double input4 = 5.7;
     double input5 = 2.7;
-    std::vector<long long> gridDim = {dataSize1, dataSize2, dataSize3, dataSize4, dataSize5};
+    std::vector<int64_t> gridDim = {dataSize1, dataSize2, dataSize3, dataSize4, dataSize5};
     std::vector<double> gridPar1(dataSize1);
     std::vector<double> gridPar2(dataSize2);
     std::vector<double> gridPar3(dataSize3);
@@ -403,8 +405,18 @@ static double perform_interp(const grtest::Coordinate& c,
 template <typename Fn>
 static std::pair<GRIMPL_NS::InterpGrid, grtest::CoordGrid> setup(
     const std::vector<GRIMPL_NS::InterpDimScale>& dim_scales, Fn fn) {
+  using GRIMPL_NS::InterpGridProps;
   int rank = dim_scales.size();
-  GRIMPL_NS::InterpGridProps grid_props(rank, dim_scales.data());
+  GRIMPL_NS::Expected<InterpGridProps, GRIMPL_NS::Error> grid_props_rslt =
+      InterpGridProps::create(rank, dim_scales.data());
+  if (!grid_props_rslt.has_value()) {
+    std::string msg = grid_props_rslt.error().to_string();
+    GR_INTERNAL_ERROR(
+      "this function assumes that valid arguments were being used to "
+      "construct a InterpGridProps. Encountered error:\n\n%s",
+      msg.c_str());
+  }
+  InterpGridProps& grid_props = grid_props_rslt.value();
   std::vector<std::vector<double>> coords;
   for (int i = 0; i < rank; i++) {
     int n_elements = grid_props.dimension[i];
@@ -704,7 +716,7 @@ TYPED_TEST(InterpGridTest, BeyondGrid) {
     clamped_coord.rank = grid_rank;
     for (int i = 0; i < grid_rank; i++) {
       clamped_coord.components[i] =
-          GRIMPL_NS::clamp(c[i], ax_extremes[i][0], ax_extremes[i][1]);
+          GRIMPL_NS::fclamp(c[i], ax_extremes[i][0], ax_extremes[i][1]);
     }
 
     // allows a discrepancy of 4 ULPs

@@ -58,7 +58,8 @@ extern "C" int gr_initialize_field_data(grackle_field_data *my_fields)
   // to hold datafields, to have values of NULL
 
   // part 1: modify species-field members that grackle can evolve
-  #define ENTRY(SPECIES_NAME) my_fields->SPECIES_NAME ## _density = nullptr;
+  #define ENTRY(SPECIES_NAME, DUMMY_ARG) \
+      my_fields->SPECIES_NAME ## _density = nullptr;
   #include "field_data_evolved_species.def"
   #undef ENTRY
 

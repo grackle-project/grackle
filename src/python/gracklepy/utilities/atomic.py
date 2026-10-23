@@ -35,48 +35,4 @@ solar_abundance = {
     "Ni": 1.78e-06, "Cu": 1.62e-08, "Zn": 3.98e-08,
     "D" : 0}
 
-# Atomic masses in amu of the first 30 elements and deuterium.
-# In the case of all but deuterium, these are averages of all
-# isotopes weighted by their natural abundance.
-atomic_mass = {
-    "H" : 1.00794,   "He": 4.002602,  "Li": 6.941,
-    "Be": 9.012182,  "B" : 10.811,    "C" : 12.0107,
-    "N" : 14.0067,   "O" : 15.9994,   "F" : 18.9984032,
-    "Ne": 20.1797,   "Na": 22.989770, "Mg": 24.3050,
-    "Al": 26.981538, "Si": 28.0855,   "P" : 30.973761,
-    "S" : 32.065,    "Cl": 35.453,    "Ar": 39.948,
-    "K" : 39.0983,   "Ca": 40.078,    "Sc": 44.955910,
-    "Ti": 47.867,    "V" : 50.9415,   "Cr": 51.9961,
-    "Mn": 54.938049, "Fe": 55.845,    "Co": 58.933200,
-    "Ni": 58.6934,   "Cu": 63.546,    "Zn": 65.409,
-    "D" : 2.0141017778}
-
-atomic_number = {
-    "H" : 1,  "He": 2,  "Li": 3,
-    "Be": 4,  "B" : 5,  "C" : 6,
-    "N" : 7,  "O" : 8,  "F" : 9,
-    "Ne": 10, "Na": 11, "Mg": 12,
-    "Al": 13, "Si": 14, "P" : 15,
-    "S" : 16, "Cl": 17, "Ar": 18,
-    "K" : 19, "Ca": 20, "Sc": 21,
-    "Ti": 22, "V" : 23, "Cr": 24,
-    "Mn": 25, "Fe": 26, "Co": 27,
-    "Ni": 28, "Cu": 29, "Zn": 30,
-    "D" : 1}
-
-# Mass number (i.e., the number of protons plus neutrons)
-# for the most commonly occuring isotope.
-mass_number = {
-    "H" : 1,  "He": 4,  "Li": 7,
-    "Be": 9,  "B" : 11, "C" : 12,
-    "N" : 14, "O" : 16, "F" : 19,
-    "Ne": 20, "Na": 23, "Mg": 24,
-    "Al": 27, "Si": 28, "P" : 31,
-    "S" : 32, "Cl": 35, "Ar": 40,
-    "K" : 39, "Ca": 40, "Sc": 45,
-    "Ti": 48, "V" : 51, "Cr": 52,
-    "Mn": 55, "Fe": 56, "Co": 59,
-    "Ni": 58, "Cu": 63, "Zn": 64,
-    "D" : 2}
-
 primordial_elements = ("H", "He", "D")

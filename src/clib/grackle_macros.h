@@ -40,26 +40,6 @@
 #define GRACKLE_VFAIL(format, ...) {snprintf(current_error, 254, format, ##__VA_ARGS__); throw(GrackleFatalException(current_error, __FILE__, __LINE__));}
 #endif
 
-/* Fortran name generator (cpp blues) */
-
-#if defined(SUN_OLD)
-#define FORTRAN_NAME(NAME) NAME/**/_
-#endif
-
-#if defined(IRIS4) || defined(CONVEX) || defined(COMPAQ) || defined(SUN) || defined(LINUX) || defined(IA64) || defined(CRAYX1) || defined(XT3)
-#define FORTRAN_NAME(NAME) NAME##_
-#endif
-
-#if defined(SPP) || defined(SP2) || defined(BGL)
-#define FORTRAN_NAME(NAME) NAME
-#endif
-
-#ifdef CONFIG_PFLOAT_16
-#define PFORTRAN_NAME(NAME) NAME##_c
-#else
-#define PFORTRAN_NAME(NAME) FORTRAN_NAME(NAME)
-#endif
-
 /* Standard definitions (well, fairly standard) */
 
 #ifdef FAIL

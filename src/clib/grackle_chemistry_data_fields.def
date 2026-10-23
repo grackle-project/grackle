@@ -91,9 +91,6 @@ ENTRY(metal_abundances, INT, 0)
 */
 ENTRY(dust_species, INT, 0)
 
-/* Flag to solve temperatures of multiple grain species */
-ENTRY(use_multiple_dust_temperatures, INT, FALSE)
-
 /* add heating from UV background model
    0) off, 1) on */
 ENTRY(UVbackground, INT, 0)
@@ -305,15 +302,6 @@ ENTRY(hd_reaction_rates, INT, 0)
  * 1: Omukai (2000) - see rate_functions.c for more details
  */
 ENTRY(gas_grain_cooling_rate, INT, 0)
-
-/* Alternative formulations of interstellar radiation heating
-   rate on uniform sized grains. Both are based on Goldsmith (2001)
-   and Krumholz (2014) and are in fact very similar. See
-   rate_functions.c for more details.
- * 0: 3.9e-24 / mh / fgr, where fgr is local dust-to-gas ratio
- * 1: 8.60892e-24 / (2.0 * mh) / fgr
- */
-ENTRY(uniform_grain_isrf_heating_rate, INT, 0)
 
 /* maximum number of subcycle iterations for solve_chemistry */
 ENTRY(max_iterations, INT, 10000)

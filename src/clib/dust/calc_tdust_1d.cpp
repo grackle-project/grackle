@@ -21,8 +21,7 @@
 #include "dust/passive/analytic_opac.hpp"
 #include "grackle.h"
 #include "fortran_func_decls.h"
-// TODO: to be removed when transcription is done
-#include "fortran_func_wrappers.hpp"
+#include "math/misc.hpp"
 #include "phys_constants.hpp"
 #include "support/config.hpp"
 #include "support/status_reporting.hpp"
@@ -286,8 +285,8 @@ static EqnSolveRslt unchecked_posdomain_fdiff_newton(
         x[i] = std::fmin(x[i] - (f_vals[i] / slope), max_x);
 
         // try to ensure next x_plus is closer to x than x_old
-        pert[i] = GRIMPL_NS::clamp(0.5 * std::fabs(x[i] - x_old) / x[i],
-                                   param.perturb_min, pert[i]);
+        pert[i] = fclamp(0.5 * std::fabs(x[i] - x_old) / x[i],
+                         param.perturb_min, pert[i]);
 
         if (x[i] < giveup_small_x_threshold) {
           solvemask[i] = SolveStatus::SKIP_SOLVE;

@@ -23,15 +23,13 @@ namespace grackle::impl {
 
 /// Enforces consistency of species fields with expected total abundances
 ///
-/// @param[in] imetal specifies whether or not the caller provided a metal
-///     field (0 = no, 1 = yes)
 /// @param[in] dom
 /// @param[in] my_chemistry holds a number of configuration parameters
 /// @param[in] inject_pathway_props holds data about the modelled injection
 ///     pathways for all metals and grain species
 /// @param[in] my_fields specifies the field data
 void make_consistent(
-    int imetal, double dom, chemistry_data* my_chemistry,
+    double dom, chemistry_data* my_chemistry,
     const grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
     grackle_field_data* my_fields);
 

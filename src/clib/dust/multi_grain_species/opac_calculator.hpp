@@ -17,6 +17,7 @@
 #include "../../support/config.hpp"
 #include "../../support/View.hpp"
 
+#include <cstdint>
 #include <memory>  // std::unique_ptr, std::make_unique
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -30,7 +31,7 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// The future goal is to get rid of intermediate buffers so that we can
 /// directly compute opacity from the injection pathway data
 class MultiGrainGrowthOpacCalc {
-  long long gr_N_;
+  int64_t gr_N_;
   int gr_Size_;
   double dTdust_;
   const double* Tdust_vals_;
@@ -49,7 +50,7 @@ public:
   /// @param[in]  logalsp_data Grain opacity table data
   MultiGrainGrowthOpacCalc(int in, int gr_N, int gr_Size, double gr_dT,
                            const double* gr_Td, const double* logalsp_data)
-      : gr_N_{static_cast<long long>(gr_N)},
+      : gr_N_{static_cast<int64_t>(gr_N)},
         gr_Size_{gr_Size},
         dTdust_{gr_dT},
         Tdust_vals_{gr_Td} {

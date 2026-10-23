@@ -17,14 +17,12 @@
 #define LOOKUP_COOL_RATES1D_HPP
 
 #include "grackle.h"
-#include "dust/lookup_dust_rates1d.hpp"
-#include "dust/multi_grain_species/dust_props.hpp"
 #include "field_adaptor.hpp"
 #include "fortran_func_decls.h"
 #include "full_rxn_rate_buf.hpp"
 #include "internal_types.hpp"
+#include "math/misc.hpp"
 #include "opaque_storage.hpp"
-#include "utils-cpp.hpp"
 
 namespace grackle::impl {
 
@@ -381,7 +379,7 @@ inline void model_H2I_dissociation_shielding(
         // update: self-shielding following Wolcott-Green & Haiman (2019)
         // range of validity: T=100-8000 K, n<=1e7 cm^-3
 
-        double tgas_touse = grackle::impl::clamp(tgas1d[i], 1e2, 8e3);
+        double tgas_touse = fclamp(tgas1d[i], 1e2, 8e3);
         double ngas_touse =
             std::fmin(d(i, idx_range.j, idx_range.k) * dom / mmw[i], 1e7);
 
@@ -605,6 +603,16 @@ inline void apply_misc_shield_factors(
               kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
         }
 
+        // Scale O I photo-ionization (13.62 eV) using the same scaling as
+        // HI. The C I ionization and CO dissociation rates are left
+        // optically thin: they are driven by photons below the Lyman limit.
+        if (my_uvb_rates.kphOI_bg < tiny8) {
+          kph_buf[PhotoRxnLUT::kphOI][i] = 0.;
+        } else {
+          kph_buf[PhotoRxnLUT::kphOI][i] =
+              kph_buf[PhotoRxnLUT::kphOI][i] * tmp.f_shield_H;
+        }
+
         kph_buf[PhotoRxnLUT::k25][i] = my_uvb_rates.k25;
         kph_buf[PhotoRxnLUT::k26][i] = my_uvb_rates.k26;
       }
@@ -637,6 +645,16 @@ inline void apply_misc_shield_factors(
         } else {
           kph_buf[PhotoRxnLUT::k29][i] =
               kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
+        }
+
+        // Scale O I photo-ionization (13.62 eV) using the same scaling as
+        // HI. The C I ionization and CO dissociation rates are left
+        // optically thin: they are driven by photons below the Lyman limit.
+        if (my_uvb_rates.kphOI_bg < tiny8) {
+          kph_buf[PhotoRxnLUT::kphOI][i] = 0.;
+        } else {
+          kph_buf[PhotoRxnLUT::kphOI][i] =
+              kph_buf[PhotoRxnLUT::kphOI][i] * tmp.f_shield_H;
         }
 
         // Apply same equations to HeI (assumes HeI closely follows HI)
@@ -689,6 +707,16 @@ inline void apply_misc_shield_factors(
               kph_buf[PhotoRxnLUT::k29][i] * tmp.f_shield_H;
         }
 
+        // Scale O I photo-ionization (13.62 eV) using the same scaling as
+        // HI. The C I ionization and CO dissociation rates are left
+        // optically thin: they are driven by photons below the Lyman limit.
+        if (my_uvb_rates.kphOI_bg < tiny8) {
+          kph_buf[PhotoRxnLUT::kphOI][i] = 0.;
+        } else {
+          kph_buf[PhotoRxnLUT::kphOI][i] =
+              kph_buf[PhotoRxnLUT::kphOI][i] * tmp.f_shield_H;
+        }
+
         // Apply same equations to HeI (assumes HeI closely follows HI)
 
         if (my_uvb_rates.k26 < tiny8) {
@@ -722,30 +750,16 @@ inline void apply_misc_shield_factors(
 /// This routine uses the gas temperature to calculate rate at each location
 /// in the specified index range.
 ///
-/// In more detail, this function does a lot (probably too much):
-/// - it computes collisional reaction rates
+/// In more detail, this function:
+/// - computes collisional reaction rates
 /// - shielding-adjusted photo-rates (related to the UV background)
 /// - a few heating/cooling rates
-/// - dust-related rates (details depend on the dust model)
-/// - logTlininterp_buf is considered an output too (at the time of writing, it
-///   is used for some subsequent calculations)
 ///
-/// > [!note]
-/// > A case could be made to handle the dust-related rates in a separate
-/// > function
+/// All dust-related reaction rates are computed in a separate function
 ///
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] anydust Whether to model any dust
 /// @param[in] tgas1d specifies the gas temperatures for the @p idx_range
 /// @param[in] mmw specifies the mean molecular weight for the @p idx_range
-/// @param[in] tdust Precomputed dust temperatures at each location in the
-///     index range. This **ONLY** holds meaningful values when using variants
-///     of the classic 1-field dust-model or using variant of the
-///     multi-grain-species model where all grains are configured to share a
-///     single temperature.
-/// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
-///     index range. In other words, this holds the dust mass per unit gas mass
-///     (only used in certain configuration)
 /// @param[in] dom a standard quantity used throughout the codebase
 /// @param[in] dx_cgs The width of a cell in comoving cm (I think). Used in
 ///     certain self-shielding calculations.
@@ -754,7 +768,6 @@ inline void apply_misc_shield_factors(
 ///     for this calculation.
 /// @param[in] itmask_metal Specifies the iteration-mask of the @p idx_range for
 ///     performing metal and dust calculations.
-/// @param[in] dt See the warning at the end of the docstring
 /// @param[in] my_chemistry holds a number of configuration parameters.
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
@@ -776,25 +789,16 @@ inline void apply_misc_shield_factors(
 ///    rates for @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
 ///     values that are used to compute heating from certain chemical reactions.
-/// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
-///     temporary grain species properties (only used in certain configurations)
-///
-/// > [!important]
-/// > TODO: The role of the `dt` argument **MUST** be clarified! See the
-/// > docstring of @ref grackle::impl::lookup_dust_rates1d for more details
 inline void lookup_cool_rates1d(
-    IndexRange idx_range, gr_mask_type anydust, const double* tgas1d,
-    const double* mmw, const double* tdust, const double* dust2gas, double dom,
+    IndexRange idx_range, const double* tgas1d, const double* mmw, double dom,
     double dx_cgs, double c_ljeans, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
+    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     chemistry_data_storage* my_rates, grackle_field_data* my_fields,
     SpeciesMultiView<const gr_float> species_densities,
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
-    grackle::impl::ChemHeatingRates chemheatrates_buf,
-    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
+    grackle::impl::ChemHeatingRates chemheatrates_buf) {
   // Construct views of fields referenced in several parts of this function.
 
   // Linearly Interpolate the Collisional Rxn Rates
@@ -810,15 +814,6 @@ inline void lookup_cool_rates1d(
   if (my_chemistry->primordial_chemistry > 1) {
     interpolate_h2_heating_terms_(chemheatrates_buf, idx_range, my_rates,
                                   itmask, logTlininterp_buf);
-  }
-
-  // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
-
-  if (anydust != MASK_FALSE) {
-    lookup_dust_rates1d(idx_range, tdust, dust2gas, dom, itmask_metal, dt,
-                        my_chemistry, my_rates, my_fields, species_densities,
-                        grain_temperatures, logTlininterp_buf, rxn_rate_buf,
-                        internal_dust_prop_scratch_buf);
   }
 
   // Deal with the photo reaction rates
@@ -847,6 +842,23 @@ inline void lookup_cool_rates1d(
       kph_buf[PhotoRxnLUT::k29][i] = my_uvb_rates.k29;
       kph_buf[PhotoRxnLUT::k30][i] = my_uvb_rates.k30;
       // k31 is handled separately
+
+      // metal photo-ionization/photo-dissociation rates. Each buffer holds
+      // the total rate: the UV background part set here plus the
+      // radiative-transfer part folded in further below. Only the O I
+      // background rate is self-shielded (in apply_misc_shield_factors):
+      // O I ionization (13.62 eV) uses the same photons as H I, while C I
+      // ionization (11.26 eV) and the CO (11.2-13.6 eV), OH (4.44 eV) and
+      // H2O (5.12 eV) dissociations sit below the Lyman limit, where the
+      // gas is transparent.
+      kph_buf[PhotoRxnLUT::kphCI][i] = my_uvb_rates.kphCI_bg;
+      kph_buf[PhotoRxnLUT::kphOI][i] = my_uvb_rates.kphOI_bg;
+      kph_buf[PhotoRxnLUT::kdissCO][i] = my_uvb_rates.kdissCO_bg;
+      kph_buf[PhotoRxnLUT::kdissOH][i] = my_uvb_rates.kdissOH_bg;
+      // TODO: the Leiden H2O cross section has two dissociation branches
+      // (H2O -> OH + H and H2O -> O + H2/2H). The table stores the total
+      // and grackle only implements the OH + H channel; revisit this.
+      kph_buf[PhotoRxnLUT::kdissH2O][i] = my_uvb_rates.kdissH2O_bg;
     }
   }
 
@@ -865,6 +877,52 @@ inline void lookup_cool_rates1d(
     apply_misc_shield_factors(kph_buf, idx_range, itmask,
                               my_chemistry->self_shielding_method, my_uvb_rates,
                               &calculator);
+  }
+
+  // add the radiative-transfer rates for metal species to the background
+  // rates (after shielding, which only applies to the background)
+  if ((my_chemistry->use_radiative_transfer == 1) &&
+      (my_chemistry->metal_chemistry == 1)) {
+    if (my_chemistry->radiative_transfer_metal_ionization > 0) {
+      FortranView<const gr_float***> kphCI(
+          my_fields->RT_CI_ionization_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      FortranView<const gr_float***> kphOI(
+          my_fields->RT_OI_ionization_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          kph_buf[PhotoRxnLUT::kphCI][i] = kph_buf[PhotoRxnLUT::kphCI][i] +
+                                           kphCI(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kphOI][i] = kph_buf[PhotoRxnLUT::kphOI][i] +
+                                           kphOI(i, idx_range.j, idx_range.k);
+        }
+      }
+    }
+    if (my_chemistry->radiative_transfer_metal_dissociation > 0) {
+      FortranView<const gr_float***> kdissCO(
+          my_fields->RT_CO_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      FortranView<const gr_float***> kdissOH(
+          my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      FortranView<const gr_float***> kdissH2O(
+          my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          kph_buf[PhotoRxnLUT::kdissCO][i] =
+              kph_buf[PhotoRxnLUT::kdissCO][i] +
+              kdissCO(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kdissOH][i] =
+              kph_buf[PhotoRxnLUT::kdissOH][i] +
+              kdissOH(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kdissH2O][i] =
+              kph_buf[PhotoRxnLUT::kdissH2O][i] +
+              kdissH2O(i, idx_range.j, idx_range.k);
+        }
+      }
+    }
   }
 
 #ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED

@@ -115,7 +115,29 @@ inline void dust_related_props(
         my_fields->dust_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-    if (my_chemistry->use_dust_density_field == 1) {
+    if (my_chemistry->dust_chemistry == 2) {
+      // Add up all dust mass densities
+      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        dust2gas[i] = 0.0;
+      }
+
+      const GrainSpeciesInfo* grain_species_info =
+          my_rates->opaque_storage->grain_species_info;
+      for (int grsp_i = 0; grsp_i < grain_species_info->n_species(); grsp_i++) {
+        const GrainSpeciesInfoEntry& cur_grsp_info =
+            grain_species_info->species_info()[grsp_i];
+        const gr_float* grsp_density =
+            sp_densities.contig1d_ptr(cur_grsp_info.species_idx);
+
+        for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+          dust2gas[i] += grsp_density[i];
+        }
+      }
+
+      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
+        dust2gas[i] /= d(i, idx_range.j, idx_range.k);
+      }
+    } else if (my_chemistry->use_dust_density_field == 1) {
       for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
         // REMINDER: use of `itmask` over `itmask_metal` is
         //   currently required by Photo-electric heating

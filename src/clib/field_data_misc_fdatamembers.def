@@ -65,7 +65,6 @@ ENTRY(H2_custom_shielding_factor)
   // use_isrf_field = 1
 ENTRY(isrf_habing)
 
-  // use_multiple_dust_temperatures = 1
 ENTRY(SiM_dust_temperature)
 ENTRY(FeM_dust_temperature)
 ENTRY(Mg2SiO4_dust_temperature)

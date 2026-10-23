@@ -1,3 +1,5 @@
+from libc.stdint cimport int64_t
+
 cdef extern from "grackle.h":
 
     # This does not need to be exactly correct, only of the right basic type
@@ -127,17 +129,17 @@ cdef extern from "grackle.h":
       gr_float *HeHII_density;
       gr_float *CI_density;
       gr_float *CII_density;
-      gr_float *CO_density;
-      gr_float *CO2_density;
+      gr_float *COI_density;
+      gr_float *CO2I_density;
       gr_float *OI_density;
-      gr_float *OH_density;
-      gr_float *H2O_density;
-      gr_float *O2_density;
+      gr_float *OHI_density;
+      gr_float *H2OI_density;
+      gr_float *O2I_density;
       gr_float *SiI_density;
       gr_float *SiOI_density;
       gr_float *SiO2I_density;
-      gr_float *CH_density;
-      gr_float *CH2_density;
+      gr_float *CHI_density;
+      gr_float *CH2I_density;
       gr_float *COII_density;
       gr_float *OII_density;
       gr_float *OHII_density;
@@ -331,7 +333,7 @@ cdef extern from "grackle.h":
         const c_chemistry_data_storage* my_rates,
         grunstable_rateid_type rate_id,
         grunstable_ratequery_prop_kind prop_kind,
-        long long* ptr)
+        int64_t* ptr)
 
     const char* grunstable_ith_rate(
         const c_chemistry_data_storage* my_rates,

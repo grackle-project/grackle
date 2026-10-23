@@ -24,6 +24,7 @@
   #error "it is an error for GRIMPL_PUBLIC_INCLUDE to be defined"
 #endif /* GRIMPL_PUBLIC_INCLUDE */
 
+#include <stdint.h>
 
 // include the private headers
 #include "grackle_types.h"
@@ -387,7 +388,7 @@ enum grunstable_ratequery_prop_kind {
 int grunstable_ratequery_prop(const chemistry_data_storage* my_rates,
                               grunstable_rateid_type rate_id,
                               enum grunstable_ratequery_prop_kind prop_kind,
-                              long long* ptr);
+                              int64_t* ptr);
 
 /// Query the name (and optionally the rate_id) of the ith registered rate
 ///

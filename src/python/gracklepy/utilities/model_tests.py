@@ -39,7 +39,6 @@ _parameter_exclude = (
     {"metal_chemistry": 1, "primordial_chemistry": 1},
     {"metal_chemistry": 1, "metal_cooling": 0},
     {"grackle_data_file": "CloudyData_noUVB.h5", "UVbackground": 1},
-    {"dust_species": 0, "use_multiple_dust_temperatures": 1},
     {"primordial_chemistry": 0, "dust_recombination_cooling": 1},
 )
 
@@ -326,7 +325,6 @@ _model_test_grids = \
                 "variants": \
                 {
                     "dust_species": (1,),
-                    "use_multiple_dust_temperatures": (0, 1),
                     "multi_metals": (1,),
                 }
             },

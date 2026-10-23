@@ -90,27 +90,15 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
   FortranView<gr_float***> OI(
       my_fields->OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OH(
-      my_fields->OH_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> OHI(
+      my_fields->OHI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2O(
-      my_fields->H2O_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> H2OI(
+      my_fields->H2OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   FortranView<gr_float***> kdissHDI(
       my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> kphCI(
-      my_fields->RT_CI_ionization_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> kphOI(
-      my_fields->RT_OI_ionization_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> kdissOH(
-      my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> kdissH2O(
-      my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // locals
@@ -299,28 +287,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
              kph_buf[PhotoRxnLUT::k26][i] * HeI(i, idx_range.j, idx_range.k) /
                  4.);
 
-        // HII, HeII, HeIII recombination heating
-
-        edot[i] = edot[i] -
-                  chunit * (13.6 * (kcol_buf[CollisionalRxnLUT::k1][i] *
-                                        HI(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k) -
-                                    kcol_buf[CollisionalRxnLUT::k2][i] *
-                                        HII(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k)) +
-                            24.6 * (kcol_buf[CollisionalRxnLUT::k3][i] *
-                                        HeI(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k) / 4. -
-                                    kcol_buf[CollisionalRxnLUT::k4][i] *
-                                        HeII(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k) / 4.) +
-                            79.0 * (kcol_buf[CollisionalRxnLUT::k5][i] *
-                                        HeII(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k) / 4. -
-                                    kcol_buf[CollisionalRxnLUT::k6][i] *
-                                        HeIII(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k) / 4.));
-
         // H2 formation heating
 
         // Equation 23 from Omukai (2000)
@@ -409,28 +375,24 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
         }
       }
     }
-    if ((my_chemistry->metal_chemistry > 0) &&
-        (my_chemistry->radiative_transfer_metal_ionization > 0)) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          dedot[i] = dedot[i] +
-                     kphCI(i, idx_range.j, idx_range.k) *
-                         CI(i, idx_range.j, idx_range.k) / 12.0 +
-                     kphOI(i, idx_range.j, idx_range.k) *
-                         OI(i, idx_range.j, idx_range.k) / 16.0;
-        }
-      }
-    }
-    if ((my_chemistry->metal_chemistry > 0) &&
-        (my_chemistry->radiative_transfer_metal_dissociation > 0)) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          HIdot[i] = HIdot[i] +
-                     kdissOH(i, idx_range.j, idx_range.k) *
-                         OH(i, idx_range.j, idx_range.k) / 17.0 +
-                     kdissH2O(i, idx_range.j, idx_range.k) *
-                         H2O(i, idx_range.j, idx_range.k) / 18.0;
-        }
+  }
+
+  // Add photo-ionization/photo-dissociation of metal species (UV background
+  // + radiative transfer)
+
+  if (my_chemistry->metal_chemistry > 0) {
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        dedot[i] = dedot[i] +
+                   kph_buf[PhotoRxnLUT::kphCI][i] *
+                       CI(i, idx_range.j, idx_range.k) / 12.0 +
+                   kph_buf[PhotoRxnLUT::kphOI][i] *
+                       OI(i, idx_range.j, idx_range.k) / 16.0;
+        HIdot[i] = HIdot[i] +
+                   kph_buf[PhotoRxnLUT::kdissOH][i] *
+                       OHI(i, idx_range.j, idx_range.k) / 17.0 +
+                   kph_buf[PhotoRxnLUT::kdissH2O][i] *
+                       H2OI(i, idx_range.j, idx_range.k) / 18.0;
       }
     }
   }

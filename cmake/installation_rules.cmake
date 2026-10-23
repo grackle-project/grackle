@@ -19,7 +19,7 @@
 #
 # For the sake of the conversation, let's imagine that the we are using `ld`
 # for linking together object files and the minimal set of "linker flags" for
-# Grackle's dependencies are: `-lhdf5 -lm -lgfortran`
+# Grackle's dependencies are: `-lhdf5 -lc++` or `-lhdf5 -lstdc++`
 #
 # We can now consider the 3 main scenarios:
 #
@@ -27,7 +27,7 @@
 #    dependencies (or there are no potential version incompatabilites) AND they
 #    are all installed in the standard-system-locations.
 #
-#    - In this case, we can use `-lhdf5 -lm -lgfortran` as flags. `ld` will be
+#    - In this case, we can use `-lhdf5 -lstdc++` as flags. `ld` will be
 #      able to find each library at compile time, and the operating system's
 #      "dynamic linker" will be able to locate each dependency at runtime
 #
@@ -142,32 +142,44 @@ install(TARGETS Grackle_Grackle
 )
 
 if (BUILD_SHARED_LIBS)
-  # (As noted above) Because we renamed the shared library so its called
-  # `libgrackle-{VERSION_NUM}.so` (rather than `libgrackle.so`), we need an
-  # install-rule to make a symlink called libgrackle.so to support compilation
-  # with `-lgrackle`. (This is consistent with the classic build-system)
-  install(CODE "
-    set(_prefix \"${CMAKE_INSTALL_PREFIX}\")
-    if(DEFINED ENV{DESTDIR})
-      message(WARNING
-        \"linking to libgrackle.so (during install) is untested with DESTDIR\")
-      set(_prefix \"\$ENV{DESTDIR}\")
-    elseif(NOT IS_ABSOLUTE \${CMAKE_INSTALL_PREFIX})
-      # install probably triggered by `cmake --install <p1> --prefix <p2>`
-      # and <p2> is not an absolute path...
-      get_filename_component(_prefix \${CMAKE_INSTALL_PREFIX} ABSOLUTE)
-    endif()
+  # construct a code snippet that is invoked during installation
+  # -> (As noted above) Because we renamed the shared library so its called
+  #    `libgrackle-{VERSION_NUM}.so` (rather than `libgrackle.so`), we need an
+  #    install-rule to make a symlink called libgrackle.so to support
+  #    compilation with `-lgrackle`.
+  # -> we can stop doing this if we drop the the classic build-system and if we
+  #    commit to ABI stability (the latter requirement may not be necessary)
+  # -> we can't use file(GENERATE ...) with install(SCRIPT ...) because this
+  #    logic uses some generator expressions
+  string(JOIN "\n" _SHARED_LIB_SYMLINK_CODE_SNIPPET
+    # record definition known to the interpretter while assembling snippet
+    "set(_CMAKE_INSTALL_LIBDIR \"${CMAKE_INSTALL_LIBDIR}\")"
 
-    set(_COMMON \"\${_prefix}/${CMAKE_INSTALL_LIBDIR}\")
-    set(_LIB \"\${_COMMON}/$<TARGET_FILE_NAME:Grackle_Grackle>\")
-    set(_LINK \"\${_COMMON}/libgrackle$<TARGET_FILE_SUFFIX:Grackle_Grackle>\")
+    # remaining lines encode the actual logic (the bracket syntax lets us avoid
+    # escaping quotes & escaping eager variable substitution)
+    [==[
+set(_prefix "${CMAKE_INSTALL_PREFIX}")
+if(DEFINED ENV{DESTDIR})
+  message(WARNING
+    "linking to libgrackle.so (during install) is untested with DESTDIR")
+  set(_prefix "$ENV{DESTDIR}")
+elseif(NOT IS_ABSOLUTE ${CMAKE_INSTALL_PREFIX})
+  # install probably triggered by `cmake --install <p1> --prefix <p2>`
+  # and <p2> is not an absolute path...
+  get_filename_component(_prefix ${CMAKE_INSTALL_PREFIX} ABSOLUTE)
+endif()
 
-    message(STATUS \"Creating symlink to \${_LIB} called \${_LINK}\")
+set(_COMMON "${_prefix}/${_CMAKE_INSTALL_LIBDIR}")
+set(_LIB "${_COMMON}/$<TARGET_FILE_NAME:Grackle_Grackle>")
+set(_LINK "${_COMMON}/libgrackle$<TARGET_FILE_SUFFIX:Grackle_Grackle>")
 
-    execute_process(COMMAND
-      ${CMAKE_COMMAND} -E create_symlink \${_LIB} \${_LINK}
-    )"
+message(STATUS "Creating symlink to ${_LIB} called ${_LINK}")
+
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${_LIB} ${_LINK})
+    ]==]
   )
+
+  install(CODE "${_SHARED_LIB_SYMLINK_CODE_SNIPPET}")
 endif()
 
 # precompute metadata-file information (to help with linking)
@@ -179,26 +191,18 @@ endif()
 
 if (GRACKLE_USE_OPENMP)
   set(_GRACKLE_OpenMP_LIBS ${OpenMP_C_LIB_NAMES})
-  list(APPEND _GRACKLE_OpenMP_LIBS ${OpenMP_Fortran_LIB_NAMES})
+  list(APPEND _GRACKLE_OpenMP_LIBS ${OpenMP_CXX_LIB_NAMES})
   list(REMOVE_DUPLICATES _GRACKLE_OpenMP_LIBS)
 else()
   set(_GRACKLE_OpenMP_LIBS "")
 endif()
 
-get_implicit_link_reqs(Fortran Fortran_implicit_libs Fortran_implicit_linkdirs)
-set(_TOOLCHAIN_LINK_LIBS ${Fortran_implicit_libs})
+get_implicit_link_reqs(CXX CXX_implicit_libs CXX_implicit_linkdirs)
+list(APPEND _TOOLCHAIN_LINK_LIBS ${CXX_implicit_libs})
 
-# on most unix-like platforms (but not macOS), we need to explicitly link to
-# to the standard library's math functions
-# -> here we determine based on whether our custom toolchain::m target
-#    is a dummy placeholder or not whether to add this target
-get_target_property(toolchain_m_prop toolchain::m IMPORTED_LIBNAME)
-if(${toolchain_m_prop})
-  list(APPEND _TOOLCHAIN_LINK_LIBS m) # explicit c requirement (but may
-                                      # be a duplicate)
-endif()
 
-list(REMOVE_DUPLICATES _TOOLCHAIN_LINK_LIBS)
+# we previously did this, but I'm not sure this is a good idea
+#list(REMOVE_DUPLICATES _TOOLCHAIN_LINK_LIBS)
 
 
 # Define the grackle.pc file
@@ -226,7 +230,7 @@ string(REPLACE
   ";" " " _STATIC_EXTRA_LINK_LIBS "${_STATIC_EXTRA_LINK_LIBS}")
 
 # at the moment, the only extra library search paths that we are specifying is
-# for finding implicit Fortran dependencies
+# for finding implicit C++ dependencies
 # -> this probably isn't adequate on systems where hdf5.pc can't be found
 # -> it may not be adequate on some systems when using OpenMP
 #
@@ -237,9 +241,9 @@ string(REPLACE
 #    -> we effectively assume that libraries are found at run-time in normal
 #       system installation paths. Thus, if a downstream is linked against a
 #       static grackle library it will hopefully keep working even if we
-#       replace our system's Fortran compiler
-#    -> it kinda makes sense to use libraries shipped with the Fortran compiler
-#       for linking. If there are multiple versions of the Fortran runtime, this
+#       replace our system's C++ compiler
+#    -> it kinda makes sense to use libraries shipped with the C++ compiler
+#       for linking. If there are multiple versions of the C++ runtime, this
 #       ensures that the downstream application knows to use the runtime that
 #       is compatible with the original compiler (not sure if this is really
 #       an issue in-practice...). At the same time, our pkg-config file will
@@ -250,16 +254,13 @@ string(REPLACE
 # -> We also aren't very consistent. It turns out on macOS, the linker uses the
 #    link-time locations at runtime as well. This is equivalent to us also
 #    specifying -rpath with absolute-paths on most systems.
-#    -> it turns out that this works to our advantage right now because
-#       libgfortran isn't at a system install-path... it is only attached to
-#       the version of libgfortran shipped with the compiler
-#    -> this does mean that an installation could break if you remove/replace
-#       your fortran compiler. We could potentially reduce the chance of
-#       breakage during gfortran upgrades by replacing the -L path to make use
-#       of the symlink at /opt/homebrew/lib/gcc/...
+#    -> this may work to our advantage if someone tries to compile against a
+#       a C++ runtime library other than the one at a system install-path
+#       (presumably it would be attached to a runtime library shipped with a
+#       compiler)
 
 
-set(_STATIC_EXTRA_LINK_DIRS ${Fortran_implicit_linkdirs})
+set(_STATIC_EXTRA_LINK_DIRS ${CXX_implicit_linkdirs})
 list(TRANSFORM _STATIC_EXTRA_LINK_DIRS PREPEND "-L")
 string(REPLACE
   ";" " " _STATIC_EXTRA_LINK_DIRS "${_STATIC_EXTRA_LINK_DIRS}")
@@ -272,8 +273,10 @@ include(TargetInfoProps)
 get_info_properties_export_str(Grackle_Grackle
   PKG_CONFIG _GRACKLE_PC_INFO_PROPERTIES)
 
+set(INSTALL_EXTRAS_DIR "${CMAKE_CURRENT_BINARY_DIR}/grackle-install-extras")
+set(INSTALL_METADATA_DIR "${INSTALL_EXTRAS_DIR}/metadata")
+set(INSTALL_SCRIPTS_DIR "${INSTALL_EXTRAS_DIR}/scripts")
 
-set(INSTALL_METADATA_DIR "${CMAKE_CURRENT_BINARY_DIR}/install-metadata") 
 
 foreach(suffix IN ITEMS "conventional.pc" "static.pc")
   set(_extra_arg "")
@@ -291,39 +294,53 @@ endforeach()
 
 if (BUILD_SHARED_LIBS)
   install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/grackle-conventional.pc
+    ${INSTALL_METADATA_DIR}/grackle-conventional.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     RENAME grackle.pc)
 else()
-  # if shared library was previously installed, install grackle-conventional.pc
-  # as grackle.pc. Otherwise, install grackle-static.pc as grackle.pc
-  install(CODE "
-    set(_prefix \"${CMAKE_INSTALL_PREFIX}\")
-    if(DEFINED ENV{DESTDIR})
-      message(WARNING
-        \"linking to libgrackle.so (during install) is untested with DESTDIR\")
-      set(_prefix \"\$ENV{DESTDIR}\")
-    elseif(NOT IS_ABSOLUTE \${CMAKE_INSTALL_PREFIX})
-      # install probably triggered by `cmake --install <p1> --prefix <p2>`
-      # and <p2> is not an absolute path...
-      get_filename_component(_prefix \${CMAKE_INSTALL_PREFIX} ABSOLUTE)
-    endif()
+  # construct a code snippet that is invoked during installation
+  # -> if shared library was previously installed, install
+  #    grackle-conventional.pc as grackle.pc
+  # -> Otherwise, install grackle-static.pc as grackle.pc
+  set(_INSTALL_PC_TEMPLATE [==[
+set(_INSTALL_METADATA_DIR "@INSTALL_METADATA_DIR@")
+set(_CMAKE_INSTALL_LIBDIR "@CMAKE_INSTALL_LIBDIR@")
 
-    set(_COMMON \"\${_prefix}/${CMAKE_INSTALL_LIBDIR}\")
-    set(_PCDIR \"\${_COMMON}/pkgconfig\")
-    set(_DEST \"\${_PCDIR}/grackle.pc\")
-    if ((EXISTS \"\${_COMMON}/libgrackle.so\") OR
-        (EXISTS \"\${_COMMON}/libgrackle.dylib\"))
-      set(_SRC \"${INSTALL_METADATA_DIR}/grackle-conventional.pc\")
-      file(REMOVE \${_DEST})
-    else()
-      set(_SRC \"${INSTALL_METADATA_DIR}/grackle-static.pc\")
-    endif()
+set(_prefix "${CMAKE_INSTALL_PREFIX}")
+if(DEFINED ENV{DESTDIR})
+  message(WARNING
+    "linking to libgrackle.so (during install) is untested with DESTDIR")
+  set(_prefix "$ENV{DESTDIR}")
+elseif(NOT IS_ABSOLUTE ${CMAKE_INSTALL_PREFIX})
+  # install probably triggered by `cmake --install <p1> --prefix <p2>`
+  # and <p2> is not an absolute path...
+  get_filename_component(_prefix ${CMAKE_INSTALL_PREFIX} ABSOLUTE)
+endif()
 
-    message(STATUS \"Copying \${_SRC} to \${_DEST}\")
+set(_COMMON "${_prefix}/${_CMAKE_INSTALL_LIBDIR}")
+set(_PCDIR "${_COMMON}/pkgconfig")
+set(_DEST "${_PCDIR}/grackle.pc")
+if ((EXISTS "${_COMMON}/libgrackle.so") OR
+    (EXISTS "${_COMMON}/libgrackle.dylib"))
+  set(_SRC "${_INSTALL_METADATA_DIR}/grackle-conventional.pc")
+  file(REMOVE ${_DEST})
+else()
+  set(_SRC "${_INSTALL_METADATA_DIR}/grackle-static.pc")
+endif()
 
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy \${_SRC} \${_DEST})"
+message(STATUS "Copying ${_SRC} to ${_DEST}")
+
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${_SRC} ${_DEST})
+]==])
+
+  set(_INSTALL_PC_SCRIPT "${INSTALL_SCRIPTS_DIR}/install-grackle-pc.cmake")
+
+  file(CONFIGURE
+    OUTPUT ${_INSTALL_PC_SCRIPT}
+    CONTENT ${_INSTALL_PC_TEMPLATE}
+    @ONLY
   )
+  install(SCRIPT "${_INSTALL_PC_SCRIPT}")
 endif()
 
 # Define the cmake Package Config File
@@ -350,7 +367,7 @@ include(CMakePackageConfigHelpers)
 # installations on your machine. If someone is doing that, we can assume they
 # have some level of expertise. So let's just go with SameMajorVersion
 write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfigVersion.cmake"
+  "${INSTALL_METADATA_DIR}/GrackleConfigVersion.cmake"
   VERSION "${Grackle_VERSION}" # <- variable was set by project(Grackle ...)
   COMPATIBILITY SameMajorVersion
 )
@@ -364,13 +381,13 @@ get_info_properties_export_str(Grackle_Grackle
     CMAKE_CONFIG _GRACKLE_INFO_PROPERTIES)
 configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/GrackleConfig.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfig.cmake
+  ${INSTALL_METADATA_DIR}/GrackleConfig.cmake
   @ONLY
 )
 
 install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfig.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfigVersion.cmake
+  ${INSTALL_METADATA_DIR}/GrackleConfig.cmake
+  ${INSTALL_METADATA_DIR}/GrackleConfigVersion.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Grackle
 )
 
@@ -397,8 +414,8 @@ install(EXPORT GrackleTargets
 set(BUILDTREE_CMAKE_DIR ${GRACKLE_BUILD_EXPORT_PREFIX_PATH}/cmake/Grackle)
 
 file(COPY
-  ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfig.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfigVersion.cmake
+  ${INSTALL_METADATA_DIR}/GrackleConfig.cmake
+  ${INSTALL_METADATA_DIR}/GrackleConfigVersion.cmake
   DESTINATION ${BUILDTREE_CMAKE_DIR}
 )
 
