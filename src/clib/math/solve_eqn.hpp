@@ -6,19 +6,17 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares the solve_cubic_equation function
+/// Declares logic fo solving equations
 ///
 //===----------------------------------------------------------------------===//
 
-// This file was initially generated automatically during conversion of the
-// solve_cubic_equation function from FORTRAN to C++
-
-#ifndef SOLVE_CUBIC_EQUATION_HPP
-#define SOLVE_CUBIC_EQUATION_HPP
+#ifndef MATH_SOLVE_EQN_HPP
+#define MATH_SOLVE_EQN_HPP
 
 #include "support/config.hpp"  // GRIMPL_NAMESPACE_DECL
 
 namespace GRIMPL_NAMESPACE_DECL {
+namespace solve_eqn {
 
 ///  Find the real root of a cubic equation of the form
 ///   x^3 + a x^2 + b x + c = 0
@@ -31,8 +29,8 @@ namespace GRIMPL_NAMESPACE_DECL {
 ///
 /// @par History
 /// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
-int solve_cubic_equation_cpp(double a, double b, double c, double& root);
-
+int cubic_eqn_root(double a, double b, double c, double& root);
+}  // namespace solve_eqn
 }  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* SOLVE_CUBIC_EQUATION_HPP */
+#endif /* MATH_SOLVE_EQN_HPP */
