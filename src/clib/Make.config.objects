@@ -20,6 +20,7 @@ OBJS_CONFIG_LIB = \
         api/solve_chemistry.lo \
         tabulated/calc_temp1d_cloudy.lo \
         chem_model/nuclide_model.lo \
+        chem_model/parse.lo \
         collisional_rate_props.lo \
         tabulated/cool1d_cloudy.lo \
         tabulated/cool1d_cloudy_old_tables.lo \
