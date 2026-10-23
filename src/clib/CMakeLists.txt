@@ -93,7 +93,9 @@ add_library(Grackle_Grackle
   api/solve_chemistry.cpp
   api/units.cpp
   ceiling_species.hpp
+  chem_model/chemsp_props.cpp chem_model/chemsp_props.hpp
   chem_model/nuclide_model.cpp chem_model/nuclide_model.hpp
+  chem_model/parse.cpp chem_model/parse.hpp
   cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
@@ -152,6 +154,7 @@ add_library(Grackle_Grackle
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
   support/index_helper.hpp
+  support/inplace_vector.hpp
   support/PartMap.hpp
   support/status_reporting.cpp support/status_reporting.hpp
   support/View.hpp
