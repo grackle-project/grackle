@@ -13,14 +13,12 @@
 // This file was initially generated automatically during conversion of the
 // calc_tdust_1d_g function from FORTRAN to C++
 
-#include <cstdio>
 #include <vector>
 
 #include "dust/multi_grain_species/opac_calculator.hpp"
 #include "dust/passive/analytic_opac.hpp"
-#include "grackle.h"
 #include "fortran_func_decls.h"
-#include "phys_constants.hpp"
+#include "math/solve_eqn.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"
 
@@ -67,231 +65,127 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // temperature. The root finding hunts for the dust temperature where the
   // grain's heating and cooling are balanced (we are also interested in
   // returning the associated opacity).
-  // -> in the future, we probably want to refactor calc_gr_balance_g so that
-  //    we can compute opacity and energy balance at the same time
-  // -> in that scenario, we may not want to actually include the for-loop in
-  //    this function, to help us try to minimize the number of temporary
-  //    buffers we use.
-  // -> we should also think about directly computing analytic derivatives.
-  //    This shouldn't be too hard and would significantly improve the
-  //    robustness (and speed) of the newton solver pass
-  auto fn = [&](const double* Tdust, double* kgr, double* sol,
-                const gr_mask_type* itmask, IndexRange idx_range) {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        kgr[i] = calculator.calc_opac(Tdust[i], i);
-        sol[i] = Tdust_detail::calc_grain_balance(
-            Tdust[i], tgas[i], kgr[i], Trad4, gasgr[i], gamma_isrf[i], nh[i]);
-      }
-    }
+  // -> we should think about directly computing analytic derivatives. This
+  //    shouldn't be too hard and would significantly improve the robustness
+  //    (and speed) of the newton solver pass
+  auto fn = [&](double Tdust, int i) -> double {
+    double kgr = calculator.calc_opac(Tdust, i);
+    double sol = Tdust_detail::calc_grain_balance(
+        Tdust, tgas[i], kgr, Trad4, gasgr[i], gamma_isrf[i], nh[i]);
+    return sol;
   };
 
   // grain opacity from Omukai (2000, equation 17) normalized by
   // the local dust-to-gas ratio, which in this work is 0.934e-2.
   const double kgr1 = 4.0e-4 / 0.00934;
 
-  const double tol = 1.e-5;
   const double bi_tol = 1.e-3;
-  const double minpert = 1.e-10;
   const int itmax = 50;
   const int bi_itmax = 30;
 
-  // Locals
+  const solve_eqn::FDiffNewtonParams newton_params{.maxiter = itmax,
+                                                   .perturb_init = 1.e-3,
+                                                   .perturb_min = 1.e-10,
+                                                   .tol = 1.e-5};
 
-  int iter, c_done, c_total, nm_done;
-
-  // Slice Locals
-
-  std::vector<double> kgrplus(buf_len);
   std::vector<double> sol(buf_len);
-  std::vector<double> solplus(buf_len);
-  // holds dust temperature guess from the last root-finding iteration
-  std::vector<double> tdustold(buf_len);
   // holds dust temperature guess for the current root-finding iteration
   std::vector<double> tdustnow(buf_len);
-  // holds a value offset from the current dust temperature (tdustnow)
-  // it is used to get a finite difference estimate for the derivative
-  std::vector<double> tdplus(buf_len);
   // relative finite difference step size
   std::vector<double> pert(buf_len);
-  std::vector<double> bi_t_mid(buf_len);
   std::vector<double> bi_t_high(buf_len);
-  // iteration mask specifies where we use newton's method with finite
-  // differences
-  std::vector<gr_mask_type> nm_itmask(buf_len);
-  // iteration mask specifies where we use bisection
-  std::vector<gr_mask_type> bi_itmask(buf_len);
 
-  double pert_i = 1.e-3;
+  // specifies the status of each index (a solver skips a calculation if an
+  // index corresponds to SolveStatus::CONVERGED)
+  std::vector<solve_eqn::SolveStatus> solvemask(
+      buf_len, solve_eqn::SolveStatus::CONVERGED);
 
-  // Set total cells for calculation
-
-  c_done = 0;
-  nm_done = 0;
-  c_total = idx_range.i_stop - idx_range.i_start;
-
-  // Set local iteration mask and initial guess
-
+  // setup solvemask for use with newton-raphson and set initial guess
+  bool at_least_one_bisection = false;
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    nm_itmask[i] = itmask[i];
-    bi_itmask[i] = itmask[i];
-    if (nm_itmask[i] != MASK_FALSE) {
+    if (itmask[i] != MASK_FALSE) {
       if (Trad >= tgas[i]) {
         tdustnow[i] = Trad;
-        nm_itmask[i] = MASK_FALSE;
-        bi_itmask[i] = MASK_FALSE;
-        c_done = c_done + 1;
-        nm_done = nm_done + 1;
+        solvemask[i] = solve_eqn::SolveStatus::CONVERGED;
       } else if (tgas[i] > passive_dust_model_T_sublimation) {
-        // Use bisection if T_gas > grain sublimation temperature.
-        nm_itmask[i] = MASK_FALSE;
-        nm_done = nm_done + 1;
+        // we'll be skipping the newton method if T_gas exceeds grain
+        // sublimation temperature (we'll wait to solve for Tdust until we
+        // we use the bisection method)
+        solvemask[i] = solve_eqn::SolveStatus::SKIP_SOLVE;
+        at_least_one_bisection = true;
       } else {
-        // we the following is a guess based on the premise that cooling from
+        // the following is a guess based on the premise that cooling from
         // thermal radiation is balanced by heating from the interstellar
         // radiation field.
         // -> The constants assume that we are using the classic passive dust
         //    model with Tgrain < 200 Kelvin
-        // -> striclty speaking, the exponent should be 1/6
+        // -> strictly speaking, the exponent should be 1/6
         double isrf_balance_guess = std::pow(
             (gamma_isrf[i] / Tdust_detail::sigma_sb_times_4 / kgr1), 0.17);
         tdustnow[i] = std::fmax(Trad, isrf_balance_guess);
-        pert[i] = pert_i;
+        solvemask[i] = solve_eqn::SolveStatus::UNCONVERGED;
       }
 
     } else {
-      c_done = c_done + 1;
-      nm_done = nm_done + 1;
+      solvemask[i] = solve_eqn::SolveStatus::CONVERGED;
     }
   }
 
-  // Iterate to convergence with Newton's method
+  {  // perform newton's method
+    double* x = tdustnow.data();
+    double max_x = 3000.0;
+    // below this x value, we give up!
+    double giveup_small_x_threshold = Trad;
 
-  for (iter = 1; iter <= (itmax); iter++) {
-    // Loop over slice
+    double* f_vals = sol.data();
 
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (nm_itmask[i] != MASK_FALSE) {
-        tdplus[i] = std::fmax(1.e-3, ((1. + pert[i]) * tdustnow[i]));
-      }
-    }
-
-    // Calculate grain opacities AND heating/cooling balance
-    fn(tdustnow.data(), kgr, sol.data(), nm_itmask.data(), idx_range);
-    fn(tdplus.data(), kgrplus.data(), solplus.data(), nm_itmask.data(),
-       idx_range);
-
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (nm_itmask[i] != MASK_FALSE) {
-        // Check if the solution has converged (if not prepare the next guess)
-
-        auto slope = (solplus[i] - sol[i]) / (pert[i] * tdustnow[i]);
-
-        tdustold[i] = tdustnow[i];
-        // tdustnow(i) = tdustnow(i) - (sol(i) / slope)
-        tdustnow[i] = std::fmin(tdustnow[i] - (sol[i] / slope), 3e3);
-
-        pert[i] = std::fmax(
-            std::fmin(pert[i], (0.5 * std::fabs(tdustnow[i] - tdustold[i]) /
-                                tdustnow[i])),
-            minpert);
-
-        // If negative solution calculated, give up and wait for bisection step.
-        if (tdustnow[i] < Trad) {
-          nm_itmask[i] = MASK_FALSE;
-          nm_done = nm_done + 1;
-          // Check for convergence of solution
-        } else if (std::fabs(sol[i] / solplus[i]) < tol) {
-          nm_itmask[i] = MASK_FALSE;
-          c_done = c_done + 1;
-          bi_itmask[i] = MASK_FALSE;
-          nm_done = nm_done + 1;
-        }
-
-        // if ( nm_itmask(i) )
-      }
-
-      // End loop over slice
-    }
-
-    // Check for all cells converged
-    if (c_done >= c_total) {
-      break;
-    }
-
-    // Check for all cells done with Newton method
-    // This includes attempts where a negative solution was found
-    if (nm_done >= c_total) {
-      break;
-    }
-
-    // End iteration loop for Newton's method
+    solve_eqn::EqnSolveRslt rslt = unchecked_posdomain_fdiff_newton(
+        fn, x, solvemask.data(), f_vals, pert.data(), idx_range.i_start,
+        idx_range.i_stop, newton_params, giveup_small_x_threshold, max_x);
+    at_least_one_bisection = at_least_one_bisection || !rslt.all_solved;
   }
 
-  // If iteration count exceeded, try once more with bisection
-  if (c_done < c_total) {
-    for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-      if (bi_itmask[i] != MASK_FALSE) {
+  if (at_least_one_bisection) {
+    // set initial guesses solvemask for bisection
+    //
+    // There's an implicit assumption here that
+    // - fn(tdustnow[i], i).f_val > 0
+    // - fn(bi_t_high[i], i).f_val < 0
+    //
+    // We may want to check that assumption is indeed correct. While its
+    // unlikely to be false, the iteration will fail silently (with an
+    // absolute garbage result) on the off chance that it comes up
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (solvemask[i] == solve_eqn::SolveStatus::CONVERGED) {
+        solvemask[i] = solve_eqn::SolveStatus::CONVERGED;
+      } else {  // we want SolveStatus::UNCONVERGED and SolveStatus::SKIP_SOLVE
+        solvemask[i] = solve_eqn::SolveStatus::UNCONVERGED;
         tdustnow[i] = Trad;
         // bi_t_high(i) = tgas(i)
         bi_t_high[i] = 3e3;
       }
     }
 
-    for (iter = 1; iter <= (bi_itmax); iter++) {
-      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (bi_itmask[i] != MASK_FALSE) {
-          bi_t_mid[i] = 0.5 * (tdustnow[i] + bi_t_high[i]);
-          if (iter == 1) {
-            bi_t_mid[i] =
-                std::fmin(bi_t_mid[i], passive_dust_model_T_sublimation);
-          }
-        }
-      }
-
-      fn(bi_t_mid.data(), kgr, sol.data(), bi_itmask.data(), idx_range);
-
-      for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (bi_itmask[i] != MASK_FALSE) {
-          if (sol[i] > 0.) {
-            tdustnow[i] = bi_t_mid[i];
-          } else {
-            bi_t_high[i] = bi_t_mid[i];
-          }
-
-          if ((std::fabs(bi_t_high[i] - tdustnow[i]) / tdustnow[i]) <= bi_tol) {
-            bi_itmask[i] = MASK_FALSE;
-            c_done = c_done + 1;
-          }
-
-          // Check for all cells converged
-          if (c_done >= c_total) {
-            break;
-          }
-
-          // if ( bi_itmask(i) )
-        }
-
-        // End loop over slice
-      }
-
-      if (c_done >= c_total) {
-        break;
-      }
-      // End iteration loop for bisection
-    }
+    double max_initial_guess = passive_dust_model_T_sublimation;
+    int iter =
+        unchecked_bisect(fn, tdustnow.data(), bi_t_high.data(),
+                         solvemask.data(), idx_range.i_start, idx_range.i_stop,
+                         bi_tol, bi_itmax, max_initial_guess)
+            .iterations;
 
     // If iteration count exceeded with bisection, end of the line.
-    if (iter > itmax) {
+    if (iter > bi_itmax) {
+      int n_unconverged = 0;
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        n_unconverged += (solvemask[i] != solve_eqn::SolveStatus::CONVERGED);
+      }
       OMP_PRAGMA_CRITICAL {
         eprintf(
             "CALC_TDUST_1D_G failed to converge after %d iterations for %d "
             "cells.\n",
-            iter, (c_total - c_done));
+            iter, n_unconverged);
       }
     }
-
-    // if (iter .gt. itmax) then
   }
 
   // Copy values back to thrown slice
@@ -310,6 +204,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       }
 
       tdust[i] = tdustnow[i];
+      kgr[i] = calculator.calc_opac(tdust[i], i);
     }
   }
 
