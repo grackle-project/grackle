@@ -213,6 +213,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       }
 
       tdust[i] = tdustnow[i];
+      kgr[i] = calculator.calc_opac(tdust[i], i);
     }
   }
 
