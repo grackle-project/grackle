@@ -19,7 +19,7 @@
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "grackle.h"
 #include "internal_types.hpp"
-#include "math/misc.hpp"  // GRIMPL_NS::clamp
+#include "math/misc.hpp"  // GRIMPL_NS::clamp, GRIMPL_NS::fclamp
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
 #include "visitor/common.hpp"
@@ -127,7 +127,7 @@ template <class UnaryFn>
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       logTlininterp_buf.logtem[i] = std::log(get_T_fn(i));
-      logTlininterp_buf.logtem[i] = GRIMPL_NS::clamp(
+      logTlininterp_buf.logtem[i] = GRIMPL_NS::fclamp(
           logTlininterp_buf.logtem[i], logtem_start, logtem_end);
 
       // Find the corresponding index and precompute interpolation values

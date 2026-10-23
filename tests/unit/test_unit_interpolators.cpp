@@ -716,7 +716,7 @@ TYPED_TEST(InterpGridTest, BeyondGrid) {
     clamped_coord.rank = grid_rank;
     for (int i = 0; i < grid_rank; i++) {
       clamped_coord.components[i] =
-          GRIMPL_NS::clamp(c[i], ax_extremes[i][0], ax_extremes[i][1]);
+          GRIMPL_NS::fclamp(c[i], ax_extremes[i][0], ax_extremes[i][1]);
     }
 
     // allows a discrepancy of 4 ULPs

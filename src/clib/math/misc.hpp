@@ -51,11 +51,13 @@ inline double fmin(double a, double b, double c, double d) {
 ///@}
 
 ///@{
-/// Implements alternatives to std::clamp that always works with floating point
-/// values
+/// @brief Returns the closest value to the value ``v``, that lies within the
+///     bounded interval [``lo``, ``hi``].
 ///
-/// For context, std::clamp, produces undefined behavior when a NaN is passed
-/// into the function
+/// @todo Consider replacing these functions with ``std::clamp`` in the future.
+///     The main concern with doing so is that the ``<algorithm>`` header
+///     (where ``std::clamp`` is declared) is fairly template-heavy and could
+///     slightly worsen compilation times
 inline int clamp(int v, int lo, int hi) {
   return (v < lo) ? lo : (v > hi) ? hi : v;
 }
@@ -65,10 +67,21 @@ inline long clamp(long v, long lo, long hi) {
 inline long long clamp(long long v, long long lo, long long hi) {
   return (v < lo) ? lo : (v > hi) ? hi : v;
 }
-inline float clamp(float v, float lo, float hi) {
+///@}
+
+///@{
+/// @brief Returns the closest value to the floating point value ``v``, that
+///     lies within the bounded interval [``lo``, ``hi``].
+///
+/// In contrast to ``std::clamp``, this functions provide consistent behvaior
+/// when a NaN is passed into the function.
+/// - For context, passing a NaN to ``std::clamp`` triggers undefined behavior
+/// - in the future, we might want to revist the precise behavior when a NaN
+///   is passed
+inline float fclamp(float v, float lo, float hi) {
   return std::fmax(lo, std::fmin(v, hi));
 }
-inline double clamp(double v, double lo, double hi) {
+inline double fclamp(double v, double lo, double hi) {
   return std::fmax(lo, std::fmin(v, hi));
 }
 ///@}
