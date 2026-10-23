@@ -88,12 +88,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
                                                    .perturb_min = 1.e-10,
                                                    .tol = 1.e-5};
 
-  // Locals
-
-  int iter;
-
-  // Slice Locals
-
   std::vector<double> sol(buf_len);
   // holds dust temperature guess for the current root-finding iteration
   std::vector<double> tdustnow(buf_len);
@@ -137,6 +131,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
   }
 
+  int iter;
   {  // perform newton's method
     double* x = tdustnow.data();
     double max_x = 3000.0;
