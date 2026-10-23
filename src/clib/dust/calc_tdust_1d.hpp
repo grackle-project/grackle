@@ -79,13 +79,35 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
 
 }  // namespace Tdust_detail
 
-/// @brief A helper function that helps implement calc_tdust_1d
+///  Calculate equilibrium dust temperature
 ///
-/// The basic premise is that the particulars of the opacity calculation are
-/// handled by the `OpacCalculator` template argument.
+///  TODO: this docstring, and the docstrings of all helper functions should
+///  EXPLICITLY document how the meaning of arguments change based on
+///  whether we are using the single-field dust model or the
+///  multi-species dust model. The different meaning of each variable
+///  gets VERY confusing
 ///
-/// In the future, we may want to entirely replace @ref calc_tdust_1d with this
-/// function template (if we do that, this will need to be moved to the header)
+/// @param[out] tdust 1D array to hold dust temperatures
+/// @param[in]  tgas 1D array to hold gas temperatures
+/// @param[in]  nh 1D array of hydrogen number densities
+/// @param[in]  gasgr Array of gas-grain heat transfer rates
+/// @param[in]  gamma_isrfa Heating from interstellar radiation field
+/// @param[in]  isrf Interstellar radiation field strength in Habing units
+/// @param[in]  itmask Iteration mask
+/// @param[in]  nominal_Trad CMB ratiation temperature
+/// @param[in]  buf_len Length of the 1D slice
+/// @param[out] kgr Array to hold computed grain opacities
+/// @param[in]  idx_range Index range specifying the portion of the grid to
+///     operate on
+/// @param[in]  calculator Object of template type ``OpacCalcuator`` that
+///     supports a method with the signature given by
+///     ``double OpacCalculator::calc_opac(double tdust, int i) const``.
+///     This method returns the opacity given for the cell in the index range
+///     with an index of ``i`` given a dust temperature ``tdust``
+///
+/// @par History
+/// written by: Britton Smith, 2011
+/// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
 ///
 /// @todo
 /// Consider using a hybrid Newton-Bisection strategy. The section in Numerical
@@ -93,11 +115,11 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
 /// shocked if a hybrid scheme wasn't superior to running pure Newton-Raphson
 /// and then falling back to Bisection.
 template <typename OpacCalculator>
-void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
-                    const double* gasgr, const double* gamma_isrfa,
-                    const double* isrf, const gr_mask_type* itmask,
-                    double nominal_Trad, int buf_len, double* kgr,
-                    IndexRange idx_range, const OpacCalculator& calculator) {
+void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
+                   const double* gasgr, const double* gamma_isrfa,
+                   const double* isrf, const gr_mask_type* itmask,
+                   double nominal_Trad, int buf_len, double* kgr,
+                   IndexRange idx_range, const OpacCalculator& calculator) {
   const double Trad = std::fmax(1., nominal_Trad);
   const double Trad4 = std::pow(Trad, 4);
 
@@ -260,43 +282,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
 
   return;
 }
-
-///  Calculate equilibrium dust temperature
-///
-///  TODO: this docstring, and the docstrings of all helper functions should
-///  EXPLICITLY document how the meaning of arguments change based on
-///  whether we are using the single-field dust model or the
-///  multi-species dust model. The different meaning of each variable
-///  gets VERY confusing
-///
-/// @param[out] tdust 1D array to hold dust temperatures
-/// @param[in]  tgas 1D array to hold gas temperatures
-/// @param[in]  nh 1D array of hydrogen number densities
-/// @param[in]  gasgr Array of gas-grain heat transfer rates
-/// @param[in]  gamma_isrfa Heating from interstellar radiation field
-/// @param[in]  isrf Interstellar radiation field strength in Habing units
-/// @param[in]  itmask Iteration mask
-/// @param[in]  trad CMB ratiation temperature
-/// @param[in]  buf_len Length of the 1D slice
-/// @param[in]  gr_N Number of temperature points in the grain opacity table
-/// @param[in]  gr_dT Temperature spacing of the grain opacity table
-/// @param[in]  gr_Td Temperature values of the grain opacity table
-/// @param[in]  alsp_data_ Grain opacity table data
-/// @param[out] kgr Array to hold computed grain opacities
-/// @param[in]  idspecies indicates whether to use the analytic opactiy formula
-/// @param[in]  idx_range Index range specifying the portion of the grid to
-///     operate on
-///
-/// @par History
-/// written by: Britton Smith, 2011
-/// modified: March, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
-///
-void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
-                   const double* gasgr, const double* gamma_isrfa,
-                   const double* isrf, const gr_mask_type* itmask, double trad,
-                   int buf_len, int gr_N, double gr_dT, const double* gr_Td,
-                   const double* alsp_data_, double* kgr,
-                   bool analytic_opac_formula, IndexRange idx_range);
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 #endif  // DUST_CALC_TDUST_1D_HPP

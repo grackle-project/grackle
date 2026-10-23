@@ -101,9 +101,9 @@ void calc_all_tdust_gasgr_1d(
 
     // Compute dust temperature
     AnalyticOpacCalc calculator(Tdust_detail::passive_dust_model_T_sublimation);
-    calc_tdust_1d_(tdust, tgas, nh, gasgr_tdust, mygisrf.data(), myisrf,
-                   itmask_metal, trad, my_fields->grid_dimension[0], kptot,
-                   idx_range, calculator);
+    calc_tdust_1d(tdust, tgas, nh, gasgr_tdust, mygisrf.data(), myisrf,
+                  itmask_metal, trad, my_fields->grid_dimension[0], kptot,
+                  idx_range, calculator);
   } else {
     // can we reuse gasgr_tdust? Or do we actually need to perform a fresh
     // allocation?
@@ -158,10 +158,10 @@ void calc_all_tdust_gasgr_1d(
                                           log10Tdust_vals,
                                           logalsp_data_.data());
 
-      calc_tdust_1d_(grain_temperatures.data[gsp_idx], tgas, nh,
-                     gasgr_tdust_sp.data(), mygisrf.data(), myisrf,
-                     itmask_metal, trad, buf_len, grain_kappa.data[gsp_idx],
-                     idx_range, calculator);
+      calc_tdust_1d(grain_temperatures.data[gsp_idx], tgas, nh,
+                    gasgr_tdust_sp.data(), mygisrf.data(), myisrf, itmask_metal,
+                    trad, buf_len, grain_kappa.data[gsp_idx], idx_range,
+                    calculator);
     }
   }
 }
