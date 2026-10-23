@@ -7,9 +7,9 @@
 #include "grtestutils/coord_grid.hpp"
 #include "interp_grid.hpp"
 #include "interpolate.hpp"
+#include "math/misc.hpp"  // GRIMPL_NS::clamp
 #include "support/expected.hpp"
 #include "support/status_reporting.hpp"
-#include "utils-cpp.hpp"  // GRIMPL_NS::clamp
 
 
 TEST(InterpolationTest, Interpolate1D) {

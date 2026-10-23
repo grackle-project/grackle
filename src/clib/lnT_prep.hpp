@@ -19,9 +19,9 @@
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "grackle.h"
 #include "internal_types.hpp"
+#include "math/misc.hpp"  // GRIMPL_NS::clamp
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
-#include "utils-cpp.hpp"  // GRIMPL_NS::clamp
 #include "visitor/common.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
