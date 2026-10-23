@@ -15,6 +15,7 @@
 
 #include <cstddef>
 #include "grackle.h"
+#include "chem_model/infer_species.hpp"
 #include "dust/grain_species_info.hpp"
 #include "dust/solver.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -22,6 +23,7 @@
 #include "interp_grid.hpp"
 #include "ratequery.hpp"
 #include "support/config.hpp"
+#include "support/PartMap.hpp"
 
 /// @brief a struct-like class that is used to wrap some private storage details
 ///
@@ -50,6 +52,20 @@
 /// state. The gr_opaque_storage struct can be used to help us gradually
 /// transition towards this case
 struct gr_opaque_storage {
+  /// categorizes the kinds of species evolved in the chemical network,
+  /// see @ref GRIMPL_NS::SpKind for details (about the kinds and how this is
+  /// used)
+  ///
+  /// @note
+  /// At the time of writing, @ref SpLUT is a compound lookup table that
+  /// describes species of all kinds. The goal is to replace all occurrences
+  /// of `SpLUT::<name>`` with a combination of:
+  /// - ``sp_kind_map.part_bounds(SpKind::PRIMORDIAL).start
+  ///   + PrimordialSpLUT::<name>``
+  /// - ``sp_kind_map.part_bounds(SpKind::METAL).start + MetalSpLUT::<name>``
+  /// - ``sp_kind_map.part_bounds(SpKind::DUST).start + DustSpLUT::<name>``
+  GRIMPL_NS::PartMap<GRIMPL_NS::SpKind> sp_kind_map;
+
   // in the future, we may want refactor the following set of members into
   // a separate datatype that takes full responsibility for "normal"
   // collisional rates
