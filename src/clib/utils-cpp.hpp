@@ -119,19 +119,6 @@ void print_contiguous_row_(const T* ptr, int start_idx, int stop_idx) {
   }
 }
 
-
-
-/// Crude implementation of Fortran's
-/// [MOD function](https://gcc.gnu.org/onlinedocs/gfortran/MOD.html)
-///
-/// @note
-/// We currently only implement behavior for positive lengths
-inline int mod(int a, int p) {
-  GRIMPL_REQUIRE((a >= 0) && (p>0),
-      "a must be non-negative and p must be positive");
-  return a % p;
-}
-
 } // namespace GRIMPL_NAMESPACE_DECL
 
 
