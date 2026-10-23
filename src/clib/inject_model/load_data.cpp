@@ -477,15 +477,22 @@ int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
   }
 
   // initialize the grid of dust temperatures associated with the opacity table
-  double log10Tdust_lo = 0.0;
-  double log10Tdust_step = 0.1;
+  {
+    double log10Tdust_lo = 0.0;
+    double log10Tdust_step = 0.1;
 
-  InterpDimScale dim_scale =
-      InterpDimScale::Linear(n_log10Tdust_vals, log10Tdust_lo, log10Tdust_step);
-  inject_pathway_props->log10Tdust_interp_props =
-      InterpGridProps(1, &dim_scale);
-  if (!inject_pathway_props->log10Tdust_interp_props) {
-    return GR_FAIL;
+    InterpDimScale dim_scale = InterpDimScale::Linear(
+        n_log10Tdust_vals, log10Tdust_lo, log10Tdust_step);
+    Expected<InterpGridProps, Error> interp_props_rslt =
+        InterpGridProps::create(1, &dim_scale);
+    if (!interp_props_rslt.has_value()) {
+      Error err = interp_props_rslt.error().context_literal(
+          "problem initializing opacity table's dust temperature grid");
+      err.write(stderr);
+      return GR_FAIL;
+    }
+    inject_pathway_props->log10Tdust_interp_props =
+        std::move(interp_props_rslt).value();
   }
 
   // zero-out all metal injection yield fractions and dust grain properties
