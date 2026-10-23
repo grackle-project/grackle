@@ -44,36 +44,10 @@ void calc_all_tdust_gasgr_1d(
   int i;
 
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
-
-  int n_grain_species = 0;
-  if (!single_species_dust_model) {
-    GrainSpeciesInfo* gsp_info = my_rates->opaque_storage->grain_species_info;
-    GRIMPL_REQUIRE(gsp_info != nullptr, "sanity check!");
-    n_grain_species = gsp_info->n_species();
-  }
+  const int buf_len = my_fields->grid_dimension[0];
 
   // Cooling/heating slice locals
-  std::vector<double> mygisrf(my_fields->grid_dimension[0]);
-
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
-      my_rates->opaque_storage->inject_pathway_props;
-
-  double dlog10Tdust = 0.0;
-  double* log10Tdust_vals = nullptr;
-
-  // NOTE: gr_N is a historical name
-  // -> it is pretty uninformative and should be changed!
-  int gr_N[2] = {0, 0};
-  if (inject_pathway_props != nullptr) {
-    dlog10Tdust =
-        inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0];
-    log10Tdust_vals =
-        inject_pathway_props->log10Tdust_interp_props.parameters[0];
-
-    gr_N[0] = inject_pathway_props->n_opac_poly_coef;
-    gr_N[1] = static_cast<int>(
-        inject_pathway_props->log10Tdust_interp_props.dimension[0]);
-  };
+  std::vector<double> mygisrf(buf_len);
 
   if (single_species_dust_model) {
     // Calculate heating from interstellar radiation field
@@ -102,12 +76,32 @@ void calc_all_tdust_gasgr_1d(
     // Compute dust temperature
     AnalyticOpacCalc calculator(Tdust_detail::passive_dust_model_T_sublimation);
     calc_tdust_1d(tdust, tgas, nh, gasgr_tdust, mygisrf.data(), myisrf,
-                  itmask_metal, trad, my_fields->grid_dimension[0], kptot,
-                  idx_range, calculator);
+                  itmask_metal, trad, buf_len, kptot, idx_range, calculator);
   } else {
+    const GrainSpeciesInfo* gsp_info =
+        my_rates->opaque_storage->grain_species_info;
+    GRIMPL_REQUIRE(gsp_info != nullptr, "sanity check!");
+    int n_grain_species = gsp_info->n_species();
+
+    const GrainMetalInjectPathways* inject_pathway_props =
+        my_rates->opaque_storage->inject_pathway_props;
+    GRIMPL_REQUIRE(inject_pathway_props != nullptr, "sanity check!");
+
+    double dlog10Tdust =
+        inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0];
+    double* log10Tdust_vals =
+        inject_pathway_props->log10Tdust_interp_props.parameters[0];
+
+    // NOTE: gr_N is a historical name
+    // -> it is pretty uninformative and should be changed!
+    int gr_N[2] = {
+        inject_pathway_props->n_opac_poly_coef,
+        static_cast<int>(
+            inject_pathway_props->log10Tdust_interp_props.dimension[0])};
+
     // can we reuse gasgr_tdust? Or do we actually need to perform a fresh
     // allocation?
-    std::vector<double> gasgr_tdust_sp(my_fields->grid_dimension[0]);
+    std::vector<double> gasgr_tdust_sp(buf_len);
 
     for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
       const double* sigma_per_gas_mass =
@@ -135,8 +129,6 @@ void calc_all_tdust_gasgr_1d(
           gasgr_tdust_sp[i] = gasgr_sp[i] * fac;
         }
       }
-
-      int buf_len = my_fields->grid_dimension[0];
 
       FortranView<const double**> alsp(
           internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx], gr_N[1],
