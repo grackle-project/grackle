@@ -287,28 +287,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
              kph_buf[PhotoRxnLUT::k26][i] * HeI(i, idx_range.j, idx_range.k) /
                  4.);
 
-        // HII, HeII, HeIII recombination heating
-
-        edot[i] = edot[i] -
-                  chunit * (13.6 * (kcol_buf[CollisionalRxnLUT::k1][i] *
-                                        HI(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k) -
-                                    kcol_buf[CollisionalRxnLUT::k2][i] *
-                                        HII(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k)) +
-                            24.6 * (kcol_buf[CollisionalRxnLUT::k3][i] *
-                                        HeI(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k) / 4. -
-                                    kcol_buf[CollisionalRxnLUT::k4][i] *
-                                        HeII(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k) / 4.) +
-                            79.0 * (kcol_buf[CollisionalRxnLUT::k5][i] *
-                                        HeII(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k) / 4. -
-                                    kcol_buf[CollisionalRxnLUT::k6][i] *
-                                        HeIII(i, idx_range.j, idx_range.k) *
-                                        de(i, idx_range.j, idx_range.k) / 4.));
-
         // H2 formation heating
 
         // Equation 23 from Omukai (2000)
