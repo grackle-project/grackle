@@ -24,6 +24,7 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "opaque_storage.hpp"
 #include "support/config.hpp"
+#include "passive/analytic_opac.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -98,12 +99,10 @@ void calc_all_tdust_gasgr_1d(
     }
 
     // Compute dust temperature
-    calc_tdust_1d(tdust, tgas, nh, gasgr_tdust, mygisrf.data(), myisrf,
-                  itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
-                  dlog10Tdust, log10Tdust_vals,
-                  internal_dust_prop_buf.dyntab_kappa_tot, kptot, true,
-                  idx_range);
-
+    AnalyticOpacCalc calculator(Tdust_detail::passive_dust_model_T_sublimation);
+    calc_tdust_1d_(tdust, tgas, nh, gasgr_tdust, mygisrf.data(), myisrf,
+                   itmask_metal, trad, my_fields->grid_dimension[0], kptot,
+                   idx_range, calculator);
   } else {
     // can we reuse gasgr_tdust? Or do we actually need to perform a fresh
     // allocation?
