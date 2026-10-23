@@ -1,0 +1,35 @@
+[shared]
+# this table is used to specify options common to all tests
+
+# the file from GRACKLE_ROOT/src/example to copy
+src_file = "cxx_example.cpp"
+
+# the path to the example binary relative to the sample project directory
+# that will be produced by executing the supplied commands
+output_binary = "build/example_app"
+
+# enumerate each of the test cases
+# ================================
+
+[test.simple]
+parametrize = [
+  # first, use a copy of Grackle from its build-directory
+  {image="shared_build", Grackle_DIR="/home/gr-user/grackle/build"},
+  {image="static_build", Grackle_DIR="/home/gr-user/grackle/build"},
+
+  # next, use a copy of Grackle that was installed in the local installation directory
+  {image="shared_install", Grackle_DIR="/home/gr-user/local"},
+  {image="static_install", Grackle_DIR="/home/gr-user/local"},
+  {image="static_install_conftimeprefix", Grackle_DIR="/home/gr-user/local"},
+]
+
+# the docker image to use to run the test
+image.use-param = "image"
+
+# list the commands to construct output_binary
+cmds = [
+  "Grackle_DIR='{Grackle_DIR}' cmake -Bbuild",
+  "cmake --build build"
+]
+override_LD_LIBRARY_PATH = false
+
