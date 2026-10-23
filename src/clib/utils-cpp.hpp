@@ -164,10 +164,6 @@ inline int mod(int a, int p) {
   return a % p;
 }
 
-/// Implementation of Fortran's
-/// [DAbs intrinsic](https://gcc.gnu.org/onlinedocs/gcc-3.4.6/g77/DAbs-Intrinsic.html)
-inline double dabs(double a) { return std::fabs(a); }
-
 } // namespace grackle::internal
 
 // ----------------------
