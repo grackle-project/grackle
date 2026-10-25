@@ -728,8 +728,6 @@ int solve_rate_cool(
         grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
-  enforce_species_floor(my_chemistry, my_fields);
-
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   OMP_PRAGMA("omp parallel")
@@ -822,6 +820,9 @@ int solve_rate_cool(
 
       SpeciesMultiView<gr_float> sp_densities
           = field_adaptor_mgr.get_species_data(idx_range);
+
+      // enforce the species floor on the index range
+      enforce_species_floor(my_chemistry, my_fields, idx_range);
 
       // `tolerance = 1.0e-06_DKIND * dt` was some commented logic in the
       // original fortran subroutine in this location
