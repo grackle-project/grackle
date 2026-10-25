@@ -89,15 +89,10 @@ void calc_all_tdust_gasgr_1d(
 
     double dlog10Tdust =
         inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0];
-    double* log10Tdust_vals =
+    const double* log10Tdust_vals =
         inject_pathway_props->log10Tdust_interp_props.parameters[0];
-
-    // NOTE: gr_N is a historical name
-    // -> it is pretty uninformative and should be changed!
-    int gr_N[2] = {
-        inject_pathway_props->n_opac_poly_coef,
-        static_cast<int>(
-            inject_pathway_props->log10Tdust_interp_props.dimension[0])};
+    int n_log10Tdust_vals = static_cast<int>(
+        inject_pathway_props->log10Tdust_interp_props.dimension[0]);
 
     // can we reuse gasgr_tdust? Or do we actually need to perform a fresh
     // allocation?
@@ -131,24 +126,23 @@ void calc_all_tdust_gasgr_1d(
       }
 
       FortranView<const double**> alsp(
-          internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx], gr_N[1],
-          buf_len);
-      std::vector<double> logalsp_data_(gr_N[1] * buf_len);
-      FortranView<double**> logalsp(logalsp_data_.data(), gr_N[1], buf_len);
+          internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx],
+          n_log10Tdust_vals, buf_len);
+      std::vector<double> logalsp_data_(n_log10Tdust_vals * buf_len);
+      FortranView<double**> logalsp(logalsp_data_.data(), n_log10Tdust_vals,
+                                    buf_len);
 
-      int Td_N = gr_N[1];
-      int Td_Size = gr_N[1];
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
-          for (int j = 0; j < gr_N[1]; j++) {
+          for (int j = 0; j < n_log10Tdust_vals; j++) {
             logalsp(j, i) = std::log10(alsp(j, i));
           }
         }
       }
 
-      MultiGrainGrowthOpacCalc calculator(buf_len, Td_N, Td_Size, dlog10Tdust,
-                                          log10Tdust_vals,
-                                          logalsp_data_.data());
+      MultiGrainGrowthOpacCalc calculator(
+          buf_len, n_log10Tdust_vals, n_log10Tdust_vals, dlog10Tdust,
+          log10Tdust_vals, logalsp_data_.data());
 
       calc_tdust_1d(grain_temperatures.data[gsp_idx], tgas, nh,
                     gasgr_tdust_sp.data(), mygisrf.data(), myisrf, itmask_metal,
