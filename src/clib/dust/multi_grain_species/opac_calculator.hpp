@@ -27,22 +27,25 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// of the opacity
 class MultiGrainGrowthOpacCalc {
   int64_t gr_N_;
-  double dTdust_;
-  const double* Tdust_vals_;
-  View<const double**> logalsp;
+  double dlog10Tdust_;
+  const double* log10Tdust_vals_;
+  View<const double**> log10kappa;
 
 public:
   /// @brief Construct a new instance
   ///
   /// @param[in]  in i dimension of 3D fields
   /// @param[in]  gr_N Number of temperature points in the grain opacity table
-  /// @param[in]  gr_dT Temperature spacing of the grain opacity table
-  /// @param[in]  gr_Td Temperature values of the grain opacity table
-  /// @param[in]  logalsp_data Grain opacity table data
-  MultiGrainGrowthOpacCalc(int in, int gr_N, double gr_dT, const double* gr_Td,
-                           const double* logalsp_data)
-      : gr_N_{static_cast<int64_t>(gr_N)}, dTdust_{gr_dT}, Tdust_vals_{gr_Td} {
-    logalsp = View<const double**>(logalsp_data, in, gr_N);
+  /// @param[in]  dlog10Tdust Temperature spacing of the grain opacity table
+  /// @param[in]  log10Tdust_vals Temperature values of the grain opacity table
+  /// @param[in]  log10kappa_data Grain opacity table data
+  MultiGrainGrowthOpacCalc(int in, int gr_N, double dlog10Tdust,
+                           const double* log10Tdust_vals,
+                           const double* log10kappa_data)
+      : gr_N_{static_cast<int64_t>(gr_N)},
+        dlog10Tdust_{dlog10Tdust},
+        log10Tdust_vals_{log10Tdust_vals} {
+    log10kappa = View<const double**>(log10kappa_data, in, gr_N);
   }
 
   /// @brief Calculate mean plank opacity for the dust grain
@@ -51,8 +54,9 @@ public:
   /// "per unit gas mass" (this contrasts with @ref AnalyticOpac::calc_opac
   /// which returns a value measured "per unit grain mass")
   double calc_opac(double tdust, int i) const noexcept {
-    double logkgr = interpolate_1d(std::log10(tdust), &gr_N_, Tdust_vals_,
-                                   dTdust_, gr_N_, logalsp.contig1d_ptr(i));
+    double logkgr =
+        interpolate_1d(std::log10(tdust), &gr_N_, log10Tdust_vals_,
+                       dlog10Tdust_, gr_N_, log10kappa.contig1d_ptr(i));
     return std::pow(10., logkgr);
   }
 };

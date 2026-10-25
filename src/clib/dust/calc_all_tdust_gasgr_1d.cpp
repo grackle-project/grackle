@@ -125,23 +125,24 @@ void calc_all_tdust_gasgr_1d(
         }
       }
 
-      View<double**> alsp(
+      View<double**> kappa(
           internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx], buf_len,
           n_log10Tdust_vals);
-      std::vector<double> logalsp_data_(n_log10Tdust_vals * buf_len);
-      View<double**> logalsp(logalsp_data_.data(), buf_len, n_log10Tdust_vals);
+      std::vector<double> log10kappa_data_(n_log10Tdust_vals * buf_len);
+      View<double**> log10kappa(log10kappa_data_.data(), buf_len,
+                                n_log10Tdust_vals);
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
           for (int j = 0; j < n_log10Tdust_vals; j++) {
-            logalsp(i, j) = std::log10(alsp(i, j));
+            log10kappa(i, j) = std::log10(kappa(i, j));
           }
         }
       }
 
       MultiGrainGrowthOpacCalc calculator(buf_len, n_log10Tdust_vals,
                                           dlog10Tdust, log10Tdust_vals,
-                                          logalsp_data_.data());
+                                          log10kappa_data_.data());
 
       calc_tdust_1d(grain_temperatures.data[gsp_idx], tgas, nh,
                     gasgr_tdust_sp.data(), mygisrf.data(), myisrf, itmask_metal,
