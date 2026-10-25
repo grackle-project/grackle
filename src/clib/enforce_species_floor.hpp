@@ -5,11 +5,8 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-/// @file ceiling_species.hpp
-/// @brief Implements ceiling_species
-/// Applies a floor to all species densities.
-///
-/// @todo consider renaming this (maybe enforce_species_floor)
+/// @file
+/// @brief Implements enforce_species_floor
 ///
 //===----------------------------------------------------------------------===//
 
@@ -20,13 +17,14 @@
 #include "support/config.hpp"
 #include <cmath>  // std::fmax
 
-#ifndef CEILING_SPECIES_HPP
-#define CEILING_SPECIES_HPP
+#ifndef ENFORCE_SPECIES_FLOOR_HPP
+#define ENFORCE_SPECIES_FLOOR_HPP
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-inline void ceiling_species(chemistry_data* my_chemistry,
-                            grackle_field_data* my_fields) {
+/// @brief enforces a floor for all species densities
+inline void enforce_species_floor(chemistry_data* my_chemistry,
+                                  grackle_field_data* my_fields) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
@@ -324,4 +322,4 @@ inline void ceiling_species(chemistry_data* my_chemistry,
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* CEILING_SPECIES_CPP_H */
+#endif  // ENFORCE_SPECIES_FLOOR_HPP

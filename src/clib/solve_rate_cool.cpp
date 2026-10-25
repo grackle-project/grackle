@@ -37,7 +37,7 @@
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
 
-#include "ceiling_species.hpp"
+#include "enforce_species_floor.hpp"
 #include "rate_timestep_g.hpp"
 #include "cool1d_multi_g.hpp"
 #include "scale_fields.hpp"
@@ -728,7 +728,7 @@ int solve_rate_cool(
         grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
-  grackle::impl::ceiling_species(my_chemistry, my_fields);
+  enforce_species_floor(my_chemistry, my_fields);
 
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
