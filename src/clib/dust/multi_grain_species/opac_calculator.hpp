@@ -35,7 +35,7 @@ class MultiGrainGrowthOpacCalc {
   int gr_Size_;
   double dTdust_;
   const double* Tdust_vals_;
-  FortranView<const double**> logalsp;
+  View<const double**> logalsp;
   std::unique_ptr<double[]> logalsp_tmp;
 
 public:
@@ -54,7 +54,7 @@ public:
         gr_Size_{gr_Size},
         dTdust_{gr_dT},
         Tdust_vals_{gr_Td} {
-    logalsp = FortranView<const double**>(logalsp_data, gr_N, in);
+    logalsp = View<const double**>(logalsp_data, in, gr_N);
     logalsp_tmp = std::make_unique<double[]>(gr_Size);
   }
 
@@ -65,7 +65,7 @@ public:
   /// which returns a value measured "per unit grain mass")
   double calc_opac(double tdust, int i) const noexcept {
     for (int j = 0; j < gr_Size_; j++) {
-      logalsp_tmp[j] = logalsp(j, i);
+      logalsp_tmp[j] = logalsp(i, j);
     }
     double log10tdust = std::log10(tdust);
 

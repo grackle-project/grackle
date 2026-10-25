@@ -125,17 +125,16 @@ void calc_all_tdust_gasgr_1d(
         }
       }
 
-      FortranView<const double**> alsp(
-          internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx],
-          n_log10Tdust_vals, buf_len);
+      View<double**> alsp(
+          internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx], buf_len,
+          n_log10Tdust_vals);
       std::vector<double> logalsp_data_(n_log10Tdust_vals * buf_len);
-      FortranView<double**> logalsp(logalsp_data_.data(), n_log10Tdust_vals,
-                                    buf_len);
+      View<double**> logalsp(logalsp_data_.data(), buf_len, n_log10Tdust_vals);
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
           for (int j = 0; j < n_log10Tdust_vals; j++) {
-            logalsp(j, i) = std::log10(alsp(j, i));
+            logalsp(i, j) = std::log10(alsp(i, j));
           }
         }
       }
