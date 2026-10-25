@@ -41,17 +41,13 @@ void calc_all_tdust_gasgr_1d(
     InternalDustPropBuf internal_dust_prop_buf,
     GrainSpeciesCollection grain_kappa) {
   const double mh_local_var = constants::mH_grflt;
-  int i;
-
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
   const int buf_len = my_fields->grid_dimension[0];
-
-  // Cooling/heating slice locals
   std::vector<double> mygisrf(buf_len);
 
   if (single_species_dust_model) {
     // Calculate heating from interstellar radiation field
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
         mygisrf[i] = my_rates->gamma_isrf *
                      my_chemistry->local_dust_to_gas_ratio / dust2gas[i] *
@@ -60,7 +56,7 @@ void calc_all_tdust_gasgr_1d(
     }
 
     // Look up gas to grain heat transfer rates
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
         gasgr[i] =
             my_rates->gas_grain[logTlininterp_buf.indixe[i] - 1] +
@@ -114,7 +110,7 @@ void calc_all_tdust_gasgr_1d(
           internal_dust_prop_buf.grain_sigma_per_gas_mass.data[gsp_idx];
 
       // Calculate heating from interstellar radiation field
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
           mygisrf[i] = my_rates->gamma_isrf2 * sigma_per_gas_mass[i];
         }
@@ -123,7 +119,7 @@ void calc_all_tdust_gasgr_1d(
       // Look up gas to grain heat transfer rates
       double* gasgr_sp = gas_grainsp_heatrate.data[gsp_idx];
       double fac = coolunit / mh_local_var;
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
           double fv2k =
               my_rates->gas_grain2[logTlininterp_buf.indixe[i] - 1] +
