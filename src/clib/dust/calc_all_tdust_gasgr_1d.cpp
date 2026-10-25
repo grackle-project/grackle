@@ -13,10 +13,8 @@
 // This file was initially generated automatically during conversion of the
 // calc_all_tdust_gasgr_1d_g function from FORTRAN to C++
 
-#include <cstdio>
 #include <vector>
 
-#include "LUT.hpp"
 #include "grackle.h"
 
 #include "calc_tdust_1d.hpp"
@@ -41,11 +39,10 @@ void calc_all_tdust_gasgr_1d(
     InternalDustPropBuf internal_dust_prop_buf,
     GrainSpeciesCollection grain_kappa) {
   const double mh_local_var = constants::mH_grflt;
-  const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
   const int buf_len = my_fields->grid_dimension[0];
   std::vector<double> mygisrf(buf_len);
 
-  if (single_species_dust_model) {
+  if (my_chemistry->dust_chemistry == 1) {
     // Calculate heating from interstellar radiation field
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
