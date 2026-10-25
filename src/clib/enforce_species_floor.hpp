@@ -6,12 +6,9 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// @brief Implements enforce_species_floor
+/// @brief Implements @ref enforce_species_floor
 ///
 //===----------------------------------------------------------------------===//
-
-// This file was initially generated automatically during conversion of the
-// ceiling_species_g function from FORTRAN to C++
 
 #include "grackle.h"                     // my_chemistry, my_fields
 #include "chem_model/infer_species.hpp"  // SpKind
@@ -39,20 +36,20 @@ inline int infer_species_id_HeIII_(const PartMap<SpKind>& sp_kind_map) {
   return -1;
 }
 
-/// @brief enforces a floor for all species densities for the specified index
-///     range
+/// @brief enforces a floor for all species densities (and metal_density) for
+///     the specified index range
 inline void enforce_species_floor(chemistry_data* my_chemistry,
                                   grackle_field_data* my_fields,
                                   IndexRange idx_range,
                                   SpeciesMultiView<gr_float> sp_densities,
                                   const PartMap<SpKind>& sp_kind_map) {
-  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
-                             my_fields->grid_dimension[1],
-                             my_fields->grid_dimension[2]);
-  FortranView<gr_float***> metal(
-      my_fields->metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   if (my_chemistry->metal_cooling == 1) {
+    FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                               my_fields->grid_dimension[1],
+                               my_fields->grid_dimension[2]);
+    FortranView<gr_float***> metal(
+        my_fields->metal_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       int k = idx_range.k;
       int j = idx_range.j;
