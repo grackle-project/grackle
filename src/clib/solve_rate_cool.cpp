@@ -822,7 +822,8 @@ int solve_rate_cool(
           = field_adaptor_mgr.get_species_data(idx_range);
 
       // enforce the species floor on the index range
-      enforce_species_floor(my_chemistry, my_fields, idx_range);
+      enforce_species_floor(my_chemistry, my_fields, idx_range, sp_densities,
+          my_rates->opaque_storage->sp_kind_map);
 
       // `tolerance = 1.0e-06_DKIND * dt` was some commented logic in the
       // original fortran subroutine in this location
