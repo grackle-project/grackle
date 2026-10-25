@@ -18,7 +18,6 @@
 #include "../../support/View.hpp"
 
 #include <cstdint>
-#include <memory>  // std::unique_ptr, std::make_unique
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -26,36 +25,24 @@ namespace GRIMPL_NAMESPACE_DECL {
 ///
 /// This class is temporarily constructed to facillitate repeated calculations
 /// of the opacity
-///
-/// @note
-/// The future goal is to get rid of intermediate buffers so that we can
-/// directly compute opacity from the injection pathway data
 class MultiGrainGrowthOpacCalc {
   int64_t gr_N_;
-  int gr_Size_;
   double dTdust_;
   const double* Tdust_vals_;
   View<const double**> logalsp;
-  std::unique_ptr<double[]> logalsp_tmp;
 
 public:
   /// @brief Construct a new instance
   ///
   /// @param[in]  in i dimension of 3D fields
   /// @param[in]  gr_N Number of temperature points in the grain opacity table
-  /// @param[in]  gr_Size Number of temperature points in the grain opacity
-  ///     table
   /// @param[in]  gr_dT Temperature spacing of the grain opacity table
   /// @param[in]  gr_Td Temperature values of the grain opacity table
   /// @param[in]  logalsp_data Grain opacity table data
-  MultiGrainGrowthOpacCalc(int in, int gr_N, int gr_Size, double gr_dT,
-                           const double* gr_Td, const double* logalsp_data)
-      : gr_N_{static_cast<int64_t>(gr_N)},
-        gr_Size_{gr_Size},
-        dTdust_{gr_dT},
-        Tdust_vals_{gr_Td} {
+  MultiGrainGrowthOpacCalc(int in, int gr_N, double gr_dT, const double* gr_Td,
+                           const double* logalsp_data)
+      : gr_N_{static_cast<int64_t>(gr_N)}, dTdust_{gr_dT}, Tdust_vals_{gr_Td} {
     logalsp = View<const double**>(logalsp_data, in, gr_N);
-    logalsp_tmp = std::make_unique<double[]>(gr_Size);
   }
 
   /// @brief Calculate mean plank opacity for the dust grain
@@ -64,14 +51,8 @@ public:
   /// "per unit gas mass" (this contrasts with @ref AnalyticOpac::calc_opac
   /// which returns a value measured "per unit grain mass")
   double calc_opac(double tdust, int i) const noexcept {
-    for (int j = 0; j < gr_Size_; j++) {
-      logalsp_tmp[j] = logalsp(i, j);
-    }
-    double log10tdust = std::log10(tdust);
-
-    double logkgr = interpolate_1d(log10tdust, &gr_N_, Tdust_vals_, dTdust_,
-                                   gr_N_, logalsp_tmp.get());
-
+    double logkgr = interpolate_1d(std::log10(tdust), &gr_N_, Tdust_vals_,
+                                   dTdust_, gr_N_, logalsp.contig1d_ptr(i));
     return std::pow(10., logkgr);
   }
 };

@@ -139,9 +139,9 @@ void calc_all_tdust_gasgr_1d(
         }
       }
 
-      MultiGrainGrowthOpacCalc calculator(
-          buf_len, n_log10Tdust_vals, n_log10Tdust_vals, dlog10Tdust,
-          log10Tdust_vals, logalsp_data_.data());
+      MultiGrainGrowthOpacCalc calculator(buf_len, n_log10Tdust_vals,
+                                          dlog10Tdust, log10Tdust_vals,
+                                          logalsp_data_.data());
 
       calc_tdust_1d(grain_temperatures.data[gsp_idx], tgas, nh,
                     gasgr_tdust_sp.data(), mygisrf.data(), myisrf, itmask_metal,
