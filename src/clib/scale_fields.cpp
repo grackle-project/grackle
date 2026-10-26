@@ -103,10 +103,11 @@ static void scale_misc_density_fields_(chemistry_data* my_chemistry,
   }
 }
 
-void scale_fields_dust(chemistry_data* my_chemistry,
-                       grackle_field_data* my_fields, gr_float factor,
-                       int n_inj_path_ptrs, IndexRange idx_range,
+void scale_fields_dust(gr_float factor, IndexRange idx_range,
+                       chemistry_data* my_chemistry,
+                       grackle_field_data* my_fields,
                        SpeciesMultiView<gr_float> sp_densities,
+                       int n_inj_path_ptrs,
                        const PartMap<SpKind>& sp_kind_map) {
   scale_misc_density_fields_(my_chemistry, my_fields, factor, idx_range, true);
 
@@ -120,9 +121,9 @@ void scale_fields_dust(chemistry_data* my_chemistry,
                                      idx_range);
 }
 
-void scale_fields(gr_float factor, chemistry_data* my_chemistry,
-                  grackle_field_data* my_fields, int n_inj_path_ptrs,
-                  IndexRange idx_range, SpeciesMultiView<gr_float> sp_densities,
+void scale_fields(gr_float factor, IndexRange idx_range,
+                  chemistry_data* my_chemistry, grackle_field_data* my_fields,
+                  SpeciesMultiView<gr_float> sp_densities, int n_inj_path_ptrs,
                   const PartMap<SpKind>& sp_kind_map) {
   scale_misc_density_fields_(my_chemistry, my_fields, factor, idx_range, false);
 

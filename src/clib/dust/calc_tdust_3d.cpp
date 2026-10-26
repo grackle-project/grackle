@@ -146,9 +146,9 @@ void calc_tdust_3d(
       if (internalu.extfields_in_comoving == 1)  {
         gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
         scale_fields_dust(
-            my_chemistry, my_fields, factor,
-            get_n_inject_pathway_density_ptrs(my_rates), idx_range,
-            sp_densities, my_rates->opaque_storage->sp_kind_map);
+            factor, idx_range, my_chemistry, my_fields, sp_densities, 
+            get_n_inject_pathway_density_ptrs(my_rates), 
+            my_rates->opaque_storage->sp_kind_map);
       }
 
 
@@ -291,14 +291,13 @@ void calc_tdust_3d(
       }
 
 
-
       // Convert densities back to comoving from 'proper'
       if (internalu.extfields_in_comoving == 1)  {
         gr_float factor = (gr_float)std::pow(internalu.a_value,3);
         scale_fields_dust(
-            my_chemistry, my_fields, factor,
-            get_n_inject_pathway_density_ptrs(my_rates), idx_range,
-            sp_densities, my_rates->opaque_storage->sp_kind_map);
+            factor, idx_range, my_chemistry, my_fields, sp_densities, 
+            get_n_inject_pathway_density_ptrs(my_rates), 
+            my_rates->opaque_storage->sp_kind_map);
       }
 
     }
