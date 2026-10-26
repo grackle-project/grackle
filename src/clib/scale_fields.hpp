@@ -15,10 +15,11 @@
 #define SCALE_FIELDS_HPP
 
 #include "grackle.h"
+#include "support/config.hpp"
 #include "support/index_helper.hpp"
-#include "utils-cpp.hpp"
+#include "support/View.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// A helper function for scaling the injection pathway metal density fields
 ///
@@ -146,6 +147,6 @@ void scale_fields(gr_float factor, chemistry_data* my_chemistry,
                   grackle_field_data* my_fields, int n_inj_path_ptrs,
                   IndexRange idx_range);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* SCALE_FIELDS_HPP */
+#endif  // SCALE_FIELDS_HPP
