@@ -41,58 +41,6 @@ void scale_fields(gr_float factor, chemistry_data* my_chemistry,
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
-  FortranView<gr_float***> de(
-      my_fields->e_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HI(
-      my_fields->HI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HII(
-      my_fields->HII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeI(
-      my_fields->HeI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeII(
-      my_fields->HeII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeIII(
-      my_fields->HeIII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HM(
-      my_fields->HM_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2I(
-      my_fields->H2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2II(
-      my_fields->H2II_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> DI(
-      my_fields->DI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> DII(
-      my_fields->DII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HDI(
-      my_fields->HDI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> DM(
-      my_fields->DM_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HDII(
-      my_fields->HDII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeHII(
-      my_fields->HeHII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> metal(
-      my_fields->metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> dust(
-      my_fields->dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
   const bool dust_density_field_present =
       my_chemistry->dust_chemistry == 1 &&
       my_chemistry->use_dust_density_field == 1;
@@ -104,52 +52,27 @@ void scale_fields(gr_float factor, chemistry_data* my_chemistry,
     d(i, j, k) = d(i, j, k) * factor;
   }
 
-  if (my_chemistry->primordial_chemistry > 0) {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      de(i, j, k) = de(i, j, k) * factor;
-      HI(i, j, k) = HI(i, j, k) * factor;
-      HII(i, j, k) = HII(i, j, k) * factor;
-      HeI(i, j, k) = HeI(i, j, k) * factor;
-      HeII(i, j, k) = HeII(i, j, k) * factor;
-      HeIII(i, j, k) = HeIII(i, j, k) * factor;
-    }
-  }
-  if (my_chemistry->primordial_chemistry > 1) {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      HM(i, j, k) = HM(i, j, k) * factor;
-      H2I(i, j, k) = H2I(i, j, k) * factor;
-      H2II(i, j, k) = H2II(i, j, k) * factor;
-    }
-  }
-  if (my_chemistry->primordial_chemistry > 2) {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      DI(i, j, k) = DI(i, j, k) * factor;
-      DII(i, j, k) = DII(i, j, k) * factor;
-      HDI(i, j, k) = HDI(i, j, k) * factor;
-    }
-  }
-  if (my_chemistry->primordial_chemistry > 3) {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      DM(i, j, k) = DM(i, j, k) * factor;
-      HDII(i, j, k) = HDII(i, j, k) * factor;
-      HeHII(i, j, k) = HeHII(i, j, k) * factor;
-    }
-  }
-
   if (my_chemistry->metal_cooling == 1) {
+    FortranView<gr_float***> metal(
+        my_fields->metal_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       metal(i, j, k) = metal(i, j, k) * factor;
     }
   }
 
   if (dust_density_field_present) {
+    FortranView<gr_float***> dust(
+        my_fields->dust_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       dust(i, j, k) = dust(i, j, k) * factor;
     }
   }
 
-  // scale all dynamically evolved metal & dust species fields
-  const SpKind sp_kinds[] = {SpKind::METAL, SpKind::DUST};
+  // scale all dynamically evolved species fields
+  const SpKind sp_kinds[] = {SpKind::PRIMORDIAL, SpKind::METAL, SpKind::DUST};
   for (SpKind kind : sp_kinds) {
     // reminder: PartMap::part_bounds is designed such that when it's called
     //     for a kind that is not tracked by the kind_map, it will return an
