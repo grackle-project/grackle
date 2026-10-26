@@ -36,7 +36,7 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
 
 void scale_fields_dust(chemistry_data* my_chemistry,
                        grackle_field_data* my_fields, gr_float factor,
-                       int n_inj_path_ptrs) {
+                       int n_inj_path_ptrs, IndexRange idx_range) {
   FortranView<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -83,54 +83,48 @@ void scale_fields_dust(chemistry_data* my_chemistry,
       my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  const IndexHelper idx_helper = build_index_helper_(my_fields);
   const bool dust_density_field_present =
       my_chemistry->dust_chemistry == 1 &&
       my_chemistry->use_dust_density_field == 1;
 
-  OMP_PRAGMA("omp parallel for schedule(runtime)")
-  for (int t = 0; t < idx_helper.outer_ind_size; t++) {
-    // construct an index-range corresponding to "i-slice"
-    const IndexRange idx_range = make_idx_range_(t, &idx_helper);
-    const int k = idx_range.k;
-    const int j = idx_range.j;
+  const int k = idx_range.k;
+  const int j = idx_range.j;
 
-    if (my_chemistry->metal_cooling == 1) {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        metal(i, j, k) = metal(i, j, k) * factor;
-      }
+  if (my_chemistry->metal_cooling == 1) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      metal(i, j, k) = metal(i, j, k) * factor;
     }
-    if (dust_density_field_present) {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        dust(i, j, k) = dust(i, j, k) * factor;
-      }
-    } else if (my_chemistry->dust_chemistry == 2) {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (my_chemistry->dust_species > 0) {
-          MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
-          AC(i, j, k) = AC(i, j, k) * factor;
-        }
-        if (my_chemistry->dust_species > 1) {
-          SiM(i, j, k) = SiM(i, j, k) * factor;
-          FeM(i, j, k) = FeM(i, j, k) * factor;
-          Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
-          Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
-          SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
-          MgO(i, j, k) = MgO(i, j, k) * factor;
-          FeS(i, j, k) = FeS(i, j, k) * factor;
-          Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
-        }
-        if (my_chemistry->dust_species > 2) {
-          reforg(i, j, k) = reforg(i, j, k) * factor;
-          volorg(i, j, k) = volorg(i, j, k) * factor;
-          H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
-        }
-      }
-    }
-
-    scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs,
-                                       idx_range);
   }
+  if (dust_density_field_present) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      dust(i, j, k) = dust(i, j, k) * factor;
+    }
+  } else if (my_chemistry->dust_chemistry == 2) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (my_chemistry->dust_species > 0) {
+        MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
+        AC(i, j, k) = AC(i, j, k) * factor;
+      }
+      if (my_chemistry->dust_species > 1) {
+        SiM(i, j, k) = SiM(i, j, k) * factor;
+        FeM(i, j, k) = FeM(i, j, k) * factor;
+        Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
+        Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
+        SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
+        MgO(i, j, k) = MgO(i, j, k) * factor;
+        FeS(i, j, k) = FeS(i, j, k) * factor;
+        Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
+      }
+      if (my_chemistry->dust_species > 2) {
+        reforg(i, j, k) = reforg(i, j, k) * factor;
+        volorg(i, j, k) = volorg(i, j, k) * factor;
+        H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
+      }
+    }
+  }
+
+  scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs,
+                                     idx_range);
 }
 
 void scale_fields(gr_float factor, chemistry_data* my_chemistry,
