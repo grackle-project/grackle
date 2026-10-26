@@ -34,6 +34,27 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
   }
 }
 
+/// @brief scale densities of dynamically evolved species
+///
+/// IMPORTANT: it's valid to call this function with **ANY** @p sp_id_bounds
+///    object produced by a call to @ref PartMap::part_bounds (even if that
+///    method was passed a partition descriptor not tracked by the underlying
+///    object). For reference, this function uses @p sp_id_bounds to create
+///    bounds of a for-loop and @ref PartMap::part_bounds guarantees that the
+///    bounds are always valid (if the partition descriptor isn't tracked, the
+///    loop exits immediately)
+static void scale_dyn_sp_densities_(SpeciesMultiView<gr_float> sp_densities,
+                                    gr_float factor,
+                                    const IndexInterval1D& sp_id_bounds,
+                                    IndexRange idx_range) {
+  for (int sp_id = sp_id_bounds.start; sp_id < sp_id_bounds.stop; sp_id++) {
+    gr_float* ptr = sp_densities.contig1d_ptr(sp_id);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      ptr[i] = ptr[i] * factor;
+    }
+  }
+}
+
 void scale_fields_dust(chemistry_data* my_chemistry,
                        grackle_field_data* my_fields, gr_float factor,
                        int n_inj_path_ptrs, IndexRange idx_range,
@@ -44,45 +65,6 @@ void scale_fields_dust(chemistry_data* my_chemistry,
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiM(
-      my_fields->SiM_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> FeM(
-      my_fields->FeM_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Mg2SiO4(
-      my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> MgSiO3(
-      my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Fe3O4(
-      my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> AC(
-      my_fields->AC_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiO2D(
-      my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> MgO(
-      my_fields->MgO_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> FeS(
-      my_fields->FeS_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Al2O3(
-      my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> reforg(
-      my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> volorg(
-      my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2Oice(
-      my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   const bool dust_density_field_present =
@@ -101,29 +83,13 @@ void scale_fields_dust(chemistry_data* my_chemistry,
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       dust(i, j, k) = dust(i, j, k) * factor;
     }
-  } else if (my_chemistry->dust_chemistry == 2) {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (my_chemistry->dust_species > 0) {
-        MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
-        AC(i, j, k) = AC(i, j, k) * factor;
-      }
-      if (my_chemistry->dust_species > 1) {
-        SiM(i, j, k) = SiM(i, j, k) * factor;
-        FeM(i, j, k) = FeM(i, j, k) * factor;
-        Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
-        Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
-        SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
-        MgO(i, j, k) = MgO(i, j, k) * factor;
-        FeS(i, j, k) = FeS(i, j, k) * factor;
-        Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
-      }
-      if (my_chemistry->dust_species > 2) {
-        reforg(i, j, k) = reforg(i, j, k) * factor;
-        volorg(i, j, k) = volorg(i, j, k) * factor;
-        H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
-      }
-    }
   }
+
+  // scale dynamically evolved dust species densities (if any)
+  IndexInterval1D dust_sp_bounds = sp_kind_map.part_bounds(SpKind::DUST);
+  // it's ok to pass bounds to scale_dyn_sp_densities_, even if ``kind``
+  // isn't contained by sp_kind_map (see docstring for more details!)
+  scale_dyn_sp_densities_(sp_densities, factor, dust_sp_bounds, idx_range);
 
   scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs,
                                      idx_range);
@@ -169,17 +135,10 @@ void scale_fields(gr_float factor, chemistry_data* my_chemistry,
   // scale all dynamically evolved species fields
   const SpKind sp_kinds[] = {SpKind::PRIMORDIAL, SpKind::METAL, SpKind::DUST};
   for (SpKind kind : sp_kinds) {
-    // reminder: PartMap::part_bounds is designed such that when it's called
-    //     for a kind that is not tracked by the kind_map, it will return an
-    //     interval where start & stop are equal to each other (thus if it's
-    //     used for the bounds of a for-loop, the loop will be skipped)
     IndexInterval1D bounds = sp_kind_map.part_bounds(kind);
-    for (int sp_id = bounds.start; sp_id < bounds.stop; sp_id++) {
-      gr_float* ptr = sp_densities.contig1d_ptr(sp_id);
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        ptr[i] = ptr[i] * factor;
-      }
-    }
+    // it's ok to pass bounds to scale_dyn_sp_densities_, even if ``kind``
+    // isn't contained by sp_kind_map (see docstring for more details!)
+    scale_dyn_sp_densities_(sp_densities, factor, bounds, idx_range);
   }
 
   scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs,
