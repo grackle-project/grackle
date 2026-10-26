@@ -99,7 +99,7 @@ void cool_multi_time(
       const int k = idx_range.k; // use 0-based index
       const int j = idx_range.j; // use 0-based index
 
-      SpeciesMultiView<const gr_float> species_densities
+      SpeciesMultiView<gr_float> species_densities
           = field_adaptor_mgr.get_species_data(idx_range);
 
       // Convert densities from comoving to 'proper'
@@ -108,7 +108,8 @@ void cool_multi_time(
         scale_fields(
             factor, my_chemistry, my_fields,
             get_n_inject_pathway_density_ptrs(my_rates),
-            idx_range);
+            idx_range, species_densities,
+            my_rates->opaque_storage->sp_kind_map);
       }
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
@@ -180,7 +181,8 @@ void cool_multi_time(
         scale_fields(
             factor, my_chemistry, my_fields,
             get_n_inject_pathway_density_ptrs(my_rates),
-            idx_range);
+            idx_range, species_densities,
+            my_rates->opaque_storage->sp_kind_map);
       }
 
     }

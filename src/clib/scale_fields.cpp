@@ -36,7 +36,8 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
 
 void scale_fields(gr_float factor, chemistry_data* my_chemistry,
                   grackle_field_data* my_fields, int n_inj_path_ptrs,
-                  IndexRange idx_range) {
+                  IndexRange idx_range, SpeciesMultiView<gr_float> sp_densities,
+                  const PartMap<SpKind>& sp_kind_map) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
@@ -91,114 +92,6 @@ void scale_fields(gr_float factor, chemistry_data* my_chemistry,
   FortranView<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CI(
-      my_fields->CI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CII(
-      my_fields->CII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> COI(
-      my_fields->COI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CO2I(
-      my_fields->CO2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OI(
-      my_fields->OI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OHI(
-      my_fields->OHI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2OI(
-      my_fields->H2OI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> O2I(
-      my_fields->O2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiI(
-      my_fields->SiI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiOI(
-      my_fields->SiOI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiO2I(
-      my_fields->SiO2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CHI(
-      my_fields->CHI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CH2I(
-      my_fields->CH2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> COII(
-      my_fields->COII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OII(
-      my_fields->OII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OHII(
-      my_fields->OHII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2OII(
-      my_fields->H2OII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H3OII(
-      my_fields->H3OII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> O2II(
-      my_fields->O2II_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Mg(
-      my_fields->Mg_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Al(
-      my_fields->Al_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> S(my_fields->S_density, my_fields->grid_dimension[0],
-                             my_fields->grid_dimension[1],
-                             my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Fe(
-      my_fields->Fe_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiM(
-      my_fields->SiM_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> FeM(
-      my_fields->FeM_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Mg2SiO4(
-      my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> MgSiO3(
-      my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Fe3O4(
-      my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> AC(
-      my_fields->AC_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiO2D(
-      my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> MgO(
-      my_fields->MgO_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> FeS(
-      my_fields->FeS_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Al2O3(
-      my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> reforg(
-      my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> volorg(
-      my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2Oice(
-      my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   const bool dust_density_field_present =
       my_chemistry->dust_chemistry == 1 &&
@@ -249,66 +142,24 @@ void scale_fields(gr_float factor, chemistry_data* my_chemistry,
     }
   }
 
-  if (my_chemistry->metal_chemistry == 1) {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      CI(i, j, k) = CI(i, j, k) * factor;
-      CII(i, j, k) = CII(i, j, k) * factor;
-      COI(i, j, k) = COI(i, j, k) * factor;
-      CO2I(i, j, k) = CO2I(i, j, k) * factor;
-      OI(i, j, k) = OI(i, j, k) * factor;
-      OHI(i, j, k) = OHI(i, j, k) * factor;
-      H2OI(i, j, k) = H2OI(i, j, k) * factor;
-      O2I(i, j, k) = O2I(i, j, k) * factor;
-      SiI(i, j, k) = SiI(i, j, k) * factor;
-      SiOI(i, j, k) = SiOI(i, j, k) * factor;
-      SiO2I(i, j, k) = SiO2I(i, j, k) * factor;
-      CHI(i, j, k) = CHI(i, j, k) * factor;
-      CH2I(i, j, k) = CH2I(i, j, k) * factor;
-      COII(i, j, k) = COII(i, j, k) * factor;
-      OII(i, j, k) = OII(i, j, k) * factor;
-      OHII(i, j, k) = OHII(i, j, k) * factor;
-      H2OII(i, j, k) = H2OII(i, j, k) * factor;
-      H3OII(i, j, k) = H3OII(i, j, k) * factor;
-      O2II(i, j, k) = O2II(i, j, k) * factor;
-    }
-  }
-
   if (dust_density_field_present) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       dust(i, j, k) = dust(i, j, k) * factor;
     }
   }
 
-  else if (my_chemistry->dust_chemistry == 2) {
-    if (my_chemistry->dust_species > 0) {
+  // scale all dynamically evolved metal & dust species fields
+  const SpKind sp_kinds[] = {SpKind::METAL, SpKind::DUST};
+  for (SpKind kind : sp_kinds) {
+    // reminder: PartMap::part_bounds is designed such that when it's called
+    //     for a kind that is not tracked by the kind_map, it will return an
+    //     interval where start & stop are equal to each other (thus if it's
+    //     used for the bounds of a for-loop, the loop will be skipped)
+    IndexInterval1D bounds = sp_kind_map.part_bounds(kind);
+    for (int sp_id = bounds.start; sp_id < bounds.stop; sp_id++) {
+      gr_float* ptr = sp_densities.contig1d_ptr(sp_id);
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        Mg(i, j, k) = Mg(i, j, k) * factor;
-
-        MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
-        AC(i, j, k) = AC(i, j, k) * factor;
-      }
-    }
-    if (my_chemistry->dust_species > 1) {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        Al(i, j, k) = Al(i, j, k) * factor;
-        S(i, j, k) = S(i, j, k) * factor;
-        Fe(i, j, k) = Fe(i, j, k) * factor;
-
-        SiM(i, j, k) = SiM(i, j, k) * factor;
-        FeM(i, j, k) = FeM(i, j, k) * factor;
-        Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
-        Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
-        SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
-        MgO(i, j, k) = MgO(i, j, k) * factor;
-        FeS(i, j, k) = FeS(i, j, k) * factor;
-        Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
-      }
-    }
-    if (my_chemistry->dust_species > 2) {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        reforg(i, j, k) = reforg(i, j, k) * factor;
-        volorg(i, j, k) = volorg(i, j, k) * factor;
-        H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
+        ptr[i] = ptr[i] * factor;
       }
     }
   }
