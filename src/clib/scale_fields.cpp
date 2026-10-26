@@ -19,9 +19,16 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
-                                        gr_float factor, int n_inj_path_ptrs,
-                                        IndexRange idx_range) {
+/// A helper function for scaling the injection pathway metal density fields
+///
+/// @param[inout] my_fields holds the fields that will be updated in-place
+/// @param[in] factor The factor that is multiplied by the fields
+/// @param[in] n_inj_path_ptrs The number of pointers tracked by
+///     `my_fields->inject_pathway_metal_density`
+/// @param[in] idx_range The index range that will be modified
+static void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
+                                               gr_float factor, int n_inj_path_ptrs,
+                                               IndexRange idx_range) {
   const int* layout_left_extents = my_fields->grid_dimension;
   int offset = layoutleft_3D_index_to_1D_(layout_left_extents, 0, idx_range.j,
                                           idx_range.k);
