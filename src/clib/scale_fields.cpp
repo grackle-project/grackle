@@ -34,19 +34,6 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
   }
 }
 
-void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
-                                        gr_float factor, int n_inj_path_ptrs) {
-  // parallelize the k and j loops with OpenMP
-  // flat j and k loops for better parallelism
-  const IndexHelper idx_helper = build_index_helper_(my_fields);
-  OMP_PRAGMA("omp parallel for schedule(runtime)")
-  for (int t = 0; t < idx_helper.outer_ind_size; t++) {
-    const IndexRange idx_range = make_idx_range_(t, &idx_helper);
-    scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs,
-                                       idx_range);
-  }
-}
-
 void scale_fields(gr_float factor, chemistry_data* my_chemistry,
                   grackle_field_data* my_fields, int n_inj_path_ptrs,
                   IndexRange idx_range) {
