@@ -817,8 +817,8 @@ int solve_rate_cool(
         gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
         scale_fields(
             factor, my_chemistry, my_fields,
-            get_n_inject_pathway_density_ptrs(my_rates),
-            idx_range);
+            get_n_inject_pathway_density_ptrs(my_rates), idx_range,
+            sp_densities, my_rates->opaque_storage->sp_kind_map);
       }
 
 
@@ -1096,7 +1096,8 @@ int solve_rate_cool(
           gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
           scale_fields(
               factor, my_chemistry, my_fields,
-              get_n_inject_pathway_density_ptrs(my_rates), idx_range);
+              get_n_inject_pathway_density_ptrs(my_rates), idx_range,
+              sp_densities, my_rates->opaque_storage->sp_kind_map);
         }
       }
 
