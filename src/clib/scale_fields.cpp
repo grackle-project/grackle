@@ -10,47 +10,40 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <cstdio>
-
+#include "field_adaptor.hpp"
 #include "grackle.h"
-#include "support/index_helper.hpp"
-#include "inject_model/misc.hpp"
 #include "scale_fields.hpp"
+#include "support/config.hpp"
+#include "support/index_helper.hpp"
 #include "utils-cpp.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
+
+void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
+                                        gr_float factor, int n_inj_path_ptrs,
+                                        IndexRange idx_range) {
+  const int* layout_left_extents = my_fields->grid_dimension;
+  int offset = layoutleft_3D_index_to_1D_(layout_left_extents, 0, idx_range.j,
+                                          idx_range.k);
+
+  for (int path_idx = 0; path_idx < n_inj_path_ptrs; path_idx++) {
+    gr_float* ptr = my_fields->inject_pathway_metal_density[path_idx] + offset;
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      ptr[i] = ptr[i] * factor;
+    }
+  }
+}
 
 void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
                                         gr_float factor, int n_inj_path_ptrs) {
-  // each view within inj_path_view_arr wraps a field specifying the total
-  // metal density that was injected by an injection pathway (we allocate
-  // space for the max possible number of injection pathways)
-  //
-  // -> note: get_n_inject_pathway_density_ptrs returns 0 in the event that
-  //    my_fields->inject_pathway_metal_density holds no entries
-  FortranView<gr_float***>
-      inj_path_view_arr[inj_model_input::N_Injection_Pathways];
-  for (int path_idx = 0; path_idx < n_inj_path_ptrs; path_idx++) {
-    inj_path_view_arr[path_idx] = FortranView<gr_float***>(
-        my_fields->inject_pathway_metal_density[path_idx],
-        my_fields->grid_dimension[0], my_fields->grid_dimension[1],
-        my_fields->grid_dimension[2]);
-  }
-
   // parallelize the k and j loops with OpenMP
   // flat j and k loops for better parallelism
   const IndexHelper idx_helper = build_index_helper_(my_fields);
   OMP_PRAGMA("omp parallel for schedule(runtime)")
   for (int t = 0; t < idx_helper.outer_ind_size; t++) {
     const IndexRange idx_range = make_idx_range_(t, &idx_helper);
-    const int k = idx_range.k;  // use 0-based index
-    const int j = idx_range.j;  // use 0-based index
-    for (int path_idx = 0; path_idx < n_inj_path_ptrs; path_idx++) {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        inj_path_view_arr[path_idx](i, j, k) =
-            inj_path_view_arr[path_idx](i, j, k) * factor;
-      }
-    }
+    scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs,
+                                       idx_range);
   }
 }
 
@@ -347,4 +340,4 @@ void scale_fields(gr_float factor, chemistry_data* my_chemistry,
   scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs);
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
