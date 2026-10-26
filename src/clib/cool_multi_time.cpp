@@ -40,13 +40,6 @@ void cool_multi_time(
 {
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
-  // Convert densities from comoving to 'proper'
-  if (internalu.extfields_in_comoving == 1)  {
-    gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    scale_fields(
-        factor, my_chemistry, my_fields,
-        get_n_inject_pathway_density_ptrs(my_rates));
-  }
 
 
   OMP_PRAGMA("omp parallel")
@@ -108,6 +101,15 @@ void cool_multi_time(
 
       SpeciesMultiView<const gr_float> species_densities
           = field_adaptor_mgr.get_species_data(idx_range);
+
+      // Convert densities from comoving to 'proper'
+      if (internalu.extfields_in_comoving == 1)  {
+        gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
+        scale_fields(
+            factor, my_chemistry, my_fields,
+            get_n_inject_pathway_density_ptrs(my_rates),
+            idx_range);
+      }
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask[i] = MASK_TRUE;
@@ -172,6 +174,15 @@ void cool_multi_time(
         cooltime(i,j,k) = (gr_float)(energy/edot[i]);
       }
 
+      // Convert densities back to comoving from 'proper'
+      if (internalu.extfields_in_comoving == 1)  {
+        gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
+        scale_fields(
+            factor, my_chemistry, my_fields,
+            get_n_inject_pathway_density_ptrs(my_rates),
+            idx_range);
+      }
+
     }
 
     // cleanup temporaries
@@ -181,13 +192,6 @@ void cool_multi_time(
 
   }  // OMP_PRAGMA("omp parallel")
 
-  // Convert densities back to comoving from 'proper'
-  if (internalu.extfields_in_comoving == 1)  {
-    gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    scale_fields(
-        factor, my_chemistry, my_fields,
-        get_n_inject_pathway_density_ptrs(my_rates));
-  }
 
   return;
 }

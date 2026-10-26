@@ -719,15 +719,6 @@ int solve_rate_cool(
     (double)(my_chemistry->NumberOfTemperatureBins-1 )
   );
 
-  // Convert densities from comoving to proper
-
-  if (internalu.extfields_in_comoving == 1)  {
-    gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    grackle::impl::scale_fields(
-        factor, my_chemistry, my_fields,
-        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
-  }
-
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   OMP_PRAGMA("omp parallel")
@@ -820,6 +811,16 @@ int solve_rate_cool(
 
       SpeciesMultiView<gr_float> sp_densities
           = field_adaptor_mgr.get_species_data(idx_range);
+
+      // Convert densities from comoving to proper
+      if (internalu.extfields_in_comoving == 1)  {
+        gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
+        scale_fields(
+            factor, my_chemistry, my_fields,
+            get_n_inject_pathway_density_ptrs(my_rates),
+            idx_range);
+      }
+
 
       // enforce the species floor on the index range
       enforce_species_floor(my_chemistry, my_fields, idx_range, sp_densities,
@@ -1078,11 +1079,24 @@ int solve_rate_cool(
         }  // OMP_PRAGMA_CRITICAL
       }
 
-      if (iter > my_chemistry->max_iterations/2) { // WARNING_MESSAGE
-        OMP_PRAGMA_CRITICAL
-        {
-          eprintf("MULTI_COOL iter,j_0based,k_0based = %d %d %d\n",
-                  iter, idx_range.j, idx_range.k);
+      // perform some cleanup if we are exitting after success
+      if (iter <= my_chemistry->max_iterations ||
+          my_chemistry->exit_after_iterations_exceeded == 0) {
+
+        if (iter > my_chemistry->max_iterations/2) { // WARNING_MESSAGE
+          OMP_PRAGMA_CRITICAL
+          {
+            eprintf("MULTI_COOL iter,j_0based,k_0based = %d %d %d\n",
+                    iter, idx_range.j, idx_range.k);
+          }
+        }
+
+        // Convert densities back to comoving from proper
+        if (internalu.extfields_in_comoving == 1)  {
+          gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
+          scale_fields(
+              factor, my_chemistry, my_fields,
+              get_n_inject_pathway_density_ptrs(my_rates), idx_range);
         }
       }
 
@@ -1102,15 +1116,6 @@ int solve_rate_cool(
 
   if (ierr != GR_SUCCESS)  {
     return ierr;
-  }
-
-  // Convert densities back to comoving from proper
-
-  if (internalu.extfields_in_comoving == 1)  {
-    gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    grackle::impl::scale_fields(
-        factor, my_chemistry, my_fields,
-        grackle::impl::get_n_inject_pathway_density_ptrs(my_rates));
   }
 
   if (my_chemistry->primordial_chemistry > 0)  {
