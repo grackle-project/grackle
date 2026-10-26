@@ -144,6 +144,10 @@ inline void scale_fields_dust(chemistry_data* my_chemistry,
 void scale_fields(gr_float factor, chemistry_data* my_chemistry,
                   grackle_field_data* my_fields, int n_inj_path_ptrs);
 
+void scale_fields(gr_float factor, chemistry_data* my_chemistry,
+                  grackle_field_data* my_fields, int n_inj_path_ptrs,
+                  IndexRange idx_range);
+
 }  // namespace grackle::impl
 
 #endif /* SCALE_FIELDS_HPP */

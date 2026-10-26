@@ -48,7 +48,8 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
 }
 
 void scale_fields(gr_float factor, chemistry_data* my_chemistry,
-                  grackle_field_data* my_fields, int n_inj_path_ptrs) {
+                  grackle_field_data* my_fields, int n_inj_path_ptrs,
+                  IndexRange idx_range) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
@@ -212,132 +213,133 @@ void scale_fields(gr_float factor, chemistry_data* my_chemistry,
       my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  int dj, dk;
-  dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
-  dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
   const bool dust_density_field_present =
       my_chemistry->dust_chemistry == 1 &&
       my_chemistry->use_dust_density_field == 1;
 
-  // parallelize the k and j loops with OpenMP
-  // flat j and k loops for better parallelism
-  OMP_PRAGMA("omp parallel") {
-    int i, j, k;
+  int j = idx_range.j;
+  int k = idx_range.k;
 
-    OMP_PRAGMA("omp for schedule(runtime)")
-    for (int t = 0; t <= (dk * dj - 1); t++) {
-      k = t / dj + my_fields->grid_start[2];
-      j = grackle::impl::mod(t, dj) + my_fields->grid_start[1];
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    d(i, j, k) = d(i, j, k) * factor;
+  }
 
-      for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-        d(i, j, k) = d(i, j, k) * factor;
-      }
+  if (my_chemistry->primordial_chemistry > 0) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      de(i, j, k) = de(i, j, k) * factor;
+      HI(i, j, k) = HI(i, j, k) * factor;
+      HII(i, j, k) = HII(i, j, k) * factor;
+      HeI(i, j, k) = HeI(i, j, k) * factor;
+      HeII(i, j, k) = HeII(i, j, k) * factor;
+      HeIII(i, j, k) = HeIII(i, j, k) * factor;
+    }
+  }
+  if (my_chemistry->primordial_chemistry > 1) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      HM(i, j, k) = HM(i, j, k) * factor;
+      H2I(i, j, k) = H2I(i, j, k) * factor;
+      H2II(i, j, k) = H2II(i, j, k) * factor;
+    }
+  }
+  if (my_chemistry->primordial_chemistry > 2) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      DI(i, j, k) = DI(i, j, k) * factor;
+      DII(i, j, k) = DII(i, j, k) * factor;
+      HDI(i, j, k) = HDI(i, j, k) * factor;
+    }
+  }
+  if (my_chemistry->primordial_chemistry > 3) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      DM(i, j, k) = DM(i, j, k) * factor;
+      HDII(i, j, k) = HDII(i, j, k) * factor;
+      HeHII(i, j, k) = HeHII(i, j, k) * factor;
+    }
+  }
 
-      if (my_chemistry->primordial_chemistry > 0) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          de(i, j, k) = de(i, j, k) * factor;
-          HI(i, j, k) = HI(i, j, k) * factor;
-          HII(i, j, k) = HII(i, j, k) * factor;
-          HeI(i, j, k) = HeI(i, j, k) * factor;
-          HeII(i, j, k) = HeII(i, j, k) * factor;
-          HeIII(i, j, k) = HeIII(i, j, k) * factor;
-        }
-      }
-      if (my_chemistry->primordial_chemistry > 1) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          HM(i, j, k) = HM(i, j, k) * factor;
-          H2I(i, j, k) = H2I(i, j, k) * factor;
-          H2II(i, j, k) = H2II(i, j, k) * factor;
-        }
-      }
-      if (my_chemistry->primordial_chemistry > 2) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          DI(i, j, k) = DI(i, j, k) * factor;
-          DII(i, j, k) = DII(i, j, k) * factor;
-          HDI(i, j, k) = HDI(i, j, k) * factor;
-        }
-      }
-      if (my_chemistry->primordial_chemistry > 3) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          DM(i, j, k) = DM(i, j, k) * factor;
-          HDII(i, j, k) = HDII(i, j, k) * factor;
-          HeHII(i, j, k) = HeHII(i, j, k) * factor;
-        }
-      }
+  if (my_chemistry->metal_cooling == 1) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      metal(i, j, k) = metal(i, j, k) * factor;
+    }
+  }
 
-      if (my_chemistry->metal_cooling == 1) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          metal(i, j, k) = metal(i, j, k) * factor;
-        }
-      }
+  if (my_chemistry->metal_chemistry == 1) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      CI(i, j, k) = CI(i, j, k) * factor;
+      CII(i, j, k) = CII(i, j, k) * factor;
+      COI(i, j, k) = COI(i, j, k) * factor;
+      CO2I(i, j, k) = CO2I(i, j, k) * factor;
+      OI(i, j, k) = OI(i, j, k) * factor;
+      OHI(i, j, k) = OHI(i, j, k) * factor;
+      H2OI(i, j, k) = H2OI(i, j, k) * factor;
+      O2I(i, j, k) = O2I(i, j, k) * factor;
+      SiI(i, j, k) = SiI(i, j, k) * factor;
+      SiOI(i, j, k) = SiOI(i, j, k) * factor;
+      SiO2I(i, j, k) = SiO2I(i, j, k) * factor;
+      CHI(i, j, k) = CHI(i, j, k) * factor;
+      CH2I(i, j, k) = CH2I(i, j, k) * factor;
+      COII(i, j, k) = COII(i, j, k) * factor;
+      OII(i, j, k) = OII(i, j, k) * factor;
+      OHII(i, j, k) = OHII(i, j, k) * factor;
+      H2OII(i, j, k) = H2OII(i, j, k) * factor;
+      H3OII(i, j, k) = H3OII(i, j, k) * factor;
+      O2II(i, j, k) = O2II(i, j, k) * factor;
+    }
+  }
 
-      if (my_chemistry->metal_chemistry == 1) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          CI(i, j, k) = CI(i, j, k) * factor;
-          CII(i, j, k) = CII(i, j, k) * factor;
-          COI(i, j, k) = COI(i, j, k) * factor;
-          CO2I(i, j, k) = CO2I(i, j, k) * factor;
-          OI(i, j, k) = OI(i, j, k) * factor;
-          OHI(i, j, k) = OHI(i, j, k) * factor;
-          H2OI(i, j, k) = H2OI(i, j, k) * factor;
-          O2I(i, j, k) = O2I(i, j, k) * factor;
-          SiI(i, j, k) = SiI(i, j, k) * factor;
-          SiOI(i, j, k) = SiOI(i, j, k) * factor;
-          SiO2I(i, j, k) = SiO2I(i, j, k) * factor;
-          CHI(i, j, k) = CHI(i, j, k) * factor;
-          CH2I(i, j, k) = CH2I(i, j, k) * factor;
-          COII(i, j, k) = COII(i, j, k) * factor;
-          OII(i, j, k) = OII(i, j, k) * factor;
-          OHII(i, j, k) = OHII(i, j, k) * factor;
-          H2OII(i, j, k) = H2OII(i, j, k) * factor;
-          H3OII(i, j, k) = H3OII(i, j, k) * factor;
-          O2II(i, j, k) = O2II(i, j, k) * factor;
-        }
-      }
+  if (dust_density_field_present) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      dust(i, j, k) = dust(i, j, k) * factor;
+    }
+  }
 
-      if (dust_density_field_present) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-          dust(i, j, k) = dust(i, j, k) * factor;
-        }
-      }
+  else if (my_chemistry->dust_chemistry == 2) {
+    if (my_chemistry->dust_species > 0) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        Mg(i, j, k) = Mg(i, j, k) * factor;
 
-      else if (my_chemistry->dust_chemistry == 2) {
-        if (my_chemistry->dust_species > 0) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            Mg(i, j, k) = Mg(i, j, k) * factor;
-
-            MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
-            AC(i, j, k) = AC(i, j, k) * factor;
-          }
-        }
-        if (my_chemistry->dust_species > 1) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            Al(i, j, k) = Al(i, j, k) * factor;
-            S(i, j, k) = S(i, j, k) * factor;
-            Fe(i, j, k) = Fe(i, j, k) * factor;
-
-            SiM(i, j, k) = SiM(i, j, k) * factor;
-            FeM(i, j, k) = FeM(i, j, k) * factor;
-            Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
-            Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
-            SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
-            MgO(i, j, k) = MgO(i, j, k) * factor;
-            FeS(i, j, k) = FeS(i, j, k) * factor;
-            Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
-          }
-        }
-        if (my_chemistry->dust_species > 2) {
-          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            reforg(i, j, k) = reforg(i, j, k) * factor;
-            volorg(i, j, k) = volorg(i, j, k) * factor;
-            H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
-          }
-        }
+        MgSiO3(i, j, k) = MgSiO3(i, j, k) * factor;
+        AC(i, j, k) = AC(i, j, k) * factor;
       }
     }
-  }  // OMP_PRAGMA("omp parallel")
+    if (my_chemistry->dust_species > 1) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        Al(i, j, k) = Al(i, j, k) * factor;
+        S(i, j, k) = S(i, j, k) * factor;
+        Fe(i, j, k) = Fe(i, j, k) * factor;
 
-  scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs);
+        SiM(i, j, k) = SiM(i, j, k) * factor;
+        FeM(i, j, k) = FeM(i, j, k) * factor;
+        Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * factor;
+        Fe3O4(i, j, k) = Fe3O4(i, j, k) * factor;
+        SiO2D(i, j, k) = SiO2D(i, j, k) * factor;
+        MgO(i, j, k) = MgO(i, j, k) * factor;
+        FeS(i, j, k) = FeS(i, j, k) * factor;
+        Al2O3(i, j, k) = Al2O3(i, j, k) * factor;
+      }
+    }
+    if (my_chemistry->dust_species > 2) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        reforg(i, j, k) = reforg(i, j, k) * factor;
+        volorg(i, j, k) = volorg(i, j, k) * factor;
+        H2Oice(i, j, k) = H2Oice(i, j, k) * factor;
+      }
+    }
+  }
+
+  scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs,
+                                     idx_range);
+}
+
+void scale_fields(gr_float factor, chemistry_data* my_chemistry,
+                  grackle_field_data* my_fields, int n_inj_path_ptrs) {
+  // parallelize the k and j loops with OpenMP
+  // flat j and k loops for better parallelism
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
+  OMP_PRAGMA("omp parallel for schedule(runtime)")
+  for (int t = 0; t < idx_helper.outer_ind_size; t++) {
+    const IndexRange idx_range = make_idx_range_(t, &idx_helper);
+    scale_fields(factor, my_chemistry, my_fields, n_inj_path_ptrs, idx_range);
+  }
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
