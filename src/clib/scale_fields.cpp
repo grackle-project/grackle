@@ -36,7 +36,9 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
 
 void scale_fields_dust(chemistry_data* my_chemistry,
                        grackle_field_data* my_fields, gr_float factor,
-                       int n_inj_path_ptrs, IndexRange idx_range) {
+                       int n_inj_path_ptrs, IndexRange idx_range,
+                       SpeciesMultiView<gr_float> sp_densities,
+                       const PartMap<SpKind>& sp_kind_map) {
   FortranView<gr_float***> metal(
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
