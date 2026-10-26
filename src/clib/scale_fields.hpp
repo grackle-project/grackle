@@ -33,15 +33,12 @@ namespace GRIMPL_NAMESPACE_DECL {
 ///     that Grackle evolves (if any) in a format that allows the values to be
 ///     accessed with the index lookup table. Wherever possible, data should be
 ///     be accessed through this argument, rather than with @p my_fields
-/// @param[in] n_inj_path_ptrs The number of pointers tracked by
-///     `my_fields->inject_pathway_metal_density`
-/// @param[in] sp_kind_map Specifies species index ranges that correspond
-///     to particular categories of species
+/// @param[in] my_rates Holds internal configuration info.
 void scale_fields_dust(gr_float factor, IndexRange idx_range,
-                       chemistry_data* my_chemistry,
+                       const chemistry_data* my_chemistry,
                        grackle_field_data* my_fields,
                        SpeciesMultiView<gr_float> sp_densities,
-                       int n_inj_path_ptrs, const PartMap<SpKind>& sp_kind_map);
+                       const chemistry_data_storage* my_rates);
 
 /// @brief Scales density-related fields for the specified index range
 ///
@@ -53,14 +50,12 @@ void scale_fields_dust(gr_float factor, IndexRange idx_range,
 ///     that Grackle evolves (if any) in a format that allows the values to be
 ///     accessed with the index lookup table. Wherever possible, data should be
 ///     be accessed through this argument, rather than with @p my_fields
-/// @param[in] n_inj_path_ptrs The number of pointers tracked by
-///     `my_fields->inject_pathway_metal_density`
-/// @param[in] sp_kind_map Specifies species index ranges that correspond
-///     to particular categories of species
+/// @param[in] my_rates Holds internal configuration info.
 void scale_fields(gr_float factor, IndexRange idx_range,
-                  chemistry_data* my_chemistry, grackle_field_data* my_fields,
-                  SpeciesMultiView<gr_float> sp_densities, int n_inj_path_ptrs,
-                  const PartMap<SpKind>& sp_kind_map);
+                  const chemistry_data* my_chemistry,
+                  grackle_field_data* my_fields,
+                  SpeciesMultiView<gr_float> sp_densities,
+                  const chemistry_data_storage* my_rates);
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 

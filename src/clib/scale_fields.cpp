@@ -12,6 +12,8 @@
 
 #include "field_adaptor.hpp"
 #include "grackle.h"
+#include "inject_model/misc.hpp"
+#include "opaque_storage.hpp"
 #include "scale_fields.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
@@ -26,10 +28,9 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in] n_inj_path_ptrs The number of pointers tracked by
 ///     `my_fields->inject_pathway_metal_density`
 /// @param[in] idx_range The index range that will be modified
-static void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
-                                               gr_float factor,
-                                               int n_inj_path_ptrs,
-                                               IndexRange idx_range) {
+static void scale_inject_path_metal_densities_(
+    const grackle_field_data* my_fields, gr_float factor, int n_inj_path_ptrs,
+    IndexRange idx_range) {
   const int* layout_left_extents = my_fields->grid_dimension;
   int offset = layoutleft_3D_index_to_1D_(layout_left_extents, 0, idx_range.j,
                                           idx_range.k);
@@ -64,7 +65,7 @@ static void scale_dyn_sp_densities_(SpeciesMultiView<gr_float> sp_densities,
 }
 
 /// @brief scale density fields that aren't handled by other helper functions
-static void scale_misc_density_fields_(chemistry_data* my_chemistry,
+static void scale_misc_density_fields_(const chemistry_data* my_chemistry,
                                        grackle_field_data* my_fields,
                                        gr_float factor, IndexRange idx_range,
                                        bool skip_standard_density = false) {
@@ -104,30 +105,33 @@ static void scale_misc_density_fields_(chemistry_data* my_chemistry,
 }
 
 void scale_fields_dust(gr_float factor, IndexRange idx_range,
-                       chemistry_data* my_chemistry,
+                       const chemistry_data* my_chemistry,
                        grackle_field_data* my_fields,
                        SpeciesMultiView<gr_float> sp_densities,
-                       int n_inj_path_ptrs,
-                       const PartMap<SpKind>& sp_kind_map) {
+                       const chemistry_data_storage* my_rates) {
   scale_misc_density_fields_(my_chemistry, my_fields, factor, idx_range, true);
 
   // scale dynamically evolved dust species densities (if any)
+  const PartMap<SpKind>& sp_kind_map = my_rates->opaque_storage->sp_kind_map;
   IndexInterval1D dust_sp_bounds = sp_kind_map.part_bounds(SpKind::DUST);
   // it's ok to pass bounds to scale_dyn_sp_densities_, even if ``kind``
   // isn't contained by sp_kind_map (see docstring for more details!)
   scale_dyn_sp_densities_(sp_densities, factor, dust_sp_bounds, idx_range);
 
-  scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs,
-                                     idx_range);
+  scale_inject_path_metal_densities_(
+      my_fields, factor, get_n_inject_pathway_density_ptrs(my_rates),
+      idx_range);
 }
 
 void scale_fields(gr_float factor, IndexRange idx_range,
-                  chemistry_data* my_chemistry, grackle_field_data* my_fields,
-                  SpeciesMultiView<gr_float> sp_densities, int n_inj_path_ptrs,
-                  const PartMap<SpKind>& sp_kind_map) {
+                  const chemistry_data* my_chemistry,
+                  grackle_field_data* my_fields,
+                  SpeciesMultiView<gr_float> sp_densities,
+                  const chemistry_data_storage* my_rates) {
   scale_misc_density_fields_(my_chemistry, my_fields, factor, idx_range, false);
 
   // scale all dynamically evolved species fields
+  const PartMap<SpKind>& sp_kind_map = my_rates->opaque_storage->sp_kind_map;
   const SpKind sp_kinds[] = {SpKind::PRIMORDIAL, SpKind::METAL, SpKind::DUST};
   for (SpKind kind : sp_kinds) {
     IndexInterval1D bounds = sp_kind_map.part_bounds(kind);
@@ -136,8 +140,9 @@ void scale_fields(gr_float factor, IndexRange idx_range,
     scale_dyn_sp_densities_(sp_densities, factor, bounds, idx_range);
   }
 
-  scale_inject_path_metal_densities_(my_fields, factor, n_inj_path_ptrs,
-                                     idx_range);
+  scale_inject_path_metal_densities_(
+      my_fields, factor, get_n_inject_pathway_density_ptrs(my_rates),
+      idx_range);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
