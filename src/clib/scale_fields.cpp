@@ -55,35 +55,52 @@ static void scale_dyn_sp_densities_(SpeciesMultiView<gr_float> sp_densities,
   }
 }
 
-void scale_fields_dust(chemistry_data* my_chemistry,
-                       grackle_field_data* my_fields, gr_float factor,
-                       int n_inj_path_ptrs, IndexRange idx_range,
-                       SpeciesMultiView<gr_float> sp_densities,
-                       const PartMap<SpKind>& sp_kind_map) {
-  FortranView<gr_float***> metal(
-      my_fields->metal_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> dust(
-      my_fields->dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+/// @brief scale density fields that aren't handled by other helper functions
+static void scale_misc_density_fields_(chemistry_data* my_chemistry,
+                                       grackle_field_data* my_fields,
+                                       gr_float factor, IndexRange idx_range,
+                                       bool skip_standard_density = false) {
+  const int j = idx_range.j;
+  const int k = idx_range.k;
+  if (!skip_standard_density) {
+    FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
+                               my_fields->grid_dimension[1],
+                               my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      d(i, j, k) = d(i, j, k) * factor;
+    }
+  }
+
+  if (my_chemistry->metal_cooling == 1) {
+    FortranView<gr_float***> metal(
+        my_fields->metal_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      metal(i, j, k) = metal(i, j, k) * factor;
+    }
+  }
 
   const bool dust_density_field_present =
       my_chemistry->dust_chemistry == 1 &&
       my_chemistry->use_dust_density_field == 1;
 
-  const int k = idx_range.k;
-  const int j = idx_range.j;
-
-  if (my_chemistry->metal_cooling == 1) {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      metal(i, j, k) = metal(i, j, k) * factor;
-    }
-  }
   if (dust_density_field_present) {
+    FortranView<gr_float***> dust(
+        my_fields->dust_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       dust(i, j, k) = dust(i, j, k) * factor;
     }
   }
+}
+
+void scale_fields_dust(chemistry_data* my_chemistry,
+                       grackle_field_data* my_fields, gr_float factor,
+                       int n_inj_path_ptrs, IndexRange idx_range,
+                       SpeciesMultiView<gr_float> sp_densities,
+                       const PartMap<SpKind>& sp_kind_map) {
+  scale_misc_density_fields_(my_chemistry, my_fields, factor, idx_range, true);
 
   // scale dynamically evolved dust species densities (if any)
   IndexInterval1D dust_sp_bounds = sp_kind_map.part_bounds(SpKind::DUST);
@@ -99,38 +116,7 @@ void scale_fields(gr_float factor, chemistry_data* my_chemistry,
                   grackle_field_data* my_fields, int n_inj_path_ptrs,
                   IndexRange idx_range, SpeciesMultiView<gr_float> sp_densities,
                   const PartMap<SpKind>& sp_kind_map) {
-  FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
-                             my_fields->grid_dimension[1],
-                             my_fields->grid_dimension[2]);
-  const bool dust_density_field_present =
-      my_chemistry->dust_chemistry == 1 &&
-      my_chemistry->use_dust_density_field == 1;
-
-  int j = idx_range.j;
-  int k = idx_range.k;
-
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    d(i, j, k) = d(i, j, k) * factor;
-  }
-
-  if (my_chemistry->metal_cooling == 1) {
-    FortranView<gr_float***> metal(
-        my_fields->metal_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      metal(i, j, k) = metal(i, j, k) * factor;
-    }
-  }
-
-  if (dust_density_field_present) {
-    FortranView<gr_float***> dust(
-        my_fields->dust_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      dust(i, j, k) = dust(i, j, k) * factor;
-    }
-  }
+  scale_misc_density_fields_(my_chemistry, my_fields, factor, idx_range, false);
 
   // scale all dynamically evolved species fields
   const SpKind sp_kinds[] = {SpKind::PRIMORDIAL, SpKind::METAL, SpKind::DUST};
