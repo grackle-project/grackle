@@ -21,11 +21,11 @@
 #include "gas_props.hpp"
 #include "grackle.h"
 #include "support/index_helper.hpp"
-#include "inject_model/misc.hpp"
 #include "internal_units.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
 #include "mask.hpp"
+#include "opaque_storage.hpp"
 #include "scale_fields.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"
@@ -105,11 +105,8 @@ void cool_multi_time(
       // Convert densities from comoving to 'proper'
       if (internalu.extfields_in_comoving == 1)  {
         gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-        scale_fields(
-            factor, idx_range, my_chemistry, my_fields,
-            species_densities,
-            get_n_inject_pathway_density_ptrs(my_rates),
-            my_rates->opaque_storage->sp_kind_map);
+        scale_fields(factor, idx_range, my_chemistry, my_fields,
+                     species_densities, my_rates);
       }
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
@@ -178,11 +175,8 @@ void cool_multi_time(
       // Convert densities back to comoving from 'proper'
       if (internalu.extfields_in_comoving == 1)  {
         gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-        scale_fields(
-            factor, idx_range, my_chemistry, my_fields,
-            species_densities,
-            get_n_inject_pathway_density_ptrs(my_rates),
-            my_rates->opaque_storage->sp_kind_map);
+        scale_fields(factor, idx_range, my_chemistry, my_fields,
+                     species_densities, my_rates);
       }
 
     }

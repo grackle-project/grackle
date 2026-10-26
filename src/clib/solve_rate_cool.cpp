@@ -23,7 +23,6 @@
 #include "full_rxn_rate_buf.hpp"
 #include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
-#include "inject_model/misc.hpp"
 #include "internal_types.hpp"
 #include "internal_units.hpp"
 #include "lookup_cool_rates1d.hpp"
@@ -815,10 +814,8 @@ int solve_rate_cool(
       // Convert densities from comoving to proper
       if (internalu.extfields_in_comoving == 1)  {
         gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-        scale_fields(
-            factor, idx_range, my_chemistry, my_fields, sp_densities, 
-            get_n_inject_pathway_density_ptrs(my_rates), 
-            my_rates->opaque_storage->sp_kind_map);
+        scale_fields(factor, idx_range, my_chemistry, my_fields, sp_densities, 
+                     my_rates);
       }
 
 
@@ -1094,10 +1091,8 @@ int solve_rate_cool(
         // Convert densities back to comoving from proper
         if (internalu.extfields_in_comoving == 1)  {
           gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-          scale_fields(
-              factor, idx_range, my_chemistry, my_fields, sp_densities, 
-              get_n_inject_pathway_density_ptrs(my_rates), 
-              my_rates->opaque_storage->sp_kind_map);
+          scale_fields(factor, idx_range, my_chemistry, my_fields, sp_densities, 
+                       my_rates);
         }
       }
 
