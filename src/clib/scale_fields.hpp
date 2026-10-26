@@ -41,9 +41,10 @@ void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
 /// @param[in] factor The factor that is multiplied by the fields
 /// @param[in] n_inj_path_ptrs The number of pointers tracked by
 ///     `my_fields->inject_pathway_metal_density`
+/// @param[in] idx_range The index range that will be modified
 void scale_fields_dust(chemistry_data* my_chemistry,
                        grackle_field_data* my_fields, gr_float factor,
-                       int n_inj_path_ptrs);
+                       int n_inj_path_ptrs, IndexRange idx_range);
 
 /// @brief Scales density-related fields for the specified index range
 ///
