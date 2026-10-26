@@ -27,7 +27,8 @@ namespace GRIMPL_NAMESPACE_DECL {
 ///     `my_fields->inject_pathway_metal_density`
 /// @param[in] idx_range The index range that will be modified
 static void scale_inject_path_metal_densities_(grackle_field_data* my_fields,
-                                               gr_float factor, int n_inj_path_ptrs,
+                                               gr_float factor,
+                                               int n_inj_path_ptrs,
                                                IndexRange idx_range) {
   const int* layout_left_extents = my_fields->grid_dimension;
   int offset = layoutleft_3D_index_to_1D_(layout_left_extents, 0, idx_range.j,
@@ -102,10 +103,11 @@ static void scale_misc_density_fields_(chemistry_data* my_chemistry,
   }
 }
 
-void scale_fields_dust(chemistry_data* my_chemistry,
-                       grackle_field_data* my_fields, gr_float factor,
-                       int n_inj_path_ptrs, IndexRange idx_range,
+void scale_fields_dust(gr_float factor, IndexRange idx_range,
+                       chemistry_data* my_chemistry,
+                       grackle_field_data* my_fields,
                        SpeciesMultiView<gr_float> sp_densities,
+                       int n_inj_path_ptrs,
                        const PartMap<SpKind>& sp_kind_map) {
   scale_misc_density_fields_(my_chemistry, my_fields, factor, idx_range, true);
 
@@ -119,9 +121,9 @@ void scale_fields_dust(chemistry_data* my_chemistry,
                                      idx_range);
 }
 
-void scale_fields(gr_float factor, chemistry_data* my_chemistry,
-                  grackle_field_data* my_fields, int n_inj_path_ptrs,
-                  IndexRange idx_range, SpeciesMultiView<gr_float> sp_densities,
+void scale_fields(gr_float factor, IndexRange idx_range,
+                  chemistry_data* my_chemistry, grackle_field_data* my_fields,
+                  SpeciesMultiView<gr_float> sp_densities, int n_inj_path_ptrs,
                   const PartMap<SpKind>& sp_kind_map) {
   scale_misc_density_fields_(my_chemistry, my_fields, factor, idx_range, false);
 
