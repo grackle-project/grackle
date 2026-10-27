@@ -290,12 +290,15 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
     InterpDimScale::Linear(n_Tgas, logtem_start, dlogtem),
   };
 
-  GRIMPL_NS::InterpGridProps& grid_props = my_rates->opaque_storage->h2dust_grain_interp_props;
-  grid_props = GRIMPL_NS::InterpGridProps(2, params);
-  if (!grid_props) {
+  GRIMPL_NS::Expected<GRIMPL_NS::InterpGridProps, GRIMPL_NS::Error> tmp =
+      GRIMPL_NS::InterpGridProps::create(2, params);
+  if (!tmp.has_value()) {
+    GRIMPL_NS::Error err = tmp.error().context_literal(
+        "issue creating my_rates->opaque_storage->h2dust_grain_interp_props");
+    err.write(stderr);
     return GR_FAIL;
   }
-
+  my_rates->opaque_storage->h2dust_grain_interp_props = std::move(tmp).value();
   return GR_SUCCESS;
 }
 
