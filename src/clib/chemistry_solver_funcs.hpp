@@ -35,6 +35,72 @@
 
 namespace grackle::impl::chemistry {
 
+/// @brief Converts the relative species id to the global species id
+///
+/// This is a tool to help us replace `SpLUT`. Given an object `lut`, you
+/// can replace occurrences of `SpLUT::<name>` with one of:
+/// - `spid.prim(PrimordialSpLUT::<name>)`
+/// - `spid.metal(MetalSpLUT::<name>)`
+/// - `spid.dust(DustSpLUT::<name>)`
+///
+/// An important property of this type is that even when grackle isn't
+/// configured to track a given species, each of the above method calls will
+/// fallback to a valid species id.
+/// - in a vaccuum, this property looks and acts a lot like bug (if grackle is
+///   misconfigured, we could accidentally use the wrong species)
+/// - however, this property is required to facillitate rewrites of the
+///   `chemistry::species_density_*` without introducing undefined behavior or
+///   requiring significant immediate structural changes
+/// The primary reason this property is required is the historical choice to
+/// eagerly load a species density buffer at the start of the function (even
+/// if the species isn't actually used)
+///
+/// @note
+/// The interface of this class was backported so that we could reimplement
+/// `chemistry::species_density_*` without as many dependency PRs. For that
+/// reason, the motivation for certain design decisions may not be completely
+/// obvious.
+class SpIdAdaptor{
+  // tracks properties about an interval of species ids that are all a given
+  // kind of species (e.g. primordial, metal, or dust)
+  struct IntervalProps{
+    int id_offset;
+    int id_count;
+  };
+
+  int fallback_id_;
+  IntervalProps prim_;
+  IntervalProps metal_;
+  IntervalProps dust_;
+
+  [[gnu::always_inline]] int calc_(const IntervalProps& kind_id_props,
+                                   int kind_id) const noexcept {
+    // let's skip the check that kind_id is not-negative
+    bool valid = kind_id < kind_id_props.id_count;
+    // we could make the following branchless (unclear if that matters)
+    return (valid) ? kind_id_props.id_offset + kind_id : fallback_id_;
+  };
+
+public:
+  // define the main methods:
+  [[gnu::always_inline]] int prim(int id) const {return calc_(prim_, id); }
+  [[gnu::always_inline]] int metal(int id) const {return calc_(metal_, id); }
+  [[gnu::always_inline]] int dust(int id) const { return calc_(dust_, id); }
+
+  SpIdAdaptor() {
+    fallback_id_ = 0;
+    int num_prim = PrimordialSpLUT::NUM_ENTRIES;
+    int num_metal = MetalSpLUT::NUM_ENTRIES;
+    int num_dust = DustSpLUT::NUM_ENTRIES;
+    prim_ = IntervalProps{.id_offset = 0, .id_count = num_prim};
+    metal_ = IntervalProps{.id_offset = num_prim, .id_count = num_metal};
+    dust_ = IntervalProps{
+      .id_offset = num_prim + num_metal, .id_count = num_dust
+    };
+  }
+};
+
+
 /// Perform an implicit Gauss-Seidel sweep of a backward-Euler time integrator
 /// to advance the rate equations by one (sub-)cycle (for each index in the
 /// index-range that is selected by the given itmask)
@@ -109,6 +175,7 @@ inline void species_density_updates_gauss_seidel(
   const FullRxnRateBuf rxn_rate_buf
 )
 {
+  [[maybe_unused]] const SpIdAdaptor spid;
 
   View<gr_float**> out_spdens(out_spdens_obj.data[0], SpLUT::NUM_ENTRIES, my_fields->grid_dimension[0]);
 
@@ -1346,7 +1413,6 @@ inline void species_density_updates_gauss_seidel(
 }
 
 
-
 /// Computes the time derivatives of the mass densities of various species
 ///
 /// This function is specialized to operate on a single cell at a time. This is
@@ -1393,6 +1459,7 @@ inline void species_density_derivatives_0d(
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
   const FullRxnRateBuf rxn_rate_buf
 ) {
+  [[maybe_unused]] const SpIdAdaptor spid;
 
   View<gr_float**> deriv(deriv_obj.data[0], SpLUT::NUM_ENTRIES, 1);
 
