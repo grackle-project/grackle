@@ -175,7 +175,7 @@ inline void species_density_updates_gauss_seidel(
   const FullRxnRateBuf rxn_rate_buf
 )
 {
-  [[maybe_unused]] const SpIdAdaptor spid;
+  const SpIdAdaptor spid;
 
   View<gr_float**> out_spdens(out_spdens_obj.data[0], SpLUT::NUM_ENTRIES, my_fields->grid_dimension[0]);
 
@@ -1326,7 +1326,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust]  [i] * 100.;
           acoef = 0.;
 
-          out_spdens(SpLUT::MgSiO3_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::MgSiO3_dust), i) =
               ( scoef*dtit[i] + MgSiO3(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1337,7 +1337,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::AC_dust]      [i] * 12.;
           acoef = 0.;
 
-          out_spdens(SpLUT::AC_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::AC_dust), i) =
               ( scoef*dtit[i] + AC(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1350,7 +1350,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::SiM_dust]     [i] * 28.;
           acoef = 0.;
 
-          out_spdens(SpLUT::SiM_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::SiM_dust), i) =
               ( scoef*dtit[i] + SiM(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1361,7 +1361,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::FeM_dust]     [i] * 56.;
           acoef = 0.;
 
-          out_spdens(SpLUT::FeM_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::FeM_dust), i) =
               ( scoef*dtit[i] + FeM(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1372,7 +1372,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust] [i] * 140.;
           acoef = 0.;
 
-          out_spdens(SpLUT::Mg2SiO4_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::Mg2SiO4_dust), i) =
               ( scoef*dtit[i] + Mg2SiO4(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1383,7 +1383,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::Fe3O4_dust]   [i] * 232.;
           acoef = 0.;
 
-          out_spdens(SpLUT::Fe3O4_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::Fe3O4_dust), i) =
               ( scoef*dtit[i] + Fe3O4(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1394,7 +1394,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::SiO2_dust]   [i] * 60.;
           acoef = 0.;
 
-          out_spdens(SpLUT::SiO2_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::SiO2_dust), i) =
               ( scoef*dtit[i] + SiO2D(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1405,7 +1405,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::MgO_dust]     [i] * 40.;
           acoef = 0.;
 
-          out_spdens(SpLUT::MgO_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::MgO_dust), i) =
               ( scoef*dtit[i] + MgO(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1416,7 +1416,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::FeS_dust]     [i] * 88.;
           acoef = 0.;
 
-          out_spdens(SpLUT::FeS_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::FeS_dust), i) =
               ( scoef*dtit[i] + FeS(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1427,7 +1427,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::Al2O3_dust]   [i] * 102.;
           acoef = 0.;
 
-          out_spdens(SpLUT::Al2O3_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::Al2O3_dust), i) =
               ( scoef*dtit[i] + Al2O3(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1440,7 +1440,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust]  [i] * 22.68;
           acoef = 0.;
 
-          out_spdens(SpLUT::ref_org_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::ref_org_dust), i) =
               ( scoef*dtit[i] + reforg(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1451,7 +1451,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::vol_org_dust]  [i] * 32.;
           acoef = 0.;
 
-          out_spdens(SpLUT::vol_org_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::vol_org_dust), i) =
               ( scoef*dtit[i] + volorg(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1462,7 +1462,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates[OnlyGrainSpLUT::H2O_ice_dust]  [i] * 18.;
           acoef = 0.;
 
-          out_spdens(SpLUT::H2O_ice_dust, i) =
+          out_spdens(spid.dust(DustSpLUT::H2O_ice_dust), i) =
               ( scoef*dtit[i] + H2Oice(i,j,k) ) /
               ( 1. + acoef*dtit[i] );
 
@@ -1520,7 +1520,7 @@ inline void species_density_derivatives_0d(
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
   const FullRxnRateBuf rxn_rate_buf
 ) {
-  [[maybe_unused]] const SpIdAdaptor spid;
+  const SpIdAdaptor spid;
 
   View<gr_float**> deriv(deriv_obj.data[0], SpLUT::NUM_ENTRIES, 1);
 
@@ -2700,8 +2700,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][0]      * 100.;
         acoef = 0.;
 
-        deriv(SpLUT::MgSiO3_dust, 0) =
-            deriv(SpLUT::MgSiO3_dust, 0) +
+        deriv(spid.dust(DustSpLUT::MgSiO3_dust), 0) =
+            deriv(spid.dust(DustSpLUT::MgSiO3_dust), 0) +
             (scoef - acoef * MgSiO3);
 
 
@@ -2712,8 +2712,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::AC_dust][0]          * 12.;
         acoef = 0.;
 
-        deriv(SpLUT::AC_dust, 0) =
-            deriv(SpLUT::AC_dust, 0) +
+        deriv(spid.dust(DustSpLUT::AC_dust), 0) =
+            deriv(spid.dust(DustSpLUT::AC_dust), 0) +
             (scoef - acoef * AC);
 
 
@@ -2726,8 +2726,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::SiM_dust][0]         * 28.;
         acoef = 0.;
 
-        deriv(SpLUT::SiM_dust, 0) =
-            deriv(SpLUT::SiM_dust, 0) +
+        deriv(spid.dust(DustSpLUT::SiM_dust), 0) =
+            deriv(spid.dust(DustSpLUT::SiM_dust), 0) +
             (scoef - acoef * SiM);
 
 
@@ -2738,8 +2738,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::FeM_dust][0]         * 56.;
         acoef = 0.;
 
-        deriv(SpLUT::FeM_dust, 0) =
-            deriv(SpLUT::FeM_dust, 0) +
+        deriv(spid.dust(DustSpLUT::FeM_dust), 0) =
+            deriv(spid.dust(DustSpLUT::FeM_dust), 0) +
             (scoef - acoef * FeM);
 
 
@@ -2750,8 +2750,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::Mg2SiO4_dust][0]     * 140.;
         acoef = 0.;
 
-        deriv(SpLUT::Mg2SiO4_dust, 0) =
-            deriv(SpLUT::Mg2SiO4_dust, 0) +
+        deriv(spid.dust(DustSpLUT::Mg2SiO4_dust), 0) =
+            deriv(spid.dust(DustSpLUT::Mg2SiO4_dust), 0) +
             (scoef - acoef * Mg2SiO4);
 
 
@@ -2762,8 +2762,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::Fe3O4_dust][0]       * 232.;
         acoef = 0.;
 
-        deriv(SpLUT::Fe3O4_dust, 0) =
-            deriv(SpLUT::Fe3O4_dust, 0) +
+        deriv(spid.dust(DustSpLUT::Fe3O4_dust), 0) =
+            deriv(spid.dust(DustSpLUT::Fe3O4_dust), 0) +
             (scoef - acoef * Fe3O4);
 
 
@@ -2774,8 +2774,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::SiO2_dust][0]       * 60.;
         acoef = 0.;
 
-        deriv(SpLUT::SiO2_dust, 0) =
-            deriv(SpLUT::SiO2_dust, 0) +
+        deriv(spid.dust(DustSpLUT::SiO2_dust), 0) =
+            deriv(spid.dust(DustSpLUT::SiO2_dust), 0) +
             (scoef - acoef * SiO2D);
 
 
@@ -2786,8 +2786,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::MgO_dust][0]         * 40.;
         acoef = 0.;
 
-        deriv(SpLUT::MgO_dust, 0) =
-            deriv(SpLUT::MgO_dust, 0) +
+        deriv(spid.dust(DustSpLUT::MgO_dust), 0) =
+            deriv(spid.dust(DustSpLUT::MgO_dust), 0) +
             (scoef - acoef * MgO);
 
 
@@ -2798,8 +2798,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::FeS_dust][0]         * 88.;
         acoef = 0.;
 
-        deriv(SpLUT::FeS_dust, 0) =
-            deriv(SpLUT::FeS_dust, 0) +
+        deriv(spid.dust(DustSpLUT::FeS_dust), 0) =
+            deriv(spid.dust(DustSpLUT::FeS_dust), 0) +
             (scoef - acoef * FeS);
 
 
@@ -2810,8 +2810,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::Al2O3_dust][0]       * 102.;
         acoef = 0.;
 
-        deriv(SpLUT::Al2O3_dust, 0) =
-            deriv(SpLUT::Al2O3_dust, 0) +
+        deriv(spid.dust(DustSpLUT::Al2O3_dust), 0) =
+            deriv(spid.dust(DustSpLUT::Al2O3_dust), 0) +
             (scoef - acoef * Al2O3);
 
 
@@ -2824,8 +2824,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::ref_org_dust][0]      * 22.68;
         acoef = 0.;
 
-        deriv(SpLUT::ref_org_dust, 0) =
-            deriv(SpLUT::ref_org_dust, 0) +
+        deriv(spid.dust(DustSpLUT::ref_org_dust), 0) =
+            deriv(spid.dust(DustSpLUT::ref_org_dust), 0) +
             (scoef - acoef * reforg);
 
 
@@ -2836,8 +2836,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::vol_org_dust][0]      * 32.;
         acoef = 0.;
 
-        deriv(SpLUT::vol_org_dust, 0) =
-            deriv(SpLUT::vol_org_dust, 0) +
+        deriv(spid.dust(DustSpLUT::vol_org_dust), 0) =
+            deriv(spid.dust(DustSpLUT::vol_org_dust), 0) +
             (scoef - acoef * volorg);
 
 
@@ -2848,8 +2848,8 @@ inline void species_density_derivatives_0d(
         + grain_growth_rates[OnlyGrainSpLUT::H2O_ice_dust][0]      * 18.;
         acoef = 0.;
 
-        deriv(SpLUT::H2O_ice_dust, 0) =
-            deriv(SpLUT::H2O_ice_dust, 0) +
+        deriv(spid.dust(DustSpLUT::H2O_ice_dust), 0) =
+            deriv(spid.dust(DustSpLUT::H2O_ice_dust), 0) +
             (scoef - acoef * H2Oice);
 
 
