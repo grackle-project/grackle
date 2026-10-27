@@ -694,7 +694,7 @@ inline void species_density_updates_gauss_seidel(
             }
           }
         }
-        out_spdens(SpLUT::H2I, i) =
+        out_spdens(spid.prim(PrimordialSpLUT::H2I), i) =
             ( scoef*dtit[i] + H2I(i,j,k) ) /
             ( 1. + acoef*dtit[i] );
 
@@ -717,39 +717,39 @@ inline void species_density_updates_gauss_seidel(
           acoef = acoef
               + kcol_buf[CollisionalRxnLUT::k135][i] *    DI(i,j,k) /  2.;
         }
-        out_spdens(SpLUT::HM, i) =
+        out_spdens(spid.prim(PrimordialSpLUT::HM), i) =
             (scoef*dtit[i] + HM(i,j,k)) /
             (1.0f + acoef*dtit[i]);
 
 
         // 9) H2+
 
-        out_spdens(SpLUT::H2II, i) =
+        out_spdens(spid.prim(PrimordialSpLUT::H2II), i) =
             2. * (
                 kcol_buf[CollisionalRxnLUT::k9][i]*out_spdens(SpLUT::HI, i)*out_spdens(SpLUT::HII, i)
-              + kcol_buf[CollisionalRxnLUT::k11][i]*out_spdens(SpLUT::H2I, i)/2.*out_spdens(SpLUT::HII, i)
-              + kcol_buf[CollisionalRxnLUT::k17][i]*out_spdens(SpLUT::HM, i)*out_spdens(SpLUT::HII, i)
-              + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(SpLUT::H2I, i)
+              + kcol_buf[CollisionalRxnLUT::k11][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)/2.*out_spdens(SpLUT::HII, i)
+              + kcol_buf[CollisionalRxnLUT::k17][i]*out_spdens(spid.prim(PrimordialSpLUT::HM), i)*out_spdens(SpLUT::HII, i)
+              + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)
                  )
             / (
                 kcol_buf[CollisionalRxnLUT::k10][i]*out_spdens(SpLUT::HI, i)
               + kcol_buf[CollisionalRxnLUT::k18][i]*out_spdens(SpLUT::e, i)
-              + kcol_buf[CollisionalRxnLUT::k19][i]*out_spdens(SpLUT::HM, i)
+              + kcol_buf[CollisionalRxnLUT::k19][i]*out_spdens(spid.prim(PrimordialSpLUT::HM), i)
               + (kph_buf[PhotoRxnLUT::k28][i]+kph_buf[PhotoRxnLUT::k30][i])
               );
         if (my_chemistry->primordial_chemistry > 3)  {
-          out_spdens(SpLUT::H2II, i) =
+          out_spdens(spid.prim(PrimordialSpLUT::H2II), i) =
               2. * (
                   kcol_buf[CollisionalRxnLUT::k9] [i]*out_spdens(SpLUT::HI, i)*out_spdens(SpLUT::HII, i)
-                + kcol_buf[CollisionalRxnLUT::k11][i]*out_spdens(SpLUT::H2I, i)/2.*out_spdens(SpLUT::HII, i)
-                + kcol_buf[CollisionalRxnLUT::k17][i]*out_spdens(SpLUT::HM, i)*out_spdens(SpLUT::HII, i)
-                + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(SpLUT::H2I, i)
+                + kcol_buf[CollisionalRxnLUT::k11][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)/2.*out_spdens(SpLUT::HII, i)
+                + kcol_buf[CollisionalRxnLUT::k17][i]*out_spdens(spid.prim(PrimordialSpLUT::HM), i)*out_spdens(SpLUT::HII, i)
+                + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)
                 + kcol_buf[CollisionalRxnLUT::k152][i]*HeHII(i,j,k)*out_spdens(SpLUT::HI, i)/5.
                    )
               / (
                   kcol_buf[CollisionalRxnLUT::k10][i]*out_spdens(SpLUT::HI, i)
                 + kcol_buf[CollisionalRxnLUT::k18][i]*out_spdens(SpLUT::e, i)
-                + kcol_buf[CollisionalRxnLUT::k19][i]*out_spdens(SpLUT::HM, i)
+                + kcol_buf[CollisionalRxnLUT::k19][i]*out_spdens(spid.prim(PrimordialSpLUT::HM), i)
                 + (kph_buf[PhotoRxnLUT::k28][i]+kph_buf[PhotoRxnLUT::k30][i])
                 + kcol_buf[CollisionalRxnLUT::k150][i]*out_spdens(SpLUT::HeI, i)/4.
                 );
@@ -2038,8 +2038,8 @@ inline void species_density_derivatives_0d(
         }
       }
     }
-    deriv(SpLUT::H2I, 0) =
-        deriv(SpLUT::H2I, 0) +
+    deriv(spid.prim(PrimordialSpLUT::H2I), 0) =
+        deriv(spid.prim(PrimordialSpLUT::H2I), 0) +
         (scoef - acoef * H2I);
 
 
@@ -2062,8 +2062,8 @@ inline void species_density_derivatives_0d(
       acoef = acoef
           + kcol_buf[CollisionalRxnLUT::k135][0]    *    DI        /  2.;
     }
-    deriv(SpLUT::HM, 0) =
-        deriv(SpLUT::HM, 0) +
+    deriv(spid.prim(PrimordialSpLUT::HM), 0) =
+        deriv(spid.prim(PrimordialSpLUT::HM), 0) +
         (scoef - acoef * HM);
 
 
@@ -2085,8 +2085,8 @@ inline void species_density_derivatives_0d(
       acoef = acoef
           + kcol_buf[CollisionalRxnLUT::k150][0]    *   HeI        /  4.;
     }
-    deriv(SpLUT::H2II, 0) =
-        deriv(SpLUT::H2II, 0) +
+    deriv(spid.prim(PrimordialSpLUT::H2II), 0) =
+        deriv(spid.prim(PrimordialSpLUT::H2II), 0) +
         (scoef - acoef * H2II);
 
 
