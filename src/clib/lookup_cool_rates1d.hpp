@@ -926,6 +926,7 @@ inline void lookup_cool_rates1d(
       kph_buf[PhotoRxnLUT::k29][i] = my_uvb_rates.k29;
       kph_buf[PhotoRxnLUT::k30][i] = my_uvb_rates.k30;
       // k31 is handled separately
+      // kdissHDI is handled separately
 
       // metal photo-ionization/photo-dissociation rates. Each buffer holds
       // the total rate: the UV background part set here plus the
@@ -951,6 +952,29 @@ inline void lookup_cool_rates1d(
     model_H2I_dissociation_shielding(kph_buf, idx_range, tgas1d, mmw, dom,
                                      dx_cgs, c_ljeans, itmask, my_chemistry,
                                      my_fields, my_uvb_rates, internalu);
+  }
+
+  // TODO: it probably makes sense to treat kdissHDI more like the k31 rate
+  // (i.e. H2I dissociation)
+  if (my_chemistry->primordial_chemistry > 2) {
+    if ((my_chemistry->use_radiative_transfer == 1) &&
+        (my_chemistry->radiative_transfer_HDI_dissociation > 0)) {
+      FortranView<const gr_float***> kdissHDI(
+          my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          kph_buf[PhotoRxnLUT::kdissHDI][i] =
+              kdissHDI(i, idx_range.j, idx_range.k);
+        }
+      }
+    } else {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          kph_buf[PhotoRxnLUT::kdissHDI][i] = 0.0;
+        }
+      }
+    }
   }
 
   // apply some miscellaneous self-shielding adjustments

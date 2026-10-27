@@ -54,10 +54,16 @@ enum {
 // -> ideally this should get relocated to a more sensible location (but not
 //    sure where that is...)
 
+// the number of queryable photo reaction rates
+// - we subtract off each non-queryable rate (i.e. PhotoRxnLUT::kdissHDI)
+static constexpr int NumPhotoRxnEntries = PhotoRxnLUT::NUM_ENTRIES - 1;
+
 static Entry get_PhotoRxn_Entry(chemistry_data_storage* my_rates, int i) {
   if (my_rates == nullptr) {  // <- shouldn't come up
     return mk_invalid_Entry();
   }
+  // we explicitly omit PhotoRxnLUT::kdissHDI from this table because we don't
+  // currently support a background rate
   switch (i) {
     case PhotoRxnLUT::k24:
       return new_Entry(&my_rates->k24, "k24");
@@ -94,7 +100,7 @@ static Entry get_PhotoRxn_Entry(chemistry_data_storage* my_rates, int i) {
 int add_misc_recipies_to_RegBuilder(RegBuilder* ptr,
                                     const chemistry_data* my_chemistry) {
   if (my_chemistry->primordial_chemistry != 0) {
-    return ptr->recipe_scalar(PhotoRxnLUT::NUM_ENTRIES, &get_PhotoRxn_Entry);
+    return ptr->recipe_scalar(NumPhotoRxnEntries, &get_PhotoRxn_Entry);
   }
   return GR_SUCCESS;
 }
