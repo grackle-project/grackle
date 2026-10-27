@@ -756,6 +756,37 @@ inline void add_rt_contributions_to_rates_(
     return;
   }
 
+  {
+    FortranView<const gr_float***> kphHI(
+        my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kph_buf[PhotoRxnLUT::k24][i] =
+            kph_buf[PhotoRxnLUT::k24][i] + kphHI(i, idx_range.j, idx_range.k);
+      }
+    }
+  }
+
+  if (my_chemistry->radiative_transfer_hydrogen_only == 0) {
+    FortranView<const gr_float***> kphHeII(
+        my_fields->RT_HeII_ionization_rate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    FortranView<const gr_float***> kphHeI(
+        my_fields->RT_HeI_ionization_rate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kph_buf[PhotoRxnLUT::k25][i] =
+            kph_buf[PhotoRxnLUT::k25][i] + kphHeII(i, idx_range.j, idx_range.k);
+        kph_buf[PhotoRxnLUT::k26][i] =
+            kph_buf[PhotoRxnLUT::k26][i] + kphHeI(i, idx_range.j, idx_range.k);
+      }
+    }
+  }
+
+  // shouldn't my_chemistry->radiative_transfer_hydrogen_only affect the
+  // following behavior?
   if (my_chemistry->metal_chemistry == 1) {
     if (my_chemistry->radiative_transfer_metal_ionization > 0) {
       FortranView<const gr_float***> kphCI(
