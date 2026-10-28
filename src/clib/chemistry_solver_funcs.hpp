@@ -134,7 +134,7 @@ public:
 ///     chemistry.
 /// @param[in] my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
-/// @param[in] sp_densities Specifies the densities of the various species
+/// @param[in] spdens Specifies the current densities of the various species
 ///     that Grackle evolves in a format that allows the values to be accessed
 ///     with the index lookup table.
 /// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
@@ -201,6 +201,12 @@ inline void species_density_updates_gauss_seidel(
 
   // Get pointers to the various species fields
   // ------------------------------------------
+  // - for now, if Grackle isn't configured to use a species specified in the
+  //   call to `spid.(prim|metal|dust)`, the method will fallback to an
+  //   arbitrary valid index. This avoids undefined behavior and is ok since we
+  //   won't actually use the resulting pointer for anything
+  // - in the future, we should work on conditionally loading species where
+  //   they are needed
   const gr_float* de = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::e));
   const gr_float* HI = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HI));
   const gr_float* HII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HII));
@@ -1509,7 +1515,7 @@ inline void species_density_updates_gauss_seidel(
 ///     chemistry
 /// @param[in]  my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
-/// @param[in]  spdens Specifies the densities of the various species
+/// @param[in]  spdens Specifies the current densities of the various species
 ///     that Grackle evolves in a format that allows the values to be accessed
 ///     with the index lookup table.
 /// @param[in]  rxn_rate_buf specifies the precomputed rxn rates (depends on
@@ -1549,15 +1555,10 @@ inline void species_density_derivatives_0d(
 
   // define some local variables carried over from the fortran version:
   // - the goal is to eventually remove all of these
-  // - originally we only conditionally defined some of these variables, but
-  //   there honestly isn't any benefit to doing that (the memory is allocated
-  //   already)
-  // - originally, each of these variables was a stack allocated variable that
-  //   held a copy of the corresponding entry in dsp. Now, these variables are
-  //   references to casted copies taken from dsp
-  // - we aren't being that consistent with the historic implementation when
-  //   gr_float isn't the same as double (but, the historical implementation
-  //   definitely didn't handle this case properly)
+  // - for now, if Grackle isn't configured to use a species specified in the
+  //   call to `spid.(prim|metal|dust)`, the method will fallback to an
+  //   arbitrary valid index. This avoids undefined behavior and is ok since we
+  //   won't actually use the resulting reference for anything
 
   const gr_float& de      = spdens(spid.prim(PrimordialSpLUT::e), 0);
   const gr_float& HI      = spdens(spid.prim(PrimordialSpLUT::HI), 0);
