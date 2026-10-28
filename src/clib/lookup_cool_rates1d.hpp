@@ -297,7 +297,7 @@ inline void interpolate_collisional_rxn_rates_(
 /// @param[in] uvb_rate is the associated rate value from the uvb table
 /// @param[in] field_ptr is a pointer to field array holding photo rates
 /// @param[out] ph_rate_buf is the rate buffer to be filled
-inline void setup_photo_rates(
+inline void calculate_photo_rate_buffer(
   IndexRange idx_range, const gr_mask_type* itmask,
   grackle_field_data* my_fields,
   const int rate_parameter,
@@ -327,6 +327,21 @@ inline void setup_photo_rates(
       ph_rate_buf[i] = add_uvb * uvb_rate + add_field * my_kph(i, idx_range.j, idx_range.k);
     }
   }
+
+}
+
+inline void setup_photo_rate_buffers(
+  IndexRange idx_range, const gr_mask_type* itmask,
+  chemistry_data* my_chemistry,
+  photo_rate_storage my_uvb_rates,
+  grackle_field_data* my_fields,
+  double* const* kph_buf){
+
+  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                              my_chemistry->use_HI_ionization,
+                              my_uvb_rates.k24,
+                              my_fields->HI_ionization_rate,
+                              kph_buf[PhotoRxnLUT::k24]);
 
 }
 
@@ -876,11 +891,11 @@ inline void lookup_cool_rates1d(
   // custom external radiation fields.
   double* const* kph_buf = FullRxnRateBuf_kph_bufs(&rxn_rate_buf);
 
-  setup_photo_rates(idx_range, itmask, my_fields,
-                    my_chemistry->use_HI_ionization,
-                    my_uvb_rates.k24,
-                    my_fields->HI_ionization_rate,
-                    kph_buf[PhotoRxnLUT::k24]);
+  setup_photo_rate_buffers(idx_range, itmask,
+                           my_chemistry,
+                           my_uvb_rates,
+                           my_fields,
+                           kph_buf);
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {

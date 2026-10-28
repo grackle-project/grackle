@@ -275,7 +275,6 @@ ENTRY(use_COI_dissociation, INT, 0)
 ENTRY(use_OHI_dissociation, INT, 0)
 ENTRY(use_H2OI_dissociation, INT, 0)
 
-
 /* flag for approximiate self-shielding as well
    as spectrum averaged photo heating and
    photo ionization shielding factors */
