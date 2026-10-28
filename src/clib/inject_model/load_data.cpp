@@ -474,6 +474,25 @@ Expected<void, Error> load_inject_path_data(
   }
   FrozenKeyIdxBiMap inj_path_names = inj_path_names_rslt.value();
 
+  // store the inject path field_names within opaque_storage
+  {
+    std::vector<std::string> field_names_(n_pathways);
+    std::vector<const char*> c_strings_(n_pathways);
+    for (int i = 0; i < n_pathways; i++) {
+      field_names_[i] = std::string(inj_path_name_l[i]) + "_metal_density";
+      c_strings_[i] = field_names_[i].c_str();
+    }
+    Expected<FrozenKeyIdxBiMap, Error> inj_path_field_names_rslt =
+        FrozenKeyIdxBiMap::create(c_strings_.data(), n_pathways,
+                                  BiMapMode::COPIES_KEYDATA);
+    if (!inj_path_field_names_rslt.has_value()) {
+      return Unexpected(inj_path_field_names_rslt.error().context_literal(
+          "problem building map of field names"));
+    }
+    my_rates->opaque_storage->field_query_inject_pathway_names =
+        std::move(inj_path_field_names_rslt).value();
+  }
+
   // initialize the object that will hold the loaded data
   int n_log10Tdust_vals = inj_model_input::N_Tdust_Opacity_Table;
   int n_opac_poly_coef = inj_model_input::N_Opacity_Coef;
