@@ -67,7 +67,9 @@ typedef struct
   int metal_cooling;
 
   /* add heating from UV background model
-     0) off, 1) on */
+     0) off, 1) on
+     This will set all unset photo rate parameters to 1.
+  */
   int UVbackground;
 
   /* data file containing cooling and UV background tables */
@@ -232,7 +234,12 @@ typedef struct
   int radiative_transfer_metal_ionization;
   int radiative_transfer_metal_dissociation;
 
-  /* flags for supplying field arrays for radiative rates */
+  /* flags for including photo reaction rates from:
+   0: nowhere (off)
+   1: UVB table
+   2: field array
+   3: UVB table and field array together
+  */
   int use_HI_ionization;     // k24
   int use_HeII_ionization;   // k25
   int use_HeI_ionization;    // k26
@@ -247,6 +254,12 @@ typedef struct
   int use_COI_dissociation;
   int use_OHI_dissociation;
   int use_H2OI_dissociation;
+
+  /* flag to signal that fields are being provided for all photo rates.
+     This will set all the above photo rates to 2 if UVbackground is off and
+     3 if UVBackground is on.
+  */
+  int use_photo_fields;
 
   /* flag to signal H2 self-shielding is being done in hydro code */
   int radiative_transfer_use_H2_shielding;

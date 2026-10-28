@@ -260,20 +260,26 @@ ENTRY(radiative_transfer_use_H2_shielding, INT, FALSE)
    2: rate included from field array only
    3: rate is the sum of UVB table and field array values
 */
-ENTRY(use_HI_ionization, INT, 0)
-ENTRY(use_HeII_ionization, INT, 0)
-ENTRY(use_HeI_ionization, INT, 0)
-ENTRY(use_HM_detachment, INT, 0)
-ENTRY(use_H2II_dissociation, INT, 0)
-ENTRY(use_H2I_ionization, INT, 0)
-ENTRY(use_H2II_dissociative_ionization, INT, 0)
-ENTRY(use_H2I_dissociation, INT, 0)
-ENTRY(use_HDI_dissociation, INT, 0)
-ENTRY(use_CI_ionization, INT, 0)
-ENTRY(use_OI_ionization, INT, 0)
-ENTRY(use_COI_dissociation, INT, 0)
-ENTRY(use_OHI_dissociation, INT, 0)
-ENTRY(use_H2OI_dissociation, INT, 0)
+ENTRY(use_HI_ionization, INT, -1)
+ENTRY(use_HeII_ionization, INT, -1)
+ENTRY(use_HeI_ionization, INT, -1)
+ENTRY(use_HM_detachment, INT, -1)
+ENTRY(use_H2II_dissociation, INT, -1)
+ENTRY(use_H2I_ionization, INT, -1)
+ENTRY(use_H2II_dissociative_ionization, INT, -1)
+ENTRY(use_H2I_dissociation, INT, -1)
+ENTRY(use_HDI_dissociation, INT, -1)
+ENTRY(use_CI_ionization, INT, -1)
+ENTRY(use_OI_ionization, INT, -1)
+ENTRY(use_COI_dissociation, INT, -1)
+ENTRY(use_OHI_dissociation, INT, -1)
+ENTRY(use_H2OI_dissociation, INT, -1)
+
+/* flag to signal that fields are being provided for all photo rates.
+   This will set all the above photo rates to 2 if UVbackground is off and
+   3 if UVBackground is on.
+*/
+ENTRY(use_photo_fields, INT, 0)
 
 /* flag for approximiate self-shielding as well
    as spectrum averaged photo heating and
