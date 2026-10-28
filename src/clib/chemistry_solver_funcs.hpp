@@ -1952,7 +1952,8 @@ inline void species_density_derivatives_0d(
                +      kcol_buf[CollisionalRxnLUT::k51][0]   * DII        * HI
                + 2.*kcol_buf[CollisionalRxnLUT::k55][0]   * HDI        *
             HI       /3.
-               );
+               )
+               + 2. * kph_buf[PhotoRxnLUT::kdissHDI][0]  *   HDI /3.;
     acoef  =    kcol_buf[CollisionalRxnLUT::k1][0]    * de
            +    kcol_buf[CollisionalRxnLUT::k50][0]    * HII
            +    kcol_buf[CollisionalRxnLUT::k54][0]    * H2I       /2.
@@ -1964,8 +1965,7 @@ inline void species_density_derivatives_0d(
           + kcol_buf[CollisionalRxnLUT::k133][0]    *   DII        *    DM        /  2.
           + kcol_buf[CollisionalRxnLUT::k134][0]    *   HII        *    DM        /  2.
           + kcol_buf[CollisionalRxnLUT::k136][0]    *    DM        *    HI        /  2.
-          )
-          + 2. * kph_buf[PhotoRxnLUT::kdissHDI][0]  *   HDI /3.;
+          );
       acoef = acoef
           + kcol_buf[CollisionalRxnLUT::k129][0]    *   HII
           + kcol_buf[CollisionalRxnLUT::k132][0]    *    de
