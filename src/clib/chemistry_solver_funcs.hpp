@@ -134,7 +134,9 @@ public:
 ///     chemistry.
 /// @param[in] my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
-/// @param[in] my_fields Specifies the current values of the field data
+/// @param[in] sp_densities Specifies the densities of the various species
+///     that Grackle evolves in a format that allows the values to be accessed
+///     with the index lookup table.
 /// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
 ///     local physical conditions)
 /// @param[in]  sp_kind_map associates intervals of species ids with the kind
@@ -189,7 +191,8 @@ inline void species_density_updates_gauss_seidel(
   View<double**> out_spdens, IndexRange idx_range,
   const double* dtit, gr_mask_type anydust, const double* rhoH,
   const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
-  const chemistry_data* my_chemistry, grackle_field_data* my_fields,
+  const chemistry_data* my_chemistry,
+  SpeciesMultiView<const gr_float> sp_densities,
   const FullRxnRateBuf rxn_rate_buf, const PartMap<SpKind>& sp_kind_map
 )
 {
@@ -198,60 +201,57 @@ inline void species_density_updates_gauss_seidel(
 
   // Get pointers to the various species fields
   // ------------------------------------------
-  int ptr_offset_ = layoutleft_3D_index_to_1D_(
-      my_fields->grid_dimension, 0, idx_range.j, idx_range.k);
-
-  const gr_float* de = my_fields->e_density + ptr_offset_;
-  const gr_float* HI = my_fields->HI_density + ptr_offset_;
-  const gr_float* HII = my_fields->HII_density + ptr_offset_;
-  const gr_float* HeI = my_fields->HeI_density + ptr_offset_;
-  const gr_float* HeII = my_fields->HeII_density + ptr_offset_;
-  const gr_float* HeIII = my_fields->HeIII_density + ptr_offset_;
-  const gr_float* HM = my_fields->HM_density + ptr_offset_;
-  const gr_float* H2I = my_fields->H2I_density + ptr_offset_;
-  const gr_float* H2II = my_fields->H2II_density + ptr_offset_;
-  const gr_float* DI = my_fields->DI_density + ptr_offset_;
-  const gr_float* DII = my_fields->DII_density + ptr_offset_;
-  const gr_float* HDI = my_fields->HDI_density + ptr_offset_;
-  const gr_float* DM = my_fields->DM_density + ptr_offset_;
-  const gr_float* HDII = my_fields->HDII_density + ptr_offset_;
-  const gr_float* HeHII = my_fields->HeHII_density + ptr_offset_;
-  const gr_float* CI = my_fields->CI_density + ptr_offset_;
-  const gr_float* CII = my_fields->CII_density + ptr_offset_;
-  const gr_float* COI = my_fields->COI_density + ptr_offset_;
-  const gr_float* CO2I = my_fields->CO2I_density + ptr_offset_;
-  const gr_float* OI = my_fields->OI_density + ptr_offset_;
-  const gr_float* OHI = my_fields->OHI_density + ptr_offset_;
-  const gr_float* H2OI = my_fields->H2OI_density + ptr_offset_;
-  const gr_float* O2I = my_fields->O2I_density + ptr_offset_;
-  const gr_float* SiI = my_fields->SiI_density + ptr_offset_;
-  const gr_float* SiOI = my_fields->SiOI_density + ptr_offset_;
-  const gr_float* SiO2I = my_fields->SiO2I_density + ptr_offset_;
-  const gr_float* CHI = my_fields->CHI_density + ptr_offset_;
-  const gr_float* CH2I = my_fields->CH2I_density + ptr_offset_;
-  const gr_float* COII = my_fields->COII_density + ptr_offset_;
-  const gr_float* OII = my_fields->OII_density + ptr_offset_;
-  const gr_float* OHII = my_fields->OHII_density + ptr_offset_;
-  const gr_float* H2OII = my_fields->H2OII_density + ptr_offset_;
-  const gr_float* H3OII = my_fields->H3OII_density + ptr_offset_;
-  const gr_float* O2II = my_fields->O2II_density + ptr_offset_;
-  const gr_float* Mg = my_fields->Mg_density + ptr_offset_;
-  const gr_float* Al = my_fields->Al_density + ptr_offset_;
-  const gr_float* S = my_fields->S_density + ptr_offset_;
-  const gr_float* Fe = my_fields->Fe_density + ptr_offset_;
-  const gr_float* SiM = my_fields->SiM_dust_density + ptr_offset_;
-  const gr_float* FeM = my_fields->FeM_dust_density + ptr_offset_;
-  const gr_float* Mg2SiO4 = my_fields->Mg2SiO4_dust_density + ptr_offset_;
-  const gr_float* MgSiO3 = my_fields->MgSiO3_dust_density + ptr_offset_;
-  const gr_float* Fe3O4 = my_fields->Fe3O4_dust_density + ptr_offset_;
-  const gr_float* AC = my_fields->AC_dust_density + ptr_offset_;
-  const gr_float* SiO2D = my_fields->SiO2_dust_density + ptr_offset_;
-  const gr_float* MgO = my_fields->MgO_dust_density + ptr_offset_;
-  const gr_float* FeS = my_fields->FeS_dust_density + ptr_offset_;
-  const gr_float* Al2O3 = my_fields->Al2O3_dust_density + ptr_offset_;
-  const gr_float* reforg = my_fields->ref_org_dust_density + ptr_offset_;
-  const gr_float* volorg = my_fields->vol_org_dust_density + ptr_offset_;
-  const gr_float* H2Oice = my_fields->H2O_ice_dust_density + ptr_offset_;
+  const gr_float* de = sp_densities.contig1d_ptr(SpLUT::e);
+  const gr_float* HI = sp_densities.contig1d_ptr(SpLUT::HI);
+  const gr_float* HII = sp_densities.contig1d_ptr(SpLUT::HII);
+  const gr_float* HeI = sp_densities.contig1d_ptr(SpLUT::HeI);
+  const gr_float* HeII = sp_densities.contig1d_ptr(SpLUT::HeII);
+  const gr_float* HeIII = sp_densities.contig1d_ptr(SpLUT::HeIII);
+  const gr_float* HM = sp_densities.contig1d_ptr(SpLUT::HM);
+  const gr_float* H2I = sp_densities.contig1d_ptr(SpLUT::H2I);
+  const gr_float* H2II = sp_densities.contig1d_ptr(SpLUT::H2II);
+  const gr_float* DI = sp_densities.contig1d_ptr(SpLUT::DI);
+  const gr_float* DII = sp_densities.contig1d_ptr(SpLUT::DII);
+  const gr_float* HDI = sp_densities.contig1d_ptr(SpLUT::HDI);
+  const gr_float* DM = sp_densities.contig1d_ptr(SpLUT::DM);
+  const gr_float* HDII = sp_densities.contig1d_ptr(SpLUT::HDII);
+  const gr_float* HeHII = sp_densities.contig1d_ptr(SpLUT::HeHII);
+  const gr_float* CI = sp_densities.contig1d_ptr(SpLUT::CI);
+  const gr_float* CII = sp_densities.contig1d_ptr(SpLUT::CII);
+  const gr_float* COI = sp_densities.contig1d_ptr(SpLUT::COI);
+  const gr_float* CO2I = sp_densities.contig1d_ptr(SpLUT::CO2I);
+  const gr_float* OI = sp_densities.contig1d_ptr(SpLUT::OI);
+  const gr_float* OHI = sp_densities.contig1d_ptr(SpLUT::OHI);
+  const gr_float* H2OI = sp_densities.contig1d_ptr(SpLUT::H2OI);
+  const gr_float* O2I = sp_densities.contig1d_ptr(SpLUT::O2I);
+  const gr_float* SiI = sp_densities.contig1d_ptr(SpLUT::SiI);
+  const gr_float* SiOI = sp_densities.contig1d_ptr(SpLUT::SiOI);
+  const gr_float* SiO2I = sp_densities.contig1d_ptr(SpLUT::SiO2I);
+  const gr_float* CHI = sp_densities.contig1d_ptr(SpLUT::CHI);
+  const gr_float* CH2I = sp_densities.contig1d_ptr(SpLUT::CH2I);
+  const gr_float* COII = sp_densities.contig1d_ptr(SpLUT::COII);
+  const gr_float* OII = sp_densities.contig1d_ptr(SpLUT::OII);
+  const gr_float* OHII = sp_densities.contig1d_ptr(SpLUT::OHII);
+  const gr_float* H2OII = sp_densities.contig1d_ptr(SpLUT::H2OII);
+  const gr_float* H3OII = sp_densities.contig1d_ptr(SpLUT::H3OII);
+  const gr_float* O2II = sp_densities.contig1d_ptr(SpLUT::O2II);
+  const gr_float* Mg = sp_densities.contig1d_ptr(SpLUT::Mg);
+  const gr_float* Al = sp_densities.contig1d_ptr(SpLUT::Al);
+  const gr_float* S = sp_densities.contig1d_ptr(SpLUT::S);
+  const gr_float* Fe = sp_densities.contig1d_ptr(SpLUT::Fe);
+  const gr_float* SiM = sp_densities.contig1d_ptr(SpLUT::SiM_dust);
+  const gr_float* FeM = sp_densities.contig1d_ptr(SpLUT::FeM_dust);
+  const gr_float* Mg2SiO4 = sp_densities.contig1d_ptr(SpLUT::Mg2SiO4_dust);
+  const gr_float* MgSiO3 = sp_densities.contig1d_ptr(SpLUT::MgSiO3_dust);
+  const gr_float* Fe3O4 = sp_densities.contig1d_ptr(SpLUT::Fe3O4_dust);
+  const gr_float* AC = sp_densities.contig1d_ptr(SpLUT::AC_dust);
+  const gr_float* SiO2D = sp_densities.contig1d_ptr(SpLUT::SiO2_dust);
+  const gr_float* MgO = sp_densities.contig1d_ptr(SpLUT::MgO_dust);
+  const gr_float* FeS = sp_densities.contig1d_ptr(SpLUT::FeS_dust);
+  const gr_float* Al2O3 = sp_densities.contig1d_ptr(SpLUT::Al2O3_dust);
+  const gr_float* reforg = sp_densities.contig1d_ptr(SpLUT::ref_org_dust);
+  const gr_float* volorg = sp_densities.contig1d_ptr(SpLUT::vol_org_dust);
+  const gr_float* H2Oice = sp_densities.contig1d_ptr(SpLUT::H2O_ice_dust);
 
   // locals
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
@@ -1509,7 +1509,9 @@ inline void species_density_updates_gauss_seidel(
 ///     chemistry
 /// @param[in]  my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
-/// @param[in]  my_fields Specifies field data
+/// @param[in]  sp_densities Specifies the densities of the various species
+///     that Grackle evolves in a format that allows the values to be accessed
+///     with the index lookup table.
 /// @param[in]  rxn_rate_buf specifies the precomputed rxn rates (depends on
 ///     local physical conditions)
 /// @param[in]  sp_kind_map associates intervals of species ids with the kind
@@ -1539,7 +1541,8 @@ inline void species_density_updates_gauss_seidel(
 inline void species_density_derivatives_0d(
   View<gr_float**> deriv, gr_mask_type anydust,
   const double* rhoH, const gr_mask_type* itmask_metal,
-  const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
+  const chemistry_data* my_chemistry,
+  SpeciesMultiView<const gr_float> sp_densities,
   const FullRxnRateBuf rxn_rate_buf, const PartMap<SpKind>& sp_kind_map
 ) {
   const SpIdAdaptor spid(sp_kind_map);
@@ -1556,57 +1559,57 @@ inline void species_density_derivatives_0d(
   //   gr_float isn't the same as double (but, the historical implementation
   //   definitely didn't handle this case properly)
 
-  const gr_float& de      = my_fields->e_density[0];
-  const gr_float& HI      = my_fields->HI_density[0];
-  const gr_float& HII     = my_fields->HII_density[0];
-  const gr_float& HeI     = my_fields->HeI_density[0];
-  const gr_float& HeII    = my_fields->HeII_density[0];
-  const gr_float& HeIII   = my_fields->HeIII_density[0];
-  const gr_float& HM      = my_fields->HM_density[0];
-  const gr_float& H2I     = my_fields->H2I_density[0];
-  const gr_float& H2II    = my_fields->H2II_density[0];
-  const gr_float& DI      = my_fields->DI_density[0];
-  const gr_float& DII     = my_fields->DII_density[0];
-  const gr_float& HDI     = my_fields->HDI_density[0];
-  const gr_float& DM      = my_fields->DM_density[0];
-  const gr_float& HDII    = my_fields->HDII_density[0];
-  const gr_float& HeHII   = my_fields->HeHII_density[0];
-  const gr_float& CI      = my_fields->CI_density[0];
-  const gr_float& CII     = my_fields->CII_density[0];
-  const gr_float& COI     = my_fields->COI_density[0];
-  const gr_float& CO2I    = my_fields->CO2I_density[0];
-  const gr_float& OI      = my_fields->OI_density[0];
-  const gr_float& OHI     = my_fields->OHI_density[0];
-  const gr_float& H2OI    = my_fields->H2OI_density[0];
-  const gr_float& O2I     = my_fields->O2I_density[0];
-  const gr_float& SiI     = my_fields->SiI_density[0];
-  const gr_float& SiOI    = my_fields->SiOI_density[0];
-  const gr_float& SiO2I   = my_fields->SiO2I_density[0];
-  const gr_float& CHI     = my_fields->CHI_density[0];
-  const gr_float& CH2I    = my_fields->CH2I_density[0];
-  const gr_float& COII    = my_fields->COII_density[0];
-  const gr_float& OII     = my_fields->OII_density[0];
-  const gr_float& OHII    = my_fields->OHII_density[0];
-  const gr_float& H2OII   = my_fields->H2OII_density[0];
-  const gr_float& H3OII   = my_fields->H3OII_density[0];
-  const gr_float& O2II    = my_fields->O2II_density[0];
-  const gr_float& Mg      = my_fields->Mg_density[0];
-  const gr_float& Al      = my_fields->Al_density[0];
-  const gr_float& S       = my_fields->S_density[0];
-  const gr_float& Fe      = my_fields->Fe_density[0];
-  const gr_float& MgSiO3  = my_fields->MgSiO3_dust_density[0];
-  const gr_float& AC      = my_fields->AC_dust_density[0];
-  const gr_float& SiM     = my_fields->SiM_dust_density[0];
-  const gr_float& FeM     = my_fields->FeM_dust_density[0];
-  const gr_float& Mg2SiO4 = my_fields->Mg2SiO4_dust_density[0];
-  const gr_float& Fe3O4   = my_fields->Fe3O4_dust_density[0];
-  const gr_float& SiO2D   = my_fields->SiO2_dust_density[0];
-  const gr_float& MgO     = my_fields->MgO_dust_density[0];
-  const gr_float& FeS     = my_fields->FeS_dust_density[0];
-  const gr_float& Al2O3   = my_fields->Al2O3_dust_density[0];
-  const gr_float& reforg  = my_fields->ref_org_dust_density[0];
-  const gr_float& volorg  = my_fields->vol_org_dust_density[0];
-  const gr_float& H2Oice  = my_fields->H2O_ice_dust_density[0];
+  const gr_float& de      = sp_densities(SpLUT::e, 0);
+  const gr_float& HI      = sp_densities(SpLUT::HI, 0);
+  const gr_float& HII     = sp_densities(SpLUT::HII, 0);
+  const gr_float& HeI     = sp_densities(SpLUT::HeI, 0);
+  const gr_float& HeII    = sp_densities(SpLUT::HeII, 0);
+  const gr_float& HeIII   = sp_densities(SpLUT::HeIII, 0);
+  const gr_float& HM      = sp_densities(SpLUT::HM, 0);
+  const gr_float& H2I     = sp_densities(SpLUT::H2I, 0);
+  const gr_float& H2II    = sp_densities(SpLUT::H2II, 0);
+  const gr_float& DI      = sp_densities(SpLUT::DI, 0);
+  const gr_float& DII     = sp_densities(SpLUT::DII, 0);
+  const gr_float& HDI     = sp_densities(SpLUT::HDI, 0);
+  const gr_float& DM      = sp_densities(SpLUT::DM, 0);
+  const gr_float& HDII    = sp_densities(SpLUT::HDII, 0);
+  const gr_float& HeHII   = sp_densities(SpLUT::HeHII, 0);
+  const gr_float& CI      = sp_densities(SpLUT::CI, 0);
+  const gr_float& CII     = sp_densities(SpLUT::CII, 0);
+  const gr_float& COI     = sp_densities(SpLUT::COI, 0);
+  const gr_float& CO2I    = sp_densities(SpLUT::CO2I, 0);
+  const gr_float& OI      = sp_densities(SpLUT::OI, 0);
+  const gr_float& OHI     = sp_densities(SpLUT::OHI, 0);
+  const gr_float& H2OI    = sp_densities(SpLUT::H2OI, 0);
+  const gr_float& O2I     = sp_densities(SpLUT::O2I, 0);
+  const gr_float& SiI     = sp_densities(SpLUT::SiI, 0);
+  const gr_float& SiOI    = sp_densities(SpLUT::SiOI, 0);
+  const gr_float& SiO2I   = sp_densities(SpLUT::SiO2I, 0);
+  const gr_float& CHI     = sp_densities(SpLUT::CHI, 0);
+  const gr_float& CH2I    = sp_densities(SpLUT::CH2I, 0);
+  const gr_float& COII    = sp_densities(SpLUT::COII, 0);
+  const gr_float& OII     = sp_densities(SpLUT::OII, 0);
+  const gr_float& OHII    = sp_densities(SpLUT::OHII, 0);
+  const gr_float& H2OII   = sp_densities(SpLUT::H2OII, 0);
+  const gr_float& H3OII   = sp_densities(SpLUT::H3OII, 0);
+  const gr_float& O2II    = sp_densities(SpLUT::O2II, 0);
+  const gr_float& Mg      = sp_densities(SpLUT::Mg, 0);
+  const gr_float& Al      = sp_densities(SpLUT::Al, 0);
+  const gr_float& S       = sp_densities(SpLUT::S, 0);
+  const gr_float& Fe      = sp_densities(SpLUT::Fe, 0);
+  const gr_float& MgSiO3  = sp_densities(SpLUT::MgSiO3_dust, 0);
+  const gr_float& AC      = sp_densities(SpLUT::AC_dust, 0);
+  const gr_float& SiM     = sp_densities(SpLUT::SiM_dust, 0);
+  const gr_float& FeM     = sp_densities(SpLUT::FeM_dust, 0);
+  const gr_float& Mg2SiO4 = sp_densities(SpLUT::Mg2SiO4_dust, 0);
+  const gr_float& Fe3O4   = sp_densities(SpLUT::Fe3O4_dust, 0);
+  const gr_float& SiO2D   = sp_densities(SpLUT::SiO2_dust, 0);
+  const gr_float& MgO     = sp_densities(SpLUT::MgO_dust, 0);
+  const gr_float& FeS     = sp_densities(SpLUT::FeS_dust, 0);
+  const gr_float& Al2O3   = sp_densities(SpLUT::Al2O3_dust, 0);
+  const gr_float& reforg  = sp_densities(SpLUT::ref_org_dust, 0);
+  const gr_float& volorg  = sp_densities(SpLUT::vol_org_dust, 0);
+  const gr_float& H2Oice  = sp_densities(SpLUT::H2O_ice_dust, 0);
 
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
   const double* const* kph_buf = FullRxnRateBuf_kph_bufs(&rxn_rate_buf);

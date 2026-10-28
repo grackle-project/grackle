@@ -628,7 +628,7 @@ inline void derivatives(
 
   gr_chem::species_density_derivatives_0d(
     rhosp_dot_view, pack.fwd_args.anydust, pack.other_scratch_buf.rhoH,
-    &pack.local_itmask_metal, my_chemistry, &pack.fields,
+    &pack.local_itmask_metal, my_chemistry, sp_densities,
     pack.main_scratch_buf.rxn_rate_buf, my_rates->opaque_storage->sp_kind_map
   );
 }
