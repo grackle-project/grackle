@@ -29,7 +29,6 @@
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "full_rxn_rate_buf.hpp"
 #include "support/index_helper.hpp"
-#include "internal_types.hpp"
 #include "LUT.hpp"
 #include "support/View.hpp"
 
@@ -105,8 +104,8 @@ public:
 /// to advance the rate equations by one (sub-)cycle (for each index in the
 /// index-range that is selected by the given itmask)
 ///
-/// @param[out] out_spdens_obj Holds buffers that are used to store the updated
-///     species densities for the @p idx_range.
+/// @param[out] out_spdens stores the updated species densities for the
+///     @p idx_range.
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] dtit Specifies the timestep of the current sub-cycle for each
 ///     index in @p idx_range.
@@ -168,7 +167,7 @@ public:
 ///   maybe even primordial_chemistry == 3 (but, we'll obviously need to test
 ///   performance).
 inline void species_density_updates_gauss_seidel(
-  SpeciesCollection out_spdens_obj, IndexRange idx_range,
+  View<gr_float**> out_spdens, IndexRange idx_range,
   const double* dtit, gr_mask_type anydust, const double* rhoH,
   const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, grackle_field_data* my_fields,
@@ -176,8 +175,6 @@ inline void species_density_updates_gauss_seidel(
 )
 {
   const SpIdAdaptor spid;
-
-  View<gr_float**> out_spdens(out_spdens_obj.data[0], SpLUT::NUM_ENTRIES, my_fields->grid_dimension[0]);
 
   // Construct views of various species fields
   // -----------------------------------------
@@ -1480,7 +1477,7 @@ inline void species_density_updates_gauss_seidel(
 /// mostly for historical reasons. In reality, it would be faster to operate on
 /// many species at once.
 ///
-/// @param[out] deriv_obj This is where we store the time derivative of the
+/// @param[out] deriv This is where we store the time derivative of the
 ///     species mass densities. The caller must make sure this is filled with
 ///     zeros before calling this function
 /// @param[in]  anydust
@@ -1515,14 +1512,12 @@ inline void species_density_updates_gauss_seidel(
 ///    - notably, part (D) does not do this (but I'm not sure that there
 ///      is a reasonable motivation for that choice)
 inline void species_density_derivatives_0d(
-  SpeciesCollection deriv_obj, gr_mask_type anydust,
+  View<double**> deriv, gr_mask_type anydust,
   const double* rhoH, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
   const FullRxnRateBuf rxn_rate_buf
 ) {
   const SpIdAdaptor spid;
-
-  View<gr_float**> deriv(deriv_obj.data[0], SpLUT::NUM_ENTRIES, 1);
 
   // define some local variables carried over from the fortran version:
   // - the goal is to eventually remove all of these
