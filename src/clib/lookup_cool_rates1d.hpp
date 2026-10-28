@@ -330,8 +330,21 @@ inline void calculate_photo_rate_buffer(
 
 }
 
+/// This routine fills buffers of rates for all photo reactions in the
+/// specified index range.
+///
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] itmask_metal Specifies the metal_chemistry iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] my_uvb_rates holds photo rates interpolated from uvb tables
+/// @param[in] my_fields Specifies the field data.
+/// @param[out] kph_buf points to all of the photo rate buffers
 inline void setup_photo_rate_buffers(
   IndexRange idx_range, const gr_mask_type* itmask,
+  const gr_mask_type* itmask_metal,
   chemistry_data* my_chemistry,
   photo_rate_storage my_uvb_rates,
   grackle_field_data* my_fields,
@@ -382,7 +395,45 @@ inline void setup_photo_rate_buffers(
                                 my_uvb_rates.kdissHDI,
                                 my_fields->HDI_dissociation_rate,
                                 kph_buf[PhotoRxnLUT::kdissHDI]);
+  }
 
+  if (my_chemistry->metal_chemistry == 1) {
+    // metal photo-ionization/photo-dissociation rates. Each buffer holds
+    // the total rate: the UV background part set here plus the
+    // radiative-transfer part folded in further below. Only the O I
+    // background rate is self-shielded (in apply_misc_shield_factors):
+    // O I ionization (13.62 eV) uses the same photons as H I, while C I
+    // ionization (11.26 eV) and the CO (11.2-13.6 eV), OH (4.44 eV) and
+    // H2O (5.12 eV) dissociations sit below the Lyman limit, where the
+    // gas is transparent.
+    calculate_photo_rate_buffer(idx_range, itmask_metal, my_fields,
+                                my_chemistry->use_CI_ionization,
+                                my_uvb_rates.kphCI_bg,
+                                my_fields->CI_ionization_rate,
+                                kph_buf[PhotoRxnLUT::kphCI]);
+    calculate_photo_rate_buffer(idx_range, itmask_metal, my_fields,
+                                my_chemistry->use_OI_ionization,
+                                my_uvb_rates.kphOI_bg,
+                                my_fields->OI_ionization_rate,
+                                kph_buf[PhotoRxnLUT::kphOI]);
+    calculate_photo_rate_buffer(idx_range, itmask_metal, my_fields,
+                                my_chemistry->use_COI_dissociation,
+                                my_uvb_rates.kdissCO_bg,
+                                my_fields->COI_dissociation_rate,
+                                kph_buf[PhotoRxnLUT::kdissCO]);
+    calculate_photo_rate_buffer(idx_range, itmask_metal, my_fields,
+                                my_chemistry->use_OHI_dissociation,
+                                my_uvb_rates.kdissOH_bg,
+                                my_fields->OHI_dissociation_rate,
+                                kph_buf[PhotoRxnLUT::kdissOH]);
+    // TODO: the Leiden H2O cross section has two dissociation branches
+    // (H2O -> OH + H and H2O -> O + H2/2H). The table stores the total
+    // and grackle only implements the OH + H channel; revisit this.
+    calculate_photo_rate_buffer(idx_range, itmask_metal, my_fields,
+                                my_chemistry->use_H2OI_dissociation,
+                                my_uvb_rates.kdissH2O_bg,
+                                my_fields->H2OI_dissociation_rate,
+                                kph_buf[PhotoRxnLUT::kdissH2O]);
   }
 }
 
@@ -932,32 +983,12 @@ inline void lookup_cool_rates1d(
   // custom external radiation fields.
   double* const* kph_buf = FullRxnRateBuf_kph_bufs(&rxn_rate_buf);
 
-  setup_photo_rate_buffers(idx_range, itmask,
+  // Setup buffers for all photo reaction rates (except H2I photo-dissociation for now)
+  setup_photo_rate_buffers(idx_range, itmask, itmask_metal,
                            my_chemistry,
                            my_uvb_rates,
                            my_fields,
                            kph_buf);
-
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      // metal photo-ionization/photo-dissociation rates. Each buffer holds
-      // the total rate: the UV background part set here plus the
-      // radiative-transfer part folded in further below. Only the O I
-      // background rate is self-shielded (in apply_misc_shield_factors):
-      // O I ionization (13.62 eV) uses the same photons as H I, while C I
-      // ionization (11.26 eV) and the CO (11.2-13.6 eV), OH (4.44 eV) and
-      // H2O (5.12 eV) dissociations sit below the Lyman limit, where the
-      // gas is transparent.
-      kph_buf[PhotoRxnLUT::kphCI][i] = my_uvb_rates.kphCI_bg;
-      kph_buf[PhotoRxnLUT::kphOI][i] = my_uvb_rates.kphOI_bg;
-      kph_buf[PhotoRxnLUT::kdissCO][i] = my_uvb_rates.kdissCO_bg;
-      kph_buf[PhotoRxnLUT::kdissOH][i] = my_uvb_rates.kdissOH_bg;
-      // TODO: the Leiden H2O cross section has two dissociation branches
-      // (H2O -> OH + H and H2O -> O + H2/2H). The table stores the total
-      // and grackle only implements the OH + H channel; revisit this.
-      kph_buf[PhotoRxnLUT::kdissH2O][i] = my_uvb_rates.kdissH2O_bg;
-    }
-  }
 
   // model the effects of H2 self-shielding
   if (my_chemistry->primordial_chemistry > 1) {
@@ -974,52 +1005,6 @@ inline void lookup_cool_rates1d(
     apply_misc_shield_factors(kph_buf, idx_range, itmask,
                               my_chemistry->self_shielding_method, my_uvb_rates,
                               &calculator);
-  }
-
-  // add the radiative-transfer rates for metal species to the background
-  // rates (after shielding, which only applies to the background)
-  if ((my_chemistry->use_radiative_transfer == 1) &&
-      (my_chemistry->metal_chemistry == 1)) {
-    if (my_chemistry->radiative_transfer_metal_ionization > 0) {
-      FortranView<const gr_float***> kphCI(
-          my_fields->RT_CI_ionization_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      FortranView<const gr_float***> kphOI(
-          my_fields->RT_OI_ionization_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kph_buf[PhotoRxnLUT::kphCI][i] = kph_buf[PhotoRxnLUT::kphCI][i] +
-                                           kphCI(i, idx_range.j, idx_range.k);
-          kph_buf[PhotoRxnLUT::kphOI][i] = kph_buf[PhotoRxnLUT::kphOI][i] +
-                                           kphOI(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
-    if (my_chemistry->radiative_transfer_metal_dissociation > 0) {
-      FortranView<const gr_float***> kdissCO(
-          my_fields->RT_CO_dissociation_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      FortranView<const gr_float***> kdissOH(
-          my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      FortranView<const gr_float***> kdissH2O(
-          my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kph_buf[PhotoRxnLUT::kdissCO][i] =
-              kph_buf[PhotoRxnLUT::kdissCO][i] +
-              kdissCO(i, idx_range.j, idx_range.k);
-          kph_buf[PhotoRxnLUT::kdissOH][i] =
-              kph_buf[PhotoRxnLUT::kdissOH][i] +
-              kdissOH(i, idx_range.j, idx_range.k);
-          kph_buf[PhotoRxnLUT::kdissH2O][i] =
-              kph_buf[PhotoRxnLUT::kdissH2O][i] +
-              kdissH2O(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
   }
 
 #ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED
