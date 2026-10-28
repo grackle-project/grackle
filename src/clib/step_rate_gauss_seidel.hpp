@@ -21,6 +21,7 @@
 
 #include "grackle.h"  // gr_float
 #include "chemistry_solver_funcs.hpp"
+#include "chem_model/infer_species.hpp"
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "support/index_helper.hpp"
 #include "internal_types.hpp"
@@ -239,9 +240,8 @@ inline void step_rate_gauss_seidel(
   const double* rhoH, double* dedot_prev,
   double* HIdot_prev, const gr_mask_type* itmask,
   const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-  grackle_field_data* my_fields,
-  grackle::impl::SpeciesCollection species_tmpdens,
-  const FullRxnRateBuf rxn_rate_buf
+  grackle_field_data* my_fields, SpeciesCollection species_tmpdens,
+  const FullRxnRateBuf rxn_rate_buf, const PartMap<SpKind>& sp_kind_map
 ) {
   View<gr_float**> species_tmpdens_view(species_tmpdens.data[0],
                                         MAX_EVOLVED_SPECIES_FIELDS,
@@ -251,7 +251,7 @@ inline void step_rate_gauss_seidel(
   // end of the current timestep. The results are saved in species_tmpdens
   chemistry::species_density_updates_gauss_seidel(
       species_tmpdens_view, idx_range, dtit, anydust, rhoH, itmask,
-      itmask_metal, my_chemistry, my_fields, rxn_rate_buf);
+      itmask_metal, my_chemistry, my_fields, rxn_rate_buf, sp_kind_map);
 
   // update the entries from my_fields with the values in species_tmpdens
   update_fields_from_tmpdens_gauss_seidel(

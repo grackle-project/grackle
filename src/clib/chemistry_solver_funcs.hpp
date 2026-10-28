@@ -25,12 +25,16 @@
 #ifndef CHEMISTRY_SOLVER_FUNCS_HPP
 #define CHEMISTRY_SOLVER_FUNCS_HPP
 
+#include <climits>
+
+#include "chem_model/infer_species.hpp"
 #include "grackle.h"
 #include "field_adaptor.hpp"
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "full_rxn_rate_buf.hpp"
 #include "support/index_helper.hpp"
 #include "LUT.hpp"
+#include "support/status_reporting.hpp"
 #include "support/View.hpp"
 
 namespace grackle::impl::chemistry {
@@ -55,11 +59,10 @@ namespace grackle::impl::chemistry {
 /// eagerly load a species density buffer at the start of the function (even
 /// if the species isn't actually used)
 ///
-/// @note
-/// The interface of this class was backported so that we could reimplement
-/// `chemistry::species_density_*` without as many dependency PRs. For that
-/// reason, the motivation for certain design decisions may not be completely
-/// obvious.
+/// Longer Term Outlook
+/// ===================
+/// Longer term, the goal is to rewrite the `chemistry::species_density_*`
+/// functions in order to totally remove this class
 class SpIdAdaptor{
   // tracks properties about an interval of species ids that are all a given
   // kind of species (e.g. primordial, metal, or dust)
@@ -87,19 +90,32 @@ public:
   [[gnu::always_inline]] int metal(int id) const {return calc_(metal_, id); }
   [[gnu::always_inline]] int dust(int id) const { return calc_(dust_, id); }
 
-  SpIdAdaptor() {
-    fallback_id_ = 0;
-    int num_prim = PrimordialSpLUT::NUM_ENTRIES;
-    int num_metal = MetalSpLUT::NUM_ENTRIES;
-    int num_dust = DustSpLUT::NUM_ENTRIES;
-    prim_ = IntervalProps{.id_offset = 0, .id_count = num_prim};
-    metal_ = IntervalProps{.id_offset = num_prim, .id_count = num_metal};
-    dust_ = IntervalProps{
-      .id_offset = num_prim + num_metal, .id_count = num_dust
-    };
+  SpIdAdaptor() = delete;
+
+  /// @brief Primary Constructor
+  explicit SpIdAdaptor(PartMap<SpKind> sp_kind_map) {
+    int min_id = INT_MAX;
+
+    SpKind kinds[3] = {SpKind::PRIMORDIAL, SpKind::METAL, SpKind::DUST};
+    for (SpKind kind: kinds) {
+      IndexInterval1D b = sp_kind_map.part_bounds(kind);
+      IntervalProps props{.id_offset = b.start, .id_count = b.stop - b.start};
+      if (kind == SpKind::PRIMORDIAL) {
+        prim_ = props;
+      } else if (kind == SpKind::METAL) {
+        metal_ = props;
+      } else {
+        dust_ = props;
+      }
+      min_id = (b.start >= 0 && b.start < min_id) ? b.start : min_id;
+    }
+    fallback_id_ = min_id;
+
+    if (min_id == INT_MAX) { // this should be impossible
+      GR_INTERNAL_ERROR("sp_kind_map contains no species");
+    }
   }
 };
-
 
 /// Perform an implicit Gauss-Seidel sweep of a backward-Euler time integrator
 /// to advance the rate equations by one (sub-)cycle (for each index in the
@@ -121,6 +137,8 @@ public:
 /// @param[in] my_fields Specifies the current values of the field data
 /// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
 ///     local physical conditions)
+/// @param[in]  sp_kind_map associates intervals of species ids with the kind
+///     with the appropriate @ref SpKind
 ///
 /// Refactoring Goals
 /// -----------------
@@ -168,14 +186,15 @@ public:
 ///   maybe even primordial_chemistry == 3 (but, we'll obviously need to test
 ///   performance).
 inline void species_density_updates_gauss_seidel(
-  View<gr_float**> out_spdens, IndexRange idx_range,
+  View<double**> out_spdens, IndexRange idx_range,
   const double* dtit, gr_mask_type anydust, const double* rhoH,
   const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, grackle_field_data* my_fields,
-  const FullRxnRateBuf rxn_rate_buf
+  const FullRxnRateBuf rxn_rate_buf, const PartMap<SpKind>& sp_kind_map
 )
 {
-  const SpIdAdaptor spid;
+  const SpIdAdaptor spid(sp_kind_map);
+
 
   // Get pointers to the various species fields
   // ------------------------------------------
@@ -1491,8 +1510,10 @@ inline void species_density_updates_gauss_seidel(
 /// @param[in]  my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
 /// @param[in]  my_fields Specifies field data
-/// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
+/// @param[in]  rxn_rate_buf specifies the precomputed rxn rates (depends on
 ///     local physical conditions)
+/// @param[in]  sp_kind_map associates intervals of species ids with the kind
+///     with the appropriate @ref SpKind
 ///
 /// @note
 /// Some of occurences of the const keyword is somewhat symbolic (to indicate
@@ -1516,12 +1537,12 @@ inline void species_density_updates_gauss_seidel(
 ///    - notably, part (D) does not do this (but I'm not sure that there
 ///      is a reasonable motivation for that choice)
 inline void species_density_derivatives_0d(
-  View<double**> deriv, gr_mask_type anydust,
+  View<gr_float**> deriv, gr_mask_type anydust,
   const double* rhoH, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
-  const FullRxnRateBuf rxn_rate_buf
+  const FullRxnRateBuf rxn_rate_buf, const PartMap<SpKind>& sp_kind_map
 ) {
-  const SpIdAdaptor spid;
+  const SpIdAdaptor spid(sp_kind_map);
 
   // define some local variables carried over from the fortran version:
   // - the goal is to eventually remove all of these
