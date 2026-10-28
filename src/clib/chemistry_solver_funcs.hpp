@@ -192,7 +192,7 @@ inline void species_density_updates_gauss_seidel(
   const double* dtit, gr_mask_type anydust, const double* rhoH,
   const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry,
-  SpeciesMultiView<const gr_float> sp_densities,
+  SpeciesMultiView<const gr_float> spdens,
   const FullRxnRateBuf rxn_rate_buf, const PartMap<SpKind>& sp_kind_map
 )
 {
@@ -201,57 +201,57 @@ inline void species_density_updates_gauss_seidel(
 
   // Get pointers to the various species fields
   // ------------------------------------------
-  const gr_float* de = sp_densities.contig1d_ptr(SpLUT::e);
-  const gr_float* HI = sp_densities.contig1d_ptr(SpLUT::HI);
-  const gr_float* HII = sp_densities.contig1d_ptr(SpLUT::HII);
-  const gr_float* HeI = sp_densities.contig1d_ptr(SpLUT::HeI);
-  const gr_float* HeII = sp_densities.contig1d_ptr(SpLUT::HeII);
-  const gr_float* HeIII = sp_densities.contig1d_ptr(SpLUT::HeIII);
-  const gr_float* HM = sp_densities.contig1d_ptr(SpLUT::HM);
-  const gr_float* H2I = sp_densities.contig1d_ptr(SpLUT::H2I);
-  const gr_float* H2II = sp_densities.contig1d_ptr(SpLUT::H2II);
-  const gr_float* DI = sp_densities.contig1d_ptr(SpLUT::DI);
-  const gr_float* DII = sp_densities.contig1d_ptr(SpLUT::DII);
-  const gr_float* HDI = sp_densities.contig1d_ptr(SpLUT::HDI);
-  const gr_float* DM = sp_densities.contig1d_ptr(SpLUT::DM);
-  const gr_float* HDII = sp_densities.contig1d_ptr(SpLUT::HDII);
-  const gr_float* HeHII = sp_densities.contig1d_ptr(SpLUT::HeHII);
-  const gr_float* CI = sp_densities.contig1d_ptr(SpLUT::CI);
-  const gr_float* CII = sp_densities.contig1d_ptr(SpLUT::CII);
-  const gr_float* COI = sp_densities.contig1d_ptr(SpLUT::COI);
-  const gr_float* CO2I = sp_densities.contig1d_ptr(SpLUT::CO2I);
-  const gr_float* OI = sp_densities.contig1d_ptr(SpLUT::OI);
-  const gr_float* OHI = sp_densities.contig1d_ptr(SpLUT::OHI);
-  const gr_float* H2OI = sp_densities.contig1d_ptr(SpLUT::H2OI);
-  const gr_float* O2I = sp_densities.contig1d_ptr(SpLUT::O2I);
-  const gr_float* SiI = sp_densities.contig1d_ptr(SpLUT::SiI);
-  const gr_float* SiOI = sp_densities.contig1d_ptr(SpLUT::SiOI);
-  const gr_float* SiO2I = sp_densities.contig1d_ptr(SpLUT::SiO2I);
-  const gr_float* CHI = sp_densities.contig1d_ptr(SpLUT::CHI);
-  const gr_float* CH2I = sp_densities.contig1d_ptr(SpLUT::CH2I);
-  const gr_float* COII = sp_densities.contig1d_ptr(SpLUT::COII);
-  const gr_float* OII = sp_densities.contig1d_ptr(SpLUT::OII);
-  const gr_float* OHII = sp_densities.contig1d_ptr(SpLUT::OHII);
-  const gr_float* H2OII = sp_densities.contig1d_ptr(SpLUT::H2OII);
-  const gr_float* H3OII = sp_densities.contig1d_ptr(SpLUT::H3OII);
-  const gr_float* O2II = sp_densities.contig1d_ptr(SpLUT::O2II);
-  const gr_float* Mg = sp_densities.contig1d_ptr(SpLUT::Mg);
-  const gr_float* Al = sp_densities.contig1d_ptr(SpLUT::Al);
-  const gr_float* S = sp_densities.contig1d_ptr(SpLUT::S);
-  const gr_float* Fe = sp_densities.contig1d_ptr(SpLUT::Fe);
-  const gr_float* SiM = sp_densities.contig1d_ptr(SpLUT::SiM_dust);
-  const gr_float* FeM = sp_densities.contig1d_ptr(SpLUT::FeM_dust);
-  const gr_float* Mg2SiO4 = sp_densities.contig1d_ptr(SpLUT::Mg2SiO4_dust);
-  const gr_float* MgSiO3 = sp_densities.contig1d_ptr(SpLUT::MgSiO3_dust);
-  const gr_float* Fe3O4 = sp_densities.contig1d_ptr(SpLUT::Fe3O4_dust);
-  const gr_float* AC = sp_densities.contig1d_ptr(SpLUT::AC_dust);
-  const gr_float* SiO2D = sp_densities.contig1d_ptr(SpLUT::SiO2_dust);
-  const gr_float* MgO = sp_densities.contig1d_ptr(SpLUT::MgO_dust);
-  const gr_float* FeS = sp_densities.contig1d_ptr(SpLUT::FeS_dust);
-  const gr_float* Al2O3 = sp_densities.contig1d_ptr(SpLUT::Al2O3_dust);
-  const gr_float* reforg = sp_densities.contig1d_ptr(SpLUT::ref_org_dust);
-  const gr_float* volorg = sp_densities.contig1d_ptr(SpLUT::vol_org_dust);
-  const gr_float* H2Oice = sp_densities.contig1d_ptr(SpLUT::H2O_ice_dust);
+  const gr_float* de = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::e));
+  const gr_float* HI = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HI));
+  const gr_float* HII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HII));
+  const gr_float* HeI = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HeI));
+  const gr_float* HeII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HeII));
+  const gr_float* HeIII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HeIII));
+  const gr_float* HM = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HM));
+  const gr_float* H2I = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::H2I));
+  const gr_float* H2II = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::H2II));
+  const gr_float* DI = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::DI));
+  const gr_float* DII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::DII));
+  const gr_float* HDI = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HDI));
+  const gr_float* DM = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::DM));
+  const gr_float* HDII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HDII));
+  const gr_float* HeHII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HeHII));
+  const gr_float* CI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::CI));
+  const gr_float* CII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::CII));
+  const gr_float* COI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::COI));
+  const gr_float* CO2I = spdens.contig1d_ptr(spid.metal(MetalSpLUT::CO2I));
+  const gr_float* OI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::OI));
+  const gr_float* OHI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::OHI));
+  const gr_float* H2OI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::H2OI));
+  const gr_float* O2I = spdens.contig1d_ptr(spid.metal(MetalSpLUT::O2I));
+  const gr_float* SiI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::SiI));
+  const gr_float* SiOI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::SiOI));
+  const gr_float* SiO2I = spdens.contig1d_ptr(spid.metal(MetalSpLUT::SiO2I));
+  const gr_float* CHI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::CHI));
+  const gr_float* CH2I = spdens.contig1d_ptr(spid.metal(MetalSpLUT::CH2I));
+  const gr_float* COII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::COII));
+  const gr_float* OII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::OII));
+  const gr_float* OHII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::OHII));
+  const gr_float* H2OII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::H2OII));
+  const gr_float* H3OII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::H3OII));
+  const gr_float* O2II = spdens.contig1d_ptr(spid.metal(MetalSpLUT::O2II));
+  const gr_float* Mg = spdens.contig1d_ptr(spid.metal(MetalSpLUT::Mg));
+  const gr_float* Al = spdens.contig1d_ptr(spid.metal(MetalSpLUT::Al));
+  const gr_float* S = spdens.contig1d_ptr(spid.metal(MetalSpLUT::S));
+  const gr_float* Fe = spdens.contig1d_ptr(spid.metal(MetalSpLUT::Fe));
+  const gr_float* SiM = spdens.contig1d_ptr(spid.dust(DustSpLUT::SiM_dust));
+  const gr_float* FeM = spdens.contig1d_ptr(spid.dust(DustSpLUT::FeM_dust));
+  const gr_float* Mg2SiO4 = spdens.contig1d_ptr(spid.dust(DustSpLUT::Mg2SiO4_dust));
+  const gr_float* MgSiO3 = spdens.contig1d_ptr(spid.dust(DustSpLUT::MgSiO3_dust));
+  const gr_float* Fe3O4 = spdens.contig1d_ptr(spid.dust(DustSpLUT::Fe3O4_dust));
+  const gr_float* AC = spdens.contig1d_ptr(spid.dust(DustSpLUT::AC_dust));
+  const gr_float* SiO2D = spdens.contig1d_ptr(spid.dust(DustSpLUT::SiO2_dust));
+  const gr_float* MgO = spdens.contig1d_ptr(spid.dust(DustSpLUT::MgO_dust));
+  const gr_float* FeS = spdens.contig1d_ptr(spid.dust(DustSpLUT::FeS_dust));
+  const gr_float* Al2O3 = spdens.contig1d_ptr(spid.dust(DustSpLUT::Al2O3_dust));
+  const gr_float* reforg = spdens.contig1d_ptr(spid.dust(DustSpLUT::ref_org_dust));
+  const gr_float* volorg = spdens.contig1d_ptr(spid.dust(DustSpLUT::vol_org_dust));
+  const gr_float* H2Oice = spdens.contig1d_ptr(spid.dust(DustSpLUT::H2O_ice_dust));
 
   // locals
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
@@ -1509,7 +1509,7 @@ inline void species_density_updates_gauss_seidel(
 ///     chemistry
 /// @param[in]  my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
-/// @param[in]  sp_densities Specifies the densities of the various species
+/// @param[in]  spdens Specifies the densities of the various species
 ///     that Grackle evolves in a format that allows the values to be accessed
 ///     with the index lookup table.
 /// @param[in]  rxn_rate_buf specifies the precomputed rxn rates (depends on
@@ -1542,7 +1542,7 @@ inline void species_density_derivatives_0d(
   View<gr_float**> deriv, gr_mask_type anydust,
   const double* rhoH, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry,
-  SpeciesMultiView<const gr_float> sp_densities,
+  SpeciesMultiView<const gr_float> spdens,
   const FullRxnRateBuf rxn_rate_buf, const PartMap<SpKind>& sp_kind_map
 ) {
   const SpIdAdaptor spid(sp_kind_map);
@@ -1559,57 +1559,57 @@ inline void species_density_derivatives_0d(
   //   gr_float isn't the same as double (but, the historical implementation
   //   definitely didn't handle this case properly)
 
-  const gr_float& de      = sp_densities(SpLUT::e, 0);
-  const gr_float& HI      = sp_densities(SpLUT::HI, 0);
-  const gr_float& HII     = sp_densities(SpLUT::HII, 0);
-  const gr_float& HeI     = sp_densities(SpLUT::HeI, 0);
-  const gr_float& HeII    = sp_densities(SpLUT::HeII, 0);
-  const gr_float& HeIII   = sp_densities(SpLUT::HeIII, 0);
-  const gr_float& HM      = sp_densities(SpLUT::HM, 0);
-  const gr_float& H2I     = sp_densities(SpLUT::H2I, 0);
-  const gr_float& H2II    = sp_densities(SpLUT::H2II, 0);
-  const gr_float& DI      = sp_densities(SpLUT::DI, 0);
-  const gr_float& DII     = sp_densities(SpLUT::DII, 0);
-  const gr_float& HDI     = sp_densities(SpLUT::HDI, 0);
-  const gr_float& DM      = sp_densities(SpLUT::DM, 0);
-  const gr_float& HDII    = sp_densities(SpLUT::HDII, 0);
-  const gr_float& HeHII   = sp_densities(SpLUT::HeHII, 0);
-  const gr_float& CI      = sp_densities(SpLUT::CI, 0);
-  const gr_float& CII     = sp_densities(SpLUT::CII, 0);
-  const gr_float& COI     = sp_densities(SpLUT::COI, 0);
-  const gr_float& CO2I    = sp_densities(SpLUT::CO2I, 0);
-  const gr_float& OI      = sp_densities(SpLUT::OI, 0);
-  const gr_float& OHI     = sp_densities(SpLUT::OHI, 0);
-  const gr_float& H2OI    = sp_densities(SpLUT::H2OI, 0);
-  const gr_float& O2I     = sp_densities(SpLUT::O2I, 0);
-  const gr_float& SiI     = sp_densities(SpLUT::SiI, 0);
-  const gr_float& SiOI    = sp_densities(SpLUT::SiOI, 0);
-  const gr_float& SiO2I   = sp_densities(SpLUT::SiO2I, 0);
-  const gr_float& CHI     = sp_densities(SpLUT::CHI, 0);
-  const gr_float& CH2I    = sp_densities(SpLUT::CH2I, 0);
-  const gr_float& COII    = sp_densities(SpLUT::COII, 0);
-  const gr_float& OII     = sp_densities(SpLUT::OII, 0);
-  const gr_float& OHII    = sp_densities(SpLUT::OHII, 0);
-  const gr_float& H2OII   = sp_densities(SpLUT::H2OII, 0);
-  const gr_float& H3OII   = sp_densities(SpLUT::H3OII, 0);
-  const gr_float& O2II    = sp_densities(SpLUT::O2II, 0);
-  const gr_float& Mg      = sp_densities(SpLUT::Mg, 0);
-  const gr_float& Al      = sp_densities(SpLUT::Al, 0);
-  const gr_float& S       = sp_densities(SpLUT::S, 0);
-  const gr_float& Fe      = sp_densities(SpLUT::Fe, 0);
-  const gr_float& MgSiO3  = sp_densities(SpLUT::MgSiO3_dust, 0);
-  const gr_float& AC      = sp_densities(SpLUT::AC_dust, 0);
-  const gr_float& SiM     = sp_densities(SpLUT::SiM_dust, 0);
-  const gr_float& FeM     = sp_densities(SpLUT::FeM_dust, 0);
-  const gr_float& Mg2SiO4 = sp_densities(SpLUT::Mg2SiO4_dust, 0);
-  const gr_float& Fe3O4   = sp_densities(SpLUT::Fe3O4_dust, 0);
-  const gr_float& SiO2D   = sp_densities(SpLUT::SiO2_dust, 0);
-  const gr_float& MgO     = sp_densities(SpLUT::MgO_dust, 0);
-  const gr_float& FeS     = sp_densities(SpLUT::FeS_dust, 0);
-  const gr_float& Al2O3   = sp_densities(SpLUT::Al2O3_dust, 0);
-  const gr_float& reforg  = sp_densities(SpLUT::ref_org_dust, 0);
-  const gr_float& volorg  = sp_densities(SpLUT::vol_org_dust, 0);
-  const gr_float& H2Oice  = sp_densities(SpLUT::H2O_ice_dust, 0);
+  const gr_float& de      = spdens(spid.prim(PrimordialSpLUT::e), 0);
+  const gr_float& HI      = spdens(spid.prim(PrimordialSpLUT::HI), 0);
+  const gr_float& HII     = spdens(spid.prim(PrimordialSpLUT::HII), 0);
+  const gr_float& HeI     = spdens(spid.prim(PrimordialSpLUT::HeI), 0);
+  const gr_float& HeII    = spdens(spid.prim(PrimordialSpLUT::HeII), 0);
+  const gr_float& HeIII   = spdens(spid.prim(PrimordialSpLUT::HeIII), 0);
+  const gr_float& HM      = spdens(spid.prim(PrimordialSpLUT::HM), 0);
+  const gr_float& H2I     = spdens(spid.prim(PrimordialSpLUT::H2I), 0);
+  const gr_float& H2II    = spdens(spid.prim(PrimordialSpLUT::H2II), 0);
+  const gr_float& DI      = spdens(spid.prim(PrimordialSpLUT::DI), 0);
+  const gr_float& DII     = spdens(spid.prim(PrimordialSpLUT::DII), 0);
+  const gr_float& HDI     = spdens(spid.prim(PrimordialSpLUT::HDI), 0);
+  const gr_float& DM      = spdens(spid.prim(PrimordialSpLUT::DM), 0);
+  const gr_float& HDII    = spdens(spid.prim(PrimordialSpLUT::HDII), 0);
+  const gr_float& HeHII   = spdens(spid.prim(PrimordialSpLUT::HeHII), 0);
+  const gr_float& CI      = spdens(spid.metal(MetalSpLUT::CI), 0);
+  const gr_float& CII     = spdens(spid.metal(MetalSpLUT::CII), 0);
+  const gr_float& COI     = spdens(spid.metal(MetalSpLUT::COI), 0);
+  const gr_float& CO2I    = spdens(spid.metal(MetalSpLUT::CO2I), 0);
+  const gr_float& OI      = spdens(spid.metal(MetalSpLUT::OI), 0);
+  const gr_float& OHI     = spdens(spid.metal(MetalSpLUT::OHI), 0);
+  const gr_float& H2OI    = spdens(spid.metal(MetalSpLUT::H2OI), 0);
+  const gr_float& O2I     = spdens(spid.metal(MetalSpLUT::O2I), 0);
+  const gr_float& SiI     = spdens(spid.metal(MetalSpLUT::SiI), 0);
+  const gr_float& SiOI    = spdens(spid.metal(MetalSpLUT::SiOI), 0);
+  const gr_float& SiO2I   = spdens(spid.metal(MetalSpLUT::SiO2I), 0);
+  const gr_float& CHI     = spdens(spid.metal(MetalSpLUT::CHI), 0);
+  const gr_float& CH2I    = spdens(spid.metal(MetalSpLUT::CH2I), 0);
+  const gr_float& COII    = spdens(spid.metal(MetalSpLUT::COII), 0);
+  const gr_float& OII     = spdens(spid.metal(MetalSpLUT::OII), 0);
+  const gr_float& OHII    = spdens(spid.metal(MetalSpLUT::OHII), 0);
+  const gr_float& H2OII   = spdens(spid.metal(MetalSpLUT::H2OII), 0);
+  const gr_float& H3OII   = spdens(spid.metal(MetalSpLUT::H3OII), 0);
+  const gr_float& O2II    = spdens(spid.metal(MetalSpLUT::O2II), 0);
+  const gr_float& Mg      = spdens(spid.metal(MetalSpLUT::Mg), 0);
+  const gr_float& Al      = spdens(spid.metal(MetalSpLUT::Al), 0);
+  const gr_float& S       = spdens(spid.metal(MetalSpLUT::S), 0);
+  const gr_float& Fe      = spdens(spid.metal(MetalSpLUT::Fe), 0);
+  const gr_float& MgSiO3  = spdens(spid.dust(DustSpLUT::MgSiO3_dust), 0);
+  const gr_float& AC      = spdens(spid.dust(DustSpLUT::AC_dust), 0);
+  const gr_float& SiM     = spdens(spid.dust(DustSpLUT::SiM_dust), 0);
+  const gr_float& FeM     = spdens(spid.dust(DustSpLUT::FeM_dust), 0);
+  const gr_float& Mg2SiO4 = spdens(spid.dust(DustSpLUT::Mg2SiO4_dust), 0);
+  const gr_float& Fe3O4   = spdens(spid.dust(DustSpLUT::Fe3O4_dust), 0);
+  const gr_float& SiO2D   = spdens(spid.dust(DustSpLUT::SiO2_dust), 0);
+  const gr_float& MgO     = spdens(spid.dust(DustSpLUT::MgO_dust), 0);
+  const gr_float& FeS     = spdens(spid.dust(DustSpLUT::FeS_dust), 0);
+  const gr_float& Al2O3   = spdens(spid.dust(DustSpLUT::Al2O3_dust), 0);
+  const gr_float& reforg  = spdens(spid.dust(DustSpLUT::ref_org_dust), 0);
+  const gr_float& volorg  = spdens(spid.dust(DustSpLUT::vol_org_dust), 0);
+  const gr_float& H2Oice  = spdens(spid.dust(DustSpLUT::H2O_ice_dust), 0);
 
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
   const double* const* kph_buf = FullRxnRateBuf_kph_bufs(&rxn_rate_buf);
