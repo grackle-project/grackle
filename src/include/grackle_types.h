@@ -180,8 +180,34 @@ typedef struct
   gr_float *RT_OH_dissociation_rate;
   gr_float *RT_H2O_dissociation_rate;
 
-  // use_HI_ionization = 1
+  // use_HI_ionization > 1
   gr_float *HI_ionization_rate;
+  // use_HeII_ionization > 1
+  gr_float *HeII_ionization_rate;
+  // use_HeI_ionization > 1
+  gr_float *HeI_ionization_rate;
+  // use_HM_detachment > 1
+  gr_float *HM_detachment_rate;
+  // use_H2II_dissociation > 1
+  gr_float *H2II_dissociation_rate;
+  // use_H2I_ionization > 1
+  gr_float *H2I_ionization_rate;
+  // use_H2II_dissociative_ionization > 1
+  gr_float *H2II_dissociative_ionization_rate;
+  // use_H2I_dissociation > 1
+  gr_float *H2I_dissociation_rate;
+  // use_HDI_dissociation > 1
+  gr_float *HDI_dissociation_rate;
+  // use_CI_ionization > 1
+  gr_float *CI_ionization_rate;
+  // use_OI_ionization > 1
+  gr_float *OI_ionization_rate;
+  // use_COI_dissociation > 1
+  gr_float *COI_dissociation_rate;
+  // use_OHI_dissociation > 1
+  gr_float *OHI_dissociation_rate;
+  // use_H2OI_dissociation > 1
+  gr_float *H2OI_dissociation_rate;
 
   // H2_self_shielding = 2
   gr_float *H2_self_shielding_length;

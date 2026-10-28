@@ -305,8 +305,34 @@ def _required_radiation_transfer_fields(my_chemistry):
 
 def _required_photo_rate_fields(my_chemistry):
     my_fields = []
-    if my_chemistry.use_HI_ionization > 0:
+    if my_chemistry.use_HI_ionization > 1:
         my_fields.append("HI_ionization_rate")
+    if my_chemistry.use_HeII_ionization > 1:
+        my_fields.append("HeII_ionization_rate")
+    if my_chemistry.use_HeI_ionization > 1:
+        my_fields.append("HeI_ionization_rate")
+    if my_chemistry.use_HM_detachment > 1:
+        my_fields.append("HM_detachment_rate")
+    if my_chemistry.use_H2II_dissociation > 1:
+        my_fields.append("H2II_dissociation_rate")
+    if my_chemistry.use_H2I_ionization > 1:
+        my_fields.append("H2I_ionization_rate")
+    if my_chemistry.use_H2II_dissociative_ionization > 1:
+        my_fields.append("H2II_dissociative_ionization_rate")
+    if my_chemistry.use_H2I_dissociation > 1:
+        my_fields.append("H2I_dissociation_rate")
+    if my_chemistry.use_HDI_dissociation > 1:
+        my_fields.append("HDI_dissociation_rate")
+    if my_chemistry.use_CI_ionization > 1:
+        my_fields.append("CI_ionization_rate")
+    if my_chemistry.use_OI_ionization > 1:
+        my_fields.append("OI_ionization_rate")
+    if my_chemistry.use_COI_dissociation > 1:
+        my_fields.append("COI_dissociation_rate")
+    if my_chemistry.use_OHI_dissociation > 1:
+        my_fields.append("OHI_dissociation_rate")
+    if my_chemistry.use_H2OI_dissociation > 1:
+        my_fields.append("H2OI_dissociation_rate")
     return my_fields
 
 def _required_extra_fields(my_chemistry):
@@ -347,6 +373,19 @@ _field_units = {
     "RT_HeII_ionization_rate": (_photo_units, "1/s"),
     "RT_H2_dissociation_rate": (_photo_units, "1/s"),
     "HI_ionization_rate": (_photo_units, "1/s"),
+    "HeII_ionization_rate": (_photo_units, "1/s"),
+    "HeI_ionization_rate": (_photo_units, "1/s"),
+    "HM_detachment_rate": (_photo_units, "1/s"),
+    "H2II_dissociation_rate": (_photo_units, "1/s"),
+    "H2I_ionization_rate": (_photo_units, "1/s"),
+    "H2II_dissociative_ionization_rate": (_photo_units, "1/s"),
+    "H2I_dissociation_rate": (_photo_units, "1/s"),
+    "HDI_dissociation_rate": (_photo_units, "1/s"),
+    "CI_ionization_rate": (_photo_units, "1/s"),
+    "OI_ionization_rate": (_photo_units, "1/s"),
+    "COI_dissociation_rate": (_photo_units, "1/s"),
+    "OHI_dissociation_rate": (_photo_units, "1/s"),
+    "H2OI_dissociation_rate": (_photo_units, "1/s"),
     "cooling_rate": (None, "erg*cm**3/s"),
     "cooling_time": ("time_units", "s"),
     "dust_temperature": (None, "K"),
