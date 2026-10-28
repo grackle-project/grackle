@@ -208,6 +208,10 @@ ENTRY(collisional_ionisation_rates, INT, 1) //Collisional ionisation
 ENTRY(recombination_cooling_rates, INT, 1) //Recombination cooling
 ENTRY(bremsstrahlung_cooling_rates, INT, 1) //Bremsstrahlung cooling
 
+/* Flag to specify unit-handling. Use the GR_UNIT_HANDLING_LEGACY and
+   GR_UNIT_HANDLING_AUTOMATIC to set the flag values */
+ENTRY(unit_handling, INT, -3)
+
 /* maximum number of subcycle iterations for solve_chemistry */
 ENTRY(max_iterations, INT, 10000)
 

@@ -14,10 +14,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
 #include "phys_constants.h"
+#include "unit_handling.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -26,8 +26,6 @@ extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
 /* function prototypes */
-
-double get_temperature_units(code_units *my_units);
 
 int local_calculate_temperature(chemistry_data *my_chemistry,
                                 chemistry_data_storage *my_rates,
@@ -64,6 +62,17 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
 
   if (my_chemistry->dust_chemistry < 1 && my_chemistry->h2_on_dust < 1)
     return SUCCESS;
+
+  /* do unit-handling */
+  code_units units = determine_code_units(my_units, my_rates,
+                                          my_fields->current_a_value,
+                                          my_chemistry->unit_handling,
+                                          "local_calculate_dust_temperature");
+  if (units.a_units < 0) {
+    return FAIL;
+  } else {
+    my_units = &units;
+  }
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {

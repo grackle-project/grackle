@@ -38,6 +38,9 @@ extern "C" {
 #define GR_FAIL 0
 
 #define GR_SPECIFY_INITIAL_A_VALUE -1
+#define GR_UNIT_HANDLING_LEGACY -2
+#define GR_UNIT_HANDLING_AUTOMATIC -1
+
 
 extern int grackle_verbose;
 
