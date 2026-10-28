@@ -279,6 +279,57 @@ inline void interpolate_collisional_rxn_rates_(
   }
 }
 
+/// This routine computes photo reaction rates for each location in the
+/// specified index range.
+///
+/// The value of the associated parameter (e.g., "use_HI_ionization")
+/// controls the behavior in the following way:
+/// 0: rate is set to 0
+/// 1: rate is set to value from uvb table
+/// 2: rate is taken from a field pointer
+/// 3: rate is the sum of table and field pointer values
+///
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] my_fields Specifies the field data.
+/// @param[in] rate_parameter is the associated runtime parameter controlling behavior
+/// @param[in] uvb_rate is the associated rate value from the uvb table
+/// @param[in] field_ptr is a pointer to field array holding photo rates
+/// @param[out] ph_rate_buf is the rate buffer to be filled
+inline void setup_photo_rates(
+  IndexRange idx_range, const gr_mask_type* itmask,
+  grackle_field_data* my_fields,
+  const int rate_parameter,
+  const double uvb_rate,
+  const double* field_ptr,
+  double* ph_rate_buf) {
+
+  // add rate from uvb table for parameter values 1, 3
+  const int add_uvb = rate_parameter % 2;
+  // add rate from field for parameter value 2 only
+  const int add_field = (int) rate_parameter > 2;
+  FortranView<const gr_float***> my_kph(
+        field_ptr, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  if (rate_parameter == 0) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        ph_rate_buf[i] = 0.;
+      }
+    }
+    return;
+  }
+
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      ph_rate_buf[i] = add_uvb * uvb_rate + add_field * my_kph(i, idx_range.j, idx_range.k);
+    }
+  }
+
+}
+
 /// adjust the rate of neutral H2 photodissociation by modeling self-shielding
 inline void model_H2I_dissociation_shielding(
     double* const* kph_buf, IndexRange idx_range, const double* tgas1d,
@@ -825,30 +876,14 @@ inline void lookup_cool_rates1d(
   // custom external radiation fields.
   double* const* kph_buf = FullRxnRateBuf_kph_bufs(&rxn_rate_buf);
 
+  setup_photo_rates(idx_range, itmask, my_fields,
+                    my_chemistry->use_HI_ionization,
+                    my_uvb_rates.k24,
+                    my_fields->HI_ionization_rate,
+                    kph_buf[PhotoRxnLUT::k24]);
+
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      // Fill buffers for all photo rates, allowing them to come from
-      // a UVB table, field array, or both.
-      if (my_chemistry->use_HI_ionization == 0) {
-        kph_buf[PhotoRxnLUT::k24][i] = 0.;
-      }
-      else if (my_chemistry->use_HI_ionization == 1) {
-        kph_buf[PhotoRxnLUT::k24][i] = my_uvb_rates.k24;
-      }
-      else if (my_chemistry->use_HI_ionization == 2) {
-        FortranView<const gr_float***> my_kph(
-          my_fields->HI_ionization_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        kph_buf[PhotoRxnLUT::k24][i] = my_kph(i, idx_range.j, idx_range.k);
-      }
-      else if (my_chemistry->use_HI_ionization == 3) {
-        FortranView<const gr_float***> my_kph(
-          my_fields->HI_ionization_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        kph_buf[PhotoRxnLUT::k24][i] = my_kph(i, idx_range.j, idx_range.k) +
-          my_uvb_rates.k24;
-      }
-
       // historically, k27 was treated as a special case:
       // - At this time, k27 is always the same everywhere. So we could pass the
       //   unmodified scalar value rather than use a 1D array
