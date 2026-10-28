@@ -12,9 +12,10 @@
 
 #include <cstdint>
 #include "grackle.h"
-#include "support/FrozenKeyIdxBiMap.hpp"
-#include "support/error.hpp"
-#include "support/expected.hpp"
+#include "../opaque_storage.hpp"
+#include "../support/FrozenKeyIdxBiMap.hpp"
+#include "../support/error.hpp"
+#include "../support/expected.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -22,7 +23,12 @@ namespace GRIMPL_NAMESPACE_DECL {
 static Expected<const FrozenKeyIdxBiMap*, Error> find_bimap_(
     const chemistry_data_storage& my_rates, int64_t category) {
   // in the future, we'll fetch the bimap from my_rates->opaque_storage
-  return Unexpected(Error::msg_literal("recieved unknown category"));
+  switch (category) {
+    case GR_FIELD_CAT_INJ_PATHWAY:
+      return &my_rates.opaque_storage->field_query_inject_pathway_names;
+    default:
+      return Unexpected(Error::msg_literal("recieved unknown category"));
+  }
 }
 
 /// does the heavy lifting
