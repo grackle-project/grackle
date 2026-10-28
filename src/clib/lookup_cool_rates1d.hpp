@@ -342,7 +342,37 @@ inline void setup_photo_rate_buffers(
                               my_uvb_rates.k24,
                               my_fields->HI_ionization_rate,
                               kph_buf[PhotoRxnLUT::k24]);
-
+  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                              my_chemistry->use_HeII_ionization,
+                              my_uvb_rates.k25,
+                              my_fields->HeII_ionization_rate,
+                              kph_buf[PhotoRxnLUT::k25]);
+  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                              my_chemistry->use_HeI_ionization,
+                              my_uvb_rates.k26,
+                              my_fields->HeI_ionization_rate,
+                              kph_buf[PhotoRxnLUT::k26]);
+  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                              my_chemistry->use_HM_detachment,
+                              my_uvb_rates.k27,
+                              my_fields->HM_detachment_rate,
+                              kph_buf[PhotoRxnLUT::k27]);
+  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                              my_chemistry->use_H2II_dissociation,
+                              my_uvb_rates.k28,
+                              my_fields->H2II_dissociation_rate,
+                              kph_buf[PhotoRxnLUT::k28]);
+  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                              my_chemistry->use_H2I_ionization,
+                              my_uvb_rates.k29,
+                              my_fields->H2I_ionization_rate,
+                              kph_buf[PhotoRxnLUT::k29]);
+  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                              my_chemistry->use_H2II_dissociative_ionization,
+                              my_uvb_rates.k30,
+                              my_fields->H2II_dissociative_ionization_rate,
+                              kph_buf[PhotoRxnLUT::k30]);
+  // k31 is handled separately for now
 }
 
 /// adjust the rate of neutral H2 photodissociation by modeling self-shielding
@@ -899,23 +929,6 @@ inline void lookup_cool_rates1d(
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      // historically, k27 was treated as a special case:
-      // - At this time, k27 is always the same everywhere. So we could pass the
-      //   unmodified scalar value rather than use a 1D array
-      // - For simpler bookkeeping & clarity, we choose to handle k27 using a 1D
-      //   array all other reaction rates (radiative & otherwise).
-      // - For now, the performance benefits from special treatment would be
-      //   marginal (it is always used with at least ~30 other rates)
-      kph_buf[PhotoRxnLUT::k27][i] = my_uvb_rates.k27;
-
-      // handle cases that may be corrected
-      kph_buf[PhotoRxnLUT::k25][i] = my_uvb_rates.k25;
-      kph_buf[PhotoRxnLUT::k26][i] = my_uvb_rates.k26;
-      kph_buf[PhotoRxnLUT::k28][i] = my_uvb_rates.k28;
-      kph_buf[PhotoRxnLUT::k29][i] = my_uvb_rates.k29;
-      kph_buf[PhotoRxnLUT::k30][i] = my_uvb_rates.k30;
-      // k31 is handled separately
-
       // metal photo-ionization/photo-dissociation rates. Each buffer holds
       // the total rate: the UV background part set here plus the
       // radiative-transfer part folded in further below. Only the O I

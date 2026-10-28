@@ -69,17 +69,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
       my_fields->metal_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // Radiative Transfer Fields
-  FortranView<gr_float***> kphHI(
-      my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> kphHeI(
-      my_fields->RT_HeI_ionization_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> kphHeII(
-      my_fields->RT_HeII_ionization_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
   FortranView<gr_float***> HDI(
       my_fields->HDI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -350,9 +339,9 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
           dedot[i] = dedot[i] +
                      kph_buf[PhotoRxnLUT::k24][i] *
                          HI(i, idx_range.j, idx_range.k) +
-                     kphHeI(i, idx_range.j, idx_range.k) *
+                     kph_buf[PhotoRxnLUT::k26][i] *
                          HeI(i, idx_range.j, idx_range.k) / 4. +
-                     kphHeII(i, idx_range.j, idx_range.k) *
+                     kph_buf[PhotoRxnLUT::k25][i] *
                          HeII(i, idx_range.j, idx_range.k) / 4.;
         }
       }
