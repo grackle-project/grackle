@@ -70,16 +70,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Radiative Transfer Fields
-  FortranView<gr_float***> kphHI(
-      my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> kphHeI(
-      my_fields->RT_HeI_ionization_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> kphHeII(
-      my_fields->RT_HeII_ionization_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
   FortranView<gr_float***> HDI(
       my_fields->HDI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -342,30 +332,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
   // Add photo-ionization rates if needed
 
   if (my_chemistry->use_radiative_transfer == 1) {
-    if (my_chemistry->radiative_transfer_hydrogen_only == 0) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          HIdot[i] = HIdot[i] - kphHI(i, idx_range.j, idx_range.k) *
-                                    HI(i, idx_range.j, idx_range.k);
-          dedot[i] = dedot[i] +
-                     kphHI(i, idx_range.j, idx_range.k) *
-                         HI(i, idx_range.j, idx_range.k) +
-                     kphHeI(i, idx_range.j, idx_range.k) *
-                         HeI(i, idx_range.j, idx_range.k) / 4. +
-                     kphHeII(i, idx_range.j, idx_range.k) *
-                         HeII(i, idx_range.j, idx_range.k) / 4.;
-        }
-      }
-    } else {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          HIdot[i] = HIdot[i] - kphHI(i, idx_range.j, idx_range.k) *
-                                    HI(i, idx_range.j, idx_range.k);
-          dedot[i] = dedot[i] + kphHI(i, idx_range.j, idx_range.k) *
-                                    HI(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
     if ((my_chemistry->primordial_chemistry > 2) &&
         (my_chemistry->radiative_transfer_HDI_dissociation > 0)) {
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
