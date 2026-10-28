@@ -352,27 +352,38 @@ inline void setup_photo_rate_buffers(
                               my_uvb_rates.k26,
                               my_fields->HeI_ionization_rate,
                               kph_buf[PhotoRxnLUT::k26]);
-  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
-                              my_chemistry->use_HM_detachment,
-                              my_uvb_rates.k27,
-                              my_fields->HM_detachment_rate,
-                              kph_buf[PhotoRxnLUT::k27]);
-  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
-                              my_chemistry->use_H2II_dissociation,
-                              my_uvb_rates.k28,
-                              my_fields->H2II_dissociation_rate,
-                              kph_buf[PhotoRxnLUT::k28]);
-  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
-                              my_chemistry->use_H2I_ionization,
-                              my_uvb_rates.k29,
-                              my_fields->H2I_ionization_rate,
-                              kph_buf[PhotoRxnLUT::k29]);
-  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
-                              my_chemistry->use_H2II_dissociative_ionization,
-                              my_uvb_rates.k30,
-                              my_fields->H2II_dissociative_ionization_rate,
-                              kph_buf[PhotoRxnLUT::k30]);
-  // k31 is handled separately for now
+  if (my_chemistry->primordial_chemistry > 1) {
+    calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                                my_chemistry->use_HM_detachment,
+                                my_uvb_rates.k27,
+                                my_fields->HM_detachment_rate,
+                                kph_buf[PhotoRxnLUT::k27]);
+    calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                                my_chemistry->use_H2II_dissociation,
+                                my_uvb_rates.k28,
+                                my_fields->H2II_dissociation_rate,
+                                kph_buf[PhotoRxnLUT::k28]);
+    calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                                my_chemistry->use_H2I_ionization,
+                                my_uvb_rates.k29,
+                                my_fields->H2I_ionization_rate,
+                                kph_buf[PhotoRxnLUT::k29]);
+    calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                                my_chemistry->use_H2II_dissociative_ionization,
+                                my_uvb_rates.k30,
+                                my_fields->H2II_dissociative_ionization_rate,
+                                kph_buf[PhotoRxnLUT::k30]);
+    // k31 is handled separately for now
+  }
+
+  if (my_chemistry->primordial_chemistry > 2) {
+    calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                                my_chemistry->use_HDI_dissociation,
+                                my_uvb_rates.kdissHDI,
+                                my_fields->HDI_dissociation_rate,
+                                kph_buf[PhotoRxnLUT::kdissHDI]);
+
+  }
 }
 
 /// adjust the rate of neutral H2 photodissociation by modeling self-shielding

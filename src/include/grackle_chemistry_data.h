@@ -390,6 +390,8 @@ typedef struct
     double *k29;
     double *k30;
     double *k31;
+    /* Radiative rates for 12-species. */
+    double *kdissHDI;
 
     /* Radiative rates for metal species. */
     double *kphCI;
@@ -447,6 +449,8 @@ typedef struct
   double k29;
   double k30;
   double k31;
+  /* Radiative rates for 12-species (for external field). */
+  double kdissHDI;
 
   /* Radiative rates for metal species (for external field). */
   double kphCI_bg;
@@ -588,6 +592,8 @@ typedef struct
     double k29;
     double k30;
     double k31;
+    /* Radiative rates for 12-species. */
+    double kdissHDI;
 
     /* Radiative rates for metal species. */
     double kphCI_bg;

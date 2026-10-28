@@ -35,6 +35,7 @@ void initialize_empty_UVBtable_struct(UVBtable *table)
   table->k29    = nullptr;
   table->k30    = nullptr;
   table->k31    = nullptr;
+  table->kdissHDI = nullptr;
   table->kphCI  = nullptr;
   table->kphOI  = nullptr;
   table->kdissCO = nullptr;
@@ -114,6 +115,9 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
     my_rates->UVbackground_table.k29 = new double[Nz];
     my_rates->UVbackground_table.k30 = new double[Nz];
     my_rates->UVbackground_table.k31 = new double[Nz];
+  }
+  if (my_chemistry->primordial_chemistry > 2) {
+    my_rates->UVbackground_table.kdissHDI = new double[Nz];
   }
 
   if (my_chemistry->metal_chemistry > 0) {
@@ -216,6 +220,17 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
     // *** k31 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k31",
                       my_rates->UVbackground_table.k31,
+                      /* expected_shape = */ &common_shape) ) {
+      std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k31' in %s.\n",
+              my_chemistry->grackle_data_file);
+      return GR_FAIL;
+    }
+
+    // *** kdissHDI ***
+    // Note: at this time, we are simply reading in the k31 rate again until an
+    // HDI dissociation rate has been added to the tables.
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k31",
+                      my_rates->UVbackground_table.kdissHDI,
                       /* expected_shape = */ &common_shape) ) {
       std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k31' in %s.\n",
               my_chemistry->grackle_data_file);
