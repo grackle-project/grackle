@@ -827,6 +827,28 @@ inline void lookup_cool_rates1d(
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
+      // Fill buffers for all photo rates, allowing them to come from
+      // a UVB table, field array, or both.
+      if (my_chemistry->use_HI_ionization == 0) {
+        kph_buf[PhotoRxnLUT::k24][i] = 0.;
+      }
+      else if (my_chemistry->use_HI_ionization == 1) {
+        kph_buf[PhotoRxnLUT::k24][i] = my_uvb_rates.k24;
+      }
+      else if (my_chemistry->use_HI_ionization == 2) {
+        FortranView<const gr_float***> my_kph(
+          my_fields->HI_ionization_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        kph_buf[PhotoRxnLUT::k24][i] = my_kph(i, idx_range.j, idx_range.k);
+      }
+      else if (my_chemistry->use_HI_ionization == 3) {
+        FortranView<const gr_float***> my_kph(
+          my_fields->HI_ionization_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        kph_buf[PhotoRxnLUT::k24][i] = my_kph(i, idx_range.j, idx_range.k) +
+          my_uvb_rates.k24;
+      }
+
       // historically, k27 was treated as a special case:
       // - At this time, k27 is always the same everywhere. So we could pass the
       //   unmodified scalar value rather than use a 1D array
@@ -837,7 +859,6 @@ inline void lookup_cool_rates1d(
       kph_buf[PhotoRxnLUT::k27][i] = my_uvb_rates.k27;
 
       // handle cases that may be corrected
-      kph_buf[PhotoRxnLUT::k24][i] = my_uvb_rates.k24;
       kph_buf[PhotoRxnLUT::k25][i] = my_uvb_rates.k25;
       kph_buf[PhotoRxnLUT::k26][i] = my_uvb_rates.k26;
       kph_buf[PhotoRxnLUT::k28][i] = my_uvb_rates.k28;

@@ -803,6 +803,8 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.RT_OH_dissociation_rate = get_field(fc, "RT_OH_dissociation_rate")
     my_fields.RT_H2O_dissociation_rate = get_field(fc, "RT_H2O_dissociation_rate")
 
+    my_fields.HI_ionization_rate = get_field(fc, "HI_ionization_rate")
+
     my_fields.H2_self_shielding_length = get_field(fc, "H2_self_shielding_length")
     my_fields.H2_custom_shielding_factor = get_field(fc, "H2_custom_shielding_factor")
     my_fields.isrf_habing = get_field(fc, "isrf_habing")

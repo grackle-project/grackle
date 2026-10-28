@@ -303,6 +303,12 @@ def _required_radiation_transfer_fields(my_chemistry):
                           "RT_H2O_dissociation_rate"])
     return my_fields
 
+def _required_photo_rate_fields(my_chemistry):
+    my_fields = []
+    if my_chemistry.use_HI_ionization > 0:
+        my_fields.append("HI_ionization_rate")
+    return my_fields
+
 def _required_extra_fields(my_chemistry):
     my_fields = _base_extra_fields.copy()
     if my_chemistry.use_volumetric_heating_rate == 1:
@@ -319,6 +325,7 @@ def _required_extra_fields(my_chemistry):
         my_fields.append("H2_custom_shielding_factor")
     if my_chemistry.use_isrf_field == 1:
         my_fields.append("isrf_habing")
+    my_fields.extend(_required_photo_rate_fields(my_chemistry))
     return my_fields
 
 def _required_calculated_fields(my_chemistry):
@@ -339,6 +346,7 @@ _field_units = {
     "RT_HeI_ionization_rate": (_photo_units, "1/s"),
     "RT_HeII_ionization_rate": (_photo_units, "1/s"),
     "RT_H2_dissociation_rate": (_photo_units, "1/s"),
+    "HI_ionization_rate": (_photo_units, "1/s"),
     "cooling_rate": (None, "erg*cm**3/s"),
     "cooling_time": ("time_units", "s"),
     "dust_temperature": (None, "K"),

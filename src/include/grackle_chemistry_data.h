@@ -233,20 +233,20 @@ typedef struct
   int radiative_transfer_metal_dissociation;
 
   /* flags for supplying field arrays for radiative rates */
-  int use_HI_ionization_field;     // k24
-  int use_HeII_ionization_field;   // k25
-  int use_HeI_ionization_field;    // k26
-  int use_HM_detachment_field;     // k27
-  int use_H2II_dissociation_field; // k28
-  int use_H2I_ionization_field;    // k29
-  int use_H2II_dissociative_ionization_field; // k30
-  int use_H2I_dissociation_field;  // k31
-  int use_HDI_dissociation_field;
-  int use_CI_ionization_field;
-  int use_OI_ionization_field;
-  int use_COI_dissociation_field;
-  int use_OHI_dissociation_field;
-  int use_H2OI_dissociation_field;
+  int use_HI_ionization;     // k24
+  int use_HeII_ionization;   // k25
+  int use_HeI_ionization;    // k26
+  int use_HM_detachment;     // k27
+  int use_H2II_dissociation; // k28
+  int use_H2I_ionization;    // k29
+  int use_H2II_dissociative_ionization; // k30
+  int use_H2I_dissociation;  // k31
+  int use_HDI_dissociation;
+  int use_CI_ionization;
+  int use_OI_ionization;
+  int use_COI_dissociation;
+  int use_OHI_dissociation;
+  int use_H2OI_dissociation;
 
   /* flag to signal H2 self-shielding is being done in hydro code */
   int radiative_transfer_use_H2_shielding;

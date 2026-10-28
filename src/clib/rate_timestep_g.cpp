@@ -345,10 +345,10 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
     if (my_chemistry->radiative_transfer_hydrogen_only == 0) {
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
-          HIdot[i] = HIdot[i] - kphHI(i, idx_range.j, idx_range.k) *
+          HIdot[i] = HIdot[i] - kph_buf[PhotoRxnLUT::k24][i] *
                                     HI(i, idx_range.j, idx_range.k);
           dedot[i] = dedot[i] +
-                     kphHI(i, idx_range.j, idx_range.k) *
+                     kph_buf[PhotoRxnLUT::k24][i] *
                          HI(i, idx_range.j, idx_range.k) +
                      kphHeI(i, idx_range.j, idx_range.k) *
                          HeI(i, idx_range.j, idx_range.k) / 4. +
@@ -359,9 +359,9 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
     } else {
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
-          HIdot[i] = HIdot[i] - kphHI(i, idx_range.j, idx_range.k) *
+          HIdot[i] = HIdot[i] - kph_buf[PhotoRxnLUT::k24][i] *
                                     HI(i, idx_range.j, idx_range.k);
-          dedot[i] = dedot[i] + kphHI(i, idx_range.j, idx_range.k) *
+          dedot[i] = dedot[i] + kph_buf[PhotoRxnLUT::k24][i] *
                                     HI(i, idx_range.j, idx_range.k);
         }
       }

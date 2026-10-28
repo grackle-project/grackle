@@ -254,6 +254,28 @@ ENTRY(radiative_transfer_metal_dissociation, INT, 0)
 /* flag to signal H2 self-shielding is being done in hydro code */
 ENTRY(radiative_transfer_use_H2_shielding, INT, FALSE)
 
+/* flags to control how photo rates are calculated
+   0: rate not included
+   1: rate included from UVB table only
+   2: rate included from field array only
+   3: rate is the sum of UVB table and field array values
+*/
+ENTRY(use_HI_ionization, INT, 0)
+ENTRY(use_HeII_ionization, INT, 0)
+ENTRY(use_HeI_ionization, INT, 0)
+ENTRY(use_HM_detachment, INT, 0)
+ENTRY(use_H2II_dissociation, INT, 0)
+ENTRY(use_H2I_ionization, INT, 0)
+ENTRY(use_H2II_dissociative_ionization, INT, 0)
+ENTRY(use_H2I_dissociation, INT, 0)
+ENTRY(use_HDI_dissociation, INT, 0)
+ENTRY(use_CI_ionization, INT, 0)
+ENTRY(use_OI_ionization, INT, 0)
+ENTRY(use_COI_dissociation, INT, 0)
+ENTRY(use_OHI_dissociation, INT, 0)
+ENTRY(use_H2OI_dissociation, INT, 0)
+
+
 /* flag for approximiate self-shielding as well
    as spectrum averaged photo heating and
    photo ionization shielding factors */

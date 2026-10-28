@@ -180,6 +180,9 @@ typedef struct
   gr_float *RT_OH_dissociation_rate;
   gr_float *RT_H2O_dissociation_rate;
 
+  // use_HI_ionization = 1
+  gr_float *HI_ionization_rate;
+
   // H2_self_shielding = 2
   gr_float *H2_self_shielding_length;
   // H2_custom_shielding = 1
