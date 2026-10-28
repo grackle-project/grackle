@@ -61,6 +61,15 @@
           "cacheVariables": { "CMAKE_BUILD_TYPE": "RELEASE" }
       },
       {
+          "name": "ci-linux-coverage",
+          "description": "an experimental preset for code-coverage",
+          "inherits": ["ci-flags-warnings-gcc-clang", "ci-common-config"],
+          "cacheVariables": {
+	    "CMAKE_BUILD_TYPE": "DEBUG",
+	    "_GRACKLE_CODE_COVERAGE": "ON"
+	  }
+      },
+      {
           "name": "ci-linux-omp",
           "description": "a preset for linux with OpenMP",
           "inherits": ["ci-flags-warnings-gcc-clang", "ci-omp-config"],
