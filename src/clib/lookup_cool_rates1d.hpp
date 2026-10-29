@@ -17,14 +17,12 @@
 #define LOOKUP_COOL_RATES1D_HPP
 
 #include "grackle.h"
-#include "dust/multi_grain_species/dust_props.hpp"
-#include "dust/solver.hpp"
 #include "field_adaptor.hpp"
 #include "fortran_func_decls.h"
 #include "full_rxn_rate_buf.hpp"
 #include "internal_types.hpp"
+#include "math/misc.hpp"
 #include "opaque_storage.hpp"
-#include "utils-cpp.hpp"
 
 namespace grackle::impl {
 
@@ -381,7 +379,7 @@ inline void model_H2I_dissociation_shielding(
         // update: self-shielding following Wolcott-Green & Haiman (2019)
         // range of validity: T=100-8000 K, n<=1e7 cm^-3
 
-        double tgas_touse = grackle::impl::clamp(tgas1d[i], 1e2, 8e3);
+        double tgas_touse = fclamp(tgas1d[i], 1e2, 8e3);
         double ngas_touse =
             std::fmin(d(i, idx_range.j, idx_range.k) * dom / mmw[i], 1e7);
 
