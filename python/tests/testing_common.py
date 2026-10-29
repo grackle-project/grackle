@@ -18,4 +18,4 @@ from gracklepy.utilities.misc import dirname
 
 grackle_install_dir = dirname(os.path.abspath(__file__), level=4)
 grackle_data_dir = os.path.join(grackle_install_dir, "input")
-grackle_python_dir = os.path.join(grackle_install_dir, "src", "python")
+grackle_python_dir = os.path.join(grackle_install_dir, "python")
