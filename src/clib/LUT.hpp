@@ -189,6 +189,17 @@ struct PhotoRxnLUT {
     kdissCO,
     kdissOH,
     kdissH2O,
+    // Radiative rate(s) for 12-species network
+    // - these are put at the very end of the LUT beacause we don't currently
+    //   track explicit UV background rates for these quantities. Since we
+    //   don't support dynamic ratequery access to these quantities, these
+    //   need to have larger indices than all rates accessible through
+    //   GRIMPL_NS::ratequery::get_PhotoRxn_Entry
+    // - can we explain the inconsistency? why do we directly use k24 (including
+    //   external HI ionization radiation field) for DI ionization, but then
+    //   ignore k31 for HDI ionization (and use an external HDI dissociation
+    //   field without any UV background...)
+    kdissHDI,
 
     NUM_ENTRIES  // <- (specifies the number of shieldable radiative reactions)
   };  // enum
