@@ -154,6 +154,19 @@ static inline int gr_check_consistency(void) {
 
 int gr_initialize_field_data(grackle_field_data *my_fields);
 
+// todo: do we actually want to specify these as enums?
+//    - it might be more flexible if its a macro
+//    - it might be better if we make people query the id from a function
+//      (at the same time, it may be too much of an inconvenience)
+enum gr_field_category {
+  GR_FIELD_CAT_INJ_PATHWAY
+};
+
+int gr_get_field_id(const chemistry_data_storage* my_rates, int64_t category,
+                    const char* name, int64_t* out);
+int gr_get_field_name(const chemistry_data_storage* my_rates, int64_t category,
+                      int64_t id, const char** out);
+
 /// unstable/experimental machinery
 /// ===============================
 /// entities defined down below (prefixed with `grunstable_`) are experimental

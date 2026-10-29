@@ -21,6 +21,7 @@
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
 #include "ratequery.hpp"
+#include "support/FrozenKeyIdxBiMap.hpp"
 #include "support/config.hpp"
 
 /// @brief a struct-like class that is used to wrap some private storage details
@@ -142,6 +143,13 @@ struct gr_opaque_storage {
 
   /// used to implement the experimental ratequery machinery
   GRIMPL_NS::ratequery::Registry* registry = nullptr;
+
+  // The following is used to implement field_id query machinery (over time
+  // we'll gradually collect more and more bimaps for this purpose)
+
+  /// Tracks the names of the expected fields to be provided within
+  /// @ref grackle_field_data::inject_pathway_metal_density (in any)
+  GRIMPL_NS::FrozenKeyIdxBiMap field_query_inject_pathway_names;
 
   // define basic constructor/assignement/destructor methods
   // -------------------------------------------------------
