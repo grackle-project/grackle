@@ -6,14 +6,14 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Tests grackle::impl::solve_cubic_equation_cpp
+/// Tests GRIMPL_NS::solve_eqn::cubic_eqn_root
 //===----------------------------------------------------------------------===//
 
 #include <gtest/gtest.h>
 
 #include <array>
 
-#include "math/solve_cubic_equation.hpp"
+#include "math/solve_eqn.hpp"
 
 namespace {
 
@@ -40,8 +40,8 @@ TEST(SolveCubicEquation, OneRealRootCases) {
 
   for (const auto& one_case : cases) {
     double root = 0.0;
-    int rslt = grackle::impl::solve_cubic_equation_cpp(one_case.a, one_case.b,
-                                                       one_case.c, root);
+    int rslt = GRIMPL_NS::solve_eqn::cubic_eqn_root(one_case.a, one_case.b,
+                                                    one_case.c, root);
 
     EXPECT_EQ(rslt, 0);
     EXPECT_NEAR(root, one_case.expected_root, 1e-12);
@@ -51,7 +51,7 @@ TEST(SolveCubicEquation, OneRealRootCases) {
 TEST(SolveCubicEquation, ThreeRealRootsReturnsError) {
   // (x - 1)(x - 2)(x - 3) = x^3 - 6x^2 + 11x - 6
   double root = 0.0;
-  int rslt = grackle::impl::solve_cubic_equation_cpp(-6.0, 11.0, -6.0, root);
+  int rslt = GRIMPL_NS::solve_eqn::cubic_eqn_root(-6.0, 11.0, -6.0, root);
 
   EXPECT_EQ(rslt, 1);
 }
