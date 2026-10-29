@@ -252,9 +252,7 @@ def _ordered_inject_pathway_yield_densities(my_chemistry):
     Returns the names of metal yield density field names for each injection
     pathway in the appropriate order
     """
-    # rate_map is safe as long as the instance doesn't outlive my_chemistry
-    rate_map = my_chemistry._unsafe_get_rate_map()
-    inject_path_names = rate_map.get("inject_model_names", [])
+    inject_path_names = my_chemistry._inj_path_field_names()
 
     # perform a few sanity checks:
     # - these checks should really be handled while initializing chemistry_data,
@@ -267,7 +265,7 @@ def _ordered_inject_pathway_yield_densities(my_chemistry):
                 "Something is very wrong. There should be at least one injection "
                 "pathway yield field why metal_chemistry > 0"
             )
-    return [f"{name}_metal_density" for name in inject_path_names]
+    return inject_path_names
 
 _base_radiation_transfer_fields = \
   ["RT_heating_rate",
