@@ -234,7 +234,7 @@ void scale_fields(gr_float factor, chemistry_data* my_chemistry,
     OMP_PRAGMA("omp for schedule(runtime)")
     for (int t = 0; t <= (dk * dj - 1); t++) {
       k = t / dj + my_fields->grid_start[2];
-      j = grackle::impl::mod(t, dj) + my_fields->grid_start[1];
+      j = t % dj + my_fields->grid_start[1];
 
       for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
         d(i, j, k) = d(i, j, k) * factor;

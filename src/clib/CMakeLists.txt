@@ -132,7 +132,8 @@ add_library(Grackle_Grackle
   mask.hpp
   math/gaussj.cpp math/gaussj.hpp
   math/integrate.hpp
-  math/solve_cubic_equation.cpp math/solve_cubic_equation.hpp
+  math/solve_eqn.cpp math/solve_eqn.hpp
+  math/misc.hpp
   opaque_storage.cpp opaque_storage.hpp
   phys_constants.hpp
   ratequery.cpp ratequery.hpp
