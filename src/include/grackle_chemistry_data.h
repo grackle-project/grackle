@@ -67,7 +67,9 @@ typedef struct
   int metal_cooling;
 
   /* add heating from UV background model
-     0) off, 1) on */
+     0) off, 1) on
+     This will set all unset photo rate parameters to 1.
+  */
   int UVbackground;
 
   /* data file containing cooling and UV background tables */
@@ -227,10 +229,33 @@ typedef struct
   int use_radiative_transfer;
   int radiative_transfer_coupled_rate_solver;
   int radiative_transfer_intermediate_step;
-  int radiative_transfer_hydrogen_only;
-  int radiative_transfer_HDI_dissociation;
-  int radiative_transfer_metal_ionization;
-  int radiative_transfer_metal_dissociation;
+
+  /* flags for including photo reaction rates from:
+   0: nowhere (off)
+   1: UVB table
+   2: field array
+   3: UVB table and field array together
+  */
+  int use_HI_ionization;     // k24
+  int use_HeII_ionization;   // k25
+  int use_HeI_ionization;    // k26
+  int use_HM_detachment;     // k27
+  int use_H2II_dissociation; // k28
+  int use_H2I_ionization;    // k29
+  int use_H2II_dissociative_ionization; // k30
+  int use_H2I_dissociation;  // k31
+  int use_HDI_dissociation;
+  int use_CI_ionization;
+  int use_OI_ionization;
+  int use_COI_dissociation;
+  int use_OHI_dissociation;
+  int use_H2OI_dissociation;
+
+  /* flag to signal that fields are being provided for all photo rates.
+     This will set all the above photo rates to 2 if UVbackground is off and
+     3 if UVBackground is on.
+  */
+  int use_photo_fields;
 
   /* flag to signal H2 self-shielding is being done in hydro code */
   int radiative_transfer_use_H2_shielding;
@@ -244,10 +269,6 @@ typedef struct
      These determine the length scale used in the calculation of the H2 column density.
      Please refer to the grackle documentation for specifics. */
   int H2_self_shielding;
-
-  /* flag for custom H2-shielding factor. The factor is provided as an additional field 
-     by the user and is multiplied to the rate for radiative H2 dissocitation */
-  int H2_custom_shielding;
 
   /* flag to select which formula for calculating k11 you want to use. 
      Setting to 1 will use Savin 2004, 2 will use Abel et al. 1996  */
@@ -374,6 +395,8 @@ typedef struct
     double *k29;
     double *k30;
     double *k31;
+    /* Radiative rates for 12-species. */
+    double *kdissHDI;
 
     /* Radiative rates for metal species. */
     double *kphCI;
@@ -431,6 +454,8 @@ typedef struct
   double k29;
   double k30;
   double k31;
+  /* Radiative rates for 12-species (for external field). */
+  double kdissHDI;
 
   /* Radiative rates for metal species (for external field). */
   double kphCI_bg;
@@ -572,6 +597,8 @@ typedef struct
     double k29;
     double k30;
     double k31;
+    /* Radiative rates for 12-species. */
+    double kdissHDI;
 
     /* Radiative rates for metal species. */
     double kphCI_bg;

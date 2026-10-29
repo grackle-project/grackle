@@ -107,18 +107,21 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: specific_heating_rate
          TYPE(C_PTR) :: temperature_floor
          TYPE(C_PTR) :: RT_heating_rate
-         TYPE(C_PTR) :: RT_HI_ionization_rate
-         TYPE(C_PTR) :: RT_HeI_ionization_rate
-         TYPE(C_PTR) :: RT_HeII_ionization_rate
-         TYPE(C_PTR) :: RT_H2_dissociation_rate
-         TYPE(C_PTR) :: RT_HDI_dissociation_rate
-         TYPE(C_PTR) :: RT_CI_ionization_rate
-         TYPE(C_PTR) :: RT_OI_ionization_rate
-         TYPE(C_PTR) :: RT_CO_dissociation_rate
-         TYPE(C_PTR) :: RT_OH_dissociation_rate
-         TYPE(C_PTR) :: RT_H2O_dissociation_rate
+         TYPE(C_PTR) :: HI_ionization_rate
+         TYPE(C_PTR) :: HeII_ionization_rate
+         TYPE(C_PTR) :: HeI_ionization_rate
+         TYPE(C_PTR) :: HM_detachment_rate
+         TYPE(C_PTR) :: H2II_dissociation_rate
+         TYPE(C_PTR) :: H2I_ionization_rate
+         TYPE(C_PTR) :: H2II_dissociative_ionization_rate
+         TYPE(C_PTR) :: H2I_dissociation_rate
+         TYPE(C_PTR) :: HDI_dissociation_rate
+         TYPE(C_PTR) :: CI_ionization_rate
+         TYPE(C_PTR) :: OI_ionization_rate
+         TYPE(C_PTR) :: COI_dissociation_rate
+         TYPE(C_PTR) :: OHI_dissociation_rate
+         TYPE(C_PTR) :: H2OI_dissociation_rate
          TYPE(C_PTR) :: H2_self_shielding_length
-         TYPE(C_PTR) :: H2_custom_shielding_factor
          TYPE(C_PTR) :: isrf_habing
          TYPE(C_PTR) :: SiM_dust_temperature
          TYPE(C_PTR) :: FeM_dust_temperature
@@ -193,14 +196,24 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: use_radiative_transfer
          INTEGER(C_INT) :: radiative_transfer_coupled_rate_solver
          INTEGER(C_INT) :: radiative_transfer_intermediate_step
-         INTEGER(C_INT) :: radiative_transfer_hydrogen_only
-         INTEGER(C_INT) :: radiative_transfer_HDI_dissociation
-         INTEGER(C_INT) :: radiative_transfer_metal_ionization
-         INTEGER(C_INT) :: radiative_transfer_metal_dissociation
+         INTEGER(C_INT) :: use_HI_ionization
+         INTEGER(C_INT) :: use_HeII_ionization
+         INTEGER(C_INT) :: use_HeI_ionization
+         INTEGER(C_INT) :: use_HM_detachment
+         INTEGER(C_INT) :: use_H2II_dissociation
+         INTEGER(C_INT) :: use_H2I_ionization
+         INTEGER(C_INT) :: use_H2II_dissociative_ionization
+         INTEGER(C_INT) :: use_H2I_dissociation
+         INTEGER(C_INT) :: use_HDI_dissociation
+         INTEGER(C_INT) :: use_CI_ionization
+         INTEGER(C_INT) :: use_OI_ionization
+         INTEGER(C_INT) :: use_COI_dissociation
+         INTEGER(C_INT) :: use_OHI_dissociation
+         INTEGER(C_INT) :: use_H2OI_dissociation
+         INTEGER(C_INT) :: use_photo_fields
          INTEGER(C_INT) :: radiative_transfer_use_H2_shielding
          INTEGER(C_INT) :: self_shielding_method
          INTEGER(C_INT) :: H2_self_shielding
-         INTEGER(C_INT) :: H2_custom_shielding
          INTEGER(C_INT) :: h2_charge_exchange_rate
          INTEGER(C_INT) :: h2_dust_rate
          INTEGER(C_INT) :: h2_h_cooling_rate

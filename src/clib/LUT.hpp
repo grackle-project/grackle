@@ -181,6 +181,8 @@ struct PhotoRxnLUT {
     k29,
     k30,
     k31,
+    // Radiative rates for 12-species network
+    kdissHDI,
     // Radiative rates for metal species. Each buffer holds the total rate:
     // the UV background rate plus, when radiative transfer is in use, the
     // user-supplied radiative-transfer rate.

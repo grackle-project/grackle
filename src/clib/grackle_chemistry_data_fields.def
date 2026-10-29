@@ -246,13 +246,36 @@ ENTRY(cloudy_electron_fraction_factor, DOUBLE, 9.153959e-3)
 ENTRY(use_radiative_transfer, INT, 0)
 ENTRY(radiative_transfer_coupled_rate_solver, INT, 0)
 ENTRY(radiative_transfer_intermediate_step, INT, 0)
-ENTRY(radiative_transfer_hydrogen_only, INT, 0)
-ENTRY(radiative_transfer_HDI_dissociation, INT, 0)
-ENTRY(radiative_transfer_metal_ionization, INT, 0)
-ENTRY(radiative_transfer_metal_dissociation, INT, 0)
 
 /* flag to signal H2 self-shielding is being done in hydro code */
 ENTRY(radiative_transfer_use_H2_shielding, INT, FALSE)
+
+/* flags to control how photo rates are calculated
+   0: rate not included
+   1: rate included from UVB table only
+   2: rate included from field array only
+   3: rate is the sum of UVB table and field array values
+*/
+ENTRY(use_HI_ionization, INT, -1)
+ENTRY(use_HeII_ionization, INT, -1)
+ENTRY(use_HeI_ionization, INT, -1)
+ENTRY(use_HM_detachment, INT, -1)
+ENTRY(use_H2II_dissociation, INT, -1)
+ENTRY(use_H2I_ionization, INT, -1)
+ENTRY(use_H2II_dissociative_ionization, INT, -1)
+ENTRY(use_H2I_dissociation, INT, -1)
+ENTRY(use_HDI_dissociation, INT, -1)
+ENTRY(use_CI_ionization, INT, -1)
+ENTRY(use_OI_ionization, INT, -1)
+ENTRY(use_COI_dissociation, INT, -1)
+ENTRY(use_OHI_dissociation, INT, -1)
+ENTRY(use_H2OI_dissociation, INT, -1)
+
+/* flag to signal that fields are being provided for all photo rates.
+   This will set all the above photo rates to 2 if UVbackground is off and
+   3 if UVBackground is on.
+*/
+ENTRY(use_photo_fields, INT, 0)
 
 /* flag for approximiate self-shielding as well
    as spectrum averaged photo heating and
@@ -263,11 +286,6 @@ ENTRY(self_shielding_method, INT, 0)
    These determine the length scale used in the calculation of the H2 column
    density. Please refer to the grackle documentation for specifics. */
 ENTRY(H2_self_shielding, INT, 0)
-
-/* flag for custom H2-shielding factor. The factor is provided as an additional
-   field by the user and is multiplied to the rate for radiative H2
-   dissociation */
-ENTRY(H2_custom_shielding, INT, 0)
 
 /* flag to select which formula for calculating k11 you want to use. 
    Setting to 1 will use Savin 2004, 2 will use Abel et al. 1996  */

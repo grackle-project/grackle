@@ -148,6 +148,41 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->opaque_storage = NULL;
 }
 
+int configure_photo_rate_parameter(chemistry_data *my_chemistry,
+                                   const bool par_condition,
+                                   int &photo_parameter,
+                                   const char *par_name) {
+  if (photo_parameter == -1) {
+    photo_parameter = 0;
+    // only activate parameter if the specified condition is also met
+    if (par_condition) {
+      if (my_chemistry->UVbackground == 1) {
+        photo_parameter += 1;
+      }
+      if (my_chemistry->use_photo_fields == 1) {
+        photo_parameter += 2;
+      }
+    }
+    if (grackle_verbose) {
+      fprintf(stdout, "Setting %s to %d.\n", par_name, photo_parameter);
+    }
+  }
+
+  else {
+    if (photo_parameter > 0 && !par_condition) {
+      fprintf(stderr, "ERROR: other settings require %s to be set to 0.\n", par_name);
+      return GR_FAIL;
+    }
+  }
+
+  if (photo_parameter < 0 || photo_parameter > 3) {
+    fprintf(stderr, "ERROR: %s must be set to 0, 1, 2, or 3.\n", par_name);
+    return GR_FAIL;
+  }
+
+  return GR_SUCCESS;
+}
+
 extern "C" int local_initialize_chemistry_data(
     chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
     code_units *my_units)
@@ -259,6 +294,92 @@ extern "C" int local_initialize_chemistry_data(
   // Default photo-electric heating to off if unset.
   if (my_chemistry->photoelectric_heating < 0) {
     my_chemistry->photoelectric_heating = 0;
+  }
+
+  // Configure photo rate parameters
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 0),
+        my_chemistry->use_HI_ionization,
+        "use_HI_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 0),
+        my_chemistry->use_HeII_ionization,
+        "use_HeII_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 0),
+        my_chemistry->use_HeI_ionization,
+        "use_HeI_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 1),
+        my_chemistry->use_HM_detachment,
+        "use_HM_detachment") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 1),
+        my_chemistry->use_H2II_dissociation,
+        "use_H2II_dissociation") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 1),
+        my_chemistry->use_H2I_ionization,
+        "use_H2I_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 1),
+        my_chemistry->use_H2II_dissociative_ionization,
+        "use_H2II_dissociative_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 1),
+        my_chemistry->use_H2I_dissociation,
+        "use_H2I_dissociation") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 2),
+        my_chemistry->use_HDI_dissociation,
+        "use_HDI_dissociation") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->metal_chemistry == 1),
+        my_chemistry->use_CI_ionization,
+        "use_CI_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->metal_chemistry == 1),
+        my_chemistry->use_OI_ionization,
+        "use_OI_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->metal_chemistry == 1),
+        my_chemistry->use_COI_dissociation,
+        "use_COI_dissociation") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->metal_chemistry == 1),
+        my_chemistry->use_OHI_dissociation,
+        "use_OHI_dissociation") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->metal_chemistry == 1),
+        my_chemistry->use_H2OI_dissociation,
+        "use_H2OI_dissociation") == GR_FAIL) {
+    return GR_FAIL;
   }
 
 //initialize OpenMP

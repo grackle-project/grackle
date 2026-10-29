@@ -51,10 +51,15 @@ c     Field data arrays
      &     dust_density(field_size),
      &     volumetric_heating_rate(field_size),
      &     specific_heating_rate(field_size),
-     &     RT_HI_ionization_rate(field_size), 
-     &     RT_HeI_ionization_rate(field_size),
-     &     RT_HeII_ionization_rate(field_size),
-     &     RT_H2_dissociation_rate(field_size),
+     &     HI_ionization_rate(field_size),
+     &     HeI_ionization_rate(field_size),
+     &     HeII_ionization_rate(field_size),
+     &     HM_detachment_rate(field_size),
+     &     H2II_dissociation_rate(field_size),
+     &     H2I_ionization_rate(field_size),
+     &     H2II_dissociative_ionization_rate(field_size),
+     &     H2I_dissociation_rate(field_size),
+     &     HDI_dissociation_rate(field_size),
      &     RT_heating_rate(field_size),
      &     isrf_habing(field_size)
 
@@ -110,6 +115,7 @@ c     Set parameters
       grackle_data%primordial_chemistry = 3   ! network with H, He, D
       grackle_data%metal_cooling = 1          ! metal cooling on
       grackle_data%UVbackground = 1           ! UV background on
+      grackle_data%use_photo_fields = 1       ! pass photo rates via fields as well
       grackle_data%dust_chemistry = 1         ! dust processes
       grackle_data%use_dust_density_field = 1 ! follow dust density field
       grackle_data%use_isrf_field = 1         ! follow interstellar radiation field
@@ -181,13 +187,17 @@ c     volumetric heating rate (provide in units [erg s^-1 cm^-3])
 c     specific heating rate (provide in units [egs s^-1 g^-1])
       my_fields%specific_heating_rate = C_LOC(specific_heating_rate)
 
-c     radiative transfer ionization / dissociation rate fields
-c     (provide in units of [1/s])
-      my_fields%RT_HI_ionization_rate = C_LOC(RT_HI_ionization_rate)
-      my_fields%RT_HeI_ionization_rate = C_LOC(RT_HeI_ionization_rate)
-      my_fields%RT_HeII_ionization_rate =
-     &                                  C_LOC(RT_HeII_ionization_rate)
-      my_fields%RT_H2_dissociation_rate = C_LOC(RT_H2_dissociation_rate)
+c     ionization / dissociation rate fields (provide in units [1/s])
+      my_fields%HI_ionization_rate = C_LOC(HI_ionization_rate)
+      my_fields%HeI_ionization_rate = C_LOC(HeI_ionization_rate)
+      my_fields%HeII_ionization_rate = C_LOC(HeII_ionization_rate)
+      my_fields%HM_detachment_rate = C_LOC(HM_detachment_rate)
+      my_fields%H2II_dissociation_rate = C_LOC(H2II_dissociation_rate)
+      my_fields%H2I_ionization_rate = C_LOC(H2I_ionization_rate)
+      my_fields%H2II_dissociative_ionization_rate =
+     &     C_LOC(H2II_dissociative_ionization_rate)
+      my_fields%H2I_dissociation_rate = C_LOC(H2I_dissociation_rate)
+      my_fields%HDI_dissociation_rate = C_LOC(HDI_dissociation_rate)
 
 c     radiative transfer heating rate field
 c     (provide in units of [erg s^-1 cm^-3])
@@ -231,10 +241,15 @@ c        initilize internal energy (here 1000 K for no reason)
 
          volumetric_heating_rate(i) = 0.0
          specific_heating_rate(i) = 0.0
-         RT_HI_ionization_rate(i) = 0.0
-         RT_HeI_ionization_rate(i) = 0.0
-         RT_HeII_ionization_rate(i) = 0.0
-         RT_H2_dissociation_rate(i) = 0.0
+         HI_ionization_rate(i) = 0.0
+         HeI_ionization_rate(i) = 0.0
+         HeII_ionization_rate(i) = 0.0
+         HM_detachment_rate(i) = 0.0
+         H2II_dissociation_rate(i) = 0.0
+         H2I_ionization_rate(i) = 0.0
+         H2II_dissociative_ionization_rate(i) = 0.0
+         H2I_dissociation_rate(i) = 0.0
+         HDI_dissociation_rate(i) = 0.0
          RT_heating_rate(i) = 0.0
 
          isrf_habing(i) = grackle_data%interstellar_radiation_field

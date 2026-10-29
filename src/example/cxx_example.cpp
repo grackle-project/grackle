@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
   grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
   grackle_data->metal_cooling = 1;          // metal cooling on
   grackle_data->UVbackground = 1;           // UV background on
+  grackle_data->use_photo_fields = 1;       // pass photo rates via fields as well
   grackle_data->dust_chemistry = 1;         // dust processes
   grackle_data->use_dust_density_field = 1; // follow dust density field
   grackle_data->use_isrf_field = 1;         // follow interstellar radiation field
@@ -132,11 +133,16 @@ int main(int argc, char *argv[])
   // specific heating rate (provide in units [egs s^-1 g^-1]
   my_fields.specific_heating_rate = new gr_float[field_size];
 
-  // radiative transfer ionization / dissociation rate fields (provided in units of [1/s])
-  my_fields.RT_HI_ionization_rate = new gr_float[field_size];
-  my_fields.RT_HeI_ionization_rate = new gr_float[field_size];
-  my_fields.RT_HeII_ionization_rate = new gr_float[field_size];
-  my_fields.RT_H2_dissociation_rate = new gr_float[field_size];
+  // ionization / dissociation rate fields (provide in units [1/s])
+  my_fields.HI_ionization_rate = new gr_float[field_size];
+  my_fields.HeI_ionization_rate = new gr_float[field_size];
+  my_fields.HeII_ionization_rate = new gr_float[field_size];
+  my_fields.HM_detachment_rate = new gr_float[field_size];
+  my_fields.H2II_dissociation_rate = new gr_float[field_size];
+  my_fields.H2I_ionization_rate = new gr_float[field_size];
+  my_fields.H2II_dissociative_ionization_rate = new gr_float[field_size];
+  my_fields.H2I_dissociation_rate = new gr_float[field_size];
+  my_fields.HDI_dissociation_rate = new gr_float[field_size];
   // radiative transfer heating rate (provide in units [erg s^-1 cm^-3])
   my_fields.RT_heating_rate = new gr_float[field_size];
 
@@ -179,10 +185,15 @@ int main(int argc, char *argv[])
     my_fields.volumetric_heating_rate[i] = 0.0;
     my_fields.specific_heating_rate[i] = 0.0;
 
-    my_fields.RT_HI_ionization_rate[i] = 0.0;
-    my_fields.RT_HeI_ionization_rate[i] = 0.0;
-    my_fields.RT_HeII_ionization_rate[i] = 0.0;
-    my_fields.RT_H2_dissociation_rate[i] = 0.0;
+    my_fields.HI_ionization_rate[i] = 0.0;
+    my_fields.HeI_ionization_rate[i] = 0.0;
+    my_fields.HeII_ionization_rate[i] = 0.0;
+    my_fields.HM_detachment_rate[i] = 0.0;
+    my_fields.H2II_dissociation_rate[i] = 0.0;
+    my_fields.H2I_ionization_rate[i] = 0.0;
+    my_fields.H2II_dissociative_ionization_rate[i] = 0.0;
+    my_fields.H2I_dissociation_rate[i] = 0.0;
+    my_fields.HDI_dissociation_rate[i] = 0.0;
     my_fields.RT_heating_rate[i] = 0.0;
 
     my_fields.isrf_habing[i] = grackle_data->interstellar_radiation_field;

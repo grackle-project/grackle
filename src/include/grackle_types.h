@@ -164,26 +164,38 @@ typedef struct
   // use_radiative_transfer = 1
   // primordial_chemistry = 1
   gr_float *RT_heating_rate;
-  gr_float *RT_HI_ionization_rate;
-  gr_float *RT_HeI_ionization_rate;
-  gr_float *RT_HeII_ionization_rate;
-  // primordial_chemistry = 2
-  gr_float *RT_H2_dissociation_rate;
 
-  // radiative_transfer_HDI_dissociation = 1
-  gr_float *RT_HDI_dissociation_rate;
-  // radiative_transfer_metal_ionization = 1
-  gr_float *RT_CI_ionization_rate;
-  gr_float *RT_OI_ionization_rate;
-  // radiative_transfer_metal_dissociation = 1
-  gr_float *RT_CO_dissociation_rate;
-  gr_float *RT_OH_dissociation_rate;
-  gr_float *RT_H2O_dissociation_rate;
+  // use_HI_ionization > 1
+  gr_float *HI_ionization_rate;
+  // use_HeII_ionization > 1
+  gr_float *HeII_ionization_rate;
+  // use_HeI_ionization > 1
+  gr_float *HeI_ionization_rate;
+  // use_HM_detachment > 1
+  gr_float *HM_detachment_rate;
+  // use_H2II_dissociation > 1
+  gr_float *H2II_dissociation_rate;
+  // use_H2I_ionization > 1
+  gr_float *H2I_ionization_rate;
+  // use_H2II_dissociative_ionization > 1
+  gr_float *H2II_dissociative_ionization_rate;
+  // use_H2I_dissociation > 1
+  gr_float *H2I_dissociation_rate;
+  // use_HDI_dissociation > 1
+  gr_float *HDI_dissociation_rate;
+  // use_CI_ionization > 1
+  gr_float *CI_ionization_rate;
+  // use_OI_ionization > 1
+  gr_float *OI_ionization_rate;
+  // use_COI_dissociation > 1
+  gr_float *COI_dissociation_rate;
+  // use_OHI_dissociation > 1
+  gr_float *OHI_dissociation_rate;
+  // use_H2OI_dissociation > 1
+  gr_float *H2OI_dissociation_rate;
 
   // H2_self_shielding = 2
   gr_float *H2_self_shielding_length;
-  // H2_custom_shielding = 1
-  gr_float *H2_custom_shielding_factor;
 
   // use_isrf_field = 1
   gr_float *isrf_habing;
