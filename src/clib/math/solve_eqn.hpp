@@ -43,14 +43,6 @@ int cubic_eqn_root(double a, double b, double c, double& root);
 // codebase
 //
 // A few items to reconsider for the future:
-// -> this machinery is designed to track associated values computed along the
-//    way of performing root-finding
-//    - the hypothetical benefit is that you could theoretically save a
-//      little time at the end solve if the you are interested in a quantity
-//      other than just the location where the root occurs.
-//    - I actually think that this is fairly error-prone choice that we should
-//      get rid of. The actual cost of one extra evaluation (relative to the
-//      cost of the full-solve) is going to be fairly minimal)
 // -> the machinery is designed to let you run a pseudo-newton's method first
 //    and then run a bisection method afterwards. It would be MUCH better to
 //    adopt a hybrid method
@@ -68,23 +60,6 @@ int cubic_eqn_root(double a, double b, double c, double& root);
 //    derivatives is to an initial phase of the calculation using
 //    bisection/binary to find the interval containing bounding the solution
 //    where the analytic derivative is continuous
-
-/// @brief Aggregates results of a function that is being iteratively solved
-///
-/// @note
-/// To more fully support Newton-Raphson, we may want to consider adding a slot
-/// for the derivative
-struct FnEval {
-  /// the calculated value
-  double f_val;
-
-  /// @brief an associated intermediate value
-  ///
-  /// The basic premise is that this value is calculated in the process of
-  /// computing @ref f_val and we are interested in its value at the location
-  /// where the function has been solved.
-  double associated_val;
-};
 
 /// Encodes a mask value specifying the status at a given index of a numerical
 /// root-finding algorithm
@@ -110,20 +85,16 @@ struct EqnSolveRslt {
 /// @brief Find root of a function within an interval at a number of locations
 ///
 /// Uses the bisection method to find an array of roots for @p fn (a
-/// scalar-valued function) for an array of bracktting intervals. Values
-/// associated the function evaluation are recorded to @p associated_vals
+/// scalar-valued function) for an array of bracktting intervals.
 ///
 /// @param[in]    fn Function object representing the models the mathematical
 ///    function for which roots are computed. This should have a signature
-///    of the form `FnEval fn(double x, int i)` where `i` refers to an
+///    of the form `double fn(double x, int i)` where `i` refers to an
 ///    associated array index
 /// @param[inout] x_a, x_b Arrays of interval bounds bracketting the root.
 ///    Elements are updated in place as the bounds around the root are
 ///    narrowed. Historically, we have called the final value in x_a the
 ///    root. See the note below for additional requirements.
-/// @param[out]   associated_vals Output buffer for storing values computed
-///    while root finding. At this time, it is not specifies whether the value
-///    at index `i` cooresponds to `x_a[i]` or `x_b[i]`.
 /// @param[inout] solvemask Array specifying a @ref SolveStatus value at each
 ///    index. The solver will only look for roots at indices that initially have
 ///    values of @ref SolveStatus::UNCONVERGED. Elements will be updated to hold
@@ -156,8 +127,8 @@ struct EqnSolveRslt {
 /// assumption that `x_a` and `x_b` both initially hold positive values.
 template <typename Fn>
 static EqnSolveRslt unchecked_bisect(
-    const Fn& fn, double* x_a, double* x_b, double* associated_vals,
-    SolveStatus* solvemask, int i_start, int i_stop, double rtol, int max_iter,
+    const Fn& fn, double* x_a, double* x_b, SolveStatus* solvemask, int i_start,
+    int i_stop, double rtol, int max_iter,
     double max_initial_guess = std::numeric_limits<double>::max()) {
   int n_unconverged = 0;
   for (int i = i_start; i < i_stop; i++) {
@@ -179,8 +150,7 @@ static EqnSolveRslt unchecked_bisect(
           x_mid = std::fmin(x_mid, max_initial_guess);
         }
 
-        FnEval eval_rslt = fn(x_mid, i);
-        associated_vals[i] = eval_rslt.associated_val;
+        double f_val = fn(x_mid, i);
 
         // TODO: consider implementing common bisection strategy that tracks
         //       x_a and current bracket width. This is advantageous because
@@ -189,7 +159,7 @@ static EqnSolveRslt unchecked_bisect(
         //
         // if x_a, x_b, or x_mid isn't finite, branchless choice will act
         // weird (but we will be pretty doomed in that scenario, anyway)
-        bool update_a = eval_rslt.f_val > 0.0;
+        bool update_a = f_val > 0.0;
         x_a[i] = update_a ? x_mid : x_a[i];
         x_b[i] = update_a ? x_b[i] : x_mid;
 
@@ -233,8 +203,7 @@ struct FDiffNewtonParams {
 ///
 /// Use a variant of newton's method to find an array of roots for @p fn (a
 /// scalar-valued function that does NOT directly compute the derivative).
-/// Derivatives are estimated via finite differences. Values associated with
-/// the function evaluation are recorded to @p associated_vals
+/// Derivatives are estimated via finite differences.
 ///
 /// This function assumes that the root of @p fn occurs for a positive x value.
 /// It is also designed to help the caller fall back to an alternative method
@@ -242,14 +211,12 @@ struct FDiffNewtonParams {
 ///
 /// @param[in]    fn Function object representing the models the mathematical
 ///    function for which roots are computed. This should have a signature
-///    of the form `FnEval fn(double x, int i)` where `i` refers to an
+///    of the form `double fn(double x, int i)` where `i` refers to an
 ///    associated array index
 /// @param[inout] x Array of initial guesses for the root. Elements are updated
 ///    in place as the root is searched for.
 ///    narrowed. Historically, we have called the final value in x_a the
 ///    root. See the note below for additional requirements.
-/// @param[out]   associated_vals Output buffer for storing values computed
-///    while root finding.
 /// @param[inout] solvemask Array specifying a @ref SolveStatus value at each
 ///    index. The solver will only look for roots at indices that initially have
 ///    values of @ref SolveStatus::UNCONVERGED. Elements will be updated to hold
@@ -276,10 +243,9 @@ struct FDiffNewtonParams {
 /// reflected by the name of this function template.
 template <typename Fn>
 static EqnSolveRslt unchecked_posdomain_fdiff_newton(
-    const Fn& fn, double* x, double* associated_vals, SolveStatus* solvemask,
-    double* f_vals, double* pert, int i_start, int i_stop,
-    const FDiffNewtonParams& param, double giveup_small_x_threshold,
-    double max_x) {
+    const Fn& fn, double* x, SolveStatus* solvemask, double* f_vals,
+    double* pert, int i_start, int i_stop, const FDiffNewtonParams& param,
+    double giveup_small_x_threshold, double max_x) {
   int n_to_solve = 0;
 
   for (int i = i_start; i < i_stop; i++) {
@@ -292,9 +258,7 @@ static EqnSolveRslt unchecked_posdomain_fdiff_newton(
   for (iter = 0; (iter < param.maxiter) && (n_to_solve > 0); iter++) {
     for (int i = i_start; i < i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
-        FnEval eval_rslt = fn(x[i], i);
-        associated_vals[i] = eval_rslt.associated_val;
-        f_vals[i] = eval_rslt.f_val;
+        f_vals[i] = fn(x[i], i);
       }
     }
     for (int i = i_start; i < i_stop; i++) {
@@ -310,8 +274,7 @@ static EqnSolveRslt unchecked_posdomain_fdiff_newton(
         // to apply fmax to giveup_small_x_threshold and add an initial check
         // to comparing x and giveup_small_x_threshold
         double x_plus = std::fmax(1.e-3, (1. + pert[i]) * x[i]);
-        FnEval eval_rslt = fn(x_plus, i);
-        double fplus_val = eval_rslt.f_val;
+        double fplus_val = fn(x_plus, i);
         // it would be slightly faster to compute 1.0/slope
         double slope = (fplus_val - f_vals[i]) / (pert[i] * x[i]);
 

@@ -68,11 +68,11 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
   // -> we should think about directly computing analytic derivatives. This
   //    shouldn't be too hard and would significantly improve the robustness
   //    (and speed) of the newton solver pass
-  auto fn = [&](double Tdust, int i) -> solve_eqn::FnEval {
+  auto fn = [&](double Tdust, int i) -> double {
     double kgr = calculator.calc_opac(Tdust, i);
     double sol = Tdust_detail::calc_grain_balance(
         Tdust, tgas[i], kgr, Trad4, gasgr[i], gamma_isrf[i], nh[i]);
-    return {sol, kgr};
+    return sol;
   };
 
   // grain opacity from Omukai (2000, equation 17) normalized by
@@ -131,21 +131,17 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
   }
 
-  int iter;
   {  // perform newton's method
     double* x = tdustnow.data();
     double max_x = 3000.0;
     // below this x value, we give up!
     double giveup_small_x_threshold = Trad;
 
-    double* associated_vals = kgr;
     double* f_vals = sol.data();
 
     solve_eqn::EqnSolveRslt rslt = unchecked_posdomain_fdiff_newton(
-        fn, x, associated_vals, solvemask.data(), f_vals, pert.data(),
-        idx_range.i_start, idx_range.i_stop, newton_params,
-        giveup_small_x_threshold, max_x);
-    iter = rslt.iterations;
+        fn, x, solvemask.data(), f_vals, pert.data(), idx_range.i_start,
+        idx_range.i_stop, newton_params, giveup_small_x_threshold, max_x);
     at_least_one_bisection = at_least_one_bisection || !rslt.all_solved;
   }
 
@@ -171,17 +167,14 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
     }
 
     double max_initial_guess = passive_dust_model_T_sublimation;
-    double* associated_vals = kgr;
-    iter =
-        unchecked_bisect(fn, tdustnow.data(), bi_t_high.data(), associated_vals,
+    int iter =
+        unchecked_bisect(fn, tdustnow.data(), bi_t_high.data(),
                          solvemask.data(), idx_range.i_start, idx_range.i_stop,
                          bi_tol, bi_itmax, max_initial_guess)
             .iterations;
 
     // If iteration count exceeded with bisection, end of the line.
-    // -> Since `(bi_itmax+1) < itmax`, I'm pretty sure the following
-    //    if-statement is never invoked
-    if (iter > itmax) {
+    if (iter > bi_itmax) {
       int n_unconverged = 0;
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         n_unconverged += (solvemask[i] != solve_eqn::SolveStatus::CONVERGED);
@@ -193,8 +186,6 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
             iter, n_unconverged);
       }
     }
-
-    // if (iter .gt. itmax) then
   }
 
   // Copy values back to thrown slice
@@ -213,6 +204,7 @@ void calc_tdust_1d_(double* tdust, const double* tgas, const double* nh,
       }
 
       tdust[i] = tdustnow[i];
+      kgr[i] = calculator.calc_opac(tdust[i], i);
     }
   }
 
