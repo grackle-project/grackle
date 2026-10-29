@@ -176,7 +176,6 @@ cdef extern from "grackle.h":
       gr_float *specific_heating_rate;
       gr_float *temperature_floor;
       gr_float *RT_heating_rate;
-      gr_float *RT_H2_dissociation_rate;
       gr_float *HI_ionization_rate;
       gr_float *HeII_ionization_rate;
       gr_float *HeI_ionization_rate;

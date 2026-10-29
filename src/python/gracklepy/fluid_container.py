@@ -352,7 +352,6 @@ def _photo_units(my_chemistry):
 _field_units = {
     "H2_self_shielding_length": ("length_units", "cm"),
     "RT_heating_rate": (None, "erg/s"),
-    "RT_H2_dissociation_rate": (_photo_units, "1/s"),
     "HI_ionization_rate": (_photo_units, "1/s"),
     "HeII_ionization_rate": (_photo_units, "1/s"),
     "HeI_ionization_rate": (_photo_units, "1/s"),

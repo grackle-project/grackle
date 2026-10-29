@@ -789,7 +789,6 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.temperature_floor = get_field(fc, "temperature_floor")
 
     my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
-    my_fields.RT_H2_dissociation_rate = get_field(fc, "RT_H2_dissociation_rate")
 
     my_fields.HI_ionization_rate = get_field(fc, "HI_ionization_rate")
     my_fields.HeII_ionization_rate = get_field(fc, "HeII_ionization_rate")

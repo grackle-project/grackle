@@ -41,8 +41,6 @@ ENTRY(temperature_floor)
   // use_radiative_transfer = 1
   // primordial_chemistry = 1
 ENTRY(RT_heating_rate)
-  // primordial_chemistry = 2
-ENTRY(RT_H2_dissociation_rate)
 
   // H2_self_shielding = 2
 ENTRY(H2_self_shielding_length)
