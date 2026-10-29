@@ -21,11 +21,11 @@
 #include "gas_props.hpp"
 #include "grackle.h"
 #include "support/index_helper.hpp"
-#include "inject_model/misc.hpp"
 #include "internal_units.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
 #include "mask.hpp"
+#include "opaque_storage.hpp"
 #include "scale_fields.hpp"
 #include "support/config.hpp"
 #include "utils-cpp.hpp"
@@ -40,13 +40,6 @@ void cool_multi_time(
 {
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
-  // Convert densities from comoving to 'proper'
-  if (internalu.extfields_in_comoving == 1)  {
-    gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    scale_fields(
-        factor, my_chemistry, my_fields,
-        get_n_inject_pathway_density_ptrs(my_rates));
-  }
 
 
   OMP_PRAGMA("omp parallel")
@@ -106,8 +99,15 @@ void cool_multi_time(
       const int k = idx_range.k; // use 0-based index
       const int j = idx_range.j; // use 0-based index
 
-      SpeciesMultiView<const gr_float> species_densities
+      SpeciesMultiView<gr_float> species_densities
           = field_adaptor_mgr.get_species_data(idx_range);
+
+      // Convert densities from comoving to 'proper'
+      if (internalu.extfields_in_comoving == 1)  {
+        gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
+        scale_fields(factor, idx_range, my_chemistry, my_fields,
+                     species_densities, my_rates);
+      }
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask[i] = MASK_TRUE;
@@ -172,6 +172,13 @@ void cool_multi_time(
         cooltime(i,j,k) = (gr_float)(energy/edot[i]);
       }
 
+      // Convert densities back to comoving from 'proper'
+      if (internalu.extfields_in_comoving == 1)  {
+        gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
+        scale_fields(factor, idx_range, my_chemistry, my_fields,
+                     species_densities, my_rates);
+      }
+
     }
 
     // cleanup temporaries
@@ -181,13 +188,6 @@ void cool_multi_time(
 
   }  // OMP_PRAGMA("omp parallel")
 
-  // Convert densities back to comoving from 'proper'
-  if (internalu.extfields_in_comoving == 1)  {
-    gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    scale_fields(
-        factor, my_chemistry, my_fields,
-        get_n_inject_pathway_density_ptrs(my_rates));
-  }
 
   return;
 }

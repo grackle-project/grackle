@@ -25,7 +25,6 @@
 #include "phys_constants.hpp"
 #include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
-#include "inject_model/misc.hpp"
 #include "internal_types.hpp"
 #include "lnT_prep.hpp"
 #include "mask.hpp"
@@ -54,14 +53,6 @@ void calc_tdust_3d(
   const IndexHelper idx_helper = build_index_helper_(my_fields);
 
   const bool single_species_dust_model = my_chemistry->dust_chemistry == 1;
-
-  // Convert densities to 'proper' from comoving
-  if (internalu.extfields_in_comoving == 1)  {
-    gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
-    scale_fields_dust(
-        my_chemistry, my_fields, factor,
-        get_n_inject_pathway_density_ptrs(my_rates));
-  }
 
   OMP_PRAGMA("omp parallel")
   {
@@ -149,6 +140,14 @@ void calc_tdust_3d(
 
       SpeciesMultiView<gr_float> sp_densities
           = field_adaptor_mgr.get_species_data(idx_range);
+
+      // Convert densities to 'proper' from comoving
+      if (internalu.extfields_in_comoving == 1)  {
+        gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
+        scale_fields_dust(factor, idx_range, my_chemistry, my_fields,
+                          sp_densities, my_rates); 
+      }
+
 
       // compute gas properties (tgas and metallicity) & fill up logTlinterp_buf
       // - compared to earlier iterations of this code path:
@@ -288,6 +287,14 @@ void calc_tdust_3d(
         }
       }
 
+
+      // Convert densities back to comoving from 'proper'
+      if (internalu.extfields_in_comoving == 1)  {
+        gr_float factor = (gr_float)std::pow(internalu.a_value,3);
+        scale_fields_dust(factor, idx_range, my_chemistry, my_fields,
+                          sp_densities, my_rates); 
+      }
+
     }
 
     drop_LnTLinInterpBuf(&logTlininterp_buf);
@@ -296,14 +303,6 @@ void calc_tdust_3d(
     drop_GrainSpeciesCollection(&grain_kappa);
     drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
   }  // OMP_PRAGMA("omp parallel")
-
-  // Convert densities back to comoving from 'proper'
-  if (internalu.extfields_in_comoving == 1)  {
-    gr_float factor = (gr_float)std::pow(internalu.a_value,3);
-    scale_fields_dust(
-        my_chemistry, my_fields, factor,
-        get_n_inject_pathway_density_ptrs(my_rates));
-  }
 
   return;
 }
