@@ -138,11 +138,16 @@ void construct_field_data(grackle_field_data& my_fields,
   // specific heating rate (provide in units [egs s^-1 g^-1]
   my_fields.specific_heating_rate = init_helper("specific_heating_rate");
 
-  // radiative transfer ionization / dissociation rate fields (provided in units of [1/s])
-  my_fields.RT_HI_ionization_rate = init_helper("RT_HI_ionization_rate");
-  my_fields.RT_HeI_ionization_rate = init_helper("RT_HeI_ionization_rate");
-  my_fields.RT_HeII_ionization_rate = init_helper("RT_HeII_ionization_rate");
-  my_fields.RT_H2_dissociation_rate = init_helper("RT_H2_dissociation_rate");
+  // ionization / dissociation rate fields (provide in units [1/s])
+  my_fields.HI_ionization_rate = init_helper("HI_ionization_rate");
+  my_fields.HeI_ionization_rate = init_helper("HeI_ionization_rate");
+  my_fields.HeII_ionization_rate = init_helper("HeII_ionization_rate");
+  my_fields.HM_detachment_rate = init_helper("HM_detachment_rate");
+  my_fields.H2II_dissociation_rate = init_helper("H2II_dissociation_rate");
+  my_fields.H2I_ionization_rate = init_helper("H2I_ionization_rate");
+  my_fields.H2II_dissociative_ionization_rate = init_helper("H2II_dissociative_ionization_rate");
+  my_fields.H2I_dissociation_rate = init_helper("H2I_dissociation_rate");
+  my_fields.HDI_dissociation_rate = init_helper("HDI_dissociation_rate");
   // radiative transfer heating rate (provide in units [erg s^-1 cm^-3])
   my_fields.RT_heating_rate = init_helper("RT_heating_rate");
 
