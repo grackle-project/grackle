@@ -393,8 +393,11 @@ inline void setup_photo_rate_buffers(
                               my_uvb_rates.k30,
                               my_fields->H2II_dissociative_ionization_rate,
                               kph_buf[PhotoRxnLUT::k30]);
-  // k31 is handled separately for now
-
+  calculate_photo_rate_buffer(idx_range, itmask, my_fields,
+                              my_chemistry->use_H2I_dissociation,
+                              my_uvb_rates.k31,
+                              my_fields->H2I_dissociation_rate,
+                              kph_buf[PhotoRxnLUT::k31]);
   calculate_photo_rate_buffer(idx_range, itmask, my_fields,
                               my_chemistry->use_HDI_dissociation,
                               my_uvb_rates.kdissHDI,
@@ -462,31 +465,6 @@ inline void model_H2I_dissociation_shielding(
   FortranView<const gr_float***> H2II(
       my_fields->H2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  FortranView<const gr_float***> kdissH2I;
-  if (my_chemistry->use_radiative_transfer == 1) {
-    kdissH2I = FortranView<const gr_float***>(
-        my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  }
-
-  // If radiative transfer for LW photons have been already solved in
-  // your hydro code, add kdissH2I later
-  if (my_chemistry->use_radiative_transfer == 0 ||
-      my_chemistry->radiative_transfer_use_H2_shielding == 1) {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        kph_buf[PhotoRxnLUT::k31][i] = my_uvb_rates.k31;
-      }
-    }
-  } else {
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        kph_buf[PhotoRxnLUT::k31][i] =
-            my_uvb_rates.k31 + kdissH2I(i, idx_range.j, idx_range.k);
-      }
-    }
-  }
 
   if (my_chemistry->H2_self_shielding > 0) {
     // conditionally construct a view
@@ -560,34 +538,6 @@ inline void model_H2I_dissociation_shielding(
         f_shield = std::fmin(f_shield, 1.);
 
         kph_buf[PhotoRxnLUT::k31][i] = f_shield * kph_buf[PhotoRxnLUT::k31][i];
-      }
-    }
-  }
-  // If radiative transfer for LW photons have been already solved in
-  // your hydro code, add kdissH2I here
-  if (my_chemistry->use_radiative_transfer == 1 &&
-      my_chemistry->radiative_transfer_use_H2_shielding == 1) {
-    // write(*,*) 'kdissH2I included'
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        kph_buf[PhotoRxnLUT::k31][i] = kph_buf[PhotoRxnLUT::k31][i] +
-                                       kdissH2I(i, idx_range.j, idx_range.k);
-      }
-    }
-  }
-
-  // Custom H2 shielding
-  if (my_chemistry->H2_custom_shielding > 0) {
-    // create a view of the field of custom shielding values
-    FortranView<const gr_float***> f_shield_custom(
-        my_fields->H2_custom_shielding_factor, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        kph_buf[PhotoRxnLUT::k31][i] =
-            f_shield_custom(i, idx_range.j, idx_range.k) *
-            kph_buf[PhotoRxnLUT::k31][i];
       }
     }
   }
@@ -970,13 +920,6 @@ inline void lookup_cool_rates1d(
                                      dom, my_chemistry, my_fields, my_rates,
                                      logTlininterp_buf);
 
-  // interpolate terms used to compute H2 formation heating terms.
-  // (this is honestly a little out of place in this function)
-  if (my_chemistry->primordial_chemistry > 1) {
-    interpolate_h2_heating_terms_(chemheatrates_buf, idx_range, my_rates,
-                                  itmask, logTlininterp_buf);
-  }
-
   // Deal with the photo reaction rates
   // ----------------------------------
   // In the simplest configuration, these rates are same everywhere. Things get
@@ -1007,6 +950,14 @@ inline void lookup_cool_rates1d(
                               my_chemistry->self_shielding_method, my_uvb_rates,
                               &calculator);
   }
+
+  // interpolate terms used to compute H2 formation heating terms.
+  // (this is honestly a little out of place in this function)
+  if (my_chemistry->primordial_chemistry > 1) {
+    interpolate_h2_heating_terms_(chemheatrates_buf, idx_range, my_rates,
+                                  itmask, logTlininterp_buf);
+  }
+
 
 #ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED
   // If using a high-energy radiation field, then account for
