@@ -92,7 +92,7 @@ add_library(Grackle_Grackle
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
   api/units.cpp
-  ceiling_species.hpp
+  chem_model/infer_species.cpp chem_model/infer_species.hpp
   chem_model/nuclide_model.cpp chem_model/nuclide_model.hpp
   cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
@@ -111,6 +111,7 @@ add_library(Grackle_Grackle
   dust/passive/analytic_opac.hpp
   dust/solver.cpp dust/solver.hpp
   dynamic_api.cpp
+  enforce_species_floor.hpp
   field_adaptor.hpp
   full_rxn_rate_buf.hpp
   gas_props.hpp
