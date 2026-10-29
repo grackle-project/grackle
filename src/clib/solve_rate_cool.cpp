@@ -605,11 +605,6 @@ struct SpeciesRateSolverScratchBuf {
   /// buffer specifying how the Newton-Raphson scheme handles energy evolution
   int* imp_eng;
 
-  // buffers in the following data structure are used to temporarily hold
-  // the evolved density of various species as we evolve over a subcycle
-  // (currently only used by step_rate_g)
-  grackle::impl::SpeciesCollection species_tmpdens;
-
   /// buffers in the following data structure are used to temporarily hold
   /// all reaction rates
   FullRxnRateBuf rxn_rate_buf;
@@ -626,7 +621,8 @@ struct SpeciesRateSolverScratchBuf {
 template <class BinaryVisitor>
 void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
                        SpeciesRateSolverScratchBuf& obj1,
-                       BinaryVisitor f) {
+                       BinaryVisitor f,
+                       bool managing_memory = false) {
   namespace vis = ::grackle::impl::visitor;
 
   vis::begin_visit("SpeciesRateSolverScratchBuf", f);
@@ -638,9 +634,6 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
   f(VIS_MEMBER_NAME("itmask_gs"), obj0.itmask_gs, obj1.itmask_gs, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("itmask_nr"), obj0.itmask_nr, obj1.itmask_nr, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("imp_eng"), obj0.imp_eng, obj1.imp_eng, vis::idx_range_len_multiple(1));
-
-  vis::previsit_struct_member(VIS_MEMBER_NAME("species_tmpdens"), f);
-  visit_member_pair(obj0.species_tmpdens, obj1.species_tmpdens, f);
 
   vis::previsit_struct_member(VIS_MEMBER_NAME("rxn_rate_buf"), f);
   visit_member_pair(obj0.rxn_rate_buf, obj1.rxn_rate_buf, f);
@@ -748,6 +741,14 @@ int solve_rate_cool(
 
     grackle::impl::CoolHeatScratchBuf coolingheating_buf =
       grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
+
+    // buffers in the following data structure are used to temporarily hold
+    // the evolved density of various species as we evolve over a subcycle
+    // - currently only used by step_rate_gauss_seidel
+    // - this can't be part of SpeciesRateSolverScratchBuf because we depend on
+    //   allocating all memory in a single buffer (which currently doesn't work)
+    SpeciesCollection species_tmpdens =
+      new_SpeciesCollection(my_fields->grid_dimension[0]);
 
     // at the time of writing, the following scratch buffer is **ONLY** used
     // within lookup_cool_rates1d. In the future, we should really work on
@@ -1011,7 +1012,7 @@ int solve_rate_cool(
             dtit.data(), idx_range, anydust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
             itmask_metal.data(), my_chemistry, my_fields,
-            spsolvbuf.species_tmpdens, spsolvbuf.rxn_rate_buf
+            species_tmpdens, spsolvbuf.rxn_rate_buf
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel
@@ -1090,6 +1091,7 @@ int solve_rate_cool(
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
     grackle::impl::drop_LnTLinInterpBuf(&logTlininterp_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
+    drop_SpeciesCollection(&species_tmpdens);
     grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_scratch_buf);
 
     grackle::impl::drop_SpeciesRateSolverScratchBuf(&spsolvbuf);

@@ -17,14 +17,12 @@
 #define LOOKUP_COOL_RATES1D_HPP
 
 #include "grackle.h"
-#include "dust/multi_grain_species/dust_props.hpp"
-#include "dust/solver.hpp"
 #include "field_adaptor.hpp"
 #include "fortran_func_decls.h"
 #include "full_rxn_rate_buf.hpp"
 #include "internal_types.hpp"
+#include "math/misc.hpp"
 #include "opaque_storage.hpp"
-#include "utils-cpp.hpp"
 
 namespace grackle::impl {
 
@@ -381,7 +379,7 @@ inline void model_H2I_dissociation_shielding(
         // update: self-shielding following Wolcott-Green & Haiman (2019)
         // range of validity: T=100-8000 K, n<=1e7 cm^-3
 
-        double tgas_touse = grackle::impl::clamp(tgas1d[i], 1e2, 8e3);
+        double tgas_touse = fclamp(tgas1d[i], 1e2, 8e3);
         double ngas_touse =
             std::fmin(d(i, idx_range.j, idx_range.k) * dom / mmw[i], 1e7);
 
@@ -749,6 +747,88 @@ inline void apply_misc_shield_factors(
   }
 }
 
+inline void add_rt_contributions_to_rates_(
+    double* const* kph_buf, IndexRange idx_range, const gr_mask_type* itmask,
+    const chemistry_data* my_chemistry, const grackle_field_data* my_fields) {
+  if (my_chemistry->use_radiative_transfer != 1) {
+    return;
+  }
+
+  {
+    FortranView<const gr_float***> kphHI(
+        my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kph_buf[PhotoRxnLUT::k24][i] =
+            kph_buf[PhotoRxnLUT::k24][i] + kphHI(i, idx_range.j, idx_range.k);
+      }
+    }
+  }
+
+  if (my_chemistry->radiative_transfer_hydrogen_only == 0) {
+    FortranView<const gr_float***> kphHeII(
+        my_fields->RT_HeII_ionization_rate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    FortranView<const gr_float***> kphHeI(
+        my_fields->RT_HeI_ionization_rate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kph_buf[PhotoRxnLUT::k25][i] =
+            kph_buf[PhotoRxnLUT::k25][i] + kphHeII(i, idx_range.j, idx_range.k);
+        kph_buf[PhotoRxnLUT::k26][i] =
+            kph_buf[PhotoRxnLUT::k26][i] + kphHeI(i, idx_range.j, idx_range.k);
+      }
+    }
+  }
+
+  // shouldn't my_chemistry->radiative_transfer_hydrogen_only affect the
+  // following behavior?
+  if (my_chemistry->metal_chemistry == 1) {
+    if (my_chemistry->radiative_transfer_metal_ionization > 0) {
+      FortranView<const gr_float***> kphCI(
+          my_fields->RT_CI_ionization_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      FortranView<const gr_float***> kphOI(
+          my_fields->RT_OI_ionization_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          kph_buf[PhotoRxnLUT::kphCI][i] = kph_buf[PhotoRxnLUT::kphCI][i] +
+                                           kphCI(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kphOI][i] = kph_buf[PhotoRxnLUT::kphOI][i] +
+                                           kphOI(i, idx_range.j, idx_range.k);
+        }
+      }
+    }
+    if (my_chemistry->radiative_transfer_metal_dissociation > 0) {
+      FortranView<const gr_float***> kdissCO(
+          my_fields->RT_CO_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      FortranView<const gr_float***> kdissOH(
+          my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      FortranView<const gr_float***> kdissH2O(
+          my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          kph_buf[PhotoRxnLUT::kdissCO][i] =
+              kph_buf[PhotoRxnLUT::kdissCO][i] +
+              kdissCO(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kdissOH][i] =
+              kph_buf[PhotoRxnLUT::kdissOH][i] +
+              kdissOH(i, idx_range.j, idx_range.k);
+          kph_buf[PhotoRxnLUT::kdissH2O][i] =
+              kph_buf[PhotoRxnLUT::kdissH2O][i] +
+              kdissH2O(i, idx_range.j, idx_range.k);
+        }
+      }
+    }
+  }
+}
+
 /// This routine uses the gas temperature to calculate rate at each location
 /// in the specified index range.
 ///
@@ -844,6 +924,7 @@ inline void lookup_cool_rates1d(
       kph_buf[PhotoRxnLUT::k29][i] = my_uvb_rates.k29;
       kph_buf[PhotoRxnLUT::k30][i] = my_uvb_rates.k30;
       // k31 is handled separately
+      // kdissHDI is handled separately
 
       // metal photo-ionization/photo-dissociation rates. Each buffer holds
       // the total rate: the UV background part set here plus the
@@ -871,6 +952,29 @@ inline void lookup_cool_rates1d(
                                      my_fields, my_uvb_rates, internalu);
   }
 
+  // TODO: it probably makes sense to treat kdissHDI more like the k31 rate
+  // (i.e. H2I dissociation)
+  if (my_chemistry->primordial_chemistry > 2) {
+    if ((my_chemistry->use_radiative_transfer == 1) &&
+        (my_chemistry->radiative_transfer_HDI_dissociation > 0)) {
+      FortranView<const gr_float***> kdissHDI(
+          my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          kph_buf[PhotoRxnLUT::kdissHDI][i] =
+              kdissHDI(i, idx_range.j, idx_range.k);
+        }
+      }
+    } else {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          kph_buf[PhotoRxnLUT::kdissHDI][i] = 0.0;
+        }
+      }
+    }
+  }
+
   // apply some miscellaneous self-shielding adjustments
   if (my_chemistry->self_shielding_method > 0) {
     ShieldFactorCalculator calculator =
@@ -883,49 +987,8 @@ inline void lookup_cool_rates1d(
 
   // add the radiative-transfer rates for metal species to the background
   // rates (after shielding, which only applies to the background)
-  if ((my_chemistry->use_radiative_transfer == 1) &&
-      (my_chemistry->metal_chemistry == 1)) {
-    if (my_chemistry->radiative_transfer_metal_ionization > 0) {
-      FortranView<const gr_float***> kphCI(
-          my_fields->RT_CI_ionization_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      FortranView<const gr_float***> kphOI(
-          my_fields->RT_OI_ionization_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kph_buf[PhotoRxnLUT::kphCI][i] = kph_buf[PhotoRxnLUT::kphCI][i] +
-                                           kphCI(i, idx_range.j, idx_range.k);
-          kph_buf[PhotoRxnLUT::kphOI][i] = kph_buf[PhotoRxnLUT::kphOI][i] +
-                                           kphOI(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
-    if (my_chemistry->radiative_transfer_metal_dissociation > 0) {
-      FortranView<const gr_float***> kdissCO(
-          my_fields->RT_CO_dissociation_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      FortranView<const gr_float***> kdissOH(
-          my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      FortranView<const gr_float***> kdissH2O(
-          my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kph_buf[PhotoRxnLUT::kdissCO][i] =
-              kph_buf[PhotoRxnLUT::kdissCO][i] +
-              kdissCO(i, idx_range.j, idx_range.k);
-          kph_buf[PhotoRxnLUT::kdissOH][i] =
-              kph_buf[PhotoRxnLUT::kdissOH][i] +
-              kdissOH(i, idx_range.j, idx_range.k);
-          kph_buf[PhotoRxnLUT::kdissH2O][i] =
-              kph_buf[PhotoRxnLUT::kdissH2O][i] +
-              kdissH2O(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
-  }
+  add_rt_contributions_to_rates_(kph_buf, idx_range, itmask, my_chemistry,
+                                 my_fields);
 
 #ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED
   // If using a high-energy radiation field, then account for
