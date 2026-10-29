@@ -86,10 +86,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
       my_fields->H2OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  FortranView<gr_float***> kdissHDI(
-      my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
   // locals
   const double* h2dust = FullRxnRateBuf_h2dust(&rxn_rate_buf);
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
@@ -355,11 +351,10 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
         }
       }
     }
-    if ((my_chemistry->primordial_chemistry > 2) &&
-        (my_chemistry->radiative_transfer_HDI_dissociation > 0)) {
+    if (my_chemistry->primordial_chemistry > 2) {
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
-          HIdot[i] = HIdot[i] + kdissHDI(i, idx_range.j, idx_range.k) *
+          HIdot[i] = HIdot[i] + kph_buf[PhotoRxnLUT::kdissHDI][i] *
                                     HDI(i, idx_range.j, idx_range.k) / 3.0;
         }
       }

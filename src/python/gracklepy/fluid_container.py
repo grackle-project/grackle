@@ -292,15 +292,6 @@ def _required_density_fields(my_chemistry):
 
 def _required_radiation_transfer_fields(my_chemistry):
     my_fields = _base_radiation_transfer_fields.copy()
-    if my_chemistry.radiative_transfer_HDI_dissociation:
-        my_fields.append("RT_HDI_dissociation_rate")
-    if my_chemistry.radiative_transfer_metal_ionization:
-        my_fields.extend(["RT_CI_ionization_rate",
-                          "RT_OI_ionization_rate"])
-    if my_chemistry.radiative_transfer_metal_dissociation:
-        my_fields.extend(["RT_CO_dissociation_rate",
-                          "RT_OH_dissociation_rate",
-                          "RT_H2O_dissociation_rate"])
     return my_fields
 
 def _required_photo_rate_fields(my_chemistry):

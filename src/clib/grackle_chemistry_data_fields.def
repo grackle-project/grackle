@@ -247,9 +247,6 @@ ENTRY(use_radiative_transfer, INT, 0)
 ENTRY(radiative_transfer_coupled_rate_solver, INT, 0)
 ENTRY(radiative_transfer_intermediate_step, INT, 0)
 ENTRY(radiative_transfer_hydrogen_only, INT, 0)
-ENTRY(radiative_transfer_HDI_dissociation, INT, 0)
-ENTRY(radiative_transfer_metal_ionization, INT, 0)
-ENTRY(radiative_transfer_metal_dissociation, INT, 0)
 
 /* flag to signal H2 self-shielding is being done in hydro code */
 ENTRY(radiative_transfer_use_H2_shielding, INT, FALSE)

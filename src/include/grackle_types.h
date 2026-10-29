@@ -170,16 +170,6 @@ typedef struct
   // primordial_chemistry = 2
   gr_float *RT_H2_dissociation_rate;
 
-  // radiative_transfer_HDI_dissociation = 1
-  gr_float *RT_HDI_dissociation_rate;
-  // radiative_transfer_metal_ionization = 1
-  gr_float *RT_CI_ionization_rate;
-  gr_float *RT_OI_ionization_rate;
-  // radiative_transfer_metal_dissociation = 1
-  gr_float *RT_CO_dissociation_rate;
-  gr_float *RT_OH_dissociation_rate;
-  gr_float *RT_H2O_dissociation_rate;
-
   // use_HI_ionization > 1
   gr_float *HI_ionization_rate;
   // use_HeII_ionization > 1

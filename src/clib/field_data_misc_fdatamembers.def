@@ -47,16 +47,6 @@ ENTRY(RT_HeII_ionization_rate)
   // primordial_chemistry = 2
 ENTRY(RT_H2_dissociation_rate)
 
-  // radiative_transfer_HDI_dissociation = 1
-ENTRY(RT_HDI_dissociation_rate)
-  // radiative_transfer_metal_ionization = 1
-ENTRY(RT_CI_ionization_rate)
-ENTRY(RT_OI_ionization_rate)
-  // radiative_transfer_metal_dissociation = 1
-ENTRY(RT_CO_dissociation_rate)
-ENTRY(RT_OH_dissociation_rate)
-ENTRY(RT_H2O_dissociation_rate)
-
   // H2_self_shielding = 2
 ENTRY(H2_self_shielding_length)
   // H2_custom_shielding = 1

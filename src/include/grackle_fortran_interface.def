@@ -111,12 +111,6 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: RT_HeI_ionization_rate
          TYPE(C_PTR) :: RT_HeII_ionization_rate
          TYPE(C_PTR) :: RT_H2_dissociation_rate
-         TYPE(C_PTR) :: RT_HDI_dissociation_rate
-         TYPE(C_PTR) :: RT_CI_ionization_rate
-         TYPE(C_PTR) :: RT_OI_ionization_rate
-         TYPE(C_PTR) :: RT_CO_dissociation_rate
-         TYPE(C_PTR) :: RT_OH_dissociation_rate
-         TYPE(C_PTR) :: RT_H2O_dissociation_rate
          TYPE(C_PTR) :: H2_self_shielding_length
          TYPE(C_PTR) :: H2_custom_shielding_factor
          TYPE(C_PTR) :: isrf_habing
@@ -194,9 +188,6 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: radiative_transfer_coupled_rate_solver
          INTEGER(C_INT) :: radiative_transfer_intermediate_step
          INTEGER(C_INT) :: radiative_transfer_hydrogen_only
-         INTEGER(C_INT) :: radiative_transfer_HDI_dissociation
-         INTEGER(C_INT) :: radiative_transfer_metal_ionization
-         INTEGER(C_INT) :: radiative_transfer_metal_dissociation
          INTEGER(C_INT) :: radiative_transfer_use_H2_shielding
          INTEGER(C_INT) :: self_shielding_method
          INTEGER(C_INT) :: H2_self_shielding
