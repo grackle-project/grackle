@@ -229,7 +229,6 @@ typedef struct
   int use_radiative_transfer;
   int radiative_transfer_coupled_rate_solver;
   int radiative_transfer_intermediate_step;
-  int radiative_transfer_hydrogen_only;
 
   /* flags for including photo reaction rates from:
    0: nowhere (off)

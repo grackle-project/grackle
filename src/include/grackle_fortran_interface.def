@@ -198,7 +198,6 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: use_radiative_transfer
          INTEGER(C_INT) :: radiative_transfer_coupled_rate_solver
          INTEGER(C_INT) :: radiative_transfer_intermediate_step
-         INTEGER(C_INT) :: radiative_transfer_hydrogen_only
          INTEGER(C_INT) :: use_HI_ionization
          INTEGER(C_INT) :: use_HeII_ionization
          INTEGER(C_INT) :: use_HeI_ionization
