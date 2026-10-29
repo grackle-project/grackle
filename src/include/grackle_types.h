@@ -198,8 +198,6 @@ typedef struct
 
   // H2_self_shielding = 2
   gr_float *H2_self_shielding_length;
-  // H2_custom_shielding = 1
-  gr_float *H2_custom_shielding_factor;
 
   // use_isrf_field = 1
   gr_float *isrf_habing;

@@ -807,7 +807,6 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.H2OI_dissociation_rate = get_field(fc, "H2OI_dissociation_rate")
 
     my_fields.H2_self_shielding_length = get_field(fc, "H2_self_shielding_length")
-    my_fields.H2_custom_shielding_factor = get_field(fc, "H2_custom_shielding_factor")
     my_fields.isrf_habing = get_field(fc, "isrf_habing")
 
     my_fields.SiM_dust_temperature = get_field(fc, "SiM_dust_temperature")

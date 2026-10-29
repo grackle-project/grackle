@@ -334,8 +334,6 @@ def _required_extra_fields(my_chemistry):
         my_fields.extend(_required_radiation_transfer_fields(my_chemistry))
     if my_chemistry.H2_self_shielding == 2:
         my_fields.append("H2_self_shielding_length")
-    if my_chemistry.H2_custom_shielding == 1:
-        my_fields.append("H2_custom_shielding_factor")
     if my_chemistry.use_isrf_field == 1:
         my_fields.append("isrf_habing")
     my_fields.extend(_required_photo_rate_fields(my_chemistry))
@@ -353,7 +351,6 @@ def _photo_units(my_chemistry):
 
 _field_units = {
     "H2_self_shielding_length": ("length_units", "cm"),
-    "H2_custom_shielding_factor": (None, ""),
     "RT_heating_rate": (None, "erg/s"),
     "RT_H2_dissociation_rate": (_photo_units, "1/s"),
     "HI_ionization_rate": (_photo_units, "1/s"),

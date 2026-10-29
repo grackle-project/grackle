@@ -192,7 +192,6 @@ cdef extern from "grackle.h":
       gr_float *OHI_dissociation_rate;
       gr_float *H2OI_dissociation_rate;
       gr_float *H2_self_shielding_length;
-      gr_float *H2_custom_shielding_factor;
       gr_float *isrf_habing;
       gr_float *SiM_dust_temperature;
       gr_float *FeM_dust_temperature;

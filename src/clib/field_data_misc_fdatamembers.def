@@ -46,8 +46,6 @@ ENTRY(RT_H2_dissociation_rate)
 
   // H2_self_shielding = 2
 ENTRY(H2_self_shielding_length)
-  // H2_custom_shielding = 1
-ENTRY(H2_custom_shielding_factor)
 
   // use_isrf_field = 1
 ENTRY(isrf_habing)

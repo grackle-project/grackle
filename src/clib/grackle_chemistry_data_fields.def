@@ -287,11 +287,6 @@ ENTRY(self_shielding_method, INT, 0)
    density. Please refer to the grackle documentation for specifics. */
 ENTRY(H2_self_shielding, INT, 0)
 
-/* flag for custom H2-shielding factor. The factor is provided as an additional
-   field by the user and is multiplied to the rate for radiative H2
-   dissociation */
-ENTRY(H2_custom_shielding, INT, 0)
-
 /* flag to select which formula for calculating k11 you want to use. 
    Setting to 1 will use Savin 2004, 2 will use Abel et al. 1996  */
 ENTRY(h2_charge_exchange_rate, INT, 1)
