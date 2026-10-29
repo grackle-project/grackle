@@ -99,7 +99,7 @@ add_library(Grackle_Grackle
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time.cpp cool_multi_time.hpp
   dust/calc_all_tdust_gasgr_1d.cpp dust/calc_all_tdust_gasgr_1d.hpp
-  dust/calc_tdust_1d.cpp dust/calc_tdust_1d.hpp
+  dust/calc_tdust_1d.hpp
   dust/calc_tdust_3d.cpp dust/calc_tdust_3d.hpp
   dust/gas_heat_cool.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp

@@ -24,6 +24,8 @@
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "opaque_storage.hpp"
 #include "support/config.hpp"
+#include "multi_grain_species/opac_calculator.hpp"
+#include "passive/analytic_opac.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -98,12 +100,10 @@ void calc_all_tdust_gasgr_1d(
     }
 
     // Compute dust temperature
+    AnalyticOpacCalc calculator(Tdust_detail::passive_dust_model_T_sublimation);
     calc_tdust_1d(tdust, tgas, nh, gasgr_tdust, mygisrf.data(), myisrf,
-                  itmask_metal, trad, my_fields->grid_dimension[0], gr_N[1],
-                  dlog10Tdust, log10Tdust_vals,
-                  internal_dust_prop_buf.dyntab_kappa_tot, kptot, true,
-                  idx_range);
-
+                  itmask_metal, trad, my_fields->grid_dimension[0], kptot,
+                  idx_range, calculator);
   } else {
     // can we reuse gasgr_tdust? Or do we actually need to perform a fresh
     // allocation?
@@ -136,13 +136,32 @@ void calc_all_tdust_gasgr_1d(
         }
       }
 
-      // Compute dust temperature
+      int buf_len = my_fields->grid_dimension[0];
+
+      FortranView<const double**> alsp(
+          internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx], gr_N[1],
+          buf_len);
+      std::vector<double> logalsp_data_(gr_N[1] * buf_len);
+      FortranView<double**> logalsp(logalsp_data_.data(), gr_N[1], buf_len);
+
+      int Td_N = gr_N[1];
+      int Td_Size = gr_N[1];
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask_metal[i] != MASK_FALSE) {
+          for (int j = 0; j < gr_N[1]; j++) {
+            logalsp(j, i) = std::log10(alsp(j, i));
+          }
+        }
+      }
+
+      MultiGrainGrowthOpacCalc calculator(buf_len, Td_N, Td_Size, dlog10Tdust,
+                                          log10Tdust_vals,
+                                          logalsp_data_.data());
+
       calc_tdust_1d(grain_temperatures.data[gsp_idx], tgas, nh,
                     gasgr_tdust_sp.data(), mygisrf.data(), myisrf, itmask_metal,
-                    trad, my_fields->grid_dimension[0], gr_N[1], dlog10Tdust,
-                    log10Tdust_vals,
-                    internal_dust_prop_buf.grain_dyntab_kappa.data[gsp_idx],
-                    grain_kappa.data[gsp_idx], false, idx_range);
+                    trad, buf_len, grain_kappa.data[gsp_idx], idx_range,
+                    calculator);
     }
   }
 }
