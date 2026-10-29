@@ -164,9 +164,6 @@ typedef struct
   // use_radiative_transfer = 1
   // primordial_chemistry = 1
   gr_float *RT_heating_rate;
-  gr_float *RT_HI_ionization_rate;
-  gr_float *RT_HeI_ionization_rate;
-  gr_float *RT_HeII_ionization_rate;
   // primordial_chemistry = 2
   gr_float *RT_H2_dissociation_rate;
 

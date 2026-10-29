@@ -41,9 +41,6 @@ ENTRY(temperature_floor)
   // use_radiative_transfer = 1
   // primordial_chemistry = 1
 ENTRY(RT_heating_rate)
-ENTRY(RT_HI_ionization_rate)
-ENTRY(RT_HeI_ionization_rate)
-ENTRY(RT_HeII_ionization_rate)
   // primordial_chemistry = 2
 ENTRY(RT_H2_dissociation_rate)
 

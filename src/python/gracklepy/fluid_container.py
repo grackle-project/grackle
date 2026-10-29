@@ -270,11 +270,7 @@ def _ordered_inject_pathway_yield_densities(my_chemistry):
     return [f"{name}_metal_density" for name in inject_path_names]
 
 _base_radiation_transfer_fields = \
-  ["RT_heating_rate",
-   "RT_HI_ionization_rate",
-   "RT_HeI_ionization_rate",
-   "RT_HeII_ionization_rate",
-   "RT_H2_dissociation_rate"]
+  ["RT_heating_rate"]
 
 def _required_density_fields(my_chemistry):
     my_fields = \
@@ -359,9 +355,6 @@ _field_units = {
     "H2_self_shielding_length": ("length_units", "cm"),
     "H2_custom_shielding_factor": (None, ""),
     "RT_heating_rate": (None, "erg/s"),
-    "RT_HI_ionization_rate": (_photo_units, "1/s"),
-    "RT_HeI_ionization_rate": (_photo_units, "1/s"),
-    "RT_HeII_ionization_rate": (_photo_units, "1/s"),
     "RT_H2_dissociation_rate": (_photo_units, "1/s"),
     "HI_ionization_rate": (_photo_units, "1/s"),
     "HeII_ionization_rate": (_photo_units, "1/s"),
