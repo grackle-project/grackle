@@ -19,12 +19,11 @@ c     address of the data held in `filename`
 
 c     Define constants
 
-      real*8 mh, kboltz, fH
+      real*8 mh, kboltz
       R_PREC tiny_number
       parameter (tiny_number = 1.0e-20_RKIND)
       parameter (mh = 1.67262171d-24)
       parameter (kboltz = 1.3806504d-16)
-      parameter (fH = 0.76)
 
 c     Initialization parameters
 
@@ -117,13 +116,6 @@ c     Set parameters
       filename = "../../input/CloudyData_UVB=HM2012.h5"//C_NULL_CHAR
       grackle_data%grackle_data_file = C_LOC(filename(1:1))
 
-
-c     Initialize the Grackle
-
-      write(6,*) "primordial_chemistry:",
-     &     grackle_data%primordial_chemistry
-      write(6,*) "metal_cooling:",
-     &     grackle_data%metal_cooling
 
 c     Finally, initialize the chemistry object
       iresult = initialize_chemistry_data(my_units)

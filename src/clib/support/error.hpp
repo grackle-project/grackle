@@ -80,8 +80,8 @@ namespace GRIMPL_NAMESPACE_DECL {
 class Error {
   static constexpr const char* DFLT_MSG_ = "<UNKNOWN ERROR>";
 
-  // This is wrapped by a shared_ptr (i.e. its heap-allocated with
-  // atomic reference counting) in order to make it easier to
+  // ErrImpl_ is wrapped by a shared_ptr (i.e. it's heap-allocated with atomic
+  // reference counting) in order to make it cheap to clone
   std::shared_ptr<ErrImpl_> impl_;  ///< internal representation of Error
 
   Error() = default;  // <- this is private to force use of factory methods
@@ -152,13 +152,12 @@ public:
     va_start(vlist, format);
     std::string msg = vstr_formatf(format, vlist);
     va_end(vlist);
-    Error out;
     return context_helper_(ErrImpl_("", std::move(msg), nullptr));
   }
 
   /// @brief wrap the existing err info in additional context
   ///
-  /// This method exists to allow
+  /// The additional context is specified as a string-literal
   ///
   /// @return Returns a reference to `this` for convenience (e.g. to facillitate
   ///     chaining of operations)
