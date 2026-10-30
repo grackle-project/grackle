@@ -22,8 +22,8 @@
 #include "internal_types.hpp"
 #include "interpolate.hpp"
 #include "lnT_prep.hpp"
+#include "math/misc.hpp"
 #include "opaque_storage.hpp"
-#include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -82,12 +82,12 @@ void DustSolver::lookup_dust_rxn_rates1d(
         } else {
           // Get log dust temperature
 
-          double logTdust = grackle::impl::clamp(std::log(tdust[i]),
-                                                 logTdust_start, logTdust_end);
+          double logTdust =
+              fclamp(std::log(tdust[i]), logTdust_start, logTdust_end);
 
           // Find index into table and precompute interpolation values
 
-          long long d_indixe = grackle::impl::clamp(
+          long long d_indixe = clamp(
               (long long)((logTdust - logTdust_start) / dlogTdust) + 1LL, 1LL,
               (long long)(my_chemistry->NumberOfDustTemperatureBins) - 1LL);
           double d_t1 = (logTdust_start + (d_indixe - 1) * dlogTdust);
@@ -199,10 +199,27 @@ void DustSolver::lookup_dust_rxn_rates1d(
     double* const* grain_growth_rates =
         FullRxnRateBuf_grain_growth_bufs(&rxn_rate_buf);
 
-    int64_t nratec_single_elem_arr[1] = {
-        static_cast<int64_t>(my_chemistry->NumberOfTemperatureBins)};
-
-    if (my_chemistry->grain_growth == 1) {
+    if (my_chemistry->grain_growth == 0) {
+      // explicitly set the the grain growth rates to zero
+      // -> this simplifies bookkeeping in other parts of the code. In other
+      //    words, we are either using the chiaki dust model or we aren't
+      // -> strictly speaking, skipping updates of dust grain species when
+      //    grain_growth would be faster (especially in the context of the
+      //    newton-raphson solver), but we really only support the chiaki
+      //    dust-model without grain growth for the sake of debugging
+      for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+        double* ptr = grain_growth_rates[gsp_idx];
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          // ignoring itmask_metal isn't great, but it's ok in this case because
+          // the buffers are ALWAYS 0 (since growth is disabled)
+          // -> the impetus for the bypassing the itmask_metal check was
+          //    the fact that our tests keep on timing out on circleci
+          ptr[i] = 0.0;
+        }
+      }
+    } else if (my_chemistry->grain_growth == 1) {
+      int64_t nratec_single_elem_arr[1] = {
+          static_cast<int64_t>(my_chemistry->NumberOfTemperatureBins)};
       // NOTE: an earlier version of this logic included a large block of
       //       commented code that appeared to calculate growth rates for
       //       the MgSiO3 dust grain species
@@ -265,9 +282,9 @@ void DustSolver::lookup_dust_rxn_rates1d(
                 interp_props.parameters[1], dlogtem, nratec_single_elem_arr[0],
                 my_rates->grain_growth_rate);
 
-            grain_growth_rates[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                kd * grain_sigma_per_gas_mass[i] *
-                d(i, idx_range.j, idx_range.k) * limiting_factor;
+            grain_growth_rates[gsp_idx][i] = kd * grain_sigma_per_gas_mass[i] *
+                                             d(i, idx_range.j, idx_range.k) *
+                                             limiting_factor;
           }
         }  // idx_range loop
       }  // n_grain_species loop
