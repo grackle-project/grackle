@@ -160,6 +160,7 @@ if (TARGET GTest::gtest)
   
     googletest/assertions.hpp
     googletest/check_allclose.cpp googletest/check_allclose.hpp
+    googletest/chem_model_tools.hpp
     googletest/fixtures.hpp
     googletest/matchers.hpp
   )

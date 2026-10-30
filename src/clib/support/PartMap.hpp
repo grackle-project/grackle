@@ -19,7 +19,7 @@
 namespace GRIMPL_NAMESPACE_DECL {
 namespace partmap_detail {
 /// we are starting with an arbitrarily low number
-inline constexpr int MAX_LEN = 4;
+inline constexpr int MAX_LEN = 5;
 }  // namespace partmap_detail
 
 namespace partmap {
