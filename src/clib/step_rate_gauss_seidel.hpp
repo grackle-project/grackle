@@ -99,9 +99,11 @@ inline void update_fields_from_tmpdens_gauss_seidel(
 
   const int j = idx_range.j;
   const int k = idx_range.k;
-  // flag for if Gen Chiaki's dust model is enabled with grain growth
-  const bool chiaki_model_dust_evolution =
-    my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
+  // flag for if Gen Chiaki's dust model is enabled
+  // -> to simplify bookkeeping in other parts of the code, we ignore whether
+  //    the grain_growth flag was enabled, (the logic for setting the relevant
+  //    reaction rates, explicitly sets the rates to 0 if disabled)
+  const bool chiaki_model_dust_evolution = my_chemistry->dust_chemistry == 2;
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
@@ -241,11 +243,14 @@ inline void step_rate_gauss_seidel(
   grackle::impl::SpeciesCollection species_tmpdens,
   const FullRxnRateBuf rxn_rate_buf
 ) {
+  View<gr_float**> species_tmpdens_view(species_tmpdens.data[0],
+                                        MAX_EVOLVED_SPECIES_FIELDS,
+                                        my_fields->grid_dimension[0]);
 
   // perform the Gauss-Seidel sweep to compute the species densities at the
   // end of the current timestep. The results are saved in species_tmpdens
-  grackle::impl::chemistry::species_density_updates_gauss_seidel(
-      species_tmpdens, idx_range, dtit, anydust, rhoH, itmask,
+  chemistry::species_density_updates_gauss_seidel(
+      species_tmpdens_view, idx_range, dtit, anydust, rhoH, itmask,
       itmask_metal, my_chemistry, my_fields, rxn_rate_buf);
 
   // update the entries from my_fields with the values in species_tmpdens

@@ -7,7 +7,9 @@
 #include "grtestutils/coord_grid.hpp"
 #include "interp_grid.hpp"
 #include "interpolate.hpp"
-#include "utils-cpp.hpp"  // GRIMPL_NS::clamp
+#include "math/misc.hpp"  // GRIMPL_NS::clamp
+#include "support/expected.hpp"
+#include "support/status_reporting.hpp"
 
 
 TEST(InterpolationTest, Interpolate1D) {
@@ -403,8 +405,18 @@ static double perform_interp(const grtest::Coordinate& c,
 template <typename Fn>
 static std::pair<GRIMPL_NS::InterpGrid, grtest::CoordGrid> setup(
     const std::vector<GRIMPL_NS::InterpDimScale>& dim_scales, Fn fn) {
+  using GRIMPL_NS::InterpGridProps;
   int rank = dim_scales.size();
-  GRIMPL_NS::InterpGridProps grid_props(rank, dim_scales.data());
+  GRIMPL_NS::Expected<InterpGridProps, GRIMPL_NS::Error> grid_props_rslt =
+      InterpGridProps::create(rank, dim_scales.data());
+  if (!grid_props_rslt.has_value()) {
+    std::string msg = grid_props_rslt.error().to_string();
+    GR_INTERNAL_ERROR(
+      "this function assumes that valid arguments were being used to "
+      "construct a InterpGridProps. Encountered error:\n\n%s",
+      msg.c_str());
+  }
+  InterpGridProps& grid_props = grid_props_rslt.value();
   std::vector<std::vector<double>> coords;
   for (int i = 0; i < rank; i++) {
     int n_elements = grid_props.dimension[i];
@@ -704,7 +716,7 @@ TYPED_TEST(InterpGridTest, BeyondGrid) {
     clamped_coord.rank = grid_rank;
     for (int i = 0; i < grid_rank; i++) {
       clamped_coord.components[i] =
-          GRIMPL_NS::clamp(c[i], ax_extremes[i][0], ax_extremes[i][1]);
+          GRIMPL_NS::fclamp(c[i], ax_extremes[i][0], ax_extremes[i][1]);
     }
 
     // allows a discrepancy of 4 ULPs

@@ -617,16 +617,17 @@ inline void derivatives(
     pack.other_scratch_buf.edot[0] / pack.fields.density[0]
   );
 
+
+  View<gr_float**> rhosp_dot_view(rhosp_dot.data[0],
+                                  MAX_EVOLVED_SPECIES_FIELDS, 1);
+
   // Initialize entries of the derivatives buffer to 0
-  // -> we could define a function associated with SpeciesCollection to perform
-  //    a much more optimized version of this operation by taking advantage of
-  //    the underlying implementation
-  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
-    rhosp_dot.data[sp_idx][0] = 0.0;
+  for (int sp_idx = 0; sp_idx < MAX_EVOLVED_SPECIES_FIELDS; sp_idx++) {
+    rhosp_dot_view(sp_idx,0) = 0.0;
   }
 
   gr_chem::species_density_derivatives_0d(
-    rhosp_dot, pack.fwd_args.anydust, pack.other_scratch_buf.rhoH,
+    rhosp_dot_view, pack.fwd_args.anydust, pack.other_scratch_buf.rhoH,
     &pack.local_itmask_metal, my_chemistry, &pack.fields,
     pack.main_scratch_buf.rxn_rate_buf
   );
