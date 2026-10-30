@@ -32,7 +32,6 @@ OBJS_CONFIG_LIB = \
         cool_multi_time.lo \
         dust/calc_all_tdust_gasgr_1d.lo \
         dust/multi_grain_species/calc_grain_size_increment_species_1d.lo \
-        dust/calc_tdust_1d.lo \
         dust/calc_tdust_3d.lo \
         dust/grain_species_info.lo \
         dust/solver.lo \
@@ -51,7 +50,7 @@ OBJS_CONFIG_LIB = \
         opaque_storage.lo \
         scale_fields.lo \
         math/gaussj.lo \
-        math/solve_cubic_equation.lo \
+        math/solve_eqn.lo \
         solve_rate_cool.lo \
         support/error.lo \
         support/formatf.lo \
