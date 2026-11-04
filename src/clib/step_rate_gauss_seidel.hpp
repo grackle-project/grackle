@@ -32,15 +32,15 @@ namespace GRIMPL_NAMESPACE_DECL {
 
 namespace step_gs_detail{
 
-/// This function overwrites the species density field values using the values
-/// in @p species_tmpdens, which holds the values from the end of the current
+/// @brief overwrites species density values with values in @p species_tmpdens
+///
+/// For context, @p species_tmpdens holds the values from the end of the current
 /// (sub-)cycle.
 inline void update_from_tmpdens(
   const double* dtit, IndexRange idx_range, double* dedot_prev,
   double* HIdot_prev, const gr_mask_type* itmask,
   const gr_mask_type* itmask_metal, const chemistry_data* my_chemistry,
-  SpeciesMultiView<gr_float> spdens,
-  grackle::impl::SpeciesCollection species_tmpdens
+  SpeciesMultiView<gr_float> spdens, View<const gr_float**> tmp_spdens
 ) {
 
   // Get pointers to the various species fields
@@ -108,13 +108,13 @@ inline void update_from_tmpdens(
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
-      HIdot_prev[i] = std::fabs(HI[i]-species_tmpdens.data[SpLUT::HI][i]) /
+      HIdot_prev[i] = std::fabs(HI[i]-tmp_spdens(SpLUT::HI, i)) /
               std::fmax((double)(dtit[i] ), tiny8);
-      HI[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HI][i] ), tiny_fortran_val);
-      HII[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HII][i] ), tiny_fortran_val);
-      HeI[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeI][i] ), tiny_fortran_val);
-      HeII[i]  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeII][i] ), tiny_fortran_val);
-      HeIII[i] = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeIII][i] ), (gr_float)(1e-5)*tiny_fortran_val);
+      HI[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::HI, i) ), tiny_fortran_val);
+      HII[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::HII, i) ), tiny_fortran_val);
+      HeI[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::HeI, i) ), tiny_fortran_val);
+      HeII[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::HeII, i) ), tiny_fortran_val);
+      HeIII[i] = std::fmax((gr_float)(tmp_spdens(SpLUT::HeIII, i) ), (gr_float)(1e-5)*tiny_fortran_val);
 
       // temporarily store the electron density from the start of the current
       // subcycle.
@@ -148,75 +148,75 @@ inline void update_from_tmpdens(
            std::fmax(dtit[i],tiny8);
 
       if (my_chemistry->primordial_chemistry > 1)  {
-        HM[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HM][i] ), tiny_fortran_val);
-        H2I[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2I][i]), tiny_fortran_val);
-        H2II[i]  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2II][i] ), tiny_fortran_val);
+        HM[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::HM, i) ), tiny_fortran_val);
+        H2I[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::H2I, i)), tiny_fortran_val);
+        H2II[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::H2II, i) ), tiny_fortran_val);
       }
 
       if (my_chemistry->primordial_chemistry > 2)  {
-        DI[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::DI][i] ), tiny_fortran_val);
-        DII[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::DII][i] ), tiny_fortran_val);
-        HDI[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HDI][i] ), tiny_fortran_val);
+        DI[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::DI, i) ), tiny_fortran_val);
+        DII[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::DII, i) ), tiny_fortran_val);
+        HDI[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::HDI, i) ), tiny_fortran_val);
       }
 
       if (my_chemistry->primordial_chemistry > 3)  {
-        DM[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::DM][i] ), tiny_fortran_val);
-        HDII[i]  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HDII][i] ), tiny_fortran_val);
-        HeHII[i] = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeHII][i] ), tiny_fortran_val);
+        DM[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::DM, i) ), tiny_fortran_val);
+        HDII[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::HDII, i) ), tiny_fortran_val);
+        HeHII[i] = std::fmax((gr_float)(tmp_spdens(SpLUT::HeHII, i) ), tiny_fortran_val);
       }
 
       if ( (my_chemistry->metal_chemistry == 1)  && 
            (itmask_metal[i] != MASK_FALSE) )  {
-        CI[i]      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CI][i]      ), tiny_fortran_val);
-        CII[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CII][i]     ), tiny_fortran_val);
-        COI[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::COI][i]     ), tiny_fortran_val);
-        CO2I[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CO2I][i]    ), tiny_fortran_val);
-        OI[i]      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OI][i]      ), tiny_fortran_val);
-        OHI[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OHI][i]     ), tiny_fortran_val);
-        H2OI[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2OI][i]    ), tiny_fortran_val);
-        O2I[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::O2I][i]     ), tiny_fortran_val);
-        SiI[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiI][i]     ), tiny_fortran_val);
-        SiOI[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiOI][i]    ), tiny_fortran_val);
-        SiO2I[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiO2I][i]   ), tiny_fortran_val);
-        CHI[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CHI][i]     ), tiny_fortran_val);
-        CH2I[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CH2I][i]    ), tiny_fortran_val);
-        COII[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::COII][i]    ), tiny_fortran_val);
-        OII[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OII][i]     ), tiny_fortran_val);
-        OHII[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OHII][i]    ), tiny_fortran_val);
-        H2OII[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2OII][i]   ), tiny_fortran_val);
-        H3OII[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H3OII][i]   ), tiny_fortran_val);
-        O2II[i]    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::O2II][i]    ), tiny_fortran_val);
+        CI[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::CI, i)      ), tiny_fortran_val);
+        CII[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::CII, i)     ), tiny_fortran_val);
+        COI[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::COI, i)     ), tiny_fortran_val);
+        CO2I[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::CO2I, i)    ), tiny_fortran_val);
+        OI[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::OI, i)      ), tiny_fortran_val);
+        OHI[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::OHI, i)     ), tiny_fortran_val);
+        H2OI[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::H2OI, i)    ), tiny_fortran_val);
+        O2I[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::O2I, i)     ), tiny_fortran_val);
+        SiI[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::SiI, i)     ), tiny_fortran_val);
+        SiOI[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::SiOI, i)    ), tiny_fortran_val);
+        SiO2I[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::SiO2I, i)   ), tiny_fortran_val);
+        CHI[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::CHI, i)     ), tiny_fortran_val);
+        CH2I[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::CH2I, i)    ), tiny_fortran_val);
+        COII[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::COII, i)    ), tiny_fortran_val);
+        OII[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::OII, i)     ), tiny_fortran_val);
+        OHII[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::OHII, i)    ), tiny_fortran_val);
+        H2OII[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::H2OII, i)   ), tiny_fortran_val);
+        H3OII[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::H3OII, i)   ), tiny_fortran_val);
+        O2II[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::O2II, i)    ), tiny_fortran_val);
       }
 
       if (chiaki_model_dust_evolution && itmask_metal[i] != MASK_FALSE) {
 
         if (my_chemistry->dust_species > 0)  {
-          Mg[i]      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Mg][i]      ), tiny_fortran_val);
+          Mg[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::Mg, i)      ), tiny_fortran_val);
         }
         if (my_chemistry->dust_species > 1)  {
-          Al[i]      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Al][i]      ), tiny_fortran_val);
-          S[i]       = std::fmax((gr_float)(species_tmpdens.data[SpLUT::S][i]       ), tiny_fortran_val);
-          Fe[i]      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Fe][i]      ), tiny_fortran_val);
+          Al[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::Al, i)      ), tiny_fortran_val);
+          S[i]       = std::fmax((gr_float)(tmp_spdens(SpLUT::S, i)       ), tiny_fortran_val);
+          Fe[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::Fe, i)      ), tiny_fortran_val);
         }
 
         if (my_chemistry->dust_species > 0)  {
-          MgSiO3[i]  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::MgSiO3_dust][i]  ), tiny_fortran_val);
-          AC[i]      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::AC_dust][i]      ), tiny_fortran_val);
+          MgSiO3[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::MgSiO3_dust, i)  ), tiny_fortran_val);
+          AC[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::AC_dust, i)      ), tiny_fortran_val);
         }
         if (my_chemistry->dust_species > 1)  {
-          SiM[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiM_dust][i]     ), tiny_fortran_val);
-          FeM[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::FeM_dust][i]     ), tiny_fortran_val);
-          Mg2SiO4[i] = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Mg2SiO4_dust][i] ), tiny_fortran_val);
-          Fe3O4[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Fe3O4_dust][i]   ), tiny_fortran_val);
-          SiO2D[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiO2_dust][i]   ), tiny_fortran_val);
-          MgO[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::MgO_dust][i]     ), tiny_fortran_val);
-          FeS[i]     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::FeS_dust][i]     ), tiny_fortran_val);
-          Al2O3[i]   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Al2O3_dust][i]   ), tiny_fortran_val);
+          SiM[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::SiM_dust, i)     ), tiny_fortran_val);
+          FeM[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::FeM_dust, i)     ), tiny_fortran_val);
+          Mg2SiO4[i] = std::fmax((gr_float)(tmp_spdens(SpLUT::Mg2SiO4_dust, i) ), tiny_fortran_val);
+          Fe3O4[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::Fe3O4_dust, i)   ), tiny_fortran_val);
+          SiO2D[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::SiO2_dust, i)   ), tiny_fortran_val);
+          MgO[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::MgO_dust, i)     ), tiny_fortran_val);
+          FeS[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::FeS_dust, i)     ), tiny_fortran_val);
+          Al2O3[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::Al2O3_dust, i)   ), tiny_fortran_val);
         }
         if (my_chemistry->dust_species > 2)  {
-          reforg[i]  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::ref_org_dust][i]   ), tiny_fortran_val);
-          volorg[i]  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::vol_org_dust][i]   ), tiny_fortran_val);
-          H2Oice[i]  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2O_ice_dust][i]   ), tiny_fortran_val);
+          reforg[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::ref_org_dust, i)   ), tiny_fortran_val);
+          volorg[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::vol_org_dust, i)   ), tiny_fortran_val);
+          H2Oice[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::H2O_ice_dust, i)   ), tiny_fortran_val);
         }
       }
 
@@ -256,10 +256,10 @@ inline void step_rate_gauss_seidel(
       species_tmpdens_view, idx_range, dtit, anydust, rhoH, itmask,
       itmask_metal, my_chemistry, sp_densities, rxn_rate_buf, sp_kind_map);
 
-  // update the entries from my_fields with the values in species_tmpdens
+  // update the species densities with the values in species_tmpdens
   step_gs_detail::update_from_tmpdens(
       dtit, idx_range, dedot_prev, HIdot_prev, itmask, itmask_metal,
-      my_chemistry, sp_densities, species_tmpdens);
+      my_chemistry, sp_densities, species_tmpdens_view);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
