@@ -328,7 +328,7 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
   if (my_chemistry->primordial_chemistry > 2) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        HIdot[i] += kph_buf[PhotoRxnLUT::kdissHDI][i] *
+        HIdot[i] += kph_buf[PhotoRxnLUT::k31][i] *
                     HDI(i, idx_range.j, idx_range.k) / 3.0;
       }
     }

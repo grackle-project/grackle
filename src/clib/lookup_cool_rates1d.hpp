@@ -383,10 +383,6 @@ inline void setup_photo_rate_buffers(IndexRange idx_range,
       idx_range, itmask, my_fields, my_chemistry->use_H2I_dissociation,
       my_uvb_rates.k31, my_fields->H2I_dissociation_rate,
       kph_buf[PhotoRxnLUT::k31]);
-  calculate_photo_rate_buffer(
-      idx_range, itmask, my_fields, my_chemistry->use_HDI_dissociation,
-      my_uvb_rates.kdissHDI, my_fields->HDI_dissociation_rate,
-      kph_buf[PhotoRxnLUT::kdissHDI]);
   // metal photo-ionization/photo-dissociation rates. Each buffer holds
   // the total rate: the UV background part set here plus the
   // radiative-transfer part folded in further below. Only the O I
