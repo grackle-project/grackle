@@ -32,6 +32,61 @@ namespace GRIMPL_NAMESPACE_DECL {
 
 namespace step_gs_detail{
 
+/// calculates electron density from other species tracked by @p spdens and
+/// stores the result in the slot reserved for electron density
+///
+/// @note this is essentially equivalent to logic written in make_consistent
+inline void update_electron_densities(IndexRange idx_range,
+                                      const gr_mask_type* itmask,
+                                      const gr_mask_type* itmask_metal,
+                                      const chemistry_data* my_chemistry,
+                                      SpeciesMultiView<gr_float> spdens) {
+
+  // TODO: stop using SpLUT and stop accessing species unless we know that
+  //       grackle is configured to actually use them
+  // -> the proper way to fix this is to precalculate information about the
+  //    relevant species at startup (I have a plan for that)
+  gr_float* de = spdens.contig1d_ptr(SpLUT::e);
+  const gr_float* HII = spdens.contig1d_ptr(SpLUT::HII);
+  const gr_float* HeII = spdens.contig1d_ptr(SpLUT::HeII);
+  const gr_float* HeIII = spdens.contig1d_ptr(SpLUT::HeIII);
+  const gr_float* HM = spdens.contig1d_ptr(SpLUT::HM);
+  const gr_float* H2II = spdens.contig1d_ptr(SpLUT::H2II);
+  const gr_float* DII = spdens.contig1d_ptr(SpLUT::DII);
+  const gr_float* DM = spdens.contig1d_ptr(SpLUT::DM);
+  const gr_float* HDII = spdens.contig1d_ptr(SpLUT::HDII);
+  const gr_float* HeHII = spdens.contig1d_ptr(SpLUT::HeHII);
+  const gr_float* CII = spdens.contig1d_ptr(SpLUT::CII);
+  const gr_float* COII = spdens.contig1d_ptr(SpLUT::COII);
+  const gr_float* OII = spdens.contig1d_ptr(SpLUT::OII);
+  const gr_float* OHII = spdens.contig1d_ptr(SpLUT::OHII);
+  const gr_float* H2OII = spdens.contig1d_ptr(SpLUT::H2OII);
+  const gr_float* H3OII = spdens.contig1d_ptr(SpLUT::H3OII);
+  const gr_float* O2II = spdens.contig1d_ptr(SpLUT::O2II);
+
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE)  {
+      de[i] = HII[i] + HeII[i]/(gr_float)(4.) +
+           HeIII[i]/(gr_float)(2.);
+      if (my_chemistry->primordial_chemistry > 1)
+           { de[i] = de[i] - HM[i] + H2II[i]/(gr_float)(2.); }
+
+      if (my_chemistry->primordial_chemistry > 2)
+           { de[i] = de[i] + DII[i]/(gr_float)(2.); }
+      if (my_chemistry->primordial_chemistry > 3)
+           { de[i] = de[i] - DM[i]/(gr_float)(2.)
+                + HDII[i]/(gr_float)(3.) + HeHII[i]/(gr_float)(5.); }
+      if ( (my_chemistry->metal_chemistry == 1)  &&
+           (itmask_metal[i] != MASK_FALSE) )
+           { de[i] = de[i]
+                + CII[i]/(gr_float)(12.) + COII[i]/(gr_float)(28.)
+                + OII[i]/(gr_float)(16.) + OHII[i]/(gr_float)(17.)
+                + H2OII[i]/(gr_float)(18.) + H3OII[i]/(gr_float)(19.)
+                + O2II[i]/(gr_float)(32.); }
+    }
+  }
+}
+
 /// @brief overwrites species density values with values in @p species_tmpdens
 ///
 /// For context, @p species_tmpdens holds the values from the end of the current
@@ -144,31 +199,16 @@ inline void update_from_tmpdens(
       // temporarily store the electron density from the start of the current
       // subcycle.
       dedot_prev[i] = de[i];
+    }
+  }
 
-      // Use charge conservation to determine electron fraction
-      // -> in other words, we ignore species_tmpdens.data[SpLUT::e] (in
-      //    practice, I think that array holds garbage values)
-      de[i] = HII[i] + HeII[i]/(gr_float)(4.) +
-           HeIII[i]/(gr_float)(2.);
-      if (my_chemistry->primordial_chemistry > 1)
-           { de[i] = de[i] - HM[i] + H2II[i]/(gr_float)(2.); }
+  // actually override the electron density
+  update_electron_densities(idx_range, itmask, itmask_metal, my_chemistry,
+                            spdens);
 
-      if (my_chemistry->primordial_chemistry > 2)
-           { de[i] = de[i] + DII[i]/(gr_float)(2.); }
-      if (my_chemistry->primordial_chemistry > 3)
-           { de[i] = de[i] - DM[i]/(gr_float)(2.)
-                + HDII[i]/(gr_float)(3.) + HeHII[i]/(gr_float)(5.); }
-      if ( (my_chemistry->metal_chemistry == 1)  && 
-           (itmask_metal[i] != MASK_FALSE) )
-           { de[i] = de[i]
-                + CII[i]/(gr_float)(12.) + COII[i]/(gr_float)(28.)
-                + OII[i]/(gr_float)(16.) + OHII[i]/(gr_float)(17.)
-                + H2OII[i]/(gr_float)(18.) + H3OII[i]/(gr_float)(19.)
-                + O2II[i]/(gr_float)(32.); }
-
-      // store the time-derivative of the electron-density in dedot
-      // (don't forget that we previously stored the value from the start of
-      // the current cycle within dedot_prev)
+  // update dedot_prev to store the time derivative of the electron density
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE)  {
       dedot_prev[i] = std::fabs(de[i]-dedot_prev[i])/
            std::fmax(dtit[i],tiny8);
     }
