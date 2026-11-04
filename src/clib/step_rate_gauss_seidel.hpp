@@ -98,14 +98,14 @@ inline void update_from_tmpdens(
   gr_float* volorg = spdens.contig1d_ptr(SpLUT::vol_org_dust);
   gr_float* H2Oice = spdens.contig1d_ptr(SpLUT::H2O_ice_dust);
 
-  // --- (E) Set densities from 1D temps to 3D fields ---
-
   // flag for if Gen Chiaki's dust model is enabled
   // -> to simplify bookkeeping in other parts of the code, we ignore whether
   //    the grain_growth flag was enabled, (the logic for setting the relevant
   //    reaction rates, explicitly sets the rates to 0 if disabled)
   const bool chiaki_model_dust_evolution = my_chemistry->dust_chemistry == 2;
 
+  // Part 1: update buffers for each primordial species other than electrons
+  //         that are enabled with primordial_chemistry >= 1
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
       HIdot_prev[i] = std::fabs(HI[i]-tmp_spdens(SpLUT::HI, i)) /
@@ -116,6 +116,31 @@ inline void update_from_tmpdens(
       HeII[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::HeII, i) ), tiny_fortran_val);
       HeIII[i] = std::fmax((gr_float)(tmp_spdens(SpLUT::HeIII, i) ), (gr_float)(1e-5)*tiny_fortran_val);
 
+      // this is here for historical reasons:
+      // - with the way std::fmax works, I don't think it's impossible possible
+      //   for HI[i] to be a NaN
+      // - todo: either remove this or check if the value in the temporary
+      //   buffer is a NaN
+      if (std::isnan(HI[i]))  {
+        OMP_PRAGMA_CRITICAL
+        {
+          std::printf("HUGE HI! ::  %d %d %d %g\n",
+                      i, idx_range.j, idx_range.k, HI[i]);
+        }
+      }
+    }
+  }
+
+  // Part 2: update the buffer for free electrons
+  //
+  // TODO: give some consideration to the case where all species have zero
+  // density except for
+  //   - species with neutral charges
+  //   - Hminus & Dminus (H⁻ & D⁻).
+  // Under the currrent charge conservation logic, the resulting electron
+  // density would be negative in this scenario
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE)  {
       // temporarily store the electron density from the start of the current
       // subcycle.
       dedot_prev[i] = de[i];
@@ -146,6 +171,12 @@ inline void update_from_tmpdens(
       // the current cycle within dedot_prev)
       dedot_prev[i] = std::fabs(de[i]-dedot_prev[i])/
            std::fmax(dtit[i],tiny8);
+    }
+  }
+
+  // Part 3: update buffers for all other primordial species
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE)  {
 
       if (my_chemistry->primordial_chemistry > 1)  {
         HM[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::HM, i) ), tiny_fortran_val);
@@ -164,7 +195,12 @@ inline void update_from_tmpdens(
         HDII[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::HDII, i) ), tiny_fortran_val);
         HeHII[i] = std::fmax((gr_float)(tmp_spdens(SpLUT::HeHII, i) ), tiny_fortran_val);
       }
+    }
+  }
 
+  // Part 4 update buffers for all remaining dynamically evolved species
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE)  {
       if ( (my_chemistry->metal_chemistry == 1)  && 
            (itmask_metal[i] != MASK_FALSE) )  {
         CI[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::CI, i)      ), tiny_fortran_val);
@@ -222,13 +258,6 @@ inline void update_from_tmpdens(
 
     }
 
-    if (HI[i] != HI[i])  {
-      OMP_PRAGMA_CRITICAL
-      {
-        std::printf("HUGE HI! ::  %d %d %d %g\n",
-                    i, idx_range.j, idx_range.k, HI[i]);
-      }
-    }
   }
 
 }
