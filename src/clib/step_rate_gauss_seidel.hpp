@@ -105,12 +105,6 @@ inline void update_from_tmpdens(
   const PartMap<SpKind>& sp_kind_map
 ) {
 
-  // Get pointers to the various species fields
-  // ------------------------------------------
-  // -> TODO: stop doing this!
-  gr_float* de = spdens.contig1d_ptr(SpLUT::e);
-  gr_float* HI = spdens.contig1d_ptr(SpLUT::HI);
-
   // perform a compile-time sanity-check to verify that the primordial species
   // participating in the network defined by primordial_chemistry==1 always
   // have the lowest 6 ids among all primordial species
@@ -130,9 +124,11 @@ inline void update_from_tmpdens(
   IndexInterval1D prim_id_bounds = sp_kind_map.part_bounds(SpKind::PRIMORDIAL);
   int n_prim_sp = prim_id_bounds.stop - prim_id_bounds.start;
   GR_INTERNAL_REQUIRE(n_prim_sp >= 6, "sanity check failed!");
+  const int species_id_e = prim_id_bounds.start + PrimordialSpLUT::e;
+  const int species_id_HI = prim_id_bounds.start + PrimordialSpLUT::HI;
   const int species_id_HeIII = prim_id_bounds.start + PrimordialSpLUT::HeIII;
   const int spidarr_pre_electron_updates[5] = {
-    prim_id_bounds.start + PrimordialSpLUT::HI,
+    species_id_HI,
     prim_id_bounds.start + PrimordialSpLUT::HII,
     prim_id_bounds.start + PrimordialSpLUT::HeI,
     prim_id_bounds.start + PrimordialSpLUT::HeII,
@@ -153,10 +149,23 @@ inline void update_from_tmpdens(
 
   // Part 1: update buffers for each primordial species other than electrons
   //         that are enabled with primordial_chemistry >= 1
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE)  {
-      HIdot_prev[i] = std::fabs(HI[i]-tmp_spdens(SpLUT::HI, i)) /
-              std::fmax((double)(dtit[i] ), tiny8);
+  {  // handle update to HIdot_prev
+    gr_float* HI = spdens.contig1d_ptr(species_id_HI);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        double new_HI_val = tmp_spdens(species_id_HI, i);
+        // todo: break the gold standard and fix the next line
+        HIdot_prev[i] = std::fabs(HI[i]-new_HI_val) /
+                std::fmax((double)(dtit[i] ), tiny8);
+
+        if (std::isnan(new_HI_val))  {
+          OMP_PRAGMA_CRITICAL
+          {
+            std::printf("HUGE HI! ::  %d %d %d %g\n",
+                        i, idx_range.j, idx_range.k, new_HI_val);
+          }
+        }
+      }
     }
   }
 
@@ -172,23 +181,6 @@ inline void update_from_tmpdens(
     }
   }
 
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE)  {
-      // this is here for historical reasons:
-      // - with the way std::fmax works, I don't think it's impossible possible
-      //   for HI[i] to be a NaN
-      // - todo: either remove this or check if the value in the temporary
-      //   buffer is a NaN
-      if (std::isnan(HI[i]))  {
-        OMP_PRAGMA_CRITICAL
-        {
-          std::printf("HUGE HI! ::  %d %d %d %g\n",
-                      i, idx_range.j, idx_range.k, HI[i]);
-        }
-      }
-    }
-  }
-
   // Part 2: update the buffer for free electrons
   //
   // TODO: give some consideration to the case where all species have zero
@@ -197,6 +189,7 @@ inline void update_from_tmpdens(
   //   - Hminus & Dminus (H⁻ & D⁻).
   // Under the currrent charge conservation logic, the resulting electron
   // density would be negative in this scenario
+  gr_float* de = spdens.contig1d_ptr(species_id_e);
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
       // temporarily store the electron density from the start of the current
