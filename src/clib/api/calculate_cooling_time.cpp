@@ -35,7 +35,7 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
 
   my_uvb_rates.k24 = my_uvb_rates.k25 = my_uvb_rates.k26 =
     my_uvb_rates.k27 = my_uvb_rates.k28 = my_uvb_rates.k29 =
-    my_uvb_rates.k30 = my_uvb_rates.k31 =
+    my_uvb_rates.k30 = my_uvb_rates.k31 = my_uvb_rates.kdissHDI =
     my_uvb_rates.kphCI_bg = my_uvb_rates.kphOI_bg =
     my_uvb_rates.kdissCO_bg = my_uvb_rates.kdissOH_bg =
     my_uvb_rates.kdissH2O_bg = my_uvb_rates.piHI =
@@ -59,6 +59,7 @@ extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
     my_uvb_rates.k29       = my_rates->k29;
     my_uvb_rates.k30       = my_rates->k30;
     my_uvb_rates.k31       = my_rates->k31;
+    my_uvb_rates.kdissHDI  = my_rates->kdissHDI;
     my_uvb_rates.kphCI_bg  = my_rates->kphCI_bg;
     my_uvb_rates.kphOI_bg  = my_rates->kphOI_bg;
     my_uvb_rates.kdissCO_bg = my_rates->kdissCO_bg;
