@@ -95,7 +95,8 @@ inline void update_from_tmpdens(
   const double* dtit, IndexRange idx_range, double* dedot_prev,
   double* HIdot_prev, const gr_mask_type* itmask,
   const gr_mask_type* itmask_metal, const chemistry_data* my_chemistry,
-  SpeciesMultiView<gr_float> spdens, View<const gr_float**> tmp_spdens
+  SpeciesMultiView<gr_float> spdens, View<const gr_float**> tmp_spdens,
+  const PartMap<SpKind>& sp_kind_map
 ) {
 
   // Get pointers to the various species fields
@@ -116,48 +117,6 @@ inline void update_from_tmpdens(
   gr_float* DM = spdens.contig1d_ptr(SpLUT::DM);
   gr_float* HDII = spdens.contig1d_ptr(SpLUT::HDII);
   gr_float* HeHII = spdens.contig1d_ptr(SpLUT::HeHII);
-  gr_float* CI = spdens.contig1d_ptr(SpLUT::CI);
-  gr_float* CII = spdens.contig1d_ptr(SpLUT::CII);
-  gr_float* COI = spdens.contig1d_ptr(SpLUT::COI);
-  gr_float* CO2I = spdens.contig1d_ptr(SpLUT::CO2I);
-  gr_float* OI = spdens.contig1d_ptr(SpLUT::OI);
-  gr_float* OHI = spdens.contig1d_ptr(SpLUT::OHI);
-  gr_float* H2OI = spdens.contig1d_ptr(SpLUT::H2OI);
-  gr_float* O2I = spdens.contig1d_ptr(SpLUT::O2I);
-  gr_float* SiI = spdens.contig1d_ptr(SpLUT::SiI);
-  gr_float* SiOI = spdens.contig1d_ptr(SpLUT::SiOI);
-  gr_float* SiO2I = spdens.contig1d_ptr(SpLUT::SiO2I);
-  gr_float* CHI = spdens.contig1d_ptr(SpLUT::CHI);
-  gr_float* CH2I = spdens.contig1d_ptr(SpLUT::CH2I);
-  gr_float* COII = spdens.contig1d_ptr(SpLUT::COII);
-  gr_float* OII = spdens.contig1d_ptr(SpLUT::OII);
-  gr_float* OHII = spdens.contig1d_ptr(SpLUT::OHII);
-  gr_float* H2OII = spdens.contig1d_ptr(SpLUT::H2OII);
-  gr_float* H3OII = spdens.contig1d_ptr(SpLUT::H3OII);
-  gr_float* O2II = spdens.contig1d_ptr(SpLUT::O2II);
-  gr_float* Mg = spdens.contig1d_ptr(SpLUT::Mg);
-  gr_float* Al = spdens.contig1d_ptr(SpLUT::Al);
-  gr_float* S = spdens.contig1d_ptr(SpLUT::S);
-  gr_float* Fe = spdens.contig1d_ptr(SpLUT::Fe);
-  gr_float* SiM = spdens.contig1d_ptr(SpLUT::SiM_dust);
-  gr_float* FeM = spdens.contig1d_ptr(SpLUT::FeM_dust);
-  gr_float* Mg2SiO4 = spdens.contig1d_ptr(SpLUT::Mg2SiO4_dust);
-  gr_float* MgSiO3 = spdens.contig1d_ptr(SpLUT::MgSiO3_dust);
-  gr_float* Fe3O4 = spdens.contig1d_ptr(SpLUT::Fe3O4_dust);
-  gr_float* AC = spdens.contig1d_ptr(SpLUT::AC_dust);
-  gr_float* SiO2D = spdens.contig1d_ptr(SpLUT::SiO2_dust);
-  gr_float* MgO = spdens.contig1d_ptr(SpLUT::MgO_dust);
-  gr_float* FeS = spdens.contig1d_ptr(SpLUT::FeS_dust);
-  gr_float* Al2O3 = spdens.contig1d_ptr(SpLUT::Al2O3_dust);
-  gr_float* reforg = spdens.contig1d_ptr(SpLUT::ref_org_dust);
-  gr_float* volorg = spdens.contig1d_ptr(SpLUT::vol_org_dust);
-  gr_float* H2Oice = spdens.contig1d_ptr(SpLUT::H2O_ice_dust);
-
-  // flag for if Gen Chiaki's dust model is enabled
-  // -> to simplify bookkeeping in other parts of the code, we ignore whether
-  //    the grain_growth flag was enabled, (the logic for setting the relevant
-  //    reaction rates, explicitly sets the rates to 0 if disabled)
-  const bool chiaki_model_dust_evolution = my_chemistry->dust_chemistry == 2;
 
   // Part 1: update buffers for each primordial species other than electrons
   //         that are enabled with primordial_chemistry >= 1
@@ -238,68 +197,23 @@ inline void update_from_tmpdens(
     }
   }
 
-  // Part 4 update buffers for all remaining dynamically evolved species
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE)  {
-      if ( (my_chemistry->metal_chemistry == 1)  && 
-           (itmask_metal[i] != MASK_FALSE) )  {
-        CI[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::CI, i)      ), tiny_fortran_val);
-        CII[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::CII, i)     ), tiny_fortran_val);
-        COI[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::COI, i)     ), tiny_fortran_val);
-        CO2I[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::CO2I, i)    ), tiny_fortran_val);
-        OI[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::OI, i)      ), tiny_fortran_val);
-        OHI[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::OHI, i)     ), tiny_fortran_val);
-        H2OI[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::H2OI, i)    ), tiny_fortran_val);
-        O2I[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::O2I, i)     ), tiny_fortran_val);
-        SiI[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::SiI, i)     ), tiny_fortran_val);
-        SiOI[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::SiOI, i)    ), tiny_fortran_val);
-        SiO2I[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::SiO2I, i)   ), tiny_fortran_val);
-        CHI[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::CHI, i)     ), tiny_fortran_val);
-        CH2I[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::CH2I, i)    ), tiny_fortran_val);
-        COII[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::COII, i)    ), tiny_fortran_val);
-        OII[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::OII, i)     ), tiny_fortran_val);
-        OHII[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::OHII, i)    ), tiny_fortran_val);
-        H2OII[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::H2OII, i)   ), tiny_fortran_val);
-        H3OII[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::H3OII, i)   ), tiny_fortran_val);
-        O2II[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::O2II, i)    ), tiny_fortran_val);
-      }
-
-      if (chiaki_model_dust_evolution && itmask_metal[i] != MASK_FALSE) {
-
-        if (my_chemistry->dust_species > 0)  {
-          Mg[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::Mg, i)      ), tiny_fortran_val);
-        }
-        if (my_chemistry->dust_species > 1)  {
-          Al[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::Al, i)      ), tiny_fortran_val);
-          S[i]       = std::fmax((gr_float)(tmp_spdens(SpLUT::S, i)       ), tiny_fortran_val);
-          Fe[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::Fe, i)      ), tiny_fortran_val);
-        }
-
-        if (my_chemistry->dust_species > 0)  {
-          MgSiO3[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::MgSiO3_dust, i)  ), tiny_fortran_val);
-          AC[i]      = std::fmax((gr_float)(tmp_spdens(SpLUT::AC_dust, i)      ), tiny_fortran_val);
-        }
-        if (my_chemistry->dust_species > 1)  {
-          SiM[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::SiM_dust, i)     ), tiny_fortran_val);
-          FeM[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::FeM_dust, i)     ), tiny_fortran_val);
-          Mg2SiO4[i] = std::fmax((gr_float)(tmp_spdens(SpLUT::Mg2SiO4_dust, i) ), tiny_fortran_val);
-          Fe3O4[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::Fe3O4_dust, i)   ), tiny_fortran_val);
-          SiO2D[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::SiO2_dust, i)   ), tiny_fortran_val);
-          MgO[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::MgO_dust, i)     ), tiny_fortran_val);
-          FeS[i]     = std::fmax((gr_float)(tmp_spdens(SpLUT::FeS_dust, i)     ), tiny_fortran_val);
-          Al2O3[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::Al2O3_dust, i)   ), tiny_fortran_val);
-        }
-        if (my_chemistry->dust_species > 2)  {
-          reforg[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::ref_org_dust, i)   ), tiny_fortran_val);
-          volorg[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::vol_org_dust, i)   ), tiny_fortran_val);
-          H2Oice[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::H2O_ice_dust, i)   ), tiny_fortran_val);
+  const SpKind sp_kinds[] = {SpKind::METAL, SpKind::DUST};
+  for (SpKind kind : sp_kinds) {
+    // reminder: PartMap::part_bounds is designed such that when it's called
+    //     for a kind that is not tracked by the kind_map, it will return an
+    //     interval where start & stop are equal to each other (thus if it's
+    //     used for the bounds of a for-loop, the loop will be skipped)
+    IndexInterval1D bounds = sp_kind_map.part_bounds(kind);
+    for (int sp_id = bounds.start; sp_id < bounds.stop; sp_id++) {
+      gr_float* ptr = spdens.contig1d_ptr(sp_id);
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        // note: I'm pretty sure itmask_metal is false if itmask is false
+        if ((itmask[i] != MASK_FALSE) && (itmask_metal[i] != MASK_FALSE)) {
+          ptr[i] = std::fmax((gr_float)(tmp_spdens(sp_id, i)), tiny_fortran_val);
         }
       }
-
     }
-
   }
-
 }
 
 }  // namespace step_gs_detail
@@ -328,7 +242,7 @@ inline void step_rate_gauss_seidel(
   // update the species densities with the values in species_tmpdens
   step_gs_detail::update_from_tmpdens(
       dtit, idx_range, dedot_prev, HIdot_prev, itmask, itmask_metal,
-      my_chemistry, sp_densities, species_tmpdens_view);
+      my_chemistry, sp_densities, species_tmpdens_view, sp_kind_map);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
