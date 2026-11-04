@@ -27,6 +27,7 @@
 #include "LUT.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
+#include "support/status_reporting.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -104,10 +105,6 @@ inline void update_from_tmpdens(
   // -> TODO: stop doing this!
   gr_float* de = spdens.contig1d_ptr(SpLUT::e);
   gr_float* HI = spdens.contig1d_ptr(SpLUT::HI);
-  gr_float* HII = spdens.contig1d_ptr(SpLUT::HII);
-  gr_float* HeI = spdens.contig1d_ptr(SpLUT::HeI);
-  gr_float* HeII = spdens.contig1d_ptr(SpLUT::HeII);
-  gr_float* HeIII = spdens.contig1d_ptr(SpLUT::HeIII);
   gr_float* HM = spdens.contig1d_ptr(SpLUT::HM);
   gr_float* H2I = spdens.contig1d_ptr(SpLUT::H2I);
   gr_float* H2II = spdens.contig1d_ptr(SpLUT::H2II);
@@ -118,18 +115,60 @@ inline void update_from_tmpdens(
   gr_float* HDII = spdens.contig1d_ptr(SpLUT::HDII);
   gr_float* HeHII = spdens.contig1d_ptr(SpLUT::HeHII);
 
+
+  // perform a compile-time sanity-check to verify that the primordial species
+  // participating in the network defined by primordial_chemistry==1 always
+  // have the lowest 6 ids among all primordial species
+  static_assert((
+    (0 <= PrimordialSpLUT::e && PrimordialSpLUT::e < 6) &&
+    (0 <= PrimordialSpLUT::HI && PrimordialSpLUT::HI < 6) &&
+    (0 <= PrimordialSpLUT::HII && PrimordialSpLUT::HII < 6) &&
+    (0 <= PrimordialSpLUT::HeI && PrimordialSpLUT::HeI < 6) &&
+    (0 <= PrimordialSpLUT::HeII && PrimordialSpLUT::HeII < 6) &&
+    (0 <= PrimordialSpLUT::HeIII && PrimordialSpLUT::HeIII < 6)),
+    "the ordering or primordial species ids changed unexpectedly");
+
+  // infer the species ids of primordial species that:
+  // - are updated before the electron density (i.e. species enabled by
+  //   primordial_chemistry==1)
+  // - all other primordial species (if any)
+  IndexInterval1D prim_id_bounds = sp_kind_map.part_bounds(SpKind::PRIMORDIAL);
+  int n_prim_sp = prim_id_bounds.stop - prim_id_bounds.start;
+  GR_INTERNAL_REQUIRE(n_prim_sp >= 6, "sanity check failed!");
+  const int species_id_HeIII = prim_id_bounds.start + PrimordialSpLUT::HeIII;
+  const int spidarr_pre_electron_updates[5] = {
+    prim_id_bounds.start + PrimordialSpLUT::HI,
+    prim_id_bounds.start + PrimordialSpLUT::HII,
+    prim_id_bounds.start + PrimordialSpLUT::HeI,
+    prim_id_bounds.start + PrimordialSpLUT::HeII,
+    species_id_HeIII
+  };
+  //IndexInterval1D remaining_prim_id_bounds{
+  //  .start = prim_id_bounds.start + 6, .stop = prim_id_bounds.stop};
+
   // Part 1: update buffers for each primordial species other than electrons
   //         that are enabled with primordial_chemistry >= 1
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
       HIdot_prev[i] = std::fabs(HI[i]-tmp_spdens(SpLUT::HI, i)) /
               std::fmax((double)(dtit[i] ), tiny8);
-      HI[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::HI, i) ), tiny_fortran_val);
-      HII[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::HII, i) ), tiny_fortran_val);
-      HeI[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::HeI, i) ), tiny_fortran_val);
-      HeII[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::HeII, i) ), tiny_fortran_val);
-      HeIII[i] = std::fmax((gr_float)(tmp_spdens(SpLUT::HeIII, i) ), (gr_float)(1e-5)*tiny_fortran_val);
+    }
+  }
 
+  for (int species_id: spidarr_pre_electron_updates) {
+    gr_float* ptr = spdens.contig1d_ptr(species_id);
+    gr_float floor_val = (species_id == species_id_HeIII)
+                         ? static_cast<gr_float>(1e-5) * tiny_fortran_val
+                         : tiny_fortran_val;
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if ((itmask[i] != MASK_FALSE)) {
+        ptr[i] = std::fmax((gr_float)(tmp_spdens(species_id, i)), floor_val);
+      }
+    }
+  }
+
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE)  {
       // this is here for historical reasons:
       // - with the way std::fmax works, I don't think it's impossible possible
       //   for HI[i] to be a NaN
