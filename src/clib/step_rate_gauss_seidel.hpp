@@ -88,6 +88,11 @@ inline void update_electron_densities(IndexRange idx_range,
   }
 }
 
+struct spbounds_metalrelated_pair {
+  IndexInterval1D sp_bounds;
+  bool metal_related;
+};
+
 /// @brief overwrites species density values with values in @p species_tmpdens
 ///
 /// For context, @p species_tmpdens holds the values from the end of the current
@@ -105,16 +110,6 @@ inline void update_from_tmpdens(
   // -> TODO: stop doing this!
   gr_float* de = spdens.contig1d_ptr(SpLUT::e);
   gr_float* HI = spdens.contig1d_ptr(SpLUT::HI);
-  gr_float* HM = spdens.contig1d_ptr(SpLUT::HM);
-  gr_float* H2I = spdens.contig1d_ptr(SpLUT::H2I);
-  gr_float* H2II = spdens.contig1d_ptr(SpLUT::H2II);
-  gr_float* DI = spdens.contig1d_ptr(SpLUT::DI);
-  gr_float* DII = spdens.contig1d_ptr(SpLUT::DII);
-  gr_float* HDI = spdens.contig1d_ptr(SpLUT::HDI);
-  gr_float* DM = spdens.contig1d_ptr(SpLUT::DM);
-  gr_float* HDII = spdens.contig1d_ptr(SpLUT::HDII);
-  gr_float* HeHII = spdens.contig1d_ptr(SpLUT::HeHII);
-
 
   // perform a compile-time sanity-check to verify that the primordial species
   // participating in the network defined by primordial_chemistry==1 always
@@ -128,10 +123,10 @@ inline void update_from_tmpdens(
     (0 <= PrimordialSpLUT::HeIII && PrimordialSpLUT::HeIII < 6)),
     "the ordering or primordial species ids changed unexpectedly");
 
-  // infer the species ids of primordial species that:
-  // - are updated before the electron density (i.e. species enabled by
-  //   primordial_chemistry==1)
-  // - all other primordial species (if any)
+  // infer the species ids of the species that:
+  // - are updated before the electron density (i.e. primordial species enabled
+  //   by primordial_chemistry=1)
+  // - all other species
   IndexInterval1D prim_id_bounds = sp_kind_map.part_bounds(SpKind::PRIMORDIAL);
   int n_prim_sp = prim_id_bounds.stop - prim_id_bounds.start;
   GR_INTERNAL_REQUIRE(n_prim_sp >= 6, "sanity check failed!");
@@ -143,8 +138,18 @@ inline void update_from_tmpdens(
     prim_id_bounds.start + PrimordialSpLUT::HeII,
     species_id_HeIII
   };
-  //IndexInterval1D remaining_prim_id_bounds{
-  //  .start = prim_id_bounds.start + 6, .stop = prim_id_bounds.stop};
+  IndexInterval1D remaining_prim_id_bounds{
+      .start = prim_id_bounds.start + 6, .stop = prim_id_bounds.stop};
+
+  // reminder: PartMap::part_bounds is designed such that when it's called
+  //     for a kind that is not tracked by the kind_map, it will return an
+  //     interval where start & stop are equal to each other (thus if it's
+  //     used for the bounds of a for-loop, the loop will be skipped)
+  const spbounds_metalrelated_pair remaining_id_info_pairs[3] = {
+      {remaining_prim_id_bounds, false},
+      {sp_kind_map.part_bounds(SpKind::METAL), true},
+      {sp_kind_map.part_bounds(SpKind::DUST), true}
+  };
 
   // Part 1: update buffers for each primordial species other than electrons
   //         that are enabled with primordial_chemistry >= 1
@@ -212,43 +217,25 @@ inline void update_from_tmpdens(
     }
   }
 
-  // Part 3: update buffers for all other primordial species
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE)  {
+  // Part 3: update buffers for all other species
+  for (const spbounds_metalrelated_pair &pair: remaining_id_info_pairs) {
+    const auto& [bounds, metal_related] = pair;
 
-      if (my_chemistry->primordial_chemistry > 1)  {
-        HM[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::HM, i) ), tiny_fortran_val);
-        H2I[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::H2I, i)), tiny_fortran_val);
-        H2II[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::H2II, i) ), tiny_fortran_val);
-      }
-
-      if (my_chemistry->primordial_chemistry > 2)  {
-        DI[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::DI, i) ), tiny_fortran_val);
-        DII[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::DII, i) ), tiny_fortran_val);
-        HDI[i]   = std::fmax((gr_float)(tmp_spdens(SpLUT::HDI, i) ), tiny_fortran_val);
-      }
-
-      if (my_chemistry->primordial_chemistry > 3)  {
-        DM[i]    = std::fmax((gr_float)(tmp_spdens(SpLUT::DM, i) ), tiny_fortran_val);
-        HDII[i]  = std::fmax((gr_float)(tmp_spdens(SpLUT::HDII, i) ), tiny_fortran_val);
-        HeHII[i] = std::fmax((gr_float)(tmp_spdens(SpLUT::HeHII, i) ), tiny_fortran_val);
-      }
-    }
-  }
-
-  const SpKind sp_kinds[] = {SpKind::METAL, SpKind::DUST};
-  for (SpKind kind : sp_kinds) {
-    // reminder: PartMap::part_bounds is designed such that when it's called
-    //     for a kind that is not tracked by the kind_map, it will return an
-    //     interval where start & stop are equal to each other (thus if it's
-    //     used for the bounds of a for-loop, the loop will be skipped)
-    IndexInterval1D bounds = sp_kind_map.part_bounds(kind);
     for (int sp_id = bounds.start; sp_id < bounds.stop; sp_id++) {
       gr_float* ptr = spdens.contig1d_ptr(sp_id);
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        // note: I'm pretty sure itmask_metal is false if itmask is false
-        if ((itmask[i] != MASK_FALSE) && (itmask_metal[i] != MASK_FALSE)) {
-          ptr[i] = std::fmax((gr_float)(tmp_spdens(sp_id, i)), tiny_fortran_val);
+      if (metal_related) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          // at the moment, there are some cases where itmask holds
+          // false and itmask_metal holds true
+          if ((itmask[i] != MASK_FALSE) && (itmask_metal[i] != MASK_FALSE)) {
+            ptr[i] = std::fmax((gr_float)(tmp_spdens(sp_id, i)), tiny_fortran_val);
+          }
+        }
+      } else {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          if (itmask[i] != MASK_FALSE) {
+            ptr[i] = std::fmax((gr_float)(tmp_spdens(sp_id, i)), tiny_fortran_val);
+          }
         }
       }
     }
