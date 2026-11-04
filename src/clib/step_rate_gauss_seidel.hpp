@@ -23,17 +23,19 @@
 #include "chemistry_solver_funcs.hpp"
 #include "chem_model/infer_species.hpp"
 #include "fortran_func_decls.h"  // gr_mask_type
-#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "LUT.hpp"
+#include "support/config.hpp"
+#include "support/index_helper.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
+namespace step_gs_detail{
 
 /// This function overwrites the species density field values using the values
 /// in @p species_tmpdens, which holds the values from the end of the current
 /// (sub-)cycle.
-inline void update_fields_from_tmpdens_gauss_seidel(
+inline void update_from_tmpdens(
   const double* dtit, IndexRange idx_range, double* dedot_prev,
   double* HIdot_prev, const gr_mask_type* itmask,
   const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
@@ -233,6 +235,8 @@ inline void update_fields_from_tmpdens_gauss_seidel(
 
 }
 
+}  // namespace step_gs_detail
+
 /// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time
 /// integrator to advance the rate equations by one (sub-)cycle (dtit).
 inline void step_rate_gauss_seidel(
@@ -255,11 +259,11 @@ inline void step_rate_gauss_seidel(
       itmask_metal, my_chemistry, sp_densities, rxn_rate_buf, sp_kind_map);
 
   // update the entries from my_fields with the values in species_tmpdens
-  update_fields_from_tmpdens_gauss_seidel(
+  step_gs_detail::update_from_tmpdens(
       dtit, idx_range, dedot_prev, HIdot_prev, itmask, itmask_metal,
       my_chemistry, my_fields, species_tmpdens);
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* STEP_RATE_GAUSS_SEIDEL_HPP */
+#endif  // STEP_RATE_GAUSS_SEIDEL_HPP
