@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements step_rate_gauss_seidel
+/// Declares/Implements @ref step_rate_gauss_seidel and relevant logic
 ///
 //===----------------------------------------------------------------------===//
 
@@ -27,7 +27,6 @@
 #include "LUT.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
-#include "support/status_reporting.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -88,9 +87,32 @@ inline void update_electron_densities(IndexRange idx_range,
   }
 }
 
-struct spbounds_metalrelated_pair {
-  IndexInterval1D sp_bounds;
-  bool metal_related;
+struct DensUpdater {
+  struct spbounds_metalrelated_pair {
+    IndexInterval1D sp_bounds;
+    bool metal_related;
+  };
+
+  // data-members:
+  /// ids of some species that require special attention
+  int species_id_e_, species_id_HI_, species_id_HeIII_;
+
+  /// ids of species whose densities are updated BEFORE the free-electron
+  /// density
+  int spidarr_pre_elec_updates_[5];
+
+  /// specifies the intervals of species ids whose densities are updated AFTER
+  /// the free electron density
+  ///
+  /// @note
+  /// The premise is to perform for-loops on each set of specified intervals
+  /// (an empty interval has start == stop)
+  spbounds_metalrelated_pair remaining_id_info_pairs_[3];
+
+  // interface methods
+  // -----------------
+  DensUpdater() = delete;
+  explicit DensUpdater(const PartMap<SpKind>& sp_kind_map);
 };
 
 /// @brief overwrites species density values with values in @p species_tmpdens
@@ -104,56 +126,15 @@ inline void update_from_tmpdens(
   SpeciesMultiView<gr_float> spdens, View<const gr_float**> tmp_spdens,
   const PartMap<SpKind>& sp_kind_map
 ) {
-
-  // perform a compile-time sanity-check to verify that the primordial species
-  // participating in the network defined by primordial_chemistry==1 always
-  // have the lowest 6 ids among all primordial species
-  static_assert((
-    (0 <= PrimordialSpLUT::e && PrimordialSpLUT::e < 6) &&
-    (0 <= PrimordialSpLUT::HI && PrimordialSpLUT::HI < 6) &&
-    (0 <= PrimordialSpLUT::HII && PrimordialSpLUT::HII < 6) &&
-    (0 <= PrimordialSpLUT::HeI && PrimordialSpLUT::HeI < 6) &&
-    (0 <= PrimordialSpLUT::HeII && PrimordialSpLUT::HeII < 6) &&
-    (0 <= PrimordialSpLUT::HeIII && PrimordialSpLUT::HeIII < 6)),
-    "the ordering or primordial species ids changed unexpectedly");
-
-  // infer the species ids of the species that:
-  // - are updated before the electron density (i.e. primordial species enabled
-  //   by primordial_chemistry=1)
-  // - all other species
-  IndexInterval1D prim_id_bounds = sp_kind_map.part_bounds(SpKind::PRIMORDIAL);
-  int n_prim_sp = prim_id_bounds.stop - prim_id_bounds.start;
-  GR_INTERNAL_REQUIRE(n_prim_sp >= 6, "sanity check failed!");
-  const int species_id_e = prim_id_bounds.start + PrimordialSpLUT::e;
-  const int species_id_HI = prim_id_bounds.start + PrimordialSpLUT::HI;
-  const int species_id_HeIII = prim_id_bounds.start + PrimordialSpLUT::HeIII;
-  const int spidarr_pre_electron_updates[5] = {
-    species_id_HI,
-    prim_id_bounds.start + PrimordialSpLUT::HII,
-    prim_id_bounds.start + PrimordialSpLUT::HeI,
-    prim_id_bounds.start + PrimordialSpLUT::HeII,
-    species_id_HeIII
-  };
-  IndexInterval1D remaining_prim_id_bounds{
-      .start = prim_id_bounds.start + 6, .stop = prim_id_bounds.stop};
-
-  // reminder: PartMap::part_bounds is designed such that when it's called
-  //     for a kind that is not tracked by the kind_map, it will return an
-  //     interval where start & stop are equal to each other (thus if it's
-  //     used for the bounds of a for-loop, the loop will be skipped)
-  const spbounds_metalrelated_pair remaining_id_info_pairs[3] = {
-      {remaining_prim_id_bounds, false},
-      {sp_kind_map.part_bounds(SpKind::METAL), true},
-      {sp_kind_map.part_bounds(SpKind::DUST), true}
-  };
+  DensUpdater obj(sp_kind_map);
 
   // Part 1: update buffers for each primordial species other than electrons
   //         that are enabled with primordial_chemistry >= 1
   {  // handle update to HIdot_prev
-    gr_float* HI = spdens.contig1d_ptr(species_id_HI);
+    gr_float* HI = spdens.contig1d_ptr(obj.species_id_HI_);
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE)  {
-        double new_HI_val = tmp_spdens(species_id_HI, i);
+        double new_HI_val = tmp_spdens(obj.species_id_HI_, i);
         // todo: break the gold standard and fix the next line
         HIdot_prev[i] = std::fabs(HI[i]-new_HI_val) /
                 std::fmax((double)(dtit[i] ), tiny8);
@@ -169,9 +150,9 @@ inline void update_from_tmpdens(
     }
   }
 
-  for (int species_id: spidarr_pre_electron_updates) {
+  for (int species_id: obj.spidarr_pre_elec_updates_) {
     gr_float* ptr = spdens.contig1d_ptr(species_id);
-    gr_float floor_val = (species_id == species_id_HeIII)
+    gr_float floor_val = (species_id == obj.species_id_HeIII_)
                          ? static_cast<gr_float>(1e-5) * tiny_fortran_val
                          : tiny_fortran_val;
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
@@ -189,7 +170,7 @@ inline void update_from_tmpdens(
   //   - Hminus & Dminus (H⁻ & D⁻).
   // Under the currrent charge conservation logic, the resulting electron
   // density would be negative in this scenario
-  gr_float* de = spdens.contig1d_ptr(species_id_e);
+  gr_float* de = spdens.contig1d_ptr(obj.species_id_e_);
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
       // temporarily store the electron density from the start of the current
@@ -211,7 +192,7 @@ inline void update_from_tmpdens(
   }
 
   // Part 3: update buffers for all other species
-  for (const spbounds_metalrelated_pair &pair: remaining_id_info_pairs) {
+  for (const DensUpdater::spbounds_metalrelated_pair &pair: obj.remaining_id_info_pairs_) {
     const auto& [bounds, metal_related] = pair;
 
     for (int sp_id = bounds.start; sp_id < bounds.stop; sp_id++) {
