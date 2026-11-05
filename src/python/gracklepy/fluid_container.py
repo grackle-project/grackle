@@ -308,8 +308,6 @@ def _required_photo_rate_fields(my_chemistry):
         my_fields.append("H2II_dissociative_ionization_rate")
     if my_chemistry.use_H2I_dissociation > 1:
         my_fields.append("H2I_dissociation_rate")
-    if my_chemistry.use_HDI_dissociation > 1:
-        my_fields.append("HDI_dissociation_rate")
     if my_chemistry.use_CI_ionization > 1:
         my_fields.append("CI_ionization_rate")
     if my_chemistry.use_OI_ionization > 1:
@@ -360,7 +358,6 @@ _field_units = {
     "H2I_ionization_rate": (_photo_units, "1/s"),
     "H2II_dissociative_ionization_rate": (_photo_units, "1/s"),
     "H2I_dissociation_rate": (_photo_units, "1/s"),
-    "HDI_dissociation_rate": (_photo_units, "1/s"),
     "CI_ionization_rate": (_photo_units, "1/s"),
     "OI_ionization_rate": (_photo_units, "1/s"),
     "COI_dissociation_rate": (_photo_units, "1/s"),

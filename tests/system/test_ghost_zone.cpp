@@ -147,7 +147,6 @@ void construct_field_data(grackle_field_data& my_fields,
   my_fields.H2I_ionization_rate = init_helper("H2I_ionization_rate");
   my_fields.H2II_dissociative_ionization_rate = init_helper("H2II_dissociative_ionization_rate");
   my_fields.H2I_dissociation_rate = init_helper("H2I_dissociation_rate");
-  my_fields.HDI_dissociation_rate = init_helper("HDI_dissociation_rate");
   // radiative transfer heating rate (provide in units [erg s^-1 cm^-3])
   my_fields.RT_heating_rate = init_helper("RT_heating_rate");
 
@@ -206,7 +205,6 @@ void construct_field_data(grackle_field_data& my_fields,
         my_fields.H2I_ionization_rate[i] = 0.0;
         my_fields.H2II_dissociative_ionization_rate[i] = 0.0;
         my_fields.H2I_dissociation_rate[i] = 0.0;
-        my_fields.HDI_dissociation_rate[i] = 0.0;
         my_fields.RT_heating_rate[i] = 0.0;
 
         my_fields.isrf_habing[i] = my_chemistry->interstellar_radiation_field;

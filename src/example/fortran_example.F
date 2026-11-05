@@ -59,7 +59,6 @@ c     Field data arrays
      &     H2I_ionization_rate(field_size),
      &     H2II_dissociative_ionization_rate(field_size),
      &     H2I_dissociation_rate(field_size),
-     &     HDI_dissociation_rate(field_size),
      &     RT_heating_rate(field_size),
      &     isrf_habing(field_size)
 
@@ -197,7 +196,6 @@ c     ionization / dissociation rate fields (provide in units [1/s])
       my_fields%H2II_dissociative_ionization_rate =
      &     C_LOC(H2II_dissociative_ionization_rate)
       my_fields%H2I_dissociation_rate = C_LOC(H2I_dissociation_rate)
-      my_fields%HDI_dissociation_rate = C_LOC(HDI_dissociation_rate)
 
 c     radiative transfer heating rate field
 c     (provide in units of [erg s^-1 cm^-3])
@@ -249,7 +247,6 @@ c        initilize internal energy (here 1000 K for no reason)
          H2I_ionization_rate(i) = 0.0
          H2II_dissociative_ionization_rate(i) = 0.0
          H2I_dissociation_rate(i) = 0.0
-         HDI_dissociation_rate(i) = 0.0
          RT_heating_rate(i) = 0.0
 
          isrf_habing(i) = grackle_data%interstellar_radiation_field

@@ -146,7 +146,6 @@ int main(int argc, char *argv[])
   my_fields.H2I_ionization_rate = malloc(field_size * sizeof(gr_float));
   my_fields.H2II_dissociative_ionization_rate = malloc(field_size * sizeof(gr_float));
   my_fields.H2I_dissociation_rate = malloc(field_size * sizeof(gr_float));
-  my_fields.HDI_dissociation_rate = malloc(field_size * sizeof(gr_float));
   // radiative transfer heating rate field (provide in units [erg s^-1 cm^-3])
   my_fields.RT_heating_rate = malloc(field_size * sizeof(gr_float));
 
@@ -197,7 +196,6 @@ int main(int argc, char *argv[])
     my_fields.H2I_ionization_rate[i] = 0.0;
     my_fields.H2II_dissociative_ionization_rate[i] = 0.0;
     my_fields.H2I_dissociation_rate[i] = 0.0;
-    my_fields.HDI_dissociation_rate[i] = 0.0;
     my_fields.RT_heating_rate[i] = 0.0;
 
     my_fields.isrf_habing[i] = grackle_data->interstellar_radiation_field;

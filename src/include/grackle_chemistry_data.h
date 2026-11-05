@@ -244,7 +244,6 @@ typedef struct
   int use_H2I_ionization;    // k29
   int use_H2II_dissociative_ionization; // k30
   int use_H2I_dissociation;  // k31
-  int use_HDI_dissociation;
   int use_CI_ionization;
   int use_OI_ionization;
   int use_COI_dissociation;

@@ -181,8 +181,6 @@ typedef struct
   gr_float *H2II_dissociative_ionization_rate;
   // use_H2I_dissociation > 1
   gr_float *H2I_dissociation_rate;
-  // use_HDI_dissociation > 1
-  gr_float *HDI_dissociation_rate;
   // use_CI_ionization > 1
   gr_float *CI_ionization_rate;
   // use_OI_ionization > 1

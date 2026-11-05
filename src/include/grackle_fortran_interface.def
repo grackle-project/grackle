@@ -115,7 +115,6 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: H2I_ionization_rate
          TYPE(C_PTR) :: H2II_dissociative_ionization_rate
          TYPE(C_PTR) :: H2I_dissociation_rate
-         TYPE(C_PTR) :: HDI_dissociation_rate
          TYPE(C_PTR) :: CI_ionization_rate
          TYPE(C_PTR) :: OI_ionization_rate
          TYPE(C_PTR) :: COI_dissociation_rate
@@ -204,7 +203,6 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: use_H2I_ionization
          INTEGER(C_INT) :: use_H2II_dissociative_ionization
          INTEGER(C_INT) :: use_H2I_dissociation
-         INTEGER(C_INT) :: use_HDI_dissociation
          INTEGER(C_INT) :: use_CI_ionization
          INTEGER(C_INT) :: use_OI_ionization
          INTEGER(C_INT) :: use_COI_dissociation

@@ -184,7 +184,6 @@ cdef extern from "grackle.h":
       gr_float *H2I_ionization_rate;
       gr_float *H2II_dissociative_ionization_rate;
       gr_float *H2I_dissociation_rate;
-      gr_float *HDI_dissociation_rate;
       gr_float *CI_ionization_rate;
       gr_float *OI_ionization_rate;
       gr_float *COI_dissociation_rate;

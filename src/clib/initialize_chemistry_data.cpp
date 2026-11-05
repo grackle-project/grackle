@@ -346,12 +346,6 @@ extern "C" int local_initialize_chemistry_data(
     return GR_FAIL;
   }
   if (configure_photo_rate_parameter(
-        my_chemistry, (my_chemistry->primordial_chemistry > 2),
-        my_chemistry->use_HDI_dissociation,
-        "use_HDI_dissociation") == GR_FAIL) {
-    return GR_FAIL;
-  }
-  if (configure_photo_rate_parameter(
         my_chemistry, (my_chemistry->metal_chemistry == 1),
         my_chemistry->use_CI_ionization,
         "use_CI_ionization") == GR_FAIL) {

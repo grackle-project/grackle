@@ -798,7 +798,6 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.H2I_ionization_rate = get_field(fc, "H2I_ionization_rate")
     my_fields.H2II_dissociative_ionization_rate = get_field(fc, "H2II_dissociative_ionization_rate")
     my_fields.H2I_dissociation_rate = get_field(fc, "H2I_dissociation_rate")
-    my_fields.HDI_dissociation_rate = get_field(fc, "HDI_dissociation_rate")
     my_fields.CI_ionization_rate = get_field(fc, "CI_ionization_rate")
     my_fields.OI_ionization_rate = get_field(fc, "OI_ionization_rate")
     my_fields.COI_dissociation_rate = get_field(fc, "COI_dissociation_rate")

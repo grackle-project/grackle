@@ -142,7 +142,6 @@ int main(int argc, char *argv[])
   my_fields.H2I_ionization_rate = new gr_float[field_size];
   my_fields.H2II_dissociative_ionization_rate = new gr_float[field_size];
   my_fields.H2I_dissociation_rate = new gr_float[field_size];
-  my_fields.HDI_dissociation_rate = new gr_float[field_size];
   // radiative transfer heating rate (provide in units [erg s^-1 cm^-3])
   my_fields.RT_heating_rate = new gr_float[field_size];
 
@@ -193,7 +192,6 @@ int main(int argc, char *argv[])
     my_fields.H2I_ionization_rate[i] = 0.0;
     my_fields.H2II_dissociative_ionization_rate[i] = 0.0;
     my_fields.H2I_dissociation_rate[i] = 0.0;
-    my_fields.HDI_dissociation_rate[i] = 0.0;
     my_fields.RT_heating_rate[i] = 0.0;
 
     my_fields.isrf_habing[i] = grackle_data->interstellar_radiation_field;
