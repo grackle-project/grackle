@@ -76,9 +76,8 @@ void DensUpdater::operator()(const double* dtit, IndexRange idx_range,
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         double new_HI_val = tmp_spdens(species_id_HI_, i);
-        // todo: break the gold standard and fix the next line
         HIdot_prev[i] =
-            std::fabs(HI[i] - new_HI_val) / std::fmax((double)(dtit[i]), tiny8);
+            std::fabs(new_HI_val - HI[i]) / std::fmax(dtit[i], tiny8);
 
         if (std::isnan(new_HI_val)) {
           OMP_PRAGMA_CRITICAL {
