@@ -87,13 +87,21 @@ inline void update_electron_densities(IndexRange idx_range,
   }
 }
 
-struct DensUpdater {
-  struct spbounds_metalrelated_pair {
+/// @brief functor that updates species density values
+///
+/// This is a component of the Gauss-Seidel Logic
+///
+/// @note
+/// A case could be made for consolidating more of the gauss-seidel logic into
+/// this class, but we're punting on that for now
+class DensUpdater {
+  struct spbounds_metalrelated_pair_ {
     IndexInterval1D sp_bounds;
     bool metal_related;
   };
 
-  // data-members:
+  // data-members
+  // ------------
   /// ids of some species that require special attention
   int species_id_e_, species_id_HI_, species_id_HeIII_;
 
@@ -107,114 +115,39 @@ struct DensUpdater {
   /// @note
   /// The premise is to perform for-loops on each set of specified intervals
   /// (an empty interval has start == stop)
-  spbounds_metalrelated_pair remaining_id_info_pairs_[3];
+  spbounds_metalrelated_pair_ remaining_id_info_pairs_[3];
 
-  // interface methods
-  // -----------------
+public:  // interface methods
   DensUpdater() = delete;
+
+  /// Primary constructor
+  ///
+  /// This should not be called unless we're using a grackle configuraton with
+  /// at least the classic 6-species primordial species
+  ///
+  /// @note
+  /// In the future, we *MAY* want to replace this with a factory method that
+  /// returns a `Expected<DensUpdater, Error>` so that failures can be more
+  /// gracefully handled. This isn't really necessary right now, but becomes
+  /// more important if this class takes on more responsibility.
   explicit DensUpdater(const PartMap<SpKind>& sp_kind_map);
+
+  /// @brief overwrites species density values with values in @p species_tmpdens
+  ///
+  /// For context, @p species_tmpdens holds the values from the end of the
+  /// current (sub-)cycle.
+  ///
+  /// @note
+  /// The @p my_chemistry argument is *ONLY* being passed so that it can be
+  /// forwarded onto @ref update_electron_densities. In the future, this will
+  /// probably change
+  void operator()(const double* dtit, IndexRange idx_range, double* dedot_prev,
+                  double* HIdot_prev, const gr_mask_type* itmask,
+                  const gr_mask_type* itmask_metal,
+                  const chemistry_data* my_chemistry,
+                  SpeciesMultiView<gr_float> spdens,
+                  View<const gr_float**> tmp_spdens) const;
 };
-
-/// @brief overwrites species density values with values in @p species_tmpdens
-///
-/// For context, @p species_tmpdens holds the values from the end of the current
-/// (sub-)cycle.
-inline void update_from_tmpdens(
-  const double* dtit, IndexRange idx_range, double* dedot_prev,
-  double* HIdot_prev, const gr_mask_type* itmask,
-  const gr_mask_type* itmask_metal, const chemistry_data* my_chemistry,
-  SpeciesMultiView<gr_float> spdens, View<const gr_float**> tmp_spdens,
-  const PartMap<SpKind>& sp_kind_map
-) {
-  DensUpdater obj(sp_kind_map);
-
-  // Part 1: update buffers for each primordial species other than electrons
-  //         that are enabled with primordial_chemistry >= 1
-  {  // handle update to HIdot_prev
-    gr_float* HI = spdens.contig1d_ptr(obj.species_id_HI_);
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE)  {
-        double new_HI_val = tmp_spdens(obj.species_id_HI_, i);
-        // todo: break the gold standard and fix the next line
-        HIdot_prev[i] = std::fabs(HI[i]-new_HI_val) /
-                std::fmax((double)(dtit[i] ), tiny8);
-
-        if (std::isnan(new_HI_val))  {
-          OMP_PRAGMA_CRITICAL
-          {
-            std::printf("HUGE HI! ::  %d %d %d %g\n",
-                        i, idx_range.j, idx_range.k, new_HI_val);
-          }
-        }
-      }
-    }
-  }
-
-  for (int species_id: obj.spidarr_pre_elec_updates_) {
-    gr_float* ptr = spdens.contig1d_ptr(species_id);
-    gr_float floor_val = (species_id == obj.species_id_HeIII_)
-                         ? static_cast<gr_float>(1e-5) * tiny_fortran_val
-                         : tiny_fortran_val;
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if ((itmask[i] != MASK_FALSE)) {
-        ptr[i] = std::fmax((gr_float)(tmp_spdens(species_id, i)), floor_val);
-      }
-    }
-  }
-
-  // Part 2: update the buffer for free electrons
-  //
-  // TODO: give some consideration to the case where all species have zero
-  // density except for
-  //   - species with neutral charges
-  //   - Hminus & Dminus (H⁻ & D⁻).
-  // Under the currrent charge conservation logic, the resulting electron
-  // density would be negative in this scenario
-  gr_float* de = spdens.contig1d_ptr(obj.species_id_e_);
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE)  {
-      // temporarily store the electron density from the start of the current
-      // subcycle.
-      dedot_prev[i] = de[i];
-    }
-  }
-
-  // actually override the electron density
-  update_electron_densities(idx_range, itmask, itmask_metal, my_chemistry,
-                            spdens);
-
-  // update dedot_prev to store the time derivative of the electron density
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE)  {
-      dedot_prev[i] = std::fabs(de[i]-dedot_prev[i])/
-           std::fmax(dtit[i],tiny8);
-    }
-  }
-
-  // Part 3: update buffers for all other species
-  for (const DensUpdater::spbounds_metalrelated_pair &pair: obj.remaining_id_info_pairs_) {
-    const auto& [bounds, metal_related] = pair;
-
-    for (int sp_id = bounds.start; sp_id < bounds.stop; sp_id++) {
-      gr_float* ptr = spdens.contig1d_ptr(sp_id);
-      if (metal_related) {
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          // at the moment, there are some cases where itmask holds
-          // false and itmask_metal holds true
-          if ((itmask[i] != MASK_FALSE) && (itmask_metal[i] != MASK_FALSE)) {
-            ptr[i] = std::fmax((gr_float)(tmp_spdens(sp_id, i)), tiny_fortran_val);
-          }
-        }
-      } else {
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          if (itmask[i] != MASK_FALSE) {
-            ptr[i] = std::fmax((gr_float)(tmp_spdens(sp_id, i)), tiny_fortran_val);
-          }
-        }
-      }
-    }
-  }
-}
 
 }  // namespace step_gs_detail
 
@@ -240,9 +173,10 @@ inline void step_rate_gauss_seidel(
       itmask_metal, my_chemistry, sp_densities, rxn_rate_buf, sp_kind_map);
 
   // update the species densities with the values in species_tmpdens
-  step_gs_detail::update_from_tmpdens(
+  step_gs_detail::DensUpdater updater(sp_kind_map);
+  updater(
       dtit, idx_range, dedot_prev, HIdot_prev, itmask, itmask_metal,
-      my_chemistry, sp_densities, species_tmpdens_view, sp_kind_map);
+      my_chemistry, sp_densities, species_tmpdens_view);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL

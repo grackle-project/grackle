@@ -57,5 +57,101 @@ DensUpdater::DensUpdater(const PartMap<SpKind>& sp_kind_map) {
   remaining_id_info_pairs_[2] = {sp_kind_map.part_bounds(SpKind::DUST), true};
 }
 
+void DensUpdater::operator()(const double* dtit, IndexRange idx_range,
+                             double* dedot_prev, double* HIdot_prev,
+                             const gr_mask_type* itmask,
+                             const gr_mask_type* itmask_metal,
+                             const chemistry_data* my_chemistry,
+                             SpeciesMultiView<gr_float> spdens,
+                             View<const gr_float**> tmp_spdens) const {
+  // Part 1: update buffers for each primordial species other than electrons
+  //         that are enabled with primordial_chemistry >= 1
+  {  // handle update to HIdot_prev
+    gr_float* HI = spdens.contig1d_ptr(species_id_HI_);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        double new_HI_val = tmp_spdens(species_id_HI_, i);
+        // todo: break the gold standard and fix the next line
+        HIdot_prev[i] =
+            std::fabs(HI[i] - new_HI_val) / std::fmax((double)(dtit[i]), tiny8);
+
+        if (std::isnan(new_HI_val)) {
+          OMP_PRAGMA_CRITICAL {
+            std::printf("HUGE HI! ::  %d %d %d %g\n", i, idx_range.j,
+                        idx_range.k, new_HI_val);
+          }
+        }
+      }
+    }
+  }
+
+  for (int species_id : spidarr_pre_elec_updates_) {
+    gr_float* ptr = spdens.contig1d_ptr(species_id);
+    gr_float floor_val = (species_id == species_id_HeIII_)
+                             ? static_cast<gr_float>(1e-5) * tiny_fortran_val
+                             : tiny_fortran_val;
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if ((itmask[i] != MASK_FALSE)) {
+        ptr[i] = std::fmax((gr_float)(tmp_spdens(species_id, i)), floor_val);
+      }
+    }
+  }
+
+  // Part 2: update the buffer for free electrons
+  //
+  // TODO: give some consideration to the case where all species have zero
+  // density except for
+  //   - species with neutral charges
+  //   - Hminus & Dminus (H⁻ & D⁻).
+  // Under the currrent charge conservation logic, the resulting electron
+  // density would be negative in this scenario
+  gr_float* de = spdens.contig1d_ptr(species_id_e_);
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      // temporarily store the electron density from the start of the current
+      // subcycle.
+      dedot_prev[i] = de[i];
+    }
+  }
+
+  // actually override the electron density
+  update_electron_densities(idx_range, itmask, itmask_metal, my_chemistry,
+                            spdens);
+
+  // update dedot_prev to store the time derivative of the electron density
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      dedot_prev[i] =
+          std::fabs(de[i] - dedot_prev[i]) / std::fmax(dtit[i], tiny8);
+    }
+  }
+
+  // Part 3: update buffers for all other species
+  for (const spbounds_metalrelated_pair_& pair : remaining_id_info_pairs_) {
+    const auto& [bounds, metal_related] = pair;
+
+    for (int sp_id = bounds.start; sp_id < bounds.stop; sp_id++) {
+      gr_float* ptr = spdens.contig1d_ptr(sp_id);
+      if (metal_related) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          // at the moment, there are some cases where itmask holds
+          // false and itmask_metal holds true
+          if ((itmask[i] != MASK_FALSE) && (itmask_metal[i] != MASK_FALSE)) {
+            ptr[i] =
+                std::fmax((gr_float)(tmp_spdens(sp_id, i)), tiny_fortran_val);
+          }
+        }
+      } else {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          if (itmask[i] != MASK_FALSE) {
+            ptr[i] =
+                std::fmax((gr_float)(tmp_spdens(sp_id, i)), tiny_fortran_val);
+          }
+        }
+      }
+    }
+  }
+}
+
 }  // namespace step_gs_detail
 }  // namespace GRIMPL_NAMESPACE_DECL
