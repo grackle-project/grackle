@@ -165,7 +165,7 @@ inline void step_rate_gauss_seidel(
 ) {
   View<gr_float**> species_tmpdens_view(species_tmpdens.data[0],
                                         MAX_EVOLVED_SPECIES_FIELDS,
-                                        my_fields->grid_dimension[0]);
+                                        sp_densities.extent(1));
 
   // perform the Gauss-Seidel sweep to compute the species densities at the
   // end of the current timestep. The results are saved in species_tmpdens

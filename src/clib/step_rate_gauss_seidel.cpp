@@ -17,6 +17,11 @@ namespace GRIMPL_NAMESPACE_DECL {
 namespace step_gs_detail {
 
 DensUpdater::DensUpdater(const PartMap<SpKind>& sp_kind_map) {
+  // The current implementation was simply the most convenient thing to do
+  // -> in the future, we could consider a more general implementation that
+  //    accomodates some more arbitrary sets of species (or perhaps more
+  //    arbitrary orderings of species)
+
   // perform a compile-time sanity-check to verify that the primordial species
   // participating in the network defined by primordial_chemistry==1 always
   // have the lowest 6 ids among all primordial species
