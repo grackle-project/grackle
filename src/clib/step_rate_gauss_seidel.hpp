@@ -157,10 +157,11 @@ inline void step_rate_gauss_seidel(
   const double* dtit, IndexRange idx_range, gr_mask_type anydust,
   const double* rhoH, double* dedot_prev,
   double* HIdot_prev, const gr_mask_type* itmask,
-  const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+  const gr_mask_type* itmask_metal, const chemistry_data* my_chemistry,
   grackle_field_data* my_fields, SpeciesMultiView<gr_float> sp_densities,
   SpeciesCollection species_tmpdens, const FullRxnRateBuf rxn_rate_buf,
-  const PartMap<SpKind>& sp_kind_map
+  const PartMap<SpKind>& sp_kind_map,
+  const step_gs_detail::DensUpdater& dens_updater
 ) {
   View<gr_float**> species_tmpdens_view(species_tmpdens.data[0],
                                         MAX_EVOLVED_SPECIES_FIELDS,
@@ -173,8 +174,7 @@ inline void step_rate_gauss_seidel(
       itmask_metal, my_chemistry, sp_densities, rxn_rate_buf, sp_kind_map);
 
   // update the species densities with the values in species_tmpdens
-  step_gs_detail::DensUpdater updater(sp_kind_map);
-  updater(
+  dens_updater(
       dtit, idx_range, dedot_prev, HIdot_prev, itmask, itmask_metal,
       my_chemistry, sp_densities, species_tmpdens_view);
 }
