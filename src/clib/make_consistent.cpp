@@ -19,6 +19,7 @@
 #include "grackle.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
+#include "support/index_helper.hpp"
 
 #include "make_consistent.hpp"
 
@@ -193,7 +194,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
 
   // locals
 
-  int i, j, k;
+  int i;
   // flag for if Gen Chiaki's dust model is enabled with grain growth
   const bool chiaki_model_dust_evolution =
       my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
@@ -257,10 +258,14 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
 
   // Loop over all zones
 
-  for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
-    for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
-      // Compute total densities of H and He
-      //     (ensure non-negativity)
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
+  for (int t = 0; t < idx_helper.outer_ind_size; t++) {
+    const IndexRange idx_range = make_idx_range_(t, &idx_helper);
+    const int k = idx_range.k;
+    const int j = idx_range.j;
+    {  // <- TODO: remove this scope (it only exists to delay reformatting)
+
+      // Compute total densities of H and He (ensure non-negativity)
 
       if ((my_chemistry->metal_cooling) == 1) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
