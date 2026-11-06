@@ -11,9 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <optional>
 #include <utility>
+
 #include "grackle.h"
 #include <gtest/gtest.h>
 #include "grtestutils/iterator_adaptor.hpp"
@@ -43,7 +45,66 @@ const std::string INJ_PATH_GRAIN_YIELD_PREFIX =
 
 using InjPathSuite = grtest::ParametrizedConfigPresetFixture;
 
+static std::optional<std::vector<std::string>> get_field_names(
+    const chemistry_data_storage& my_rates, int64_t category) {
+  int64_t n = INT64_MAX;
+  if (gr_get_field_id(&my_rates, category, nullptr, &n) != GR_SUCCESS) {
+    return std::nullopt;
+  }
+  std::vector<std::string> out;
+  out.reserve(n);
+  for (int64_t i = 0; i < n; i++) {
+    const char* name = nullptr;
+    if (gr_get_field_name(&my_rates, category, i, &name) != GR_SUCCESS) {
+      return std::nullopt;
+    }
+    out.emplace_back(name);
+  }
+  return out;
+}
+
+TEST_P(InjPathSuite, FieldNames) {
+  std::optional<std::vector<std::string>> str_list_maybe =
+      get_field_names(*pack.my_rates(), GR_FIELD_CAT_INJ_PATHWAY);
+  ASSERT_NOT_EMPTY(str_list_maybe)
+      << "error querying \"" << GR_FIELD_CAT_INJ_PATHWAY << '"';
+  std::vector<std::string> str_list =
+      std::exchange(str_list_maybe, std::nullopt).value();
+
+  // construct the reference list of field names:
+  constexpr std::size_t N_KNOWN_NAMES = CANONICAL_INJ_PATH_NAMES.size();
+  std::array<std::string, N_KNOWN_NAMES> known_field_names;
+  for (std::size_t i = 0; i < N_KNOWN_NAMES; i++) {
+    known_field_names[i] =
+        std::string(CANONICAL_INJ_PATH_NAMES[i]) + "_metal_density";
+  }
+
+  EXPECT_THAT(str_list, grtest::HoldsUnique());
+  EXPECT_THAT(str_list, ::testing::Not(::testing::IsEmpty()));
+  EXPECT_THAT(str_list, ::testing::IsSubsetOf(known_field_names));
+
+  // now let's check that `gr_get_field_id` works properly
+  // -> in the future, it probably makes some sense to dedicate some tests to
+  //    explicitly checking this logic (and decoupling the test from the
+  //    inject-pathway logic)
+  // -> but, that's not very easy to do right now (i.e. currently, the ONLY
+  //    fields accessible through the function are the inject_path fields)
+  int64_t list_len = str_list.size();
+  for (int64_t i = 0; i < list_len; i++) {
+    const char* name = str_list[i].c_str();
+    int64_t queried_id = INT64_MAX;
+    ASSERT_GR_SUCCESS(gr_get_field_id(pack.my_rates(), GR_FIELD_CAT_INJ_PATHWAY,
+                                      name, &queried_id))
+        << "problem during call for \"" << name << '"';
+
+    EXPECT_EQ(i, queried_id) << "incorrect id retrieved for\"" << name << '"';
+  }
+}
+
 TEST_P(InjPathSuite, PathName) {
+  // this is a little bit like the previous test, but we use the ratequery
+  // machinery rather than the field_id machinery
+  // -> the plan is to transition away from this approach!
   std::optional<std::vector<std::string>> str_list_maybe =
       grtest::try_query_str_arr1d(pack.my_rates(), INJ_PATH_NAMES_KEY);
   ASSERT_NOT_EMPTY(str_list_maybe)

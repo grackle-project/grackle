@@ -202,6 +202,29 @@ cdef class chemistry_data:
             f"'{type(self).__name__}' object has no attribute '{name}'"
         )
 
+    def _inj_path_field_names(self) -> list[str]:
+        """Return the expected inject path field names for current configuration
+        """
+
+        # as we make more field names accessible through this machinery,
+        # we can factor out the following function into a helper method where
+        # category is the argument
+        cdef int64_t category = GR_FIELD_CAT_INJ_PATHWAY
+        # get number of fields
+        cdef int64_t n
+        cdef int ret = gr_get_field_id(&self.rates, category, NULL, &n)
+        if ret != GR_SUCCESS:
+            raise RuntimeError("unable to query number of inject path fields")
+
+        out = []
+        cdef char* str_tmp = NULL
+        for i in range(n):
+            ret = gr_get_field_name(&self.rates, category, i, &str_tmp)
+            if ret != GR_SUCCESS:
+                raise RuntimeError(f"inj path field query failed for {i=}")
+            out.append(str_tmp.decode('UTF-8'))
+        return out
+
     def _experimental_nuclide_gas_inj_path_yields(
         self
     ) -> MappingProxyType[str, np.ndarray]:

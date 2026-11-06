@@ -295,6 +295,21 @@ cdef extern from "grackle.h":
 
     int gr_initialize_field_data(c_field_data *my_fields)
 
+    cdef enum gr_field_category:
+      GR_FIELD_CAT_INJ_PATHWAY
+
+    int gr_get_field_id(
+        const c_chemistry_data_storage* my_rates,
+        int64_t category,
+        const char* name,
+        int64_t* out)
+
+    int gr_get_field_name(
+        const c_chemistry_data_storage* my_rates,
+        int64_t category,
+        int64_t id,
+        const char** out)
+
     # the unstable API
     ctypedef long long grunstable_rateid_type
 

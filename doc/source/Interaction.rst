@@ -931,6 +931,19 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    array. Required when setting :c:data:`dust_chemistry` = 2 and
    :c:data:`chiaki_dust_model_dust_species` > 2.
 
+.. c:var:: gr_float *inject_pathway_metal_density[]
+
+   .. versionadded:: 3.5
+
+   Used to specify the injection pathway metal densities for each injection pathway used with metal chemistry.
+   The precise length of this array is considered an implementation detail.
+
+   The expectations about the number of these densities, their names, and their order can be queried for a given solver-configuration by using the :c:macro:`GR_FIELD_CAT_INJ_PATHWAY` constant with the :c:func:`gr_get_field_id` and :c:func:`gr_get_field_name` functions.
+
+   .. note::
+
+      **TODO:** Update this description after we allow the metal chemistry network to be run without the injection pathway machinery.
+
 It is not necessary to attach a pointer to any field that you do
 not intend to use.
 
