@@ -140,7 +140,7 @@ We refer to the location where the results of answer-tests are stored as the "an
 
 .. note::
 
-   The test of the **src/python/examples/yt_grackle.py** python-example requires that you supply test-data.
+   The test of the **python/examples/yt_grackle.py** python-example requires that you supply test-data.
    The location of the test-data is specified through the :envvar:`!YT_DATA_DIR` environment variable.
    The **scripts/ci/fetch_test_data.py** script is provided as a convenience to fetch this data after the environment variable has been set.
 
@@ -195,26 +195,26 @@ Each shows snippets assuming that you are at the root of the Grackle directory.
          platform darwin -- Python 3.10.14, pytest-8.3.5, pluggy-1.5.0
          rootdir: /Users/mabruzzo/packages/c++/grackle
          configfile: pyproject.toml
-         testpaths: src/python/tests
+         testpaths: python/tests
          plugins: anyio-4.2.0
          collected 62 items
 
-         src/python/tests/test_chemistry.py ....                                  [  6%]
-         src/python/tests/test_chemistry_struct_synched.py .                      [  8%]
-         src/python/tests/test_dynamic_api.py ...                                 [ 12%]
-         src/python/tests/test_get_grackle_version.py .                           [ 14%]
-         src/python/tests/test_initialisation.py s                                [ 16%]
-         src/python/tests/test_local_functions.py s                               [ 17%]
-         src/python/tests/test_models.py sssssssssssssssssssssssssssssssssssssss  [ 80%]
-         src/python/tests/test_primordial.py .                                    [ 82%]
-         src/python/tests/test_query_units.py ...                                 [ 87%]
-         src/python/tests/test_specific_heating_rate.py ....                      [ 93%]
-         src/python/tests/test_volumetric_heating_rate.py ....                    [100%]
+         python/tests/test_chemistry.py ....                                  [  6%]
+         python/tests/test_chemistry_struct_synched.py .                      [  8%]
+         python/tests/test_dynamic_api.py ...                                 [ 12%]
+         python/tests/test_get_grackle_version.py .                           [ 14%]
+         python/tests/test_initialisation.py s                                [ 16%]
+         python/tests/test_local_functions.py s                               [ 17%]
+         python/tests/test_models.py sssssssssssssssssssssssssssssssssssssss  [ 80%]
+         python/tests/test_primordial.py .                                    [ 82%]
+         python/tests/test_query_units.py ...                                 [ 87%]
+         python/tests/test_specific_heating_rate.py ....                      [ 93%]
+         python/tests/test_volumetric_heating_rate.py ....                    [100%]
 
          =========================== short test summary info ============================
-         SKIPPED [1] src/python/tests/test_initialisation.py:103: no --answer-dir option found
-         SKIPPED [1] src/python/tests/test_local_functions.py:191: no --answer-dir option found
-         SKIPPED [39] src/python/tests/test_models.py:23: no --answer-dir option found
+         SKIPPED [1] python/tests/test_initialisation.py:103: no --answer-dir option found
+         SKIPPED [1] python/tests/test_local_functions.py:191: no --answer-dir option found
+         SKIPPED [39] python/tests/test_models.py:23: no --answer-dir option found
          ================== 21 passed, 41 skipped, 1 warning in 2.61s =================== 
 
 

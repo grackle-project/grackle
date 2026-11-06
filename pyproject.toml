@@ -1,8 +1,8 @@
 # NOTE: scikit-build-core doesn't use the root-level CMakeLists.txt file,
-#       instead we have it use src/python/CMakeLists.txt.
+#       instead we have it use ./python/CMakeLists.txt.
 #
-# There are 2 reasons for placing this at the root-level directory
-# (rather than in src/python):
+# There are 2 reasons for placing this configuration file at the root-level
+# directory (rather than in ./python):
 #   1. it ensures that the source-distribution of our source-directory and the
 #      SDist we'll eventually distribute via PyPI will have the same structure
 #   2. it ensures that gracklepy can be installable by invoking
@@ -97,13 +97,13 @@ addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 # limit the directories searched by pytests for the test files
 testpaths = [
-  "src/python/tests",
+  "python/tests",
 ]
 
 
 [tool.scikit-build]
 # redirect to the appropriate CMakeLists.txt file
-cmake.source-dir = "./src/python"
+cmake.source-dir = "./python"
 
 # if the version of CMake (in {cmake.source-dir}/CMakeLists.txt) isn't found,
 # scikit-build-core will download and use a compatible CMake-verison
@@ -134,10 +134,10 @@ sdist.exclude = [
     "input", "grackle_data_files",
     # if we aren't including data-files, there's no reason to include gracklepy-tests
     # (all meaningful tests will currently fail)
-    "src/python/tests",
+    "python/tests",
     # if we aren't including data-files, there's no reason to include the gracklepy
     # code examples (they currently require editable installations)
-    "src/python/examples",
+    "python/examples",
     # for consistency, we exclude the core-library tests and examples
     "tests", "src/example",
     # exclude miscellaneous classic-build-system machinery
@@ -145,7 +145,7 @@ sdist.exclude = [
 ]
 
 # A list of packages to auto-copy into the wheel.
-wheel.packages = ["./src/python/gracklepy"]
+wheel.packages = ["./python/gracklepy"]
 
 # A set of patterns to exclude from the wheel. This is additive to the SDist
 # exclude patterns.
@@ -225,40 +225,40 @@ exclude = [
     "doc/source/conf.py",
     "scripts/configure_file.py",
     "scripts/query_version.py",
-    "src/python/examples/cooling_cell.py",
-    "src/python/examples/cooling_rate.py",
-    "src/python/examples/freefall.py",
-    "src/python/examples/yt_grackle.py",
-    "src/python/gracklepy/__init__.py",
-    "src/python/gracklepy/api.py",
-    "src/python/gracklepy/fluid_container.py",
-    "src/python/gracklepy/utilities/__init__.py",
-    "src/python/gracklepy/utilities/api.py",
-    "src/python/gracklepy/utilities/convenience.py",
-    "src/python/gracklepy/utilities/data_path.py",
-    "src/python/gracklepy/utilities/evolve.py",
-    "src/python/gracklepy/utilities/misc.py",
-    "src/python/gracklepy/utilities/model_tests.py",
-    "src/python/gracklepy/utilities/physical_constants.py",
-    "src/python/gracklepy/utilities/primordial_equilibrium.py",
-    "src/python/gracklepy/utilities/testing.py",
-    "src/python/gracklepy/utilities/units.py",
-    "src/python/gracklepy/yt_fields.py",
-    "src/python/tests/conftest.py",
-    "src/python/tests/test_chemistry.py",
-    "src/python/tests/test_chemistry_struct_synched.py",
-    "src/python/tests/test_dynamic_api.py",
-    "src/python/tests/test_get_grackle_version.py",
-    "src/python/tests/test_initialisation.py",
-    "src/python/tests/test_local_functions.py",
-    "src/python/tests/test_models.py",
-    "src/python/tests/test_primordial.py",
-    "src/python/tests/test_query_units.py",
-    "src/python/tests/test_specific_heating_rate.py",
-    "src/python/tests/test_volumetric_heating_rate.py",
-    "src/python/tests/testing_common.py",
+    "python/examples/cooling_cell.py",
+    "python/examples/cooling_rate.py",
+    "python/examples/freefall.py",
+    "python/examples/yt_grackle.py",
+    "python/gracklepy/__init__.py",
+    "python/gracklepy/api.py",
+    "python/gracklepy/fluid_container.py",
+    "python/gracklepy/utilities/__init__.py",
+    "python/gracklepy/utilities/api.py",
+    "python/gracklepy/utilities/convenience.py",
+    "python/gracklepy/utilities/data_path.py",
+    "python/gracklepy/utilities/evolve.py",
+    "python/gracklepy/utilities/misc.py",
+    "python/gracklepy/utilities/model_tests.py",
+    "python/gracklepy/utilities/physical_constants.py",
+    "python/gracklepy/utilities/primordial_equilibrium.py",
+    "python/gracklepy/utilities/testing.py",
+    "python/gracklepy/utilities/units.py",
+    "python/gracklepy/yt_fields.py",
+    "python/tests/conftest.py",
+    "python/tests/test_chemistry.py",
+    "python/tests/test_chemistry_struct_synched.py",
+    "python/tests/test_dynamic_api.py",
+    "python/tests/test_get_grackle_version.py",
+    "python/tests/test_initialisation.py",
+    "python/tests/test_local_functions.py",
+    "python/tests/test_models.py",
+    "python/tests/test_primordial.py",
+    "python/tests/test_query_units.py",
+    "python/tests/test_specific_heating_rate.py",
+    "python/tests/test_volumetric_heating_rate.py",
+    "python/tests/testing_common.py",
     "tests/scripts/code_example_checker.py",
-    "src/python/gracklepy/utilities/atomic.py"
+    "python/gracklepy/utilities/atomic.py"
 ]
 
 [tool.cibuildwheel]
@@ -288,7 +288,7 @@ cache-keys = [
     { file = "cmake/**" },
     { file = "scripts/query_version.py" },
     { file = "src/clib/**" },
-    { file = "src/python/CMakeLists.txt" },
-    { file = "src/python/gracklepy/*.pyx" },
-    { file = "src/python/gracklepy/*.pxd" }
+    { file = "python/CMakeLists.txt" },
+    { file = "python/gracklepy/*.pyx" },
+    { file = "python/gracklepy/*.pxd" }
 ]

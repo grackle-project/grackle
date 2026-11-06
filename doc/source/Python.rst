@@ -276,7 +276,7 @@ The above snippet, includes the optional ``-e`` flag to perform an editable-inst
 Running the Example Scripts
 ---------------------------
 
-A number of example scripts are available in the :source:`src/python/examples`
+A number of example scripts are available in the :source:`python/examples`
 directory.  These scripts provide examples of ways that Grackle can be
 used in simplified models, such as solving the temperature evolution of
 a parcel of gas at constant density or in a free-fall model.  Each example
@@ -319,7 +319,7 @@ rate.
 
 .. code-block:: shell-session
 
-   ~/grackle/src/python/examples $ python cooling_rate.py
+   ~/grackle/python/examples $ python cooling_rate.py
 
 .. image:: _images/cooling_rate.png
    :width: 500
@@ -348,7 +348,7 @@ the values of the densities, temperatures, and mean molecular weights for all ti
 
 .. code-block:: shell-session
 
-   ~/grackle/src/python/examples $ python cooling_cell.py
+   ~/grackle/python/examples $ python cooling_cell.py
 
 .. image:: _images/cooling_cell.png
    :width: 500
@@ -375,7 +375,7 @@ This can be useful for testing chemistry networks over a large range in density.
 
 .. code-block:: shell-session
 
-   ~/grackle/src/python/examples $ python freefall.py
+   ~/grackle/python/examples $ python freefall.py
 
 .. image:: _images/freefall.png
    :width: 500
@@ -407,7 +407,7 @@ same session.
 
 .. code-block:: shell-session
 
-   ~/grackle/src/python/examples $ python -i yt_grackle.py
+   ~/grackle/python/examples $ python -i yt_grackle.py
 
 .. code-block:: python
 

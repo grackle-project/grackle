@@ -2,7 +2,7 @@
 # -> the python build-backend, scikit-build-core, is responsible for reading in
 #    this file (it defines predefines certain variables and certain commands)
 # -> scikit-build-core is configured in ${GRACKLE_REPO_ROOT}/pyproject.toml
-set(GRACKLE_REPO_ROOT  ${CMAKE_CURRENT_SOURCE_DIR}/../../)
+set(GRACKLE_REPO_ROOT  ${CMAKE_CURRENT_SOURCE_DIR}/../)
 
 # Prologue
 # --------
