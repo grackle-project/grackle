@@ -20,16 +20,15 @@
 #include "field_adaptor.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
-#include "support/index_helper.hpp"
 
 #include "make_consistent.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-static void make_consistent_(
-    const IndexRange& idx_range, double dom, const chemistry_data* my_chemistry,
-    const GrainMetalInjectPathways* inject_pathway_props,
-    grackle_field_data* my_fields) {
+void make_consistent(const IndexRange& idx_range, double dom,
+                     const chemistry_data* my_chemistry,
+                     const GrainMetalInjectPathways* inject_pathway_props,
+                     grackle_field_data* my_fields) {
   FortranView<const gr_float***> d(
       const_cast<const gr_float*>(my_fields->density),
       my_fields->grid_dimension[0], my_fields->grid_dimension[1],
@@ -758,17 +757,6 @@ static void make_consistent_(
               O2II[i] / (gr_float)(32.);
       // endif
     }
-  }
-}
-
-void make_consistent(double dom, const chemistry_data* my_chemistry,
-                     const GrainMetalInjectPathways* inject_pathway_props,
-                     grackle_field_data* my_fields) {
-  const IndexHelper idx_helper = build_index_helper_(my_fields);
-  for (int t = 0; t < idx_helper.outer_ind_size; t++) {
-    const IndexRange idx_range = make_idx_range_(t, &idx_helper);
-    make_consistent_(idx_range, dom, my_chemistry, inject_pathway_props,
-                     my_fields);
   }
 }
 

@@ -18,13 +18,15 @@
 
 #include "grackle.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
-
 #include "support/config.hpp"
+#include "support/index_helper.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
 /// Enforces consistency of species fields with expected total abundances
+/// for indices in the specified index-range
 ///
+/// @param[in] idx_range index range for which the operation is performed
 /// @param[in] dom  equivalent to `nH_cgs / rhoH_proper_codeU`.  Multiplying
 ///     this quantity by Hydrogen mass density, in (proper) density code units,
 ///     will produce the Hydrogen number density with units of cm^-3
@@ -32,7 +34,8 @@ namespace GRIMPL_NAMESPACE_DECL {
 /// @param[in] inject_pathway_props holds data about the modelled injection
 ///     pathways for all metals and grain species
 /// @param[out] my_fields specifies the field data
-void make_consistent(double dom, const chemistry_data* my_chemistry,
+void make_consistent(const IndexRange& idx_range, double dom,
+                     const chemistry_data* my_chemistry,
                      const GrainMetalInjectPathways* inject_pathway_props,
                      grackle_field_data* my_fields);
 
