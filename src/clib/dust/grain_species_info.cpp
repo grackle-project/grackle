@@ -304,6 +304,7 @@ Expected<GrainSpeciesInfo, Error> GrainSpeciesInfo::create(
     GrainSpeciesInfo out;
     out.n_species_ = n_species;
     out.species_info_ = species_info;
+    out.dust_species_parameter_ = dust_species_parameter;
     out.name_map_.swap(name_map_rslt.value());
     return out;
   }
