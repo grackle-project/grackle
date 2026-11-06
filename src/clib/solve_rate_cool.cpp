@@ -528,7 +528,7 @@ static inline void coupled_rt_modify_itmask_(
   grackle_field_data* my_fields
 )
 {
-  FortranView<const gr_float***> kphHI(my_fields->RT_HI_ionization_rate,
+  FortranView<const gr_float***> kphHI(my_fields->HI_ionization_rate,
                                                my_fields->grid_dimension[0],
                                                my_fields->grid_dimension[1],
                                                my_fields->grid_dimension[2]);
@@ -536,8 +536,7 @@ static inline void coupled_rt_modify_itmask_(
   // adjust iteration mask if the caller indicates that they're using
   // Grackle in a coupled radiative-transfer/chemistry-energy calculation
   // (that has intermediate steps)
-  if (my_chemistry->use_radiative_transfer == 1 &&
-      my_chemistry->radiative_transfer_coupled_rate_solver == 1)  {
+  if (my_chemistry->radiative_transfer_coupled_rate_solver == 1)  {
     // we only define behavior for radiative_transfer_intermediate_step
     // values of 0 or 1
 
