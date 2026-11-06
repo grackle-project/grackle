@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "grackle.h"
+#include "field_adaptor.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
 #include "support/index_helper.hpp"
@@ -29,26 +30,6 @@ static void make_consistent_(
     const IndexRange& idx_range, double dom, const chemistry_data* my_chemistry,
     const GrainMetalInjectPathways* inject_pathway_props,
     grackle_field_data* my_fields) {
-  // Arguments
-
-  FortranView<gr_float***> de(
-      my_fields->e_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HI(
-      my_fields->HI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HII(
-      my_fields->HII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeI(
-      my_fields->HeI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeII(
-      my_fields->HeII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeIII(
-      my_fields->HeIII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<const gr_float***> d(
       const_cast<const gr_float*>(my_fields->density),
       my_fields->grid_dimension[0], my_fields->grid_dimension[1],
@@ -57,141 +38,61 @@ static void make_consistent_(
       const_cast<const gr_float*>(my_fields->metal_density),
       my_fields->grid_dimension[0], my_fields->grid_dimension[1],
       my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HM(
-      my_fields->HM_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2I(
-      my_fields->H2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2II(
-      my_fields->H2II_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> DI(
-      my_fields->DI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> DII(
-      my_fields->DII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HDI(
-      my_fields->HDI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> DM(
-      my_fields->DM_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HDII(
-      my_fields->HDII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeHII(
-      my_fields->HeHII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CI(
-      my_fields->CI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CII(
-      my_fields->CII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> COI(
-      my_fields->COI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CO2I(
-      my_fields->CO2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OI(
-      my_fields->OI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OHI(
-      my_fields->OHI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2OI(
-      my_fields->H2OI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> O2I(
-      my_fields->O2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiI(
-      my_fields->SiI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiOI(
-      my_fields->SiOI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiO2I(
-      my_fields->SiO2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CHI(
-      my_fields->CHI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CH2I(
-      my_fields->CH2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> COII(
-      my_fields->COII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OII(
-      my_fields->OII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OHII(
-      my_fields->OHII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2OII(
-      my_fields->H2OII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H3OII(
-      my_fields->H3OII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> O2II(
-      my_fields->O2II_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Mg(
-      my_fields->Mg_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Al(
-      my_fields->Al_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> S(my_fields->S_density, my_fields->grid_dimension[0],
-                             my_fields->grid_dimension[1],
-                             my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Fe(
-      my_fields->Fe_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiM(
-      my_fields->SiM_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> FeM(
-      my_fields->FeM_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Mg2SiO4(
-      my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> MgSiO3(
-      my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Fe3O4(
-      my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> AC(
-      my_fields->AC_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiO2D(
-      my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> MgO(
-      my_fields->MgO_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> FeS(
-      my_fields->FeS_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Al2O3(
-      my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> reforg(
-      my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> volorg(
-      my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2Oice(
-      my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  int ptr_offset_ = layoutleft_3D_index_to_1D_(my_fields->grid_dimension, 0,
+                                               idx_range.j, idx_range.k);
+
+  gr_float* de = my_fields->e_density + ptr_offset_;
+  gr_float* HI = my_fields->HI_density + ptr_offset_;
+  gr_float* HII = my_fields->HII_density + ptr_offset_;
+  gr_float* HeI = my_fields->HeI_density + ptr_offset_;
+  gr_float* HeII = my_fields->HeII_density + ptr_offset_;
+  gr_float* HeIII = my_fields->HeIII_density + ptr_offset_;
+  gr_float* HM = my_fields->HM_density + ptr_offset_;
+  gr_float* H2I = my_fields->H2I_density + ptr_offset_;
+  gr_float* H2II = my_fields->H2II_density + ptr_offset_;
+  gr_float* DI = my_fields->DI_density + ptr_offset_;
+  gr_float* DII = my_fields->DII_density + ptr_offset_;
+  gr_float* HDI = my_fields->HDI_density + ptr_offset_;
+  gr_float* DM = my_fields->DM_density + ptr_offset_;
+  gr_float* HDII = my_fields->HDII_density + ptr_offset_;
+  gr_float* HeHII = my_fields->HeHII_density + ptr_offset_;
+  gr_float* CI = my_fields->CI_density + ptr_offset_;
+  gr_float* CII = my_fields->CII_density + ptr_offset_;
+  gr_float* COI = my_fields->COI_density + ptr_offset_;
+  gr_float* CO2I = my_fields->CO2I_density + ptr_offset_;
+  gr_float* OI = my_fields->OI_density + ptr_offset_;
+  gr_float* OHI = my_fields->OHI_density + ptr_offset_;
+  gr_float* H2OI = my_fields->H2OI_density + ptr_offset_;
+  gr_float* O2I = my_fields->O2I_density + ptr_offset_;
+  gr_float* SiI = my_fields->SiI_density + ptr_offset_;
+  gr_float* SiOI = my_fields->SiOI_density + ptr_offset_;
+  gr_float* SiO2I = my_fields->SiO2I_density + ptr_offset_;
+  gr_float* CHI = my_fields->CHI_density + ptr_offset_;
+  gr_float* CH2I = my_fields->CH2I_density + ptr_offset_;
+  gr_float* COII = my_fields->COII_density + ptr_offset_;
+  gr_float* OII = my_fields->OII_density + ptr_offset_;
+  gr_float* OHII = my_fields->OHII_density + ptr_offset_;
+  gr_float* H2OII = my_fields->H2OII_density + ptr_offset_;
+  gr_float* H3OII = my_fields->H3OII_density + ptr_offset_;
+  gr_float* O2II = my_fields->O2II_density + ptr_offset_;
+  gr_float* Mg = my_fields->Mg_density + ptr_offset_;
+  gr_float* Al = my_fields->Al_density + ptr_offset_;
+  gr_float* S = my_fields->S_density + ptr_offset_;
+  gr_float* Fe = my_fields->Fe_density + ptr_offset_;
+  gr_float* SiM = my_fields->SiM_dust_density + ptr_offset_;
+  gr_float* FeM = my_fields->FeM_dust_density + ptr_offset_;
+  gr_float* Mg2SiO4 = my_fields->Mg2SiO4_dust_density + ptr_offset_;
+  gr_float* MgSiO3 = my_fields->MgSiO3_dust_density + ptr_offset_;
+  gr_float* Fe3O4 = my_fields->Fe3O4_dust_density + ptr_offset_;
+  gr_float* AC = my_fields->AC_dust_density + ptr_offset_;
+  gr_float* SiO2D = my_fields->SiO2_dust_density + ptr_offset_;
+  gr_float* MgO = my_fields->MgO_dust_density + ptr_offset_;
+  gr_float* FeS = my_fields->FeS_dust_density + ptr_offset_;
+  gr_float* Al2O3 = my_fields->Al2O3_dust_density + ptr_offset_;
+  gr_float* reforg = my_fields->ref_org_dust_density + ptr_offset_;
+  gr_float* volorg = my_fields->vol_org_dust_density + ptr_offset_;
+  gr_float* H2Oice = my_fields->H2O_ice_dust_density + ptr_offset_;
 
   // locals
 
@@ -274,41 +175,40 @@ static void make_consistent_(
   }
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    HI(i, j, k) = std::fabs(HI(i, j, k));
-    HII(i, j, k) = std::fabs(HII(i, j, k));
-    HeI(i, j, k) = std::fabs(HeI(i, j, k));
-    HeII(i, j, k) = std::fabs(HeII(i, j, k));
-    HeIII(i, j, k) = std::fabs(HeIII(i, j, k));
-    totalH[i] = HI(i, j, k) + HII(i, j, k);
-    totalHe[i] = HeI(i, j, k) + HeII(i, j, k) + HeIII(i, j, k);
+    HI[i] = std::fabs(HI[i]);
+    HII[i] = std::fabs(HII[i]);
+    HeI[i] = std::fabs(HeI[i]);
+    HeII[i] = std::fabs(HeII[i]);
+    HeIII[i] = std::fabs(HeIII[i]);
+    totalH[i] = HI[i] + HII[i];
+    totalHe[i] = HeI[i] + HeII[i] + HeIII[i];
   }
 
   // include molecular hydrogen
 
   if (my_chemistry->primordial_chemistry > 1) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      HM(i, j, k) = std::fabs(HM(i, j, k));
-      H2II(i, j, k) = std::fabs(H2II(i, j, k));
-      H2I(i, j, k) = std::fabs(H2I(i, j, k));
-      totalH[i] = totalH[i] + HM(i, j, k) + H2I(i, j, k) + H2II(i, j, k);
+      HM[i] = std::fabs(HM[i]);
+      H2II[i] = std::fabs(H2II[i]);
+      H2I[i] = std::fabs(H2I[i]);
+      totalH[i] = totalH[i] + HM[i] + H2I[i] + H2II[i];
     }
   }
 
   if (my_chemistry->primordial_chemistry > 2) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      HDI(i, j, k) = std::fabs(HDI(i, j, k));
-      totalH[i] = totalH[i] + 1. / 3. * HDI(i, j, k);
+      HDI[i] = std::fabs(HDI[i]);
+      totalH[i] = totalH[i] + 1. / 3. * HDI[i];
     }
   }
   // ! GC202005
 
   if (my_chemistry->primordial_chemistry > 3) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      HDII(i, j, k) = std::fabs(HDII(i, j, k));
-      HeHII(i, j, k) = std::fabs(HeHII(i, j, k));
-      totalH[i] =
-          totalH[i] + 1. / 3. * HDII(i, j, k) + 1. / 5. * HeHII(i, j, k);
-      totalHe[i] = totalHe[i] + 4. / 5. * HeHII(i, j, k);
+      HDII[i] = std::fabs(HDII[i]);
+      HeHII[i] = std::fabs(HeHII[i]);
+      totalH[i] = totalH[i] + 1. / 3. * HDII[i] + 1. / 5. * HeHII[i];
+      totalHe[i] = totalHe[i] + 4. / 5. * HeHII[i];
     }
   }
 
@@ -384,17 +284,16 @@ static void make_consistent_(
 
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       // if (itmask_metal(i)) then
-      OHI(i, j, k) = std::fabs(OHI(i, j, k));
-      H2OI(i, j, k) = std::fabs(H2OI(i, j, k));
-      CHI(i, j, k) = std::fabs(CHI(i, j, k));
-      CH2I(i, j, k) = std::fabs(CH2I(i, j, k));
-      OHII(i, j, k) = std::fabs(OHII(i, j, k));
-      H2OII(i, j, k) = std::fabs(H2OII(i, j, k));
-      H3OII(i, j, k) = std::fabs(H3OII(i, j, k));
-      totalH[i] = totalH[i] + OHI(i, j, k) / 17. + H2OI(i, j, k) / 18. * 2. +
-                  CHI(i, j, k) / 13. + CH2I(i, j, k) / 14. * 2. +
-                  OHII(i, j, k) / 17. + H2OII(i, j, k) / 18. * 2. +
-                  H3OII(i, j, k) / 19. * 3.;
+      OHI[i] = std::fabs(OHI[i]);
+      H2OI[i] = std::fabs(H2OI[i]);
+      CHI[i] = std::fabs(CHI[i]);
+      CH2I[i] = std::fabs(CH2I[i]);
+      OHII[i] = std::fabs(OHII[i]);
+      H2OII[i] = std::fabs(H2OII[i]);
+      H3OII[i] = std::fabs(H3OII[i]);
+      totalH[i] = totalH[i] + OHI[i] / 17. + H2OI[i] / 18. * 2. + CHI[i] / 13. +
+                  CH2I[i] / 14. * 2. + OHII[i] / 17. + H2OII[i] / 18. * 2. +
+                  H3OII[i] / 19. * 3.;
       // endif
     }
   }
@@ -404,25 +303,25 @@ static void make_consistent_(
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     correctH = (gr_float)(my_chemistry->HydrogenFractionByMass * metalfree[i] /
                           totalH[i]);
-    HI(i, j, k) = HI(i, j, k) * correctH;
-    HII(i, j, k) = HII(i, j, k) * correctH;
+    HI[i] = HI[i] * correctH;
+    HII[i] = HII[i] * correctH;
 
     correctHe = (gr_float)((1. - my_chemistry->HydrogenFractionByMass) *
                            metalfree[i] / totalHe[i]);
-    HeI(i, j, k) = HeI(i, j, k) * correctHe;
-    HeII(i, j, k) = HeII(i, j, k) * correctHe;
-    HeIII(i, j, k) = HeIII(i, j, k) * correctHe;
+    HeI[i] = HeI[i] * correctHe;
+    HeII[i] = HeII[i] * correctHe;
+    HeIII[i] = HeIII[i] * correctHe;
 
     // Correct molecular hydrogen-related fractions
 
     if (my_chemistry->primordial_chemistry > 1) {
-      HM(i, j, k) = HM(i, j, k) * correctH;
-      H2II(i, j, k) = H2II(i, j, k) * correctH;
-      H2I(i, j, k) = H2I(i, j, k) * correctH;
+      HM[i] = HM[i] * correctH;
+      H2II[i] = H2II[i] * correctH;
+      H2I[i] = H2I[i] * correctH;
     }
     if (my_chemistry->primordial_chemistry > 3) {
       // !          HDII (i,j,k) = HDII (i,j,k)*correctH
-      HeHII(i, j, k) = HeHII(i, j, k) * correctHe;
+      HeHII[i] = HeHII[i] * correctHe;
     }
   }
 
@@ -430,24 +329,24 @@ static void make_consistent_(
 
   if (my_chemistry->primordial_chemistry > 2) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      DI(i, j, k) = std::fabs(DI(i, j, k));
-      DII(i, j, k) = std::fabs(DII(i, j, k));
-      HDI(i, j, k) = std::fabs(HDI(i, j, k));
-      totalD = DI(i, j, k) + DII(i, j, k) + 2. / 3. * HDI(i, j, k);
+      DI[i] = std::fabs(DI[i]);
+      DII[i] = std::fabs(DII[i]);
+      HDI[i] = std::fabs(HDI[i]);
+      totalD = DI[i] + DII[i] + 2. / 3. * HDI[i];
       if (my_chemistry->primordial_chemistry > 3) {
-        DM(i, j, k) = std::fabs(DM(i, j, k));
-        HDII(i, j, k) = std::fabs(HDII(i, j, k));
-        totalD = totalD + DM(i, j, k) + 2. / 3. * HDII(i, j, k);
+        DM[i] = std::fabs(DM[i]);
+        HDII[i] = std::fabs(HDII[i]);
+        totalD = totalD + DM[i] + 2. / 3. * HDII[i];
       }
       correctD = (gr_float)(my_chemistry->HydrogenFractionByMass *
                             my_chemistry->DeuteriumToHydrogenRatio *
                             metalfree[i] / totalD);
-      DI(i, j, k) = DI(i, j, k) * correctD;
-      DII(i, j, k) = DII(i, j, k) * correctD;
-      HDI(i, j, k) = HDI(i, j, k) * correctD;
+      DI[i] = DI[i] * correctD;
+      DII[i] = DII[i] * correctD;
+      HDI[i] = HDI[i] * correctD;
       if (my_chemistry->primordial_chemistry > 3) {
-        DM(i, j, k) = DM(i, j, k) * correctD;
-        HDII(i, j, k) = HDII(i, j, k) * correctD;
+        DM[i] = DM[i] * correctD;
+        HDII[i] = HDII[i] * correctD;
       }
     }
   }
@@ -456,54 +355,54 @@ static void make_consistent_(
 
   if (my_chemistry->metal_chemistry == 1) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      CI(i, j, k) = std::fabs(CI(i, j, k));
-      CII(i, j, k) = std::fabs(CII(i, j, k));
-      COI(i, j, k) = std::fabs(COI(i, j, k));
-      CO2I(i, j, k) = std::fabs(CO2I(i, j, k));
-      OI(i, j, k) = std::fabs(OI(i, j, k));
-      OHI(i, j, k) = std::fabs(OHI(i, j, k));
-      H2OI(i, j, k) = std::fabs(H2OI(i, j, k));
-      O2I(i, j, k) = std::fabs(O2I(i, j, k));
-      SiI(i, j, k) = std::fabs(SiI(i, j, k));
-      SiOI(i, j, k) = std::fabs(SiOI(i, j, k));
-      SiO2I(i, j, k) = std::fabs(SiO2I(i, j, k));
-      CHI(i, j, k) = std::fabs(CHI(i, j, k));
-      CH2I(i, j, k) = std::fabs(CH2I(i, j, k));
-      COII(i, j, k) = std::fabs(COII(i, j, k));
-      OII(i, j, k) = std::fabs(OII(i, j, k));
-      OHII(i, j, k) = std::fabs(OHII(i, j, k));
-      H2OII(i, j, k) = std::fabs(H2OII(i, j, k));
-      H3OII(i, j, k) = std::fabs(H3OII(i, j, k));
-      O2II(i, j, k) = std::fabs(O2II(i, j, k));
+      CI[i] = std::fabs(CI[i]);
+      CII[i] = std::fabs(CII[i]);
+      COI[i] = std::fabs(COI[i]);
+      CO2I[i] = std::fabs(CO2I[i]);
+      OI[i] = std::fabs(OI[i]);
+      OHI[i] = std::fabs(OHI[i]);
+      H2OI[i] = std::fabs(H2OI[i]);
+      O2I[i] = std::fabs(O2I[i]);
+      SiI[i] = std::fabs(SiI[i]);
+      SiOI[i] = std::fabs(SiOI[i]);
+      SiO2I[i] = std::fabs(SiO2I[i]);
+      CHI[i] = std::fabs(CHI[i]);
+      CH2I[i] = std::fabs(CH2I[i]);
+      COII[i] = std::fabs(COII[i]);
+      OII[i] = std::fabs(OII[i]);
+      OHII[i] = std::fabs(OHII[i]);
+      H2OII[i] = std::fabs(H2OII[i]);
+      H3OII[i] = std::fabs(H3OII[i]);
+      O2II[i] = std::fabs(O2II[i]);
     }
   }
 
   if (chiaki_model_dust_evolution) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (my_chemistry->dust_species > 0) {
-        Mg(i, j, k) = std::fabs(Mg(i, j, k));
+        Mg[i] = std::fabs(Mg[i]);
 
-        MgSiO3(i, j, k) = std::fabs(MgSiO3(i, j, k));
-        AC(i, j, k) = std::fabs(AC(i, j, k));
+        MgSiO3[i] = std::fabs(MgSiO3[i]);
+        AC[i] = std::fabs(AC[i]);
       }
       if (my_chemistry->dust_species > 1) {
-        Al(i, j, k) = std::fabs(Al(i, j, k));
-        S(i, j, k) = std::fabs(S(i, j, k));
-        Fe(i, j, k) = std::fabs(Fe(i, j, k));
+        Al[i] = std::fabs(Al[i]);
+        S[i] = std::fabs(S[i]);
+        Fe[i] = std::fabs(Fe[i]);
 
-        SiM(i, j, k) = std::fabs(SiM(i, j, k));
-        FeM(i, j, k) = std::fabs(FeM(i, j, k));
-        Mg2SiO4(i, j, k) = std::fabs(Mg2SiO4(i, j, k));
-        Fe3O4(i, j, k) = std::fabs(Fe3O4(i, j, k));
-        SiO2D(i, j, k) = std::fabs(SiO2D(i, j, k));
-        MgO(i, j, k) = std::fabs(MgO(i, j, k));
-        FeS(i, j, k) = std::fabs(FeS(i, j, k));
-        Al2O3(i, j, k) = std::fabs(Al2O3(i, j, k));
+        SiM[i] = std::fabs(SiM[i]);
+        FeM[i] = std::fabs(FeM[i]);
+        Mg2SiO4[i] = std::fabs(Mg2SiO4[i]);
+        Fe3O4[i] = std::fabs(Fe3O4[i]);
+        SiO2D[i] = std::fabs(SiO2D[i]);
+        MgO[i] = std::fabs(MgO[i]);
+        FeS[i] = std::fabs(FeS[i]);
+        Al2O3[i] = std::fabs(Al2O3[i]);
       }
       if (my_chemistry->dust_species > 2) {
-        reforg(i, j, k) = std::fabs(reforg(i, j, k));
-        volorg(i, j, k) = std::fabs(volorg(i, j, k));
-        H2Oice(i, j, k) = std::fabs(H2Oice(i, j, k));
+        reforg[i] = std::fabs(reforg[i]);
+        volorg[i] = std::fabs(volorg[i]);
+        H2Oice[i] = std::fabs(H2Oice[i]);
       }
     }
   }
@@ -521,330 +420,319 @@ static void make_consistent_(
              (d(i, j, k) * dom < 1.e8)) ||
             ((metal(i, j, k) > 1.e-9 * d(i, j, k)) &&
              (d(i, j, k) * dom < 1.e6))))) {
-        totalOg = 16. / 28. * COI(i, j, k) + 32. / 44. * CO2I(i, j, k) +
-                  OI(i, j, k) + 16. / 17. * OHI(i, j, k) +
-                  16. / 18. * H2OI(i, j, k) + O2I(i, j, k) +
-                  16. / 44. * SiOI(i, j, k) + 32. / 60. * SiO2I(i, j, k) +
-                  16. / 28. * COII(i, j, k) + OII(i, j, k) +
-                  16. / 17. * OHII(i, j, k) + 16. / 18. * H2OII(i, j, k) +
-                  16. / 19. * H3OII(i, j, k) + O2II(i, j, k);
+        totalOg = 16. / 28. * COI[i] + 32. / 44. * CO2I[i] + OI[i] +
+                  16. / 17. * OHI[i] + 16. / 18. * H2OI[i] + O2I[i] +
+                  16. / 44. * SiOI[i] + 32. / 60. * SiO2I[i] +
+                  16. / 28. * COII[i] + OII[i] + 16. / 17. * OHII[i] +
+                  16. / 18. * H2OII[i] + 16. / 19. * H3OII[i] + O2II[i];
         correctOg = (gr_float)(Og[i] / totalOg);
-        COI(i, j, k) = COI(i, j, k) * correctOg;
-        CO2I(i, j, k) = CO2I(i, j, k) * correctOg;
-        OI(i, j, k) = OI(i, j, k) * correctOg;
-        OHI(i, j, k) = OHI(i, j, k) * correctOg;
-        H2OI(i, j, k) = H2OI(i, j, k) * correctOg;
-        O2I(i, j, k) = O2I(i, j, k) * correctOg;
-        SiOI(i, j, k) = SiOI(i, j, k) * correctOg;
-        SiO2I(i, j, k) = SiO2I(i, j, k) * correctOg;
-        COII(i, j, k) = COII(i, j, k) * correctOg;
-        OII(i, j, k) = OII(i, j, k) * correctOg;
-        OHII(i, j, k) = OHII(i, j, k) * correctOg;
-        H2OII(i, j, k) = H2OII(i, j, k) * correctOg;
-        H3OII(i, j, k) = H3OII(i, j, k) * correctOg;
-        O2II(i, j, k) = O2II(i, j, k) * correctOg;
+        COI[i] = COI[i] * correctOg;
+        CO2I[i] = CO2I[i] * correctOg;
+        OI[i] = OI[i] * correctOg;
+        OHI[i] = OHI[i] * correctOg;
+        H2OI[i] = H2OI[i] * correctOg;
+        O2I[i] = O2I[i] * correctOg;
+        SiOI[i] = SiOI[i] * correctOg;
+        SiO2I[i] = SiO2I[i] * correctOg;
+        COII[i] = COII[i] * correctOg;
+        OII[i] = OII[i] * correctOg;
+        OHII[i] = OHII[i] * correctOg;
+        H2OII[i] = H2OII[i] * correctOg;
+        H3OII[i] = H3OII[i] * correctOg;
+        O2II[i] = O2II[i] * correctOg;
         if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 0) {
-            totalOd = 48. / 100. * MgSiO3(i, j, k);
+            totalOd = 48. / 100. * MgSiO3[i];
           }
           if (my_chemistry->dust_species > 1) {
-            totalOd = totalOd + 64. / 140. * Mg2SiO4(i, j, k) +
-                      64. / 232. * Fe3O4(i, j, k) + 32. / 60. * SiO2D(i, j, k) +
-                      16. / 40. * MgO(i, j, k) + 48. / 102. * Al2O3(i, j, k);
+            totalOd = totalOd + 64. / 140. * Mg2SiO4[i] +
+                      64. / 232. * Fe3O4[i] + 32. / 60. * SiO2D[i] +
+                      16. / 40. * MgO[i] + 48. / 102. * Al2O3[i];
           }
           if (my_chemistry->dust_species > 2) {
-            totalOd = totalOd + 8. / 22.68 * reforg(i, j, k) +
-                      16. / 32. * volorg(i, j, k) + 16. / 18. * H2Oice(i, j, k);
+            totalOd = totalOd + 8. / 22.68 * reforg[i] + 16. / 32. * volorg[i] +
+                      16. / 18. * H2Oice[i];
           }
           correctOd = (gr_float)(Od[i] / totalOd);
           if (my_chemistry->dust_species > 0) {
-            MgSiO3(i, j, k) = MgSiO3(i, j, k) * correctOd;
+            MgSiO3[i] = MgSiO3[i] * correctOd;
           }
           if (my_chemistry->dust_species > 1) {
-            Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * correctOd;
-            Fe3O4(i, j, k) = Fe3O4(i, j, k) * correctOd;
-            SiO2D(i, j, k) = SiO2D(i, j, k) * correctOd;
-            MgO(i, j, k) = MgO(i, j, k) * correctOd;
-            Al2O3(i, j, k) = Al2O3(i, j, k) * correctOd;
+            Mg2SiO4[i] = Mg2SiO4[i] * correctOd;
+            Fe3O4[i] = Fe3O4[i] * correctOd;
+            SiO2D[i] = SiO2D[i] * correctOd;
+            MgO[i] = MgO[i] * correctOd;
+            Al2O3[i] = Al2O3[i] * correctOd;
           }
           if (my_chemistry->dust_species > 2) {
-            reforg(i, j, k) = reforg(i, j, k) * correctOd;
-            volorg(i, j, k) = volorg(i, j, k) * correctOd;
-            H2Oice(i, j, k) = H2Oice(i, j, k) * correctOd;
+            reforg[i] = reforg[i] * correctOd;
+            volorg[i] = volorg[i] * correctOd;
+            H2Oice[i] = H2Oice[i] * correctOd;
           }
         }
 
-        totalCg = CI(i, j, k) + CII(i, j, k) + 12. / 28. * COI(i, j, k) +
-                  12. / 44. * CO2I(i, j, k) + 12. / 13. * CHI(i, j, k) +
-                  12. / 14. * CH2I(i, j, k) + 12. / 28. * COII(i, j, k);
+        totalCg = CI[i] + CII[i] + 12. / 28. * COI[i] + 12. / 44. * CO2I[i] +
+                  12. / 13. * CHI[i] + 12. / 14. * CH2I[i] +
+                  12. / 28. * COII[i];
         correctCg = (gr_float)(Cg[i] / totalCg);
-        CI(i, j, k) = CI(i, j, k) * correctCg;
-        CII(i, j, k) = CII(i, j, k) * correctCg;
-        COI(i, j, k) = COI(i, j, k) * correctCg;
-        CO2I(i, j, k) = CO2I(i, j, k) * correctCg;
-        CHI(i, j, k) = CHI(i, j, k) * correctCg;
-        CH2I(i, j, k) = CH2I(i, j, k) * correctCg;
-        COII(i, j, k) = COII(i, j, k) * correctCg;
+        CI[i] = CI[i] * correctCg;
+        CII[i] = CII[i] * correctCg;
+        COI[i] = COI[i] * correctCg;
+        CO2I[i] = CO2I[i] * correctCg;
+        CHI[i] = CHI[i] * correctCg;
+        CH2I[i] = CH2I[i] * correctCg;
+        COII[i] = COII[i] * correctCg;
         if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 0) {
-            totalCd = AC(i, j, k);
+            totalCd = AC[i];
           }
           if (my_chemistry->dust_species > 2) {
-            totalCd = totalCd + 12. / 22.68 * reforg(i, j, k) +
-                      12. / 32. * volorg(i, j, k);
+            totalCd = totalCd + 12. / 22.68 * reforg[i] + 12. / 32. * volorg[i];
           }
           correctCd = (gr_float)(Cd[i] / totalCd);
           if (my_chemistry->dust_species > 0) {
-            AC(i, j, k) = AC(i, j, k) * correctCd;
+            AC[i] = AC[i] * correctCd;
           }
           if (my_chemistry->dust_species > 2) {
-            reforg(i, j, k) = reforg(i, j, k) * correctCd;
-            volorg(i, j, k) = volorg(i, j, k) * correctCd;
+            reforg[i] = reforg[i] * correctCd;
+            volorg[i] = volorg[i] * correctCd;
           }
         }
 
-        totalSig = SiI(i, j, k) + 28. / 44. * SiOI(i, j, k) +
-                   28. / 60. * SiO2I(i, j, k);
+        totalSig = SiI[i] + 28. / 44. * SiOI[i] + 28. / 60. * SiO2I[i];
         correctSig = (gr_float)(Sig[i] / totalSig);
-        SiI(i, j, k) = SiI(i, j, k) * correctSig;
-        SiOI(i, j, k) = SiOI(i, j, k) * correctSig;
-        SiO2I(i, j, k) = SiO2I(i, j, k) * correctSig;
+        SiI[i] = SiI[i] * correctSig;
+        SiOI[i] = SiOI[i] * correctSig;
+        SiO2I[i] = SiO2I[i] * correctSig;
         if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 0) {
-            totalSid = 28. / 100. * MgSiO3(i, j, k);
+            totalSid = 28. / 100. * MgSiO3[i];
           }
           if (my_chemistry->dust_species > 1) {
-            totalSid = totalSid + SiM(i, j, k) + 28. / 140. * Mg2SiO4(i, j, k) +
-                       28. / 60. * SiO2D(i, j, k);
+            totalSid = totalSid + SiM[i] + 28. / 140. * Mg2SiO4[i] +
+                       28. / 60. * SiO2D[i];
           }
           correctSid = (gr_float)(Sid[i] / totalSid);
           if (my_chemistry->dust_species > 0) {
-            MgSiO3(i, j, k) = MgSiO3(i, j, k) * correctSid;
+            MgSiO3[i] = MgSiO3[i] * correctSid;
           }
           if (my_chemistry->dust_species > 1) {
-            SiM(i, j, k) = SiM(i, j, k) * correctSid;
-            Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * correctSid;
-            SiO2D(i, j, k) = SiO2D(i, j, k) * correctSid;
+            SiM[i] = SiM[i] * correctSid;
+            Mg2SiO4[i] = Mg2SiO4[i] * correctSid;
+            SiO2D[i] = SiO2D[i] * correctSid;
           }
         }
 
         if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 1) {
-            totalFeg = Fe(i, j, k);
+            totalFeg = Fe[i];
             correctFeg = (gr_float)(Feg[i] / totalFeg);
-            Fe(i, j, k) = Fe(i, j, k) * correctFeg;
+            Fe[i] = Fe[i] * correctFeg;
 
-            totalFed = FeM(i, j, k) + 168. / 232. * Fe3O4(i, j, k) +
-                       56. / 88. * FeS(i, j, k);
+            totalFed = FeM[i] + 168. / 232. * Fe3O4[i] + 56. / 88. * FeS[i];
             correctFed = (gr_float)(Fed[i] / totalFed);
-            FeM(i, j, k) = FeM(i, j, k) * correctFed;
-            Fe3O4(i, j, k) = Fe3O4(i, j, k) * correctFed;
-            FeS(i, j, k) = FeS(i, j, k) * correctFed;
+            FeM[i] = FeM[i] * correctFed;
+            Fe3O4[i] = Fe3O4[i] * correctFed;
+            FeS[i] = FeS[i] * correctFed;
           }
 
           if (my_chemistry->dust_species > 0) {
-            totalMgg = Mg(i, j, k);
+            totalMgg = Mg[i];
             correctMgg = (gr_float)(Mgg[i] / totalMgg);
-            Mg(i, j, k) = Mg(i, j, k) * correctMgg;
-            totalMgd = 24. / 100. * MgSiO3(i, j, k);
+            Mg[i] = Mg[i] * correctMgg;
+            totalMgd = 24. / 100. * MgSiO3[i];
             if (my_chemistry->dust_species > 1) {
-              totalMgd = totalMgd + 48. / 140. * Mg2SiO4(i, j, k) +
-                         24. / 40. * MgO(i, j, k);
+              totalMgd =
+                  totalMgd + 48. / 140. * Mg2SiO4[i] + 24. / 40. * MgO[i];
             }
             correctMgd = (gr_float)(Mgd[i] / totalMgd);
-            MgSiO3(i, j, k) = MgSiO3(i, j, k) * correctMgd;
+            MgSiO3[i] = MgSiO3[i] * correctMgd;
             if (my_chemistry->dust_species > 1) {
-              Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * correctMgd;
-              MgO(i, j, k) = MgO(i, j, k) * correctMgd;
+              Mg2SiO4[i] = Mg2SiO4[i] * correctMgd;
+              MgO[i] = MgO[i] * correctMgd;
             }
           }
 
           if (my_chemistry->dust_species > 1) {
-            S(i, j, k) = Sg[i];
-            FeS(i, j, k) = 88. / 32. * Sd[i];
+            S[i] = Sg[i];
+            FeS[i] = 88. / 32. * Sd[i];
 
-            Al(i, j, k) = Alg[i];
-            Al2O3(i, j, k) = 102. / 54. * Ald[i];
+            Al[i] = Alg[i];
+            Al2O3[i] = 102. / 54. * Ald[i];
           }
         }
 
       } else {
-        totalO = 16. / 28. * COI(i, j, k) + 32. / 44. * CO2I(i, j, k) +
-                 OI(i, j, k) + 16. / 17. * OHI(i, j, k) +
-                 16. / 18. * H2OI(i, j, k) + O2I(i, j, k) +
-                 16. / 44. * SiOI(i, j, k) + 32. / 60. * SiO2I(i, j, k) +
-                 16. / 28. * COII(i, j, k) + OII(i, j, k) +
-                 16. / 17. * OHII(i, j, k) + 16. / 18. * H2OII(i, j, k) +
-                 16. / 19. * H3OII(i, j, k) + O2II(i, j, k);
+        totalO = 16. / 28. * COI[i] + 32. / 44. * CO2I[i] + OI[i] +
+                 16. / 17. * OHI[i] + 16. / 18. * H2OI[i] + O2I[i] +
+                 16. / 44. * SiOI[i] + 32. / 60. * SiO2I[i] +
+                 16. / 28. * COII[i] + OII[i] + 16. / 17. * OHII[i] +
+                 16. / 18. * H2OII[i] + 16. / 19. * H3OII[i] + O2II[i];
         if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 0) {
-            totalO = totalO + 48. / 100. * MgSiO3(i, j, k);
+            totalO = totalO + 48. / 100. * MgSiO3[i];
           }
           if (my_chemistry->dust_species > 1) {
-            totalO = totalO + 64. / 140. * Mg2SiO4(i, j, k) +
-                     64. / 232. * Fe3O4(i, j, k) + 32. / 60. * SiO2D(i, j, k) +
-                     16. / 40. * MgO(i, j, k) + 48. / 102. * Al2O3(i, j, k);
+            totalO = totalO + 64. / 140. * Mg2SiO4[i] + 64. / 232. * Fe3O4[i] +
+                     32. / 60. * SiO2D[i] + 16. / 40. * MgO[i] +
+                     48. / 102. * Al2O3[i];
           }
           if (my_chemistry->dust_species > 2) {
-            totalO = totalO + 8. / 22.68 * reforg(i, j, k) +
-                     16. / 32. * volorg(i, j, k) + 16. / 18. * H2Oice(i, j, k);
+            totalO = totalO + 8. / 22.68 * reforg[i] + 16. / 32. * volorg[i] +
+                     16. / 18. * H2Oice[i];
           }
         }
         if (!chiaki_model_dust_evolution) {
           correctO = (gr_float)(Og[i] / totalO);
-          COI(i, j, k) = COI(i, j, k) * correctO;
-          CO2I(i, j, k) = CO2I(i, j, k) * correctO;
-          OI(i, j, k) = OI(i, j, k) * correctO;
-          OHI(i, j, k) = OHI(i, j, k) * correctO;
-          H2OI(i, j, k) = H2OI(i, j, k) * correctO;
-          O2I(i, j, k) = O2I(i, j, k) * correctO;
-          SiOI(i, j, k) = SiOI(i, j, k) * correctO;
-          SiO2I(i, j, k) = SiO2I(i, j, k) * correctO;
-          COII(i, j, k) = COII(i, j, k) * correctO;
-          OII(i, j, k) = OII(i, j, k) * correctO;
-          OHII(i, j, k) = OHII(i, j, k) * correctO;
-          H2OII(i, j, k) = H2OII(i, j, k) * correctO;
-          H3OII(i, j, k) = H3OII(i, j, k) * correctO;
-          O2II(i, j, k) = O2II(i, j, k) * correctO;
+          COI[i] = COI[i] * correctO;
+          CO2I[i] = CO2I[i] * correctO;
+          OI[i] = OI[i] * correctO;
+          OHI[i] = OHI[i] * correctO;
+          H2OI[i] = H2OI[i] * correctO;
+          O2I[i] = O2I[i] * correctO;
+          SiOI[i] = SiOI[i] * correctO;
+          SiO2I[i] = SiO2I[i] * correctO;
+          COII[i] = COII[i] * correctO;
+          OII[i] = OII[i] * correctO;
+          OHII[i] = OHII[i] * correctO;
+          H2OII[i] = H2OII[i] * correctO;
+          H3OII[i] = H3OII[i] * correctO;
+          O2II[i] = O2II[i] * correctO;
         } else {
           correctO = (gr_float)(Ot[i] / totalO);
-          COI(i, j, k) = COI(i, j, k) * correctO;
-          CO2I(i, j, k) = CO2I(i, j, k) * correctO;
-          OI(i, j, k) = OI(i, j, k) * correctO;
-          OHI(i, j, k) = OHI(i, j, k) * correctO;
-          H2OI(i, j, k) = H2OI(i, j, k) * correctO;
-          O2I(i, j, k) = O2I(i, j, k) * correctO;
-          SiOI(i, j, k) = SiOI(i, j, k) * correctO;
-          SiO2I(i, j, k) = SiO2I(i, j, k) * correctO;
-          COII(i, j, k) = COII(i, j, k) * correctO;
-          OII(i, j, k) = OII(i, j, k) * correctO;
-          OHII(i, j, k) = OHII(i, j, k) * correctO;
-          H2OII(i, j, k) = H2OII(i, j, k) * correctO;
-          H3OII(i, j, k) = H3OII(i, j, k) * correctO;
-          O2II(i, j, k) = O2II(i, j, k) * correctO;
+          COI[i] = COI[i] * correctO;
+          CO2I[i] = CO2I[i] * correctO;
+          OI[i] = OI[i] * correctO;
+          OHI[i] = OHI[i] * correctO;
+          H2OI[i] = H2OI[i] * correctO;
+          O2I[i] = O2I[i] * correctO;
+          SiOI[i] = SiOI[i] * correctO;
+          SiO2I[i] = SiO2I[i] * correctO;
+          COII[i] = COII[i] * correctO;
+          OII[i] = OII[i] * correctO;
+          OHII[i] = OHII[i] * correctO;
+          H2OII[i] = H2OII[i] * correctO;
+          H3OII[i] = H3OII[i] * correctO;
+          O2II[i] = O2II[i] * correctO;
           if (my_chemistry->dust_species > 0) {
-            MgSiO3(i, j, k) = MgSiO3(i, j, k) * correctO;
+            MgSiO3[i] = MgSiO3[i] * correctO;
           }
           if (my_chemistry->dust_species > 1) {
-            Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * correctO;
-            Fe3O4(i, j, k) = Fe3O4(i, j, k) * correctO;
-            SiO2D(i, j, k) = SiO2D(i, j, k) * correctO;
-            MgO(i, j, k) = MgO(i, j, k) * correctO;
-            Al2O3(i, j, k) = Al2O3(i, j, k) * correctO;
+            Mg2SiO4[i] = Mg2SiO4[i] * correctO;
+            Fe3O4[i] = Fe3O4[i] * correctO;
+            SiO2D[i] = SiO2D[i] * correctO;
+            MgO[i] = MgO[i] * correctO;
+            Al2O3[i] = Al2O3[i] * correctO;
           }
           if (my_chemistry->dust_species > 2) {
-            reforg(i, j, k) = reforg(i, j, k) * correctO;
-            volorg(i, j, k) = volorg(i, j, k) * correctO;
-            H2Oice(i, j, k) = H2Oice(i, j, k) * correctO;
+            reforg[i] = reforg[i] * correctO;
+            volorg[i] = volorg[i] * correctO;
+            H2Oice[i] = H2Oice[i] * correctO;
           }
         }
 
-        totalC = CI(i, j, k) + CII(i, j, k) + 12. / 28. * COI(i, j, k) +
-                 12. / 44. * CO2I(i, j, k) + 12. / 13. * CHI(i, j, k) +
-                 12. / 14. * CH2I(i, j, k) + 12. / 28. * COII(i, j, k);
+        totalC = CI[i] + CII[i] + 12. / 28. * COI[i] + 12. / 44. * CO2I[i] +
+                 12. / 13. * CHI[i] + 12. / 14. * CH2I[i] + 12. / 28. * COII[i];
         if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 0) {
-            totalC = totalC + AC(i, j, k);
+            totalC = totalC + AC[i];
           }
           if (my_chemistry->dust_species > 2) {
-            totalC = totalC + 12. / 22.68 * reforg(i, j, k) +
-                     12. / 32. * volorg(i, j, k);
+            totalC = totalC + 12. / 22.68 * reforg[i] + 12. / 32. * volorg[i];
           }
         }
         if (!chiaki_model_dust_evolution) {
           correctC = (gr_float)(Cg[i] / totalC);
-          CI(i, j, k) = CI(i, j, k) * correctC;
-          CII(i, j, k) = CII(i, j, k) * correctC;
-          COI(i, j, k) = COI(i, j, k) * correctC;
-          CO2I(i, j, k) = CO2I(i, j, k) * correctC;
-          CHI(i, j, k) = CHI(i, j, k) * correctC;
-          CH2I(i, j, k) = CH2I(i, j, k) * correctC;
-          COII(i, j, k) = COII(i, j, k) * correctC;
+          CI[i] = CI[i] * correctC;
+          CII[i] = CII[i] * correctC;
+          COI[i] = COI[i] * correctC;
+          CO2I[i] = CO2I[i] * correctC;
+          CHI[i] = CHI[i] * correctC;
+          CH2I[i] = CH2I[i] * correctC;
+          COII[i] = COII[i] * correctC;
         } else {
           correctC = (gr_float)(Ct[i] / totalC);
-          CI(i, j, k) = CI(i, j, k) * correctC;
-          CII(i, j, k) = CII(i, j, k) * correctC;
-          COI(i, j, k) = COI(i, j, k) * correctC;
-          CO2I(i, j, k) = CO2I(i, j, k) * correctC;
-          CHI(i, j, k) = CHI(i, j, k) * correctC;
-          CH2I(i, j, k) = CH2I(i, j, k) * correctC;
-          COII(i, j, k) = COII(i, j, k) * correctC;
+          CI[i] = CI[i] * correctC;
+          CII[i] = CII[i] * correctC;
+          COI[i] = COI[i] * correctC;
+          CO2I[i] = CO2I[i] * correctC;
+          CHI[i] = CHI[i] * correctC;
+          CH2I[i] = CH2I[i] * correctC;
+          COII[i] = COII[i] * correctC;
           if (my_chemistry->dust_species > 0) {
-            AC(i, j, k) = AC(i, j, k) * correctC;
+            AC[i] = AC[i] * correctC;
           }
           if (my_chemistry->dust_species > 2) {
-            reforg(i, j, k) = reforg(i, j, k) * correctC;
-            volorg(i, j, k) = volorg(i, j, k) * correctC;
+            reforg[i] = reforg[i] * correctC;
+            volorg[i] = volorg[i] * correctC;
           }
         }
 
-        totalSi = SiI(i, j, k) + 28. / 44. * SiOI(i, j, k) +
-                  28. / 60. * SiO2I(i, j, k);
+        totalSi = SiI[i] + 28. / 44. * SiOI[i] + 28. / 60. * SiO2I[i];
         if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 0) {
-            totalSi = totalSi + 28. / 100. * MgSiO3(i, j, k);
+            totalSi = totalSi + 28. / 100. * MgSiO3[i];
           }
           if (my_chemistry->dust_species > 1) {
-            totalSi = totalSi + SiM(i, j, k) + 28. / 140. * Mg2SiO4(i, j, k) +
-                      28. / 60. * SiO2D(i, j, k);
+            totalSi = totalSi + SiM[i] + 28. / 140. * Mg2SiO4[i] +
+                      28. / 60. * SiO2D[i];
           }
         }
         if (!chiaki_model_dust_evolution) {
           correctSi = (gr_float)(Sig[i] / totalSi);
-          SiI(i, j, k) = SiI(i, j, k) * correctSi;
-          SiOI(i, j, k) = SiOI(i, j, k) * correctSi;
-          SiO2I(i, j, k) = SiO2I(i, j, k) * correctSi;
+          SiI[i] = SiI[i] * correctSi;
+          SiOI[i] = SiOI[i] * correctSi;
+          SiO2I[i] = SiO2I[i] * correctSi;
         } else {
           correctSi = (gr_float)(Sit[i] / totalSi);
-          SiI(i, j, k) = SiI(i, j, k) * correctSi;
-          SiOI(i, j, k) = SiOI(i, j, k) * correctSi;
-          SiO2I(i, j, k) = SiO2I(i, j, k) * correctSi;
+          SiI[i] = SiI[i] * correctSi;
+          SiOI[i] = SiOI[i] * correctSi;
+          SiO2I[i] = SiO2I[i] * correctSi;
           if (my_chemistry->dust_species > 0) {
-            MgSiO3(i, j, k) = MgSiO3(i, j, k) * correctSi;
+            MgSiO3[i] = MgSiO3[i] * correctSi;
           }
           if (my_chemistry->dust_species > 1) {
-            SiM(i, j, k) = SiM(i, j, k) * correctSi;
-            Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * correctSi;
-            SiO2D(i, j, k) = SiO2D(i, j, k) * correctSi;
+            SiM[i] = SiM[i] * correctSi;
+            Mg2SiO4[i] = Mg2SiO4[i] * correctSi;
+            SiO2D[i] = SiO2D[i] * correctSi;
           }
         }
 
         if (chiaki_model_dust_evolution) {
           if (my_chemistry->dust_species > 1) {
-            totalFe = Fe(i, j, k) + FeM(i, j, k) +
-                      168. / 232. * Fe3O4(i, j, k) + 56. / 88. * FeS(i, j, k);
+            totalFe =
+                Fe[i] + FeM[i] + 168. / 232. * Fe3O4[i] + 56. / 88. * FeS[i];
             correctFe = (gr_float)(Fet[i] / totalFe);
-            Fe(i, j, k) = Fe(i, j, k) * correctFe;
-            FeM(i, j, k) = FeM(i, j, k) * correctFe;
-            Fe3O4(i, j, k) = Fe3O4(i, j, k) * correctFe;
-            FeS(i, j, k) = FeS(i, j, k) * correctFe;
+            Fe[i] = Fe[i] * correctFe;
+            FeM[i] = FeM[i] * correctFe;
+            Fe3O4[i] = Fe3O4[i] * correctFe;
+            FeS[i] = FeS[i] * correctFe;
           }
 
           if (my_chemistry->dust_species > 0) {
-            totalMg = Mg(i, j, k) + 24. / 100. * MgSiO3(i, j, k);
+            totalMg = Mg[i] + 24. / 100. * MgSiO3[i];
             if (my_chemistry->dust_species > 1) {
-              totalMg = totalMg + 48. / 140. * Mg2SiO4(i, j, k) +
-                        24. / 40. * MgO(i, j, k);
+              totalMg = totalMg + 48. / 140. * Mg2SiO4[i] + 24. / 40. * MgO[i];
             }
             correctMg = (gr_float)(Mgt[i] / totalMg);
-            Mg(i, j, k) = Mg(i, j, k) * correctMg;
-            MgSiO3(i, j, k) = MgSiO3(i, j, k) * correctMg;
+            Mg[i] = Mg[i] * correctMg;
+            MgSiO3[i] = MgSiO3[i] * correctMg;
             if (my_chemistry->dust_species > 1) {
-              Mg2SiO4(i, j, k) = Mg2SiO4(i, j, k) * correctMg;
-              MgO(i, j, k) = MgO(i, j, k) * correctMg;
+              Mg2SiO4[i] = Mg2SiO4[i] * correctMg;
+              MgO[i] = MgO[i] * correctMg;
             }
           }
 
           if (my_chemistry->dust_species > 1) {
-            totalS = S(i, j, k) + 32. / 88. * FeS(i, j, k);
+            totalS = S[i] + 32. / 88. * FeS[i];
             correctS = (gr_float)(St[i] / totalS);
-            S(i, j, k) = S(i, j, k) * correctS;
-            FeS(i, j, k) = FeS(i, j, k) * correctS;
+            S[i] = S[i] * correctS;
+            FeS[i] = FeS[i] * correctS;
 
-            totalAl = Al(i, j, k) + 54. / 102. * Al2O3(i, j, k);
+            totalAl = Al[i] + 54. / 102. * Al2O3[i];
             correctAl = (gr_float)(Alt[i] / totalAl);
-            Al(i, j, k) = Al(i, j, k) * correctAl;
-            Al2O3(i, j, k) = Al2O3(i, j, k) * correctAl;
+            Al[i] = Al[i] * correctAl;
+            Al2O3[i] = Al2O3[i] * correctAl;
           }
         }
       }
@@ -929,23 +817,20 @@ static void make_consistent_(
   // Set the electron density
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    de(i, j, k) = HII(i, j, k) + HeII(i, j, k) / (gr_float)(4.) +
-                  HeIII(i, j, k) / (gr_float)(2.);
+    de[i] = HII[i] + HeII[i] / (gr_float)(4.) + HeIII[i] / (gr_float)(2.);
     if (my_chemistry->primordial_chemistry > 1) {
-      de(i, j, k) = de(i, j, k) - HM(i, j, k) + H2II(i, j, k) / (gr_float)(2.);
+      de[i] = de[i] - HM[i] + H2II[i] / (gr_float)(2.);
     }
     if (my_chemistry->primordial_chemistry > 3) {
-      de(i, j, k) = de(i, j, k) - DM(i, j, k) / (gr_float)(2.) +
-                    HDII(i, j, k) / (gr_float)(3.) +
-                    HeHII(i, j, k) / (gr_float)(5.);
+      de[i] = de[i] - DM[i] / (gr_float)(2.) + HDII[i] / (gr_float)(3.) +
+              HeHII[i] / (gr_float)(5.);
     }
     if (my_chemistry->metal_chemistry == 1) {
       // if (itmask_metal(i)) then
-      de(i, j, k) =
-          de(i, j, k) + CII(i, j, k) / (gr_float)(12.) +
-          COII(i, j, k) / (gr_float)(28.) + OII(i, j, k) / (gr_float)(16.) +
-          OHII(i, j, k) / (gr_float)(17.) + H2OII(i, j, k) / (gr_float)(18.) +
-          H3OII(i, j, k) / (gr_float)(19.) + O2II(i, j, k) / (gr_float)(32.);
+      de[i] = de[i] + CII[i] / (gr_float)(12.) + COII[i] / (gr_float)(28.) +
+              OII[i] / (gr_float)(16.) + OHII[i] / (gr_float)(17.) +
+              H2OII[i] / (gr_float)(18.) + H3OII[i] / (gr_float)(19.) +
+              O2II[i] / (gr_float)(32.);
       // endif
     }
   }
