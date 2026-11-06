@@ -194,7 +194,6 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
 
   // locals
 
-  int i;
   // flag for if Gen Chiaki's dust model is enabled with grain growth
   const bool chiaki_model_dust_evolution =
       my_chemistry->dust_chemistry == 2 && my_chemistry->grain_growth == 1;
@@ -268,16 +267,16 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
       // Compute total densities of H and He (ensure non-negativity)
 
       if ((my_chemistry->metal_cooling) == 1) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           metalfree[i] = d(i, j, k) - metal(i, j, k);
         }
       } else {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           metalfree[i] = d(i, j, k);
         }
       }
 
-      for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         HI(i, j, k) = std::fabs(HI(i, j, k));
         HII(i, j, k) = std::fabs(HII(i, j, k));
         HeI(i, j, k) = std::fabs(HeI(i, j, k));
@@ -290,7 +289,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
       // include molecular hydrogen
 
       if (my_chemistry->primordial_chemistry > 1) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           HM(i, j, k) = std::fabs(HM(i, j, k));
           H2II(i, j, k) = std::fabs(H2II(i, j, k));
           H2I(i, j, k) = std::fabs(H2I(i, j, k));
@@ -299,7 +298,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
       }
 
       if (my_chemistry->primordial_chemistry > 2) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           HDI(i, j, k) = std::fabs(HDI(i, j, k));
           totalH[i] = totalH[i] + 1. / 3. * HDI(i, j, k);
         }
@@ -307,7 +306,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
       // ! GC202005
 
       if (my_chemistry->primordial_chemistry > 3) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           HDII(i, j, k) = std::fabs(HDII(i, j, k));
           HeHII(i, j, k) = std::fabs(HeHII(i, j, k));
           totalH[i] =
@@ -340,7 +339,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
         const grackle::impl::yields::MetalTables& onlygas_metal_yields =
             inject_pathway_props->gas_metal_nuclide_yields;
 
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           Ct[i] = 0.;
           Cg[i] = 0.;
           Ot[i] = 0.;
@@ -376,7 +375,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
           }
         }
 
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           Cd[i] = Ct[i] - Cg[i];
           Od[i] = Ot[i] - Og[i];
           Mgd[i] = Mgt[i] - Mgg[i];
@@ -386,7 +385,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
           Fed[i] = Fet[i] - Feg[i];
         }
 
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           // if (itmask_metal(i)) then
           OHI(i, j, k) = std::fabs(OHI(i, j, k));
           H2OI(i, j, k) = std::fabs(H2OI(i, j, k));
@@ -405,7 +404,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
 
       // Correct densities by keeping fractions the same
 
-      for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         correctH = (gr_float)(my_chemistry->HydrogenFractionByMass *
                               metalfree[i] / totalH[i]);
         HI(i, j, k) = HI(i, j, k) * correctH;
@@ -433,7 +432,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
       // Do the same thing for deuterium (ignore HD) Assumes dtoh is small
 
       if (my_chemistry->primordial_chemistry > 2) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           DI(i, j, k) = std::fabs(DI(i, j, k));
           DII(i, j, k) = std::fabs(DII(i, j, k));
           HDI(i, j, k) = std::fabs(HDI(i, j, k));
@@ -459,7 +458,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
       // Do the same thing for metal species
 
       if (my_chemistry->metal_chemistry == 1) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           CI(i, j, k) = std::fabs(CI(i, j, k));
           CII(i, j, k) = std::fabs(CII(i, j, k));
           COI(i, j, k) = std::fabs(COI(i, j, k));
@@ -483,7 +482,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
       }
 
       if (chiaki_model_dust_evolution) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           if (my_chemistry->dust_species > 0) {
             Mg(i, j, k) = std::fabs(Mg(i, j, k));
 
@@ -513,7 +512,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
       }
 
       if (my_chemistry->metal_chemistry == 1) {
-        for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           // if (itmask_metal(i)) then
           //- if (d(i,j,k)*dom .lt. 1.e-2_DKIND) then
           // !       if (d(i,j,k)*dom .lt.
@@ -940,7 +939,7 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
 
       // Set the electron density
 
-      for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         de(i, j, k) = HII(i, j, k) + HeII(i, j, k) / (gr_float)(4.) +
                       HeIII(i, j, k) / (gr_float)(2.);
         if (my_chemistry->primordial_chemistry > 1) {
