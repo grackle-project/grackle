@@ -30,6 +30,7 @@
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.hpp"
 #include "ratequery.hpp"
+#include "step_rate_gauss_seidel.hpp"
 #include "support/expected.hpp"
 #include "support/status_reporting.hpp"
 #include "tabulated/initialize_cloudy_data.hpp"
@@ -407,6 +408,13 @@ extern "C" int local_initialize_chemistry_data(
   // make a deep copy of the species kind map (this is very cheap)
   my_rates->opaque_storage->sp_kind_map =
       species_initialize_info_rslt.value().kind_map;
+
+  // initialize machinery used by Gauss-Seidel
+  if (species_initialize_info_rslt.value().name_map.size() > 0) {
+    my_rates->opaque_storage->step_gs_dens_updater =
+        new GRIMPL_NS::step_gs_detail::DensUpdater(
+            species_initialize_info_rslt.value().kind_map);
+  }
 
   // TODO: we should make an effort to start using the information within
   //       species_initialize_info_rslt

@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements step_rate_gauss_seidel
+/// Declares/Implements @ref step_rate_gauss_seidel and relevant logic
 ///
 //===----------------------------------------------------------------------===//
 
@@ -21,216 +21,135 @@
 
 #include "grackle.h"  // gr_float
 #include "chemistry_solver_funcs.hpp"
+#include "chem_model/infer_species.hpp"
 #include "fortran_func_decls.h"  // gr_mask_type
-#include "support/index_helper.hpp"
 #include "internal_types.hpp"
 #include "LUT.hpp"
+#include "support/config.hpp"
+#include "support/index_helper.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
+namespace step_gs_detail{
 
-/// This function overwrites the species density field values using the values
-/// in @p species_tmpdens, which holds the values from the end of the current
-/// (sub-)cycle.
-inline void update_fields_from_tmpdens_gauss_seidel(
-  const double* dtit, IndexRange idx_range, double* dedot_prev,
-  double* HIdot_prev, const gr_mask_type* itmask,
-  const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-  grackle_field_data* my_fields,
-  grackle::impl::SpeciesCollection species_tmpdens
-) {
+/// calculates electron density from other species tracked by @p spdens and
+/// stores the result in the slot reserved for electron density
+///
+/// @note this is essentially equivalent to logic written in make_consistent
+inline void update_electron_densities(IndexRange idx_range,
+                                      const gr_mask_type* itmask,
+                                      const gr_mask_type* itmask_metal,
+                                      const chemistry_data* my_chemistry,
+                                      SpeciesMultiView<gr_float> spdens) {
 
-  // Construct views of various species fields
-  // -> TODO: stop doing this!
-
-  FortranView<gr_float***> de(my_fields->e_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HI(my_fields->HI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HII(my_fields->HII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeI(my_fields->HeI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeII(my_fields->HeII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeIII(my_fields->HeIII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HM(my_fields->HM_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2I(my_fields->H2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2II(my_fields->H2II_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> DI(my_fields->DI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> DII(my_fields->DII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HDI(my_fields->HDI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> DM(my_fields->DM_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HDII(my_fields->HDII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> HeHII(my_fields->HeHII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CI(my_fields->CI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CII(my_fields->CII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> COI(my_fields->COI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CO2I(my_fields->CO2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OI(my_fields->OI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OHI(my_fields->OHI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2OI(my_fields->H2OI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> O2I(my_fields->O2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiI(my_fields->SiI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiOI(my_fields->SiOI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiO2I(my_fields->SiO2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CHI(my_fields->CHI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CH2I(my_fields->CH2I_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> COII(my_fields->COII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OII(my_fields->OII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OHII(my_fields->OHII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2OII(my_fields->H2OII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H3OII(my_fields->H3OII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> O2II(my_fields->O2II_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Mg(my_fields->Mg_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Al(my_fields->Al_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> S(my_fields->S_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Fe(my_fields->Fe_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiM(my_fields->SiM_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> FeM(my_fields->FeM_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Mg2SiO4(my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> MgSiO3(my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Fe3O4(my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> AC(my_fields->AC_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> SiO2D(my_fields->SiO2_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> MgO(my_fields->MgO_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> FeS(my_fields->FeS_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> Al2O3(my_fields->Al2O3_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> reforg(my_fields->ref_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> volorg(my_fields->vol_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2Oice(my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  // --- (E) Set densities from 1D temps to 3D fields ---
-
-  const int j = idx_range.j;
-  const int k = idx_range.k;
-  // flag for if Gen Chiaki's dust model is enabled
-  // -> to simplify bookkeeping in other parts of the code, we ignore whether
-  //    the grain_growth flag was enabled, (the logic for setting the relevant
-  //    reaction rates, explicitly sets the rates to 0 if disabled)
-  const bool chiaki_model_dust_evolution = my_chemistry->dust_chemistry == 2;
+  // TODO: stop using SpLUT and stop accessing species unless we know that
+  //       grackle is configured to actually use them
+  // -> the proper way to fix this is to precalculate information about the
+  //    relevant species at startup (I have a plan for that)
+  gr_float* de = spdens.contig1d_ptr(SpLUT::e);
+  const gr_float* HII = spdens.contig1d_ptr(SpLUT::HII);
+  const gr_float* HeII = spdens.contig1d_ptr(SpLUT::HeII);
+  const gr_float* HeIII = spdens.contig1d_ptr(SpLUT::HeIII);
+  const gr_float* HM = spdens.contig1d_ptr(SpLUT::HM);
+  const gr_float* H2II = spdens.contig1d_ptr(SpLUT::H2II);
+  const gr_float* DII = spdens.contig1d_ptr(SpLUT::DII);
+  const gr_float* DM = spdens.contig1d_ptr(SpLUT::DM);
+  const gr_float* HDII = spdens.contig1d_ptr(SpLUT::HDII);
+  const gr_float* HeHII = spdens.contig1d_ptr(SpLUT::HeHII);
+  const gr_float* CII = spdens.contig1d_ptr(SpLUT::CII);
+  const gr_float* COII = spdens.contig1d_ptr(SpLUT::COII);
+  const gr_float* OII = spdens.contig1d_ptr(SpLUT::OII);
+  const gr_float* OHII = spdens.contig1d_ptr(SpLUT::OHII);
+  const gr_float* H2OII = spdens.contig1d_ptr(SpLUT::H2OII);
+  const gr_float* H3OII = spdens.contig1d_ptr(SpLUT::H3OII);
+  const gr_float* O2II = spdens.contig1d_ptr(SpLUT::O2II);
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
-      HIdot_prev[i] = std::fabs(HI(i,j,k)-species_tmpdens.data[SpLUT::HI][i]) /
-              std::fmax((double)(dtit[i] ), tiny8);
-      HI(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HI][i] ), tiny_fortran_val);
-      HII(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HII][i] ), tiny_fortran_val);
-      HeI(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeI][i] ), tiny_fortran_val);
-      HeII(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeII][i] ), tiny_fortran_val);
-      HeIII(i,j,k) = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeIII][i] ), (gr_float)(1e-5)*tiny_fortran_val);
-
-      // temporarily store the electron density from the start of the current
-      // subcycle.
-      dedot_prev[i] = de(i,j,k);
-
-      // Use charge conservation to determine electron fraction
-      // -> in other words, we ignore species_tmpdens.data[SpLUT::e] (in
-      //    practice, I think that array holds garbage values)
-      de(i,j,k) = HII(i,j,k) + HeII(i,j,k)/(gr_float)(4.) +
-           HeIII(i,j,k)/(gr_float)(2.);
+      de[i] = HII[i] + HeII[i]/(gr_float)(4.) +
+           HeIII[i]/(gr_float)(2.);
       if (my_chemistry->primordial_chemistry > 1)
-           { de(i,j,k) = de(i,j,k) - HM(i,j,k) + H2II(i,j,k)/(gr_float)(2.); }
+           { de[i] = de[i] - HM[i] + H2II[i]/(gr_float)(2.); }
 
       if (my_chemistry->primordial_chemistry > 2)
-           { de(i,j,k) = de(i,j,k) + DII(i,j,k)/(gr_float)(2.); }
+           { de[i] = de[i] + DII[i]/(gr_float)(2.); }
       if (my_chemistry->primordial_chemistry > 3)
-           { de(i,j,k) = de(i,j,k) - DM(i,j,k)/(gr_float)(2.)
-                + HDII(i,j,k)/(gr_float)(3.) + HeHII(i,j,k)/(gr_float)(5.); }
-      if ( (my_chemistry->metal_chemistry == 1)  && 
+           { de[i] = de[i] - DM[i]/(gr_float)(2.)
+                + HDII[i]/(gr_float)(3.) + HeHII[i]/(gr_float)(5.); }
+      if ( (my_chemistry->metal_chemistry == 1)  &&
            (itmask_metal[i] != MASK_FALSE) )
-           { de(i,j,k) = de(i,j,k)
-                + CII(i,j,k)/(gr_float)(12.) + COII(i,j,k)/(gr_float)(28.)
-                + OII(i,j,k)/(gr_float)(16.) + OHII(i,j,k)/(gr_float)(17.)
-                + H2OII(i,j,k)/(gr_float)(18.) + H3OII(i,j,k)/(gr_float)(19.)
-                + O2II(i,j,k)/(gr_float)(32.); }
-
-      // store the time-derivative of the electron-density in dedot
-      // (don't forget that we previously stored the value from the start of
-      // the current cycle within dedot_prev)
-      dedot_prev[i] = std::fabs(de(i,j,k)-dedot_prev[i])/
-           std::fmax(dtit[i],tiny8);
-
-      if (my_chemistry->primordial_chemistry > 1)  {
-        HM(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HM][i] ), tiny_fortran_val);
-        H2I(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2I][i]), tiny_fortran_val);
-        H2II(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2II][i] ), tiny_fortran_val);
-      }
-
-      if (my_chemistry->primordial_chemistry > 2)  {
-        DI(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::DI][i] ), tiny_fortran_val);
-        DII(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::DII][i] ), tiny_fortran_val);
-        HDI(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HDI][i] ), tiny_fortran_val);
-      }
-
-      if (my_chemistry->primordial_chemistry > 3)  {
-        DM(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::DM][i] ), tiny_fortran_val);
-        HDII(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HDII][i] ), tiny_fortran_val);
-        HeHII(i,j,k) = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeHII][i] ), tiny_fortran_val);
-      }
-
-      if ( (my_chemistry->metal_chemistry == 1)  && 
-           (itmask_metal[i] != MASK_FALSE) )  {
-        CI(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CI][i]      ), tiny_fortran_val);
-        CII(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CII][i]     ), tiny_fortran_val);
-        COI(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::COI][i]     ), tiny_fortran_val);
-        CO2I(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CO2I][i]    ), tiny_fortran_val);
-        OI(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OI][i]      ), tiny_fortran_val);
-        OHI(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OHI][i]     ), tiny_fortran_val);
-        H2OI(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2OI][i]    ), tiny_fortran_val);
-        O2I(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::O2I][i]     ), tiny_fortran_val);
-        SiI(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiI][i]     ), tiny_fortran_val);
-        SiOI(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiOI][i]    ), tiny_fortran_val);
-        SiO2I(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiO2I][i]   ), tiny_fortran_val);
-        CHI(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CHI][i]     ), tiny_fortran_val);
-        CH2I(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CH2I][i]    ), tiny_fortran_val);
-        COII(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::COII][i]    ), tiny_fortran_val);
-        OII(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OII][i]     ), tiny_fortran_val);
-        OHII(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OHII][i]    ), tiny_fortran_val);
-        H2OII(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2OII][i]   ), tiny_fortran_val);
-        H3OII(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H3OII][i]   ), tiny_fortran_val);
-        O2II(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::O2II][i]    ), tiny_fortran_val);
-      }
-
-      if (chiaki_model_dust_evolution && itmask_metal[i] != MASK_FALSE) {
-
-        if (my_chemistry->dust_species > 0)  {
-          Mg(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Mg][i]      ), tiny_fortran_val);
-        }
-        if (my_chemistry->dust_species > 1)  {
-          Al(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Al][i]      ), tiny_fortran_val);
-          S(i,j,k)       = std::fmax((gr_float)(species_tmpdens.data[SpLUT::S][i]       ), tiny_fortran_val);
-          Fe(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Fe][i]      ), tiny_fortran_val);
-        }
-
-        if (my_chemistry->dust_species > 0)  {
-          MgSiO3(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::MgSiO3_dust][i]  ), tiny_fortran_val);
-          AC(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::AC_dust][i]      ), tiny_fortran_val);
-        }
-        if (my_chemistry->dust_species > 1)  {
-          SiM(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiM_dust][i]     ), tiny_fortran_val);
-          FeM(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::FeM_dust][i]     ), tiny_fortran_val);
-          Mg2SiO4(i,j,k) = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Mg2SiO4_dust][i] ), tiny_fortran_val);
-          Fe3O4(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Fe3O4_dust][i]   ), tiny_fortran_val);
-          SiO2D(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiO2_dust][i]   ), tiny_fortran_val);
-          MgO(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::MgO_dust][i]     ), tiny_fortran_val);
-          FeS(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::FeS_dust][i]     ), tiny_fortran_val);
-          Al2O3(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Al2O3_dust][i]   ), tiny_fortran_val);
-        }
-        if (my_chemistry->dust_species > 2)  {
-          reforg(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::ref_org_dust][i]   ), tiny_fortran_val);
-          volorg(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::vol_org_dust][i]   ), tiny_fortran_val);
-          H2Oice(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2O_ice_dust][i]   ), tiny_fortran_val);
-        }
-      }
-
-    }
-
-    if (HI(i,j,k) != HI(i,j,k))  {
-      OMP_PRAGMA_CRITICAL
-      {
-        std::printf("HUGE HI! ::  %d %d %d %g\n",
-                    i, j, k, HI ( i, j, k ));
-      }
+           { de[i] = de[i]
+                + CII[i]/(gr_float)(12.) + COII[i]/(gr_float)(28.)
+                + OII[i]/(gr_float)(16.) + OHII[i]/(gr_float)(17.)
+                + H2OII[i]/(gr_float)(18.) + H3OII[i]/(gr_float)(19.)
+                + O2II[i]/(gr_float)(32.); }
     }
   }
-
 }
+
+/// @brief functor that updates species density values
+///
+/// This is a component of the Gauss-Seidel Logic
+///
+/// @note
+/// A case could be made for consolidating more of the gauss-seidel logic into
+/// this class, but we're punting on that for now
+class DensUpdater {
+  struct spbounds_metalrelated_pair_ {
+    IndexInterval1D sp_bounds;
+    bool metal_related;
+  };
+
+  // data-members
+  // ------------
+  /// ids of some species that require special attention
+  int species_id_e_, species_id_HI_, species_id_HeIII_;
+
+  /// ids of species whose densities are updated BEFORE the free-electron
+  /// density
+  int spidarr_pre_elec_updates_[5];
+
+  /// specifies the intervals of species ids whose densities are updated AFTER
+  /// the free electron density
+  ///
+  /// @note
+  /// The premise is to perform for-loops on each set of specified intervals
+  /// (an empty interval has start == stop)
+  spbounds_metalrelated_pair_ remaining_id_info_pairs_[3];
+
+public:  // interface methods
+  DensUpdater() = delete;
+
+  /// Primary constructor
+  ///
+  /// This should not be called unless we're using a grackle configuraton with
+  /// at least the classic 6-species primordial species
+  ///
+  /// @note
+  /// In the future, we *MAY* want to replace this with a factory method that
+  /// returns a `Expected<DensUpdater, Error>` so that failures can be more
+  /// gracefully handled. This isn't really necessary right now, but becomes
+  /// more important if this class takes on more responsibility.
+  explicit DensUpdater(const PartMap<SpKind>& sp_kind_map);
+
+  /// @brief overwrites species density values with values in @p species_tmpdens
+  ///
+  /// For context, @p species_tmpdens holds the values from the end of the
+  /// current (sub-)cycle.
+  ///
+  /// @note
+  /// The @p my_chemistry argument is *ONLY* being passed so that it can be
+  /// forwarded onto @ref update_electron_densities. In the future, this will
+  /// probably change
+  void operator()(const double* dtit, IndexRange idx_range, double* dedot_prev,
+                  double* HIdot_prev, const gr_mask_type* itmask,
+                  const gr_mask_type* itmask_metal,
+                  const chemistry_data* my_chemistry,
+                  SpeciesMultiView<gr_float> spdens,
+                  View<const gr_float**> tmp_spdens) const;
+};
+
+}  // namespace step_gs_detail
 
 /// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time
 /// integrator to advance the rate equations by one (sub-)cycle (dtit).
@@ -238,27 +157,28 @@ inline void step_rate_gauss_seidel(
   const double* dtit, IndexRange idx_range, gr_mask_type anydust,
   const double* rhoH, double* dedot_prev,
   double* HIdot_prev, const gr_mask_type* itmask,
-  const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-  grackle_field_data* my_fields,
-  grackle::impl::SpeciesCollection species_tmpdens,
-  const FullRxnRateBuf rxn_rate_buf
+  const gr_mask_type* itmask_metal, const chemistry_data* my_chemistry,
+  grackle_field_data* my_fields, SpeciesMultiView<gr_float> sp_densities,
+  SpeciesCollection species_tmpdens, const FullRxnRateBuf rxn_rate_buf,
+  const PartMap<SpKind>& sp_kind_map,
+  const step_gs_detail::DensUpdater& dens_updater
 ) {
   View<gr_float**> species_tmpdens_view(species_tmpdens.data[0],
                                         MAX_EVOLVED_SPECIES_FIELDS,
-                                        my_fields->grid_dimension[0]);
+                                        sp_densities.extent(1));
 
   // perform the Gauss-Seidel sweep to compute the species densities at the
   // end of the current timestep. The results are saved in species_tmpdens
   chemistry::species_density_updates_gauss_seidel(
       species_tmpdens_view, idx_range, dtit, anydust, rhoH, itmask,
-      itmask_metal, my_chemistry, my_fields, rxn_rate_buf);
+      itmask_metal, my_chemistry, sp_densities, rxn_rate_buf, sp_kind_map);
 
-  // update the entries from my_fields with the values in species_tmpdens
-  update_fields_from_tmpdens_gauss_seidel(
+  // update the species densities with the values in species_tmpdens
+  dens_updater(
       dtit, idx_range, dedot_prev, HIdot_prev, itmask, itmask_metal,
-      my_chemistry, my_fields, species_tmpdens);
+      my_chemistry, sp_densities, species_tmpdens_view);
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* STEP_RATE_GAUSS_SEIDEL_HPP */
+#endif  // STEP_RATE_GAUSS_SEIDEL_HPP
