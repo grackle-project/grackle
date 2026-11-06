@@ -152,7 +152,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   std::vector<double> cieY06(my_fields->grid_dimension[0]);
 
   std::vector<double> logT(my_fields->grid_dimension[0]);
-  std::vector<double> logTcmb(my_fields->grid_dimension[0]);
   std::vector<double> logrho(my_fields->grid_dimension[0]);
   std::vector<double> logH(my_fields->grid_dimension[0]);
   std::vector<double> logH2I(my_fields->grid_dimension[0]);
@@ -193,11 +192,11 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
 
   // Compute log densities
 
+  const double log10_Tcmb =
+      (my_chemistry->cmb_temperature_floor == 1) ? std::log10(comp2) : 0.0;
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       logT[i] = std::log10(tgas[i]);
-      if (my_chemistry->cmb_temperature_floor == 1)
-        logTcmb[i] = std::log10(comp2);
       logrho[i] =
           std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
       if (my_chemistry->primordial_chemistry > 0) {
@@ -378,7 +377,7 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
 
           double G = tiny8;
           if (my_chemistry->cmb_temperature_floor == 1) {
-            double log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+            double log_Ginv = interp_from_3D_grid(lognhat, log10_Tcmb, logH[i],
                                                   opaque_storage.LH2);
             G = std::pow(1.e1, (-log_Ginv));
           }
@@ -684,7 +683,7 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
 
           double G = tiny8;
           if (my_chemistry->cmb_temperature_floor == 1) {
-            double log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+            double log_Ginv = interp_from_3D_grid(lognhat, log10_Tcmb, logH[i],
                                                   opaque_storage.LHD);
             G = std::pow(1.e1, (-log_Ginv));
           }
@@ -1028,7 +1027,7 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
             double G = tiny8;
             if (my_chemistry->cmb_temperature_floor == 1) {
               double log_Ginv =
-                  interp_from_3D_grid(lognhat, logTcmb[i],
+                  interp_from_3D_grid(lognhat, log10_Tcmb,
                                       last_interp_ax_vals[i], pack.interp_grid);
               G = std::pow(1.e1, (-log_Ginv));
             }
