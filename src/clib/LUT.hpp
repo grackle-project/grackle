@@ -154,7 +154,7 @@ using OnlyGrainSpLUT = DustSpLUT;
 /// `get_CollisionalRxn_rateprop_` to not use this enum
 struct CollisionalRxnLUT {
   enum {
-#define ENTRY(NAME) NAME,
+#define ENTRY(NAME, DUMMY) NAME,
 #include "collisional_rxn_rate_members.def"
 #undef ENTRY
 

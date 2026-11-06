@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <array>
-#include <iostream>  // needed to teach googletest how to print
+#include <cstdint>
 #include <vector>
 #include <set>
 #include <utility>  // std::tuple
@@ -19,8 +19,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "chem_model/infer_species.hpp"
-#include "dust/grain_species_info.hpp"
+#include "chem_model/nuclide_model.hpp"
+#include "grtestutils/googletest/chem_model_tools.hpp"
+
+#include "chem_model/chemsp_props.hpp"
+#include "chem_model/species.hpp"
 #include "LUT.hpp"
 #include "gtest/gtest.h"
 #include "support/FrozenKeyIdxBiMap.hpp"
@@ -29,47 +32,6 @@
 
 using GRIMPL_NS::Error;
 using GRIMPL_NS::Expected;
-
-struct ParameterSpec {
-  int primordial_chemistry;
-  int metal_chemistry;
-  int dust_species;
-};
-
-// teach GoogleTest how to print our sample partition descriptors for more
-// informative errors
-void PrintTo(ParameterSpec spec, std::ostream* os) {
-  *os << "{prim=" << spec.primordial_chemistry
-      << ",metal=" << spec.metal_chemistry << ",dustsp=" << spec.dust_species
-      << '}';
-}
-
-namespace GRIMPL_NAMESPACE_DECL {
-// teach GoogleTest how to print our SpKind enum for more informative errors
-void PrintTo(const SpKind& kind, std::ostream* os) {
-  switch (kind) {
-    case SpKind::PRIMORDIAL:
-      *os << "SpKind::PRIMORDIAL";
-      return;
-    case SpKind::METAL:
-      *os << "SpKind::METAL";
-      return;
-    case SpKind::DUST:
-      *os << "SpKind::DUST";
-      return;
-    case SpKind::FILLER_A:
-      *os << "SpKind::FILLER_A";
-      return;
-    case SpKind::FILLER_B:
-      *os << "SpKind::FILLER_B";
-      return;
-    default:
-      *os << "SpKind::<UNKNOWN>";
-      return;
-  }
-}
-
-}  // namespace GRIMPL_NAMESPACE_DECL
 
 struct SpTriple {
   std::string name;
@@ -85,7 +47,7 @@ struct ExpectedSpData {
   std::set<std::string> omit_set;
 };
 
-ExpectedSpData get_expected_sp_data(ParameterSpec spec) {
+ExpectedSpData get_expected_sp_data(grtest::ParameterSpec spec) {
   ExpectedSpData out;
   std::vector<SpTriple> omit;
 
@@ -195,45 +157,38 @@ ExpectedSpData get_expected_sp_data(ParameterSpec spec) {
   return out;
 }
 
-// a helper function to help with constrrucing the species maps for the tests
-Expected<GRIMPL_NS::SpInitializeInfo, Error> infer_species_maps(
-    ParameterSpec spec) {
-  using GRIMPL_NS::GrainSpeciesInfo;
-  std::optional<GrainSpeciesInfo> maybe_grainsp_info;
-  const GrainSpeciesInfo* grain_info = nullptr;
-  if (spec.dust_species > 0) {
-    using GRIMPL_NS::GrainSpeciesInfo;
-    GRIMPL_NS::Expected<GrainSpeciesInfo, GRIMPL_NS::Error> rslt =
-        GrainSpeciesInfo::create(spec.dust_species);
-    if (!rslt.has_value()) {
-      return GRIMPL_NS::Unexpected(
-          rslt.error().context_literal("unable to init GrainSpeciesInfo"));
+class SpeciesInfo : public testing::TestWithParam<grtest::ParameterSpec> {
+protected:
+  GRIMPL_NS::SpInitializeInfo* species_info = nullptr;
+
+  void SetUp() override {
+    // we perform setup here (rather than in a constructor) since it lets us
+    // fail the test
+    grtest::ParameterSpec spec = GetParam();
+    Expected<GRIMPL_NS::SpInitializeInfo, Error> tmp =
+        grtest::infer_species_maps(spec);
+    if (!tmp.has_value()) {
+      GTEST_FAIL() << "unable to build species maps\n\n"
+                   << "  for: " << testing::PrintToString(spec) << '\n'
+                   << "  error:\n"
+                   << tmp.error().to_string();
     }
-    maybe_grainsp_info = std::move(rslt).value();
-    grain_info = &maybe_grainsp_info.value();
+    species_info = new GRIMPL_NS::SpInitializeInfo(std::move(tmp).value());
   }
 
-  return GRIMPL_NS::infer_species_maps(spec.primordial_chemistry,
-                                       spec.metal_chemistry, grain_info);
-}
+  ~SpeciesInfo() override {
+    delete species_info;  // reminder: it's ok to delete a nullptr
+  }
+};
 
-class SpeciesLUT : public testing::TestWithParam<ParameterSpec> {};
-
-TEST_P(SpeciesLUT, Consistency) {
+TEST_P(SpeciesInfo, LUTConsistency) {
   using GRIMPL_NS::SpKind;
-  ParameterSpec spec = GetParam();
-  Expected<GRIMPL_NS::SpInitializeInfo, Error> tmp = infer_species_maps(spec);
-  if (!tmp.has_value()) {
-    GTEST_FAIL() << "unable to build species maps\n\n"
-                 << "  for: " << testing::PrintToString(spec) << '\n'
-                 << "  error:\n"
-                 << tmp.error().to_string();
-  }
 
-  const GRIMPL_NS::FrozenKeyIdxBiMap name_map = tmp.value().name_map;
-  const GRIMPL_NS::PartMap<SpKind> kind_map = tmp.value().kind_map;
+  const GRIMPL_NS::FrozenKeyIdxBiMap name_map = species_info->name_map;
+  const GRIMPL_NS::PartMap<SpKind> kind_map = species_info->kind_map;
 
   // prepare for comparisons agains our expectations
+  grtest::ParameterSpec spec = GetParam();
   ExpectedSpData expected = get_expected_sp_data(spec);
 
   using CmpProps =
@@ -325,14 +280,85 @@ TEST_P(SpeciesLUT, Consistency) {
   }
 }
 
+// check inferred species properties properties free electrons
+TEST_P(SpeciesInfo, PropertyCheckFreeElectron) {
+  using GRIMPL_NS::ChemSpeciesProps;
+
+  // check the entry for free electrons
+  std::optional<uint16_t> maybe_e_id = species_info->name_map.find("e");
+  if (!maybe_e_id.has_value()) {
+    GTEST_FAIL() << "unable to lookup id associated with 'e'";
+  }
+  int electron_id = maybe_e_id.value();
+  const ChemSpeciesProps& prop = species_info->chem_species_props[electron_id];
+  EXPECT_EQ(prop.elementary_charge, -1);
+  EXPECT_FALSE(prop.composed_of_nuclides());
+  EXPECT_EQ(prop.mass_factor, GRIMPL_NS::mass_factor::e);
+}
+
+// check inferred species properties for assorted species
+TEST_P(SpeciesInfo, PropertyCheckAssorted) {
+  using GRIMPL_NS::ChemSpeciesProps;
+  using grtest::HasChemProps;
+
+  grtest::ParameterSpec spec = GetParam();
+  const GRIMPL_NS::NuclideModel& nm = species_info->nuclide_model;
+
+  // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
+  using check_triple =
+      std::tuple<const char*, testing::Matcher<ChemSpeciesProps>, bool>;
+  const check_triple cases_to_check[] = {
+      // assorted normal primordial cases
+      {"HI", HasChemProps(nm, 0, {{"H", 1}}), spec.primordial_chemistry >= 1},
+      {"HeIII", HasChemProps(nm, 2, {{"He", 1}}),
+       spec.primordial_chemistry >= 1},
+      {"H2I", HasChemProps(nm, 0, {{"H", 2}}), spec.primordial_chemistry >= 2},
+      {"DII", HasChemProps(nm, 1, {{"D", 1}}), spec.primordial_chemistry >= 3},
+
+      // assorted normal metal cases
+      {"CI", HasChemProps(nm, 0, {{"C", 1}}), spec.metal_chemistry >= 1},
+      {"OHI", HasChemProps(nm, 0, {{"O", 1}, {"H", 1}}),
+       spec.metal_chemistry >= 1},
+      {"H2OII", HasChemProps(nm, 1, {{"H", 2}, {"O", 1}}),
+       spec.metal_chemistry >= 1},
+
+      // special primordial cases
+      {"HM", HasChemProps(nm, -1, {{"H", 1}}), spec.primordial_chemistry >= 2},
+      {"DM", HasChemProps(nm, -1, {{"D", 1}}), spec.primordial_chemistry >= 4},
+
+      // special metal cases
+      {"Mg", HasChemProps(nm, 0, {{"Mg", 1}}), spec.dust_species >= 1},
+      {"Al", HasChemProps(nm, 0, {{"Al", 1}}), spec.dust_species >= 2},
+      {"S", HasChemProps(nm, 0, {{"S", 1}}), spec.dust_species >= 2},
+      {"Fe", HasChemProps(nm, 0, {{"Fe", 1}}), spec.dust_species >= 2}};
+  // NOLINTEND(clang-analyzer-cplusplus.NewDeleteLeaks)
+
+  for (const check_triple& triple : cases_to_check) {
+    if (!std::get<2>(triple)) {
+      continue;
+    }
+
+    const char* species_name = std::get<0>(triple);
+    std::optional<uint16_t> tmp = species_info->name_map.find(species_name);
+    if (!tmp.has_value()) {
+      ADD_FAILURE() << '"' << species_name << "\" missing from name_map";
+      continue;
+    }
+    int species_id = tmp.value();
+    const testing::Matcher<ChemSpeciesProps>& matcher = std::get<1>(triple);
+    EXPECT_THAT(species_info->chem_species_props[species_id], matcher)
+        << '"' << species_name << "\" species has incorrect properties";
+  }
+}
+
 // we are intentionally trying to be very rigorous about covering as many cases
 // as we possibly can (any errors that might arise here would be quite annoying
 // to debug if we don't catch them here)
-static constexpr std::array<ParameterSpec, 20> param_spec_arr({
+static constexpr std::array<grtest::ParameterSpec, 20> param_spec_arr({
     // {primordial_chemistry, metal_chemistry, dust_species}
     {1, 0, 0}, {1, 1, 0}, {1, 1, 1}, {1, 1, 2}, {1, 1, 3}, {2, 0, 0}, {2, 1, 0},
     {2, 1, 1}, {2, 1, 2}, {2, 1, 3}, {3, 0, 0}, {3, 1, 0}, {3, 1, 1}, {3, 1, 2},
     {3, 1, 3}, {4, 0, 0}, {4, 1, 0}, {4, 1, 1}, {4, 1, 2}, {4, 1, 3},
 });
 INSTANTIATE_TEST_SUITE_P(,  // First argument deliberately left empty
-                         SpeciesLUT, testing::ValuesIn(param_spec_arr));
+                         SpeciesInfo, testing::ValuesIn(param_spec_arr));

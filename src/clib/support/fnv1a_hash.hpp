@@ -14,8 +14,11 @@
 
 #include <cstdint>
 #include <limits>
+#include <string_view>
 
-namespace grackle::impl {
+#include "support/config.hpp"
+
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Holds the result of a call to fnv1a_hash
 struct HashRsltPack {
@@ -24,40 +27,59 @@ struct HashRsltPack {
   std::uint32_t hash;
 };
 
-/// calculate 32-bit FNV-1a hash of key and measures the key's length.
+/// @brief collects methods for computing a key's length and 32-bit FNV-1a hash
 ///
 /// @tparam MaxKeyLen the max number of characters in key (excluding '\0'). By
 ///     default, it's the largest value HashRsltPack::keylen holds. A smaller
 ///     value can be specified as an optimization.
-/// @param key the null-terminated string. Behavior is deliberately undefined
-///     when passed a `nullptr`
 ///
 /// @note
-/// The current implementation prioritizes convenience. We may want to evaluate
-/// whether alternatives (e.g. fxhash) are faster or have fewer collisions with
-/// our typical keys.
+/// This hash function prioritizes convenience. We may want to
+/// evaluate whether alternatives (e.g. fxhash) are faster or have fewer
+/// collisions with our typical keys.
 ///
 /// @warning
 /// Obviously this is @b NOT cryptographically secure
 template <int MaxKeyLen = std::numeric_limits<std::uint16_t>::max()>
-HashRsltPack fnv1a_hash(const char* key) {
-  static_assert(
-      0 <= MaxKeyLen && MaxKeyLen <= std::numeric_limits<std::uint16_t>::max(),
-      "MaxKeyLen can't be encoded by HashRsltPack");
+struct FNV1aHasher {
+  static_assert(0 <= MaxKeyLen &&
+                    MaxKeyLen <= std::numeric_limits<std::uint16_t>::max(),
+                "MaxKeyLen can't be encoded by HashRsltPack");
 
-  constexpr std::uint32_t prime = 16777619;
-  constexpr std::uint32_t offset = 2166136261;
+  static constexpr std::uint32_t FNV1A_PRIME = 16777619;
+  static constexpr std::uint32_t FNV1A_OFFSET = 2166136261;
 
-  std::uint32_t hash = offset;
-  for (int i = 0; i <= MaxKeyLen; i++) {  // the `<=` is intentional
-    if (key[i] == '\0') {
-      return HashRsltPack{true, static_cast<std::uint16_t>(i), hash};
+  /// @brief calculate the hash value
+  ///
+  /// @param key the null-terminated string. Behavior is deliberately undefined
+  ///     when passed a `nullptr`
+  static constexpr HashRsltPack calc(const char* key) {
+    std::uint32_t hash = FNV1A_OFFSET;
+    for (int i = 0; i <= MaxKeyLen; i++) {  // the `<=` is intentional
+      if (key[i] == '\0') {
+        return {.success = true,
+                .keylen = static_cast<std::uint16_t>(i),
+                .hash = hash};
+      }
+      hash = (hash ^ static_cast<std::uint8_t>(key[i])) * FNV1A_PRIME;
     }
-    hash = (hash ^ key[i]) * prime;
+    return {.success = false, .keylen = 0, .hash = 0};
   }
-  return HashRsltPack{false, 0, 0};
-}
 
-}  // namespace grackle::impl
+  static constexpr HashRsltPack calc(std::string_view key) {
+    int len = key.size();
+    if (len > MaxKeyLen) {
+      return {.success = false, .keylen = 0, .hash = 0};
+    }
+    std::uint32_t hash = FNV1A_OFFSET;
+    for (int i = 0; i < len; i++) {
+      hash = (hash ^ static_cast<std::uint8_t>(key[i])) * FNV1A_PRIME;
+    }
+    return {
+        .success = true, .keylen = static_cast<uint16_t>(len), .hash = hash};
+  }
+};
+
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // SUPPORT_FNV1A_HASH_HPP
