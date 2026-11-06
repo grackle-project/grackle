@@ -1022,8 +1022,10 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
         {SpLUT::CI, 12.0, false, opaque_storage.LCI},
         {SpLUT::CII, 12.0, false, opaque_storage.LCII},
         {SpLUT::OI, 16.0, false, opaque_storage.LOI},
-        // metal molecular rotational cooling for low temperatures:
-        // ...
+        // metal molecule rotational cooling (for low temperatures)
+        {SpLUT::COI, 28.0, true, opaque_storage.LCO},
+        {SpLUT::OHI, 17.0, true, opaque_storage.LOH},
+        {SpLUT::H2OI, 18.0, true, opaque_storage.LH2O},
     };
 
     if (my_chemistry->metal_chemistry == 1) {
@@ -1064,75 +1066,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
         }
       }
 
-      double lognhat, log_Linv, log_Ginv, L, G;
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask_metal[i] != MASK_FALSE) {
-          // Metal molecules rotational cooling
-
-          // CO
-          lognhat = logCO[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH2[i],
-                                         opaque_storage.LCO);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
-                                           opaque_storage.LCO);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LCO[i] = (G - L) / dom * COI(i, idx_range.j, idx_range.k) / 28.e0;
-          if (LCO[i] != LCO[i]) {
-            LCO[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LCO[i];
-
-          // OH
-          lognhat = logOH[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH2[i],
-                                         opaque_storage.LOH);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
-                                           opaque_storage.LOH);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LOH[i] = (G - L) / dom * OHI(i, idx_range.j, idx_range.k) / 17.e0;
-          if (LOH[i] != LOH[i]) {
-            LOH[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LOH[i];
-
-          // H2O
-          lognhat = logH2O[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH2[i],
-                                         opaque_storage.LH2O);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
-                                           opaque_storage.LH2O);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LH2O[i] = (G - L) / dom * H2OI(i, idx_range.j, idx_range.k) / 18.e0;
-          if (LH2O[i] != LH2O[i]) {
-            LH2O[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LH2O[i];
-        }
-      }
     }
   }
 
