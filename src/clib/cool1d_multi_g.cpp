@@ -158,22 +158,10 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   std::vector<double> logH2I(my_fields->grid_dimension[0]);
   std::vector<double> logHDI(my_fields->grid_dimension[0]);
   std::vector<double> logH2(my_fields->grid_dimension[0]);
-  std::vector<double> logCI(my_fields->grid_dimension[0]);
-  std::vector<double> logCII(my_fields->grid_dimension[0]);
-  std::vector<double> logOI(my_fields->grid_dimension[0]);
-  std::vector<double> logCO(my_fields->grid_dimension[0]);
-  std::vector<double> logOH(my_fields->grid_dimension[0]);
-  std::vector<double> logH2O(my_fields->grid_dimension[0]);
   std::vector<double> logdvdr(my_fields->grid_dimension[0]);
   std::vector<double> LH2(my_fields->grid_dimension[0]);
   std::vector<double> LCIE(my_fields->grid_dimension[0]);
   std::vector<double> LHD(my_fields->grid_dimension[0]);
-  std::vector<double> LCI(my_fields->grid_dimension[0]);
-  std::vector<double> LCII(my_fields->grid_dimension[0]);
-  std::vector<double> LOI(my_fields->grid_dimension[0]);
-  std::vector<double> LCO(my_fields->grid_dimension[0]);
-  std::vector<double> LOH(my_fields->grid_dimension[0]);
-  std::vector<double> LH2O(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
@@ -224,17 +212,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
       }
       if (my_chemistry->primordial_chemistry > 2) {
         logHDI[i] = std::log10(HDI(i, idx_range.j, idx_range.k) * dom / 3.0);
-      }
-      if (my_chemistry->metal_cooling == 1) {
-        if (my_chemistry->metal_chemistry == 1) {
-          logCI[i] = std::log10(CI(i, idx_range.j, idx_range.k) * dom / 12.0);
-          logCII[i] = std::log10(CII(i, idx_range.j, idx_range.k) * dom / 12.0);
-          logOI[i] = std::log10(OI(i, idx_range.j, idx_range.k) * dom / 16.0);
-          logCO[i] = std::log10(COI(i, idx_range.j, idx_range.k) * dom / 28.0);
-          logOH[i] = std::log10(OHI(i, idx_range.j, idx_range.k) * dom / 17.0);
-          logH2O[i] =
-              std::log10(H2OI(i, idx_range.j, idx_range.k) * dom / 18.0);
-        }
       }
 
       // From Chiaki & Wise (2019), approximate dv/dr as 1/(3 * t_ff)
@@ -1011,21 +988,21 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
     }
 
     struct SpCoolTablePack {
-      int sp_id;
       double sp_mass_factor;
+      int sp_id;
       bool neutral_H_ndens_ax_includes_molecular;
       const InterpGrid& interp_grid;
     };
 
     const SpCoolTablePack packs[] = {
         // C/O fine-structure cooling
-        {SpLUT::CI, 12.0, false, opaque_storage.LCI},
-        {SpLUT::CII, 12.0, false, opaque_storage.LCII},
-        {SpLUT::OI, 16.0, false, opaque_storage.LOI},
+        {12.0, SpLUT::CI, false, opaque_storage.LCI},
+        {12.0, SpLUT::CII, false, opaque_storage.LCII},
+        {16.0, SpLUT::OI, false, opaque_storage.LOI},
         // metal molecule rotational cooling (for low temperatures)
-        {SpLUT::COI, 28.0, true, opaque_storage.LCO},
-        {SpLUT::OHI, 17.0, true, opaque_storage.LOH},
-        {SpLUT::H2OI, 18.0, true, opaque_storage.LH2O},
+        {28.0, SpLUT::COI, true, opaque_storage.LCO},
+        {17.0, SpLUT::OHI, true, opaque_storage.LOH},
+        {18.0, SpLUT::H2OI, true, opaque_storage.LH2O},
     };
 
     if (my_chemistry->metal_chemistry == 1) {
@@ -1065,7 +1042,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
           }
         }
       }
-
     }
   }
 
