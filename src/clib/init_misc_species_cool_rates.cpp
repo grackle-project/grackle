@@ -20,16 +20,11 @@
 #include "init_misc_species_cool_rates.hpp"  // forward declarations
 #include "internal_units.hpp"
 #include "opaque_storage.hpp"
-#include "grackle_rate_functions.h" // forward declarations of some funcs
 #include "support/config.hpp"
 #include "support/status_reporting.hpp"
 
-extern "C" {
-
 typedef int (*init_nd_rate_table)(chemistry_data *, chemistry_data_storage *,
                                   double);
-
-}  // extern "C"
 
 struct NDRateTableInitFnInfo{
   const char* name;
@@ -37,6 +32,14 @@ struct NDRateTableInitFnInfo{
 };
 
 namespace GRIMPL_NAMESPACE_DECL {
+
+int initialize_cooling_rate_CI (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+int initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+int initialize_cooling_rate_OI (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+int initialize_cooling_rate_CO (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+int initialize_cooling_rate_OH (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+int initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+
 
 /// calculate CIE H2 cooling rate from Yoshida et al. (2006)
 ///
@@ -154,12 +157,8 @@ static int setup_cool_interp_grid_(InterpGrid* grid,
   return GR_SUCCESS;
 }
 
-}  // namespace GRIMPL_NAMESPACE_DECL
 
-// all of the following functions are declared extern "C" because (at the time
-// of writing) 
-
-extern "C" int initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+int initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
@@ -351,7 +350,7 @@ extern "C" int initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistr
 }
 
 
-extern "C" int initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+int initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
@@ -543,7 +542,7 @@ extern "C" int initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistr
 }
 
 
-extern "C" int initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+int initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
@@ -767,7 +766,7 @@ extern "C" int initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistr
 }
 
 
-extern "C" int initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+int initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
@@ -991,7 +990,7 @@ extern "C" int initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemist
 }
 
 
-extern "C" int initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+int initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
@@ -1215,7 +1214,7 @@ extern "C" int initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistr
 }
 
 
-extern "C" int initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+int initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
@@ -1352,7 +1351,7 @@ extern "C" int initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistr
 }
 
 
-extern "C" int initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+int initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
@@ -1422,7 +1421,7 @@ extern "C" int initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistr
 }
 
 
-extern "C" int initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+int initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   using GRIMPL_NS::InterpDimScale;
   const int rank = 3;
@@ -1558,7 +1557,7 @@ extern "C" int initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemist
 }
 
 
-extern "C" int initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
+int initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
   using GRIMPL_NS::InterpDimScale;
   using GRIMPL_NS::InterpGridProps;
@@ -1622,3 +1621,4 @@ extern "C" int initialize_primordial_opacity(chemistry_data *my_chemistry, chemi
   }
 }
 
+}  // namespace GRIMPL_NAMESPACE_DECL
