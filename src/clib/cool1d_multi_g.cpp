@@ -42,6 +42,60 @@ static double interp_from_3D_grid(double input1, double input2, double input3,
       interp_grid.props.data_size, interp_grid.data);
 }
 
+namespace spcooltab_detail {
+
+struct SpCoolTablePack {
+  double sp_mass_factor;
+  int sp_id;
+  bool neutral_H_ndens_ax_includes_molecular;
+  const InterpGrid& interp_grid;
+};
+
+static void add_contrib(double* edot, const gr_mask_type*& itmask_metal,
+                        chemistry_data*& my_chemistry,
+                        SpeciesMultiView<const double>& sp_densities,
+                        IndexRange& idx_range, int& i, double& dom,
+                        std::vector<double>& logT, std::vector<double>& logH,
+                        std::vector<double>& logH2,
+                        std::vector<double>& logdvdr, const double& log10_Tcmb,
+                        const SpCoolTablePack* packs, int n_packs) {
+  for (int pack_id = 0; pack_id < n_packs; pack_id++) {
+    const SpCoolTablePack& pack = packs[pack_id];
+    const gr_float* cur_sp_dens = sp_densities.contig1d_ptr(pack.sp_id);
+    const double* last_interp_ax_vals =
+        (pack.neutral_H_ndens_ax_includes_molecular) ? logH2.data()
+                                                     : logH.data();
+
+    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+      if (itmask_metal[i] != MASK_FALSE) {
+        double log10_ndens_sp =
+            std::log10(cur_sp_dens[i] * dom / pack.sp_mass_factor);
+        double lognhat = log10_ndens_sp - logdvdr[i];
+
+        double log_Linv = interp_from_3D_grid(
+            lognhat, logT[i], last_interp_ax_vals[i], pack.interp_grid);
+        double L = std::pow(1.e1, (-log_Linv));
+
+        double G = tiny8;
+        if (my_chemistry->cmb_temperature_floor == 1) {
+          double log_Ginv = interp_from_3D_grid(
+              lognhat, log10_Tcmb, last_interp_ax_vals[i], pack.interp_grid);
+          G = std::pow(1.e1, (-log_Ginv));
+        }
+
+        double edot_contrib =
+            (G - L) / dom * cur_sp_dens[i] / pack.sp_mass_factor;
+        if (edot_contrib != edot_contrib) {
+          edot_contrib = 0.0;
+        }
+        edot[i] = edot[i] + edot_contrib;
+      }
+    }
+  }
+}
+
+}  // namespace spcooltab_detail
+
 void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
                     const double* mmw, const double* metallicity,
                     const double* rhoH, const double* nelec_times_mH,
@@ -968,61 +1022,24 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
           my_fields->density, my_fields->e_density, my_fields, idx_range);
     }
 
-    struct SpCoolTablePack {
-      double sp_mass_factor;
-      int sp_id;
-      bool neutral_H_ndens_ax_includes_molecular;
-      const InterpGrid& interp_grid;
-    };
-
-    const SpCoolTablePack packs[] = {
-        // C/O fine-structure cooling
-        {12.0, SpLUT::CI, false, opaque_storage.LCI},
-        {12.0, SpLUT::CII, false, opaque_storage.LCII},
-        {16.0, SpLUT::OI, false, opaque_storage.LOI},
-        // metal molecule rotational cooling (for low temperatures)
-        {28.0, SpLUT::COI, true, opaque_storage.LCO},
-        {17.0, SpLUT::OHI, true, opaque_storage.LOH},
-        {18.0, SpLUT::H2OI, true, opaque_storage.LH2O},
-    };
-
     if (my_chemistry->metal_chemistry == 1) {
       // --- C/O fine-structure, metal molecular rotational cooling for low
       // temperatures ---
 
-      for (const SpCoolTablePack& pack : packs) {
-        const gr_float* cur_sp_dens = sp_densities.contig1d_ptr(pack.sp_id);
-        const double* last_interp_ax_vals =
-            (pack.neutral_H_ndens_ax_includes_molecular) ? logH2.data()
-                                                         : logH.data();
+      const spcooltab_detail::SpCoolTablePack packs[6] = {
+          // C/O fine-structure cooling
+          {12.0, SpLUT::CI, false, opaque_storage.LCI},
+          {12.0, SpLUT::CII, false, opaque_storage.LCII},
+          {16.0, SpLUT::OI, false, opaque_storage.LOI},
+          // metal molecule rotational cooling (for low temperatures)
+          {28.0, SpLUT::COI, true, opaque_storage.LCO},
+          {17.0, SpLUT::OHI, true, opaque_storage.LOH},
+          {18.0, SpLUT::H2OI, true, opaque_storage.LH2O},
+      };
 
-        for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-          if (itmask_metal[i] != MASK_FALSE) {
-            double log10_ndens_sp =
-                std::log10(cur_sp_dens[i] * dom / pack.sp_mass_factor);
-            double lognhat = log10_ndens_sp - logdvdr[i];
-
-            double log_Linv = interp_from_3D_grid(
-                lognhat, logT[i], last_interp_ax_vals[i], pack.interp_grid);
-            double L = std::pow(1.e1, (-log_Linv));
-
-            double G = tiny8;
-            if (my_chemistry->cmb_temperature_floor == 1) {
-              double log_Ginv =
-                  interp_from_3D_grid(lognhat, log10_Tcmb,
-                                      last_interp_ax_vals[i], pack.interp_grid);
-              G = std::pow(1.e1, (-log_Ginv));
-            }
-
-            double edot_contrib =
-                (G - L) / dom * cur_sp_dens[i] / pack.sp_mass_factor;
-            if (edot_contrib != edot_contrib) {
-              edot_contrib = 0.0;
-            }
-            edot[i] = edot[i] + edot_contrib;
-          }
-        }
-      }
+      spcooltab_detail::add_contrib(edot, itmask_metal, my_chemistry,
+                                    sp_densities, idx_range, i, dom, logT, logH,
+                                    logH2, logdvdr, log10_Tcmb, packs, 6);
     }
   }
 
