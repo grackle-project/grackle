@@ -51,6 +51,7 @@ Grackle Documentation
    :hidden:
 
    Testing.rst
+   InstallTest.rst
    Conduct.rst
    Contributing.rst
    CodeFormatting.rst
