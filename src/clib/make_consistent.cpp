@@ -25,9 +25,10 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-void make_consistent(double dom, const chemistry_data* my_chemistry,
-                     const GrainMetalInjectPathways* inject_pathway_props,
-                     grackle_field_data* my_fields) {
+static void make_consistent_(
+    const IndexRange& idx_range, double dom, const chemistry_data* my_chemistry,
+    const GrainMetalInjectPathways* inject_pathway_props,
+    grackle_field_data* my_fields) {
   // Arguments
 
   FortranView<gr_float***> de(
@@ -255,11 +256,9 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
   std::vector<double> Sd(my_fields->grid_dimension[0]);
   std::vector<double> Fed(my_fields->grid_dimension[0]);
 
-  // Loop over all zones
+  // Loop over current index range
 
-  const IndexHelper idx_helper = build_index_helper_(my_fields);
-  for (int t = 0; t < idx_helper.outer_ind_size; t++) {
-    const IndexRange idx_range = make_idx_range_(t, &idx_helper);
+  {
     const int k = idx_range.k;
     const int j = idx_range.j;
     {  // <- TODO: remove this scope (it only exists to delay reformatting)
@@ -965,8 +964,17 @@ void make_consistent(double dom, const chemistry_data* my_chemistry,
       }
     }
   }
+}
 
-  return;
+void make_consistent(double dom, const chemistry_data* my_chemistry,
+                     const GrainMetalInjectPathways* inject_pathway_props,
+                     grackle_field_data* my_fields) {
+  const IndexHelper idx_helper = build_index_helper_(my_fields);
+  for (int t = 0; t < idx_helper.outer_ind_size; t++) {
+    const IndexRange idx_range = make_idx_range_(t, &idx_helper);
+    make_consistent_(idx_range, dom, my_chemistry, inject_pathway_props,
+                     my_fields);
+  }
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
