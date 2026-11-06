@@ -102,24 +102,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   FortranView<gr_float***> photogamma(
       my_fields->RT_heating_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CI(
-      my_fields->CI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CII(
-      my_fields->CII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> COI(
-      my_fields->COI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OI(
-      my_fields->OI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OHI(
-      my_fields->OHI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2OI(
-      my_fields->H2OI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Declare some constants:
   const double mh_local_var = constants::mH_grflt;
