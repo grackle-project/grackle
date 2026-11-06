@@ -163,9 +163,7 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   std::vector<double> logCO(my_fields->grid_dimension[0]);
   std::vector<double> logOH(my_fields->grid_dimension[0]);
   std::vector<double> logH2O(my_fields->grid_dimension[0]);
-  double lognhat;
   std::vector<double> logdvdr(my_fields->grid_dimension[0]);
-  double log_Linv, log_Ginv, L, G;
   std::vector<double> LH2(my_fields->grid_dimension[0]);
   std::vector<double> LCIE(my_fields->grid_dimension[0]);
   std::vector<double> LHD(my_fields->grid_dimension[0]);
@@ -394,18 +392,17 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
     if (my_chemistry->h2_cooling_rate == 3) {
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
-          lognhat = logH2I[i] - logdvdr[i];
+          double lognhat = logH2I[i] - logdvdr[i];
 
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                         opaque_storage.LH2);
-          L = std::pow(1.e1, (-log_Linv));
+          double log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
+                                                opaque_storage.LH2);
+          double L = std::pow(1.e1, (-log_Linv));
 
+          double G = tiny8;
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
-                                           opaque_storage.LH2);
+            double log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                                  opaque_storage.LH2);
             G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
           }
 
           LH2[i] =
@@ -701,18 +698,17 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
     if (my_chemistry->hd_cooling_rate == 1) {
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask[i] != MASK_FALSE) {
-          lognhat = logHDI[i] - logdvdr[i];
+          double lognhat = logHDI[i] - logdvdr[i];
 
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                         opaque_storage.LHD);
-          L = std::pow(1.e1, (-log_Linv));
+          double log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
+                                                opaque_storage.LHD);
+          double L = std::pow(1.e1, (-log_Linv));
 
+          double G = tiny8;
           if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
-                                           opaque_storage.LHD);
+            double log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
+                                                  opaque_storage.LHD);
             G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
           }
 
           LHD[i] = (G - L) / dom * HDI(i, idx_range.j, idx_range.k) / 3.e0;
@@ -1018,6 +1014,7 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
       // temperatures ---
 
       // C/O fine-structure cooling
+      double lognhat, log_Linv, log_Ginv, L, G;
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
           // CI
