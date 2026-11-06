@@ -1017,8 +1017,14 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
       const InterpGrid& interp_grid;
     };
 
-    const SpCoolTablePack packs[1] = {
-        {SpLUT::CI, 12.0, false, opaque_storage.LCI}};
+    const SpCoolTablePack packs[] = {
+        // C/O fine-structure cooling
+        {SpLUT::CI, 12.0, false, opaque_storage.LCI},
+        {SpLUT::CII, 12.0, false, opaque_storage.LCII},
+        {SpLUT::OI, 16.0, false, opaque_storage.LOI},
+        // metal molecular rotational cooling for low temperatures:
+        // ...
+    };
 
     if (my_chemistry->metal_chemistry == 1) {
       // --- C/O fine-structure, metal molecular rotational cooling for low
@@ -1026,6 +1032,9 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
 
       for (const SpCoolTablePack& pack : packs) {
         const gr_float* cur_sp_dens = sp_densities.contig1d_ptr(pack.sp_id);
+        const double* last_interp_ax_vals =
+            (pack.neutral_H_ndens_ax_includes_molecular) ? logH2.data()
+                                                         : logH.data();
 
         for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
           if (itmask_metal[i] != MASK_FALSE) {
@@ -1033,14 +1042,15 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
                 std::log10(cur_sp_dens[i] * dom / pack.sp_mass_factor);
             double lognhat = log10_ndens_sp - logdvdr[i];
 
-            double log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                                  pack.interp_grid);
+            double log_Linv = interp_from_3D_grid(
+                lognhat, logT[i], last_interp_ax_vals[i], pack.interp_grid);
             double L = std::pow(1.e1, (-log_Linv));
 
             double G = tiny8;
             if (my_chemistry->cmb_temperature_floor == 1) {
-              double log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i],
-                                                    logH[i], pack.interp_grid);
+              double log_Ginv =
+                  interp_from_3D_grid(lognhat, logTcmb[i],
+                                      last_interp_ax_vals[i], pack.interp_grid);
               G = std::pow(1.e1, (-log_Ginv));
             }
 
@@ -1054,52 +1064,9 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
         }
       }
 
-      // C/O fine-structure cooling
       double lognhat, log_Linv, log_Ginv, L, G;
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
-          // CII
-          lognhat = logCII[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                         opaque_storage.LCII);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
-                                           opaque_storage.LCII);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LCII[i] = (G - L) / dom * CII(i, idx_range.j, idx_range.k) / 12.e0;
-          if (LCII[i] != LCII[i]) {
-            LCII[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LCII[i];
-
-          // OI
-          lognhat = logOI[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                         opaque_storage.LOI);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
-                                           opaque_storage.LOI);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LOI[i] = (G - L) / dom * OI(i, idx_range.j, idx_range.k) / 16.e0;
-          if (LOI[i] != LOI[i]) {
-            LOI[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LOI[i];
-
           // Metal molecules rotational cooling
 
           // CO
