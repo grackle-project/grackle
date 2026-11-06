@@ -736,83 +736,8 @@ static void make_consistent_(
           }
         }
       }
-
-      //    CI(i,j,k)      = max(CI(i,j,k), tiny)
-      //    CII(i,j,k)     = max(CII(i,j,k), tiny)
-      //    CO(i,j,k)      = max(CO(i,j,k), tiny)
-      //    CO2(i,j,k)     = max(CO2(i,j,k), tiny)
-      //    OI(i,j,k)      = max(OI(i,j,k), tiny)
-      //    OH(i,j,k)      = max(OH(i,j,k), tiny)
-      //    H2O(i,j,k)     = max(H2O(i,j,k), tiny)
-      //    O2(i,j,k)      = max(O2(i,j,k), tiny)
-      //    SiI(i,j,k)     = max(SiI(i,j,k), tiny)
-      //    SiOI(i,j,k)    = max(SiOI(i,j,k), tiny)
-      //    SiO2I(i,j,k)   = max(SiO2I(i,j,k), tiny)
-      //    CH(i,j,k)      = max(CH(i,j,k), tiny)
-      //    CH2(i,j,k)     = max(CH2(i,j,k), tiny)
-      //    COII(i,j,k)    = max(COII(i,j,k), tiny)
-      //    OII(i,j,k)     = max(OII(i,j,k), tiny)
-      //    OHII(i,j,k)    = max(OHII(i,j,k), tiny)
-      //    H2OII(i,j,k)   = max(H2OII(i,j,k), tiny)
-      //    H3OII(i,j,k)   = max(H3OII(i,j,k), tiny)
-      //    O2II(i,j,k)    = max(O2II(i,j,k), tiny)
-      // if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-      // if (idspecies .gt. 0) then
-      //    Mg(i,j,k)      = max(Mg(i,j,k), tiny)
-      //    MgSiO3(i,j,k)  = max(MgSiO3(i,j,k), tiny)
-      //    AC(i,j,k)      = max(AC(i,j,k), tiny)
-      // endif
-      // if (idspecies .gt. 1) then
-      //    Al(i,j,k)      = max(Al(i,j,k), tiny)
-      //    S(i,j,k)       = max(S(i,j,k), tiny)
-      //    Fe(i,j,k)      = max(Fe(i,j,k), tiny)
-      //    SiM(i,j,k)     = max(SiM(i,j,k), tiny)
-      //    FeM(i,j,k)     = max(FeM(i,j,k), tiny)
-      //    Mg2SiO4(i,j,k) = max(Mg2SiO4(i,j,k), tiny)
-      //    Fe3O4(i,j,k)   = max(Fe3O4(i,j,k), tiny)
-      //    SiO2D(i,j,k)   = max(SiO2D(i,j,k), tiny)
-      //    MgO(i,j,k)     = max(MgO(i,j,k), tiny)
-      //    FeS(i,j,k)     = max(FeS(i,j,k), tiny)
-      //    Al2O3(i,j,k)   = max(Al2O3(i,j,k), tiny)
-      // endif
-      // if (idspecies .gt. 2) then
-      //    reforg(i,j,k)  = max(reforg(i,j,k), tiny)
-      //    volorg(i,j,k)  = max(volorg(i,j,k), tiny)
-      //    H2Oice(i,j,k)  = max(H2Oice(i,j,k), tiny)
-      // endif
-      // endif
-
-      // endif
     }
-  }
-
-  //      if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
-  //         do i = is+1, ie+1
-  // !          if ( itmask_metal(i) ) then
-  //            if (idspecies .gt. 0) then
-  //               dust(i,j,k) = MgSiO3  (i,j,k)
-  //     &                     + AC      (i,j,k)
-  //            endif
-  //            if (idspecies .gt. 1) then
-  //               dust(i,j,k) = dust(i,j,k)
-  //     &                     + SiM     (i,j,k)
-  //     &                     + FeM     (i,j,k)
-  //     &                     + Mg2SiO4 (i,j,k)
-  //     &                     + Fe3O4   (i,j,k)
-  //     &                     + SiO2D   (i,j,k)
-  //     &                     + MgO     (i,j,k)
-  //     &                     + FeS     (i,j,k)
-  //     &                     + Al2O3   (i,j,k)
-  //            endif
-  //            if (idspecies .gt. 2) then
-  //               dust(i,j,k) = dust(i,j,k)
-  //     &                     + reforg  (i,j,k)
-  //     &                     + volorg  (i,j,k)
-  //     &                     + H2Oice  (i,j,k)
-  //            endif
-  // !          endif
-  //         enddo
-  //      endif
+  }  // my_chemistry->metal_chemistry == 1
 
   // Set the electron density
 
