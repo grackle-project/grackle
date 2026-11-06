@@ -51,7 +51,7 @@ struct SpCoolTablePack {
   const InterpGrid& interp_grid;
 };
 
-static void add_contrib(double* edot, const gr_mask_type* itmask_metal,
+static void add_contrib(double* edot, const gr_mask_type* itmask,
                         const chemistry_data* my_chemistry,
                         SpeciesMultiView<const double> sp_densities,
                         const IndexRange idx_range, double& dom,
@@ -66,7 +66,7 @@ static void add_contrib(double* edot, const gr_mask_type* itmask_metal,
         (pack.neutral_H_ndens_ax_includes_molecular) ? logH2 : logH;
 
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask_metal[i] != MASK_FALSE) {
+      if (itmask[i] != MASK_FALSE) {
         double log10_ndens_sp =
             std::log10(cur_sp_dens[i] * dom / pack.sp_mass_factor);
         double lognhat = log10_ndens_sp - logdvdr[i];
@@ -189,13 +189,9 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   std::vector<double> logT(my_fields->grid_dimension[0]);
   std::vector<double> logrho(my_fields->grid_dimension[0]);
   std::vector<double> logH(my_fields->grid_dimension[0]);
-  std::vector<double> logH2I(my_fields->grid_dimension[0]);
-  std::vector<double> logHDI(my_fields->grid_dimension[0]);
   std::vector<double> logH2(my_fields->grid_dimension[0]);
   std::vector<double> logdvdr(my_fields->grid_dimension[0]);
-  std::vector<double> LH2(my_fields->grid_dimension[0]);
   std::vector<double> LCIE(my_fields->grid_dimension[0]);
-  std::vector<double> LHD(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
@@ -242,10 +238,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
         logH2[i] = std::log10((HI(i, idx_range.j, idx_range.k) +
                                H2I(i, idx_range.j, idx_range.k) / 2.0) *
                               dom);
-        logH2I[i] = std::log10(H2I(i, idx_range.j, idx_range.k) * dom / 2.0);
-      }
-      if (my_chemistry->primordial_chemistry > 2) {
-        logHDI[i] = std::log10(HDI(i, idx_range.j, idx_range.k) * dom / 3.0);
       }
 
       // From Chiaki & Wise (2019), approximate dv/dr as 1/(3 * t_ff)
@@ -402,29 +394,12 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   if (my_chemistry->primordial_chemistry > 1) {
     // Chiaki & Wise (2019) H2 cooling rate
     if (my_chemistry->h2_cooling_rate == 3) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          double lognhat = logH2I[i] - logdvdr[i];
+      const spcooltab_detail::SpCoolTablePack pack = {2.0, SpLUT::H2I, false,
+                                                      opaque_storage.LH2};
 
-          double log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                                opaque_storage.LH2);
-          double L = std::pow(1.e1, (-log_Linv));
-
-          double G = tiny8;
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            double log_Ginv = interp_from_3D_grid(lognhat, log10_Tcmb, logH[i],
-                                                  opaque_storage.LH2);
-            G = std::pow(1.e1, (-log_Ginv));
-          }
-
-          LH2[i] =
-              ih2cox * (G - L) / dom * H2I(i, idx_range.j, idx_range.k) / 2.e0;
-          if (LH2[i] != LH2[i]) {
-            LH2[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LH2[i];
-        }
-      }
+      spcooltab_detail::add_contrib(
+          edot, itmask, my_chemistry, sp_densities, idx_range, dom, logT.data(),
+          logH.data(), logH2.data(), logdvdr.data(), log10_Tcmb, &pack, 1);
 
       // Glover & Abel (2008) H2 cooling rate
     } else if (my_chemistry->h2_cooling_rate == 2) {
@@ -708,28 +683,12 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   if (my_chemistry->primordial_chemistry > 2) {
     // Chiaki & Wise (2019) HD cooling rate
     if (my_chemistry->hd_cooling_rate == 1) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          double lognhat = logHDI[i] - logdvdr[i];
+      const spcooltab_detail::SpCoolTablePack pack = {3.0, SpLUT::HDI, false,
+                                                      opaque_storage.LHD};
 
-          double log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                                opaque_storage.LHD);
-          double L = std::pow(1.e1, (-log_Linv));
-
-          double G = tiny8;
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            double log_Ginv = interp_from_3D_grid(lognhat, log10_Tcmb, logH[i],
-                                                  opaque_storage.LHD);
-            G = std::pow(1.e1, (-log_Ginv));
-          }
-
-          LHD[i] = (G - L) / dom * HDI(i, idx_range.j, idx_range.k) / 3.e0;
-          if (LHD[i] != LHD[i]) {
-            LHD[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LHD[i];
-        }
-      }
+      spcooltab_detail::add_contrib(
+          edot, itmask, my_chemistry, sp_densities, idx_range, dom, logT.data(),
+          logH.data(), logH2.data(), logdvdr.data(), log10_Tcmb, &pack, 1);
 
       // Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007) HD cooling
       // rate
