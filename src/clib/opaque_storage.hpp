@@ -15,7 +15,7 @@
 
 #include <cstddef>
 #include "grackle.h"
-#include "chem_model/infer_species.hpp"
+#include "chem_model/species.hpp"
 #include "dust/grain_species_info.hpp"
 #include "dust/solver.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"

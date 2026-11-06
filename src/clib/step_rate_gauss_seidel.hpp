@@ -21,7 +21,7 @@
 
 #include "grackle.h"  // gr_float
 #include "chemistry_solver_funcs.hpp"
-#include "chem_model/infer_species.hpp"
+#include "chem_model/species.hpp"
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "support/index_helper.hpp"
 #include "internal_types.hpp"

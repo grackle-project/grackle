@@ -27,7 +27,7 @@
 
 #include <climits>
 
-#include "chem_model/infer_species.hpp"
+#include "chem_model/species.hpp"
 #include "grackle.h"
 #include "field_adaptor.hpp"
 #include "fortran_func_decls.h"  // gr_mask_type
@@ -37,7 +37,8 @@
 #include "support/status_reporting.hpp"
 #include "support/View.hpp"
 
-namespace grackle::impl::chemistry {
+namespace GRIMPL_NAMESPACE_DECL {
+namespace chemistry {
 
 /// @brief Converts the relative species id to the global species id
 ///
@@ -454,7 +455,7 @@ inline void species_density_updates_gauss_seidel(
 
         if (my_chemistry->primordial_chemistry > 2)  {
           scoef = scoef
-            + kph_buf[PhotoRxnLUT::kdissHDI][i] * HDI[i]/3.0;
+            + kph_buf[PhotoRxnLUT::k31][i] * HDI[i]/3.0;
         }
         if ( (my_chemistry->metal_chemistry == 1)  &&
              (itmask_metal[i] != MASK_FALSE) )  {
@@ -795,7 +796,7 @@ inline void species_density_updates_gauss_seidel(
                    +      kcol_buf[CollisionalRxnLUT::k51][i]* DII[i] * HI[i]
                    + 2.*kcol_buf[CollisionalRxnLUT::k55][i]* HDI[i] * HI[i]/3.
                    )
-                   + 2. * kph_buf[PhotoRxnLUT::kdissHDI][i] * HDI[i]/3.0;
+                   + 2. * kph_buf[PhotoRxnLUT::k31][i] * HDI[i]/3.0;
         acoef  =    kcol_buf[CollisionalRxnLUT::k1][i] * de[i]
                +    kcol_buf[CollisionalRxnLUT::k50][i] * HII[i]
                +    kcol_buf[CollisionalRxnLUT::k54][i] * H2I[i]/2.
@@ -846,7 +847,7 @@ inline void species_density_updates_gauss_seidel(
                    );
         acoef  =    kcol_buf[CollisionalRxnLUT::k53][i] * HII[i]
                +    kcol_buf[CollisionalRxnLUT::k55][i] * HI[i]
-               + kph_buf[PhotoRxnLUT::kdissHDI][i];
+               + kph_buf[PhotoRxnLUT::k31][i];
         if (my_chemistry->primordial_chemistry > 3)  {
           scoef = scoef +  3. * ( 0.
               + kcol_buf[CollisionalRxnLUT::k125][i] *  HDII[i] *    HI[i] /  3.
@@ -1796,7 +1797,7 @@ inline void species_density_derivatives_0d(
 
     if (my_chemistry->primordial_chemistry > 2)  {
         scoef = scoef
-          + kph_buf[PhotoRxnLUT::kdissHDI][0] * HDI       /3.0;
+          + kph_buf[PhotoRxnLUT::k31][0] * HDI       /3.0;
     }
     if ((my_chemistry->metal_chemistry == 1)  &&
         (itmask_metal[0] != MASK_FALSE))  {
@@ -2134,7 +2135,7 @@ inline void species_density_derivatives_0d(
                + 2.*kcol_buf[CollisionalRxnLUT::k55][0]   * HDI        *
             HI       /3.
                )
-               + 2. * kph_buf[PhotoRxnLUT::kdissHDI][0]  *   HDI /3.;
+               + 2. * kph_buf[PhotoRxnLUT::k31][0]  *   HDI /3.;
     acoef  =    kcol_buf[CollisionalRxnLUT::k1][0]    * de
            +    kcol_buf[CollisionalRxnLUT::k50][0]    * HII
            +    kcol_buf[CollisionalRxnLUT::k54][0]    * H2I       /2.
@@ -2188,7 +2189,7 @@ inline void species_density_derivatives_0d(
                );
     acoef  =    kcol_buf[CollisionalRxnLUT::k53][0]    * HII
            +    kcol_buf[CollisionalRxnLUT::k55][0]    * HI
-           +  kph_buf[PhotoRxnLUT::kdissHDI][0];
+           +  kph_buf[PhotoRxnLUT::k31][0];
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef +  3. * ( 0.
           + kcol_buf[CollisionalRxnLUT::k125][0]    *  HDII        *    HI        /  3.
@@ -2886,8 +2887,7 @@ inline void species_density_derivatives_0d(
 }
 
 
+}  // namespace chemistry
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-
-} // namespace grackle::impl::chemistry
-
-#endif /* CHEMISTRY_SOLVER_FUNCS_HPP */
+#endif  // CHEMISTRY_SOLVER_FUNCS_HPP
