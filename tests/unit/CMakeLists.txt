@@ -27,7 +27,7 @@ gtest_discover_tests(runInterpolationTests)
 add_executable(runMathTests
   math/test_integrate.cpp
   math/test_linalg.cpp
-  math/test_solve_cubic_equation.cpp)
+  math/test_cubic_eqn_root.cpp)
 target_link_libraries(runMathTests testdeps)
 gtest_discover_tests(runMathTests)
 
@@ -36,6 +36,8 @@ target_link_libraries(runGrainSpeciesIntoTests testdeps)
 gtest_discover_tests(runGrainSpeciesIntoTests)
 
 add_executable(runChemModelTests
+  chem_model/test_chemsp_props.cpp
+  chem_model/test_parse_roman.cpp
   chem_model/test_sp_lut_consistency.cpp)
 target_link_libraries(runChemModelTests testdeps)
 gtest_discover_tests(runChemModelTests)

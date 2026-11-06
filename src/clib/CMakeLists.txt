@@ -93,14 +93,17 @@ add_library(Grackle_Grackle
   api/solve_chemistry.cpp
   api/units.cpp
   ceiling_species.hpp
-  chem_model/infer_species.cpp chem_model/infer_species.hpp
+  chem_model/chemsp_props.cpp chem_model/chemsp_props.hpp
   chem_model/nuclide_model.cpp chem_model/nuclide_model.hpp
+  chem_model/parse.cpp chem_model/parse.hpp
+  chem_model/species_builder.cpp chem_model/species_builder.hpp
+  chem_model/species.cpp chem_model/species.hpp
   cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time.cpp cool_multi_time.hpp
   dust/calc_all_tdust_gasgr_1d.cpp dust/calc_all_tdust_gasgr_1d.hpp
-  dust/calc_tdust_1d.cpp dust/calc_tdust_1d.hpp
+  dust/calc_tdust_1d.hpp
   dust/calc_tdust_3d.cpp dust/calc_tdust_3d.hpp
   dust/gas_heat_cool.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
@@ -133,7 +136,8 @@ add_library(Grackle_Grackle
   mask.hpp
   math/gaussj.cpp math/gaussj.hpp
   math/integrate.hpp
-  math/solve_cubic_equation.cpp math/solve_cubic_equation.hpp
+  math/solve_eqn.cpp math/solve_eqn.hpp
+  math/misc.hpp
   opaque_storage.cpp opaque_storage.hpp
   phys_constants.hpp
   ratequery.cpp ratequery.hpp
@@ -153,6 +157,7 @@ add_library(Grackle_Grackle
   support/fnv1a_hash.hpp
   support/h5io.cpp support/h5io.hpp
   support/index_helper.hpp
+  support/inplace_vector.hpp
   support/PartMap.hpp
   support/status_reporting.cpp support/status_reporting.hpp
   support/View.hpp

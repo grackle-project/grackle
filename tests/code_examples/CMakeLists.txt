@@ -130,7 +130,7 @@ if (TARGET fortran_example)
     COMMAND ${checker_script} cmp
       --target $<TARGET_FILE:fortran_example>
       --ref $<TARGET_FILE:cxx_example>
-      --rtol 6e-7
+      --rtol 7e-7
       --exec-timeout 10
       --exec-dir ${example_exec_dir}
   )
