@@ -51,22 +51,21 @@ struct SpCoolTablePack {
   const InterpGrid& interp_grid;
 };
 
-static void add_contrib(double* edot, const gr_mask_type*& itmask_metal,
-                        chemistry_data*& my_chemistry,
-                        SpeciesMultiView<const double>& sp_densities,
-                        IndexRange& idx_range, int& i, double& dom,
-                        std::vector<double>& logT, std::vector<double>& logH,
-                        std::vector<double>& logH2,
-                        std::vector<double>& logdvdr, const double& log10_Tcmb,
-                        const SpCoolTablePack* packs, int n_packs) {
+static void add_contrib(double* edot, const gr_mask_type* itmask_metal,
+                        const chemistry_data* my_chemistry,
+                        SpeciesMultiView<const double> sp_densities,
+                        const IndexRange idx_range, double& dom,
+                        const double* logT, const double* logH,
+                        const double* logH2, const double* logdvdr,
+                        const double log10_Tcmb, const SpCoolTablePack* packs,
+                        int n_packs) {
   for (int pack_id = 0; pack_id < n_packs; pack_id++) {
     const SpCoolTablePack& pack = packs[pack_id];
     const gr_float* cur_sp_dens = sp_densities.contig1d_ptr(pack.sp_id);
     const double* last_interp_ax_vals =
-        (pack.neutral_H_ndens_ax_includes_molecular) ? logH2.data()
-                                                     : logH.data();
+        (pack.neutral_H_ndens_ax_includes_molecular) ? logH2 : logH;
 
-    for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask_metal[i] != MASK_FALSE) {
         double log10_ndens_sp =
             std::log10(cur_sp_dens[i] * dom / pack.sp_mass_factor);
@@ -1038,8 +1037,9 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
       };
 
       spcooltab_detail::add_contrib(edot, itmask_metal, my_chemistry,
-                                    sp_densities, idx_range, i, dom, logT, logH,
-                                    logH2, logdvdr, log10_Tcmb, packs, 6);
+                                    sp_densities, idx_range, dom, logT.data(),
+                                    logH.data(), logH2.data(), logdvdr.data(),
+                                    log10_Tcmb, packs, 6);
     }
   }
 
