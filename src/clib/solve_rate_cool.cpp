@@ -1100,7 +1100,7 @@ int solve_rate_cool(
         if (my_chemistry->primordial_chemistry > 0)  {
           make_consistent(idx_range, dom, my_chemistry,
                           my_rates->opaque_storage->inject_pathway_props,
-                          my_fields);
+                          my_fields, sp_densities);
 
         }
       }
