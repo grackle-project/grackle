@@ -18,6 +18,7 @@
 #include "cool1d_multi_g.hpp"
 #include "dust/solver.hpp"
 #include "grackle.h"
+#include "grackle_macros.h"
 #include "internal_units.hpp"
 #include "interpolate.hpp"
 #include "internal_types.hpp"
@@ -1009,35 +1010,54 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
           my_fields->density, my_fields->e_density, my_fields, idx_range);
     }
 
+    struct SpCoolTablePack {
+      int sp_id;
+      double sp_mass_factor;
+      bool neutral_H_ndens_ax_includes_molecular;
+      const InterpGrid& interp_grid;
+    };
+
+    const SpCoolTablePack packs[1] = {
+        {SpLUT::CI, 12.0, false, opaque_storage.LCI}};
+
     if (my_chemistry->metal_chemistry == 1) {
       // --- C/O fine-structure, metal molecular rotational cooling for low
       // temperatures ---
+
+      for (const SpCoolTablePack& pack : packs) {
+        const gr_float* cur_sp_dens = sp_densities.contig1d_ptr(pack.sp_id);
+
+        for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+          if (itmask_metal[i] != MASK_FALSE) {
+            double log10_ndens_sp =
+                std::log10(cur_sp_dens[i] * dom / pack.sp_mass_factor);
+            double lognhat = log10_ndens_sp - logdvdr[i];
+
+            double log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
+                                                  pack.interp_grid);
+            double L = std::pow(1.e1, (-log_Linv));
+
+            double G = tiny8;
+            if (my_chemistry->cmb_temperature_floor == 1) {
+              double log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i],
+                                                    logH[i], pack.interp_grid);
+              G = std::pow(1.e1, (-log_Ginv));
+            }
+
+            double edot_contrib =
+                (G - L) / dom * cur_sp_dens[i] / pack.sp_mass_factor;
+            if (edot_contrib != edot_contrib) {
+              edot_contrib = 0.0;
+            }
+            edot[i] = edot[i] + edot_contrib;
+          }
+        }
+      }
 
       // C/O fine-structure cooling
       double lognhat, log_Linv, log_Ginv, L, G;
       for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
-          // CI
-          lognhat = logCI[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                         opaque_storage.LCI);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
-                                           opaque_storage.LCI);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LCI[i] = (G - L) / dom * CI(i, idx_range.j, idx_range.k) / 12.e0;
-          if (LCI[i] != LCI[i]) {
-            LCI[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LCI[i];
-
           // CII
           lognhat = logCII[i] - logdvdr[i];
 
