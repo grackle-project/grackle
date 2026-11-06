@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the `make_consistent_g` function
+/// Implements the @ref make_consistent function
 ///
 //===----------------------------------------------------------------------===//
 
@@ -17,20 +17,16 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_decls.h"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "inject_model/misc.hpp"
-#include "opaque_storage.hpp"
-#include "utils-cpp.hpp"
 
 #include "make_consistent.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
-void make_consistent(
-    double dom, chemistry_data* my_chemistry,
-    const grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
-    grackle_field_data* my_fields) {
+void make_consistent(double dom, const chemistry_data* my_chemistry,
+                     const GrainMetalInjectPathways* inject_pathway_props,
+                     grackle_field_data* my_fields) {
   // Arguments
 
   FortranView<gr_float***> de(
@@ -969,4 +965,4 @@ void make_consistent(
   return;
 }
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
