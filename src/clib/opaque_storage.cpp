@@ -35,10 +35,7 @@ gr_opaque_storage::~gr_opaque_storage() {
   }
 
   if (inject_pathway_props != nullptr) {
-    // delete contents of inject_pathway_props
-    grackle::impl::drop_GrainMetalInjectPathways(inject_pathway_props);
-    // delete inject_pathway_props, itself
-    delete inject_pathway_props;
+    delete inject_pathway_props;  // <- has a destructor
   }
 
   if (registry != nullptr) {
