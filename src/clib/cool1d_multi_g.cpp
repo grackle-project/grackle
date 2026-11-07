@@ -266,7 +266,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   std::vector<double> cieY06(my_fields->grid_dimension[0]);
 
   std::vector<double> LCIE(my_fields->grid_dimension[0]);
-  std::vector<double> lshield_con(my_fields->grid_dimension[0]);
 
   std::vector<double> spcooltab_scratch(4 * sp_densities.extent(1));
 
@@ -296,22 +295,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
 
   // multiplicative factor for including/excluding H2 cooling
   ih2cox = (double)(my_chemistry->ih2co);
-
-  // Compute log densities
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      // lshield_con is the shielding length for continuum opacity
-      // -> it's just the Jeans length. I **think** it's defined as
-      //    l_Jeans = c_sound * sqrt(pi / (G * rho))
-      // -> TODO: compute the value exactly when we need it and stop storing it
-      //    in a buffer
-      lshield_con[i] =
-          std::sqrt((my_chemistry->Gamma * constants::pi_fortran_val *
-                     constants::kboltz_grflt * tgas[i]) /
-                    (constants::GravConst_grflt * mmw[i] * mh_local_var *
-                     d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
-    }
-  }
 
   // --- 6 species cooling ---
 
@@ -1120,7 +1103,18 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   std::vector<double> tau_con(my_fields->grid_dimension[0]);
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
-      tau_con[i] = alpha_continuum[i] * lshield_con[i];
+      // compute the shielding length for continuum opacity
+      // -> it's just the Jeans length. I **think** it's defined as
+      //    l_Jeans = c_sound * sqrt(pi / (G * rho))
+      // -> if we ever want to compute analytic partial derivative, the
+      //    book-keeping would probably be simpler to look at partial
+      //    derivative with respect c_sound (rather than tgas & mmw)
+      double shield_length =
+          std::sqrt((my_chemistry->Gamma * constants::pi_fortran_val *
+                     constants::kboltz_grflt * tgas[i]) /
+                    (constants::GravConst_grflt * mmw[i] * mh_local_var *
+                     d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
+      tau_con[i] = alpha_continuum[i] * shield_length;
     }
   }
 
