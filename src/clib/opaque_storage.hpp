@@ -16,6 +16,7 @@
 #include <cstddef>
 #include "grackle.h"
 #include "chem_model/species.hpp"
+#include "cool/TabMDSpCooler.hpp"
 #include "dust/grain_species_info.hpp"
 #include "dust/solver.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -108,8 +109,9 @@ struct gr_opaque_storage {
   ///   values (for debugging purposes).
   GRIMPL_NS::InterpGridProps h2dust_grain_interp_props;
 
-  // The next 8 attributes hold interpolation grids representing collision
-  // rates of a species with HI or H2I. The parameters along each axis are:
+  // The next 8 attributes hold sets of interpolation grids representing
+  // collision rates of a species with HI or H2I. The parameters along each axis
+  // are:
   //   grid.parameter[0]: log10( ndens_{species} / (dv/dr) )
   //   grid.parameter[1]: log10( T )
   //   grid.parameter[2]: log10( ndens_HI ) OR log10( ndens_H2I )
@@ -119,14 +121,26 @@ struct gr_opaque_storage {
   GRIMPL_NS::InterpGrid LHD;
 
   /// Fine-structure cooling rates (collision with HI; Maio et al. 2007)
+  ///
+  /// @note
+  /// Are we sure these are from Maio+ 2007. Chiaki & Wise 2019 seems to
+  /// attribute them to Santoro & Shull 2006
   GRIMPL_NS::InterpGrid LCI;
   GRIMPL_NS::InterpGrid LCII;
   GRIMPL_NS::InterpGrid LOI;
 
   /// metal molecular cooling rates (collision with H2I; UMIST table)
+  ///
+  /// @note
+  /// Are we sure about the origin of these values. Chiaki & Wise 2019 seems to
+  /// attribute them to Santoro & Shull 2006
   GRIMPL_NS::InterpGrid LCO;
   GRIMPL_NS::InterpGrid LOH;
   GRIMPL_NS::InterpGrid LH2O;
+
+  // going forward, this is going to hold all of the contributions of the 8
+  // preceeding variables
+  GRIMPL_NS::TabMDSpCooler assorted_multidim_tabulated_sp_cool;
 
   /// primordial opacity table
   /// -> alphap.parameters[0] is log10(mass density)

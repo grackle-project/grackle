@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
+#include "cool/TabMDSpCooler.hpp"
 #include "LUT.hpp"
 #include "dust/solver.hpp"
 #include "grackle.h"
@@ -32,16 +33,6 @@
 #include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
-
-static double interp_from_3D_grid(double input1, double input2, double input3,
-                                  const GRIMPL_NS::InterpGrid& interp_grid) {
-  return interpolate_3d(
-      input1, input2, input3, interp_grid.props.dimension,
-      interp_grid.props.parameters[0], interp_grid.props.parameter_spacing[0],
-      interp_grid.props.parameters[1], interp_grid.props.parameter_spacing[1],
-      interp_grid.props.parameters[2], interp_grid.props.parameter_spacing[2],
-      interp_grid.props.data_size, interp_grid.data);
-}
 
 namespace spcooltab_detail {
 
