@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
+#include "LUT.hpp"
 #include "dust/solver.hpp"
 #include "grackle.h"
 #include "grackle_macros.h"
@@ -51,14 +52,86 @@ struct SpCoolTablePack {
   const InterpGrid& interp_grid;
 };
 
-static void add_contrib(double* edot, const gr_mask_type* itmask,
+/// @brief Calculate cooling/heating contributions from species-specific
+///     interpolation tables
+///
+/// You'll notice that calling this function more than one time inside of
+/// @ref cool1d_multi_g duplicates a bit of work. We made this design decision
+/// because we intend to convert this free-standing function into a method
+/// of a class that:
+/// - is responsible for all species-specific cooling/heating contributions
+///   modelled with interpolation tables
+/// - in practice, an object of this class would be configured at startup and
+///   tracked inside of opaque storage (it would directly own the underlying
+///   InterpGrid objects
+/// - in this scenario, all of these contributions would be computed at the
+///   same time (this will inevitably break the gold-standard)
+///
+/// The scratch_buf should be passed a buffer with a size of
+/// ``4 * sp_densities.extent(1)``
+static void add_contrib(double* edot, FortranView<const gr_float***> d,
+                        const gr_float* tgas, const gr_mask_type* itmask,
                         const chemistry_data* my_chemistry,
                         SpeciesMultiView<const double> sp_densities,
-                        const IndexRange idx_range, double& dom,
-                        const double* logT, const double* logH,
-                        const double* logH2, const double* logdvdr,
-                        const double log10_Tcmb, const SpCoolTablePack* packs,
-                        int n_packs) {
+                        const IndexRange& idx_range,
+                        const InternalGrUnits& internalu, double* scratch_buf,
+                        const SpCoolTablePack* packs, int n_packs) {
+  int buf_len = sp_densities.extent(1);
+  double* log10_T = scratch_buf;
+  double* logH = scratch_buf + buf_len;
+  double* logH2 = scratch_buf + 2 * buf_len;
+  double* logdvdr = scratch_buf + 3 * buf_len;
+
+  // calculate props reused for different interpolations
+  double dom = internalu_calc_dom_(internalu);
+  const double log10_Tcmb = (my_chemistry->cmb_temperature_floor == 1)
+                                ? std::log10(internalu_calc_Tcmb_(internalu))
+                                : 0.0;
+  {
+    const gr_float* HI = sp_densities.contig1d_ptr(SpLUT::HI);
+    const gr_float* H2I = (my_chemistry->primordial_chemistry > 1)
+                              ? sp_densities.contig1d_ptr(SpLUT::H2I)
+                              : nullptr;
+
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        // TODO(gold-standard): reuse the pre-computed lnT values
+        // -> we should either adjust the tables so that they interpolated with
+        //    respect to lnT, or we should compute log10(T) = ln(T) / ln(10)
+        log10_T[i] = std::log10(tgas[i]);
+        // logrho specifies the log10(proper mass density g/cm^3)
+        double logrho =
+            std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
+        logH[i] = std::log10(HI[i] * dom);
+        if (my_chemistry->primordial_chemistry < 2) {
+          logH2[i] = std::log10(HI[i] * dom);
+        } else {
+          logH2[i] = std::log10((HI[i] + H2I[i] / 2.0) * dom);
+        }
+
+        // From Chiaki & Wise (2019), approximate dv/dr as 1/(3 * t_ff)
+        // where t_ff = sqrt(3π/ (32 * G * rho))
+        //
+        // let's break this down (since I originially found this confusing)
+        //
+        // (dv/dr) = sqrt((32 * G * rho) / (27π))
+        //
+        // (dv/dr) / (km/s/cm) = 10⁻⁵ * sqrt((32 * G_cgs) / (27π))
+        //                       * sqrt(ρ / (g/cm³))
+        //
+        // -> the factor of 10⁻⁵ corresponds to (km/cm) in the units
+        // -> the constant, -8.799, is the result of evaluating
+        //    `log10(10⁻⁵ * sqrt((32 * G_cgs) / (27π)))`
+        //
+        // TODO(gold-standard): explicitly use ``constants::GravConst``
+        // -> for efficiency purposes, we may to continue to precompute
+        //    the term involving the gravitational constants
+        logdvdr[i] = -8.79947961814 + 0.5 * logrho;  // units = log10(km/s/cm)
+      }
+    }
+  }
+
+  // perform each interpolation
   for (int pack_id = 0; pack_id < n_packs; pack_id++) {
     const SpCoolTablePack& pack = packs[pack_id];
     const gr_float* cur_sp_dens = sp_densities.contig1d_ptr(pack.sp_id);
@@ -72,7 +145,7 @@ static void add_contrib(double* edot, const gr_mask_type* itmask,
         double lognhat = log10_ndens_sp - logdvdr[i];
 
         double log_Linv = interp_from_3D_grid(
-            lognhat, logT[i], last_interp_ax_vals[i], pack.interp_grid);
+            lognhat, log10_T[i], last_interp_ax_vals[i], pack.interp_grid);
         double L = std::pow(1.e1, (-log_Linv));
 
         double G = tiny8;
@@ -186,13 +259,11 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   std::vector<double> galdl(my_fields->grid_dimension[0]);
   std::vector<double> cieY06(my_fields->grid_dimension[0]);
 
-  std::vector<double> logT(my_fields->grid_dimension[0]);
   std::vector<double> logrho(my_fields->grid_dimension[0]);
-  std::vector<double> logH(my_fields->grid_dimension[0]);
-  std::vector<double> logH2(my_fields->grid_dimension[0]);
-  std::vector<double> logdvdr(my_fields->grid_dimension[0]);
   std::vector<double> LCIE(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
+
+  std::vector<double> spcooltab_scratch(4 * sp_densities.extent(1));
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
 
@@ -223,25 +294,21 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
 
   // Compute log densities
 
-  const double log10_Tcmb =
+  [[maybe_unused]] const double log10_Tcmb =
       (my_chemistry->cmb_temperature_floor == 1) ? std::log10(comp2) : 0.0;
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
-      logT[i] = std::log10(tgas[i]);
+      // logrho specifies the log10(proper mass density g/cm^3)
+      // -> TODO: compute the value exactly when we need it and stop storing it
+      //    in a buffer
       logrho[i] =
           std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
-      if (my_chemistry->primordial_chemistry > 0) {
-        logH[i] = std::log10(HI(i, idx_range.j, idx_range.k) * dom);
-        logH2[i] = std::log10(HI(i, idx_range.j, idx_range.k) * dom);
-      }
-      if (my_chemistry->primordial_chemistry > 1) {
-        logH2[i] = std::log10((HI(i, idx_range.j, idx_range.k) +
-                               H2I(i, idx_range.j, idx_range.k) / 2.0) *
-                              dom);
-      }
 
-      // From Chiaki & Wise (2019), approximate dv/dr as 1/(3 * t_ff)
-      logdvdr[i] = -8.79947961814e0 + 0.5e0 * logrho[i];  // km/s / cm
+      // lshield_con is the shielding length for continuum opacity
+      // -> it's just the Jeans length. I **think** it's defined as
+      //    l_Jeans = c_sound * sqrt(pi / (G * rho))
+      // -> TODO: compute the value exactly when we need it and stop storing it
+      //    in a buffer
       lshield_con[i] =
           std::sqrt((my_chemistry->Gamma * constants::pi_fortran_val *
                      constants::kboltz_grflt * tgas[i]) /
@@ -397,9 +464,9 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
       const spcooltab_detail::SpCoolTablePack pack = {2.0, SpLUT::H2I, false,
                                                       opaque_storage.LH2};
 
-      spcooltab_detail::add_contrib(
-          edot, itmask, my_chemistry, sp_densities, idx_range, dom, logT.data(),
-          logH.data(), logH2.data(), logdvdr.data(), log10_Tcmb, &pack, 1);
+      spcooltab_detail::add_contrib(edot, d, tgas, itmask, my_chemistry,
+                                    sp_densities, idx_range, internalu,
+                                    spcooltab_scratch.data(), &pack, 1);
 
       // Glover & Abel (2008) H2 cooling rate
     } else if (my_chemistry->h2_cooling_rate == 2) {
@@ -686,9 +753,9 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
       const spcooltab_detail::SpCoolTablePack pack = {3.0, SpLUT::HDI, false,
                                                       opaque_storage.LHD};
 
-      spcooltab_detail::add_contrib(
-          edot, itmask, my_chemistry, sp_densities, idx_range, dom, logT.data(),
-          logH.data(), logH2.data(), logdvdr.data(), log10_Tcmb, &pack, 1);
+      spcooltab_detail::add_contrib(edot, d, tgas, itmask, my_chemistry,
+                                    sp_densities, idx_range, internalu,
+                                    spcooltab_scratch.data(), &pack, 1);
 
       // Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007) HD cooling
       // rate
@@ -995,10 +1062,9 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
           {18.0, SpLUT::H2OI, true, opaque_storage.LH2O},
       };
 
-      spcooltab_detail::add_contrib(edot, itmask_metal, my_chemistry,
-                                    sp_densities, idx_range, dom, logT.data(),
-                                    logH.data(), logH2.data(), logdvdr.data(),
-                                    log10_Tcmb, packs, 6);
+      spcooltab_detail::add_contrib(edot, d, tgas, itmask_metal, my_chemistry,
+                                    sp_densities, idx_range, internalu,
+                                    spcooltab_scratch.data(), packs, 6);
     }
   }
 
@@ -1033,9 +1099,12 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
     const InterpGrid& interp_grid = opaque_storage.alphap;
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        // ! primordial continuum opacity !!
+        // TODO(gold-standard): reuse the pre-computed lnT values
+        // -> we should either adjust the table so that they interpolated with
+        //    respect to lnT, or we should compute log10(T) = ln(T) / ln(10)
+        double log10_T = std::log10(tgas[i]);
         double log10_a =
-            interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
+            interpolate_2d(logrho[i], log10_T, interp_grid.props.dimension,
                            interp_grid.props.parameters[0],
                            interp_grid.props.parameter_spacing[0],
                            interp_grid.props.parameters[1],
