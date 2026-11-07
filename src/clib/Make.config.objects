@@ -24,6 +24,7 @@ OBJS_CONFIG_LIB = \
         chem_model/parse.lo \
         chem_model/species_builder.lo \
         chem_model/species.lo \
+        cool/primordial_opac_table.lo \
         collisional_rate_props.lo \
         tabulated/cool1d_cloudy.lo \
         tabulated/cool1d_cloudy_old_tables.lo \

@@ -47,6 +47,7 @@
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
 #include "collisional_rate_props.hpp"  // init_extra_collisional_rates
+#include "cool/primordial_opac_table.hpp"
 #include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
 #include "inject_model/load_data.hpp"  // load_inject_path_data
 #include "initialize_rates.hpp"
@@ -630,9 +631,14 @@ int grackle::impl::initialize_rates(
                           / (densityBase1 * pow(timeBase1, 3));
 
     if (my_chemistry->use_primordial_continuum_opacity == 1) {
-      if (GR_SUCCESS != initialize_primordial_opacity(my_chemistry, my_rates)) {
-        return GrPrintAndReturnErr("err in initialize_primordial_opacity");
+      Expected<InterpGrid, Error> tmp = init_primordial_opacity();
+      if (!tmp.has_value()){
+        Error err = tmp.error().context_literal(
+            "problem initializing continuum primordial opacity table");
+        err.write(stderr);
+        return GR_FAIL;
       }
+      my_rates->opaque_storage->alphap = std::move(tmp).value();
     }
 
     //* 3) Units for radiative transfer coefficients are 1/[time].
