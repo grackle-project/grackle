@@ -768,17 +768,7 @@ int grackle::impl::initialize_rates(
           add_cieY06_cool_rate(&my_rates->cieY06, internalu.coolunit, my_chemistry);
         }
 
-        // Chiaki & Wise 2019 rates
-        // Note: these are still defined in initialize_metal_chemistry_rates.c.
-        // They should be moved someday.
-        if (GR_SUCCESS != initialize_cooling_rate_H2(my_chemistry, my_rates,
-                                                     coolingUnits)) {
-          return GrPrintAndReturnErr("err in initialize_cooling_rate_H2");
-        }
-        if (GR_SUCCESS != initialize_cooling_rate_HD(my_chemistry, my_rates,
-                                                      coolingUnits)){
-          return GrPrintAndReturnErr("err in initialize_cooling_rate_HD");
-        }
+        // we handle Chiaki & Wise 2019 rates for H2I and HDI, separately
 
         //* f) HD cooling.
 
@@ -839,38 +829,6 @@ int grackle::impl::initialize_rates(
     if (grackle::impl::init_misc_species_cool_rates(my_chemistry, my_rates, my_units) != GR_SUCCESS) {
       fprintf(stderr, "Error in initialize_metal_chemistry_rates.\n");
       return GR_FAIL;
-    }
-
-    // set up assorted_multidim_tabulated_sp_cool
-    {
-      const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
-      int n_packs = 0;
-      GRIMPL_NS::TabMDSpCooler& obj = my_rates->opaque_storage->assorted_multidim_tabulated_sp_cool;
-
-      if (my_chemistry->h2_cooling_rate == 3) {
-        obj.packs_.emplace_back(2.0, SpLUT::H2I, false, opaque_storage.LH2);
-        obj.pack_id_H2I_ = n_packs;
-        n_packs++;
-      }
-
-      if (my_chemistry->primordial_chemistry > 2 &&
-          my_chemistry->hd_cooling_rate == 1) {
-        obj.packs_.emplace_back(3.0, SpLUT::H2I, false, opaque_storage.LHD);
-        obj.pack_id_HDI_ = n_packs;
-        n_packs++;
-      }
-
-      if (my_chemistry->metal_cooling == 1 &&
-          my_chemistry->metal_chemistry == 1) {
-        // C/O fine-structure cooling
-        obj.packs_.emplace_back(12.0, SpLUT::CI, false, opaque_storage.LCI);
-        obj.packs_.emplace_back(12.0, SpLUT::CII, false, opaque_storage.LCII);
-        obj.packs_.emplace_back(16.0, SpLUT::OI, false, opaque_storage.LOI);
-        // metal molecule rotational cooling (for low temperatures)
-        obj.packs_.emplace_back(28.0, SpLUT::COI, true, opaque_storage.LCO);
-        obj.packs_.emplace_back(17.0, SpLUT::OHI, true, opaque_storage.LOH);
-        obj.packs_.emplace_back(18.0, SpLUT::H2OI, true, opaque_storage.LH2O);
-      }
     }
 
     // Load injection pathway data

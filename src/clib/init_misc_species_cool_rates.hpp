@@ -18,13 +18,6 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-int initialize_cooling_rate_H2(chemistry_data* my_chemistry,
-                               chemistry_data_storage* my_rates,
-                               double coolunit);
-int initialize_cooling_rate_HD(chemistry_data* my_chemistry,
-                               chemistry_data_storage* my_rates,
-                               double coolunit);
-
 int init_misc_species_cool_rates(chemistry_data* my_chemistry,
                                  chemistry_data_storage* my_rates,
                                  code_units* my_units);

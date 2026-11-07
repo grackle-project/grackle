@@ -34,7 +34,7 @@ struct TabMDSpCooler {
     double sp_mass_factor;
     int sp_id;
     bool neutral_H_ndens_ax_includes_molecular;
-    const InterpGrid& interp_grid;
+    InterpGrid interp_grid;
   };
 
   std::vector<SpCoolTablePack_> packs_;
