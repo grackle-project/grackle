@@ -31,8 +31,6 @@ int init_misc_species_cool_rates(chemistry_data* my_chemistry,
                                  chemistry_data_storage* my_rates,
                                  code_units* my_units);
 
-int free_misc_species_cool_rates(chemistry_data* my_chemistry,
-                                 chemistry_data_storage* my_rates);
 }  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* INIT_MISC_SPECIES_COOL_RATES_HPP */

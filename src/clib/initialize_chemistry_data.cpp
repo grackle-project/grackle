@@ -729,6 +729,8 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->gas_grain);
     GRACKLE_FREE(my_rates->gas_grain2);
 
+    GRACKLE_FREE(my_rates->cieY06);
+
     GRACKLE_FREE(my_rates->k13dd);
     GRACKLE_FREE(my_rates->h2dust);
     GRACKLE_FREE(my_rates->n_cr_n);
@@ -744,11 +746,6 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
   grackle::impl::free_cloudy_data(&my_rates->cloudy_metal, my_chemistry,
                                   /* primordial */ 0);
   grackle::impl::free_UVBtable(&my_rates->UVbackground_table);
-
-  if (grackle::impl::free_misc_species_cool_rates(my_chemistry, my_rates) != GR_SUCCESS) {
-    fprintf(stderr, "Error in free_metal_chemistry_rates.\n");
-    return GR_FAIL;
-  }
 
   delete my_rates->opaque_storage;
   my_rates->opaque_storage = nullptr;

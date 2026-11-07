@@ -40,50 +40,6 @@ int initialize_cooling_rate_CO (chemistry_data *my_chemistry, chemistry_data_sto
 int initialize_cooling_rate_OH (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
 int initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
 
-
-/// calculate CIE H2 cooling rate from Yoshida et al. (2006)
-///
-/// @note
-/// At some point, we should coerce this into the standard format for
-/// heating/cooling rates
-static int add_cieY06_cool_rate(double **rate_ptr, double coolunit,
-                                chemistry_data* my_chemistry) {
-
-  *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-
-  // compute log spacing of the temperature table
-  //
-  // TODO: address the ubiquity of this variable (among transcribed routines).
-  //       To ensure that every part of the code uses exactly the same value,
-  //       we should either:
-  //       1. cache this quantity
-  //       2. have a function that we use everywhere to call it
-  const double dlogtem = (
-    (log(my_chemistry->TemperatureEnd) -
-     log(my_chemistry->TemperatureStart)) /
-    (double)(my_chemistry->NumberOfTemperatureBins-1)
-  );
-
-  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-    // Set rate to tiny for safety.
-    (*rate_ptr)[i] = tiny;
-
-    // calculate local temperature
-    double ln_T = log(my_chemistry->TemperatureStart) + (double)(i)*dlogtem;
-    double T = exp(ln_T);
-
-    // store the rate
-    (*rate_ptr)[i] =
-      pow(10.0,
-          -116.6 + 96.34  * log10(T)
-                 - 47.153 * pow(log10(T), 2)
-                 + 10.744 * pow(log10(T), 3)
-                 -  0.916 * pow(log10(T), 4) ) / coolunit;
-  }
-
-  return GR_SUCCESS;
-}
-
 int init_misc_species_cool_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
   code_units *my_units)
@@ -114,20 +70,6 @@ int init_misc_species_cool_rates(
                                 init_fn_l[i].name);
     }
   }
-
-  add_cieY06_cool_rate(&my_rates->cieY06, internalu.coolunit, my_chemistry);
-
-  return GR_SUCCESS;
-}
-
-int free_misc_species_cool_rates(chemistry_data *my_chemistry,
-                                 chemistry_data_storage *my_rates)
-{
-  if (my_chemistry->primordial_chemistry == 0) {
-    return GR_SUCCESS;
-  }
-
-  GRACKLE_FREE(my_rates->cieY06 );
 
   return GR_SUCCESS;
 }

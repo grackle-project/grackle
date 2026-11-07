@@ -129,6 +129,42 @@ static int add_reaction_rate(double **rate_ptr, rate_function my_function,
   return init_preallocated_rate(*rate_ptr, my_function, units, my_chemistry);
 }
 
+/// calculate CIE H2 cooling rate from Yoshida et al. (2006)
+///
+/// @note
+/// At some point, we should coerce this into the standard format for
+/// heating/cooling rates (this may break the gold-standard)
+int add_cieY06_cool_rate(double **rate_ptr, double coolunit,
+                         const chemistry_data* my_chemistry) {
+  *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+  // compute log spacing of the temperature table
+  const double dlogtem = (
+    (log(my_chemistry->TemperatureEnd) -
+     log(my_chemistry->TemperatureStart)) /
+    (double)(my_chemistry->NumberOfTemperatureBins-1)
+  );
+
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
+    // Set rate to tiny for safety.
+    (*rate_ptr)[i] = tiny;
+
+    // calculate local temperature
+    double ln_T = log(my_chemistry->TemperatureStart) + (double)(i)*dlogtem;
+    double T = exp(ln_T);
+
+    // store the rate
+    (*rate_ptr)[i] =
+      pow(10.0,
+          -116.6 + 96.34  * log10(T)
+                 - 47.153 * pow(log10(T), 2)
+                 + 10.744 * pow(log10(T), 3)
+                 -  0.916 * pow(log10(T), 4) ) / coolunit;
+  }
+
+  return GR_SUCCESS;
+}
+
 //Define a function which will calculate the k13dd rates.
 int add_k13dd_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
 {
@@ -717,6 +753,14 @@ int grackle::impl::initialize_rates(
         //------New fit to LTE rate------ 
         //from Glover (2015, MNRAS, 451, 2082)
         add_reaction_rate(&my_rates->H2LTE, H2LTE_rate, coolingUnits, my_chemistry);
+
+        //------CIE H2 cooling rate from Yoshida et al. (2006)-----
+        // TODO(gold-standard): rework the following logic so that its more
+        //      consistent with all the other rates
+        {
+          InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
+          add_cieY06_cool_rate(&my_rates->cieY06, internalu.coolunit, my_chemistry);
+        }
 
         // Chiaki & Wise 2019 rates
         // Note: these are still defined in initialize_metal_chemistry_rates.c.
