@@ -298,9 +298,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   ih2cox = (double)(my_chemistry->ih2co);
 
   // Compute log densities
-
-  [[maybe_unused]] const double log10_Tcmb =
-      (my_chemistry->cmb_temperature_floor == 1) ? std::log10(comp2) : 0.0;
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
       // lshield_con is the shielding length for continuum opacity
