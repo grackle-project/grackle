@@ -78,9 +78,9 @@ static void add_contrib(double* edot, FortranView<const gr_float***> d,
                         const SpCoolTablePack* packs, int n_packs) {
   int buf_len = sp_densities.extent(1);
   double* log10_T = scratch_buf;
-  double* logH = scratch_buf + buf_len;
-  double* logH2 = scratch_buf + 2 * buf_len;
-  double* logdvdr = scratch_buf + 3 * buf_len;
+  double* log10_H = scratch_buf + buf_len;
+  double* log10_H2 = scratch_buf + 2 * buf_len;
+  double* log10_dvdr = scratch_buf + 3 * buf_len;
 
   // calculate props reused for different interpolations
   double dom = internalu_calc_dom_(internalu);
@@ -99,34 +99,39 @@ static void add_contrib(double* edot, FortranView<const gr_float***> d,
         // -> we should either adjust the tables so that they interpolated with
         //    respect to lnT, or we should compute log10(T) = ln(T) / ln(10)
         log10_T[i] = std::log10(tgas[i]);
-        // logrho specifies the log10(proper mass density g/cm^3)
-        double logrho =
-            std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
-        logH[i] = std::log10(HI[i] * dom);
+        log10_H[i] = std::log10(HI[i] * dom);
         if (my_chemistry->primordial_chemistry < 2) {
-          logH2[i] = std::log10(HI[i] * dom);
+          log10_H2[i] = std::log10(HI[i] * dom);
         } else {
-          logH2[i] = std::log10((HI[i] + H2I[i] / 2.0) * dom);
+          log10_H2[i] = std::log10((HI[i] + H2I[i] / 2.0) * dom);
         }
 
-        // From Chiaki & Wise (2019), approximate dv/dr as 1/(3 * t_ff)
-        // where t_ff = sqrt(3π/ (32 * G * rho))
+        // compute log10(mass density in proper units of g/cm^3)
+        double log10_rho =
+            std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
+
+        // compute log10(dv/dr in units of km/s/cm)
+        // -> From Chiaki & Wise (2019), approximate: dv/dr ≈ 1/(3 * t_ff)
+        //    where t_ff = sqrt(3π/ (32 * G * ρ)) and ρ is mass density
+        // -> let's break this down (since I originially found this confusing)
         //
-        // let's break this down (since I originially found this confusing)
+        //    we start with
+        //      (dv/dr) ≈ sqrt((32 * G * ρ) / (27π))
         //
-        // (dv/dr) = sqrt((32 * G * rho) / (27π))
+        //    make the units explicit
+        //      (dv/dr) / (1/s) = sqrt((32 * G_cgs * ρ / (g/cm³)) / (27π))
         //
-        // (dv/dr) / (km/s/cm) = 10⁻⁵ * sqrt((32 * G_cgs) / (27π))
-        //                       * sqrt(ρ / (g/cm³))
+        //    adjust so we can get our desired output units
+        //      (dv/dr) / (km/s/cm) = 10⁻⁵ * sqrt((32 * G_cgs) / (27π))
+        //                            * sqrt(ρ / (g/cm³))
         //
-        // -> the factor of 10⁻⁵ corresponds to (km/cm) in the units
-        // -> the constant, -8.799, is the result of evaluating
-        //    `log10(10⁻⁵ * sqrt((32 * G_cgs) / (27π)))`
+        //    to be clear (this was the source of my confusion) -8.799, is the
+        //        value of:  `log10(10⁻⁵ * sqrt((32 * G_cgs) / (27π)))`
         //
         // TODO(gold-standard): explicitly use ``constants::GravConst``
-        // -> for efficiency purposes, we may to continue to precompute
+        // -> for efficiency purposes, we want may to continue to precompute
         //    the term involving the gravitational constants
-        logdvdr[i] = -8.79947961814 + 0.5 * logrho;  // units = log10(km/s/cm)
+        log10_dvdr[i] = -8.79947961814 + 0.5 * log10_rho;
       }
     }
   }
@@ -136,28 +141,29 @@ static void add_contrib(double* edot, FortranView<const gr_float***> d,
     const SpCoolTablePack& pack = packs[pack_id];
     const gr_float* cur_sp_dens = sp_densities.contig1d_ptr(pack.sp_id);
     const double* last_interp_ax_vals =
-        (pack.neutral_H_ndens_ax_includes_molecular) ? logH2 : logH;
+        (pack.neutral_H_ndens_ax_includes_molecular) ? log10_H2 : log10_H;
 
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
+        // nhat is `ndens_species / (dv/dr)` and has units of `s/(cm² * km)`
         double log10_ndens_sp =
             std::log10(cur_sp_dens[i] * dom / pack.sp_mass_factor);
-        double lognhat = log10_ndens_sp - logdvdr[i];
+        double log10_nhat = log10_ndens_sp - log10_dvdr[i];
 
-        double log_Linv = interp_from_3D_grid(
-            lognhat, log10_T[i], last_interp_ax_vals[i], pack.interp_grid);
-        double L = std::pow(1.e1, (-log_Linv));
+        double log10_Linv = interp_from_3D_grid(
+            log10_nhat, log10_T[i], last_interp_ax_vals[i], pack.interp_grid);
+        double L = std::pow(10.0, -log10_Linv);
 
         double G = tiny8;
         if (my_chemistry->cmb_temperature_floor == 1) {
-          double log_Ginv = interp_from_3D_grid(
-              lognhat, log10_Tcmb, last_interp_ax_vals[i], pack.interp_grid);
-          G = std::pow(1.e1, (-log_Ginv));
+          double log10_Ginv = interp_from_3D_grid(
+              log10_nhat, log10_Tcmb, last_interp_ax_vals[i], pack.interp_grid);
+          G = std::pow(10.0, -log10_Ginv);
         }
 
         double edot_contrib =
             (G - L) / dom * cur_sp_dens[i] / pack.sp_mass_factor;
-        if (edot_contrib != edot_contrib) {
+        if (std::isnan(edot_contrib)) {
           edot_contrib = 0.0;
         }
         edot[i] = edot[i] + edot_contrib;
