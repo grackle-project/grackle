@@ -265,7 +265,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   std::vector<double> galdl(my_fields->grid_dimension[0]);
   std::vector<double> cieY06(my_fields->grid_dimension[0]);
 
-  std::vector<double> logrho(my_fields->grid_dimension[0]);
   std::vector<double> LCIE(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
 
@@ -304,12 +303,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
       (my_chemistry->cmb_temperature_floor == 1) ? std::log10(comp2) : 0.0;
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
-      // logrho specifies the log10(proper mass density g/cm^3)
-      // -> TODO: compute the value exactly when we need it and stop storing it
-      //    in a buffer
-      logrho[i] =
-          std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
-
       // lshield_con is the shielding length for continuum opacity
       // -> it's just the Jeans length. I **think** it's defined as
       //    l_Jeans = c_sound * sqrt(pi / (G * rho))
@@ -1105,12 +1098,16 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
     const InterpGrid& interp_grid = opaque_storage.alphap;
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
+        // log10_rho specifies the log10(proper mass density g/cm^3)
+        // -> should this actually use the metal-free mass density?
+        double log10_rho =
+            std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
         // TODO(gold-standard): reuse the pre-computed lnT values
         // -> we should either adjust the table so that they interpolated with
         //    respect to lnT, or we should compute log10(T) = ln(T) / ln(10)
         double log10_T = std::log10(tgas[i]);
         double log10_a =
-            interpolate_2d(logrho[i], log10_T, interp_grid.props.dimension,
+            interpolate_2d(log10_rho, log10_T, interp_grid.props.dimension,
                            interp_grid.props.parameters[0],
                            interp_grid.props.parameter_spacing[0],
                            interp_grid.props.parameters[1],
