@@ -21,6 +21,7 @@
 #include "./config.hpp"
 #include "./error_detail.hpp"
 #include "./formatf.hpp"
+#include "chem_model/parse.hpp"
 
 // it would be a lot simpler (and idiomatic) to implement string-conversion
 // logic in terms of c++ 20's std::format machinery, but this was one of the
@@ -79,8 +80,8 @@ namespace GRIMPL_NAMESPACE_DECL {
 class Error {
   static constexpr const char* DFLT_MSG_ = "<UNKNOWN ERROR>";
 
-  // This is wrapped by a shared_ptr (i.e. its heap-allocated with
-  // atomic reference counting) in order to make it easier to
+  // ErrImpl_ is wrapped by a shared_ptr (i.e. it's heap-allocated with atomic
+  // reference counting) in order to make it cheap to clone
   std::shared_ptr<ErrImpl_> impl_;  ///< internal representation of Error
 
   Error() = default;  // <- this is private to force use of factory methods
@@ -151,13 +152,12 @@ public:
     va_start(vlist, format);
     std::string msg = vstr_formatf(format, vlist);
     va_end(vlist);
-    Error out;
     return context_helper_(ErrImpl_("", std::move(msg), nullptr));
   }
 
   /// @brief wrap the existing err info in additional context
   ///
-  /// This method exists to allow
+  /// The additional context is specified as a string-literal
   ///
   /// @return Returns a reference to `this` for convenience (e.g. to facillitate
   ///     chaining of operations)
@@ -224,6 +224,20 @@ public:
   static Error msg_literal(const char* msg_literal) {
     Error out;
     out.impl_ = std::make_shared<ErrImpl_>(msg_literal, "", nullptr);
+    return out;
+  }
+
+  /// @brief Construct an object from a parsing error
+  ///
+  /// @param parsed_s Is the string being parsed where the error arose
+  /// @param err Is the parsing error
+  static Error parse(std::string_view parsed_s, parse::Err& err) {
+    // in the future, it could be worth considering tracking parsed_s and err
+    // inside of ErrImpl_ and defer the conversion to a string message until
+    // later, but that's not currently a particularly high priority
+    Error out;
+    out.impl_ =
+        std::make_shared<ErrImpl_>("", err.to_string(parsed_s), nullptr);
     return out;
   }
 };

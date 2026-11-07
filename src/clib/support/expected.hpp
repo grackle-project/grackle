@@ -76,7 +76,7 @@ class Unexpected {
 
 public:
   constexpr explicit Unexpected(const E& err) : err_{err} {};
-  constexpr explicit Unexpected(E&& err) : err_{err} {};
+  constexpr explicit Unexpected(E&& err) : err_(std::move(err)) {};
   constexpr E& error() { return err_; }
   constexpr const E& error() const { return err_; }
 };
@@ -130,7 +130,7 @@ public:
   constexpr E& error() & { return std::get<1>(u_); }
   constexpr E&& error() && { return std::get<1>(std::move(u_)); }
   constexpr const E& error() const& { return std::get<1>(u_); }
-  constexpr const E& error() const&& { return std::get<1>(std::move(u_)); }
+  constexpr const E&& error() const&& { return std::get<1>(std::move(u_)); }
 
   constexpr T value_or(T dflt_val) const&
     requires std::copy_constructible<T>
@@ -169,7 +169,7 @@ public:
 
   constexpr E& error() & { return u_.value(); }
   constexpr E&& error() && { return std::move(u_).value(); }
-  constexpr const E&& error() const& { return u_.value(); }
+  constexpr const E& error() const& { return u_.value(); }
   constexpr const E&& error() const&& { return std::move(u_).value(); }
 
   // following are all defined for consistency with general form of Expected

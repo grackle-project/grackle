@@ -744,31 +744,6 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    Pointer to the CII (C\ :sup:`+`\ ) density field array. Required
    when setting :c:data:`metal_chemistry` = 1.
 
-.. c:var:: gr_float *CH_density
-
-   Pointer to the CH density field array. Required when setting
-   :c:data:`metal_chemistry` = 1.
-
-.. c:var:: gr_float *CH2_density
-
-   Pointer to the CH2 (CH\ :sub:`2`\ ) density field array. Required
-   when setting :c:data:`metal_chemistry` = 1.
-
-.. c:var:: gr_float *CO_density
-
-   Pointer to the CO density field array. Required when setting
-   :c:data:`metal_chemistry` = 1.
-
-.. c:var:: gr_float *COII_density
-
-   Pointer to the COII (CO\ :sup:`+`\ ) density field array. Required
-   when setting :c:data:`metal_chemistry` = 1.
-
-.. c:var:: gr_float *CO2_density
-
-   Pointer to the CO2 (CO\ :sub:`2`\ ) density field array. Required
-   when setting :c:data:`metal_chemistry` = 1.
-
 .. c:var:: gr_float *OI_density
 
    Pointer to the OI density field array. Required when setting
@@ -779,9 +754,44 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    Pointer to the OII (O\ :sup:`+`\ ) density field array. Required
    when setting :c:data:`metal_chemistry` = 1.
 
-.. c:var:: gr_float *OH_density
+.. c:var:: gr_float *CHI_density
 
-   Pointer to the OH density field array. Required when setting
+   Pointer to the CHI density field array. Required when setting
+   :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *CH2I_density
+
+   Pointer to the CH2I (CH\ :sub:`2`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *COI_density
+
+   Pointer to the COI density field array. Required when setting
+   :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *COII_density
+
+   Pointer to the COII (CO\ :sup:`+`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *CO2I_density
+
+   Pointer to the CO2I (CO\ :sub:`2`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *O2I_density
+
+   Pointer to the O2I (O\ :sub:`2`\ ) density field array. Required
+   when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *O2II_density
+
+   Pointer to the O2II (O\ :sub:`2`\ :sup:`+`\ ) density field
+   array. Required when setting :c:data:`metal_chemistry` = 1.
+
+.. c:var:: gr_float *OHI_density
+
+   Pointer to the OHI density field array. Required when setting
    :c:data:`metal_chemistry` = 1.
 
 .. c:var:: gr_float *OHII_density
@@ -789,9 +799,9 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    Pointer to the OHII (OH\ :sup:`+`\ ) density field array. Required
    when setting :c:data:`metal_chemistry` = 1.
 
-.. c:var:: gr_float *H2O_density
+.. c:var:: gr_float *H2OI_density
 
-   Pointer to the H2O (H\ :sub:`2`\ O) density field array. Required
+   Pointer to the H2OI (H\ :sub:`2`\ O) density field array. Required
    when setting :c:data:`metal_chemistry` = 1.
 
 .. c:var:: gr_float *H2OII_density
@@ -802,16 +812,6 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
 .. c:var:: gr_float *H3OII_density
 
    Pointer to the H3OII (H\ :sub:`3`\ O\ :sup:`+`\ ) density field
-   array. Required when setting :c:data:`metal_chemistry` = 1.
-
-.. c:var:: gr_float *O2_density
-
-   Pointer to the O2 (O\ :sub:`2`\ ) density field array. Required
-   when setting :c:data:`metal_chemistry` = 1.
-
-.. c:var:: gr_float *O2II_density
-
-   Pointer to the O2II (O\ :sub:`2`\ :sup:`+`\ ) density field
    array. Required when setting :c:data:`metal_chemistry` = 1.
 
 .. c:var:: gr_float *SiI_density

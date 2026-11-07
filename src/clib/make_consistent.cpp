@@ -92,23 +92,23 @@ void make_consistent(
   FortranView<gr_float***> CII(
       my_fields->CII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CO(
-      my_fields->CO_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> COI(
+      my_fields->COI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CO2(
-      my_fields->CO2_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> CO2I(
+      my_fields->CO2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> OI(
       my_fields->OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OH(
-      my_fields->OH_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> OHI(
+      my_fields->OHI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2O(
-      my_fields->H2O_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> H2OI(
+      my_fields->H2OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> O2(
-      my_fields->O2_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> O2I(
+      my_fields->O2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> SiI(
       my_fields->SiI_density, my_fields->grid_dimension[0],
@@ -119,11 +119,11 @@ void make_consistent(
   FortranView<gr_float***> SiO2I(
       my_fields->SiO2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CH(
-      my_fields->CH_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> CHI(
+      my_fields->CHI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CH2(
-      my_fields->CH2_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> CH2I(
+      my_fields->CH2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> COII(
       my_fields->COII_density, my_fields->grid_dimension[0],
@@ -387,17 +387,17 @@ void make_consistent(
 
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           // if (itmask_metal(i)) then
-          OH(i, j, k) = std::fabs(OH(i, j, k));
-          H2O(i, j, k) = std::fabs(H2O(i, j, k));
-          CH(i, j, k) = std::fabs(CH(i, j, k));
-          CH2(i, j, k) = std::fabs(CH2(i, j, k));
+          OHI(i, j, k) = std::fabs(OHI(i, j, k));
+          H2OI(i, j, k) = std::fabs(H2OI(i, j, k));
+          CHI(i, j, k) = std::fabs(CHI(i, j, k));
+          CH2I(i, j, k) = std::fabs(CH2I(i, j, k));
           OHII(i, j, k) = std::fabs(OHII(i, j, k));
           H2OII(i, j, k) = std::fabs(H2OII(i, j, k));
           H3OII(i, j, k) = std::fabs(H3OII(i, j, k));
-          totalH[i] = totalH[i] + OH(i, j, k) / 17. + H2O(i, j, k) / 18. * 2. +
-                      CH(i, j, k) / 13. + CH2(i, j, k) / 14. * 2. +
-                      OHII(i, j, k) / 17. + H2OII(i, j, k) / 18. * 2. +
-                      H3OII(i, j, k) / 19. * 3.;
+          totalH[i] = totalH[i] + OHI(i, j, k) / 17. +
+                      H2OI(i, j, k) / 18. * 2. + CHI(i, j, k) / 13. +
+                      CH2I(i, j, k) / 14. * 2. + OHII(i, j, k) / 17. +
+                      H2OII(i, j, k) / 18. * 2. + H3OII(i, j, k) / 19. * 3.;
           // endif
         }
       }
@@ -461,17 +461,17 @@ void make_consistent(
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           CI(i, j, k) = std::fabs(CI(i, j, k));
           CII(i, j, k) = std::fabs(CII(i, j, k));
-          CO(i, j, k) = std::fabs(CO(i, j, k));
-          CO2(i, j, k) = std::fabs(CO2(i, j, k));
+          COI(i, j, k) = std::fabs(COI(i, j, k));
+          CO2I(i, j, k) = std::fabs(CO2I(i, j, k));
           OI(i, j, k) = std::fabs(OI(i, j, k));
-          OH(i, j, k) = std::fabs(OH(i, j, k));
-          H2O(i, j, k) = std::fabs(H2O(i, j, k));
-          O2(i, j, k) = std::fabs(O2(i, j, k));
+          OHI(i, j, k) = std::fabs(OHI(i, j, k));
+          H2OI(i, j, k) = std::fabs(H2OI(i, j, k));
+          O2I(i, j, k) = std::fabs(O2I(i, j, k));
           SiI(i, j, k) = std::fabs(SiI(i, j, k));
           SiOI(i, j, k) = std::fabs(SiOI(i, j, k));
           SiO2I(i, j, k) = std::fabs(SiO2I(i, j, k));
-          CH(i, j, k) = std::fabs(CH(i, j, k));
-          CH2(i, j, k) = std::fabs(CH2(i, j, k));
+          CHI(i, j, k) = std::fabs(CHI(i, j, k));
+          CH2I(i, j, k) = std::fabs(CH2I(i, j, k));
           COII(i, j, k) = std::fabs(COII(i, j, k));
           OII(i, j, k) = std::fabs(OII(i, j, k));
           OHII(i, j, k) = std::fabs(OHII(i, j, k));
@@ -525,20 +525,20 @@ void make_consistent(
                  (d(i, j, k) * dom < 1.e8)) ||
                 ((metal(i, j, k) > 1.e-9 * d(i, j, k)) &&
                  (d(i, j, k) * dom < 1.e6))))) {
-            totalOg = 16. / 28. * CO(i, j, k) + 32. / 44. * CO2(i, j, k) +
-                      OI(i, j, k) + 16. / 17. * OH(i, j, k) +
-                      16. / 18. * H2O(i, j, k) + O2(i, j, k) +
+            totalOg = 16. / 28. * COI(i, j, k) + 32. / 44. * CO2I(i, j, k) +
+                      OI(i, j, k) + 16. / 17. * OHI(i, j, k) +
+                      16. / 18. * H2OI(i, j, k) + O2I(i, j, k) +
                       16. / 44. * SiOI(i, j, k) + 32. / 60. * SiO2I(i, j, k) +
                       16. / 28. * COII(i, j, k) + OII(i, j, k) +
                       16. / 17. * OHII(i, j, k) + 16. / 18. * H2OII(i, j, k) +
                       16. / 19. * H3OII(i, j, k) + O2II(i, j, k);
             correctOg = (gr_float)(Og[i] / totalOg);
-            CO(i, j, k) = CO(i, j, k) * correctOg;
-            CO2(i, j, k) = CO2(i, j, k) * correctOg;
+            COI(i, j, k) = COI(i, j, k) * correctOg;
+            CO2I(i, j, k) = CO2I(i, j, k) * correctOg;
             OI(i, j, k) = OI(i, j, k) * correctOg;
-            OH(i, j, k) = OH(i, j, k) * correctOg;
-            H2O(i, j, k) = H2O(i, j, k) * correctOg;
-            O2(i, j, k) = O2(i, j, k) * correctOg;
+            OHI(i, j, k) = OHI(i, j, k) * correctOg;
+            H2OI(i, j, k) = H2OI(i, j, k) * correctOg;
+            O2I(i, j, k) = O2I(i, j, k) * correctOg;
             SiOI(i, j, k) = SiOI(i, j, k) * correctOg;
             SiO2I(i, j, k) = SiO2I(i, j, k) * correctOg;
             COII(i, j, k) = COII(i, j, k) * correctOg;
@@ -580,16 +580,16 @@ void make_consistent(
               }
             }
 
-            totalCg = CI(i, j, k) + CII(i, j, k) + 12. / 28. * CO(i, j, k) +
-                      12. / 44. * CO2(i, j, k) + 12. / 13. * CH(i, j, k) +
-                      12. / 14. * CH2(i, j, k) + 12. / 28. * COII(i, j, k);
+            totalCg = CI(i, j, k) + CII(i, j, k) + 12. / 28. * COI(i, j, k) +
+                      12. / 44. * CO2I(i, j, k) + 12. / 13. * CHI(i, j, k) +
+                      12. / 14. * CH2I(i, j, k) + 12. / 28. * COII(i, j, k);
             correctCg = (gr_float)(Cg[i] / totalCg);
             CI(i, j, k) = CI(i, j, k) * correctCg;
             CII(i, j, k) = CII(i, j, k) * correctCg;
-            CO(i, j, k) = CO(i, j, k) * correctCg;
-            CO2(i, j, k) = CO2(i, j, k) * correctCg;
-            CH(i, j, k) = CH(i, j, k) * correctCg;
-            CH2(i, j, k) = CH2(i, j, k) * correctCg;
+            COI(i, j, k) = COI(i, j, k) * correctCg;
+            CO2I(i, j, k) = CO2I(i, j, k) * correctCg;
+            CHI(i, j, k) = CHI(i, j, k) * correctCg;
+            CH2I(i, j, k) = CH2I(i, j, k) * correctCg;
             COII(i, j, k) = COII(i, j, k) * correctCg;
             if (chiaki_model_dust_evolution) {
               if (my_chemistry->dust_species > 0) {
@@ -676,9 +676,9 @@ void make_consistent(
             }
 
           } else {
-            totalO = 16. / 28. * CO(i, j, k) + 32. / 44. * CO2(i, j, k) +
-                     OI(i, j, k) + 16. / 17. * OH(i, j, k) +
-                     16. / 18. * H2O(i, j, k) + O2(i, j, k) +
+            totalO = 16. / 28. * COI(i, j, k) + 32. / 44. * CO2I(i, j, k) +
+                     OI(i, j, k) + 16. / 17. * OHI(i, j, k) +
+                     16. / 18. * H2OI(i, j, k) + O2I(i, j, k) +
                      16. / 44. * SiOI(i, j, k) + 32. / 60. * SiO2I(i, j, k) +
                      16. / 28. * COII(i, j, k) + OII(i, j, k) +
                      16. / 17. * OHII(i, j, k) + 16. / 18. * H2OII(i, j, k) +
@@ -701,12 +701,12 @@ void make_consistent(
             }
             if (!chiaki_model_dust_evolution) {
               correctO = (gr_float)(Og[i] / totalO);
-              CO(i, j, k) = CO(i, j, k) * correctO;
-              CO2(i, j, k) = CO2(i, j, k) * correctO;
+              COI(i, j, k) = COI(i, j, k) * correctO;
+              CO2I(i, j, k) = CO2I(i, j, k) * correctO;
               OI(i, j, k) = OI(i, j, k) * correctO;
-              OH(i, j, k) = OH(i, j, k) * correctO;
-              H2O(i, j, k) = H2O(i, j, k) * correctO;
-              O2(i, j, k) = O2(i, j, k) * correctO;
+              OHI(i, j, k) = OHI(i, j, k) * correctO;
+              H2OI(i, j, k) = H2OI(i, j, k) * correctO;
+              O2I(i, j, k) = O2I(i, j, k) * correctO;
               SiOI(i, j, k) = SiOI(i, j, k) * correctO;
               SiO2I(i, j, k) = SiO2I(i, j, k) * correctO;
               COII(i, j, k) = COII(i, j, k) * correctO;
@@ -717,12 +717,12 @@ void make_consistent(
               O2II(i, j, k) = O2II(i, j, k) * correctO;
             } else {
               correctO = (gr_float)(Ot[i] / totalO);
-              CO(i, j, k) = CO(i, j, k) * correctO;
-              CO2(i, j, k) = CO2(i, j, k) * correctO;
+              COI(i, j, k) = COI(i, j, k) * correctO;
+              CO2I(i, j, k) = CO2I(i, j, k) * correctO;
               OI(i, j, k) = OI(i, j, k) * correctO;
-              OH(i, j, k) = OH(i, j, k) * correctO;
-              H2O(i, j, k) = H2O(i, j, k) * correctO;
-              O2(i, j, k) = O2(i, j, k) * correctO;
+              OHI(i, j, k) = OHI(i, j, k) * correctO;
+              H2OI(i, j, k) = H2OI(i, j, k) * correctO;
+              O2I(i, j, k) = O2I(i, j, k) * correctO;
               SiOI(i, j, k) = SiOI(i, j, k) * correctO;
               SiO2I(i, j, k) = SiO2I(i, j, k) * correctO;
               COII(i, j, k) = COII(i, j, k) * correctO;
@@ -748,9 +748,9 @@ void make_consistent(
               }
             }
 
-            totalC = CI(i, j, k) + CII(i, j, k) + 12. / 28. * CO(i, j, k) +
-                     12. / 44. * CO2(i, j, k) + 12. / 13. * CH(i, j, k) +
-                     12. / 14. * CH2(i, j, k) + 12. / 28. * COII(i, j, k);
+            totalC = CI(i, j, k) + CII(i, j, k) + 12. / 28. * COI(i, j, k) +
+                     12. / 44. * CO2I(i, j, k) + 12. / 13. * CHI(i, j, k) +
+                     12. / 14. * CH2I(i, j, k) + 12. / 28. * COII(i, j, k);
             if (chiaki_model_dust_evolution) {
               if (my_chemistry->dust_species > 0) {
                 totalC = totalC + AC(i, j, k);
@@ -764,19 +764,19 @@ void make_consistent(
               correctC = (gr_float)(Cg[i] / totalC);
               CI(i, j, k) = CI(i, j, k) * correctC;
               CII(i, j, k) = CII(i, j, k) * correctC;
-              CO(i, j, k) = CO(i, j, k) * correctC;
-              CO2(i, j, k) = CO2(i, j, k) * correctC;
-              CH(i, j, k) = CH(i, j, k) * correctC;
-              CH2(i, j, k) = CH2(i, j, k) * correctC;
+              COI(i, j, k) = COI(i, j, k) * correctC;
+              CO2I(i, j, k) = CO2I(i, j, k) * correctC;
+              CHI(i, j, k) = CHI(i, j, k) * correctC;
+              CH2I(i, j, k) = CH2I(i, j, k) * correctC;
               COII(i, j, k) = COII(i, j, k) * correctC;
             } else {
               correctC = (gr_float)(Ct[i] / totalC);
               CI(i, j, k) = CI(i, j, k) * correctC;
               CII(i, j, k) = CII(i, j, k) * correctC;
-              CO(i, j, k) = CO(i, j, k) * correctC;
-              CO2(i, j, k) = CO2(i, j, k) * correctC;
-              CH(i, j, k) = CH(i, j, k) * correctC;
-              CH2(i, j, k) = CH2(i, j, k) * correctC;
+              COI(i, j, k) = COI(i, j, k) * correctC;
+              CO2I(i, j, k) = CO2I(i, j, k) * correctC;
+              CHI(i, j, k) = CHI(i, j, k) * correctC;
+              CH2I(i, j, k) = CH2I(i, j, k) * correctC;
               COII(i, j, k) = COII(i, j, k) * correctC;
               if (my_chemistry->dust_species > 0) {
                 AC(i, j, k) = AC(i, j, k) * correctC;

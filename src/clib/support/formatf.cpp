@@ -14,6 +14,7 @@
 #include <cstdio>   // std::vsnprintf
 
 #include "./formatf.hpp"
+#include "./status_reporting.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -30,8 +31,14 @@ std::string vstr_formatf(const char* s, std::va_list vlist) {
   va_copy(vlist_copy, vlist);
 
   // call vsnprintf to get the size of the output buffer
-  std::size_t sz_without_terminator = std::vsnprintf(nullptr, 0, s, vlist_copy);
+  int sz_without_terminator = std::vsnprintf(nullptr, 0, s, vlist_copy);
   va_end(vlist_copy);
+  if (sz_without_terminator < 0) {
+    GR_INTERNAL_ERROR(
+        "issue calling vsnprintf to get size of buffer using "
+        "the format string: `%s`",
+        s);
+  }
 
   // initialize the std::string with `sz_without_terminator` characters (it's
   // filled without ' ' chars). In practice, this allocates a buffer with
@@ -48,7 +55,13 @@ std::string vstr_formatf(const char* s, std::va_list vlist) {
   //   `out.data()[sz_without_terminator]` so that it stores '\0' (i.e. it
   //   doesn't know that a '\0' is already stored there). This is explicitly
   //   allowed by the C++ standard.
-  std::vsnprintf(out.data(), sz_without_terminator + 1, s, vlist);
+  int rv = std::vsnprintf(out.data(), sz_without_terminator + 1, s, vlist);
+  if (rv < 0) {
+    GR_INTERNAL_ERROR(
+        "issue calling vsnprintf to fill buffer using "
+        "the format string: `%s`",
+        s);
+  }
   return out;
 }
 

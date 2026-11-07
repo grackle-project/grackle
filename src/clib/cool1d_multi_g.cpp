@@ -107,17 +107,17 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   FortranView<gr_float***> CII(
       my_fields->CII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CO(
-      my_fields->CO_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> COI(
+      my_fields->COI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   FortranView<gr_float***> OI(
       my_fields->OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OH(
-      my_fields->OH_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> OHI(
+      my_fields->OHI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2O(
-      my_fields->H2O_density, my_fields->grid_dimension[0],
+  FortranView<gr_float***> H2OI(
+      my_fields->H2OI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Declare some constants:
@@ -231,9 +231,10 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
           logCI[i] = std::log10(CI(i, idx_range.j, idx_range.k) * dom / 12.0);
           logCII[i] = std::log10(CII(i, idx_range.j, idx_range.k) * dom / 12.0);
           logOI[i] = std::log10(OI(i, idx_range.j, idx_range.k) * dom / 16.0);
-          logCO[i] = std::log10(CO(i, idx_range.j, idx_range.k) * dom / 28.0);
-          logOH[i] = std::log10(OH(i, idx_range.j, idx_range.k) * dom / 17.0);
-          logH2O[i] = std::log10(H2O(i, idx_range.j, idx_range.k) * dom / 18.0);
+          logCO[i] = std::log10(COI(i, idx_range.j, idx_range.k) * dom / 28.0);
+          logOH[i] = std::log10(OHI(i, idx_range.j, idx_range.k) * dom / 17.0);
+          logH2O[i] =
+              std::log10(H2OI(i, idx_range.j, idx_range.k) * dom / 18.0);
         }
       }
 
@@ -1099,7 +1100,7 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
             G = tiny8;
           }
 
-          LCO[i] = (G - L) / dom * CO(i, idx_range.j, idx_range.k) / 28.e0;
+          LCO[i] = (G - L) / dom * COI(i, idx_range.j, idx_range.k) / 28.e0;
           if (LCO[i] != LCO[i]) {
             LCO[i] = 0.e0;
           }
@@ -1120,7 +1121,7 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
             G = tiny8;
           }
 
-          LOH[i] = (G - L) / dom * OH(i, idx_range.j, idx_range.k) / 17.e0;
+          LOH[i] = (G - L) / dom * OHI(i, idx_range.j, idx_range.k) / 17.e0;
           if (LOH[i] != LOH[i]) {
             LOH[i] = 0.e0;
           }
@@ -1141,7 +1142,7 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
             G = tiny8;
           }
 
-          LH2O[i] = (G - L) / dom * H2O(i, idx_range.j, idx_range.k) / 18.e0;
+          LH2O[i] = (G - L) / dom * H2OI(i, idx_range.j, idx_range.k) / 18.e0;
           if (LH2O[i] != LH2O[i]) {
             LH2O[i] = 0.e0;
           }

@@ -6,9 +6,11 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implement @ref ErrorImpl Type
+/// Declare/Implement @ref ErrImpl_ Type
 ///
 //===----------------------------------------------------------------------===//
+#ifndef SUPPORT_ERROR_DETAIL_HPP
+#define SUPPORT_ERROR_DETAIL_HPP
 
 #include <memory>
 #include <string>
@@ -57,3 +59,5 @@ struct ErrImpl_ {
 };
 
 }  // namespace GRIMPL_NAMESPACE_DECL
+
+#endif  // SUPPORT_ERROR_DETAIL_HPP

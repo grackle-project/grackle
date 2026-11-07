@@ -12,6 +12,7 @@
 
 #include <iostream>  // needed to teach googletest how to print
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -61,10 +62,10 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
   // It's worth emphasizing that the mapping is frozen when its constructed &
   // contents can't be changed (even if you reorder the original)
   const char* keys[34] = {
-      "e",   "HI",   "HII", "HeI",  "HeII",  "HeIII", "HM",   "H2I",   "H2II",
-      "DI",  "DII",  "HDI", "DM",   "HDII",  "HeHII", "CI",   "CII",   "CO",
-      "CO2", "OI",   "OH",  "H2O",  "O2",    "SiI",   "SiOI", "SiO2I", "CH",
-      "CH2", "COII", "OII", "OHII", "H2OII", "H3OII", "O2II"};
+      "e",    "HI",   "HII", "HeI",  "HeII",  "HeIII", "HM",   "H2I",   "H2II",
+      "DI",   "DII",  "HDI", "DM",   "HDII",  "HeHII", "CI",   "CII",   "COI",
+      "CO2I", "OI",   "OHI", "H2OI", "O2I",   "SiI",   "SiOI", "SiO2I", "CHI",
+      "CH2I", "COII", "OII", "OHII", "H2OII", "H3OII", "O2II"};
 
   // PART 1: build a FrozenKeyIdxBiMap from this list
   // the 3rd argument tells the string to make copies of each string
@@ -79,12 +80,18 @@ TEST(FrozenKeyIdxBiMap, FullExample) {
 
   // Equivalent Python:  `2 == m["HII"]`
   EXPECT_THAT(m.find("HII"), Optional(2));
+  EXPECT_THAT(m.find(std::string("HII")), Optional(2));
+  EXPECT_THAT(m.find(std::string_view("HII")), Optional(2));
 
   // Equivalent Python/idiomatic C++:  `33 == m["O2II"]`
   EXPECT_THAT(m.find("O2II"), Optional(33));
+  EXPECT_THAT(m.find(std::string("O2II")), Optional(33));
+  EXPECT_THAT(m.find(std::string_view("O2II")), Optional(33));
 
   // for unknown key, returns AccessRslt{has_value=false, value=<garbage>}
   EXPECT_EQ(m.find("Dummy"), std::nullopt);
+  EXPECT_EQ(m.find(std::string("Dummy")), std::nullopt);
+  EXPECT_EQ(m.find(std::string_view("Dummy")), std::nullopt);
 
   // PART 3: let's show the reverse of the previous lookups
   EXPECT_STREQ("HII", m.inverse_find(2));

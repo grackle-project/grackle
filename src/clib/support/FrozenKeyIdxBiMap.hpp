@@ -17,6 +17,7 @@
 #include <cstring>
 #include <memory>
 #include <optional>
+#include <string_view>
 #include <utility>  // std::swap
 
 #include "./config.hpp"
@@ -264,11 +265,16 @@ public:  // interface methods
   /// Returns an instance holding 0 elements.
   FrozenKeyIdxBiMap() { alloc_(0, 0, BiMapMode::REFS_KEYDATA); }
 
+  ~FrozenKeyIdxBiMap() noexcept = default;
   FrozenKeyIdxBiMap(const FrozenKeyIdxBiMap&) = default;
   FrozenKeyIdxBiMap& operator=(const FrozenKeyIdxBiMap&) = default;
-  FrozenKeyIdxBiMap(FrozenKeyIdxBiMap&&) noexcept = default;
-  FrozenKeyIdxBiMap& operator=(FrozenKeyIdxBiMap&&) noexcept = default;
-  ~FrozenKeyIdxBiMap() noexcept = default;
+  FrozenKeyIdxBiMap(FrozenKeyIdxBiMap&& o) noexcept : FrozenKeyIdxBiMap() {
+    swap(o);
+  }
+  FrozenKeyIdxBiMap& operator=(FrozenKeyIdxBiMap&& o) noexcept {
+    swap(o);
+    return *this;
+  }
 
   /// @brief swaps contents
   void swap(FrozenKeyIdxBiMap& other) noexcept {
@@ -293,6 +299,13 @@ public:  // interface methods
   /// @param[in] key A null-terminated string
   /// @return An optional that contains the value if the key can be found
   std::optional<uint16_t> find(const char* key) const noexcept {
+    uint16_t tmp =
+        bimap_StrU16_detail::search(table_rows, key, capacity, max_probe).val;
+    bool success = tmp != bimap_detail::INVALID_VAL;
+    return (success) ? std::make_optional(tmp) : std::nullopt;
+  }
+
+  std::optional<uint16_t> find(std::string_view key) const noexcept {
     uint16_t tmp =
         bimap_StrU16_detail::search(table_rows, key, capacity, max_probe).val;
     bool success = tmp != bimap_detail::INVALID_VAL;

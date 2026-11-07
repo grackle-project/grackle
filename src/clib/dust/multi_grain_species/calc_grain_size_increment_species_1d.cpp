@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "grackle.h"
-#include "math/solve_cubic_equation.hpp"
+#include "math/solve_eqn.hpp"
 #include "phys_constants.hpp"
 #include "utils-cpp.hpp"
 
@@ -193,7 +193,7 @@ void calc_grain_size_increment_species_1d(
         coef1 = coef1 / coef3;
         coef2 = coef2 / coef3;
 
-        if (solve_cubic_equation_cpp(coef2, coef1, coef0, drsp[i])) {
+        if (solve_eqn::cubic_eqn_root(coef2, coef1, coef0, drsp[i])) {
           GRIMPL_ERROR(
               "Failed to solve cubic equation for grain size increment");
         }
