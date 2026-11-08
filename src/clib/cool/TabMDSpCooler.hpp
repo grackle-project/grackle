@@ -19,6 +19,8 @@
 #include "../interp_grid.hpp"
 #include "../interpolate.hpp"
 #include "../support/config.hpp"
+#include "../support/error.hpp"
+#include "../support/expected.hpp"
 #include "../support/index_helper.hpp"
 #include "../support/View.hpp"
 
@@ -54,6 +56,14 @@ private:
       const SpCoolTablePack_* packs, int n_packs);
 
 public:  // interface
+  /// @brief Factory Method
+  ///
+  /// @note
+  /// In the future, it might make sense to have this read from an external
+  /// file rather than hardcoding all of the tables
+  static Expected<TabMDSpCooler, Error> create(
+      const chemistry_data& my_chemistry, const code_units& my_units);
+
   /// compute the number of scratch buffer elements given the number of
   /// elements considered at a given time
   static constexpr int num_scratch_buf_elements(int nelem_per_buf) noexcept {

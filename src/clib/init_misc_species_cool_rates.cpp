@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implement machinery for initializing miscellaneous species cooling rates
+/// Implement logic for @ref GRIMPL_NS::TabMDSpCooler
 ///
 //===----------------------------------------------------------------------===//
 
@@ -15,20 +15,15 @@
 #include <math.h>
 #include <string>
 
+#include "cool/TabMDSpCooler.hpp"
 #include "grackle.h"
-#include "grackle_macros.h"
 #include "interp_grid.hpp"
-#include "init_misc_species_cool_rates.hpp"  // forward declarations
 #include "internal_units.hpp"
-#include "opaque_storage.hpp"
-#include "support/config.hpp"
-#include "support/error.hpp"
-#include "support/expected.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-/// helper function to assist with setting up a interp_grid for cooling
-Expected<InterpGrid, Error> setup_cool_interp_grid_(
+/// @brief helper function to assist with setting up a interp_grid for cooling
+static Expected<InterpGrid, Error> setup_cool_interp_grid_(
     int rank, const InterpDimScale* parameters, const double* data,
     double log_coolrate) {
   Expected<InterpGridProps, Error> grid_props_rslt =
@@ -1459,7 +1454,7 @@ struct NDRateTableInitFnInfo {
 };
 // NOLINTEND(clang-analyzer-optin.performance.Padding)
 
-Expected<TabMDSpCooler, Error> init_misc_species_cool_rates(
+Expected<TabMDSpCooler, Error> TabMDSpCooler::create(
     const chemistry_data& my_chemistry, const code_units& my_units) {
   if (my_chemistry.primordial_chemistry == 0) {
     return TabMDSpCooler();  // <- returns an empty object

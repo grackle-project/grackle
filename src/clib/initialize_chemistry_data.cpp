@@ -22,7 +22,6 @@
 #include "chem_model/nuclide_model.hpp"
 #include "chem_model/species.hpp"
 #include "dust/grain_species_info.hpp"
-#include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"

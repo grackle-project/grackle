@@ -119,7 +119,7 @@ add_library(Grackle_Grackle
   field_adaptor.hpp
   full_rxn_rate_buf.hpp
   gas_props.hpp
-  init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
+  init_misc_species_cool_rates.cpp
   initialize_chemistry_data.cpp
   initialize_rates.cpp initialize_rates.hpp
   initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp

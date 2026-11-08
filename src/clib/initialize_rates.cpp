@@ -49,7 +49,6 @@
 #include "collisional_rate_props.hpp"  // init_extra_collisional_rates
 #include "cool/primordial_opac_table.hpp"
 #include "cool/TabMDSpCooler.hpp"
-#include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
 #include "inject_model/load_data.hpp"  // load_inject_path_data
 #include "initialize_rates.hpp"
 #include "internal_types.hpp" // new_CollisionalRxnRateCollection
@@ -828,7 +827,7 @@ int grackle::impl::initialize_rates(
 
     // Misc multidimensional species-specific cooling rate interpolation tables
     if (my_chemistry->primordial_chemistry > 0) {
-      Expected<TabMDSpCooler, Error> tmp = init_misc_species_cool_rates(
+      Expected<TabMDSpCooler, Error> tmp = TabMDSpCooler::create(
           *my_chemistry, *my_units);
       if (!tmp.has_value()) {
         tmp.error()
