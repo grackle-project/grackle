@@ -99,6 +99,7 @@ add_library(Grackle_Grackle
   chem_model/species_builder.cpp chem_model/species_builder.hpp
   chem_model/species.cpp chem_model/species.hpp
   cool/primordial_opac_table.cpp cool/primordial_opac_table.hpp
+  cool/TabMDSpCooler.cpp cool/TabMDSpCooler.hpp
   cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
@@ -119,7 +120,6 @@ add_library(Grackle_Grackle
   field_adaptor.hpp
   full_rxn_rate_buf.hpp
   gas_props.hpp
-  init_misc_species_cool_rates.cpp
   initialize_chemistry_data.cpp
   initialize_rates.cpp initialize_rates.hpp
   initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp
