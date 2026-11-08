@@ -48,6 +48,7 @@
 #include "grackle_rate_functions.h"
 #include "collisional_rate_props.hpp"  // init_extra_collisional_rates
 #include "cool/primordial_opac_table.hpp"
+#include "cool/TabMDSpCooler.hpp"
 #include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
 #include "inject_model/load_data.hpp"  // load_inject_path_data
 #include "initialize_rates.hpp"
@@ -825,10 +826,18 @@ int grackle::impl::initialize_rates(
     //(Equation B15, Krumholz, 2014)
     add_scalar_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
 
-    // Miscellaneous species-based cooling rates
-    if (grackle::impl::init_misc_species_cool_rates(my_chemistry, my_rates, my_units) != GR_SUCCESS) {
-      fprintf(stderr, "Error in initialize_metal_chemistry_rates.\n");
-      return GR_FAIL;
+    // Misc multidimensional species-specific cooling rate interpolation tables
+    if (my_chemistry->primordial_chemistry > 0) {
+      Expected<TabMDSpCooler, Error> tmp = init_misc_species_cool_rates(
+          *my_chemistry, *my_units);
+      if (!tmp.has_value()) {
+        tmp.error()
+           .context_literal("error in init_misc_species_cool_rates")
+           .write(stderr);
+        return GR_FAIL;
+      }
+      my_rates->opaque_storage->assorted_multidim_tabulated_sp_cool
+          = std::move(tmp).value();
     }
 
     // Load injection pathway data

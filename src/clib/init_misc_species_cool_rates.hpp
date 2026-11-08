@@ -13,14 +13,16 @@
 #ifndef INIT_MISC_SPECIES_COOL_RATES_HPP
 #define INIT_MISC_SPECIES_COOL_RATES_HPP
 
+#include "cool/TabMDSpCooler.hpp"
 #include "grackle.h"
 #include "support/config.hpp"
+#include "support/error.hpp"
+#include "support/expected.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-int init_misc_species_cool_rates(chemistry_data* my_chemistry,
-                                 chemistry_data_storage* my_rates,
-                                 code_units* my_units);
+Expected<TabMDSpCooler, Error> init_misc_species_cool_rates(
+    const chemistry_data& my_chemistry, const code_units& my_units);
 
 }  // namespace GRIMPL_NAMESPACE_DECL
 

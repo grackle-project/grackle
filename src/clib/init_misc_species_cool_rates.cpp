@@ -45,10 +45,7 @@ Expected<InterpGrid, Error> setup_cool_interp_grid_(
   return InterpGrid(std::move(grid_props_rslt).value(), grid_data);
 }
 
-Expected<InterpGrid, Error> initialize_cooling_rate_H2(
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    double coolunit) {
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_H2I(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
       InterpDimScale::Linear(16, 20.0, 1.0),  // log10(number-density like)
@@ -240,10 +237,7 @@ Expected<InterpGrid, Error> initialize_cooling_rate_H2(
   return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-Expected<InterpGrid, Error> initialize_cooling_rate_HD(
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    double coolunit) {
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_HDI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
       InterpDimScale::Linear(16, 16.0, 1.0),  // log10(number-density like)
@@ -435,10 +429,7 @@ Expected<InterpGrid, Error> initialize_cooling_rate_HD(
   return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-Expected<InterpGrid, Error> initialize_cooling_rate_CI(
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    double coolunit) {
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_CI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
       InterpDimScale::Linear(13, 15.0, 1.0),  // log10(number-density like)
@@ -662,10 +653,7 @@ Expected<InterpGrid, Error> initialize_cooling_rate_CI(
   return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-Expected<InterpGrid, Error> initialize_cooling_rate_CII(
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    double coolunit) {
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_CII(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
       InterpDimScale::Linear(13, 15.0, 1.0),  // log10(number-density like)
@@ -889,10 +877,7 @@ Expected<InterpGrid, Error> initialize_cooling_rate_CII(
   return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-Expected<InterpGrid, Error> initialize_cooling_rate_OI(
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    double coolunit) {
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_OI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
       InterpDimScale::Linear(13, 15.0, 1.0),  // log10(number-density like)
@@ -1116,10 +1101,7 @@ Expected<InterpGrid, Error> initialize_cooling_rate_OI(
   return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-Expected<InterpGrid, Error> initialize_cooling_rate_CO(
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    double coolunit) {
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_COI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
       InterpDimScale::Linear(11, 14.0, 0.5),  // log10(number-density like)
@@ -1256,10 +1238,7 @@ Expected<InterpGrid, Error> initialize_cooling_rate_CO(
   return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-Expected<InterpGrid, Error> initialize_cooling_rate_OH(
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    double coolunit) {
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_OHI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
       InterpDimScale::Linear(9, 10.0, 1.0),  // log10(number-density like)
@@ -1329,10 +1308,7 @@ Expected<InterpGrid, Error> initialize_cooling_rate_OH(
   return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-Expected<InterpGrid, Error> initialize_cooling_rate_H2O(
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    double coolunit) {
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_H2OI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
       InterpDimScale::Linear(10, 10.0, 1.0),  // log10(number-density like)
@@ -1468,8 +1444,7 @@ Expected<InterpGrid, Error> initialize_cooling_rate_H2O(
   return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-typedef Expected<InterpGrid, Error> (*init_nd_rate_table)(
-    chemistry_data*, chemistry_data_storage*, double);
+typedef Expected<InterpGrid, Error> (*init_nd_rate_table)(double);
 
 // technically the ordering of fields in the following struct is suboptimal,
 // but it's ok since we only construct it temporarily
@@ -1484,40 +1459,38 @@ struct NDRateTableInitFnInfo {
 };
 // NOLINTEND(clang-analyzer-optin.performance.Padding)
 
-int init_misc_species_cool_rates(chemistry_data* my_chemistry,
-                                 chemistry_data_storage* my_rates,
-                                 code_units* my_units) {
-  if (my_chemistry->primordial_chemistry == 0) {
-    return GR_SUCCESS;
+Expected<TabMDSpCooler, Error> init_misc_species_cool_rates(
+    const chemistry_data& my_chemistry, const code_units& my_units) {
+  if (my_chemistry.primordial_chemistry == 0) {
+    return TabMDSpCooler();  // <- returns an empty object
   }
 
   // temporarily construct the InternalGrUnits struct
   // -> the construction logic deduplicates a lot of logic that was
   //    previously copied and pasted across a lot of fortran files
-  InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
+  InternalGrUnits internalu = new_internalu_legacy_C_(&my_units);
 
-  bool use_H2 = (my_chemistry->primordial_chemistry >= 2) &&
-                (my_chemistry->h2_cooling_rate == 3);
-  bool use_HD = (my_chemistry->primordial_chemistry >= 3) &&
-                (my_chemistry->hd_cooling_rate == 1);
-  bool use_m = (my_chemistry->metal_cooling == 1) &&
-               (my_chemistry->metal_chemistry == 1);
+  bool use_H2 = (my_chemistry.primordial_chemistry >= 2) &&
+                (my_chemistry.h2_cooling_rate == 3);
+  bool use_HD = (my_chemistry.primordial_chemistry >= 3) &&
+                (my_chemistry.hd_cooling_rate == 1);
+  bool use_m =
+      (my_chemistry.metal_cooling == 1) && (my_chemistry.metal_chemistry == 1);
 
   NDRateTableInitFnInfo init_fn_l[] = {
-      {"H2I", use_H2, 2.0, SpLUT::H2I, false, initialize_cooling_rate_H2},
-      {"HDI", use_HD, 3.0, SpLUT::HDI, false, initialize_cooling_rate_HD},
+      {"H2I", use_H2, 2.0, SpLUT::H2I, false, init_cooltab_H2I},
+      {"HDI", use_HD, 3.0, SpLUT::HDI, false, init_cooltab_HDI},
       // C/O fine-structure cooling
-      {"CI", use_m, 12.0, SpLUT::CI, false, initialize_cooling_rate_CI},
-      {"CII", use_m, 12.0, SpLUT::CII, false, initialize_cooling_rate_CII},
-      {"OI", use_m, 16.0, SpLUT::OI, false, initialize_cooling_rate_OI},
+      {"CI", use_m, 12.0, SpLUT::CI, false, init_cooltab_CI},
+      {"CII", use_m, 12.0, SpLUT::CII, false, init_cooltab_CII},
+      {"OI", use_m, 16.0, SpLUT::OI, false, init_cooltab_OI},
       // metal molecule rotational cooling (for low temperatures)
-      {"COI", use_m, 28.0, SpLUT::COI, true, initialize_cooling_rate_CO},
-      {"OHI", use_m, 17.0, SpLUT::OHI, true, initialize_cooling_rate_OH},
-      {"H2OI", use_m, 18.0, SpLUT::H2OI, true, initialize_cooling_rate_H2O},
+      {"COI", use_m, 28.0, SpLUT::COI, true, init_cooltab_COI},
+      {"OHI", use_m, 17.0, SpLUT::OHI, true, init_cooltab_OHI},
+      {"H2OI", use_m, 18.0, SpLUT::H2OI, true, init_cooltab_H2OI},
   };
 
-  TabMDSpCooler& obj =
-      my_rates->opaque_storage->assorted_multidim_tabulated_sp_cool;
+  TabMDSpCooler out;
 
   int counter = -1;
   for (const NDRateTableInitFnInfo& info : init_fn_l) {
@@ -1527,27 +1500,24 @@ int init_misc_species_cool_rates(chemistry_data* my_chemistry,
     counter++;
 
     if (info.name == "H2I") {
-      obj.pack_id_H2I_ = counter;
+      out.pack_id_H2I_ = counter;
     } else if (info.name == "HDI") {
-      obj.pack_id_HDI_ = counter;
+      out.pack_id_HDI_ = counter;
     }
 
     init_nd_rate_table fn = info.fn;
-    Expected<InterpGrid, Error> tmp =
-        fn(my_chemistry, my_rates, internalu.coolunit);
+    Expected<InterpGrid, Error> tmp = fn(internalu.coolunit);
     if (!tmp.has_value()) {
-      Error err = tmp.error().contextf("error constructing grid for %s species",
-                                       info.name.c_str());
-      err.write(stderr);
-      return GR_FAIL;
+      return Unexpected(tmp.error().contextf(
+          "error constructing grid for %s species", info.name.c_str()));
     }
 
-    obj.packs_.emplace_back(info.sp_mass_factor, info.sp_id,
+    out.packs_.emplace_back(info.sp_mass_factor, info.sp_id,
                             info.neutral_H_ndens_ax_includes_molecular,
                             std::move(tmp).value());
   }
 
-  return GR_SUCCESS;
+  return out;
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL
