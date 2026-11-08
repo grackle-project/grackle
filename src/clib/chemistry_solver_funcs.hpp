@@ -415,7 +415,11 @@ inline void species_density_updates_gauss_seidel(
                + 2.*kcol_buf[CollisionalRxnLUT::k16][i]* HM[i]  * HII[i]
                + 2.*kcol_buf[CollisionalRxnLUT::k18][i]* H2II[i]* de[i]/2.
                +      kcol_buf[CollisionalRxnLUT::k19][i]* H2II[i]* HM[i]/2.
-               + 2.*kph_buf[PhotoRxnLUT::k31][i]   * H2I[i]/2.;
+               + 2.*kph_buf[PhotoRxnLUT::k31][i]   * H2I[i]/2.
+               // H from H- photodetachment (k27: H- + hv -> H + e) and
+               // H2+ photodissociation (k28: H2+ + hv -> H + H+)
+               +      kph_buf[PhotoRxnLUT::k27][i]   * HM[i]
+               +      kph_buf[PhotoRxnLUT::k28][i]   * H2II[i]/2.;
 
         acoef  =      kcol_buf[CollisionalRxnLUT::k1][i] * de[i]
                +      kcol_buf[CollisionalRxnLUT::k7][i] * de[i]
@@ -528,7 +532,11 @@ inline void species_density_updates_gauss_seidel(
                +    kcol_buf[CollisionalRxnLUT::k10][i] * H2II[i]*HI[i]/2.
                +    kcol_buf[CollisionalRxnLUT::k57][i] * HI[i] * HI[i]
                +    kcol_buf[CollisionalRxnLUT::k58][i] * HI[i] * HeI[i]/4.
-               + kph_buf[PhotoRxnLUT::k24][i]*HI[i];
+               + kph_buf[PhotoRxnLUT::k24][i]*HI[i]
+               // H+ from H2+ photodissociation (k28: H2+ + hv -> H + H+ and
+               // k30: H2+ + hv -> 2H+ + e)
+               + kph_buf[PhotoRxnLUT::k28][i]*H2II[i]/2.
+               + kph_buf[PhotoRxnLUT::k30][i]*H2II[i];
 
         acoef  =    kcol_buf[CollisionalRxnLUT::k2][i]  * de[i]
                +    kcol_buf[CollisionalRxnLUT::k9][i]  * HI[i]
@@ -580,7 +588,12 @@ inline void species_density_updates_gauss_seidel(
         // 
                + kph_buf[PhotoRxnLUT::k24][i]*out_spdens(spid.prim(PrimordialSpLUT::HI), i)
                + kph_buf[PhotoRxnLUT::k25][i]*out_spdens(spid.prim(PrimordialSpLUT::HeII), i)/4.
-               + kph_buf[PhotoRxnLUT::k26][i]*out_spdens(spid.prim(PrimordialSpLUT::HeI), i)/4.;
+               + kph_buf[PhotoRxnLUT::k26][i]*out_spdens(spid.prim(PrimordialSpLUT::HeI), i)/4.
+               // electrons released by k27 (H- + hv -> H + e),
+               // k29 (H2 + hv -> H2+ + e) and k30 (H2+ + hv -> 2H+ + e)
+               + kph_buf[PhotoRxnLUT::k27][i]*HM[i]
+               + kph_buf[PhotoRxnLUT::k29][i]*H2I[i]/2.
+               + kph_buf[PhotoRxnLUT::k30][i]*H2II[i]/2.;
 
         if ( (my_chemistry->metal_chemistry == 1)  &&
              (itmask_metal[i] != MASK_FALSE) )  {
@@ -597,6 +610,11 @@ inline void species_density_updates_gauss_seidel(
                 +  kcol_buf[CollisionalRxnLUT::k14][i]*HM[i]
                 -  kcol_buf[CollisionalRxnLUT::k7][i] *HI[i]
                 -  kcol_buf[CollisionalRxnLUT::k18][i]*H2II[i]/2.);
+        // D photoionization uses k24 like HI and releases one electron
+        // per D atom. DI stores twice its number density in mass units.
+        if (my_chemistry->primordial_chemistry > 2) {
+          scoef += kph_buf[PhotoRxnLUT::k24][i] * DI[i] / 2.;
+        }
 #ifdef CONTRIBUTION_OF_MINOR_SPECIES
         if (my_chemistry->primordial_chemistry > 2)  {
           scoef = scoef
@@ -730,7 +748,8 @@ inline void species_density_updates_gauss_seidel(
                 kcol_buf[CollisionalRxnLUT::k9][i]*out_spdens(spid.prim(PrimordialSpLUT::HI), i)*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
               + kcol_buf[CollisionalRxnLUT::k11][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)/2.*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
               + kcol_buf[CollisionalRxnLUT::k17][i]*out_spdens(spid.prim(PrimordialSpLUT::HM), i)*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
-              + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)
+              // k29 (H2 + hv -> H2+ + e) acts on the H2 number density (H2I/2)
+              + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)/2.
                  )
             / (
                 kcol_buf[CollisionalRxnLUT::k10][i]*out_spdens(spid.prim(PrimordialSpLUT::HI), i)
@@ -744,7 +763,7 @@ inline void species_density_updates_gauss_seidel(
                   kcol_buf[CollisionalRxnLUT::k9] [i]*out_spdens(spid.prim(PrimordialSpLUT::HI), i)*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
                 + kcol_buf[CollisionalRxnLUT::k11][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)/2.*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
                 + kcol_buf[CollisionalRxnLUT::k17][i]*out_spdens(spid.prim(PrimordialSpLUT::HM), i)*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
-                + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)
+                + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)/2.
                 + kcol_buf[CollisionalRxnLUT::k152][i]*HeHII[i]*out_spdens(spid.prim(PrimordialSpLUT::HI), i)/5.
                    )
               / (
@@ -1757,7 +1776,11 @@ inline void species_density_derivatives_0d(
            + 2.*kcol_buf[CollisionalRxnLUT::k16][0]   * HM         * HII
            + 2.*kcol_buf[CollisionalRxnLUT::k18][0]   * H2II       * de       /2.
            +      kcol_buf[CollisionalRxnLUT::k19][0]   * H2II       * HM       /2.
-           + 2.*kph_buf[PhotoRxnLUT::k31][0]      * H2I       /2.;
+           + 2.*kph_buf[PhotoRxnLUT::k31][0]      * H2I       /2.
+           // H from H- photodetachment (k27: H- + hv -> H + e) and
+           // H2+ photodissociation (k28: H2+ + hv -> H + H+)
+           +      kph_buf[PhotoRxnLUT::k27][0]      * HM
+           +      kph_buf[PhotoRxnLUT::k28][0]      * H2II      /2.;
 
     acoef  =      kcol_buf[CollisionalRxnLUT::k1][0]    * de
            +      kcol_buf[CollisionalRxnLUT::k7][0]    * de
@@ -1868,7 +1891,11 @@ inline void species_density_derivatives_0d(
            +    kcol_buf[CollisionalRxnLUT::k10][0]    * H2II       *HI       /2.
            +    kcol_buf[CollisionalRxnLUT::k57][0]    * HI        * HI
            +    kcol_buf[CollisionalRxnLUT::k58][0]    * HI        * HeI       /4.
-           + kph_buf[PhotoRxnLUT::k24][0]   *HI;
+           + kph_buf[PhotoRxnLUT::k24][0]   *HI
+           // H+ from H2+ photodissociation (k28: H2+ + hv -> H + H+ and
+           // k30: H2+ + hv -> 2H+ + e)
+           + kph_buf[PhotoRxnLUT::k28][0]   *H2II      /2.
+           + kph_buf[PhotoRxnLUT::k30][0]   *H2II;
 
     acoef  =    kcol_buf[CollisionalRxnLUT::k2][0]     * de
            +    kcol_buf[CollisionalRxnLUT::k9][0]     * HI
@@ -1921,7 +1948,12 @@ inline void species_density_derivatives_0d(
     // 
            + kph_buf[PhotoRxnLUT::k24][0]   *HI
            + kph_buf[PhotoRxnLUT::k25][0]   *HeII    /4.
-           + kph_buf[PhotoRxnLUT::k26][0]   *HeI    /4.;
+           + kph_buf[PhotoRxnLUT::k26][0]   *HeI    /4.
+           // electrons released by k27 (H- + hv -> H + e),
+           // k29 (H2 + hv -> H2+ + e) and k30 (H2+ + hv -> 2H+ + e)
+           + kph_buf[PhotoRxnLUT::k27][0]   *HM
+           + kph_buf[PhotoRxnLUT::k29][0]   *H2I     /2.
+           + kph_buf[PhotoRxnLUT::k30][0]   *H2II    /2.;
 
     if ((my_chemistry->metal_chemistry == 1)  &&
         (itmask_metal[0] != MASK_FALSE))  {
@@ -1941,7 +1973,9 @@ inline void species_density_derivatives_0d(
     // contribution of minor species
     if (my_chemistry->primordial_chemistry > 2)  {
       scoef = scoef
-            + kcol_buf[CollisionalRxnLUT::k56][0]    * DI         * HM        / 2.;
+            + kcol_buf[CollisionalRxnLUT::k56][0]    * DI         * HM        / 2.
+            // D + photon -> D+ + e; DI is a mass-density field.
+            + kph_buf[PhotoRxnLUT::k24][0]          * DI                   / 2.;
       acoef = acoef
             - kcol_buf[CollisionalRxnLUT::k1][0]     * DI         / 2.
             + kcol_buf[CollisionalRxnLUT::k2][0]     * DII        / 2.;
