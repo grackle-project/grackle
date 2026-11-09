@@ -89,6 +89,7 @@ class TabMDSpCooler {
   struct SpCoolTablePack_ {
     double sp_mass_factor;
     int sp_id;
+    bool is_primordial;
     bool neutral_H_ndens_ax_includes_molecular;
     InterpGrid interp_grid;
   };

@@ -19,6 +19,7 @@
 #include "grackle.h"
 #include "interp_grid.hpp"
 #include "internal_units.hpp"
+#include "support/expected.hpp"
 #include "support/status_reporting.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -1505,6 +1506,21 @@ Expected<TabMDSpCooler, Error> TabMDSpCooler::create(
           info.name.c_str());
     }
     int species_id = maybe_species_id.value();
+
+    std::optional<partmap::IdxSearch<SpKind>> search =
+        sp_info.kind_map.search_idx(species_id);
+    if (!search.has_value()) {
+      GR_INTERNAL_UNREACHABLE_ERROR();  // this shouldn't be possible!
+    }
+    bool is_prim = search.value().pd == SpKind::PRIMORDIAL;
+    bool is_metal = search.value().pd == SpKind::METAL;
+
+    // can only lookup mass factors for primordial and metal species
+    if (!is_prim && !is_metal) {
+      return Unexpected(
+          Error::msgf("the %s species isn't doesn't primordial or a metal",
+                      info.name.c_str()));
+    }
     double mass_factor = sp_info.chem_species_props[species_id].mass_factor;
 
     Expected<InterpGrid, Error> tmp = info.fn(internalu.coolunit);
@@ -1513,7 +1529,7 @@ Expected<TabMDSpCooler, Error> TabMDSpCooler::create(
           "error constructing grid for %s species", info.name.c_str()));
     }
 
-    out.packs_.emplace_back(mass_factor, species_id,
+    out.packs_.emplace_back(mass_factor, species_id, is_prim,
                             info.neutral_H_ndens_ax_includes_molecular,
                             std::move(tmp).value());
   }
