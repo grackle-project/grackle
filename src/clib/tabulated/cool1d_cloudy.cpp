@@ -20,6 +20,7 @@
 #include "grackle.h"
 #include "./common.hpp"
 #include "../interpolate.hpp"
+#include "../phys_constants.hpp"
 
 #include "cool1d_cloudy.hpp"
 
@@ -30,10 +31,6 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
                    double zr, int icmbTfloor, int iClHeat, int iZscale,
                    const gr_mask_type* itmask, cloudy_data cloudy_table,
                    IndexRange idx_range) {
-  // todo: maybe factor this constant out and have it be precomputed
-  //       (and rename it to INV_LN10)
-  const double inv_log10 = 1. / std::log(10.);
-
   // TODO: I think we can get away with converting most (all?) of these into
   //       into local loop variables
   std::vector<double> log_n_h(idx_range.i_stop);
@@ -55,7 +52,7 @@ void cool1d_cloudy(const double* rhoH, const double* metallicity,
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      log10tem[i] = logtem[i] * inv_log10;
+      log10tem[i] = logtem[i] * constants::inv_ln10;
 
       // Calculate proper log(n_H)
 

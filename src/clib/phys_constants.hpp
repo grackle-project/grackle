@@ -18,6 +18,8 @@
 #ifndef PHYS_CONSTANTS_HPP
 #define PHYS_CONSTANTS_HPP
 
+#include <concepts>  // std::floating_point
+
 #include "grackle.h"  // gr_float
 #include "grackle_float.h"
 #include "support/config.hpp"
@@ -64,6 +66,27 @@ inline constexpr float pi_fortran_val = 3.14159265f;
 #else
 inline constexpr double pi_fortran_val = 3.141592653589793;
 #endif
+
+/// @brief Specifies the value of `1.0/ln(10)` (or equivalently `log10(e)`)
+///
+/// The template argument should be a floating point type specifying the
+/// desired precision of the constant. For example, `inv_ln10_v<float>` gives
+/// the constant as a float. You *could* also use extended precision
+///
+/// While we *COULD* have used `std::numbers::log10e_v<T>`, the C++ standard
+/// doesn't explicitly specify the required level of precision and the values
+/// could plausibly differ from one standard library implementation to another
+/// (they probably all do the "best thing" but stranger things have happened)
+///
+/// @note
+/// This has the required precision to specify the best value for quadruple
+/// precision floating point (~36 significant decimal digits). It was computed
+/// with python's builtin decimal module (with additional precision)
+template <std::floating_point T>
+inline constexpr T inv_ln10_v = 0.43429448190325182765112891891660508229L;
+
+/// @brief Specifies the value of `1.0/ln(10)` as a double
+inline constexpr double inv_ln10 = inv_ln10_v<double>;
 
 //************************************************
 // Astronomical constant

@@ -5,14 +5,15 @@
 #ifndef FORTRAN_FN_DECLARATIONS_HPP
 #define FORTRAN_FN_DECLARATIONS_HPP
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 #include "grackle_macros.h" // FORTRAN_NAME
 #include "grackle.h"        // gr_float
 #include "phys_constants.hpp" // physical constants
 #include <stdint.h>         // int32_t
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef int32_t gr_mask_type;
 
 #define MASK_TRUE 1
