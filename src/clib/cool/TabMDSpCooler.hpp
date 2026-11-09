@@ -31,8 +31,60 @@ namespace GRIMPL_NAMESPACE_DECL {
 
 /// @brief Encodes logic (and data) for computing species-specific cooling
 ///     contributions from multidimensional tables
-struct TabMDSpCooler {
-  // describes a single table
+///
+/// Design Choices
+/// --------------
+/// At the moment, this type is responsible for tracking data and using the
+/// data.
+///
+/// What kind of cooling does this model?
+/// -------------------------------------
+/// The name (and description) suggest that this is a general-purpose tool for
+/// many different sources of cooling. To be honest, this is somewhat
+/// aspirational.
+///
+/// At the time that this class was created, it may model cooling due to
+/// - H2 and HD molecular transitions from collision with HI
+/// - fine structure transitions of CI, CII, and OI from collision with HI
+/// - metal molecular transitions from transitions with H2I (and HI?)
+///
+/// The parameters along each interpolation axis are:
+///     grid.parameter[0]: log10( ndens_{species} / (dv/dr) )
+///     grid.parameter[1]: log10( T )
+///     grid.parameter[2]: log10( ndens_HI ) OR log10( ndens_HI + ndens_H2I )
+///
+/// Gen Chiaki originally implemented this functionality and there's actually a
+/// **LOT** of ambiguity about how exactly the tables were made (e.g. what
+/// assumptions were made and where the data came from). Section 2.2.1 of
+/// Chiaki & Wise 2019 seems to provide a description of this kind of cooling,
+/// but it's not entirely obvious that actually describes what the code is
+/// doing. This ambiguity is discussed in GH Issue #685
+///
+/// Let's provide slightly more detail about each kind of cooling:
+/// - H2 and HD molecular transitions from collision with HI
+///   - Gen Chiaki originally left a comment attributing this data to
+///     Hollenbach & McKee (1979)
+///   - In contrast, Chiaki & Wise (2019) makes no reference to Hollenbach &
+///     McKee (1979). However, this sort of cooling seems to be closely
+///     modelled after what was done in Omukai (2000) and that paper **DOES**
+///     reference Hollenbach & McKee (1979)
+/// - Fine-structure cooling rates of CI, CII, and OI (collision with HI)
+///   - Gen Chiaki originally left a comment attributing this data to
+///     Maio et al. 2007
+///   - In contrast, Chiaki & Wise 2019 seems to attribute the data to
+///     Santoro & Shull 2006
+/// - metal molecular cooling rates for COI, OHI, and H2OI (collision with
+///   HI and H2I)
+///   - Gen Chiaki originally left a comment mentioning that this occurred due
+///     to collisions with H2I even though the corresponding code CLEARLY
+///     involved HI and H2I
+///   - Gen's comment attributed the data to "UMIST table"
+///   - In contrast Chiaki & Wise 2019 attribute the data to
+///     - Omukai, Hosokawa & Yoshida (2010) for COI
+///     - Neufeld & Kaufman (1993) for OHI
+///     - Neufeld, Lepp & Melnick (1995) for H2OI
+class TabMDSpCooler {
+  /// @brief describes a single table
   struct SpCoolTablePack_ {
     double sp_mass_factor;
     int sp_id;
@@ -40,13 +92,14 @@ struct TabMDSpCooler {
     InterpGrid interp_grid;
   };
 
+  // data members
+  // ------------
   std::vector<SpCoolTablePack_> packs_;
-
   int pack_id_H2I_ = -1;
   int pack_id_HDI_ = -1;
 
-private:
   // helper methods
+  // --------------
 
   // does the heavy lifting!
   inline static void add_contrib_(
@@ -57,6 +110,9 @@ private:
       const SpCoolTablePack_* packs, int n_packs);
 
 public:  // interface
+  /// @brief Constructs an empty object
+  TabMDSpCooler() = default;
+
   /// @brief Factory Method
   ///
   /// @note

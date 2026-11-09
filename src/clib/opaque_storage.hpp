@@ -112,28 +112,14 @@ struct gr_opaque_storage {
   /// holds multidimensional tables of species-specific cooling rates (the
   /// shapes of tables vary on a species-by-species basis)
   ///
-  /// At the time that this was created each of the enclosed interpolation
-  /// grids:
-  /// - represent collision rates of a species with HI or HI and H2I.
-  /// - The parameters along each axis are:
-  ///     grid.parameter[0]: log10( ndens_{species} / (dv/dr) )
-  ///     grid.parameter[1]: log10( T )
-  ///     grid.parameter[2]: log10( ndens_HI ) OR log10( ndens_HI + ndens_H2I )
-  /// - In more detail, it might hold:
-  ///   - H2 and HD cooling rates (collision with HI; Hollenbach & McKee 1979)
-  ///   - Fine-structure cooling rates of CI, CII, and OI (collision with HI)
-  ///     - NOTE: an earlier comment attributes these to Maio et al. 2007
-  ///     - In contrast, Chiaki & Wise 2019 seems to attribute them to
-  ///       Santoro & Shull 2006
-  ///   - metal molecular cooling rates for COI, OHI, and H2OI (collision with
-  ///     HI and H2I)
-  ///     - NOTE: an earlier comment states that there are just mentioned
-  ///       collisions with H2I (even though the code definitely includes HI
-  ///       contributions) and attributes the values to a UMIST table
-  ///     - In contrast Chiaki & Wise 2019 attribute the data to
-  ///       - Omukai, Hosokawa & Yoshida (2010) for COI
-  ///       - Neufeld & Kaufman (1993) for OHI
-  ///       - Neufeld, Lepp & Melnick (1995) for H2OI
+  /// At the time that this member was created, the object may model cooling
+  /// due to
+  /// - H2 and HD molecular transitions from collision with HI
+  /// - fine structure transitions of CI, CII, and OI from collision with HI
+  /// - metal molecular transitions from transitions with H2I (and HI?)
+  ///
+  /// See the docstring of the docstring of @ref GRIMPL_NS::TabMDSpCooler for
+  /// more information.
   GRIMPL_NS::TabMDSpCooler assorted_multidim_tabulated_sp_cool;
 
   /// primordial opacity table

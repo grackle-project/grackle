@@ -127,7 +127,8 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
 
   std::vector<double> LCIE(my_fields->grid_dimension[0]);
 
-  std::vector<double> spcooltab_scratch(4 * sp_densities.extent(1));
+  std::vector<double> spcooltab_scratch(
+      TabMDSpCooler::num_scratch_buf_elements(sp_densities.extent(1)));
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
 
