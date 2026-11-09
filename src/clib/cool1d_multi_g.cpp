@@ -302,11 +302,8 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   if (my_chemistry->primordial_chemistry > 1) {
     // Chiaki & Wise (2019) H2 cooling rate
     if (my_chemistry->h2_cooling_rate == 3) {
-      // TODO(gold-standard): we handle all contributions from
-      //    assorted_multidim_tabulated_sp_cool in a single call
-      opaque_storage.assorted_multidim_tabulated_sp_cool.add_H2I_contrib(
-          edot, d, logTlininterp_buf.logtem, itmask, my_chemistry, sp_densities,
-          idx_range, internalu, spcooltab_scratch.data());
+      // this model is handled below (alongside calculation of species-specific
+      // cooling contributions from multidimensional tables)
 
       // Glover & Abel (2008) H2 cooling rate
     } else if (my_chemistry->h2_cooling_rate == 2) {
@@ -590,11 +587,8 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   if (my_chemistry->primordial_chemistry > 2) {
     // Chiaki & Wise (2019) HD cooling rate
     if (my_chemistry->hd_cooling_rate == 1) {
-      // TODO(gold-standard): we handle all contributions from
-      //    assorted_multidim_tabulated_sp_cool in a single call
-      opaque_storage.assorted_multidim_tabulated_sp_cool.add_HDI_contrib(
-          edot, d, logTlininterp_buf.logtem, itmask, my_chemistry, sp_densities,
-          idx_range, internalu, spcooltab_scratch.data());
+      // this model is handled below (alongside calculation of species-specific
+      // cooling contributions from multidimensional tables)
 
       // Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007) HD cooling
       // rate
@@ -885,18 +879,13 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
           itmask_tab.data(), my_chemistry, my_rates->cloudy_metal,
           my_fields->density, my_fields->e_density, my_fields, idx_range);
     }
-
-    if (my_chemistry->metal_chemistry == 1) {
-      // --- C/O fine-structure, metal molecular rotational cooling for low
-      // temperatures ---
-
-      // TODO(gold-standard): we handle all contributions from
-      //    assorted_multidim_tabulated_sp_cool in a single call
-      opaque_storage.assorted_multidim_tabulated_sp_cool.add_metal_sp_contrib(
-          edot, d, logTlininterp_buf.logtem, itmask, my_chemistry, sp_densities,
-          idx_range, internalu, spcooltab_scratch.data());
-    }
   }
+
+  // computing species-specific cooling contributions from multidim tables
+  // - the specifics depend on how the object was configured
+  opaque_storage.assorted_multidim_tabulated_sp_cool.add_contrib(
+      edot, d, logTlininterp_buf.logtem, itmask, itmask_metal, my_chemistry,
+      sp_densities, idx_range, internalu, spcooltab_scratch.data());
 
   // Add user-provided volumetric and/or specific heating terms
 

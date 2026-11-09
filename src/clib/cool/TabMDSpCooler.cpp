@@ -1482,17 +1482,9 @@ Expected<TabMDSpCooler, Error> TabMDSpCooler::create(
 
   TabMDSpCooler out;
 
-  int counter = -1;
   for (const NDRateTableInitFnInfo& info : init_fn_l) {
     if (!info.enabled) {
       continue;
-    }
-    counter++;
-
-    if (info.name == "H2I") {
-      out.pack_id_H2I_ = counter;
-    } else if (info.name == "HDI") {
-      out.pack_id_HDI_ = counter;
     }
 
     // while we could just iterate down the list of all available rates & just

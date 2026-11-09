@@ -97,19 +97,6 @@ class TabMDSpCooler {
   // data members
   // ------------
   std::vector<SpCoolTablePack_> packs_;
-  int pack_id_H2I_ = -1;
-  int pack_id_HDI_ = -1;
-
-  // helper methods
-  // --------------
-
-  // does the heavy lifting!
-  inline static void add_contrib_(
-      double* edot, FortranView<const gr_float***> d, const double* ln_T,
-      const gr_mask_type* itmask, const chemistry_data* my_chemistry,
-      SpeciesMultiView<const double> sp_densities, const IndexRange& idx_range,
-      const InternalGrUnits& internalu, double* scratch_buf,
-      const SpCoolTablePack_* packs, int n_packs);
 
 public:  // interface
   /// @brief Constructs an empty object
@@ -127,62 +114,17 @@ public:  // interface
   /// compute the number of scratch buffer elements given the number of
   /// elements considered at a given time
   static constexpr int num_scratch_buf_elements(int nelem_per_buf) noexcept {
-    return 4 * nelem_per_buf;
+    return 3 * nelem_per_buf;
   }
 
-  /// @brief number of tracked rates for primordial species
-  int n_prim_sp() const {
-    return (static_cast<int>(pack_id_H2I_ >= 0) +
-            static_cast<int>(pack_id_HDI_ >= 0));
-  }
-
-  /// @brief number of tracked rates for metal species
-  int n_metal_sp() const { return packs_.size() - n_prim_sp(); }
-
-  /// @brief Add cooling/heating contributions for H2I (if any)
-  void add_H2I_contrib(double* edot, FortranView<const gr_float***> d,
-                       const double* ln_T, const gr_mask_type* itmask,
-                       const chemistry_data* my_chemistry,
-                       SpeciesMultiView<const double> sp_densities,
-                       const IndexRange& idx_range,
-                       const InternalGrUnits& internalu,
-                       double* scratch_buf) const {
-    if (pack_id_H2I_ < 0) {
-      return;
-    }
-    const SpCoolTablePack_& pack = packs_[pack_id_H2I_];
-    add_contrib_(edot, d, ln_T, itmask, my_chemistry, sp_densities, idx_range,
-                 internalu, scratch_buf, &pack, 1);
-  }
-
-  /// @brief Add cooling/heating contributions for HDI (if any)
-  void add_HDI_contrib(double* edot, FortranView<const gr_float***> d,
-                       const double* ln_T, const gr_mask_type* itmask,
-                       const chemistry_data* my_chemistry,
-                       SpeciesMultiView<const double> sp_densities,
-                       const IndexRange& idx_range,
-                       const InternalGrUnits& internalu,
-                       double* scratch_buf) const {
-    if (pack_id_HDI_ < 0) {
-      return;
-    }
-    const SpCoolTablePack_& pack = packs_[pack_id_HDI_];
-    add_contrib_(edot, d, ln_T, itmask, my_chemistry, sp_densities, idx_range,
-                 internalu, scratch_buf, &pack, 1);
-  }
-
-  /// @brief Calculate cooling/heating for metal species
-  void add_metal_sp_contrib(double* edot, FortranView<const gr_float***> d,
-                            const double* ln_T, const gr_mask_type* itmask,
-                            const chemistry_data* my_chemistry,
-                            SpeciesMultiView<const double> sp_densities,
-                            const IndexRange& idx_range,
-                            const InternalGrUnits& internalu,
-                            double* scratch_buf) const {
-    const SpCoolTablePack_* packs = packs_.data() + n_prim_sp();
-    add_contrib_(edot, d, ln_T, itmask, my_chemistry, sp_densities, idx_range,
-                 internalu, scratch_buf, packs, n_metal_sp());
-  }
+  /// @brief Calculate cooling/heating contributions
+  void add_contrib(double* edot, FortranView<const gr_float***> d,
+                   const double* ln_T, const gr_mask_type* itmask,
+                   const gr_mask_type* itmask_metal,
+                   const chemistry_data* my_chemistry,
+                   SpeciesMultiView<const double> sp_densities,
+                   const IndexRange& idx_range,
+                   const InternalGrUnits& internalu, double* scratch_buf) const;
 };
 
 inline double interp_from_3D_grid(double input1, double input2, double input3,
@@ -195,13 +137,13 @@ inline double interp_from_3D_grid(double input1, double input2, double input3,
       interp_grid.props.data_size, interp_grid.data);
 }
 
-inline void TabMDSpCooler::add_contrib_(
+inline void TabMDSpCooler::add_contrib(
     double* edot, FortranView<const gr_float***> d, const double* ln_T,
-    const gr_mask_type* itmask, const chemistry_data* my_chemistry,
+    const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
+    const chemistry_data* my_chemistry,
     SpeciesMultiView<const double> sp_densities, const IndexRange& idx_range,
-    const InternalGrUnits& internalu, double* scratch_buf,
-    const SpCoolTablePack_* packs, int n_packs) {
-  if (n_packs == 0) {
+    const InternalGrUnits& internalu, double* scratch_buf) const {
+  if (packs_.size() == 0) {
     return;
   }
 
@@ -261,14 +203,15 @@ inline void TabMDSpCooler::add_contrib_(
   }
 
   // perform each interpolation
-  for (int pack_id = 0; pack_id < n_packs; pack_id++) {
-    const SpCoolTablePack_& pack = packs[pack_id];
+  for (const SpCoolTablePack_& pack : packs_) {
     const gr_float* cur_sp_dens = sp_densities.contig1d_ptr(pack.sp_id);
     const double* last_interp_ax_vals =
         (pack.neutral_H_ndens_ax_includes_molecular) ? log10_H2 : log10_H;
+    const gr_mask_type* cur_itmask =
+        (pack.is_primordial) ? itmask : itmask_metal;
 
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
+      if (cur_itmask[i] != MASK_FALSE) {
         // nhat is `ndens_species / (dv/dr)` and has units of `s/(cm² * km)`
         double log10_ndens_sp =
             std::log10(cur_sp_dens[i] * dom / pack.sp_mass_factor);
