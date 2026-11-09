@@ -89,6 +89,7 @@ add_library(Grackle_Grackle
   api/calculate_cooling_time.cpp
   api/calculate_dust_temperature.cpp
   api/calculate_T_related.cpp
+  api/cool_multi_time.cpp api/cool_multi_time.hpp
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
   api/units.cpp
@@ -103,7 +104,6 @@ add_library(Grackle_Grackle
   cool/primordial_opac_table.cpp cool/primordial_opac_table.hpp
   cool/TabMDSpCooler.cpp cool/TabMDSpCooler.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
-  cool_multi_time.cpp cool_multi_time.hpp
   dust/calc_all_tdust_gasgr_1d.cpp dust/calc_all_tdust_gasgr_1d.hpp
   dust/calc_tdust_1d.hpp
   dust/calc_tdust_3d.cpp dust/calc_tdust_3d.hpp

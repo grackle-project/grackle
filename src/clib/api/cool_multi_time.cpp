@@ -28,7 +28,6 @@
 #include "mask.hpp"
 #include "scale_fields.hpp"
 #include "support/config.hpp"
-#include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
