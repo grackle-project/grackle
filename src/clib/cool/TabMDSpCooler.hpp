@@ -13,6 +13,7 @@
 #ifndef COOL_TABMDSPCOOLER_HPP
 #define COOL_TABMDSPCOOLER_HPP
 
+#include "../chem_model/species.hpp"
 #include "../field_adaptor.hpp"
 #include "../fortran_func_decls.h"  // gr_mask_type (todo: address this!)
 #include "../internal_units.hpp"
@@ -62,7 +63,8 @@ public:  // interface
   /// In the future, it might make sense to have this read from an external
   /// file rather than hardcoding all of the tables
   static Expected<TabMDSpCooler, Error> create(
-      const chemistry_data& my_chemistry, const code_units& my_units);
+      const chemistry_data& my_chemistry, const code_units& my_units,
+      const SpInitializeInfo& sp_info);
 
   /// compute the number of scratch buffer elements given the number of
   /// elements considered at a given time

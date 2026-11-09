@@ -540,9 +540,10 @@ extern "C" int local_initialize_chemistry_data(
   }
 
   // Compute rate tables.
-  if (grackle::impl::initialize_rates(my_chemistry, my_rates, my_units,
-                                      co_length_units, co_density_units,
-                                      &reg_builder)
+  if (GRIMPL_NS::initialize_rates(my_chemistry, my_rates, my_units,
+                                  co_length_units, co_density_units,
+                                  species_initialize_info_rslt.value(),
+                                  &reg_builder)
       != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_rates.\n");
     return GR_FAIL;

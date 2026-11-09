@@ -19,6 +19,7 @@
 #include "grackle.h"
 #include "interp_grid.hpp"
 #include "internal_units.hpp"
+#include "support/status_reporting.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -1439,23 +1440,16 @@ static Expected<InterpGrid, Error> init_cooltab_H2OI(double coolunit) {
   return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-typedef Expected<InterpGrid, Error> (*init_nd_rate_table)(double);
-
-// technically the ordering of fields in the following struct is suboptimal,
-// but it's ok since we only construct it temporarily
-// NOLINTBEGIN(clang-analyzer-optin.performance.Padding)
 struct NDRateTableInitFnInfo {
   std::string name;
   bool enabled;
-  double sp_mass_factor;
-  int sp_id;
   bool neutral_H_ndens_ax_includes_molecular;
-  init_nd_rate_table fn;
+  Expected<InterpGrid, Error> (*fn)(double);
 };
-// NOLINTEND(clang-analyzer-optin.performance.Padding)
 
 Expected<TabMDSpCooler, Error> TabMDSpCooler::create(
-    const chemistry_data& my_chemistry, const code_units& my_units) {
+    const chemistry_data& my_chemistry, const code_units& my_units,
+    const SpInitializeInfo& sp_info) {
   if (my_chemistry.primordial_chemistry == 0) {
     return TabMDSpCooler();  // <- returns an empty object
   }
@@ -1473,16 +1467,16 @@ Expected<TabMDSpCooler, Error> TabMDSpCooler::create(
       (my_chemistry.metal_cooling == 1) && (my_chemistry.metal_chemistry == 1);
 
   NDRateTableInitFnInfo init_fn_l[] = {
-      {"H2I", use_H2, 2.0, SpLUT::H2I, false, init_cooltab_H2I},
-      {"HDI", use_HD, 3.0, SpLUT::HDI, false, init_cooltab_HDI},
+      {"H2I", use_H2, false, init_cooltab_H2I},
+      {"HDI", use_HD, false, init_cooltab_HDI},
       // C/O fine-structure cooling
-      {"CI", use_m, 12.0, SpLUT::CI, false, init_cooltab_CI},
-      {"CII", use_m, 12.0, SpLUT::CII, false, init_cooltab_CII},
-      {"OI", use_m, 16.0, SpLUT::OI, false, init_cooltab_OI},
+      {"CI", use_m, false, init_cooltab_CI},
+      {"CII", use_m, false, init_cooltab_CII},
+      {"OI", use_m, false, init_cooltab_OI},
       // metal molecule rotational cooling (for low temperatures)
-      {"COI", use_m, 28.0, SpLUT::COI, true, init_cooltab_COI},
-      {"OHI", use_m, 17.0, SpLUT::OHI, true, init_cooltab_OHI},
-      {"H2OI", use_m, 18.0, SpLUT::H2OI, true, init_cooltab_H2OI},
+      {"COI", use_m, true, init_cooltab_COI},
+      {"OHI", use_m, true, init_cooltab_OHI},
+      {"H2OI", use_m, true, init_cooltab_H2OI},
   };
 
   TabMDSpCooler out;
@@ -1500,14 +1494,26 @@ Expected<TabMDSpCooler, Error> TabMDSpCooler::create(
       out.pack_id_HDI_ = counter;
     }
 
-    init_nd_rate_table fn = info.fn;
-    Expected<InterpGrid, Error> tmp = fn(internalu.coolunit);
+    // while we could just iterate down the list of all available rates & just
+    // use the rates for species that are currently in use, we choose to be a
+    // little more defensive (in order to raise errors if there are typos)
+    // -> we may want to revisit this choice in the future
+    std::optional<int> maybe_species_id = sp_info.name_map.find(info.name);
+    if (!maybe_species_id.has_value()) {
+      GR_INTERNAL_ERROR(
+          "programming inconsistency: %s species doesn't seem to be tracked",
+          info.name.c_str());
+    }
+    int species_id = maybe_species_id.value();
+    double mass_factor = sp_info.chem_species_props[species_id].mass_factor;
+
+    Expected<InterpGrid, Error> tmp = info.fn(internalu.coolunit);
     if (!tmp.has_value()) {
       return Unexpected(tmp.error().contextf(
           "error constructing grid for %s species", info.name.c_str()));
     }
 
-    out.packs_.emplace_back(info.sp_mass_factor, info.sp_id,
+    out.packs_.emplace_back(mass_factor, species_id,
                             info.neutral_H_ndens_ax_includes_molecular,
                             std::move(tmp).value());
   }

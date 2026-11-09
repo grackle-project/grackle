@@ -540,11 +540,13 @@ int check_generic_lnT_params(const chemistry_data& chem, bool gas_T) {
 
 } // anonymous namespace
 
-//Definition of the initialise_rates function.
-int grackle::impl::initialize_rates(
+// todo: we probably want to enclose the entire file in this namespace
+namespace GRIMPL_NAMESPACE_DECL {
+
+int initialize_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
-  code_units *my_units, double co_length_unit, double co_density_unit,
-  ratequery::RegBuilder* reg_builder)
+  const code_units *my_units, double co_length_unit, double co_density_unit,
+  const SpInitializeInfo& sp_info, ratequery::RegBuilder* reg_builder)
 { 
     // check NumberOfTemperatureBins, Temperature(Start|End) params
     // -> can we skip this when primordial_chemistry == 0?
@@ -828,7 +830,7 @@ int grackle::impl::initialize_rates(
     // Misc multidimensional species-specific cooling rate interpolation tables
     if (my_chemistry->primordial_chemistry > 0) {
       Expected<TabMDSpCooler, Error> tmp = TabMDSpCooler::create(
-          *my_chemistry, *my_units);
+          *my_chemistry, *my_units, sp_info);
       if (!tmp.has_value()) {
         tmp.error()
            .context_literal("error in init_misc_species_cool_rates")
@@ -852,3 +854,4 @@ int grackle::impl::initialize_rates(
     return SUCCESS;
 }
 
+}  // namespace GRIMPL_NAMESPACE_DECL
