@@ -26,6 +26,7 @@
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
 #include "opaque_storage.hpp"
+#include "phys_constants.hpp"
 #include "support/config.hpp"
 #include "support/View.hpp"
 #include "tabulated/cool1d_cloudy.hpp"
@@ -932,10 +933,7 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
         // -> should this actually use the metal-free mass density?
         double log10_rho =
             std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
-        // TODO(gold-standard): reuse the pre-computed lnT values
-        // -> we should either adjust the table so that they interpolated with
-        //    respect to lnT, or we should compute log10(T) = ln(T) / ln(10)
-        double log10_T = std::log10(tgas[i]);
+        double log10_T = logTlininterp_buf.logtem[i] * constants::inv_ln10;
         double log10_a =
             interpolate_2d(log10_rho, log10_T, interp_grid.props.dimension,
                            interp_grid.props.parameters[0],
