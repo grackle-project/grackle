@@ -305,8 +305,8 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
       // TODO(gold-standard): we handle all contributions from
       //    assorted_multidim_tabulated_sp_cool in a single call
       opaque_storage.assorted_multidim_tabulated_sp_cool.add_H2I_contrib(
-          edot, d, tgas, itmask, my_chemistry, sp_densities, idx_range,
-          internalu, spcooltab_scratch.data());
+          edot, d, logTlininterp_buf.logtem, itmask, my_chemistry, sp_densities,
+          idx_range, internalu, spcooltab_scratch.data());
 
       // Glover & Abel (2008) H2 cooling rate
     } else if (my_chemistry->h2_cooling_rate == 2) {
@@ -593,8 +593,8 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
       // TODO(gold-standard): we handle all contributions from
       //    assorted_multidim_tabulated_sp_cool in a single call
       opaque_storage.assorted_multidim_tabulated_sp_cool.add_HDI_contrib(
-          edot, d, tgas, itmask, my_chemistry, sp_densities, idx_range,
-          internalu, spcooltab_scratch.data());
+          edot, d, logTlininterp_buf.logtem, itmask, my_chemistry, sp_densities,
+          idx_range, internalu, spcooltab_scratch.data());
 
       // Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007) HD cooling
       // rate
@@ -893,8 +893,8 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
       // TODO(gold-standard): we handle all contributions from
       //    assorted_multidim_tabulated_sp_cool in a single call
       opaque_storage.assorted_multidim_tabulated_sp_cool.add_metal_sp_contrib(
-          edot, d, tgas, itmask, my_chemistry, sp_densities, idx_range,
-          internalu, spcooltab_scratch.data());
+          edot, d, logTlininterp_buf.logtem, itmask, my_chemistry, sp_densities,
+          idx_range, internalu, spcooltab_scratch.data());
     }
   }
 

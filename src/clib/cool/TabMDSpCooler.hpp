@@ -19,6 +19,7 @@
 #include "../internal_units.hpp"
 #include "../interp_grid.hpp"
 #include "../interpolate.hpp"
+#include "../phys_constants.hpp"
 #include "../support/config.hpp"
 #include "../support/error.hpp"
 #include "../support/expected.hpp"
@@ -103,7 +104,7 @@ class TabMDSpCooler {
 
   // does the heavy lifting!
   inline static void add_contrib_(
-      double* edot, FortranView<const gr_float***> d, const gr_float* tgas,
+      double* edot, FortranView<const gr_float***> d, const double* ln_T,
       const gr_mask_type* itmask, const chemistry_data* my_chemistry,
       SpeciesMultiView<const double> sp_densities, const IndexRange& idx_range,
       const InternalGrUnits& internalu, double* scratch_buf,
@@ -139,7 +140,7 @@ public:  // interface
 
   /// @brief Add cooling/heating contributions for H2I (if any)
   void add_H2I_contrib(double* edot, FortranView<const gr_float***> d,
-                       const gr_float* tgas, const gr_mask_type* itmask,
+                       const double* ln_T, const gr_mask_type* itmask,
                        const chemistry_data* my_chemistry,
                        SpeciesMultiView<const double> sp_densities,
                        const IndexRange& idx_range,
@@ -149,13 +150,13 @@ public:  // interface
       return;
     }
     const SpCoolTablePack_& pack = packs_[pack_id_H2I_];
-    add_contrib_(edot, d, tgas, itmask, my_chemistry, sp_densities, idx_range,
+    add_contrib_(edot, d, ln_T, itmask, my_chemistry, sp_densities, idx_range,
                  internalu, scratch_buf, &pack, 1);
   }
 
   /// @brief Add cooling/heating contributions for HDI (if any)
   void add_HDI_contrib(double* edot, FortranView<const gr_float***> d,
-                       const gr_float* tgas, const gr_mask_type* itmask,
+                       const double* ln_T, const gr_mask_type* itmask,
                        const chemistry_data* my_chemistry,
                        SpeciesMultiView<const double> sp_densities,
                        const IndexRange& idx_range,
@@ -165,20 +166,20 @@ public:  // interface
       return;
     }
     const SpCoolTablePack_& pack = packs_[pack_id_HDI_];
-    add_contrib_(edot, d, tgas, itmask, my_chemistry, sp_densities, idx_range,
+    add_contrib_(edot, d, ln_T, itmask, my_chemistry, sp_densities, idx_range,
                  internalu, scratch_buf, &pack, 1);
   }
 
   /// @brief Calculate cooling/heating for metal species
   void add_metal_sp_contrib(double* edot, FortranView<const gr_float***> d,
-                            const gr_float* tgas, const gr_mask_type* itmask,
+                            const double* ln_T, const gr_mask_type* itmask,
                             const chemistry_data* my_chemistry,
                             SpeciesMultiView<const double> sp_densities,
                             const IndexRange& idx_range,
                             const InternalGrUnits& internalu,
                             double* scratch_buf) const {
     const SpCoolTablePack_* packs = packs_.data() + n_prim_sp();
-    add_contrib_(edot, d, tgas, itmask, my_chemistry, sp_densities, idx_range,
+    add_contrib_(edot, d, ln_T, itmask, my_chemistry, sp_densities, idx_range,
                  internalu, scratch_buf, packs, n_metal_sp());
   }
 };
@@ -194,7 +195,7 @@ inline double interp_from_3D_grid(double input1, double input2, double input3,
 }
 
 inline void TabMDSpCooler::add_contrib_(
-    double* edot, FortranView<const gr_float***> d, const gr_float* tgas,
+    double* edot, FortranView<const gr_float***> d, const double* ln_T,
     const gr_mask_type* itmask, const chemistry_data* my_chemistry,
     SpeciesMultiView<const double> sp_densities, const IndexRange& idx_range,
     const InternalGrUnits& internalu, double* scratch_buf,
@@ -204,10 +205,9 @@ inline void TabMDSpCooler::add_contrib_(
   }
 
   int buf_len = sp_densities.extent(1);
-  double* log10_T = scratch_buf;
-  double* log10_H = scratch_buf + buf_len;
-  double* log10_H2 = scratch_buf + 2 * buf_len;
-  double* log10_dvdr = scratch_buf + 3 * buf_len;
+  double* log10_H = scratch_buf;
+  double* log10_H2 = scratch_buf + buf_len;
+  double* log10_dvdr = scratch_buf + 2 * buf_len;
 
   // calculate props reused for different interpolations
   double dom = internalu_calc_dom_(internalu);
@@ -222,10 +222,6 @@ inline void TabMDSpCooler::add_contrib_(
 
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        // TODO(gold-standard): reuse the pre-computed lnT values
-        // -> we should either adjust the tables so that they interpolated with
-        //    respect to lnT, or we should compute log10(T) = ln(T) / ln(10)
-        log10_T[i] = std::log10(tgas[i]);
         log10_H[i] = std::log10(HI[i] * dom);
         if (my_chemistry->primordial_chemistry < 2) {
           log10_H2[i] = std::log10(HI[i] * dom);
@@ -277,8 +273,10 @@ inline void TabMDSpCooler::add_contrib_(
             std::log10(cur_sp_dens[i] * dom / pack.sp_mass_factor);
         double log10_nhat = log10_ndens_sp - log10_dvdr[i];
 
+        double log10_T = ln_T[i] * constants::inv_ln10;
+
         double log10_Linv = interp_from_3D_grid(
-            log10_nhat, log10_T[i], last_interp_ax_vals[i], pack.interp_grid);
+            log10_nhat, log10_T, last_interp_ax_vals[i], pack.interp_grid);
         double L = std::pow(10.0, -log10_Linv);
 
         double G = tiny8;
