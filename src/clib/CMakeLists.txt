@@ -98,11 +98,11 @@ add_library(Grackle_Grackle
   chem_model/parse.cpp chem_model/parse.hpp
   chem_model/species_builder.cpp chem_model/species_builder.hpp
   chem_model/species.cpp chem_model/species.hpp
+  cool/cool1d_multi.cpp cool/cool1d_multi.hpp
   cool/primordial_opac_table.cpp cool/primordial_opac_table.hpp
   cool/TabMDSpCooler.cpp cool/TabMDSpCooler.hpp
   cie_thin_cooling_rate_tables.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
-  cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time.cpp cool_multi_time.hpp
   dust/calc_all_tdust_gasgr_1d.cpp dust/calc_all_tdust_gasgr_1d.hpp
   dust/calc_tdust_1d.hpp

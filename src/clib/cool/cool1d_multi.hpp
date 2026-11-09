@@ -6,15 +6,15 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares the cool1d_multi_g function
+/// Declares the @ref GRIMPL_NS::cool1d_multi function
 ///
 //===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // cool1d_multi_g function from FORTRAN to C++
 
-#ifndef COOL1D_MULTI_G_HPP
-#define COOL1D_MULTI_G_HPP
+#ifndef COOL_COOL1D_MULTI_HPP
+#define COOL_COOL1D_MULTI_HPP
 
 #include "grackle.h"                 // gr_float
 #include "field_adaptor.hpp"         // SpeciesMultiView
@@ -23,8 +23,9 @@
 #include "internal_types.hpp"        // GrainSpeciesCollection
 #include "lnT_prep.hpp"              // LnTLinInterpBuf
 #include "support/index_helper.hpp"  // IndexRange
+#include "support/config.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// Solve radiative cooling/heating equations
 ///
@@ -73,17 +74,19 @@ namespace grackle::impl {
 /// modified3: February, 2003 by Robert Harkness; iteration mask
 /// modified4: September, 2009 by BDS to include cloudy cooling
 /// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void cool1d_multi_g(
-    double* edot, double* alpha_continuum, const double* tgas,
-    const double* mmw, const double* metallicity, const double* rhoH,
-    const double* nelec_times_mH, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    SpeciesMultiView<const gr_float> sp_densities,
-    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-    IndexRange idx_range, grackle::impl::LnTLinInterpBuf logTlininterp_buf,
-    grackle::impl::CoolHeatScratchBuf coolingheating_buf);
+void cool1d_multi(double* edot, double* alpha_continuum, const double* tgas,
+                  const double* mmw, const double* metallicity,
+                  const double* rhoH, const double* nelec_times_mH,
+                  const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
+                  chemistry_data* my_chemistry,
+                  chemistry_data_storage* my_rates,
+                  grackle_field_data* my_fields,
+                  SpeciesMultiView<const gr_float> sp_densities,
+                  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+                  IndexRange idx_range,
+                  grackle::impl::LnTLinInterpBuf logTlininterp_buf,
+                  grackle::impl::CoolHeatScratchBuf coolingheating_buf);
 
-};  // namespace grackle::impl
+};  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* COOL1D_MULTI_G_HPP */
+#endif /* COOL_COOL1D_MULTI_HPP */

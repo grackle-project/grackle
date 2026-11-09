@@ -15,7 +15,7 @@
 
 #include <vector>
 
-#include "cool1d_multi_g.hpp"
+#include "cool/cool1d_multi.hpp"
 #include "cool_multi_time.hpp"
 #include "field_adaptor.hpp"
 #include "gas_props.hpp"
@@ -151,7 +151,7 @@ void cool_multi_time(
           species_densities, internalu, idx_range, logTlininterp_buf);
 
       // compute edot
-      cool1d_multi_g(
+      cool1d_multi(
           edot.data(), alpha_continuum.data(), tgas.data(), mmw.data(),
           metallicity.data(), rhoH.data(), nelec_times_mH.data(), itmask.data(),
           itmask_metal.data(), my_chemistry, my_rates, my_fields,

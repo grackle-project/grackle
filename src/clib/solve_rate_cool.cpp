@@ -20,6 +20,7 @@
 #include "gas_props.hpp"
 #include "grackle.h"
 
+#include "cool/cool1d_multi.hpp"
 #include "full_rxn_rate_buf.hpp"
 #include "support/index_helper.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -39,7 +40,6 @@
 
 #include "ceiling_species.hpp"
 #include "rate_timestep_g.hpp"
-#include "cool1d_multi_g.hpp"
 #include "scale_fields.hpp"
 #include "solve_rate_cool.hpp"
 
@@ -916,7 +916,7 @@ int solve_rate_cool(
         // Compute the edot values (so we can get the cooling time)
         // -> at this time the function also fillls dust2gas and tdust.
         // -> (we plan to factor out the extra calculations)
-        cool1d_multi_g(
+        cool1d_multi(
           edot.data(), alpha_continuum.data(),
           tgas.data(), mmw.data(), metallicity.data(),
            rhoH.data(), nelec_times_mH.data(), itmask.data(),

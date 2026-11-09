@@ -14,7 +14,7 @@
 #define TIME_DERIV_0D_HPP
 
 #include "LUT.hpp"
-#include "cool1d_multi_g.hpp"
+#include "cool/cool1d_multi.hpp"
 #include "chemistry_solver_funcs.hpp"
 #include "dust/multi_grain_species/dust_props.hpp"
 #include "field_adaptor.hpp"
@@ -509,7 +509,7 @@ inline void derivatives(
     // Compute the edot values (so we can get the cooling time)
     // -> at this time the function also fillls dust2gas and tdust
     // -> (we plan to factor out the extra calculations)
-    cool1d_multi_g(
+    cool1d_multi(
       pack.other_scratch_buf.edot, alpha_continuum,
       pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
       pack.other_scratch_buf.metallicity, pack.other_scratch_buf.rhoH,

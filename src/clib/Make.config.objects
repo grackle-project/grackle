@@ -24,12 +24,12 @@ OBJS_CONFIG_LIB = \
         chem_model/parse.lo \
         chem_model/species_builder.lo \
         chem_model/species.lo \
+        cool/cool1d_multi.lo \
         cool/primordial_opac_table.lo \
         cool/TabMDSpCooler.lo \
         collisional_rate_props.lo \
         tabulated/cool1d_cloudy.lo \
         tabulated/cool1d_cloudy_old_tables.lo \
-        cool1d_multi_g.lo \
         cool_multi_time.lo \
         dust/calc_all_tdust_gasgr_1d.lo \
         dust/multi_grain_species/calc_grain_size_increment_species_1d.lo \

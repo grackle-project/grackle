@@ -15,7 +15,7 @@
 
 #include <vector>
 
-#include "cool1d_multi_g.hpp"
+#include "cool/cool1d_multi.hpp"
 #include "cool/TabMDSpCooler.hpp"
 #include "LUT.hpp"
 #include "dust/solver.hpp"
@@ -34,18 +34,17 @@
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
-                    const double* mmw, const double* metallicity,
-                    const double* rhoH, const double* nelec_times_mH,
-                    const gr_mask_type* itmask,
-                    const gr_mask_type* itmask_metal,
-                    chemistry_data* my_chemistry,
-                    chemistry_data_storage* my_rates,
-                    grackle_field_data* my_fields,
-                    SpeciesMultiView<const gr_float> sp_densities,
-                    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-                    IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf,
-                    CoolHeatScratchBuf coolingheating_buf) {
+void cool1d_multi(double* edot, double* alpha_continuum, const double* tgas,
+                  const double* mmw, const double* metallicity,
+                  const double* rhoH, const double* nelec_times_mH,
+                  const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
+                  chemistry_data* my_chemistry,
+                  chemistry_data_storage* my_rates,
+                  grackle_field_data* my_fields,
+                  SpeciesMultiView<const gr_float> sp_densities,
+                  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+                  IndexRange idx_range, LnTLinInterpBuf logTlininterp_buf,
+                  CoolHeatScratchBuf coolingheating_buf) {
   FortranView<gr_float***> d(my_fields->density, my_fields->grid_dimension[0],
                              my_fields->grid_dimension[1],
                              my_fields->grid_dimension[2]);
