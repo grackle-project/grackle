@@ -75,6 +75,17 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
     output_lines = ["\nMax relative differences:"]
     do_diff = ds1.data["data", my_ivar].size == ds2.data["data", my_ivar].size
 
+    # prepare properties of each output figure
+    _height_ratios = [3, 1]
+    _height_inches = 4.8 * sum(_height_ratios) / _height_ratios[0]
+    subplots_kw = {
+        "nrows": len(_height_ratios),
+        "ncols": 1,
+        "sharex": True,
+        "figsize": (6.4, _height_inches),
+        "gridspec_kw": {"height_ratios": _height_ratios}
+    }
+
     for field in ds1.field_list:
         if field[1] in _exclude_fields:
             continue
@@ -84,11 +95,13 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
         if (ds1.data[field] == 0).all() and (ds2.data[field] == 0).all():
             continue
 
+        fig, (ax1, ax2) = plt.subplots(**subplots_kw)
+
         has_positive = False
         if (ds1.data[field] > 0).any():
-            plt.loglog(ds1.data["data", my_ivar], ds1.data[field],
+            ax1.loglog(ds1.data["data", my_ivar], ds1.data[field],
                        color="red", label="new", alpha=0.8)
-            plt.loglog(ds2.data["data", my_ivar], ds2.data[field],
+            ax1.loglog(ds2.data["data", my_ivar], ds2.data[field],
                        color="green", label="old", alpha=0.8)
             has_positive = True
 
@@ -98,16 +111,17 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
             else:
                 label1 = "new"
                 label2 = "old"
-            plt.loglog(ds1.data["data", my_ivar], -ds1.data[field],
+            ax1.loglog(ds1.data["data", my_ivar], -ds1.data[field],
                        color="red", linestyle="--", label=label1, alpha=0.8)
-            plt.loglog(ds2.data["data", my_ivar], -ds2.data[field],
+            ax1.loglog(ds2.data["data", my_ivar], -ds2.data[field],
                        color="green", linestyle="--", label=label2, alpha=0.8)
 
         xunits = getattr(ds1.field_info["data", my_ivar], "units", "")
         yunits = getattr(ds1.field_info[field], "units", "")
-        plt.xlabel(f"{my_ivar} [{xunits}]")
-        plt.ylabel(f"{field[1]} [{yunits}]")
-        plt.legend(loc="best")
+        ax2.set_xlabel(f"{my_ivar} [{xunits}]")
+        ax1.set_ylabel(f"{field[1]} [{yunits}]")
+        ax2.set_ylabel("relative difference")
+        ax1.legend(loc="best")
 
         if do_diff:
             diff = np.abs(ds1.data[field] - ds2.data[field]) / ds2.data[field]
@@ -115,14 +129,21 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
             output_lines.append(my_line)
 
             if (diff > 0).any():
-                plt.twinx()
-                plt.loglog(ds1.data["data", my_ivar], diff,
+                ax2.loglog(ds1.data["data", my_ivar], diff,
                            color="black", alpha=0.8)
-                plt.ylabel("relative difference")
+        else:
+            ax2.text(
+                0.5,
+                0.5,
+                'Data arrays have different sizes',
+                horizontalalignment='center',
+                verticalalignment='center',
+                transform=ax2.transAxes
+            )
 
-        plt.tight_layout()
-        plt.savefig(os.path.join(test_dir, f"{field[1]}.png"))
-        plt.clf()
+        fig.tight_layout()
+        fig.savefig(os.path.join(test_dir, f"{field[1]}.png"))
+        plt.close(fig)
 
     if not do_diff:
         output_lines = ["\nData arrays have different sizes."]
