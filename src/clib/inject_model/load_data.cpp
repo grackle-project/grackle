@@ -23,7 +23,6 @@
 #include "../ratequery.hpp"
 #include "../support/error.hpp"
 #include "../support/expected.hpp"
-#include "../support/status_reporting.hpp"  // GrPrintAndReturnErr
 #include "../support/FrozenKeyIdxBiMap.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -496,18 +495,17 @@ Expected<void, Error> load_inject_path_data(
   // initialize the object that will hold the loaded data
   int n_log10Tdust_vals = inj_model_input::N_Tdust_Opacity_Table;
   int n_opac_poly_coef = inj_model_input::N_Opacity_Coef;
-  my_rates->opaque_storage->inject_pathway_props = new GrainMetalInjectPathways;
-  *(my_rates->opaque_storage->inject_pathway_props) =
-      new_GrainMetalInjectPathways(n_pathways, n_log10Tdust_vals,
-                                   n_opac_poly_coef);
+  Expected<GrainMetalInjectPathways*, Error> inject_pathway_props_rslt =
+      GrainMetalInjectPathways::create_ptr(n_pathways, n_log10Tdust_vals,
+                                           n_opac_poly_coef);
+  if (!inject_pathway_props_rslt.has_value()) {
+    return Unexpected(inj_path_names_rslt.error().context_literal(
+        "issue initializing GrainMetalInjectPathways"));
+  }
 
   GrainMetalInjectPathways* inject_pathway_props =
-      my_rates->opaque_storage->inject_pathway_props;
-
-  if (!GrainMetalInjectPathways_is_valid(inject_pathway_props)) {
-    return Unexpected(
-        Error::msg_literal("issue in new_GrainMetalInjectPathways"));
-  }
+      inject_pathway_props_rslt.value();
+  my_rates->opaque_storage->inject_pathway_props = inject_pathway_props;
 
   // initialize the grid of dust temperatures associated with the opacity table
   {

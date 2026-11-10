@@ -20,6 +20,8 @@
 #include "grackle_macros.h"
 #include "auto_general.hpp"
 #include "chem_model/nuclide_model.hpp"
+#include "chem_model/species.hpp"
+#include "dust/grain_species_info.hpp"
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.hpp"
@@ -28,6 +30,7 @@
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.hpp"
 #include "ratequery.hpp"
+#include "support/expected.hpp"
 #include "support/status_reporting.hpp"
 #include "tabulated/initialize_cloudy_data.hpp"
 
@@ -148,10 +151,48 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->opaque_storage = NULL;
 }
 
+int configure_photo_rate_parameter(chemistry_data *my_chemistry,
+                                   const bool par_condition,
+                                   int &photo_parameter,
+                                   const char *par_name) {
+  if (photo_parameter == -1) {
+    photo_parameter = 0;
+    // only activate parameter if the specified condition is also met
+    if (par_condition) {
+      if (my_chemistry->UVbackground == 1) {
+        photo_parameter += 1;
+      }
+      if (my_chemistry->use_photo_fields == 1) {
+        photo_parameter += 2;
+      }
+    }
+    if (grackle_verbose) {
+      fprintf(stdout, "Setting %s to %d.\n", par_name, photo_parameter);
+    }
+  }
+
+  else {
+    if (photo_parameter > 0 && !par_condition) {
+      fprintf(stderr, "ERROR: other settings require %s to be set to 0.\n", par_name);
+      return GR_FAIL;
+    }
+  }
+
+  if (photo_parameter < 0 || photo_parameter > 3) {
+    fprintf(stderr, "ERROR: %s must be set to 0, 1, 2, or 3.\n", par_name);
+    return GR_FAIL;
+  }
+
+  return GR_SUCCESS;
+}
+
 extern "C" int local_initialize_chemistry_data(
     chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
     code_units *my_units)
 {
+  using GRIMPL_NS::Error;
+  using GRIMPL_NS::Expected;
+
   // Here we will default construct an empty RegBuilder
   // -> as we move through this function, we will register various
   //    kinds of rate-related quantities
@@ -261,6 +302,86 @@ extern "C" int local_initialize_chemistry_data(
     my_chemistry->photoelectric_heating = 0;
   }
 
+  // Configure photo rate parameters
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 0),
+        my_chemistry->use_HI_ionization,
+        "use_HI_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 0),
+        my_chemistry->use_HeII_ionization,
+        "use_HeII_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 0),
+        my_chemistry->use_HeI_ionization,
+        "use_HeI_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 1),
+        my_chemistry->use_HM_detachment,
+        "use_HM_detachment") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 1),
+        my_chemistry->use_H2II_dissociation,
+        "use_H2II_dissociation") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 1),
+        my_chemistry->use_H2I_ionization,
+        "use_H2I_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 1),
+        my_chemistry->use_H2II_dissociative_ionization,
+        "use_H2II_dissociative_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->primordial_chemistry > 1),
+        my_chemistry->use_H2I_dissociation,
+        "use_H2I_dissociation") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->metal_chemistry == 1),
+        my_chemistry->use_CI_ionization,
+        "use_CI_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->metal_chemistry == 1),
+        my_chemistry->use_OI_ionization,
+        "use_OI_ionization") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->metal_chemistry == 1),
+        my_chemistry->use_COI_dissociation,
+        "use_COI_dissociation") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->metal_chemistry == 1),
+        my_chemistry->use_OHI_dissociation,
+        "use_OHI_dissociation") == GR_FAIL) {
+    return GR_FAIL;
+  }
+  if (configure_photo_rate_parameter(
+        my_chemistry, (my_chemistry->metal_chemistry == 1),
+        my_chemistry->use_H2OI_dissociation,
+        "use_H2OI_dissociation") == GR_FAIL) {
+    return GR_FAIL;
+  }
+
 //initialize OpenMP
 # ifndef _OPENMP
   if (my_chemistry->omp_nthreads > 1) {
@@ -349,25 +470,63 @@ extern "C" int local_initialize_chemistry_data(
     }
   }
 
-  // it's time to make it possible to query nuclide properties
-  // -> note that that nuclide_model's constructor temporarily allocates
-  //    heap memory (before it is deallocated in the destructor)
-  // -> while this is currently a little wasteful, it's probably worth doing
-  //    because in the near future, the plan is to use nuclide_model to help us
-  //    do some setup in order to approach make_consistent in a dynamic way
-  //    (i.e. to minimize the number of edits every time a new species is added)
-  {
-    GRIMPL_NS::NuclideModel nuclide_model;  // <- default constructed
-    // the following copies some data into the reg_builder (it will get
-    // transferred to the registry). If we are worried about this, we can
-    // create a new parameter to disable this behavior
-    nuclide_model.copy_info_to_RegBuilder(reg_builder);
-  }
-
   // it's time to start initializing values in my_rates
 
   // perform some basic allocations
   my_rates->opaque_storage = new gr_opaque_storage;
+
+  // lets start determining the species that are actually involved in the
+  // calculation
+  // -> first we need to infer whether any dust grain species are involved
+  // -> this is encoded within GrainSpeciesInfo
+  if (my_chemistry->dust_species > 0) {
+    using GRIMPL_NS::GrainSpeciesInfo;
+    GRIMPL_NS::Expected<GrainSpeciesInfo, Error> rslt
+        = GrainSpeciesInfo::create(my_chemistry->dust_species);
+    if (rslt.has_value()) {
+      my_rates->opaque_storage->grain_species_info = new GrainSpeciesInfo(
+          std::move(rslt).value());
+    } else {
+      rslt.error().context_literal("Unable to build GrainSpeciesInfo")
+          .write(stderr);
+      return GR_FAIL;
+    }
+  }
+
+  // let's infer information about all species
+  // -> species_initialize_info contains queryable information about the species
+  //    involved in the reaction network
+  // -> note that this allocates some heap memory. However the object (& all of
+  //    its contents are deallocated) in the destructor which are invoked at
+  //    the end of the current function
+  // -> while this is currently a little wasteful, it's probably worth doing
+  //    because in the near future, the plan is to use this information to help
+  //    with setting up make_consistent (and potentially the step_rate_solvers)
+  //    in a dynamic way (i.e. to minimize the number of edits every time a new
+  //    species is added)
+  Expected<GRIMPL_NS::SpInitializeInfo, Error> species_initialize_info_rslt
+      = infer_species_maps(my_chemistry->primordial_chemistry,
+                           my_chemistry->metal_chemistry,
+                           my_rates->opaque_storage->grain_species_info);
+  if (!species_initialize_info_rslt.has_value()) {
+    species_initialize_info_rslt.error().context_literal("problem inferring species information")
+          .write(stderr);
+    return GR_FAIL;
+  }
+  const GRIMPL_NS::SpInitializeInfo& species_initialize_info 
+    = species_initialize_info_rslt.value();
+  
+  // the following copies some data into the reg_builder (it will get
+  // transferred to the registry). If we are worried about the cost of this, we
+  // can create a new parameter to disable this behavior
+  species_initialize_info.nuclide_model.copy_info_to_RegBuilder(reg_builder);
+
+  // make a deep copy of the species kind map (this is very cheap)
+  my_rates->opaque_storage->sp_kind_map =
+      species_initialize_info_rslt.value().kind_map;
+
+  // TODO: we should make an effort to start using the information within
+  //       species_initialize_info_rslt
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {

@@ -6,22 +6,20 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the solve_cubic_equation function
+/// Implements logic for solving equations
 ///
 //===----------------------------------------------------------------------===//
-
-// This file was initially generated automatically during conversion of the
-// solve_cubic_equation function from FORTRAN to C++
 
 #include <cmath>
 #include <cstdio>
 
 #include "phys_constants.hpp"  // pi_fortran_val
-#include "solve_cubic_equation.hpp"
+#include "solve_eqn.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
+namespace solve_eqn {
 
-int solve_cubic_equation_cpp(double a, double b, double c, double& root) {
+int cubic_eqn_root(double a, double b, double c, double& root) {
   double root1, root2, root3;
   double q, r, m;
   double th;
@@ -56,4 +54,5 @@ int solve_cubic_equation_cpp(double a, double b, double c, double& root) {
   return 0;
 }
 
+}  // namespace solve_eqn
 }  // namespace GRIMPL_NAMESPACE_DECL

@@ -38,7 +38,6 @@ _parameter_map[EnzoDataset] = {
     "UVbackground_redshift_drop": "RadiationRedshiftDropOff",
     "use_radiative_transfer": "RadiativeTransfer",
     "radiative_transfer_coupled_rate_solver": "RadiativeTransferCoupledRateSolver",
-    "radiative_transfer_hydrogen_only": "RadiativeTransferHydrogenOnly",
     "with_radiative_cooling": "with_radiative_cooling",
     "use_volumetric_heating_rate": "use_volumetric_heating_rate",
     "use_specific_heating_rate": "use_specific_heating_rate",

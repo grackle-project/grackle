@@ -41,7 +41,7 @@
 /// reason that we don't put it inside a namespace)
 int eprintf(const char* format, ...);
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 /// crude implementation of some logic for printing arrays
 ///
@@ -119,86 +119,7 @@ void print_contiguous_row_(const T* ptr, int start_idx, int stop_idx) {
   }
 }
 
-///@{
-/// Implements alternatives to fmax that take more args
-///
-/// @note
-/// These functions **only** exists to support transcription
-inline float fmax(float a, float b, float c) {
-  return std::fmax(a, std::fmax(b, c));
-}
-inline double fmax(double a, double b, double c) {
-  return std::fmax(a, std::fmax(b, c));
-}
-///@}
+} // namespace GRIMPL_NAMESPACE_DECL
 
-
-///@{
-/// Implements alternatives to fmin that take more args
-///
-/// @note
-/// These functions **only** exists to support transcription
-inline float fmin(float a, float b, float c) {
-  return std::fmin(a, std::fmin(b, c));
-}
-inline float fmin(float a, float b, float c, float d) {
-  return std::fmin(std::fmin(a, b), std::fmin(c, d));
-}
-inline double fmin(double a, double b, double c) {
-  return std::fmin(a, std::fmin(b, c));
-}
-inline double fmin(double a, double b, double c, double d) {
-  return std::fmin(std::fmin(a, b), std::fmin(c, d));
-}
-///@}
-
-
-/// Crude implementation of Fortran's
-/// [MOD function](https://gcc.gnu.org/onlinedocs/gfortran/MOD.html)
-///
-/// @note
-/// We currently only implement behavior for positive lengths
-inline int mod(int a, int p) {
-  GRIMPL_REQUIRE((a >= 0) && (p>0),
-      "a must be non-negative and p must be positive");
-  return a % p;
-}
-
-/// Implementation of Fortran's
-/// [DAbs intrinsic](https://gcc.gnu.org/onlinedocs/gcc-3.4.6/g77/DAbs-Intrinsic.html)
-inline double dabs(double a) { return std::fabs(a); }
-
-} // namespace grackle::internal
-
-// ----------------------
-// other useful machinery
-// ----------------------
-
-namespace grackle::impl {
-
-///@{
-/// Implements alternatives to std::clamp that always works with floating point
-/// values
-///
-/// For context, std::clamp, produces undefined behavior when a NaN is passed
-/// into the function
-inline int clamp(int v, int lo, int hi) {
-  return (v < lo) ? lo : (v > hi) ? hi : v;
-}
-inline long clamp(long v, long lo, long hi) {
-  return (v < lo) ? lo : (v > hi) ? hi : v;
-}
-inline long long clamp(long long v, long long lo, long long hi) {
-  return (v < lo) ? lo : (v > hi) ? hi : v;
-}
-inline float clamp(float v, float lo, float hi) {
-  return std::fmax(lo, std::fmin(v, hi));
-}
-inline double clamp(double v, double lo, double hi) {
-  return std::fmax(lo, std::fmin(v, hi));
-}
-///@}
-
-} // namespace grackle::impl
 
 #endif /* UTILS_HPP */

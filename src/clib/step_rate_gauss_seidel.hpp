@@ -243,11 +243,14 @@ inline void step_rate_gauss_seidel(
   grackle::impl::SpeciesCollection species_tmpdens,
   const FullRxnRateBuf rxn_rate_buf
 ) {
+  View<gr_float**> species_tmpdens_view(species_tmpdens.data[0],
+                                        MAX_EVOLVED_SPECIES_FIELDS,
+                                        my_fields->grid_dimension[0]);
 
   // perform the Gauss-Seidel sweep to compute the species densities at the
   // end of the current timestep. The results are saved in species_tmpdens
-  grackle::impl::chemistry::species_density_updates_gauss_seidel(
-      species_tmpdens, idx_range, dtit, anydust, rhoH, itmask,
+  chemistry::species_density_updates_gauss_seidel(
+      species_tmpdens_view, idx_range, dtit, anydust, rhoH, itmask,
       itmask_metal, my_chemistry, my_fields, rxn_rate_buf);
 
   // update the entries from my_fields with the values in species_tmpdens

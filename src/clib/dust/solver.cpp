@@ -22,8 +22,8 @@
 #include "internal_types.hpp"
 #include "interpolate.hpp"
 #include "lnT_prep.hpp"
+#include "math/misc.hpp"
 #include "opaque_storage.hpp"
-#include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
 
@@ -82,12 +82,12 @@ void DustSolver::lookup_dust_rxn_rates1d(
         } else {
           // Get log dust temperature
 
-          double logTdust = grackle::impl::clamp(std::log(tdust[i]),
-                                                 logTdust_start, logTdust_end);
+          double logTdust =
+              fclamp(std::log(tdust[i]), logTdust_start, logTdust_end);
 
           // Find index into table and precompute interpolation values
 
-          long long d_indixe = grackle::impl::clamp(
+          long long d_indixe = clamp(
               (long long)((logTdust - logTdust_start) / dlogTdust) + 1LL, 1LL,
               (long long)(my_chemistry->NumberOfDustTemperatureBins) - 1LL);
           double d_t1 = (logTdust_start + (d_indixe - 1) * dlogTdust);
