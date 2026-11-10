@@ -52,6 +52,40 @@ def get_ivar(my_test):
 
 _exclude_fields = [f"{ax}_velocity" for ax in "xyz"]
 
+def _infer_symlog_linthresh(y):
+    # infer kwarg based on the y-values being plotted for ax.set_yscale("symlog", ...)
+    # -> By default, we try to pick values that minimize the size of the region
+    #    where the y-axis crosses 0.
+    # -> a value of None means that we give up and just want builtin defaults
+
+    if np.ndim(y) != 1:
+        return None
+    abs_y = np.abs(y)
+    tmp = abs_y[(abs_y != 0) & np.isfinite(abs_y)]
+    if tmp.size == 0:
+        return None
+    linthresh = tmp.min()
+    return linthresh if linthresh < np.nanmax(abs_y) else None
+
+
+def _careful_plot_logy(ax, x, y, **kw):
+    if "linestyle" in kw:
+        raise NotImplementedError("not currently supported")
+    out = []
+
+    has_positive = (y > 0).any()
+    if has_positive:
+        out.extend(ax.plot(x, y, linestyle = "-", **kw))
+
+    if (y < 0).any():
+        _kw = kw
+        if has_positive and "label" in kw:
+            _kw = {k: v for k, v in kw.items() if k != "label"}
+        out.extend(ax.plot(x, -1*y, linestyle = "--", **_kw))
+    ax.set_yscale("log")
+    return out
+
+
 def compare_model_results(compare_dir, model_par, ds1, ds2):
     """
     Do additional comparison between models.
@@ -97,31 +131,35 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
 
         fig, (ax1, ax2) = plt.subplots(**subplots_kw)
 
-        has_positive = False
-        if (ds1.data[field] > 0).any():
-            ax1.loglog(ds1.data["data", my_ivar], ds1.data[field],
-                       color="red", label="new", alpha=0.8)
-            ax1.loglog(ds2.data["data", my_ivar], ds2.data[field],
-                       color="green", label="old", alpha=0.8)
-            has_positive = True
+        new_kw = {"color": "red", "label": "new", "alpha": 0.8}
+        old_kw = {"color": "green", "label": "old", "alpha": 0.8}
 
-        if (ds1.data[field] < 0).any():
-            if has_positive:
-                label1 = label2 = None
+        if field[1] == "cooling_rate":
+            lt1 = _infer_symlog_linthresh(ds1.data[field].ndview)
+            lt2 = _infer_symlog_linthresh(ds2.data[field].ndview)
+            if lt1 is None and lt2 is None:
+                ax1.set_yscale("symlog")  # <- just use defaults!
             else:
-                label1 = "new"
-                label2 = "old"
-            ax1.loglog(ds1.data["data", my_ivar], -ds1.data[field],
-                       color="red", linestyle="--", label=label1, alpha=0.8)
-            ax1.loglog(ds2.data["data", my_ivar], -ds2.data[field],
-                       color="green", linestyle="--", label=label2, alpha=0.8)
-
+                lt = min(
+                    np.inf if lt1 is None else lt1, np.inf if lt2 is None else lt2
+                )
+                ax1.set_yscale("symlog", linthresh=lt)
+            ax1.plot(ds1.data["data", my_ivar], ds1.data[field], **new_kw)
+            ax1.plot(ds2.data["data", my_ivar], ds2.data[field], **old_kw)
+        else:
+            _careful_plot_logy(
+                ax1, ds1.data["data", my_ivar], ds1.data[field], **new_kw
+            )
+            _careful_plot_logy(
+                ax1, ds2.data["data", my_ivar], ds2.data[field], **old_kw
+            )
         xunits = getattr(ds1.field_info["data", my_ivar], "units", "")
         yunits = getattr(ds1.field_info[field], "units", "")
         ax2.set_xlabel(f"{my_ivar} [{xunits}]")
         ax1.set_ylabel(f"{field[1]} [{yunits}]")
         ax2.set_ylabel("relative difference")
         ax1.legend(loc="best")
+        ax2.set_xscale("log")
 
         if do_diff:
             diff = np.abs(ds1.data[field] - ds2.data[field]) / ds2.data[field]
