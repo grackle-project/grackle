@@ -67,6 +67,15 @@ def _infer_symlog_linthresh(y):
     linthresh = tmp.min()
     return linthresh if linthresh < np.nanmax(abs_y) else None
 
+def _subplot_text(ax, msg):
+    ax.text(
+        0.5,
+        0.5,
+        msg,
+        horizontalalignment='center',
+        verticalalignment='center',
+        transform=ax.transAxes
+    )
 
 def _careful_plot_logy(ax, x, y, **kw):
     if "linestyle" in kw:
@@ -110,7 +119,7 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
     do_diff = ds1.data["data", my_ivar].size == ds2.data["data", my_ivar].size
 
     # prepare properties of each output figure
-    _height_ratios = [3, 1]
+    _height_ratios = [3, 1, 1]
     _height_inches = 4.8 * sum(_height_ratios) / _height_ratios[0]
     subplots_kw = {
         "nrows": len(_height_ratios),
@@ -129,7 +138,7 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
         if (ds1.data[field] == 0).all() and (ds2.data[field] == 0).all():
             continue
 
-        fig, (ax1, ax2) = plt.subplots(**subplots_kw)
+        fig, (ax1, ax2, ax3) = plt.subplots(**subplots_kw)
 
         new_kw = {"color": "red", "label": "new", "alpha": 0.8}
         old_kw = {"color": "green", "label": "old", "alpha": 0.8}
@@ -155,29 +164,33 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
             )
         xunits = getattr(ds1.field_info["data", my_ivar], "units", "")
         yunits = getattr(ds1.field_info[field], "units", "")
-        ax2.set_xlabel(f"{my_ivar} [{xunits}]")
+        ax3.set_xlabel(f"{my_ivar} [{xunits}]")
         ax1.set_ylabel(f"{field[1]} [{yunits}]")
         ax2.set_ylabel("relative difference")
+        ax3.set_ylabel("abs difference")
         ax1.legend(loc="best")
-        ax2.set_xscale("log")
+        ax3.set_xscale("log")
 
         if do_diff:
-            diff = np.abs(ds1.data[field] - ds2.data[field]) / ds2.data[field]
+            abs_diff = np.abs(ds1.data[field] - ds2.data[field])
+            diff = abs_diff / ds2.data[field]
             my_line = f"\t{field[1]}: {diff.max().d}."
             output_lines.append(my_line)
 
-            if (diff > 0).any():
-                ax2.loglog(ds1.data["data", my_ivar], diff,
-                           color="black", alpha=0.8)
+            for (ax, cur_diff) in [(ax2, diff), (ax3, abs_diff)]:
+                if (cur_diff > 0).any():
+                    ax.loglog(ds1.data["data", my_ivar], cur_diff, color="black")
+                elif (cur_diff == 0).all():
+                    _subplot_text(ax, "All elements are identical")
+                else:
+                    _subplot_text(ax, "All differences are zeros or NaNs")
+
         else:
-            ax2.text(
-                0.5,
-                0.5,
-                'Data arrays have different sizes',
-                horizontalalignment='center',
-                verticalalignment='center',
-                transform=ax2.transAxes
-            )
+
+            for ax in [ax2,ax3]:
+                _subplot_text(
+                    ax, "Unable to compare: data arrays have different sizes"
+                )
 
         fig.tight_layout()
         fig.savefig(os.path.join(test_dir, f"{field[1]}.png"))
