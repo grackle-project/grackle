@@ -23,6 +23,7 @@
 #include "interp_grid.hpp"
 #include "ratequery.hpp"
 #include "support/FrozenKeyIdxBiMap.hpp"
+#include "step_rate_gauss_seidel.hpp"
 #include "support/config.hpp"
 #include "support/PartMap.hpp"
 
@@ -159,6 +160,15 @@ struct gr_opaque_storage {
 
   /// used to implement the experimental ratequery machinery
   GRIMPL_NS::ratequery::Registry* registry = nullptr;
+
+  /// handles the density update for a Gauss-Seidel integration step
+  ///
+  /// @note
+  /// It's generally considered bad practice to directly mess around with stuff
+  /// in a submodule's `_detail` namespace. We should really replace this with
+  /// a Gauss-Seidel interface class, but I'm not quite sure what that will
+  /// look like yet
+  const GRIMPL_NS::step_gs_detail::DensUpdater* step_gs_dens_updater = nullptr;
 
   // The following is used to implement field_id query machinery (over time
   // we'll gradually collect more and more bimaps for this purpose)
