@@ -231,7 +231,7 @@ void make_consistent(const IndexRange& idx_range, double dom,
   //    where the computed mask may be different from the mask that was
   //    used to actually decide whether to perform metal/dust chemistry
 
-  if (my_chemistry->metal_chemistry > 0) {
+  if (my_chemistry->metal_chemistry == 1) {
     // compute the expected mass density for each metal nuclide using the
     // yields from every injection pathway
     const grackle::impl::yields::MetalTables& total_metal_yields =
