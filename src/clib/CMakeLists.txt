@@ -96,6 +96,7 @@ add_library(Grackle_Grackle
   chem_model/chemsp_props.cpp chem_model/chemsp_props.hpp
   chem_model/nuclide_model.cpp chem_model/nuclide_model.hpp
   chem_model/parse.cpp chem_model/parse.hpp
+  chem_model/rxn_eqn_props.cpp chem_model/rxn_eqn_props.hpp
   chem_model/species_builder.cpp chem_model/species_builder.hpp
   chem_model/species.cpp chem_model/species.hpp
   cie_thin_cooling_rate_tables.hpp
