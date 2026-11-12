@@ -94,6 +94,7 @@ add_library(Grackle_Grackle
   api/units.cpp
   ceiling_species.hpp
   chem_model/chemsp_props.cpp chem_model/chemsp_props.hpp
+  chem_model/counter.hpp
   chem_model/nuclide_model.cpp chem_model/nuclide_model.hpp
   chem_model/parse.cpp chem_model/parse.hpp
   chem_model/rxn_eqn_props.cpp chem_model/rxn_eqn_props.hpp
