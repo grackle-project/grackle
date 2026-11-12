@@ -148,7 +148,7 @@ add_library(Grackle_Grackle
   scale_fields.cpp scale_fields.hpp
   self_shielding_err_check.hpp
   solve_rate_cool.cpp solve_rate_cool.hpp
-  step_rate_gauss_seidel.hpp
+  step_rate_gauss_seidel.cpp step_rate_gauss_seidel.hpp
   step_rate_newton_raphson.hpp
   support/config.hpp
   support/error.cpp support/error.hpp

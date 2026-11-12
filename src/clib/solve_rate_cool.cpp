@@ -1007,12 +1007,13 @@ int solve_rate_cool(
           // Solve rate equations with one linearly implicit Gauss-Seidel
           // sweep of a backward Euler method (for all cells specified by
           // itmask_gs)
-          grackle::impl::step_rate_gauss_seidel(
+          step_rate_gauss_seidel(
             dtit.data(), idx_range, anydust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
             itmask_metal.data(), my_chemistry, my_fields, sp_densities,
             species_tmpdens, spsolvbuf.rxn_rate_buf,
-            my_rates->opaque_storage->sp_kind_map
+            my_rates->opaque_storage->sp_kind_map,
+            *my_rates->opaque_storage->step_gs_dens_updater
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel

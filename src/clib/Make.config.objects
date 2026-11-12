@@ -52,6 +52,7 @@ OBJS_CONFIG_LIB = \
         math/gaussj.lo \
         math/solve_eqn.lo \
         solve_rate_cool.lo \
+        step_rate_gauss_seidel.lo \
         support/error.lo \
         support/formatf.lo \
         support/status_reporting.lo \

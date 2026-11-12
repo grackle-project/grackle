@@ -42,4 +42,8 @@ gr_opaque_storage::~gr_opaque_storage() {
     // delete will trigger the Registry's destructor
     delete registry;
   }
+
+  if (step_gs_dens_updater != nullptr) {
+    delete step_gs_dens_updater;  // <- has a destructor
+  }
 }
