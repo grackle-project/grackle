@@ -89,6 +89,7 @@ add_library(Grackle_Grackle
   api/calculate_cooling_time.cpp
   api/calculate_dust_temperature.cpp
   api/calculate_T_related.cpp
+  api/cool_multi_time.cpp api/cool_multi_time.hpp
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
   api/units.cpp
@@ -99,10 +100,11 @@ add_library(Grackle_Grackle
   chem_model/rxn_eqn_props.cpp chem_model/rxn_eqn_props.hpp
   chem_model/species_builder.cpp chem_model/species_builder.hpp
   chem_model/species.cpp chem_model/species.hpp
-  cie_thin_cooling_rate_tables.hpp
+  cool/cie_thin_cooling_rate_tables.hpp
+  cool/cool1d_multi.cpp cool/cool1d_multi.hpp
+  cool/primordial_opac_table.cpp cool/primordial_opac_table.hpp
+  cool/TabMDSpCooler.cpp cool/TabMDSpCooler.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
-  cool1d_multi_g.cpp cool1d_multi_g.hpp
-  cool_multi_time.cpp cool_multi_time.hpp
   dust/calc_all_tdust_gasgr_1d.cpp dust/calc_all_tdust_gasgr_1d.hpp
   dust/calc_tdust_1d.hpp
   dust/calc_tdust_3d.cpp dust/calc_tdust_3d.hpp
@@ -119,7 +121,6 @@ add_library(Grackle_Grackle
   field_adaptor.hpp
   full_rxn_rate_buf.hpp
   gas_props.hpp
-  init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_rates.cpp initialize_rates.hpp
   initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp

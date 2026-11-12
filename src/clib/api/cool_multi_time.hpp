@@ -13,8 +13,8 @@
 // This file was initially generated automatically during conversion of the
 // cool_multi_time_g function from FORTRAN to C++
 
-#ifndef COOL_MULTI_TIME_HPP
-#define COOL_MULTI_TIME_HPP
+#ifndef API_COOL_MULTI_TIME_HPP
+#define API_COOL_MULTI_TIME_HPP
 
 #include "grackle.h"  // gr_float
 #include "internal_units.hpp"
@@ -37,4 +37,4 @@ void cool_multi_time(gr_float* cooltime_data_, InternalGrUnits internalu,
                      photo_rate_storage my_uvb_rates);
 }  // namespace GRIMPL_NAMESPACE_DECL
 
-#endif /* COOL_MULTI_TIME_HPP */
+#endif  // API_COOL_MULTI_TIME_HPP

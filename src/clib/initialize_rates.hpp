@@ -13,16 +13,18 @@
 #ifndef INITIALIZE_RATES_HPP
 #define INITIALIZE_RATES_HPP
 
+#include "chem_model/species.hpp"
 #include "grackle.h"
 #include "ratequery.hpp"
 
-namespace grackle::impl {
+namespace GRIMPL_NAMESPACE_DECL {
 
 int initialize_rates(chemistry_data* my_chemistry,
-                     chemistry_data_storage* my_rates, code_units* my_units,
-                     double co_length_unit, double co_density_unit,
+                     chemistry_data_storage* my_rates,
+                     const code_units* my_units, double co_length_unit,
+                     double co_density_unit, const SpInitializeInfo& sp_info,
                      ratequery::RegBuilder* reg_builder);
 
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif /* INITIALIZE_RATES_HPP */

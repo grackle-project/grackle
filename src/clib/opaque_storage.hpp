@@ -16,6 +16,7 @@
 #include <cstddef>
 #include "grackle.h"
 #include "chem_model/species.hpp"
+#include "cool/TabMDSpCooler.hpp"
 #include "dust/grain_species_info.hpp"
 #include "dust/solver.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -108,25 +109,18 @@ struct gr_opaque_storage {
   ///   values (for debugging purposes).
   GRIMPL_NS::InterpGridProps h2dust_grain_interp_props;
 
-  // The next 8 attributes hold interpolation grids representing collision
-  // rates of a species with HI or H2I. The parameters along each axis are:
-  //   grid.parameter[0]: log10( ndens_{species} / (dv/dr) )
-  //   grid.parameter[1]: log10( T )
-  //   grid.parameter[2]: log10( ndens_HI ) OR log10( ndens_H2I )
-
-  /// H2 and HD cooling rates (collision with HI; Hollenbach & McKee 1979
-  GRIMPL_NS::InterpGrid LH2;
-  GRIMPL_NS::InterpGrid LHD;
-
-  /// Fine-structure cooling rates (collision with HI; Maio et al. 2007)
-  GRIMPL_NS::InterpGrid LCI;
-  GRIMPL_NS::InterpGrid LCII;
-  GRIMPL_NS::InterpGrid LOI;
-
-  /// metal molecular cooling rates (collision with H2I; UMIST table)
-  GRIMPL_NS::InterpGrid LCO;
-  GRIMPL_NS::InterpGrid LOH;
-  GRIMPL_NS::InterpGrid LH2O;
+  /// holds multidimensional tables of species-specific cooling rates (the
+  /// shapes of tables vary on a species-by-species basis)
+  ///
+  /// At the time that this member was created, the object may model cooling
+  /// due to
+  /// - H2 and HD molecular transitions from collision with HI
+  /// - fine structure transitions of CI, CII, and OI from collision with HI
+  /// - metal molecular transitions from transitions with H2I (and HI?)
+  ///
+  /// See the docstring of the docstring of @ref GRIMPL_NS::TabMDSpCooler for
+  /// more information.
+  GRIMPL_NS::TabMDSpCooler assorted_multidim_tabulated_sp_cool;
 
   /// primordial opacity table
   /// -> alphap.parameters[0] is log10(mass density)
