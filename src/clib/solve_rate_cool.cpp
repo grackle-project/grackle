@@ -1097,6 +1097,15 @@ int solve_rate_cool(
           scale_fields(factor, idx_range, my_chemistry, my_fields, sp_densities, 
                        my_rates);
         }
+
+        // Correct the species to ensure conservation of species densities
+        // (e.g. Hydrogen, Helium) and conservation of 0 net charge
+        if (my_chemistry->primordial_chemistry > 0)  {
+          make_consistent(idx_range, dom, my_chemistry,
+                          my_rates->opaque_storage->inject_pathway_props,
+                          my_fields, sp_densities);
+
+        }
       }
 
     }  // outer-loop (index t) - each of these correspond to j,k pairs
@@ -1111,22 +1120,6 @@ int solve_rate_cool(
     grackle::impl::drop_SpeciesRateSolverScratchBuf(&spsolvbuf);
 
   }  // OMP_PRAGMA("omp parallel")
-
-  // If an error has been produced, return now.
-
-  if (ierr != GR_SUCCESS)  {
-    return ierr;
-  }
-
-  if (my_chemistry->primordial_chemistry > 0)  {
-
-    // Correct the species to ensure consistency (i.e. type conservation)
-
-    grackle::impl::make_consistent(
-        dom, my_chemistry,
-        my_rates->opaque_storage->inject_pathway_props, my_fields);
-
-  }
 
   return ierr;
 }
