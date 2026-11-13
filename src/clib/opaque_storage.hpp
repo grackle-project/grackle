@@ -15,13 +15,16 @@
 
 #include <cstddef>
 #include "grackle.h"
+#include "chem_model/species.hpp"
 #include "dust/grain_species_info.hpp"
 #include "dust/solver.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
 #include "ratequery.hpp"
+#include "step_rate_gauss_seidel.hpp"
 #include "support/config.hpp"
+#include "support/PartMap.hpp"
 
 /// @brief a struct-like class that is used to wrap some private storage details
 ///
@@ -50,6 +53,20 @@
 /// state. The gr_opaque_storage struct can be used to help us gradually
 /// transition towards this case
 struct gr_opaque_storage {
+  /// categorizes the kinds of species evolved in the chemical network,
+  /// see @ref GRIMPL_NS::SpKind for details (about the kinds and how this is
+  /// used)
+  ///
+  /// @note
+  /// At the time of writing, @ref SpLUT is a compound lookup table that
+  /// describes species of all kinds. The goal is to replace all occurrences
+  /// of `SpLUT::<name>`` with a combination of:
+  /// - ``sp_kind_map.part_bounds(SpKind::PRIMORDIAL).start
+  ///   + PrimordialSpLUT::<name>``
+  /// - ``sp_kind_map.part_bounds(SpKind::METAL).start + MetalSpLUT::<name>``
+  /// - ``sp_kind_map.part_bounds(SpKind::DUST).start + DustSpLUT::<name>``
+  GRIMPL_NS::PartMap<GRIMPL_NS::SpKind> sp_kind_map;
+
   // in the future, we may want refactor the following set of members into
   // a separate datatype that takes full responsibility for "normal"
   // collisional rates
@@ -142,6 +159,15 @@ struct gr_opaque_storage {
 
   /// used to implement the experimental ratequery machinery
   GRIMPL_NS::ratequery::Registry* registry = nullptr;
+
+  /// handles the density update for a Gauss-Seidel integration step
+  ///
+  /// @note
+  /// It's generally considered bad practice to directly mess around with stuff
+  /// in a submodule's `_detail` namespace. We should really replace this with
+  /// a Gauss-Seidel interface class, but I'm not quite sure what that will
+  /// look like yet
+  const GRIMPL_NS::step_gs_detail::DensUpdater* step_gs_dens_updater = nullptr;
 
   // define basic constructor/assignement/destructor methods
   // -------------------------------------------------------

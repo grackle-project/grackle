@@ -153,27 +153,10 @@ struct SearchRslt {
   int rowidx;
 };
 
-/// Search for the row matching key. The search ends when a match is found, an
-/// an empty row is found, or the function has probed `max_probe` entries
-///
-/// @param rows an array of rows to search to be compared
-/// @param key the key to be compared
-/// @param capacity the length of the rows array
-/// @param max_probe the maximum number of rows to check before giving up
-///
-/// @important
-/// The behavior is undefined if @p key is a @c nullptr, @p keylen is 0, or
-/// @p keylen exceeds @p bimap::keylen
-///
-/// @note
-/// This is declared as `static inline` to facilitate inlining within
-/// FrozenKeyIdxBiMap's interface API.
-inline SearchRslt search(const Row* rows, const char* key, int capacity,
-                         int max_probe) {
-  GR_INTERNAL_REQUIRE(key != nullptr, "Major programming oversight");
+inline SearchRslt search_helper_(const Row* rows, const char* key, int capacity,
+                                 int max_probe, const HashRsltPack& h) {
   max_probe = (max_probe <= 0 || max_probe > capacity) ? capacity : max_probe;
 
-  HashRsltPack h = fnv1a_hash<bimap_detail::KEYLEN_MAX>(key);
   int i = -1;  // <- set to a dummy value
   int launched_probes = 0;
   if (h.keylen > 0 && h.success && max_probe > 0) {
@@ -193,6 +176,30 @@ inline SearchRslt search(const Row* rows, const char* key, int capacity,
   }
 
   return SearchRslt{bimap_detail::INVALID_VAL, launched_probes, i};
+}
+
+/// Search for the row matching key. The search ends when a match is found, an
+/// an empty row is found, or the function has probed `max_probe` entries
+///
+/// @param rows an array of rows to search to be compared
+/// @param key the key to be compared
+/// @param capacity the length of the rows array
+/// @param max_probe the maximum number of rows to check before giving up
+///
+/// @important
+/// The behavior is undefined if @p key is a @c nullptr, @p keylen is 0, or
+/// @p keylen exceeds @p bimap::keylen
+inline SearchRslt search(const Row* rows, const char* key, int capacity,
+                         int max_probe) {
+  GR_INTERNAL_REQUIRE(key != nullptr, "Major programming oversight");
+  HashRsltPack h = FNV1aHasher<bimap_detail::KEYLEN_MAX>::calc(key);
+  return search_helper_(rows, key, capacity, max_probe, h);
+}
+
+inline SearchRslt search(const Row* rows, std::string_view key, int capacity,
+                         int max_probe) {
+  HashRsltPack h = FNV1aHasher<bimap_detail::KEYLEN_MAX>::calc(key);
+  return search_helper_(rows, key.data(), capacity, max_probe, h);
 }
 
 }  // namespace bimap_StrU16_detail

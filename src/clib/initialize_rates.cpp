@@ -47,7 +47,6 @@
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
 #include "collisional_rate_props.hpp"  // init_extra_collisional_rates
-#include "dust/grain_species_info.hpp"
 #include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
 #include "inject_model/load_data.hpp"  // load_inject_path_data
 #include "initialize_rates.hpp"
@@ -419,7 +418,7 @@ grackle::impl::ratequery::Entry get_CollisionalRxn_Entry
   //   constants (excluding CollisionalRxnLUT::NUM_ENTRIES) in the enum
   switch (i) {
 #define TO_STR(s) #s
-#define ENTRY(NAME)                                                            \
+#define ENTRY(NAME, DUMMY)                                                     \
   case CollisionalRxnLUT::NAME: { return new_Entry(data[i], TO_STR(NAME)); }
 #include "collisional_rxn_rate_members.def"
 
@@ -792,25 +791,14 @@ int grackle::impl::initialize_rates(
       return GR_FAIL;
     }
 
-    // Dust Grain Species Information
-    // (it may make sense want to handle more of the dust separately)
-    if (my_chemistry->dust_species > 0) {
-      Expected<GrainSpeciesInfo, Error> rslt
-          = GrainSpeciesInfo::create(my_chemistry->dust_species);
-      if (rslt.has_value()) {
-        my_rates->opaque_storage->grain_species_info = new GrainSpeciesInfo(
-            std::move(rslt).value());
-      } else {
-        rslt.error().context_literal("Unable to build GrainSpeciesInfo")
-            .write(stderr);
-        return GR_FAIL;
-      }
-    }
-
     // Load injection pathway data
-    if (grackle::impl::load_inject_path_data(
-        my_chemistry, my_rates, reg_builder) != GR_SUCCESS) {
-      return GrPrintAndReturnErr("Error in load_inject_path_data.");
+    Expected<void, Error> inject_path_rslt = load_inject_path_data(
+        my_chemistry, my_rates, reg_builder);
+    if (!inject_path_rslt.has_value()) {
+      inject_path_rslt.error()
+                      .context_literal("unable to load inject_path data")
+                      .write(stderr);
+      return GR_FAIL;
     }
 
     return SUCCESS;

@@ -12,15 +12,16 @@
 #ifndef GRAIN_METAL_INJECT_PATHWAYS_HPP
 #define GRAIN_METAL_INJECT_PATHWAYS_HPP
 
-#include "../LUT.hpp"
 #include "../internal_types.hpp"
 #include "../interp_grid.hpp"  // InterpGridProps
-#include "../support/status_reporting.hpp"
-#include "../visitor/common.hpp"
+#include "../support/config.hpp"
+#include "../support/error.hpp"
+#include "../support/expected.hpp"
 
+namespace GRIMPL_NAMESPACE_DECL {
 // this is a separate namespace because we are probably going to delete the
 // contents (when we deal with GH Issue #446)
-namespace grackle::impl::yields {
+namespace yields {
 
 /// Tables of values for each metal nuclide known to Grackle. Each table
 /// has an entry for each injection pathway modelled in the current
@@ -85,9 +86,7 @@ inline void MetalTables_zero_out(MetalTables* ptr, int nelem) {
   }
 }
 
-}  // namespace grackle::impl::yields
-
-namespace grackle::impl {
+}  // namespace yields
 
 /// The basic premise is that this tracks tables of data pertaining to the
 /// list of injection pathways for dust grains and metal species
@@ -245,61 +244,69 @@ struct GrainMetalInjectPathways {
   /// then refer the reader to the appropriate section of the documentation.
   /// (This could certainly be done for the description of the size increment)
   GrainSpeciesCollection opacity_coef_table;
-};
 
-/// allocates the contents of a new GrainMetalInjectPathways
-///
-/// @param[in] n_pathways Number of modelled injection pathways
-/// @param[in] n_log10Tdust_vals Number of log10(Tdust) values that are relevant
-///     for the opacity coefficient table.
-/// @param[in] n_opac_poly_coef Number of opacity coefficients that are
-///     computed from the opacity coefficient table.
-inline GrainMetalInjectPathways new_GrainMetalInjectPathways(
-    int n_pathways, int n_log10Tdust_vals, int n_opac_poly_coef) {
-  bool err = false;
+private:
+  GrainMetalInjectPathways() = default;  // <- invoked by factory method
 
-  if (n_pathways <= 0) {
-    GrPrintErrMsg("n_pathways must be positive\n");
-    err = true;
-  } else if (n_log10Tdust_vals <= 1) {
-    GrPrintErrMsg("n_log10Tdust_vals must exceed 1\n");
-    err = true;
-  } else if (n_opac_poly_coef != 4) {
-    GrPrintErrMsg(
-        "the logic that uses the opacity table is hardcoded to assume that "
-        "the number of opacity polynomial coefficients is exactly 4\n");
-    err = true;
+public:
+  // it isn't very tractable to implement the following methods, right now
+  GrainMetalInjectPathways(const GrainMetalInjectPathways&) = delete;
+  GrainMetalInjectPathways(GrainMetalInjectPathways&&) = delete;
+  GrainMetalInjectPathways& operator=(const GrainMetalInjectPathways&) = delete;
+  GrainMetalInjectPathways& operator=(GrainMetalInjectPathways&&) = delete;
+
+  ~GrainMetalInjectPathways() noexcept {
+    yields::drop_MetalTables(&total_metal_nuclide_yields);
+    yields::drop_MetalTables(&gas_metal_nuclide_yields);
+    drop_GrainSpeciesCollection(&grain_yields);
+    drop_GrainSpeciesCollection(&size_moments);
+    drop_GrainSpeciesCollection(&opacity_coef_table);
   }
 
-  GrainMetalInjectPathways out;
+  /// @brief factory method
+  ///
+  /// This only allocates storage, it doesn't initialize contents. Upon
+  /// success, the returned value will **NEVER** be a ``nullptr``.
+  ///
+  /// @param[in] n_pathways Number of modelled injection pathways
+  /// @param[in] n_log10Tdust_vals Number of log10(Tdust) values that are
+  ///     relevant for the opacity coefficient table.
+  /// @param[in] n_opac_poly_coef Number of opacity coefficients that are
+  ///     computed from the opacity coefficient table.
+  ///
+  /// @todo
+  /// If we implement move construction and move assignment, this should stop
+  /// returning a pointer
+  static Expected<GrainMetalInjectPathways*, Error> create_ptr(
+      int n_pathways, int n_log10Tdust_vals, int n_opac_poly_coef) {
+    if (n_pathways <= 0) {
+      return Unexpected(Error::msg_literal("n_pathways must be positive"));
+    } else if (n_log10Tdust_vals <= 1) {
+      return Unexpected(Error::msg_literal("n_log10Tdust_vals must exceed 1"));
+    } else if (n_opac_poly_coef != 4) {
+      return Unexpected(Error::msg_literal(
+          "the logic that uses the opacity table is hardcoded to assume that "
+          "the number of opacity polynomial coefficients is exactly 4"));
+    }
 
-  if (err) {
-    out.n_pathways = -1;
+    GrainMetalInjectPathways* out = new GrainMetalInjectPathways;
+
+    out->n_pathways = n_pathways;
+
+    out->total_metal_nuclide_yields = yields::new_MetalTables(n_pathways);
+    out->gas_metal_nuclide_yields = yields::new_MetalTables(n_pathways);
+
+    out->grain_yields = new_GrainSpeciesCollection(n_pathways);
+    out->size_moments = new_GrainSpeciesCollection(3 * n_pathways);
+
+    out->n_opac_poly_coef = n_opac_poly_coef;
+
+    out->opacity_coef_table = new_GrainSpeciesCollection(
+        n_pathways * n_log10Tdust_vals * n_opac_poly_coef);
+
     return out;
   }
-
-  out.n_pathways = n_pathways;
-
-  out.total_metal_nuclide_yields = yields::new_MetalTables(n_pathways);
-  out.gas_metal_nuclide_yields = yields::new_MetalTables(n_pathways);
-
-  out.grain_yields = new_GrainSpeciesCollection(n_pathways);
-  out.size_moments = new_GrainSpeciesCollection(3 * n_pathways);
-
-  out.n_opac_poly_coef = n_opac_poly_coef;
-
-  out.opacity_coef_table = new_GrainSpeciesCollection(
-      n_pathways * n_log10Tdust_vals * n_opac_poly_coef);
-
-  return out;
-}
-
-/// Checks whether the GrainMetalInjectPathways that is returned by
-/// new_GrainMetalInjectPathways is valid
-inline bool GrainMetalInjectPathways_is_valid(
-    const GrainMetalInjectPathways* ptr) {
-  return ptr->n_pathways != -1;
-}
+};
 
 /// Queries the specified GrainMetalInjectPathways instance for the number of
 /// log10(Tdust) values that are relevant for the opacity coefficient table.
@@ -319,19 +326,6 @@ inline int GrainMetalInjectPathways_get_n_log10Tdust_vals(
   return (ptr == nullptr) ? 0 : ptr->log10Tdust_interp_props.dimension[0];
 }
 
-/// performs cleanup of the contents of GrainMetalInjectPathways
-///
-/// This effectively invokes a destructor
-inline void drop_GrainMetalInjectPathways(GrainMetalInjectPathways* ptr) {
-  if (GrainMetalInjectPathways_is_valid(ptr)) {
-    yields::drop_MetalTables(&ptr->total_metal_nuclide_yields);
-    yields::drop_MetalTables(&ptr->gas_metal_nuclide_yields);
-    drop_GrainSpeciesCollection(&ptr->grain_yields);
-    drop_GrainSpeciesCollection(&ptr->size_moments);
-    drop_GrainSpeciesCollection(&ptr->opacity_coef_table);
-  }
-}
-
-}  // namespace grackle::impl
+}  // namespace GRIMPL_NAMESPACE_DECL
 
 #endif  // GRAIN_METAL_INJECT_PATHWAYS_HPP
