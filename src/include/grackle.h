@@ -167,6 +167,9 @@ int gr_get_field_id(const chemistry_data_storage* my_rates, int64_t category,
 int gr_get_field_name(const chemistry_data_storage* my_rates, int64_t category,
                       int64_t id, const char** out);
 
+int gr_global_get_field_id(int64_t category, const char* name, int64_t* out);
+int gr_global_get_field_name(int64_t category, int64_t id, const char** out);
+
 /// unstable/experimental machinery
 /// ===============================
 /// entities defined down below (prefixed with `grunstable_`) are experimental

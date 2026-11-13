@@ -64,6 +64,11 @@ extern "C" int gr_get_field_id(const chemistry_data_storage* my_rates,
   return GR_FAIL;
 }
 
+extern "C" int gr_global_get_field_id(int64_t category, const char* name,
+                                      int64_t* out) {
+  return gr_get_field_id(&grackle_rates, category, name, out);
+}
+
 static Expected<const char*, Error> get_field_name_(
     const chemistry_data_storage& my_rates, int64_t category, int64_t id) {
   Expected<const FrozenKeyIdxBiMap*, Error> tmp =
@@ -93,6 +98,11 @@ extern "C" int gr_get_field_name(const chemistry_data_storage* my_rates,
   }
   rslt.error().write(stderr);
   return GR_FAIL;
+}
+
+extern "C" int gr_global_get_field_name(int64_t category, int64_t id,
+                                        const char** out) {
+  return gr_get_field_name(&grackle_rates, category, id, out);
 }
 
 }  // namespace GRIMPL_NAMESPACE_DECL

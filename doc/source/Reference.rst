@@ -503,7 +503,7 @@ The preceeding constant(s) are used by the following functions.
 
 .. c:function:: int gr_get_field_id(const chemistry_data_storage* my_rates, int64_t category, const char* name, int64_t* out);
 
-   Queries the id associated with the specifed field name.
+   queries the id associated with the specifed field name.
    An id of ``-1`` indicates that the supplied name is **NOT** part of the supplied field category (a function call that leads to this outcome will report that it succeeded)
 
    When the ``name`` argument is passed a ``NULL`` pointer, the function queries the number of fields associated with the specified category.
@@ -536,3 +536,35 @@ The preceeding constant(s) are used by the following functions.
 
    .. versionadded:: 3.5
 
+.. c:function:: int gr_global_get_field_id(int64_t category, const char* name, int64_t* out);
+
+   Counterpart of :c:func:`gr_get_field_id` that queries the id associated with the specifed field name for a grackle configuration tracked in global variables (that was configured by the :ref:`primary_functions`).
+
+   See :c:func:`gr_get_field_id` for more details about how to use this function.
+
+   .. warning::
+
+      This function triggers undefined behavior if a valid global grackle configuration isn't currently being tracked (reminder a successful call to :c:func:`initialize_chemistry_data` fully initializes a configuration and a call to :c:func:`free_chemistry_data` cleans up the configuration).
+
+   .. note::
+
+      This function primarily exists in order to support the Fortran bindings.
+
+   .. versionadded:: 3.5
+
+
+.. c:function:: int gr_global_get_field_name(const chemistry_data_storage* my_rates, int64_t category, int64_t id, const char** out);
+
+   Counterpart of :c:func:`gr_get_field_name` the field name associated with the specified ``id`` for a grackle configuration tracked in global variables (that was configured by the :ref:`primary_functions`).
+
+   See :c:func:`gr_get_field_name` for more details about how to use this function.
+
+   .. warning::
+
+      This function triggers undefined behavior if a valid global grackle configuration isn't currently being tracked (reminder a successful call to :c:func:`initialize_chemistry_data` fully initializes a configuration and a call to :c:func:`free_chemistry_data` cleans up the configuration).
+
+   .. note::
+
+      This function primarily exists in order to support the Fortran bindings.
+
+   .. versionadded:: 3.5
