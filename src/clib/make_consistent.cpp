@@ -946,6 +946,10 @@ void make_consistent(
           de(i, j, k) =
               de(i, j, k) - HM(i, j, k) + H2II(i, j, k) / (gr_float)(2.);
         }
+        if (my_chemistry->primordial_chemistry > 2) {
+          // DII stores mass density; each deuterium ion supplies one electron.
+          de(i, j, k) += DII(i, j, k) / (gr_float)(2.);
+        }
         if (my_chemistry->primordial_chemistry > 3) {
           de(i, j, k) = de(i, j, k) - DM(i, j, k) / (gr_float)(2.) +
                         HDII(i, j, k) / (gr_float)(3.) +

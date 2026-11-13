@@ -286,9 +286,13 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
         // We only want to apply this if the formation dominates, but we
         // need to apply it outside the delta calculation.
 
+        // formation channels: H- + H (k8, 3.53 eV), H2+ + H (k10, 1.83 eV),
+        // 3-body (k22, 4.48 eV); collisional dissociation (k13, -4.48 eV)
         H2delta[i] = HI(i, idx_range.j, idx_range.k) *
                      ((3.53 * kcol_buf[CollisionalRxnLUT::k8][i] *
                            HM(i, idx_range.j, idx_range.k) +
+                       1.83 * kcol_buf[CollisionalRxnLUT::k10][i] *
+                           H2II(i, idx_range.j, idx_range.k) / 2. +
                        4.48 * kcol_buf[CollisionalRxnLUT::k22][i] *
                            std::pow(HI(i, idx_range.j, idx_range.k), 2.)) *
                           h2heatfac[i] -
