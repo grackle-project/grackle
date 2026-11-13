@@ -749,6 +749,9 @@ void make_consistent(const IndexRange& idx_range, double dom,
     if (my_chemistry->primordial_chemistry > 1) {
       de[i] = de[i] - HM[i] + H2II[i] / (gr_float)(2.);
     }
+    if (my_chemistry->primordial_chemistry > 2) {
+      de[i] = de[i] + DII[i] / (gr_float)(2.);
+    }
     if (my_chemistry->primordial_chemistry > 3) {
       de[i] = de[i] - DM[i] / (gr_float)(2.) + HDII[i] / (gr_float)(3.) +
               HeHII[i] / (gr_float)(5.);
