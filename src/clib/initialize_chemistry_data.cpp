@@ -22,7 +22,6 @@
 #include "chem_model/nuclide_model.hpp"
 #include "chem_model/species.hpp"
 #include "dust/grain_species_info.hpp"
-#include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.hpp"
 #include "inject_model/grain_metal_inject_pathways.hpp"
@@ -549,9 +548,10 @@ extern "C" int local_initialize_chemistry_data(
   }
 
   // Compute rate tables.
-  if (grackle::impl::initialize_rates(my_chemistry, my_rates, my_units,
-                                      co_length_units, co_density_units,
-                                      &reg_builder)
+  if (GRIMPL_NS::initialize_rates(my_chemistry, my_rates, my_units,
+                                  co_length_units, co_density_units,
+                                  species_initialize_info_rslt.value(),
+                                  &reg_builder)
       != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_rates.\n");
     return GR_FAIL;
@@ -737,6 +737,8 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->gas_grain);
     GRACKLE_FREE(my_rates->gas_grain2);
 
+    GRACKLE_FREE(my_rates->cieY06);
+
     GRACKLE_FREE(my_rates->k13dd);
     GRACKLE_FREE(my_rates->h2dust);
     GRACKLE_FREE(my_rates->n_cr_n);
@@ -752,11 +754,6 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
   grackle::impl::free_cloudy_data(&my_rates->cloudy_metal, my_chemistry,
                                   /* primordial */ 0);
   grackle::impl::free_UVBtable(&my_rates->UVbackground_table);
-
-  if (grackle::impl::free_misc_species_cool_rates(my_chemistry, my_rates) != GR_SUCCESS) {
-    fprintf(stderr, "Error in free_metal_chemistry_rates.\n");
-    return GR_FAIL;
-  }
 
   delete my_rates->opaque_storage;
   my_rates->opaque_storage = nullptr;

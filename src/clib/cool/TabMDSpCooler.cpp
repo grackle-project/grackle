@@ -6,169 +6,51 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implement machinery for initializing miscellaneous species cooling rates
+/// Implement logic for @ref GRIMPL_NS::TabMDSpCooler
 ///
 //===----------------------------------------------------------------------===//
 
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string>
 
+#include "cool/TabMDSpCooler.hpp"
 #include "grackle.h"
-#include "grackle_macros.h"
 #include "interp_grid.hpp"
-#include "init_misc_species_cool_rates.hpp"  // forward declarations
 #include "internal_units.hpp"
-#include "opaque_storage.hpp"
-#include "grackle_rate_functions.h" // forward declarations of some funcs
-#include "support/config.hpp"
 #include "support/status_reporting.hpp"
-
-extern "C" {
-
-typedef int (*init_nd_rate_table)(chemistry_data *, chemistry_data_storage *,
-                                  double);
-
-}  // extern "C"
-
-struct NDRateTableInitFnInfo{
-  const char* name;
-  init_nd_rate_table fn;
-};
 
 namespace GRIMPL_NAMESPACE_DECL {
 
-/// calculate CIE H2 cooling rate from Yoshida et al. (2006)
-///
-/// @note
-/// At some point, we should coerce this into the standard format for
-/// heating/cooling rates
-static int add_cieY06_cool_rate(double **rate_ptr, double coolunit,
-                                chemistry_data* my_chemistry) {
-
-  *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-
-  // compute log spacing of the temperature table
-  //
-  // TODO: address the ubiquity of this variable (among transcribed routines).
-  //       To ensure that every part of the code uses exactly the same value,
-  //       we should either:
-  //       1. cache this quantity
-  //       2. have a function that we use everywhere to call it
-  const double dlogtem = (
-    (log(my_chemistry->TemperatureEnd) -
-     log(my_chemistry->TemperatureStart)) /
-    (double)(my_chemistry->NumberOfTemperatureBins-1)
-  );
-
-  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-    // Set rate to tiny for safety.
-    (*rate_ptr)[i] = tiny;
-
-    // calculate local temperature
-    double ln_T = log(my_chemistry->TemperatureStart) + (double)(i)*dlogtem;
-    double T = exp(ln_T);
-
-    // store the rate
-    (*rate_ptr)[i] =
-      pow(10.0,
-          -116.6 + 96.34  * log10(T)
-                 - 47.153 * pow(log10(T), 2)
-                 + 10.744 * pow(log10(T), 3)
-                 -  0.916 * pow(log10(T), 4) ) / coolunit;
-  }
-
-  return GR_SUCCESS;
-}
-
-int init_misc_species_cool_rates(
-  chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
-  code_units *my_units)
-{
-  if (my_chemistry->primordial_chemistry == 0) {
-    return GR_SUCCESS;
-  }
-
-  // temporarily construct the InternalGrUnits struct
-  // -> the construction logic deduplicates a lot of logic that was
-  //    previously copied and pasted across a lot of fortran files
-  InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
-
-  constexpr int N_INIT_FN = 6;
-  NDRateTableInitFnInfo init_fn_l[N_INIT_FN] = {
-    {"CI", initialize_cooling_rate_CI},
-    {"CII", initialize_cooling_rate_CII},
-    {"OI", initialize_cooling_rate_OI},
-    {"CO", initialize_cooling_rate_CO},
-    {"OH", initialize_cooling_rate_OH},
-    {"H2O", initialize_cooling_rate_H2O},
-  };
-
-  for (int i = 0; i < N_INIT_FN; i++) {
-    init_nd_rate_table fn = init_fn_l[i].fn;
-    if (GR_SUCCESS != fn(my_chemistry, my_rates, internalu.coolunit)) {
-      return GrPrintAndReturnErr("error in initialize_cooling_rate_%s",
-                                init_fn_l[i].name);
-    }
-  }
-
-  add_cieY06_cool_rate(&my_rates->cieY06, internalu.coolunit, my_chemistry);
-
-  return GR_SUCCESS;
-}
-
-int free_misc_species_cool_rates(chemistry_data *my_chemistry,
-                                 chemistry_data_storage *my_rates)
-{
-  if (my_chemistry->primordial_chemistry == 0) {
-    return GR_SUCCESS;
-  }
-
-  GRACKLE_FREE(my_rates->cieY06 );
-
-  return GR_SUCCESS;
-}
-
-/// helper function to assist with setting up a interp_grid for cooling
-static int setup_cool_interp_grid_(InterpGrid* grid,
-                                   int rank,
-                                   const InterpDimScale* parameters,
-                                   const double* data,
-                                   double log_coolrate)
-{
+/// @brief helper function to assist with setting up a interp_grid for cooling
+static Expected<InterpGrid, Error> setup_cool_interp_grid_(
+    int rank, const InterpDimScale* parameters, const double* data,
+    double log_coolrate) {
   Expected<InterpGridProps, Error> grid_props_rslt =
       InterpGridProps::create(rank, parameters);
   if (!grid_props_rslt.has_value()) {
-    Error err = grid_props_rslt.error().context_literal(
-        "problem initializing interp grid props");
-    err.write(stderr);
-    return GR_FAIL;
+    return Unexpected(grid_props_rslt.error().context_literal(
+        "problem initializing interp grid props"));
   }
   const long long data_size = grid_props_rslt->data_size;
   double* grid_data = new double[data_size];
-  for(long long i = 0; i < data_size; i++) {
+  for (long long i = 0; i < data_size; i++) {
     grid_data[i] = data[i] + log_coolrate;
   }
-  *grid = InterpGrid(std::move(grid_props_rslt).value(), grid_data);
-
-  return GR_SUCCESS;
+  return InterpGrid(std::move(grid_props_rslt).value(), grid_data);
 }
 
-}  // namespace GRIMPL_NAMESPACE_DECL
-
-// all of the following functions are declared extern "C" because (at the time
-// of writing) 
-
-extern "C" int initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
-{
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_H2I(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
-    InterpDimScale::Linear(16,  20.0, 1.0), // log10(number-density like)
-    InterpDimScale::Linear(11,   1.6, 0.2), // log10(temperature)
-    InterpDimScale::Linear(21, -10.0, 1.0)  // log10(H2 number density)
+      InterpDimScale::Linear(16, 20.0, 1.0),  // log10(number-density like)
+      InterpDimScale::Linear(11, 1.6, 0.2),   // log10(temperature)
+      InterpDimScale::Linear(21, -10.0, 1.0)  // log10(H2 number density)
   };
 
+  // preserve historical formatting (unclear if it had special significance)
+  // clang-format off
   double L[] = 
     {41.47,  40.47,  39.47,  38.47,  37.47,  36.47,  35.47,  34.47,  33.47,  32.47,  31.47,  30.48,  29.58,  29.03,  28.91,  28.89,  28.89,  28.89,  28.89,  28.89,  28.89, 
      39.38,  38.38,  37.38,  36.38,  35.38,  34.38,  33.38,  32.38,  31.38,  30.38,  29.38,  28.39,  27.51,  27.03,  26.89,  26.86,  26.86,  26.86,  26.86,  26.86,  26.86, 
@@ -345,22 +227,22 @@ extern "C" int initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistr
      37.60,  36.61,  34.87,  34.52,  33.70,  32.73,  31.79,  30.92,  29.95,  28.96,  28.17,  27.98,  29.53,  30.30,  30.34,  30.31,  30.26,  30.25,  30.25,  30.25,  30.25, 
      34.51,  34.16,  33.56,  32.67,  31.70,  30.78,  29.89,  28.91,  27.91,  26.92,  26.11,  25.76,  29.23,  29.54,  29.53,  29.40,  29.35,  29.34,  29.34,  29.34,  29.34, 
      33.98,  33.23,  32.34,  31.37,  30.44,  29.57,  28.59,  27.59,  26.60,  25.63,  24.79,  24.33,  29.02,  29.01,  28.85,  28.64,  28.59,  28.59,  28.59,  28.59,  28.59, 
-     33.32,  32.46,  31.50,  30.54,  29.66,  28.72,  27.73,  26.73,  25.75,  24.93,  23.98,  23.66,  28.70,  28.60,  28.26,  28.03,  27.99,  27.99,  27.99,  27.99,  27.99}; 
+     33.32,  32.46,  31.50,  30.54,  29.66,  28.72,  27.73,  26.73,  25.75,  24.93,  23.98,  23.66,  28.70,  28.60,  28.26,  28.03,  27.99,  27.99,  27.99,  27.99,  27.99};
+  // clang-format on
 
-  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LH2, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-
-extern "C" int initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
-{
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_HDI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
-    InterpDimScale::Linear(16,  16.0, 1.0), // log10(number-density like)
-    InterpDimScale::Linear(11,   1.6, 0.2), // log10(temperature)
-    InterpDimScale::Linear(21, -12.0, 1.0) // log10(H2 number density)
+      InterpDimScale::Linear(16, 16.0, 1.0),  // log10(number-density like)
+      InterpDimScale::Linear(11, 1.6, 0.2),   // log10(temperature)
+      InterpDimScale::Linear(21, -12.0, 1.0)  // log10(H2 number density)
   };
 
+  // preserve historical formatting (unclear if it had special significance)
+  // clang-format off
   double L[] =
      {37.75,  36.75,  35.75,  34.75,  33.75,  32.75,  31.75,  30.75,  29.75,  28.75,  27.75,  26.75,  25.75,  24.76,  23.76,  22.83,  22.20,  22.02,  22.00,  21.99,  21.99, 
       37.14,  36.14,  35.14,  34.14,  33.14,  32.14,  31.14,  30.14,  29.14,  28.14,  27.14,  26.14,  25.14,  24.14,  23.15,  22.24,  21.68,  21.47,  21.41,  21.40,  21.40, 
@@ -538,21 +420,21 @@ extern "C" int initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistr
       35.33,  34.34,  33.42,  32.95,  32.94,  32.94,  32.94,  32.94,  32.94,  32.94,  32.94,  32.93,  32.84,  32.39,  31.66,  30.67,  29.71,  29.31,  29.23,  29.22,  29.22, 
       35.07,  34.09,  33.20,  32.88,  32.88,  32.88,  32.88,  32.88,  32.88,  32.88,  32.88,  32.86,  32.71,  32.17,  31.40,  30.33,  29.41,  29.07,  29.00,  28.99,  28.99, 
       34.83,  33.85,  33.03,  32.83,  32.83,  32.83,  32.83,  32.83,  32.83,  32.83,  32.82,  32.79,  32.57,  31.94,  31.13,  29.99,  29.10,  28.84,  28.78,  28.78,  28.78};
+  // clang-format on
 
-  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LHD, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-
-extern "C" int initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
-{
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_CI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
-    InterpDimScale::Linear(13,  15.0, 1.0), // log10(number-density like)
-    InterpDimScale::Linear(16,   0.6, 0.2), // log10(temperature)
-    InterpDimScale::Linear(17, -10.0, 1.0)  // log10(H2 number density)
+      InterpDimScale::Linear(13, 15.0, 1.0),  // log10(number-density like)
+      InterpDimScale::Linear(16, 0.6, 0.2),   // log10(temperature)
+      InterpDimScale::Linear(17, -10.0, 1.0)  // log10(H2 number density)
   };
 
+  // preserve historical formatting (unclear if it had special significance)
+  // clang-format off
   double L[] =
      {36.61,  35.61,  34.61,  33.61,  32.61,  31.61,  30.61,  29.61,  28.61,  27.61,  26.61,  25.62,  24.67,  23.98,  23.76,  23.73,  23.73, 
       35.62,  34.62,  33.62,  32.62,  31.62,  30.62,  29.62,  28.62,  27.62,  26.62,  25.62,  24.62,  23.68,  23.01,  22.81,  22.78,  22.78, 
@@ -761,22 +643,22 @@ extern "C" int initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistr
       33.06,  32.10,  31.20,  30.41,  29.79,  29.27,  28.83,  28.55,  28.46,  28.45,  28.45,  28.45,  28.45,  28.45,  28.45,  28.45,  28.45, 
       33.00,  32.05,  31.15,  30.37,  29.75,  29.22,  28.77,  28.43,  28.30,  28.28,  28.28,  28.28,  28.28,  28.28,  28.28,  28.28,  28.28, 
       32.95,  32.00,  31.10,  30.33,  29.71,  29.19,  28.71,  28.34,  28.17,  28.13,  28.13,  28.13,  28.13,  28.13,  28.13,  28.13,  28.13, 
-      32.90,  31.95,  31.06,  30.29,  29.68,  29.15,  28.67,  28.26,  28.06,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01}; 
+      32.90,  31.95,  31.06,  30.29,  29.68,  29.15,  28.67,  28.26,  28.06,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01};
+  // clang-format on
 
-  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LCI, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-
-extern "C" int initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
-{
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_CII(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
-    InterpDimScale::Linear(13,  15.0, 1.0), // log10(number-density like)
-    InterpDimScale::Linear(16,   0.6, 0.2), // log10(temperature)
-    InterpDimScale::Linear(17, -10.0, 1.0)  // log10(H2 number density)
+      InterpDimScale::Linear(13, 15.0, 1.0),  // log10(number-density like)
+      InterpDimScale::Linear(16, 0.6, 0.2),   // log10(temperature)
+      InterpDimScale::Linear(17, -10.0, 1.0)  // log10(H2 number density)
   };
 
+  // preserve historical formatting (unclear if it had special significance)
+  // clang-format off
   double L[] =
      {42.75,  41.75,  40.75,  39.75,  38.75,  37.75,  36.75,  35.75,  34.75,  33.75,  32.75,  31.75,  30.76,  29.85,  29.31,  29.19,  29.17, 
       39.06,  38.06,  37.06,  36.06,  35.06,  34.06,  33.06,  32.06,  31.06,  30.06,  29.06,  28.06,  27.07,  26.17,  25.63,  25.52,  25.50, 
@@ -986,21 +868,21 @@ extern "C" int initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemist
       32.64,  31.64,  30.67,  29.83,  29.19,  28.67,  28.24,  27.96,  27.88,  27.87,  27.87,  27.87,  27.87,  27.87,  27.87,  27.87,  27.87, 
       32.61,  31.62,  30.65,  29.81,  29.17,  28.64,  28.18,  27.84,  27.69,  27.67,  27.66,  27.66,  27.66,  27.66,  27.66,  27.66,  27.66, 
       32.59,  31.60,  30.63,  29.80,  29.16,  28.62,  28.14,  27.74,  27.52,  27.47,  27.46,  27.46,  27.46,  27.46,  27.46,  27.46,  27.46};
+  // clang-format on
 
-  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LCII, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-
-extern "C" int initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
-{
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_OI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
-    InterpDimScale::Linear(13, 15.0, 1.0), // log10(number-density like)
-    InterpDimScale::Linear(16,  0.8, 0.2), // log10(temperature)
-    InterpDimScale::Linear(16, -5.0, 1.0)  // log10(H2 number density)
+      InterpDimScale::Linear(13, 15.0, 1.0),  // log10(number-density like)
+      InterpDimScale::Linear(16, 0.8, 0.2),   // log10(temperature)
+      InterpDimScale::Linear(16, -5.0, 1.0)   // log10(H2 number density)
   };
 
+  // preserve historical formatting (unclear if it had special significance)
+  // clang-format off
   double L[] =
      {45.39,  44.39,  43.39,  42.39,  41.39,  40.39,  39.39,  38.39,  37.39,  36.39,  35.40,  34.46,  33.81,  33.62,  33.60,  33.60, 
       39.42,  38.42,  37.42,  36.42,  35.42,  34.42,  33.42,  32.42,  31.42,  30.42,  29.42,  28.50,  27.92,  27.78,  27.76,  27.76, 
@@ -1209,22 +1091,22 @@ extern "C" int initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistr
       28.02,  27.27,  26.69,  26.30,  26.13,  26.10,  26.09,  26.09,  26.09,  26.09,  26.09,  26.09,  26.09,  26.09,  26.09,  26.09, 
       27.88,  27.15,  26.57,  26.16,  25.94,  25.88,  25.88,  25.88,  25.88,  25.88,  25.88,  25.88,  25.88,  25.88,  25.88,  25.88, 
       27.75,  27.04,  26.47,  26.03,  25.76,  25.68,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67, 
-      27.63,  26.93,  26.37,  25.91,  25.60,  25.48,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46}; 
+      27.63,  26.93,  26.37,  25.91,  25.60,  25.48,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46};
+  // clang-format on
 
-  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LOI, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-
-extern "C" int initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
-{
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_COI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
-    InterpDimScale::Linear(11, 14.0, 0.5), // log10(number-density like)
-    InterpDimScale::Linear(11,  1.0, 0.2), // log10(temperature)
-    InterpDimScale::Linear(14, -3.0, 1.0)  // log10(H2I number density)
+      InterpDimScale::Linear(11, 14.0, 0.5),  // log10(number-density like)
+      InterpDimScale::Linear(11, 1.0, 0.2),   // log10(temperature)
+      InterpDimScale::Linear(14, -3.0, 1.0)   // log10(H2I number density)
   };
 
+  // preserve historical formatting (unclear if it had special significance)
+  // clang-format off
   double L[] =
      {27.77,  26.77,  25.77,  24.78,  23.80,  22.84,  21.99,  21.40,  21.16,  21.10,  21.09,  21.08,  21.08,  21.08, 
       27.51,  26.51,  25.52,  24.52,  23.54,  22.58,  21.71,  21.04,  20.72,  20.63,  20.60,  20.60,  20.60,  20.60, 
@@ -1347,21 +1229,21 @@ extern "C" int initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistr
       26.30,  25.30,  24.30,  23.31,  22.33,  21.39,  20.55,  19.86,  19.36,  19.02,  18.84,  18.76,  18.73,  18.72, 
       26.11,  25.11,  24.11,  23.11,  22.13,  21.17,  20.28,  19.54,  18.97,  18.59,  18.37,  18.28,  18.25,  18.23, 
       25.91,  24.91,  23.91,  22.92,  21.93,  20.97,  20.07,  19.28,  18.65,  18.24,  18.03,  17.96,  17.94,  17.93};
+  // clang-format on
 
-  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LCO, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-
-extern "C" int initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
-{
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_OHI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
-    InterpDimScale::Linear(9, 10.0, 1.0), // log10(number-density like)
-    InterpDimScale::Linear(6, 1.6, 0.2), // log10(temperature)
-    InterpDimScale::Linear(14, 1.0, 1.0) // log10(H2I number density)
+      InterpDimScale::Linear(9, 10.0, 1.0),  // log10(number-density like)
+      InterpDimScale::Linear(6, 1.6, 0.2),   // log10(temperature)
+      InterpDimScale::Linear(14, 1.0, 1.0)   // log10(H2I number density)
   };
 
+  // preserve historical formatting (unclear if it had special significance)
+  // clang-format off
   double L[] =
      {23.88,  22.88,  21.88,  20.88,  19.88,  18.88,  17.89,  16.94,  16.17,  15.85,  15.79,  15.78,  15.78,  15.78, 
       23.28,  22.28,  21.28,  20.28,  19.28,  18.28,  17.29,  16.35,  15.60,  15.28,  15.20,  15.18,  15.18,  15.17, 
@@ -1416,22 +1298,22 @@ extern "C" int initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistr
       22.82,  21.83,  20.86,  19.94,  19.17,  18.63,  18.30,  18.14,  18.06,  18.04,  18.03,  18.02,  18.02,  18.02, 
       22.55,  21.56,  20.58,  19.66,  18.84,  18.21,  17.81,  17.62,  17.55,  17.53,  17.52,  17.52,  17.52,  17.52, 
       22.27,  21.29,  20.32,  19.38,  18.53,  17.82,  17.34,  17.12,  17.05,  17.03,  17.02,  17.02,  17.02,  17.02, 
-      22.06,  21.08,  20.11,  19.17,  18.30,  17.55,  17.01,  16.74,  16.66,  16.64,  16.64,  16.63,  16.63,  16.63}; 
+      22.06,  21.08,  20.11,  19.17,  18.30,  17.55,  17.01,  16.74,  16.66,  16.64,  16.64,  16.63,  16.63,  16.63};
+  // clang-format on
 
-  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LOH, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
-
-extern "C" int initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
-{
-  using GRIMPL_NS::InterpDimScale;
+static Expected<InterpGrid, Error> init_cooltab_H2OI(double coolunit) {
   const int rank = 3;
   const InterpDimScale params[3] = {
-    InterpDimScale::Linear(10, 10.0, 1.0), // log10(number-density like)
-    InterpDimScale::Linear(12, 1.0, 0.2), // log10(temperature)
-    InterpDimScale::Linear(16, -1.0, 1.0) // log10(H2I number density)
+      InterpDimScale::Linear(10, 10.0, 1.0),  // log10(number-density like)
+      InterpDimScale::Linear(12, 1.0, 0.2),   // log10(temperature)
+      InterpDimScale::Linear(16, -1.0, 1.0)   // log10(H2I number density)
   };
 
+  // preserve historical formatting (unclear if it had special significance)
+  // clang-format off
   double L[] =
      {27.85,  26.85,  25.85,  24.85,  23.85,  22.85,  21.85,  20.85,  19.86,  18.91,  18.21,  17.94,  17.89,  17.88,  17.88,  17.87, 
       27.18,  26.18,  25.18,  24.18,  23.18,  22.18,  21.18,  20.19,  19.20,  18.25,  17.50,  17.18,  17.11,  17.09,  17.08,  17.08, 
@@ -1552,73 +1434,91 @@ extern "C" int initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemist
       24.43,  23.43,  22.45,  21.48,  20.56,  19.71,  18.94,  18.24,  17.60,  17.01,  16.53,  16.24,  16.12,  16.09,  16.08,  16.08, 
       24.16,  23.16,  22.17,  21.20,  20.26,  19.36,  18.53,  17.77,  17.07,  16.43,  15.92,  15.64,  15.54,  15.52,  15.51,  15.51, 
       23.89,  22.89,  21.90,  20.93,  19.97,  19.04,  18.17,  17.35,  16.58,  15.89,  15.34,  15.05,  14.97,  14.95,  14.94,  14.94, 
-      23.63,  22.64,  21.65,  20.67,  19.71,  18.77,  17.86,  17.01,  16.20,  15.48,  14.94,  14.70,  14.64,  14.62,  14.62,  14.62}; 
+      23.63,  22.64,  21.65,  20.67,  19.71,  18.77,  17.86,  17.01,  16.20,  15.48,  14.94,  14.70,  14.64,  14.62,  14.62,  14.62};
+  // clang-format on
 
-  return GRIMPL_NS::setup_cool_interp_grid_(&my_rates->opaque_storage->LH2O, rank, params, L, log10(coolunit));
+  return GRIMPL_NS::setup_cool_interp_grid_(rank, params, L, log10(coolunit));
 }
 
+struct NDRateTableInitFnInfo {
+  std::string name;
+  bool enabled;
+  bool neutral_H_ndens_ax_includes_molecular;
+  Expected<InterpGrid, Error> (*fn)(double);
+};
 
-extern "C" int initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
-{
-  using GRIMPL_NS::InterpDimScale;
-  using GRIMPL_NS::InterpGridProps;
-  const int rank = 2;
-  const InterpDimScale params[2] = {
-    InterpDimScale::Linear(15, -16.0, 1.0), // log10(mass-density)
-    InterpDimScale::Linear(29,   1.8, 0.1)  // log10(temperature)
+Expected<TabMDSpCooler, Error> TabMDSpCooler::create(
+    const chemistry_data& my_chemistry, const code_units& my_units,
+    const SpInitializeInfo& sp_info) {
+  if (my_chemistry.primordial_chemistry == 0) {
+    return TabMDSpCooler();  // <- returns an empty object
+  }
+
+  // temporarily construct the InternalGrUnits struct
+  // -> the construction logic deduplicates a lot of logic that was
+  //    previously copied and pasted across a lot of fortran files
+  InternalGrUnits internalu = new_internalu_legacy_C_(&my_units);
+
+  bool use_H2 = (my_chemistry.primordial_chemistry >= 2) &&
+                (my_chemistry.h2_cooling_rate == 3);
+  bool use_HD = (my_chemistry.primordial_chemistry >= 3) &&
+                (my_chemistry.hd_cooling_rate == 1);
+  bool use_m =
+      (my_chemistry.metal_cooling == 1) && (my_chemistry.metal_chemistry == 1);
+
+  NDRateTableInitFnInfo init_fn_l[] = {
+      {"H2I", use_H2, false, init_cooltab_H2I},
+      {"HDI", use_HD, false, init_cooltab_HDI},
+      // C/O fine-structure cooling
+      {"CI", use_m, false, init_cooltab_CI},
+      {"CII", use_m, false, init_cooltab_CII},
+      {"OI", use_m, false, init_cooltab_OI},
+      // metal molecule rotational cooling (for low temperatures)
+      {"COI", use_m, true, init_cooltab_COI},
+      {"OHI", use_m, true, init_cooltab_OHI},
+      {"H2OI", use_m, true, init_cooltab_H2OI},
   };
 
-  double kp[29][15] =
-   {{-14.39, -13.39, -12.39, -11.39, -10.39, -9.39, -8.39, -7.39,  -6.39,  -5.39,  -4.39,  -3.39,  -2.39,  -1.39,  -0.39}
-   ,{-14.18, -13.18, -12.18, -11.18, -10.18, -9.18, -8.18, -7.18,  -6.18,  -5.18,  -4.18,  -3.18,  -2.18,  -1.18,  -0.18}
-   ,{-14.03, -13.03, -12.03, -11.03, -10.03, -9.03, -8.03, -7.03,  -6.03,  -5.03,  -4.03,  -3.03,  -2.03,  -1.03,  -0.03}
-   ,{-13.92, -12.92, -11.92, -10.92,  -9.92, -8.92, -7.92, -6.92,  -5.92,  -4.92,  -3.92,  -2.92,  -1.92,  -0.92,   0.08}
-   ,{-13.84, -12.84, -11.84, -10.84,  -9.84, -8.84, -7.84, -6.84,  -5.84,  -4.84,  -3.84,  -2.84,  -1.84,  -0.84,   0.16}
-   ,{-13.79, -12.79, -11.79, -10.79,  -9.79, -8.79, -7.79, -6.79,  -5.79,  -4.79,  -3.79,  -2.79,  -1.79,  -0.79,   0.21}
-   ,{-13.78, -12.78, -11.78, -10.78,  -9.78, -8.78, -7.78, -6.78,  -5.78,  -4.78,  -3.78,  -2.78,  -1.78,  -0.78,   0.22}
-   ,{-13.80, -12.80, -11.80, -10.80,  -9.80, -8.80, -7.80, -6.80,  -5.80,  -4.80,  -3.80,  -2.80,  -1.80,  -0.80,   0.20}
-   ,{-13.84, -12.84, -11.84, -10.84,  -9.84, -8.84, -7.84, -6.84,  -5.84,  -4.84,  -3.84,  -2.84,  -1.84,  -0.84,   0.16}
-   ,{-13.87, -12.87, -11.87, -10.87,  -9.87, -8.87, -7.87, -6.87,  -5.87,  -4.87,  -3.87,  -2.87,  -1.87,  -0.87,   0.13}
-   ,{-13.88, -12.88, -11.88, -10.88,  -9.89, -8.89, -7.89, -6.89,  -5.89,  -4.89,  -3.88,  -2.88,  -1.88,  -0.88,   0.12}
-   ,{-13.85, -12.85, -11.85, -10.85,  -9.85, -8.85, -7.85, -6.85,  -5.85,  -4.85,  -3.85,  -2.85,  -1.85,  -0.85,   0.15}
-   ,{-13.75, -12.75, -11.75, -10.75,  -9.75, -8.75, -7.75, -6.75,  -5.75,  -4.75,  -3.75,  -2.75,  -1.75,  -0.75,   0.25}
-   ,{-13.59, -12.61, -11.61, -10.60,  -9.60, -8.60, -7.60, -6.60,  -5.60,  -4.60,  -3.60,  -2.60,  -1.60,  -0.60,   0.40}
-   ,{-13.80, -12.76, -11.64, -10.54,  -9.51, -8.51, -7.50, -6.50,  -5.50,  -4.50,  -3.50,  -2.50,  -1.50,  -0.50,   0.50}
-   ,{-14.06, -13.06, -12.06, -11.05,  -9.97, -8.72, -7.53, -6.46,  -5.44,  -4.43,  -3.43,  -2.43,  -1.43,  -0.43,   0.57}
-   ,{-12.33, -11.82, -11.30, -10.73, -10.05, -9.19, -8.22, -7.18,  -5.82,  -4.56,  -3.47,  -2.44,  -1.43,  -0.43,   0.57}
-   ,{ -9.70,  -9.22,  -8.73,  -8.23,  -7.73, -7.23, -6.72, -6.19,  -5.51,  -4.60,  -3.69,  -2.57,  -1.50,  -0.47,   0.54}
-   ,{ -6.65,  -6.57,  -6.39,  -6.08,  -5.66, -5.19, -4.70, -4.21,  -3.71,  -3.21,  -2.72,  -2.23,  -1.52,  -0.53,   0.49}
-   ,{ -3.71,  -3.52,  -3.46,  -3.42,  -3.36, -3.23, -2.96, -2.58,  -2.12,  -1.63,  -1.14,  -0.69,  -0.33,   0.12,   0.71}
-   ,{ -3.49,  -2.52,  -1.66,  -1.18,  -1.00, -0.94, -0.89, -0.81,  -0.63,  -0.31,   0.11,   0.57,   1.01,   1.37,   1.76}
-   ,{ -3.93,  -2.94,  -1.94,  -0.95,  -0.02,  0.62,  0.89,  0.99,   1.04,   1.12,   1.30,   1.61,   2.02,   2.40,   2.74}
-   ,{ -4.29,  -3.30,  -2.34,  -1.38,  -0.38,  0.60,  1.52,  2.13,   2.38,   2.47,   2.54,   2.66,   2.89,   3.23,   3.54}
-   ,{ -4.74,  -3.74,  -2.74,  -1.74,  -0.75,  0.20,  1.17,  2.14,   2.95,   3.39,   3.55,  10.00,  10.00,  10.00,  10.00}
-   ,{ -5.18,  -4.18,  -3.18,  -2.18,  -1.18, -0.18,  0.81,  1.77,   2.72,   3.60,   4.14,  10.00,  10.00,  10.00,  10.00}
-   ,{ -5.40,  -4.54,  -3.60,  -2.61,  -1.61, -0.61,  0.39,  1.39,   2.37,   3.31,   4.18,  10.00,  10.00,  10.00,  10.00}
-   ,{ -5.75,  -4.75,  -3.76,  -2.82,  -1.95, -1.00,  0.00,  1.00,   2.00,   2.99,   3.93,  10.00,  10.00,  10.00,  10.00}
-   ,{ -6.13,  -5.13,  -4.13,  -3.13,  -2.13, -1.15, -0.25,  0.68,   1.67,   2.67,   3.66,  10.00,  10.00,  10.00,  10.00}
-   ,{ -6.45,  -5.45,  -4.45,  -3.45,  -2.45, -1.45, -0.45,  0.53,   1.46,   2.42,   3.41,  10.00,  10.00,  10.00,  10.00}};
+  TabMDSpCooler out;
 
-  GRIMPL_NS::Expected<InterpGridProps, GRIMPL_NS::Error> grid_props_rslt =
-      InterpGridProps::create(rank, params);
-  if (grid_props_rslt.has_value()) {
-    double* grid_data = new double[grid_props_rslt->data_size];
-    for(int iD=0; iD<params[0].count; iD++) {
-      double log_rho = params[0].start + iD*params[0].step;
-      for(int iT=0; iT<params[1].count; iT++) {
-        int itab = iD * params[1].count + iT;
-        grid_data[itab] = kp[iT][iD] + log_rho;
-      }
+  int counter = -1;
+  for (const NDRateTableInitFnInfo& info : init_fn_l) {
+    if (!info.enabled) {
+      continue;
     }
-    my_rates->opaque_storage->alphap =
-        GRIMPL_NS::InterpGrid(std::move(grid_props_rslt).value(), grid_data);
+    counter++;
 
-    return GR_SUCCESS;
-  } else {
-    GRIMPL_NS::Error err = grid_props_rslt.error().context_literal(
-        "problem initializing interp grid props");
-    err.write(stderr);
-    return GR_FAIL;
+    if (info.name == "H2I") {
+      out.pack_id_H2I_ = counter;
+    } else if (info.name == "HDI") {
+      out.pack_id_HDI_ = counter;
+    }
+
+    // while we could just iterate down the list of all available rates & just
+    // use the rates for species that are currently in use, we choose to be a
+    // little more defensive (in order to raise errors if there are typos)
+    // -> we may want to revisit this choice in the future
+    std::optional<int> maybe_species_id = sp_info.name_map.find(info.name);
+    if (!maybe_species_id.has_value()) {
+      GR_INTERNAL_ERROR(
+          "programming inconsistency: %s species doesn't seem to be tracked",
+          info.name.c_str());
+    }
+    int species_id = maybe_species_id.value();
+    double mass_factor = sp_info.chem_species_props[species_id].mass_factor;
+
+    Expected<InterpGrid, Error> tmp = info.fn(internalu.coolunit);
+    if (!tmp.has_value()) {
+      return Unexpected(tmp.error().contextf(
+          "error constructing grid for %s species", info.name.c_str()));
+    }
+
+    out.packs_.emplace_back(mass_factor, species_id,
+                            info.neutral_H_ndens_ax_includes_molecular,
+                            std::move(tmp).value());
   }
+
+  return out;
 }
 
+}  // namespace GRIMPL_NAMESPACE_DECL

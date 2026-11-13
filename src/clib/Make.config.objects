@@ -25,6 +25,8 @@ OBJS_CONFIG_LIB = \
         chem_model/species_builder.lo \
         chem_model/rxn_eqn_props.lo \
         chem_model/species.lo \
+        cool/primordial_opac_table.lo \
+        cool/TabMDSpCooler.lo \
         collisional_rate_props.lo \
         tabulated/cool1d_cloudy.lo \
         tabulated/cool1d_cloudy_old_tables.lo \
@@ -39,7 +41,6 @@ OBJS_CONFIG_LIB = \
         api/units.lo \
         initialize_chemistry_data.lo \
         tabulated/initialize_cloudy_data.lo \
-        init_misc_species_cool_rates.lo \
         initialize_rates.lo \
         initialize_UVbackground_data.lo \
         inject_model/load_data.lo \
