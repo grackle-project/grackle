@@ -482,3 +482,57 @@ Miscellaneous Functions
 
    :rtype: int
    :returns: ``GR_SUCCESS`` if successful
+
+
+.. _category_constants:
+
+Here we defined some integer-value constants that are to describe categories of fields.
+Users should refrain from assuming they are compile-time constants (i.e. there's a
+chance we could convert them to global variables in the future).
+
+.. warning:: The precise values of these constants may change between different versions of Grackle.
+
+.. c:macro:: GR_FIELD_CAT_INJ_PATHWAY
+
+   This category includes all fields tracked by the :c:data:`inject_pathway_metal_density` member of the :c:type:`grackle_field_data` struct.
+
+   .. versionadded:: 3.5
+
+The preceeding constant(s) are used by the following functions.
+
+
+.. c:function:: int gr_get_field_id(const chemistry_data_storage* my_rates, int64_t category, const char* name, int64_t* out);
+
+   Queries the id associated with the specifed field name.
+   An id of ``-1`` indicates that the supplied name is **NOT** part of the supplied field category (a function call that leads to this outcome will report that it succeeded)
+
+   When the ``name`` argument is passed a ``NULL`` pointer, the function queries the number of fields associated with the specified category.
+
+   :param my_rates: encodes current grackle configuration
+   :param category: a :ref:`constant <category_constants>` denoting the relevant category
+   :param name: the queried field name
+   :param out: pointer where the result will be stored
+   :returns: ``GR_SUCCESS`` if successful.
+             (The case where a field called ``name`` isn't tracked is still considered a success.
+
+   .. versionadded:: 3.5
+
+
+.. c:function:: int gr_get_field_name(const chemistry_data_storage* my_rates, int64_t category, int64_t id, const char** out);
+
+   Queries the field name associated with the specified ``id``.
+   The lifetime of the retrieved string is tied to the lifetime of the ``my_rates`` argument.
+
+   .. warning::
+
+      Unspecified behavior occurs if ``id`` doesn't satisfy :c:expr:`0 <= id && id < hi`.
+      ``hi`` can be found by calling :c:expr:`gr_get_field_id(my_rates, category, NULL, &hi)`.
+
+   :param my_rates: encodes current grackle configuration
+   :param category: a :ref:`constant <category_constants>` denoting the relevant category
+   :param id: the index to check
+   :param out: pointer where the result will be stored
+   :returns: ``GR_SUCCESS`` if successful
+
+   .. versionadded:: 3.5
+
