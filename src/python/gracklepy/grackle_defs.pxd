@@ -297,8 +297,10 @@ cdef extern from "grackle.h":
 
     int gr_initialize_field_data(c_field_data *my_fields)
 
-    cdef enum gr_field_category:
-      GR_FIELD_CAT_INJ_PATHWAY
+    # named constant(s) that are passed to gr_get_field_id & gr_get_field_name
+    # -> sinc these are declared as macros we just treat them as if they are
+    #    global variables (as recommended by cython docs)
+    int GR_FIELD_CAT_INJ_PATHWAY
 
     int gr_get_field_id(
         const c_chemistry_data_storage* my_rates,

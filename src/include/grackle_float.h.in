@@ -36,4 +36,17 @@
 #endif
 #define GRIMPL_MAX_INJ_PATHWAYS 12
 
+
+
+#ifdef __cplusplus
+// here we define a batch of "magic named constants" to be used as the category
+// argument for gr_get_field_id AND gr_get_field_name
+// -> we choose to define these constants as macros (rather than enums) so that
+//    we could define the constants once and expose them through both the C and
+//    Fortran headers
+// -> we reserve the right to change the values associated with a constant name
+//    at any time 
+#endif
+#define GR_FIELD_CAT_INJ_PATHWAY 0
+
 #endif

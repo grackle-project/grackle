@@ -336,3 +336,24 @@ c     The following define the fortran interfaces to the C routines
             TYPE(grackle_field_data), INTENT(INOUT) :: my_fields
          END FUNCTION gr_initialize_field_data
       END INTERFACE
+
+
+      INTERFACE
+         INTEGER(C_INT) FUNCTION gr_global_get_field_id(category,
+     &        name, out) bind(C)
+            IMPORT
+            INTEGER(C_INT64_T), VALUE, INTENT(IN) :: category
+            CHARACTER(kind=C_CHAR),  INTENT(IN) :: name(*)
+            INTEGER(C_INT64_T), INTENT(OUT) :: out(*)
+         END FUNCTION gr_global_get_field_id
+      END INTERFACE
+
+      INTERFACE
+         INTEGER(C_INT) FUNCTION gr_global_get_field_name(category,
+     &        id, out) bind(C)
+            IMPORT
+            INTEGER(C_INT64_T), VALUE, INTENT(IN) :: category
+            INTEGER(C_INT64_T), VALUE, INTENT(IN) :: id
+            TYPE(C_PTR), INTENT(OUT) :: out
+         END FUNCTION gr_global_get_field_name
+      END INTERFACE
