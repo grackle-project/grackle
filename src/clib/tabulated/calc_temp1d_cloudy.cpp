@@ -19,6 +19,7 @@
 #include "grackle.h"
 #include "./common.hpp"
 #include "../interpolate.hpp"
+#include "../phys_constants.hpp"
 #include "../support/View.hpp"
 
 #include "calc_temp1d_cloudy.hpp"
@@ -49,10 +50,6 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
   // approx. mean molecular weight of metals
   const double mu_metal = 16.;
   const int ti_max = 20;
-  // todo: maybe factor this constant out and have it be precomputed
-  //       (and rename it to INV_LN10). Alternatively, if we directly compute
-  //       log10(T) we can drop this entirely
-  const double inv_log10 = 1. / std::log(10.);
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
@@ -83,7 +80,7 @@ void calc_temp1d_cloudy(const double* rhoH, double* tgas, double* mmw,
 
         // is it ok for us to just write log10_T = std::log10(tgas[i])?
         double ln_T = std::log(tgas[i]);
-        double log10_T = ln_T * inv_log10;
+        double log10_T = ln_T * constants::inv_ln10;
 
         // Call interpolation functions to get mmw
 

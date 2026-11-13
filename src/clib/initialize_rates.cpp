@@ -47,7 +47,8 @@
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
 #include "collisional_rate_props.hpp"  // init_extra_collisional_rates
-#include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
+#include "cool/primordial_opac_table.hpp"
+#include "cool/TabMDSpCooler.hpp"
 #include "inject_model/load_data.hpp"  // load_inject_path_data
 #include "initialize_rates.hpp"
 #include "internal_types.hpp" // new_CollisionalRxnRateCollection
@@ -127,6 +128,42 @@ static int add_reaction_rate(double **rate_ptr, rate_function my_function,
   *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins
                               * sizeof(double));
   return init_preallocated_rate(*rate_ptr, my_function, units, my_chemistry);
+}
+
+/// calculate CIE H2 cooling rate from Yoshida et al. (2006)
+///
+/// @note
+/// At some point, we should coerce this into the standard format for
+/// heating/cooling rates (this may break the gold-standard)
+int add_cieY06_cool_rate(double **rate_ptr, double coolunit,
+                         const chemistry_data* my_chemistry) {
+  *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+  // compute log spacing of the temperature table
+  const double dlogtem = (
+    (log(my_chemistry->TemperatureEnd) -
+     log(my_chemistry->TemperatureStart)) /
+    (double)(my_chemistry->NumberOfTemperatureBins-1)
+  );
+
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
+    // Set rate to tiny for safety.
+    (*rate_ptr)[i] = tiny;
+
+    // calculate local temperature
+    double ln_T = log(my_chemistry->TemperatureStart) + (double)(i)*dlogtem;
+    double T = exp(ln_T);
+
+    // store the rate
+    (*rate_ptr)[i] =
+      pow(10.0,
+          -116.6 + 96.34  * log10(T)
+                 - 47.153 * pow(log10(T), 2)
+                 + 10.744 * pow(log10(T), 3)
+                 -  0.916 * pow(log10(T), 4) ) / coolunit;
+  }
+
+  return GR_SUCCESS;
 }
 
 //Define a function which will calculate the k13dd rates.
@@ -503,11 +540,13 @@ int check_generic_lnT_params(const chemistry_data& chem, bool gas_T) {
 
 } // anonymous namespace
 
-//Definition of the initialise_rates function.
-int grackle::impl::initialize_rates(
+// todo: we probably want to enclose the entire file in this namespace
+namespace GRIMPL_NAMESPACE_DECL {
+
+int initialize_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
-  code_units *my_units, double co_length_unit, double co_density_unit,
-  ratequery::RegBuilder* reg_builder)
+  const code_units *my_units, double co_length_unit, double co_density_unit,
+  const SpInitializeInfo& sp_info, ratequery::RegBuilder* reg_builder)
 { 
     // check NumberOfTemperatureBins, Temperature(Start|End) params
     // -> can we skip this when primordial_chemistry == 0?
@@ -594,9 +633,14 @@ int grackle::impl::initialize_rates(
                           / (densityBase1 * pow(timeBase1, 3));
 
     if (my_chemistry->use_primordial_continuum_opacity == 1) {
-      if (GR_SUCCESS != initialize_primordial_opacity(my_chemistry, my_rates)) {
-        return GrPrintAndReturnErr("err in initialize_primordial_opacity");
+      Expected<InterpGrid, Error> tmp = init_primordial_opacity();
+      if (!tmp.has_value()){
+        Error err = tmp.error().context_literal(
+            "problem initializing continuum primordial opacity table");
+        err.write(stderr);
+        return GR_FAIL;
       }
+      my_rates->opaque_storage->alphap = std::move(tmp).value();
     }
 
     //* 3) Units for radiative transfer coefficients are 1/[time].
@@ -718,17 +762,15 @@ int grackle::impl::initialize_rates(
         //from Glover (2015, MNRAS, 451, 2082)
         add_reaction_rate(&my_rates->H2LTE, H2LTE_rate, coolingUnits, my_chemistry);
 
-        // Chiaki & Wise 2019 rates
-        // Note: these are still defined in initialize_metal_chemistry_rates.c.
-        // They should be moved someday.
-        if (GR_SUCCESS != initialize_cooling_rate_H2(my_chemistry, my_rates,
-                                                     coolingUnits)) {
-          return GrPrintAndReturnErr("err in initialize_cooling_rate_H2");
+        //------CIE H2 cooling rate from Yoshida et al. (2006)-----
+        // TODO(gold-standard): rework the following logic so that its more
+        //      consistent with all the other rates
+        {
+          InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
+          add_cieY06_cool_rate(&my_rates->cieY06, internalu.coolunit, my_chemistry);
         }
-        if (GR_SUCCESS != initialize_cooling_rate_HD(my_chemistry, my_rates,
-                                                      coolingUnits)){
-          return GrPrintAndReturnErr("err in initialize_cooling_rate_HD");
-        }
+
+        // we handle Chiaki & Wise 2019 rates for H2I and HDI, separately
 
         //* f) HD cooling.
 
@@ -785,10 +827,18 @@ int grackle::impl::initialize_rates(
     //(Equation B15, Krumholz, 2014)
     add_scalar_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
 
-    // Miscellaneous species-based cooling rates
-    if (grackle::impl::init_misc_species_cool_rates(my_chemistry, my_rates, my_units) != GR_SUCCESS) {
-      fprintf(stderr, "Error in initialize_metal_chemistry_rates.\n");
-      return GR_FAIL;
+    // Misc multidimensional species-specific cooling rate interpolation tables
+    if (my_chemistry->primordial_chemistry > 0) {
+      Expected<TabMDSpCooler, Error> tmp = TabMDSpCooler::create(
+          *my_chemistry, *my_units, sp_info);
+      if (!tmp.has_value()) {
+        tmp.error()
+           .context_literal("error in init_misc_species_cool_rates")
+           .write(stderr);
+        return GR_FAIL;
+      }
+      my_rates->opaque_storage->assorted_multidim_tabulated_sp_cool
+          = std::move(tmp).value();
     }
 
     // Load injection pathway data
@@ -804,3 +854,4 @@ int grackle::impl::initialize_rates(
     return SUCCESS;
 }
 
+}  // namespace GRIMPL_NAMESPACE_DECL

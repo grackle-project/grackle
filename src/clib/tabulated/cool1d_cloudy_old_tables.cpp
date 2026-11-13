@@ -19,6 +19,7 @@
 #include "grackle.h"
 #include "../fortran_func_decls.h"
 #include "../interpolate.hpp"
+#include "../phys_constants.hpp"
 #include "../support/View.hpp"
 #include "./common.hpp"
 
@@ -34,9 +35,6 @@ void cool1d_cloudy_old_tables(const double* rhoH, const double* metallicity,
                               gr_float* e_density,
                               grackle_field_data* my_fields,
                               IndexRange idx_range) {
-  // todo: maybe factor this constant out and have it be precomputed
-  //       (and rename it to INV_LN10)
-  const double inv_log10 = 1. / std::log(10.);
   // General Arguments
 
   FortranView<gr_float***> d(density, idx_range.i_stop,
@@ -68,7 +66,7 @@ void cool1d_cloudy_old_tables(const double* rhoH, const double* metallicity,
 
   for (int i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
-      log10tem[i] = logtem[i] * inv_log10;
+      log10tem[i] = logtem[i] * constants::inv_ln10;
 
       // Calcualte H mass fraction
 

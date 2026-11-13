@@ -52,6 +52,49 @@ def get_ivar(my_test):
 
 _exclude_fields = [f"{ax}_velocity" for ax in "xyz"]
 
+def _infer_symlog_linthresh(y):
+    # infer kwarg based on the y-values being plotted for ax.set_yscale("symlog", ...)
+    # -> By default, we try to pick values that minimize the size of the region
+    #    where the y-axis crosses 0.
+    # -> a value of None means that we give up and just want builtin defaults
+
+    if np.ndim(y) != 1:
+        return None
+    abs_y = np.abs(y)
+    tmp = abs_y[(abs_y != 0) & np.isfinite(abs_y)]
+    if tmp.size == 0:
+        return None
+    linthresh = tmp.min()
+    return linthresh if linthresh < np.nanmax(abs_y) else None
+
+def _subplot_text(ax, msg):
+    ax.text(
+        0.5,
+        0.5,
+        msg,
+        horizontalalignment='center',
+        verticalalignment='center',
+        transform=ax.transAxes
+    )
+
+def _careful_plot_logy(ax, x, y, **kw):
+    if "linestyle" in kw:
+        raise NotImplementedError("not currently supported")
+    out = []
+
+    has_positive = (y > 0).any()
+    if has_positive:
+        out.extend(ax.plot(x, y, linestyle = "-", **kw))
+
+    if (y < 0).any():
+        _kw = kw
+        if has_positive and "label" in kw:
+            _kw = {k: v for k, v in kw.items() if k != "label"}
+        out.extend(ax.plot(x, -1*y, linestyle = "--", **_kw))
+    ax.set_yscale("log")
+    return out
+
+
 def compare_model_results(compare_dir, model_par, ds1, ds2):
     """
     Do additional comparison between models.
@@ -75,6 +118,17 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
     output_lines = ["\nMax relative differences:"]
     do_diff = ds1.data["data", my_ivar].size == ds2.data["data", my_ivar].size
 
+    # prepare properties of each output figure
+    _height_ratios = [3, 1, 1]
+    _height_inches = 4.8 * sum(_height_ratios) / _height_ratios[0]
+    subplots_kw = {
+        "nrows": len(_height_ratios),
+        "ncols": 1,
+        "sharex": True,
+        "figsize": (6.4, _height_inches),
+        "gridspec_kw": {"height_ratios": _height_ratios}
+    }
+
     for field in ds1.field_list:
         if field[1] in _exclude_fields:
             continue
@@ -84,45 +138,63 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
         if (ds1.data[field] == 0).all() and (ds2.data[field] == 0).all():
             continue
 
-        has_positive = False
-        if (ds1.data[field] > 0).any():
-            plt.loglog(ds1.data["data", my_ivar], ds1.data[field],
-                       color="red", label="new", alpha=0.8)
-            plt.loglog(ds2.data["data", my_ivar], ds2.data[field],
-                       color="green", label="old", alpha=0.8)
-            has_positive = True
+        fig, (ax1, ax2, ax3) = plt.subplots(**subplots_kw)
 
-        if (ds1.data[field] < 0).any():
-            if has_positive:
-                label1 = label2 = None
+        new_kw = {"color": "red", "label": "new", "alpha": 0.8}
+        old_kw = {"color": "green", "label": "old", "alpha": 0.8}
+
+        if field[1] == "cooling_rate":
+            lt1 = _infer_symlog_linthresh(ds1.data[field].ndview)
+            lt2 = _infer_symlog_linthresh(ds2.data[field].ndview)
+            if lt1 is None and lt2 is None:
+                ax1.set_yscale("symlog")  # <- just use defaults!
             else:
-                label1 = "new"
-                label2 = "old"
-            plt.loglog(ds1.data["data", my_ivar], -ds1.data[field],
-                       color="red", linestyle="--", label=label1, alpha=0.8)
-            plt.loglog(ds2.data["data", my_ivar], -ds2.data[field],
-                       color="green", linestyle="--", label=label2, alpha=0.8)
-
+                lt = min(
+                    np.inf if lt1 is None else lt1, np.inf if lt2 is None else lt2
+                )
+                ax1.set_yscale("symlog", linthresh=lt)
+            ax1.plot(ds1.data["data", my_ivar], ds1.data[field], **new_kw)
+            ax1.plot(ds2.data["data", my_ivar], ds2.data[field], **old_kw)
+        else:
+            _careful_plot_logy(
+                ax1, ds1.data["data", my_ivar], ds1.data[field], **new_kw
+            )
+            _careful_plot_logy(
+                ax1, ds2.data["data", my_ivar], ds2.data[field], **old_kw
+            )
         xunits = getattr(ds1.field_info["data", my_ivar], "units", "")
         yunits = getattr(ds1.field_info[field], "units", "")
-        plt.xlabel(f"{my_ivar} [{xunits}]")
-        plt.ylabel(f"{field[1]} [{yunits}]")
-        plt.legend(loc="best")
+        ax3.set_xlabel(f"{my_ivar} [{xunits}]")
+        ax1.set_ylabel(f"{field[1]} [{yunits}]")
+        ax2.set_ylabel("relative difference")
+        ax3.set_ylabel("abs difference")
+        ax1.legend(loc="best")
+        ax3.set_xscale("log")
 
         if do_diff:
-            diff = np.abs(ds1.data[field] - ds2.data[field]) / ds2.data[field]
+            abs_diff = np.abs(ds1.data[field] - ds2.data[field])
+            diff = abs_diff / ds2.data[field]
             my_line = f"\t{field[1]}: {diff.max().d}."
             output_lines.append(my_line)
 
-            if (diff > 0).any():
-                plt.twinx()
-                plt.loglog(ds1.data["data", my_ivar], diff,
-                           color="black", alpha=0.8)
-                plt.ylabel("relative difference")
+            for (ax, cur_diff) in [(ax2, diff), (ax3, abs_diff)]:
+                if (cur_diff > 0).any():
+                    ax.loglog(ds1.data["data", my_ivar], cur_diff, color="black")
+                elif (cur_diff == 0).all():
+                    _subplot_text(ax, "All elements are identical")
+                else:
+                    _subplot_text(ax, "All differences are zeros or NaNs")
 
-        plt.tight_layout()
-        plt.savefig(os.path.join(test_dir, f"{field[1]}.png"))
-        plt.clf()
+        else:
+
+            for ax in [ax2,ax3]:
+                _subplot_text(
+                    ax, "Unable to compare: data arrays have different sizes"
+                )
+
+        fig.tight_layout()
+        fig.savefig(os.path.join(test_dir, f"{field[1]}.png"))
+        plt.close(fig)
 
     if not do_diff:
         output_lines = ["\nData arrays have different sizes."]

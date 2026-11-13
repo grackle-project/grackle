@@ -16,13 +16,17 @@
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
+#include "cool/TabMDSpCooler.hpp"
+#include "LUT.hpp"
 #include "dust/solver.hpp"
 #include "grackle.h"
+#include "grackle_macros.h"
 #include "internal_units.hpp"
 #include "interpolate.hpp"
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
 #include "opaque_storage.hpp"
+#include "phys_constants.hpp"
 #include "support/config.hpp"
 #include "support/View.hpp"
 #include "tabulated/cool1d_cloudy.hpp"
@@ -30,16 +34,6 @@
 #include "utils-cpp.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
-
-static double interp_from_3D_grid(double input1, double input2, double input3,
-                                  const GRIMPL_NS::InterpGrid& interp_grid) {
-  return interpolate_3d(
-      input1, input2, input3, interp_grid.props.dimension,
-      interp_grid.props.parameters[0], interp_grid.props.parameter_spacing[0],
-      interp_grid.props.parameters[1], interp_grid.props.parameter_spacing[1],
-      interp_grid.props.parameters[2], interp_grid.props.parameter_spacing[2],
-      interp_grid.props.data_size, interp_grid.data);
-}
 
 void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
                     const double* mmw, const double* metallicity,
@@ -101,24 +95,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   FortranView<gr_float***> photogamma(
       my_fields->RT_heating_rate, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CI(
-      my_fields->CI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> CII(
-      my_fields->CII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> COI(
-      my_fields->COI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OI(
-      my_fields->OI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> OHI(
-      my_fields->OHI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  FortranView<gr_float***> H2OI(
-      my_fields->H2OI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Declare some constants:
   const double mh_local_var = constants::mH_grflt;
@@ -150,32 +126,10 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   std::vector<double> galdl(my_fields->grid_dimension[0]);
   std::vector<double> cieY06(my_fields->grid_dimension[0]);
 
-  std::vector<double> logT(my_fields->grid_dimension[0]);
-  std::vector<double> logTcmb(my_fields->grid_dimension[0]);
-  std::vector<double> logrho(my_fields->grid_dimension[0]);
-  std::vector<double> logH(my_fields->grid_dimension[0]);
-  std::vector<double> logH2I(my_fields->grid_dimension[0]);
-  std::vector<double> logHDI(my_fields->grid_dimension[0]);
-  std::vector<double> logH2(my_fields->grid_dimension[0]);
-  std::vector<double> logCI(my_fields->grid_dimension[0]);
-  std::vector<double> logCII(my_fields->grid_dimension[0]);
-  std::vector<double> logOI(my_fields->grid_dimension[0]);
-  std::vector<double> logCO(my_fields->grid_dimension[0]);
-  std::vector<double> logOH(my_fields->grid_dimension[0]);
-  std::vector<double> logH2O(my_fields->grid_dimension[0]);
-  double lognhat;
-  std::vector<double> logdvdr(my_fields->grid_dimension[0]);
-  double log_Linv, log_Ginv, L, G;
-  std::vector<double> LH2(my_fields->grid_dimension[0]);
   std::vector<double> LCIE(my_fields->grid_dimension[0]);
-  std::vector<double> LHD(my_fields->grid_dimension[0]);
-  std::vector<double> LCI(my_fields->grid_dimension[0]);
-  std::vector<double> LCII(my_fields->grid_dimension[0]);
-  std::vector<double> LOI(my_fields->grid_dimension[0]);
-  std::vector<double> LCO(my_fields->grid_dimension[0]);
-  std::vector<double> LOH(my_fields->grid_dimension[0]);
-  std::vector<double> LH2O(my_fields->grid_dimension[0]);
-  std::vector<double> lshield_con(my_fields->grid_dimension[0]);
+
+  std::vector<double> spcooltab_scratch(
+      TabMDSpCooler::num_scratch_buf_elements(sp_densities.extent(1)));
 
   const gr_opaque_storage& opaque_storage = *my_rates->opaque_storage;
 
@@ -203,50 +157,6 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
 
   // multiplicative factor for including/excluding H2 cooling
   ih2cox = (double)(my_chemistry->ih2co);
-
-  // Compute log densities
-
-  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      logT[i] = std::log10(tgas[i]);
-      if (my_chemistry->cmb_temperature_floor == 1)
-        logTcmb[i] = std::log10(comp2);
-      logrho[i] =
-          std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
-      if (my_chemistry->primordial_chemistry > 0) {
-        logH[i] = std::log10(HI(i, idx_range.j, idx_range.k) * dom);
-        logH2[i] = std::log10(HI(i, idx_range.j, idx_range.k) * dom);
-      }
-      if (my_chemistry->primordial_chemistry > 1) {
-        logH2[i] = std::log10((HI(i, idx_range.j, idx_range.k) +
-                               H2I(i, idx_range.j, idx_range.k) / 2.0) *
-                              dom);
-        logH2I[i] = std::log10(H2I(i, idx_range.j, idx_range.k) * dom / 2.0);
-      }
-      if (my_chemistry->primordial_chemistry > 2) {
-        logHDI[i] = std::log10(HDI(i, idx_range.j, idx_range.k) * dom / 3.0);
-      }
-      if (my_chemistry->metal_cooling == 1) {
-        if (my_chemistry->metal_chemistry == 1) {
-          logCI[i] = std::log10(CI(i, idx_range.j, idx_range.k) * dom / 12.0);
-          logCII[i] = std::log10(CII(i, idx_range.j, idx_range.k) * dom / 12.0);
-          logOI[i] = std::log10(OI(i, idx_range.j, idx_range.k) * dom / 16.0);
-          logCO[i] = std::log10(COI(i, idx_range.j, idx_range.k) * dom / 28.0);
-          logOH[i] = std::log10(OHI(i, idx_range.j, idx_range.k) * dom / 17.0);
-          logH2O[i] =
-              std::log10(H2OI(i, idx_range.j, idx_range.k) * dom / 18.0);
-        }
-      }
-
-      // From Chiaki & Wise (2019), approximate dv/dr as 1/(3 * t_ff)
-      logdvdr[i] = -8.79947961814e0 + 0.5e0 * logrho[i];  // km/s / cm
-      lshield_con[i] =
-          std::sqrt((my_chemistry->Gamma * constants::pi_fortran_val *
-                     constants::kboltz_grflt * tgas[i]) /
-                    (constants::GravConst_grflt * mmw[i] * mh_local_var *
-                     d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
-    }
-  }
 
   // --- 6 species cooling ---
 
@@ -392,30 +302,8 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   if (my_chemistry->primordial_chemistry > 1) {
     // Chiaki & Wise (2019) H2 cooling rate
     if (my_chemistry->h2_cooling_rate == 3) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          lognhat = logH2I[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                         opaque_storage.LH2);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
-                                           opaque_storage.LH2);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LH2[i] =
-              ih2cox * (G - L) / dom * H2I(i, idx_range.j, idx_range.k) / 2.e0;
-          if (LH2[i] != LH2[i]) {
-            LH2[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LH2[i];
-        }
-      }
+      // this model is handled below (alongside calculation of species-specific
+      // cooling contributions from multidimensional tables)
 
       // Glover & Abel (2008) H2 cooling rate
     } else if (my_chemistry->h2_cooling_rate == 2) {
@@ -699,29 +587,8 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   if (my_chemistry->primordial_chemistry > 2) {
     // Chiaki & Wise (2019) HD cooling rate
     if (my_chemistry->hd_cooling_rate == 1) {
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          lognhat = logHDI[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                         opaque_storage.LHD);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
-                                           opaque_storage.LHD);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LHD[i] = (G - L) / dom * HDI(i, idx_range.j, idx_range.k) / 3.e0;
-          if (LHD[i] != LHD[i]) {
-            LHD[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LHD[i];
-        }
-      }
+      // this model is handled below (alongside calculation of species-specific
+      // cooling contributions from multidimensional tables)
 
       // Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007) HD cooling
       // rate
@@ -1012,145 +879,13 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
           itmask_tab.data(), my_chemistry, my_rates->cloudy_metal,
           my_fields->density, my_fields->e_density, my_fields, idx_range);
     }
-
-    if (my_chemistry->metal_chemistry == 1) {
-      // --- C/O fine-structure, metal molecular rotational cooling for low
-      // temperatures ---
-
-      // C/O fine-structure cooling
-      for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
-        if (itmask_metal[i] != MASK_FALSE) {
-          // CI
-          lognhat = logCI[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                         opaque_storage.LCI);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
-                                           opaque_storage.LCI);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LCI[i] = (G - L) / dom * CI(i, idx_range.j, idx_range.k) / 12.e0;
-          if (LCI[i] != LCI[i]) {
-            LCI[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LCI[i];
-
-          // CII
-          lognhat = logCII[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                         opaque_storage.LCII);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
-                                           opaque_storage.LCII);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LCII[i] = (G - L) / dom * CII(i, idx_range.j, idx_range.k) / 12.e0;
-          if (LCII[i] != LCII[i]) {
-            LCII[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LCII[i];
-
-          // OI
-          lognhat = logOI[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH[i],
-                                         opaque_storage.LOI);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH[i],
-                                           opaque_storage.LOI);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LOI[i] = (G - L) / dom * OI(i, idx_range.j, idx_range.k) / 16.e0;
-          if (LOI[i] != LOI[i]) {
-            LOI[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LOI[i];
-
-          // Metal molecules rotational cooling
-
-          // CO
-          lognhat = logCO[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH2[i],
-                                         opaque_storage.LCO);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
-                                           opaque_storage.LCO);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LCO[i] = (G - L) / dom * COI(i, idx_range.j, idx_range.k) / 28.e0;
-          if (LCO[i] != LCO[i]) {
-            LCO[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LCO[i];
-
-          // OH
-          lognhat = logOH[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH2[i],
-                                         opaque_storage.LOH);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
-                                           opaque_storage.LOH);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LOH[i] = (G - L) / dom * OHI(i, idx_range.j, idx_range.k) / 17.e0;
-          if (LOH[i] != LOH[i]) {
-            LOH[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LOH[i];
-
-          // H2O
-          lognhat = logH2O[i] - logdvdr[i];
-
-          log_Linv = interp_from_3D_grid(lognhat, logT[i], logH2[i],
-                                         opaque_storage.LH2O);
-          L = std::pow(1.e1, (-log_Linv));
-
-          if (my_chemistry->cmb_temperature_floor == 1) {
-            log_Ginv = interp_from_3D_grid(lognhat, logTcmb[i], logH2[i],
-                                           opaque_storage.LH2O);
-            G = std::pow(1.e1, (-log_Ginv));
-          } else {
-            G = tiny8;
-          }
-
-          LH2O[i] = (G - L) / dom * H2OI(i, idx_range.j, idx_range.k) / 18.e0;
-          if (LH2O[i] != LH2O[i]) {
-            LH2O[i] = 0.e0;
-          }
-          edot[i] = edot[i] + LH2O[i];
-        }
-      }
-    }
   }
+
+  // computing species-specific cooling contributions from multidim tables
+  // - the specifics depend on how the object was configured
+  opaque_storage.assorted_multidim_tabulated_sp_cool.add_contrib(
+      edot, d, logTlininterp_buf.logtem, itmask, itmask_metal, my_chemistry,
+      sp_densities, idx_range, internalu, spcooltab_scratch.data());
 
   // Add user-provided volumetric and/or specific heating terms
 
@@ -1183,9 +918,13 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
     const InterpGrid& interp_grid = opaque_storage.alphap;
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
-        // ! primordial continuum opacity !!
+        // log10_rho specifies the log10(proper mass density g/cm^3)
+        // -> should this actually use the metal-free mass density?
+        double log10_rho =
+            std::log10(d(i, idx_range.j, idx_range.k) * dom * constants::mH);
+        double log10_T = logTlininterp_buf.logtem[i] * constants::inv_ln10;
         double log10_a =
-            interpolate_2d(logrho[i], logT[i], interp_grid.props.dimension,
+            interpolate_2d(log10_rho, log10_T, interp_grid.props.dimension,
                            interp_grid.props.parameters[0],
                            interp_grid.props.parameter_spacing[0],
                            interp_grid.props.parameters[1],
@@ -1201,7 +940,18 @@ void cool1d_multi_g(double* edot, double* alpha_continuum, const double* tgas,
   std::vector<double> tau_con(my_fields->grid_dimension[0]);
   for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
     if (itmask[i] != MASK_FALSE) {
-      tau_con[i] = alpha_continuum[i] * lshield_con[i];
+      // compute the shielding length for continuum opacity
+      // -> it's just the Jeans length. I **think** it's defined as
+      //    l_Jeans = c_sound * sqrt(pi / (G * rho))
+      // -> if we ever want to compute analytic partial derivative, the
+      //    book-keeping would probably be simpler to look at partial
+      //    derivative with respect c_sound (rather than tgas & mmw)
+      double shield_length =
+          std::sqrt((my_chemistry->Gamma * constants::pi_fortran_val *
+                     constants::kboltz_grflt * tgas[i]) /
+                    (constants::GravConst_grflt * mmw[i] * mh_local_var *
+                     d(i, idx_range.j, idx_range.k) * dom * mh_local_var));
+      tau_con[i] = alpha_continuum[i] * shield_length;
     }
   }
 
