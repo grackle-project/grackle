@@ -25,15 +25,20 @@
 #ifndef CHEMISTRY_SOLVER_FUNCS_HPP
 #define CHEMISTRY_SOLVER_FUNCS_HPP
 
+#include <climits>
+
+#include "chem_model/species.hpp"
 #include "grackle.h"
 #include "field_adaptor.hpp"
 #include "fortran_func_decls.h"  // gr_mask_type
 #include "full_rxn_rate_buf.hpp"
 #include "support/index_helper.hpp"
 #include "LUT.hpp"
+#include "support/status_reporting.hpp"
 #include "support/View.hpp"
 
-namespace grackle::impl::chemistry {
+namespace GRIMPL_NAMESPACE_DECL {
+namespace chemistry {
 
 /// @brief Converts the relative species id to the global species id
 ///
@@ -55,11 +60,10 @@ namespace grackle::impl::chemistry {
 /// eagerly load a species density buffer at the start of the function (even
 /// if the species isn't actually used)
 ///
-/// @note
-/// The interface of this class was backported so that we could reimplement
-/// `chemistry::species_density_*` without as many dependency PRs. For that
-/// reason, the motivation for certain design decisions may not be completely
-/// obvious.
+/// Longer Term Outlook
+/// ===================
+/// Longer term, the goal is to rewrite the `chemistry::species_density_*`
+/// functions in order to totally remove this class
 class SpIdAdaptor{
   // tracks properties about an interval of species ids that are all a given
   // kind of species (e.g. primordial, metal, or dust)
@@ -87,19 +91,32 @@ public:
   [[gnu::always_inline]] int metal(int id) const {return calc_(metal_, id); }
   [[gnu::always_inline]] int dust(int id) const { return calc_(dust_, id); }
 
-  SpIdAdaptor() {
-    fallback_id_ = 0;
-    int num_prim = PrimordialSpLUT::NUM_ENTRIES;
-    int num_metal = MetalSpLUT::NUM_ENTRIES;
-    int num_dust = DustSpLUT::NUM_ENTRIES;
-    prim_ = IntervalProps{.id_offset = 0, .id_count = num_prim};
-    metal_ = IntervalProps{.id_offset = num_prim, .id_count = num_metal};
-    dust_ = IntervalProps{
-      .id_offset = num_prim + num_metal, .id_count = num_dust
-    };
+  SpIdAdaptor() = delete;
+
+  /// @brief Primary Constructor
+  explicit SpIdAdaptor(PartMap<SpKind> sp_kind_map) {
+    int min_id = INT_MAX;
+
+    SpKind kinds[3] = {SpKind::PRIMORDIAL, SpKind::METAL, SpKind::DUST};
+    for (SpKind kind: kinds) {
+      IndexInterval1D b = sp_kind_map.part_bounds(kind);
+      IntervalProps props{.id_offset = b.start, .id_count = b.stop - b.start};
+      if (kind == SpKind::PRIMORDIAL) {
+        prim_ = props;
+      } else if (kind == SpKind::METAL) {
+        metal_ = props;
+      } else {
+        dust_ = props;
+      }
+      min_id = (b.start >= 0 && b.start < min_id) ? b.start : min_id;
+    }
+    fallback_id_ = min_id;
+
+    if (min_id == INT_MAX) { // this should be impossible
+      GR_INTERNAL_ERROR("sp_kind_map contains no species");
+    }
   }
 };
-
 
 /// Perform an implicit Gauss-Seidel sweep of a backward-Euler time integrator
 /// to advance the rate equations by one (sub-)cycle (for each index in the
@@ -118,9 +135,13 @@ public:
 ///     chemistry.
 /// @param[in] my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
-/// @param[in] my_fields Specifies the current values of the field data
+/// @param[in] spdens Specifies the current densities of the various species
+///     that Grackle evolves in a format that allows the values to be accessed
+///     with the index lookup table.
 /// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
 ///     local physical conditions)
+/// @param[in]  sp_kind_map associates intervals of species ids with the kind
+///     with the appropriate @ref SpKind
 ///
 /// Refactoring Goals
 /// -----------------
@@ -168,71 +189,76 @@ public:
 ///   maybe even primordial_chemistry == 3 (but, we'll obviously need to test
 ///   performance).
 inline void species_density_updates_gauss_seidel(
-  View<gr_float**> out_spdens, IndexRange idx_range,
+  View<double**> out_spdens, IndexRange idx_range,
   const double* dtit, gr_mask_type anydust, const double* rhoH,
   const gr_mask_type* itmask, const gr_mask_type* itmask_metal,
-  const chemistry_data* my_chemistry, grackle_field_data* my_fields,
-  const FullRxnRateBuf rxn_rate_buf
+  const chemistry_data* my_chemistry,
+  SpeciesMultiView<const gr_float> spdens,
+  const FullRxnRateBuf rxn_rate_buf, const PartMap<SpKind>& sp_kind_map
 )
 {
-  const SpIdAdaptor spid;
+  const SpIdAdaptor spid(sp_kind_map);
+
 
   // Get pointers to the various species fields
   // ------------------------------------------
-  int ptr_offset_ = layoutleft_3D_index_to_1D_(
-      my_fields->grid_dimension, 0, idx_range.j, idx_range.k);
-
-  const gr_float* de = my_fields->e_density + ptr_offset_;
-  const gr_float* HI = my_fields->HI_density + ptr_offset_;
-  const gr_float* HII = my_fields->HII_density + ptr_offset_;
-  const gr_float* HeI = my_fields->HeI_density + ptr_offset_;
-  const gr_float* HeII = my_fields->HeII_density + ptr_offset_;
-  const gr_float* HeIII = my_fields->HeIII_density + ptr_offset_;
-  const gr_float* HM = my_fields->HM_density + ptr_offset_;
-  const gr_float* H2I = my_fields->H2I_density + ptr_offset_;
-  const gr_float* H2II = my_fields->H2II_density + ptr_offset_;
-  const gr_float* DI = my_fields->DI_density + ptr_offset_;
-  const gr_float* DII = my_fields->DII_density + ptr_offset_;
-  const gr_float* HDI = my_fields->HDI_density + ptr_offset_;
-  const gr_float* DM = my_fields->DM_density + ptr_offset_;
-  const gr_float* HDII = my_fields->HDII_density + ptr_offset_;
-  const gr_float* HeHII = my_fields->HeHII_density + ptr_offset_;
-  const gr_float* CI = my_fields->CI_density + ptr_offset_;
-  const gr_float* CII = my_fields->CII_density + ptr_offset_;
-  const gr_float* COI = my_fields->COI_density + ptr_offset_;
-  const gr_float* CO2I = my_fields->CO2I_density + ptr_offset_;
-  const gr_float* OI = my_fields->OI_density + ptr_offset_;
-  const gr_float* OHI = my_fields->OHI_density + ptr_offset_;
-  const gr_float* H2OI = my_fields->H2OI_density + ptr_offset_;
-  const gr_float* O2I = my_fields->O2I_density + ptr_offset_;
-  const gr_float* SiI = my_fields->SiI_density + ptr_offset_;
-  const gr_float* SiOI = my_fields->SiOI_density + ptr_offset_;
-  const gr_float* SiO2I = my_fields->SiO2I_density + ptr_offset_;
-  const gr_float* CHI = my_fields->CHI_density + ptr_offset_;
-  const gr_float* CH2I = my_fields->CH2I_density + ptr_offset_;
-  const gr_float* COII = my_fields->COII_density + ptr_offset_;
-  const gr_float* OII = my_fields->OII_density + ptr_offset_;
-  const gr_float* OHII = my_fields->OHII_density + ptr_offset_;
-  const gr_float* H2OII = my_fields->H2OII_density + ptr_offset_;
-  const gr_float* H3OII = my_fields->H3OII_density + ptr_offset_;
-  const gr_float* O2II = my_fields->O2II_density + ptr_offset_;
-  const gr_float* Mg = my_fields->Mg_density + ptr_offset_;
-  const gr_float* Al = my_fields->Al_density + ptr_offset_;
-  const gr_float* S = my_fields->S_density + ptr_offset_;
-  const gr_float* Fe = my_fields->Fe_density + ptr_offset_;
-  const gr_float* SiM = my_fields->SiM_dust_density + ptr_offset_;
-  const gr_float* FeM = my_fields->FeM_dust_density + ptr_offset_;
-  const gr_float* Mg2SiO4 = my_fields->Mg2SiO4_dust_density + ptr_offset_;
-  const gr_float* MgSiO3 = my_fields->MgSiO3_dust_density + ptr_offset_;
-  const gr_float* Fe3O4 = my_fields->Fe3O4_dust_density + ptr_offset_;
-  const gr_float* AC = my_fields->AC_dust_density + ptr_offset_;
-  const gr_float* SiO2D = my_fields->SiO2_dust_density + ptr_offset_;
-  const gr_float* MgO = my_fields->MgO_dust_density + ptr_offset_;
-  const gr_float* FeS = my_fields->FeS_dust_density + ptr_offset_;
-  const gr_float* Al2O3 = my_fields->Al2O3_dust_density + ptr_offset_;
-  const gr_float* reforg = my_fields->ref_org_dust_density + ptr_offset_;
-  const gr_float* volorg = my_fields->vol_org_dust_density + ptr_offset_;
-  const gr_float* H2Oice = my_fields->H2O_ice_dust_density + ptr_offset_;
+  // - for now, if Grackle isn't configured to use a species specified in the
+  //   call to `spid.(prim|metal|dust)`, the method will fallback to an
+  //   arbitrary valid index. This avoids undefined behavior and is ok since we
+  //   won't actually use the resulting pointer for anything
+  // - in the future, we should work on conditionally loading species where
+  //   they are needed
+  const gr_float* de = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::e));
+  const gr_float* HI = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HI));
+  const gr_float* HII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HII));
+  const gr_float* HeI = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HeI));
+  const gr_float* HeII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HeII));
+  const gr_float* HeIII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HeIII));
+  const gr_float* HM = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HM));
+  const gr_float* H2I = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::H2I));
+  const gr_float* H2II = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::H2II));
+  const gr_float* DI = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::DI));
+  const gr_float* DII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::DII));
+  const gr_float* HDI = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HDI));
+  const gr_float* DM = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::DM));
+  const gr_float* HDII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HDII));
+  const gr_float* HeHII = spdens.contig1d_ptr(spid.prim(PrimordialSpLUT::HeHII));
+  const gr_float* CI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::CI));
+  const gr_float* CII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::CII));
+  const gr_float* COI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::COI));
+  const gr_float* CO2I = spdens.contig1d_ptr(spid.metal(MetalSpLUT::CO2I));
+  const gr_float* OI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::OI));
+  const gr_float* OHI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::OHI));
+  const gr_float* H2OI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::H2OI));
+  const gr_float* O2I = spdens.contig1d_ptr(spid.metal(MetalSpLUT::O2I));
+  const gr_float* SiI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::SiI));
+  const gr_float* SiOI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::SiOI));
+  const gr_float* SiO2I = spdens.contig1d_ptr(spid.metal(MetalSpLUT::SiO2I));
+  const gr_float* CHI = spdens.contig1d_ptr(spid.metal(MetalSpLUT::CHI));
+  const gr_float* CH2I = spdens.contig1d_ptr(spid.metal(MetalSpLUT::CH2I));
+  const gr_float* COII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::COII));
+  const gr_float* OII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::OII));
+  const gr_float* OHII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::OHII));
+  const gr_float* H2OII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::H2OII));
+  const gr_float* H3OII = spdens.contig1d_ptr(spid.metal(MetalSpLUT::H3OII));
+  const gr_float* O2II = spdens.contig1d_ptr(spid.metal(MetalSpLUT::O2II));
+  const gr_float* Mg = spdens.contig1d_ptr(spid.metal(MetalSpLUT::Mg));
+  const gr_float* Al = spdens.contig1d_ptr(spid.metal(MetalSpLUT::Al));
+  const gr_float* S = spdens.contig1d_ptr(spid.metal(MetalSpLUT::S));
+  const gr_float* Fe = spdens.contig1d_ptr(spid.metal(MetalSpLUT::Fe));
+  const gr_float* SiM = spdens.contig1d_ptr(spid.dust(DustSpLUT::SiM_dust));
+  const gr_float* FeM = spdens.contig1d_ptr(spid.dust(DustSpLUT::FeM_dust));
+  const gr_float* Mg2SiO4 = spdens.contig1d_ptr(spid.dust(DustSpLUT::Mg2SiO4_dust));
+  const gr_float* MgSiO3 = spdens.contig1d_ptr(spid.dust(DustSpLUT::MgSiO3_dust));
+  const gr_float* Fe3O4 = spdens.contig1d_ptr(spid.dust(DustSpLUT::Fe3O4_dust));
+  const gr_float* AC = spdens.contig1d_ptr(spid.dust(DustSpLUT::AC_dust));
+  const gr_float* SiO2D = spdens.contig1d_ptr(spid.dust(DustSpLUT::SiO2_dust));
+  const gr_float* MgO = spdens.contig1d_ptr(spid.dust(DustSpLUT::MgO_dust));
+  const gr_float* FeS = spdens.contig1d_ptr(spid.dust(DustSpLUT::FeS_dust));
+  const gr_float* Al2O3 = spdens.contig1d_ptr(spid.dust(DustSpLUT::Al2O3_dust));
+  const gr_float* reforg = spdens.contig1d_ptr(spid.dust(DustSpLUT::ref_org_dust));
+  const gr_float* volorg = spdens.contig1d_ptr(spid.dust(DustSpLUT::vol_org_dust));
+  const gr_float* H2Oice = spdens.contig1d_ptr(spid.dust(DustSpLUT::H2O_ice_dust));
 
   // locals
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
@@ -415,7 +441,11 @@ inline void species_density_updates_gauss_seidel(
                + 2.*kcol_buf[CollisionalRxnLUT::k16][i]* HM[i]  * HII[i]
                + 2.*kcol_buf[CollisionalRxnLUT::k18][i]* H2II[i]* de[i]/2.
                +      kcol_buf[CollisionalRxnLUT::k19][i]* H2II[i]* HM[i]/2.
-               + 2.*kph_buf[PhotoRxnLUT::k31][i]   * H2I[i]/2.;
+               + 2.*kph_buf[PhotoRxnLUT::k31][i]   * H2I[i]/2.
+               // H from H- photodetachment (k27: H- + hv -> H + e) and
+               // H2+ photodissociation (k28: H2+ + hv -> H + H+)
+               +      kph_buf[PhotoRxnLUT::k27][i]   * HM[i]
+               +      kph_buf[PhotoRxnLUT::k28][i]   * H2II[i]/2.;
 
         acoef  =      kcol_buf[CollisionalRxnLUT::k1][i] * de[i]
                +      kcol_buf[CollisionalRxnLUT::k7][i] * de[i]
@@ -528,7 +558,11 @@ inline void species_density_updates_gauss_seidel(
                +    kcol_buf[CollisionalRxnLUT::k10][i] * H2II[i]*HI[i]/2.
                +    kcol_buf[CollisionalRxnLUT::k57][i] * HI[i] * HI[i]
                +    kcol_buf[CollisionalRxnLUT::k58][i] * HI[i] * HeI[i]/4.
-               + kph_buf[PhotoRxnLUT::k24][i]*HI[i];
+               + kph_buf[PhotoRxnLUT::k24][i]*HI[i]
+               // H+ from H2+ photodissociation (k28: H2+ + hv -> H + H+ and
+               // k30: H2+ + hv -> 2H+ + e)
+               + kph_buf[PhotoRxnLUT::k28][i]*H2II[i]/2.
+               + kph_buf[PhotoRxnLUT::k30][i]*H2II[i];
 
         acoef  =    kcol_buf[CollisionalRxnLUT::k2][i]  * de[i]
                +    kcol_buf[CollisionalRxnLUT::k9][i]  * HI[i]
@@ -580,7 +614,12 @@ inline void species_density_updates_gauss_seidel(
         // 
                + kph_buf[PhotoRxnLUT::k24][i]*out_spdens(spid.prim(PrimordialSpLUT::HI), i)
                + kph_buf[PhotoRxnLUT::k25][i]*out_spdens(spid.prim(PrimordialSpLUT::HeII), i)/4.
-               + kph_buf[PhotoRxnLUT::k26][i]*out_spdens(spid.prim(PrimordialSpLUT::HeI), i)/4.;
+               + kph_buf[PhotoRxnLUT::k26][i]*out_spdens(spid.prim(PrimordialSpLUT::HeI), i)/4.
+               // electrons released by k27 (H- + hv -> H + e),
+               // k29 (H2 + hv -> H2+ + e) and k30 (H2+ + hv -> 2H+ + e)
+               + kph_buf[PhotoRxnLUT::k27][i]*HM[i]
+               + kph_buf[PhotoRxnLUT::k29][i]*H2I[i]/2.
+               + kph_buf[PhotoRxnLUT::k30][i]*H2II[i]/2.;
 
         if ( (my_chemistry->metal_chemistry == 1)  &&
              (itmask_metal[i] != MASK_FALSE) )  {
@@ -597,6 +636,11 @@ inline void species_density_updates_gauss_seidel(
                 +  kcol_buf[CollisionalRxnLUT::k14][i]*HM[i]
                 -  kcol_buf[CollisionalRxnLUT::k7][i] *HI[i]
                 -  kcol_buf[CollisionalRxnLUT::k18][i]*H2II[i]/2.);
+        // D photoionization uses k24 like HI and releases one electron
+        // per D atom. DI stores twice its number density in mass units.
+        if (my_chemistry->primordial_chemistry > 2) {
+          scoef += kph_buf[PhotoRxnLUT::k24][i] * DI[i] / 2.;
+        }
 #ifdef CONTRIBUTION_OF_MINOR_SPECIES
         if (my_chemistry->primordial_chemistry > 2)  {
           scoef = scoef
@@ -730,7 +774,8 @@ inline void species_density_updates_gauss_seidel(
                 kcol_buf[CollisionalRxnLUT::k9][i]*out_spdens(spid.prim(PrimordialSpLUT::HI), i)*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
               + kcol_buf[CollisionalRxnLUT::k11][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)/2.*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
               + kcol_buf[CollisionalRxnLUT::k17][i]*out_spdens(spid.prim(PrimordialSpLUT::HM), i)*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
-              + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)
+              // k29 (H2 + hv -> H2+ + e) acts on the H2 number density (H2I/2)
+              + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)/2.
                  )
             / (
                 kcol_buf[CollisionalRxnLUT::k10][i]*out_spdens(spid.prim(PrimordialSpLUT::HI), i)
@@ -744,7 +789,7 @@ inline void species_density_updates_gauss_seidel(
                   kcol_buf[CollisionalRxnLUT::k9] [i]*out_spdens(spid.prim(PrimordialSpLUT::HI), i)*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
                 + kcol_buf[CollisionalRxnLUT::k11][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)/2.*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
                 + kcol_buf[CollisionalRxnLUT::k17][i]*out_spdens(spid.prim(PrimordialSpLUT::HM), i)*out_spdens(spid.prim(PrimordialSpLUT::HII), i)
-                + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)
+                + kph_buf[PhotoRxnLUT::k29][i]*out_spdens(spid.prim(PrimordialSpLUT::H2I), i)/2.
                 + kcol_buf[CollisionalRxnLUT::k152][i]*HeHII[i]*out_spdens(spid.prim(PrimordialSpLUT::HI), i)/5.
                    )
               / (
@@ -1490,9 +1535,13 @@ inline void species_density_updates_gauss_seidel(
 ///     chemistry
 /// @param[in]  my_chemistry Provides various runtime parameters (we probably
 ///     don't need to pass the whole thing)
-/// @param[in]  my_fields Specifies field data
-/// @param[in] rxn_rate_buf specifies the precomputed rxn rates (depends on
+/// @param[in]  spdens Specifies the current densities of the various species
+///     that Grackle evolves in a format that allows the values to be accessed
+///     with the index lookup table.
+/// @param[in]  rxn_rate_buf specifies the precomputed rxn rates (depends on
 ///     local physical conditions)
+/// @param[in]  sp_kind_map associates intervals of species ids with the kind
+///     with the appropriate @ref SpKind
 ///
 /// @note
 /// Some of occurences of the const keyword is somewhat symbolic (to indicate
@@ -1516,76 +1565,72 @@ inline void species_density_updates_gauss_seidel(
 ///    - notably, part (D) does not do this (but I'm not sure that there
 ///      is a reasonable motivation for that choice)
 inline void species_density_derivatives_0d(
-  View<double**> deriv, gr_mask_type anydust,
+  View<gr_float**> deriv, gr_mask_type anydust,
   const double* rhoH, const gr_mask_type* itmask_metal,
-  const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
-  const FullRxnRateBuf rxn_rate_buf
+  const chemistry_data* my_chemistry,
+  SpeciesMultiView<const gr_float> spdens,
+  const FullRxnRateBuf rxn_rate_buf, const PartMap<SpKind>& sp_kind_map
 ) {
-  const SpIdAdaptor spid;
+  const SpIdAdaptor spid(sp_kind_map);
 
   // define some local variables carried over from the fortran version:
   // - the goal is to eventually remove all of these
-  // - originally we only conditionally defined some of these variables, but
-  //   there honestly isn't any benefit to doing that (the memory is allocated
-  //   already)
-  // - originally, each of these variables was a stack allocated variable that
-  //   held a copy of the corresponding entry in dsp. Now, these variables are
-  //   references to casted copies taken from dsp
-  // - we aren't being that consistent with the historic implementation when
-  //   gr_float isn't the same as double (but, the historical implementation
-  //   definitely didn't handle this case properly)
+  // - for now, if Grackle isn't configured to use a species specified in the
+  //   call to `spid.(prim|metal|dust)`, the method will fallback to an
+  //   arbitrary valid index. This avoids undefined behavior and is ok since we
+  //   won't actually use the resulting reference for anything
 
-  const gr_float& de      = my_fields->e_density[0];
-  const gr_float& HI      = my_fields->HI_density[0];
-  const gr_float& HII     = my_fields->HII_density[0];
-  const gr_float& HeI     = my_fields->HeI_density[0];
-  const gr_float& HeII    = my_fields->HeII_density[0];
-  const gr_float& HeIII   = my_fields->HeIII_density[0];
-  const gr_float& HM      = my_fields->HM_density[0];
-  const gr_float& H2I     = my_fields->H2I_density[0];
-  const gr_float& H2II    = my_fields->H2II_density[0];
-  const gr_float& DI      = my_fields->DI_density[0];
-  const gr_float& DII     = my_fields->DII_density[0];
-  const gr_float& HDI     = my_fields->HDI_density[0];
-  const gr_float& DM      = my_fields->DM_density[0];
-  const gr_float& HDII    = my_fields->HDII_density[0];
-  const gr_float& HeHII   = my_fields->HeHII_density[0];
-  const gr_float& CI      = my_fields->CI_density[0];
-  const gr_float& CII     = my_fields->CII_density[0];
-  const gr_float& COI     = my_fields->COI_density[0];
-  const gr_float& CO2I    = my_fields->CO2I_density[0];
-  const gr_float& OI      = my_fields->OI_density[0];
-  const gr_float& OHI     = my_fields->OHI_density[0];
-  const gr_float& H2OI    = my_fields->H2OI_density[0];
-  const gr_float& O2I     = my_fields->O2I_density[0];
-  const gr_float& SiI     = my_fields->SiI_density[0];
-  const gr_float& SiOI    = my_fields->SiOI_density[0];
-  const gr_float& SiO2I   = my_fields->SiO2I_density[0];
-  const gr_float& CHI     = my_fields->CHI_density[0];
-  const gr_float& CH2I    = my_fields->CH2I_density[0];
-  const gr_float& COII    = my_fields->COII_density[0];
-  const gr_float& OII     = my_fields->OII_density[0];
-  const gr_float& OHII    = my_fields->OHII_density[0];
-  const gr_float& H2OII   = my_fields->H2OII_density[0];
-  const gr_float& H3OII   = my_fields->H3OII_density[0];
-  const gr_float& O2II    = my_fields->O2II_density[0];
-  const gr_float& Mg      = my_fields->Mg_density[0];
-  const gr_float& Al      = my_fields->Al_density[0];
-  const gr_float& S       = my_fields->S_density[0];
-  const gr_float& Fe      = my_fields->Fe_density[0];
-  const gr_float& MgSiO3  = my_fields->MgSiO3_dust_density[0];
-  const gr_float& AC      = my_fields->AC_dust_density[0];
-  const gr_float& SiM     = my_fields->SiM_dust_density[0];
-  const gr_float& FeM     = my_fields->FeM_dust_density[0];
-  const gr_float& Mg2SiO4 = my_fields->Mg2SiO4_dust_density[0];
-  const gr_float& Fe3O4   = my_fields->Fe3O4_dust_density[0];
-  const gr_float& SiO2D   = my_fields->SiO2_dust_density[0];
-  const gr_float& MgO     = my_fields->MgO_dust_density[0];
-  const gr_float& FeS     = my_fields->FeS_dust_density[0];
-  const gr_float& Al2O3   = my_fields->Al2O3_dust_density[0];
-  const gr_float& reforg  = my_fields->ref_org_dust_density[0];
-  const gr_float& volorg  = my_fields->vol_org_dust_density[0];
-  const gr_float& H2Oice  = my_fields->H2O_ice_dust_density[0];
+  const gr_float& de      = spdens(spid.prim(PrimordialSpLUT::e), 0);
+  const gr_float& HI      = spdens(spid.prim(PrimordialSpLUT::HI), 0);
+  const gr_float& HII     = spdens(spid.prim(PrimordialSpLUT::HII), 0);
+  const gr_float& HeI     = spdens(spid.prim(PrimordialSpLUT::HeI), 0);
+  const gr_float& HeII    = spdens(spid.prim(PrimordialSpLUT::HeII), 0);
+  const gr_float& HeIII   = spdens(spid.prim(PrimordialSpLUT::HeIII), 0);
+  const gr_float& HM      = spdens(spid.prim(PrimordialSpLUT::HM), 0);
+  const gr_float& H2I     = spdens(spid.prim(PrimordialSpLUT::H2I), 0);
+  const gr_float& H2II    = spdens(spid.prim(PrimordialSpLUT::H2II), 0);
+  const gr_float& DI      = spdens(spid.prim(PrimordialSpLUT::DI), 0);
+  const gr_float& DII     = spdens(spid.prim(PrimordialSpLUT::DII), 0);
+  const gr_float& HDI     = spdens(spid.prim(PrimordialSpLUT::HDI), 0);
+  const gr_float& DM      = spdens(spid.prim(PrimordialSpLUT::DM), 0);
+  const gr_float& HDII    = spdens(spid.prim(PrimordialSpLUT::HDII), 0);
+  const gr_float& HeHII   = spdens(spid.prim(PrimordialSpLUT::HeHII), 0);
+  const gr_float& CI      = spdens(spid.metal(MetalSpLUT::CI), 0);
+  const gr_float& CII     = spdens(spid.metal(MetalSpLUT::CII), 0);
+  const gr_float& COI     = spdens(spid.metal(MetalSpLUT::COI), 0);
+  const gr_float& CO2I    = spdens(spid.metal(MetalSpLUT::CO2I), 0);
+  const gr_float& OI      = spdens(spid.metal(MetalSpLUT::OI), 0);
+  const gr_float& OHI     = spdens(spid.metal(MetalSpLUT::OHI), 0);
+  const gr_float& H2OI    = spdens(spid.metal(MetalSpLUT::H2OI), 0);
+  const gr_float& O2I     = spdens(spid.metal(MetalSpLUT::O2I), 0);
+  const gr_float& SiI     = spdens(spid.metal(MetalSpLUT::SiI), 0);
+  const gr_float& SiOI    = spdens(spid.metal(MetalSpLUT::SiOI), 0);
+  const gr_float& SiO2I   = spdens(spid.metal(MetalSpLUT::SiO2I), 0);
+  const gr_float& CHI     = spdens(spid.metal(MetalSpLUT::CHI), 0);
+  const gr_float& CH2I    = spdens(spid.metal(MetalSpLUT::CH2I), 0);
+  const gr_float& COII    = spdens(spid.metal(MetalSpLUT::COII), 0);
+  const gr_float& OII     = spdens(spid.metal(MetalSpLUT::OII), 0);
+  const gr_float& OHII    = spdens(spid.metal(MetalSpLUT::OHII), 0);
+  const gr_float& H2OII   = spdens(spid.metal(MetalSpLUT::H2OII), 0);
+  const gr_float& H3OII   = spdens(spid.metal(MetalSpLUT::H3OII), 0);
+  const gr_float& O2II    = spdens(spid.metal(MetalSpLUT::O2II), 0);
+  const gr_float& Mg      = spdens(spid.metal(MetalSpLUT::Mg), 0);
+  const gr_float& Al      = spdens(spid.metal(MetalSpLUT::Al), 0);
+  const gr_float& S       = spdens(spid.metal(MetalSpLUT::S), 0);
+  const gr_float& Fe      = spdens(spid.metal(MetalSpLUT::Fe), 0);
+  const gr_float& MgSiO3  = spdens(spid.dust(DustSpLUT::MgSiO3_dust), 0);
+  const gr_float& AC      = spdens(spid.dust(DustSpLUT::AC_dust), 0);
+  const gr_float& SiM     = spdens(spid.dust(DustSpLUT::SiM_dust), 0);
+  const gr_float& FeM     = spdens(spid.dust(DustSpLUT::FeM_dust), 0);
+  const gr_float& Mg2SiO4 = spdens(spid.dust(DustSpLUT::Mg2SiO4_dust), 0);
+  const gr_float& Fe3O4   = spdens(spid.dust(DustSpLUT::Fe3O4_dust), 0);
+  const gr_float& SiO2D   = spdens(spid.dust(DustSpLUT::SiO2_dust), 0);
+  const gr_float& MgO     = spdens(spid.dust(DustSpLUT::MgO_dust), 0);
+  const gr_float& FeS     = spdens(spid.dust(DustSpLUT::FeS_dust), 0);
+  const gr_float& Al2O3   = spdens(spid.dust(DustSpLUT::Al2O3_dust), 0);
+  const gr_float& reforg  = spdens(spid.dust(DustSpLUT::ref_org_dust), 0);
+  const gr_float& volorg  = spdens(spid.dust(DustSpLUT::vol_org_dust), 0);
+  const gr_float& H2Oice  = spdens(spid.dust(DustSpLUT::H2O_ice_dust), 0);
 
   const double* const* kcol_buf = FullRxnRateBuf_kcol_bufs(&rxn_rate_buf);
   const double* const* kph_buf = FullRxnRateBuf_kph_bufs(&rxn_rate_buf);
@@ -1757,7 +1802,11 @@ inline void species_density_derivatives_0d(
            + 2.*kcol_buf[CollisionalRxnLUT::k16][0]   * HM         * HII
            + 2.*kcol_buf[CollisionalRxnLUT::k18][0]   * H2II       * de       /2.
            +      kcol_buf[CollisionalRxnLUT::k19][0]   * H2II       * HM       /2.
-           + 2.*kph_buf[PhotoRxnLUT::k31][0]      * H2I       /2.;
+           + 2.*kph_buf[PhotoRxnLUT::k31][0]      * H2I       /2.
+           // H from H- photodetachment (k27: H- + hv -> H + e) and
+           // H2+ photodissociation (k28: H2+ + hv -> H + H+)
+           +      kph_buf[PhotoRxnLUT::k27][0]      * HM
+           +      kph_buf[PhotoRxnLUT::k28][0]      * H2II      /2.;
 
     acoef  =      kcol_buf[CollisionalRxnLUT::k1][0]    * de
            +      kcol_buf[CollisionalRxnLUT::k7][0]    * de
@@ -1868,7 +1917,11 @@ inline void species_density_derivatives_0d(
            +    kcol_buf[CollisionalRxnLUT::k10][0]    * H2II       *HI       /2.
            +    kcol_buf[CollisionalRxnLUT::k57][0]    * HI        * HI
            +    kcol_buf[CollisionalRxnLUT::k58][0]    * HI        * HeI       /4.
-           + kph_buf[PhotoRxnLUT::k24][0]   *HI;
+           + kph_buf[PhotoRxnLUT::k24][0]   *HI
+           // H+ from H2+ photodissociation (k28: H2+ + hv -> H + H+ and
+           // k30: H2+ + hv -> 2H+ + e)
+           + kph_buf[PhotoRxnLUT::k28][0]   *H2II      /2.
+           + kph_buf[PhotoRxnLUT::k30][0]   *H2II;
 
     acoef  =    kcol_buf[CollisionalRxnLUT::k2][0]     * de
            +    kcol_buf[CollisionalRxnLUT::k9][0]     * HI
@@ -1921,7 +1974,12 @@ inline void species_density_derivatives_0d(
     // 
            + kph_buf[PhotoRxnLUT::k24][0]   *HI
            + kph_buf[PhotoRxnLUT::k25][0]   *HeII    /4.
-           + kph_buf[PhotoRxnLUT::k26][0]   *HeI    /4.;
+           + kph_buf[PhotoRxnLUT::k26][0]   *HeI    /4.
+           // electrons released by k27 (H- + hv -> H + e),
+           // k29 (H2 + hv -> H2+ + e) and k30 (H2+ + hv -> 2H+ + e)
+           + kph_buf[PhotoRxnLUT::k27][0]   *HM
+           + kph_buf[PhotoRxnLUT::k29][0]   *H2I     /2.
+           + kph_buf[PhotoRxnLUT::k30][0]   *H2II    /2.;
 
     if ((my_chemistry->metal_chemistry == 1)  &&
         (itmask_metal[0] != MASK_FALSE))  {
@@ -1941,7 +1999,9 @@ inline void species_density_derivatives_0d(
     // contribution of minor species
     if (my_chemistry->primordial_chemistry > 2)  {
       scoef = scoef
-            + kcol_buf[CollisionalRxnLUT::k56][0]    * DI         * HM        / 2.;
+            + kcol_buf[CollisionalRxnLUT::k56][0]    * DI         * HM        / 2.
+            // D + photon -> D+ + e; DI is a mass-density field.
+            + kph_buf[PhotoRxnLUT::k24][0]          * DI                   / 2.;
       acoef = acoef
             - kcol_buf[CollisionalRxnLUT::k1][0]     * DI         / 2.
             + kcol_buf[CollisionalRxnLUT::k2][0]     * DII        / 2.;
@@ -2861,8 +2921,7 @@ inline void species_density_derivatives_0d(
 }
 
 
+}  // namespace chemistry
+}  // namespace GRIMPL_NAMESPACE_DECL
 
-
-} // namespace grackle::impl::chemistry
-
-#endif /* CHEMISTRY_SOLVER_FUNCS_HPP */
+#endif  // CHEMISTRY_SOLVER_FUNCS_HPP
