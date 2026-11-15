@@ -15,6 +15,7 @@
 
 #include "../../support/config.hpp"
 #include "../../grackle_macros.h"  // tiny_fortran_val
+#include "../opac_with_deriv.hpp"
 
 #include <cmath>
 
@@ -67,6 +68,31 @@ public:
     } else {
       return std::fmax(tiny_fortran_val,
                        (kgr200 * std::pow(tdust / 1.5e3, -12)));
+    }
+  }
+
+  /// @brief Calculate the opacity and its derivative with respect to dust
+  ///     temperature
+  ///
+  /// The returned opacity is identical to the value returned by
+  /// @ref calc_opac. The derivative is the analytic derivative of the branch
+  /// that @ref calc_opac uses for @p tdust. Consequently, the derivative is
+  /// discontinuous at 200 K and at the sublimation temperature (when @p tdust
+  /// is exactly equal to either value, it is the right-sided derivative).
+  ///
+  /// @note
+  /// The branch conditions must stay consistent with those in @ref calc_opac
+  OpacWithDeriv calc_opac_with_deriv(double tdust, int i) const noexcept {
+    double kgr = calc_opac(tdust, i);
+    if (tdust < 200.) {
+      return {kgr, 2.0 * kgr1 * tdust};
+    } else if (tdust < t_subl) {
+      return {kgr, 0.0};
+    } else if (kgr > tiny_fortran_val) {
+      return {kgr, -12.0 * kgr / tdust};
+    } else {
+      // the opacity floor applies
+      return {kgr, 0.0};
     }
   }
 };
