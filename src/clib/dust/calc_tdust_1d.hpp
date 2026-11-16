@@ -22,7 +22,7 @@
 #include "support/index_helper.hpp"
 #include "utils-cpp.hpp"
 
-#include <cmath>    // std::pow
+#include <cmath>  // std::pow
 #include <cstdlib>  // std::getenv // TODO: to be removed after testing is complete
 #include <cstring>  // std::strcmp // TODO: to be removed after testing is complete
 #include <vector>
@@ -97,8 +97,7 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
 inline solve_eqn::FnWithDeriv calc_grain_balance_with_deriv(
     double Tdust, double Tgas, double kgr, double dkgr_dT, double Trad4,
     double gasgr, double gamma_isrf, double nH) {
-  double f =
-      calc_grain_balance(Tdust, Tgas, kgr, Trad4, gasgr, gamma_isrf, nH);
+  double f = calc_grain_balance(Tdust, Tgas, kgr, Trad4, gasgr, gamma_isrf, nH);
   double df_dT = sigma_sb_times_4 * (dkgr_dT * (Trad4 - std::pow(Tdust, 4)) -
                                      4.0 * kgr * std::pow(Tdust, 3)) -
                  gasgr * nH;
@@ -290,10 +289,10 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
         };
         const solve_eqn::NewtonParams analytic_newton_params{.maxiter = itmax,
                                                              .rtol = 1.e-5};
-        rslt = unchecked_posdomain_newton(
-            fn_with_deriv, x, solvemask.data(), idx_range.i_start,
-            idx_range.i_stop, analytic_newton_params, giveup_small_x_threshold,
-            max_x);
+        rslt = unchecked_posdomain_newton(fn_with_deriv, x, solvemask.data(),
+                                          idx_range.i_start, idx_range.i_stop,
+                                          analytic_newton_params,
+                                          giveup_small_x_threshold, max_x);
       } else {
         rslt = run_fdiff_newton();
       }

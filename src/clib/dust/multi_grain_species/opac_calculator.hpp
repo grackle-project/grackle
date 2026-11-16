@@ -61,17 +61,17 @@ public:
     return std::pow(10., logkgr);
   }
 
-  /// @brief Calculate mean plank opacity and its derivative with respect to dust
-  ///     temperature for the dust grain
+  /// @brief Calculate mean plank opacity and its derivative with respect to
+  ///     dust temperature for the dust grain
   ///
   /// The returned opacity is identical to the value returned by
-  /// @ref calc_opac. The derivative is computed analytically using the derivative
-  /// of the interpolation polynomial.
+  /// @ref calc_opac. The derivative is computed analytically using the
+  /// derivative of the interpolation polynomial.
   ///
-  /// Within a table interval, log10(opacity) is linear in log10(tdust) with slope ``s``,
-  /// so ``d(opacity)/d(tdust) = opacity * s / tdust``. The derivative is
-  /// discontinuous at the table nodes (for a @p tdust lying exactly on a node,
-  /// it uses the slope of the bin above the node).
+  /// Within a table interval, log10(opacity) is linear in log10(tdust) with
+  /// slope ``s``, so ``d(opacity)/d(tdust) = opacity * s / tdust``. The
+  /// derivative is discontinuous at the table nodes (for a @p tdust lying
+  /// exactly on a node, it uses the slope of the bin above the node).
   OpacWithDeriv calc_opac_with_deriv(double tdust, int i) const noexcept {
     // slope is d log10(opacity) / d log10(tdust)
     InterpWithSlope logkgr = interpolate_1d_with_slope(

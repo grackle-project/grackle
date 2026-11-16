@@ -308,7 +308,8 @@ struct FnWithDeriv {
   double df_dx;
 };
 
-/// @brief Parameters for the positive-domain newton method, with analytic derivatives
+/// @brief Parameters for the positive-domain newton method, with analytic
+/// derivatives
 struct NewtonParams {
   /// maximum number of iterations
   int maxiter;
@@ -358,9 +359,8 @@ struct NewtonParams {
 /// reflected by the name of this function template.
 template <typename Fn>
 static EqnSolveRslt unchecked_posdomain_newton(
-    const Fn& fn, double* x, SolveStatus* solvemask, 
-    int i_start, int i_stop, const NewtonParams& param,
-    double giveup_small_x_threshold, double max_x) {
+    const Fn& fn, double* x, SolveStatus* solvemask, int i_start, int i_stop,
+    const NewtonParams& param, double giveup_small_x_threshold, double max_x) {
   int n_to_solve = 0;
 
   for (int i = i_start; i < i_stop; i++) {
