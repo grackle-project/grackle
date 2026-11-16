@@ -16,7 +16,7 @@
 #include "../../interpolate.hpp"
 #include "../../support/config.hpp"
 #include "../../support/View.hpp"
-#include "../opac_with_deriv.hpp"
+#include "../../math/value_with_deriv.hpp"
 
 #include <cstdint>
 
@@ -72,14 +72,15 @@ public:
   /// slope ``s``, so ``d(opacity)/d(tdust) = opacity * s / tdust``. The
   /// derivative is discontinuous at the table nodes (for a @p tdust lying
   /// exactly on a node, it uses the slope of the bin above the node).
-  OpacWithDeriv calc_opac_with_deriv(double tdust, int i) const noexcept {
-    // slope is d log10(opacity) / d log10(tdust)
-    InterpWithSlope logkgr = interpolate_1d_with_slope(
+  ValueWithDeriv calc_opac_with_deriv(double tdust, int i) const noexcept {
+    // the table is interpolated in log-log space, so the slope is
+    // d log10(opacity) / d log10(tdust)
+    auto [log10kgr, dlog10kgr_dlog10T] = interpolate_1d_with_slope(
         std::log10(tdust), &gr_N_, log10Tdust_vals_, dlog10Tdust_, gr_N_,
         log10kappa.contig1d_ptr(i));
 
-    double kgr = std::pow(10., logkgr.value);
-    return {kgr, kgr * logkgr.slope / tdust};
+    double kgr = std::pow(10., log10kgr);
+    return {kgr, kgr * dlog10kgr_dlog10T / tdust};
   }
 };
 

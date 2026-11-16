@@ -113,7 +113,6 @@ add_library(Grackle_Grackle
   dust/multi_grain_species/dust_props.hpp
   dust/multi_grain_species/opac_calculator.hpp
   dust/misc.hpp
-  dust/opac_with_deriv.hpp
   dust/passive/analytic_opac.hpp
   dust/solver.cpp dust/solver.hpp
   dynamic_api.cpp
@@ -141,6 +140,7 @@ add_library(Grackle_Grackle
   math/integrate.hpp
   math/solve_eqn.cpp math/solve_eqn.hpp
   math/misc.hpp
+  math/value_with_deriv.hpp
   opaque_storage.cpp opaque_storage.hpp
   phys_constants.hpp
   ratequery.cpp ratequery.hpp

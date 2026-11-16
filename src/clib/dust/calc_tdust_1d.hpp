@@ -18,6 +18,7 @@
 
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "math/solve_eqn.hpp"
+#include "math/value_with_deriv.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
 #include "utils-cpp.hpp"
@@ -94,9 +95,11 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
 /// @param gamma_isrf Heating from interstellar radiation field
 /// @param nH hydrogen number density
 ///
-inline solve_eqn::FnWithDeriv calc_grain_balance_with_deriv(
-    double Tdust, double Tgas, double kgr, double dkgr_dT, double Trad4,
-    double gasgr, double gamma_isrf, double nH) {
+inline ValueWithDeriv calc_grain_balance_with_deriv(double Tdust, double Tgas,
+                                                    double kgr, double dkgr_dT,
+                                                    double Trad4, double gasgr,
+                                                    double gamma_isrf,
+                                                    double nH) {
   double f = calc_grain_balance(Tdust, Tgas, kgr, Trad4, gasgr, gamma_isrf, nH);
   double df_dT = sigma_sb_times_4 * (dkgr_dT * (Trad4 - std::pow(Tdust, 4)) -
                                      4.0 * kgr * std::pow(Tdust, 3)) -
@@ -280,12 +283,11 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
     solve_eqn::EqnSolveRslt rslt;
     if constexpr (requires { calculator.calc_opac_with_deriv(1.0, 0); }) {
       if (newton_kind == TdustNewtonKind::ANALYTIC) {
-        auto fn_with_deriv = [&](double Tdust,
-                                 int i) -> solve_eqn::FnWithDeriv {
-          auto opac = calculator.calc_opac_with_deriv(Tdust, i);
+        auto fn_with_deriv = [&](double Tdust, int i) -> ValueWithDeriv {
+          auto [kgr, dkgr_dT] = calculator.calc_opac_with_deriv(Tdust, i);
           return Tdust_detail::calc_grain_balance_with_deriv(
-              Tdust, tgas[i], opac.kgr, opac.dkgr_dT, Trad4, gasgr[i],
-              gamma_isrf[i], nh[i]);
+              Tdust, tgas[i], kgr, dkgr_dT, Trad4, gasgr[i], gamma_isrf[i],
+              nh[i]);
         };
         const solve_eqn::NewtonParams analytic_newton_params{.maxiter = itmax,
                                                              .rtol = 1.e-5};

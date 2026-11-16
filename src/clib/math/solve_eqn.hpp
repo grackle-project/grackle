@@ -16,6 +16,7 @@
 #include <cmath>
 
 #include "./misc.hpp"
+#include "./value_with_deriv.hpp"
 #include "support/config.hpp"  // GRIMPL_NAMESPACE_DECL
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -300,14 +301,6 @@ static EqnSolveRslt unchecked_posdomain_fdiff_newton(
   return {(n_to_solve == 0) && !any_giveups, iter + 1};
 }
 
-/// @brief Holds the value of a function and its derivative
-struct FnWithDeriv {
-  // Function value
-  double f;
-  // Function derivative value
-  double df_dx;
-};
-
 /// @brief Parameters for the positive-domain newton method, with analytic
 /// derivatives
 struct NewtonParams {
@@ -332,7 +325,7 @@ struct NewtonParams {
 ///
 /// @param[in]    fn Function object representing the mathematical function for
 ///    which roots are computed. This should have a signature of the form
-///    `FnWithDeriv fn(double x, int i)` where `i` refers to an associated
+///    `ValueWithDeriv fn(double x, int i)` where `i` refers to an associated
 ///    array index
 /// @param[inout] x Array of initial guesses for the root. Elements are updated
 ///    in place as the root is searched for.
@@ -372,8 +365,8 @@ static EqnSolveRslt unchecked_posdomain_newton(
   for (iter = 0; (iter < param.maxiter) && (n_to_solve > 0); iter++) {
     for (int i = i_start; i < i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
-        FnWithDeriv fd = fn(x[i], i);
-        double step = fd.f / fd.df_dx;
+        auto [f, df_dx] = fn(x[i], i);
+        double step = f / df_dx;
         // a zero derivative or a non-finite function value yields a
         // non-finite step. We don't need to check for tiny derivatives: the
         // resulting huge step is caught by the domain checks below

@@ -15,7 +15,7 @@
 
 #include "../../support/config.hpp"
 #include "../../grackle_macros.h"  // tiny_fortran_val
-#include "../opac_with_deriv.hpp"
+#include "../../math/value_with_deriv.hpp"
 
 #include <cmath>
 
@@ -82,7 +82,7 @@ public:
   ///
   /// @note
   /// The branch conditions must stay consistent with those in @ref calc_opac
-  OpacWithDeriv calc_opac_with_deriv(double tdust, int i) const noexcept {
+  ValueWithDeriv calc_opac_with_deriv(double tdust, int i) const noexcept {
     double kgr = calc_opac(tdust, i);
     if (tdust < 200.) {
       return {kgr, 2.0 * kgr1 * tdust};
@@ -91,7 +91,6 @@ public:
     } else if (kgr > tiny_fortran_val) {
       return {kgr, -12.0 * kgr / tdust};
     } else {
-      // the opacity floor applies
       return {kgr, 0.0};
     }
   }
