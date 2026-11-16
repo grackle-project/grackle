@@ -121,17 +121,19 @@ enum class TdustNewtonKind {
 // TODO: to be removed after testing is complete
 /// @brief Returns the newton variant selected by the ``GRACKLE_TDUST_NEWTON``
 ///     environment variable
+///
+/// The analytic variant is used unless ``GRACKLE_TDUST_NEWTON=fdiff``
 inline TdustNewtonKind default_tdust_newton_kind() {
   static const TdustNewtonKind kind = []() {
     const char* val = std::getenv("GRACKLE_TDUST_NEWTON");
-    if (val == nullptr || std::strcmp(val, "fdiff") == 0) {
-      return TdustNewtonKind::FDIFF;
-    } else if (std::strcmp(val, "analytic") == 0) {
+    if (val == nullptr || std::strcmp(val, "analytic") == 0) {
       return TdustNewtonKind::ANALYTIC;
+    } else if (std::strcmp(val, "fdiff") == 0) {
+      return TdustNewtonKind::FDIFF;
     }
-    eprintf("unrecognized GRACKLE_TDUST_NEWTON value \"%s\", using fdiff\n",
+    eprintf("unrecognized GRACKLE_TDUST_NEWTON value \"%s\", using analytic\n",
             val);
-    return TdustNewtonKind::FDIFF;
+    return TdustNewtonKind::ANALYTIC;
   }();
   return kind;
 }
