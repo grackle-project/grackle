@@ -17,6 +17,7 @@
 #include <cmath>      // log
 #include <cstdint>    // int64_t
 #include "grackle.h"  // cloudy_data
+#include "math/value_with_deriv.hpp"
 #include "support/config.hpp"
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -114,6 +115,29 @@ inline double interpolate_1d(
   // interpolate over parameter 1
   return interp_(input1, gridPar1[index1 - 1], gridPar1[index1],
                  dataField[index1 - 1], dataField[index1]);
+}
+
+/// @brief Variant of @ref interpolate_1d that also returns the slope of the
+///     linear segment used for the interpolation
+///
+/// The returned value is identical to the value returned by
+/// @ref interpolate_1d, and the returned derivative is the slope of the
+/// interpolant with respect to @p input1. The slope is discontinuous at the
+/// grid nodes (for an input lying exactly on a node, it is the slope of the
+/// segment above the node). Outside of the grid, the first or last segment is
+/// extrapolated.
+inline ValueWithDeriv interpolate_1d_with_slope(
+    double input1,
+    const int64_t* GRIMPL_RESTRICT gridDim,  // 1 elements
+    const double* GRIMPL_RESTRICT gridPar1, double dgridPar1, int64_t dataSize,
+    const double* GRIMPL_RESTRICT dataField) {
+  const int64_t index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+
+  double x0 = gridPar1[index1 - 1];
+  double x1 = gridPar1[index1];
+  double y0 = dataField[index1 - 1];
+  double y1 = dataField[index1];
+  return {interp_(input1, x0, x1, y0, y1), (y1 - y0) / (x1 - x0)};
 }
 
 inline double interpolate_2d(

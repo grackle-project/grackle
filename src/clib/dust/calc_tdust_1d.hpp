@@ -18,11 +18,14 @@
 
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "math/solve_eqn.hpp"
+#include "math/value_with_deriv.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
 #include "utils-cpp.hpp"
 
 #include <cmath>  // std::pow
+#include <cstdlib>  // std::getenv // TODO: to be removed after testing is complete
+#include <cstring>  // std::strcmp // TODO: to be removed after testing is complete
 #include <vector>
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -57,8 +60,7 @@ inline constexpr double sigma_sb_times_4 = 4.0 * constants::sigma_sb_grflt;
 /// @param nH hydrogen number density
 ///
 /// @note
-/// If we provided the derivative of @p kgr with respect to Tdust, the
-/// analytic derivative of this function is straightforward
+/// @ref calc_grain_balance_with_deriv also computes the analytic derivative
 ///
 /// @par History
 /// original function written by: Britton Smith, 2019
@@ -77,7 +79,64 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
   //  more details.
 }
 
+/// @brief Calculate grain heating/cooling balance and its derivative with
+///     respect to the dust temperature
+///
+/// The returned value is identical to the value returned by
+/// @ref calc_grain_balance. See that function for a description of the
+/// shared parameters.
+///
+/// @param Tdust dust temperature
+/// @param Tgas gas temperature
+/// @param kgr grain opacity
+/// @param dkgr_dT derivative of @p kgr with respect to @p Tdust
+/// @param Trad4 CMB radiation temperature to the 4th power
+/// @param gasgr gas-grain heat transfer rates
+/// @param gamma_isrf Heating from interstellar radiation field
+/// @param nH hydrogen number density
+///
+inline ValueWithDeriv calc_grain_balance_with_deriv(double Tdust, double Tgas,
+                                                    double kgr, double dkgr_dT,
+                                                    double Trad4, double gasgr,
+                                                    double gamma_isrf,
+                                                    double nH) {
+  double f = calc_grain_balance(Tdust, Tgas, kgr, Trad4, gasgr, gamma_isrf, nH);
+  double df_dT = sigma_sb_times_4 * (dkgr_dT * (Trad4 - std::pow(Tdust, 4)) -
+                                     4.0 * kgr * std::pow(Tdust, 3)) -
+                 gasgr * nH;
+  return {f, df_dT};
+}
+
 }  // namespace Tdust_detail
+
+// TODO: to be removed after testing is complete
+/// @brief Specifies the variant of newton's method used by @ref calc_tdust_1d
+enum class TdustNewtonKind {
+  // @brief derivatives are estimated with finite differences
+  FDIFF,
+  // @brief derivatives are computed analytically
+  ANALYTIC
+};
+
+// TODO: to be removed after testing is complete
+/// @brief Returns the newton variant selected by the ``GRACKLE_TDUST_NEWTON``
+///     environment variable
+///
+/// The analytic variant is used unless ``GRACKLE_TDUST_NEWTON=fdiff``
+inline TdustNewtonKind default_tdust_newton_kind() {
+  static const TdustNewtonKind kind = []() {
+    const char* val = std::getenv("GRACKLE_TDUST_NEWTON");
+    if (val == nullptr || std::strcmp(val, "analytic") == 0) {
+      return TdustNewtonKind::ANALYTIC;
+    } else if (std::strcmp(val, "fdiff") == 0) {
+      return TdustNewtonKind::FDIFF;
+    }
+    eprintf("unrecognized GRACKLE_TDUST_NEWTON value \"%s\", using analytic\n",
+            val);
+    return TdustNewtonKind::ANALYTIC;
+  }();
+  return kind;
+}
 
 ///  Calculate equilibrium dust temperature
 ///
@@ -104,6 +163,11 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
 ///     ``double OpacCalculator::calc_opac(double tdust, int i) const``.
 ///     This method returns the opacity given for the cell in the index range
 ///     with an index of ``i`` given a dust temperature ``tdust``
+/// @param[in]  newton_kind The variant of newton's method to use. The
+///     analytic variant is only used when ``OpacCalculator`` also provides
+///     ``calc_opac_with_deriv`` (otherwise the finite difference variant is
+///     always used). Defaults to the variant selected by
+///     @ref default_tdust_newton_kind
 ///
 /// @par History
 /// written by: Britton Smith, 2011
@@ -114,12 +178,14 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
 /// Recipes on Newton-Raphson describes this kind of strategy. I would be
 /// shocked if a hybrid scheme wasn't superior to running pure Newton-Raphson
 /// and then falling back to Bisection.
+// TODO: remove the newton_kind argument after testing is complete
 template <typename OpacCalculator>
 void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
                    const double* gasgr, const double* gamma_isrfa,
                    const double* isrf, const gr_mask_type* itmask,
                    double nominal_Trad, int buf_len, double* kgr,
-                   IndexRange idx_range, const OpacCalculator& calculator) {
+                   IndexRange idx_range, const OpacCalculator& calculator,
+                   TdustNewtonKind newton_kind = default_tdust_newton_kind()) {
   const double Trad = std::fmax(1., nominal_Trad);
   const double Trad4 = std::pow(Trad, 4);
 
@@ -137,9 +203,8 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
   // temperature. The root finding hunts for the dust temperature where the
   // grain's heating and cooling are balanced (we are also interested in
   // returning the associated opacity).
-  // -> we should think about directly computing analytic derivatives. This
-  //    shouldn't be too hard and would significantly improve the robustness
-  //    (and speed) of the newton solver pass
+  // -> the analytic variant of newton's method uses a version of this function
+  //    that also computes the derivative (see the newton's method scope)
   auto fn = [&](double Tdust, int i) -> double {
     double kgr = calculator.calc_opac(Tdust, i);
     double sol = Tdust_detail::calc_grain_balance(
@@ -211,9 +276,33 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
 
     double* f_vals = sol.data();
 
-    solve_eqn::EqnSolveRslt rslt = unchecked_posdomain_fdiff_newton(
-        fn, x, solvemask.data(), f_vals, pert.data(), idx_range.i_start,
-        idx_range.i_stop, newton_params, giveup_small_x_threshold, max_x);
+    auto run_fdiff_newton = [&]() {
+      return unchecked_posdomain_fdiff_newton(
+          fn, x, solvemask.data(), f_vals, pert.data(), idx_range.i_start,
+          idx_range.i_stop, newton_params, giveup_small_x_threshold, max_x);
+    };
+
+    solve_eqn::EqnSolveRslt rslt;
+    if constexpr (requires { calculator.calc_opac_with_deriv(1.0, 0); }) {
+      if (newton_kind == TdustNewtonKind::ANALYTIC) {
+        auto fn_with_deriv = [&](double Tdust, int i) -> ValueWithDeriv {
+          auto [kgr, dkgr_dT] = calculator.calc_opac_with_deriv(Tdust, i);
+          return Tdust_detail::calc_grain_balance_with_deriv(
+              Tdust, tgas[i], kgr, dkgr_dT, Trad4, gasgr[i], gamma_isrf[i],
+              nh[i]);
+        };
+        const solve_eqn::NewtonParams analytic_newton_params{.maxiter = itmax,
+                                                             .rtol = 1.e-5};
+        rslt = unchecked_posdomain_newton(fn_with_deriv, x, solvemask.data(),
+                                          idx_range.i_start, idx_range.i_stop,
+                                          analytic_newton_params,
+                                          giveup_small_x_threshold, max_x);
+      } else {
+        rslt = run_fdiff_newton();
+      }
+    } else {
+      rslt = run_fdiff_newton();
+    }
     at_least_one_bisection = at_least_one_bisection || !rslt.all_solved;
   }
 

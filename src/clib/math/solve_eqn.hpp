@@ -16,6 +16,7 @@
 #include <cmath>
 
 #include "./misc.hpp"
+#include "./value_with_deriv.hpp"
 #include "support/config.hpp"  // GRIMPL_NAMESPACE_DECL
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -298,6 +299,98 @@ static EqnSolveRslt unchecked_posdomain_fdiff_newton(
     }
   }
   return {(n_to_solve == 0) && !any_giveups, iter + 1};
+}
+
+/// @brief Parameters for the positive-domain newton method, with analytic
+/// derivatives
+struct NewtonParams {
+  /// maximum number of iterations
+  int maxiter;
+
+  /// @brief convergence tolerance
+  ///
+  /// A guess ``x`` is considered converged when the proposed newton step
+  /// satisfies ``|f(x)/f'(x)| <= rtol*|x_new|``
+  double rtol;
+};
+
+/// @brief Find root of a function at a number of locations
+///
+/// Use newton's method to find an array of roots for @p fn (a scalar-valued
+/// function that directly computes its derivative).
+///
+/// This function assumes that the root of @p fn occurs for a positive x value.
+/// It is also designed to help the caller fall back to an alternative method
+/// (e.g. bisection) upon failure.
+///
+/// @param[in]    fn Function object representing the mathematical function for
+///    which roots are computed. This should have a signature of the form
+///    `ValueWithDeriv fn(double x, int i)` where `i` refers to an associated
+///    array index
+/// @param[inout] x Array of initial guesses for the root. Elements are updated
+///    in place as the root is searched for.
+/// @param[inout] solvemask Array specifying a @ref SolveStatus value at each
+///    index. The solver will only look for roots at indices that initially have
+///    values of @ref SolveStatus::UNCONVERGED. Elements will be updated to hold
+///    @ref SolveStatus::CONVERGED, as convergence is achieved or to hold
+///    @ref SolveStatus::SKIP_SOLVE at locations where the guess drops below
+///    @p giveup_small_x_threshold or where the newton step is not finite (e.g.
+///    because the derivative is 0)
+/// @param[in]    i_start, i_stop The range of indices for which root finding
+///    is performed.
+/// @param[in]    param Carries a number of assorted configuration options
+/// @param[in]    giveup_small_x_threshold A positive value. Below this
+///    threshold, the solver gives up
+/// @param[in]    max_x The maximum x value in the domain that can be guessed
+///    as a root.
+///
+/// @note
+/// For an index `i`, the current implementation requires (but does not
+/// explicitly enforce) that ``giveup_small_x_threshold <= x[i]`` and
+/// ``x[i] <= max_x``. If this condition is not satisfied, then the
+/// results are undefined. The fact that these conditons aren't checked is
+/// reflected by the name of this function template.
+template <typename Fn>
+static EqnSolveRslt unchecked_posdomain_newton(
+    const Fn& fn, double* x, SolveStatus* solvemask, int i_start, int i_stop,
+    const NewtonParams& param, double giveup_small_x_threshold, double max_x) {
+  int n_to_solve = 0;
+
+  for (int i = i_start; i < i_stop; i++) {
+    n_to_solve += solvemask[i] == SolveStatus::UNCONVERGED;
+  }
+  // Iterate to convergence with Newton's method
+  bool any_giveups = false;
+  int iter;
+  for (iter = 0; (iter < param.maxiter) && (n_to_solve > 0); iter++) {
+    for (int i = i_start; i < i_stop; i++) {
+      if (solvemask[i] == SolveStatus::UNCONVERGED) {
+        auto [f, df_dx] = fn(x[i], i);
+        double step = f / df_dx;
+        // a zero derivative or a non-finite function value yields a
+        // non-finite step. We don't need to check for tiny derivatives: the
+        // resulting huge step is caught by the domain checks below
+        if (!std::isfinite(step)) {
+          solvemask[i] = SolveStatus::SKIP_SOLVE;
+          n_to_solve--;
+          any_giveups = true;
+          continue;
+        }
+
+        x[i] = std::fmin(x[i] - step, max_x);
+
+        if (x[i] < giveup_small_x_threshold) {
+          solvemask[i] = SolveStatus::SKIP_SOLVE;
+          n_to_solve--;
+          any_giveups = true;
+        } else if (std::fabs(step) <= param.rtol * std::fabs(x[i])) {
+          solvemask[i] = SolveStatus::CONVERGED;
+          n_to_solve--;
+        }
+      }
+    }
+  }
+  return {(n_to_solve == 0) && !any_giveups, iter};
 }
 }  // namespace solve_eqn
 }  // namespace GRIMPL_NAMESPACE_DECL
