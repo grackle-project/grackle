@@ -297,6 +297,23 @@ cdef extern from "grackle.h":
 
     int gr_initialize_field_data(c_field_data *my_fields)
 
+    # named constant(s) that are passed to gr_get_field_id & gr_get_field_name
+    # -> sinc these are declared as macros we just treat them as if they are
+    #    global variables (as recommended by cython docs)
+    int GR_FIELD_CAT_INJ_PATHWAY
+
+    int gr_get_field_id(
+        const c_chemistry_data_storage* my_rates,
+        int64_t category,
+        const char* name,
+        int64_t* out)
+
+    int gr_get_field_name(
+        const c_chemistry_data_storage* my_rates,
+        int64_t category,
+        int64_t id,
+        const char** out)
+
     # the unstable API
     ctypedef long long grunstable_rateid_type
 

@@ -22,6 +22,7 @@
 #include "internal_types.hpp"
 #include "interp_grid.hpp"
 #include "ratequery.hpp"
+#include "support/FrozenKeyIdxBiMap.hpp"
 #include "step_rate_gauss_seidel.hpp"
 #include "support/config.hpp"
 #include "support/PartMap.hpp"
@@ -168,6 +169,13 @@ struct gr_opaque_storage {
   /// a Gauss-Seidel interface class, but I'm not quite sure what that will
   /// look like yet
   const GRIMPL_NS::step_gs_detail::DensUpdater* step_gs_dens_updater = nullptr;
+
+  // The following is used to implement field_id query machinery (over time
+  // we'll gradually collect more and more bimaps for this purpose)
+
+  /// Tracks the names of the expected fields to be provided within
+  /// @ref grackle_field_data::inject_pathway_metal_density (in any)
+  GRIMPL_NS::FrozenKeyIdxBiMap field_query_inject_pathway_names;
 
   // define basic constructor/assignement/destructor methods
   // -------------------------------------------------------

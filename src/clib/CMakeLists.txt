@@ -89,6 +89,7 @@ add_library(Grackle_Grackle
   api/calculate_cooling_time.cpp
   api/calculate_dust_temperature.cpp
   api/calculate_T_related.cpp
+  api/field_id.cpp
   api/set_default_chemistry_parameters.cpp
   api/solve_chemistry.cpp
   api/units.cpp
