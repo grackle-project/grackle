@@ -535,7 +535,11 @@ static inline void coupled_rt_modify_itmask_(
   // adjust iteration mask if the caller indicates that they're using
   // Grackle in a coupled radiative-transfer/chemistry-energy calculation
   // (that has intermediate steps)
-  if (my_chemistry->radiative_transfer_coupled_rate_solver == 1)  {
+  // -> the mask is defined by the HI photo-ionization rate field, which is
+  //    only provided when use_HI_ionization is 2 or 3. Without that field,
+  //    the solver is applied to every cell
+  if (my_chemistry->use_HI_ionization > 1 &&
+      my_chemistry->radiative_transfer_coupled_rate_solver == 1)  {
     // we only define behavior for radiative_transfer_intermediate_step
     // values of 0 or 1
 
