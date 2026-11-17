@@ -163,6 +163,11 @@ struct ContextPack {
   int grid_end[3];
   /** @} */
 
+  /// holds the value of h2_sobolev_density_decrement for the current zone.
+  /// It is only meaningful when H2_self_shielding == 1 (the calculation needs
+  /// the neighboring zones, which `fields` can't reach)
+  double h2_sobolev_divrho[1];
+
   /// @defgroup dynamic_field_bufs
   /// The arrays in this group provide storage for the various 1-element buffers
   /// used with the dynamically evolved `fields`
@@ -265,6 +270,13 @@ inline void configure_ContextPack(
   pack->local_itmask_metal = local_itmask_metal;
   pack->calculate_edot = calculate_edot;
   pack->fields.grid_dx = my_fields->grid_dx;
+
+  // the neighbors of the zone are only reachable through my_fields
+  const chemistry_data* my_chemistry = pack->fwd_args.my_chemistry;
+  pack->h2_sobolev_divrho[0] = ((my_chemistry->H2_self_shielding == 1) &&
+                                (my_chemistry->primordial_chemistry > 1))
+    ? h2_sobolev_density_decrement(my_fields, field_idx1d)
+    : 0.0;
 
   // here, we overwrite each field in pack.fields with pointers from each field
   // in my_fields corresponding to the current location (i,j,k)
@@ -532,7 +544,8 @@ inline void derivatives(
     my_chemistry, my_rates, &pack.fields, sp_densities, my_uvb_rates, internalu,
     pack.main_scratch_buf.logTlininterp_buf,
     pack.main_scratch_buf.rxn_rate_buf,
-    pack.main_scratch_buf.chemheatrates_buf
+    pack.main_scratch_buf.chemheatrates_buf,
+    pack.h2_sobolev_divrho
   );
 
 

@@ -416,13 +416,45 @@ inline void setup_photo_rate_buffers(IndexRange idx_range,
       kph_buf[PhotoRxnLUT::kdissH2O]);
 }
 
+/// Sums the density decrements from a zone to its 6 neighbors (directions in
+/// which the density increases are excluded).
+///
+/// This is the denominator of the Sobolev-like length that is used when
+/// H2_self_shielding == 1.
+///
+/// @param[in] my_fields Specifies the full 3D field data.
+/// @param[in] field_idx1d 1D index of the zone within the fields.
+inline double h2_sobolev_density_decrement(const grackle_field_data* my_fields,
+                                           long long field_idx1d) {
+  const long long stride_j = my_fields->grid_dimension[0];
+  const long long stride_k = stride_j * my_fields->grid_dimension[1];
+  const gr_float* d = my_fields->density + field_idx1d;
+  const double divrhoa[6] = {d[1] - d[0],        d[-1] - d[0],
+                             d[stride_j] - d[0], d[-stride_j] - d[0],
+                             d[stride_k] - d[0], d[-stride_k] - d[0]};
+  double divrho = tiny_fortran_val;
+  // Exclude directions with (drho/ds > 0)
+  for (int n1 = 0; n1 < 6; n1++) {
+    if (divrhoa[n1] < 0.) {
+      divrho = divrho + divrhoa[n1];
+    }
+  }
+  return divrho;
+}
+
 /// adjust the rate of neutral H2 photodissociation by modeling self-shielding
+///
+/// @param[in] sobolev_divrho Only used when H2_self_shielding == 1. When it
+///     isn't a nullptr, it holds the value of
+///     @ref h2_sobolev_density_decrement for each location in @p idx_range.
+///     This must be provided when @p my_fields is a view of a single zone
+///     (the neighboring zones can't be reached through such a view).
 inline void model_H2I_dissociation_shielding(
     double* const* kph_buf, IndexRange idx_range, const double* tgas1d,
     const double* mmw, double dom, double dx_cgs, double c_ljeans,
     const gr_mask_type* itmask, chemistry_data* my_chemistry,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-    InternalGrUnits internalu) {
+    InternalGrUnits internalu, const double* sobolev_divrho = nullptr) {
   if (my_chemistry->primordial_chemistry <= 1) {
     return;
   }
@@ -456,19 +488,13 @@ inline void model_H2I_dissociation_shielding(
         double l_H2shield;
         // Calculate a Sobolev-like length assuming a 3D grid.
         if (my_chemistry->H2_self_shielding == 1) {
-          int j = idx_range.j;
-          int k = idx_range.k;
-          double divrhoa[6] = {
-              d(i + 1, j, k) - d(i, j, k), d(i - 1, j, k) - d(i, j, k),
-              d(i, j + 1, k) - d(i, j, k), d(i, j - 1, k) - d(i, j, k),
-              d(i, j, k + 1) - d(i, j, k), d(i, j, k - 1) - d(i, j, k)};
-          double divrho = tiny_fortran_val;
-          // Exclude directions with (drho/ds > 0)
-          for (int n1 = 0; n1 < 6; n1++) {
-            if (divrhoa[n1] < 0.) {
-              divrho = divrho + divrhoa[n1];
-            }
-          }
+          const double divrho =
+              (sobolev_divrho != nullptr)
+                  ? sobolev_divrho[i]
+                  : h2_sobolev_density_decrement(
+                        my_fields,
+                        layoutleft_3D_index_to_1D_(my_fields->grid_dimension, i,
+                                                   idx_range.j, idx_range.k));
           // (rho / divrho) is the Sobolev-like length in cell widths
           l_H2shield = std::fmin(dx_cgs * d(i, idx_range.j, idx_range.k) /
                                      (2. * std::fabs(divrho)),
@@ -875,6 +901,9 @@ inline void apply_misc_shield_factors(
 ///    rates for @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
 ///     values that are used to compute heating from certain chemical reactions.
+/// @param[in] h2_sobolev_divrho Forwarded to
+///     @ref model_H2I_dissociation_shielding. It must be provided when
+///     H2_self_shielding == 1 and @p my_fields is a view of a single zone.
 inline void lookup_cool_rates1d(
     IndexRange idx_range, const double* tgas1d, const double* mmw, double dom,
     double dx_cgs, double c_ljeans, const gr_mask_type* itmask,
@@ -884,7 +913,8 @@ inline void lookup_cool_rates1d(
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
-    grackle::impl::ChemHeatingRates chemheatrates_buf) {
+    grackle::impl::ChemHeatingRates chemheatrates_buf,
+    const double* h2_sobolev_divrho = nullptr) {
   // Construct views of fields referenced in several parts of this function.
 
   // Linearly Interpolate the Collisional Rxn Rates
@@ -909,9 +939,9 @@ inline void lookup_cool_rates1d(
 
   // model the effects of H2 self-shielding
   if (my_chemistry->primordial_chemistry > 1) {
-    model_H2I_dissociation_shielding(kph_buf, idx_range, tgas1d, mmw, dom,
-                                     dx_cgs, c_ljeans, itmask, my_chemistry,
-                                     my_fields, my_uvb_rates, internalu);
+    model_H2I_dissociation_shielding(
+        kph_buf, idx_range, tgas1d, mmw, dom, dx_cgs, c_ljeans, itmask,
+        my_chemistry, my_fields, my_uvb_rates, internalu, h2_sobolev_divrho);
   }
 
   // apply some miscellaneous self-shielding adjustments
