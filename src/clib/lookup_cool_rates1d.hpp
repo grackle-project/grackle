@@ -16,6 +16,9 @@
 #ifndef LOOKUP_COOL_RATES1D_HPP
 #define LOOKUP_COOL_RATES1D_HPP
 
+#include <cstddef>
+#include <vector>
+
 #include "grackle.h"
 #include "field_adaptor.hpp"
 #include "fortran_func_decls.h"
@@ -424,6 +427,12 @@ inline void setup_photo_rate_buffers(IndexRange idx_range,
 ///
 /// @param[in] my_fields Specifies the full 3D field data.
 /// @param[in] field_idx1d 1D index of the zone within the fields.
+///
+/// @note
+/// The zone and its neighbors must hold densities in the same units. That
+/// isn't the case while the solver processes rows (it converts one row at a
+/// time between comoving and proper densities), so this is evaluated up front
+/// by @ref precompute_h2_sobolev_density_decrement
 inline double h2_sobolev_density_decrement(const grackle_field_data* my_fields,
                                            long long field_idx1d) {
   const long long stride_j = my_fields->grid_dimension[0];
@@ -442,13 +451,38 @@ inline double h2_sobolev_density_decrement(const grackle_field_data* my_fields,
   return divrho;
 }
 
+/// Evaluates @ref h2_sobolev_density_decrement for every active zone.
+///
+/// This must be called while every zone holds the densities provided by the
+/// caller, before the solver starts to convert rows to proper densities.
+///
+/// @param[in] my_fields Specifies the full 3D field data.
+/// @param[in] density_factor Converts the densities in @p my_fields to the
+///     proper densities that the solver works with (1 if they are proper).
+/// @returns a buffer indexed like the fields (inactive zones hold 0)
+inline std::vector<double> precompute_h2_sobolev_density_decrement(
+    const grackle_field_data* my_fields, double density_factor) {
+  const int* dim = my_fields->grid_dimension;
+  std::vector<double> out(static_cast<std::size_t>(dim[0]) * dim[1] * dim[2],
+                          0.0);
+  for (int k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+    for (int j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
+      for (int i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        const int idx = layoutleft_3D_index_to_1D_(dim, i, j, k);
+        out[idx] =
+            density_factor * h2_sobolev_density_decrement(my_fields, idx);
+      }
+    }
+  }
+  return out;
+}
+
 /// adjust the rate of neutral H2 photodissociation by modeling self-shielding
 ///
-/// @param[in] sobolev_divrho Only used when H2_self_shielding == 1. When it
-///     isn't a nullptr, it holds the value of
-///     @ref h2_sobolev_density_decrement for each location in @p idx_range.
-///     This must be provided when @p my_fields is a view of a single zone
-///     (the neighboring zones can't be reached through such a view).
+/// @param[in] sobolev_divrho Required when H2_self_shielding == 1. It holds
+///     the value of @ref h2_sobolev_density_decrement, in proper density
+///     units, for each location in @p idx_range (see
+///     @ref precompute_h2_sobolev_density_decrement).
 inline void model_H2I_dissociation_shielding(
     double* const* kph_buf, IndexRange idx_range, const double* tgas1d,
     const double* mmw, double dom, double dx_cgs, double c_ljeans,
@@ -458,6 +492,9 @@ inline void model_H2I_dissociation_shielding(
   if (my_chemistry->primordial_chemistry <= 1) {
     return;
   }
+  GR_INTERNAL_REQUIRE(
+      (my_chemistry->H2_self_shielding != 1) || (sobolev_divrho != nullptr),
+      "H2_self_shielding == 1 needs the precomputed density decrements");
 
   // Construct views of fields referenced in several parts of this function.
   FortranView<const gr_float***> d(
@@ -488,13 +525,7 @@ inline void model_H2I_dissociation_shielding(
         double l_H2shield;
         // Calculate a Sobolev-like length assuming a 3D grid.
         if (my_chemistry->H2_self_shielding == 1) {
-          const double divrho =
-              (sobolev_divrho != nullptr)
-                  ? sobolev_divrho[i]
-                  : h2_sobolev_density_decrement(
-                        my_fields,
-                        layoutleft_3D_index_to_1D_(my_fields->grid_dimension, i,
-                                                   idx_range.j, idx_range.k));
+          const double divrho = sobolev_divrho[i];
           // (rho / divrho) is the Sobolev-like length in cell widths
           l_H2shield = std::fmin(dx_cgs * d(i, idx_range.j, idx_range.k) /
                                      (2. * std::fabs(divrho)),
@@ -903,7 +934,7 @@ inline void apply_misc_shield_factors(
 ///     values that are used to compute heating from certain chemical reactions.
 /// @param[in] h2_sobolev_divrho Forwarded to
 ///     @ref model_H2I_dissociation_shielding. It must be provided when
-///     H2_self_shielding == 1 and @p my_fields is a view of a single zone.
+///     H2_self_shielding == 1.
 inline void lookup_cool_rates1d(
     IndexRange idx_range, const double* tgas1d, const double* mmw, double dom,
     double dx_cgs, double c_ljeans, const gr_mask_type* itmask,

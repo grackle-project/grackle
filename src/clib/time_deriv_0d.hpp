@@ -163,9 +163,9 @@ struct ContextPack {
   int grid_end[3];
   /** @} */
 
-  /// holds the value of h2_sobolev_density_decrement for the current zone.
-  /// It is only meaningful when H2_self_shielding == 1 (the calculation needs
-  /// the neighboring zones, which `fields` can't reach)
+  /// holds the precomputed value of h2_sobolev_density_decrement for the
+  /// current zone. It is only meaningful when H2_self_shielding == 1 (the
+  /// calculation needs the neighboring zones, which `fields` can't reach)
   double h2_sobolev_divrho[1];
 
   /// @defgroup dynamic_field_bufs
@@ -263,20 +263,19 @@ inline ContextPack new_ContextPack(
 ///    (it has already been remapped from multiple dimensions to 1D).
 /// @param[in] local_itmask_metal specifies the local values of itmask_metal
 /// @param[in] calculate_edot Indicates whether to compute edot
+/// @param[in] h2_sobolev_divrho the buffer returned by
+///    precompute_h2_sobolev_density_decrement (indexed like the fields), or a
+///    nullptr when H2_self_shielding != 1
 inline void configure_ContextPack(
   ContextPack* pack, const grackle_field_data* my_fields,
-  int field_idx1d, gr_mask_type local_itmask_metal, bool calculate_edot
+  int field_idx1d, gr_mask_type local_itmask_metal, bool calculate_edot,
+  const double* h2_sobolev_divrho
 ) {
   pack->local_itmask_metal = local_itmask_metal;
   pack->calculate_edot = calculate_edot;
   pack->fields.grid_dx = my_fields->grid_dx;
-
-  // the neighbors of the zone are only reachable through my_fields
-  const chemistry_data* my_chemistry = pack->fwd_args.my_chemistry;
-  pack->h2_sobolev_divrho[0] = ((my_chemistry->H2_self_shielding == 1) &&
-                                (my_chemistry->primordial_chemistry > 1))
-    ? h2_sobolev_density_decrement(my_fields, field_idx1d)
-    : 0.0;
+  pack->h2_sobolev_divrho[0] =
+    (h2_sobolev_divrho != nullptr) ? h2_sobolev_divrho[field_idx1d] : 0.0;
 
   // here, we overwrite each field in pack.fields with pointers from each field
   // in my_fields corresponding to the current location (i,j,k)
