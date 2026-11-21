@@ -315,7 +315,7 @@ static inline double interpolate_2Df3D(
     int64_t int_index =
         ((q + index1 - 1) * gridDim[1] + (index2 - 1)) * gridDim[2] + index3;
 
-    value3[q] = interp_(input3, gridPar3[index3 - 1], gridPar3[index1],
+    value3[q] = interp_(input3, gridPar3[index3 - 1], gridPar3[index3],
                         dataField[int_index - 1], dataField[int_index]);
   }
 
