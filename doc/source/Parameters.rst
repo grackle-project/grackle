@@ -504,7 +504,10 @@ For all on/off integer flags, 0 is off and 1 is on.
      <https://ui.adsabs.harvard.edu/abs/2019MNRAS.484.2467W/>`__. Prior to
      Grackle version 3.2, this option used the method of `Wolcott-Green et. al.
      (2011) <https://ui.adsabs.harvard.edu/abs/2011MNRAS.418..838W/>`__.
-     This option is only valid for Cartesian grid codes in 3D.
+     This option is only valid for Cartesian grid codes in 3D. The length is
+     computed from the density of the 6 neighbors of each zone, so the fields
+     should include at least one layer of ghost zones. A zone on the edge of
+     the field arrays only uses the neighbors that exist.
    - 2: Supply an array of lengths using the :c:data:`H2_self_shielding_length`
      field.
    - 3: Use the local Jeans length.

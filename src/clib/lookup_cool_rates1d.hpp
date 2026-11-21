@@ -420,13 +420,23 @@ inline void setup_photo_rate_buffers(IndexRange idx_range,
 }
 
 /// Sums the density decrements from a zone to its 6 neighbors (directions in
-/// which the density increases are excluded).
+/// which the density increases are excluded) and adds a small floor.
 ///
 /// This is the denominator of the Sobolev-like length that is used when
 /// H2_self_shielding == 1.
 ///
 /// @param[in] my_fields Specifies the full 3D field data.
-/// @param[in] field_idx1d 1D index of the zone within the fields.
+/// @param[in] i,j,k The index of the zone within the fields.
+/// @param[in] density_factor Converts the densities in @p my_fields to the
+///     proper densities that the solver works with (1 if they are proper).
+///     Each density is converted before it is compared, so the result
+///     (including the floor) is the one a field of proper densities gives.
+///
+/// @note
+/// A neighbor that lies outside of the field arrays is skipped, as if the
+/// density didn't decrease in that direction. A zone on the edge of the
+/// arrays (i.e. when there isn't a layer of ghost zones) therefore only uses
+/// the neighbors that exist.
 ///
 /// @note
 /// The zone and its neighbors must hold densities in the same units. That
@@ -434,18 +444,29 @@ inline void setup_photo_rate_buffers(IndexRange idx_range,
 /// time between comoving and proper densities), so this is evaluated up front
 /// by @ref precompute_h2_sobolev_density_decrement
 inline double h2_sobolev_density_decrement(const grackle_field_data* my_fields,
-                                           long long field_idx1d) {
-  const long long stride_j = my_fields->grid_dimension[0];
-  const long long stride_k = stride_j * my_fields->grid_dimension[1];
-  const gr_float* d = my_fields->density + field_idx1d;
-  const double divrhoa[6] = {d[1] - d[0],        d[-1] - d[0],
-                             d[stride_j] - d[0], d[-stride_j] - d[0],
-                             d[stride_k] - d[0], d[-stride_k] - d[0]};
+                                           int i, int j, int k,
+                                           gr_float density_factor) {
+  const int* dim = my_fields->grid_dimension;
+  const int index[3] = {i, j, k};
+  const long long stride[3] = {1, dim[0],
+                               static_cast<long long>(dim[0]) * dim[1]};
+  const gr_float* d = my_fields->density + (i + stride[1] * j + stride[2] * k);
+  const gr_float d_zone = d[0] * density_factor;
+
   double divrho = tiny_fortran_val;
-  // Exclude directions with (drho/ds > 0)
-  for (int n1 = 0; n1 < 6; n1++) {
-    if (divrhoa[n1] < 0.) {
-      divrho = divrho + divrhoa[n1];
+  for (int axis = 0; axis < 3; axis++) {
+    // first the neighbor at the higher index, then the one at the lower index
+    const bool exists[2] = {index[axis] + 1 < dim[axis], index[axis] > 0};
+    const long long offset[2] = {stride[axis], -stride[axis]};
+    for (int side = 0; side < 2; side++) {
+      if (exists[side]) {
+        const gr_float d_neighbor = d[offset[side]] * density_factor;
+        const double diff = d_neighbor - d_zone;
+        // Exclude directions with (drho/ds > 0)
+        if (diff < 0.) {
+          divrho = divrho + diff;
+        }
+      }
     }
   }
   return divrho;
@@ -461,16 +482,15 @@ inline double h2_sobolev_density_decrement(const grackle_field_data* my_fields,
 ///     proper densities that the solver works with (1 if they are proper).
 /// @returns a buffer indexed like the fields (inactive zones hold 0)
 inline std::vector<double> precompute_h2_sobolev_density_decrement(
-    const grackle_field_data* my_fields, double density_factor) {
+    const grackle_field_data* my_fields, gr_float density_factor) {
   const int* dim = my_fields->grid_dimension;
   std::vector<double> out(static_cast<std::size_t>(dim[0]) * dim[1] * dim[2],
                           0.0);
   for (int k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
     for (int j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
       for (int i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-        const int idx = layoutleft_3D_index_to_1D_(dim, i, j, k);
-        out[idx] =
-            density_factor * h2_sobolev_density_decrement(my_fields, idx);
+        out[layoutleft_3D_index_to_1D_(dim, i, j, k)] =
+            h2_sobolev_density_decrement(my_fields, i, j, k, density_factor);
       }
     }
   }

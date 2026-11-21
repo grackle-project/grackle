@@ -723,8 +723,9 @@ int solve_rate_cool(
   std::vector<double> h2_sobolev_divrho_buf;
   if ((my_chemistry->H2_self_shielding == 1) &&
       (my_chemistry->primordial_chemistry > 1)) {
-    const double density_factor = (internalu.extfields_in_comoving == 1)
-      ? (gr_float)(std::pow(internalu.a_value,(-3)) ) : 1.0;
+    // (the same factor that scale_fields applies to each row below)
+    const gr_float density_factor = (internalu.extfields_in_comoving == 1)
+      ? (gr_float)(std::pow(internalu.a_value,(-3)) ) : (gr_float)(1.);
     h2_sobolev_divrho_buf = precompute_h2_sobolev_density_decrement(
         my_fields, density_factor);
   }
