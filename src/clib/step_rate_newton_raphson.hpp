@@ -359,6 +359,10 @@ struct FiniteDiffJacobianAdaptor{
 /// function runs.
 /// - this has **ALWAYS** been the case. Historically these buffers have been
 ///   reused when computing finite differences
+///
+/// @param h2_sobolev_divrho the buffer returned by
+///   precompute_h2_sobolev_density_decrement (indexed like the fields), or a
+///   nullptr when H2_self_shielding != 1
 inline void step_rate_newton_raphson(
     IndexRange idx_range, double dom, double chunit, double dx_cgs,
     double c_ljeans, double* dtit, double* tgas, double* tdust,
@@ -372,7 +376,8 @@ inline void step_rate_newton_raphson(
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     grackle::impl::CoolHeatScratchBuf coolingheating_buf,
-    grackle::impl::ChemHeatingRates chemheatrates_buf) {
+    grackle::impl::ChemHeatingRates chemheatrates_buf,
+    const double* h2_sobolev_divrho) {
   // shorten `grackle::impl::time_deriv_0d` to `t_deriv` within this function
   namespace t_deriv = ::grackle::impl::time_deriv_0d;
 
@@ -496,7 +501,8 @@ inline void step_rate_newton_raphson(
 
       // configure pack for use during the current index
       t_deriv::configure_ContextPack(
-        &pack, my_fields, field_idx1d, itmask_metal[i], coupled_e_evolution
+        &pack, my_fields, field_idx1d, itmask_metal[i], coupled_e_evolution,
+        h2_sobolev_divrho
       );
 
       // copy values at the current index from the external scratch buffers

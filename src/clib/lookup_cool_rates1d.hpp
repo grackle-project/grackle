@@ -16,6 +16,9 @@
 #ifndef LOOKUP_COOL_RATES1D_HPP
 #define LOOKUP_COOL_RATES1D_HPP
 
+#include <cstddef>
+#include <vector>
+
 #include "grackle.h"
 #include "field_adaptor.hpp"
 #include "fortran_func_decls.h"
@@ -416,16 +419,102 @@ inline void setup_photo_rate_buffers(IndexRange idx_range,
       kph_buf[PhotoRxnLUT::kdissH2O]);
 }
 
+/// Sums the density decrements from a zone to its 6 neighbors (directions in
+/// which the density increases are excluded) and adds a small floor.
+///
+/// This is the denominator of the Sobolev-like length that is used when
+/// H2_self_shielding == 1.
+///
+/// @param[in] my_fields Specifies the full 3D field data.
+/// @param[in] i,j,k The index of the zone within the fields.
+/// @param[in] density_factor Converts the densities in @p my_fields to the
+///     proper densities that the solver works with (1 if they are proper).
+///     Each density is converted before it is compared, so the result
+///     (including the floor) is the one a field of proper densities gives.
+///
+/// @note
+/// A neighbor that lies outside of the field arrays is skipped, as if the
+/// density didn't decrease in that direction. A zone on the edge of the
+/// arrays (i.e. when there isn't a layer of ghost zones) therefore only uses
+/// the neighbors that exist.
+///
+/// @note
+/// The zone and its neighbors must hold densities in the same units. That
+/// isn't the case while the solver processes rows (it converts one row at a
+/// time between comoving and proper densities), so this is evaluated up front
+/// by @ref precompute_h2_sobolev_density_decrement
+inline double h2_sobolev_density_decrement(const grackle_field_data* my_fields,
+                                           int i, int j, int k,
+                                           gr_float density_factor) {
+  const int* dim = my_fields->grid_dimension;
+  const int index[3] = {i, j, k};
+  const long long stride[3] = {1, dim[0],
+                               static_cast<long long>(dim[0]) * dim[1]};
+  const gr_float* d = my_fields->density + (i + stride[1] * j + stride[2] * k);
+  const gr_float d_zone = d[0] * density_factor;
+
+  double divrho = tiny_fortran_val;
+  for (int axis = 0; axis < 3; axis++) {
+    // first the neighbor at the higher index, then the one at the lower index
+    const bool exists[2] = {index[axis] + 1 < dim[axis], index[axis] > 0};
+    const long long offset[2] = {stride[axis], -stride[axis]};
+    for (int side = 0; side < 2; side++) {
+      if (exists[side]) {
+        const gr_float d_neighbor = d[offset[side]] * density_factor;
+        const double diff = d_neighbor - d_zone;
+        // Exclude directions with (drho/ds > 0)
+        if (diff < 0.) {
+          divrho = divrho + diff;
+        }
+      }
+    }
+  }
+  return divrho;
+}
+
+/// Evaluates @ref h2_sobolev_density_decrement for every active zone.
+///
+/// This must be called while every zone holds the densities provided by the
+/// caller, before the solver starts to convert rows to proper densities.
+///
+/// @param[in] my_fields Specifies the full 3D field data.
+/// @param[in] density_factor Converts the densities in @p my_fields to the
+///     proper densities that the solver works with (1 if they are proper).
+/// @returns a buffer indexed like the fields (inactive zones hold 0)
+inline std::vector<double> precompute_h2_sobolev_density_decrement(
+    const grackle_field_data* my_fields, gr_float density_factor) {
+  const int* dim = my_fields->grid_dimension;
+  std::vector<double> out(static_cast<std::size_t>(dim[0]) * dim[1] * dim[2],
+                          0.0);
+  for (int k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
+    for (int j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
+      for (int i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        out[layoutleft_3D_index_to_1D_(dim, i, j, k)] =
+            h2_sobolev_density_decrement(my_fields, i, j, k, density_factor);
+      }
+    }
+  }
+  return out;
+}
+
 /// adjust the rate of neutral H2 photodissociation by modeling self-shielding
+///
+/// @param[in] sobolev_divrho Required when H2_self_shielding == 1. It holds
+///     the value of @ref h2_sobolev_density_decrement, in proper density
+///     units, for each location in @p idx_range (see
+///     @ref precompute_h2_sobolev_density_decrement).
 inline void model_H2I_dissociation_shielding(
     double* const* kph_buf, IndexRange idx_range, const double* tgas1d,
     const double* mmw, double dom, double dx_cgs, double c_ljeans,
     const gr_mask_type* itmask, chemistry_data* my_chemistry,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-    InternalGrUnits internalu) {
+    InternalGrUnits internalu, const double* sobolev_divrho = nullptr) {
   if (my_chemistry->primordial_chemistry <= 1) {
     return;
   }
+  GR_INTERNAL_REQUIRE(
+      (my_chemistry->H2_self_shielding != 1) || (sobolev_divrho != nullptr),
+      "H2_self_shielding == 1 needs the precomputed density decrements");
 
   // Construct views of fields referenced in several parts of this function.
   FortranView<const gr_float***> d(
@@ -456,19 +545,7 @@ inline void model_H2I_dissociation_shielding(
         double l_H2shield;
         // Calculate a Sobolev-like length assuming a 3D grid.
         if (my_chemistry->H2_self_shielding == 1) {
-          int j = idx_range.j;
-          int k = idx_range.k;
-          double divrhoa[6] = {
-              d(i + 1, j, k) - d(i, j, k), d(i - 1, j, k) - d(i, j, k),
-              d(i, j + 1, k) - d(i, j, k), d(i, j - 1, k) - d(i, j, k),
-              d(i, j, k + 1) - d(i, j, k), d(i, j, k - 1) - d(i, j, k)};
-          double divrho = tiny_fortran_val;
-          // Exclude directions with (drho/ds > 0)
-          for (int n1 = 0; n1 < 6; n1++) {
-            if (divrhoa[n1] < 0.) {
-              divrho = divrho + divrhoa[n1];
-            }
-          }
+          const double divrho = sobolev_divrho[i];
           // (rho / divrho) is the Sobolev-like length in cell widths
           l_H2shield = std::fmin(dx_cgs * d(i, idx_range.j, idx_range.k) /
                                      (2. * std::fabs(divrho)),
@@ -875,6 +952,9 @@ inline void apply_misc_shield_factors(
 ///    rates for @p idx_range
 /// @param[out] chemheatrates_buf Buffers that are filled with interpolated
 ///     values that are used to compute heating from certain chemical reactions.
+/// @param[in] h2_sobolev_divrho Forwarded to
+///     @ref model_H2I_dissociation_shielding. It must be provided when
+///     H2_self_shielding == 1.
 inline void lookup_cool_rates1d(
     IndexRange idx_range, const double* tgas1d, const double* mmw, double dom,
     double dx_cgs, double c_ljeans, const gr_mask_type* itmask,
@@ -884,7 +964,8 @@ inline void lookup_cool_rates1d(
     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
     grackle::impl::LnTLinInterpBuf logTlininterp_buf,
     FullRxnRateBuf rxn_rate_buf,
-    grackle::impl::ChemHeatingRates chemheatrates_buf) {
+    grackle::impl::ChemHeatingRates chemheatrates_buf,
+    const double* h2_sobolev_divrho = nullptr) {
   // Construct views of fields referenced in several parts of this function.
 
   // Linearly Interpolate the Collisional Rxn Rates
@@ -909,9 +990,9 @@ inline void lookup_cool_rates1d(
 
   // model the effects of H2 self-shielding
   if (my_chemistry->primordial_chemistry > 1) {
-    model_H2I_dissociation_shielding(kph_buf, idx_range, tgas1d, mmw, dom,
-                                     dx_cgs, c_ljeans, itmask, my_chemistry,
-                                     my_fields, my_uvb_rates, internalu);
+    model_H2I_dissociation_shielding(
+        kph_buf, idx_range, tgas1d, mmw, dom, dx_cgs, c_ljeans, itmask,
+        my_chemistry, my_fields, my_uvb_rates, internalu, h2_sobolev_divrho);
   }
 
   // apply some miscellaneous self-shielding adjustments

@@ -42,6 +42,21 @@ ENTRY(temperature_floor)
   // primordial_chemistry = 1
 ENTRY(RT_heating_rate)
 
+  // photo reaction rates (the associated use_* parameter is 2 or 3)
+ENTRY(HI_ionization_rate)
+ENTRY(HeII_ionization_rate)
+ENTRY(HeI_ionization_rate)
+ENTRY(HM_detachment_rate)
+ENTRY(H2II_dissociation_rate)
+ENTRY(H2I_ionization_rate)
+ENTRY(H2II_dissociative_ionization_rate)
+ENTRY(H2I_dissociation_rate)
+ENTRY(CI_ionization_rate)
+ENTRY(OI_ionization_rate)
+ENTRY(COI_dissociation_rate)
+ENTRY(OHI_dissociation_rate)
+ENTRY(H2OI_dissociation_rate)
+
   // H2_self_shielding = 2
 ENTRY(H2_self_shielding_length)
 

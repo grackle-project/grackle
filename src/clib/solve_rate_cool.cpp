@@ -535,7 +535,11 @@ static inline void coupled_rt_modify_itmask_(
   // adjust iteration mask if the caller indicates that they're using
   // Grackle in a coupled radiative-transfer/chemistry-energy calculation
   // (that has intermediate steps)
-  if (my_chemistry->radiative_transfer_coupled_rate_solver == 1)  {
+  // -> the mask is defined by the HI photo-ionization rate field, which is
+  //    only provided when use_HI_ionization is 2 or 3. Without that field,
+  //    the solver is applied to every cell
+  if (my_chemistry->use_HI_ionization > 1 &&
+      my_chemistry->radiative_transfer_coupled_rate_solver == 1)  {
     // we only define behavior for radiative_transfer_intermediate_step
     // values of 0 or 1
 
@@ -711,6 +715,22 @@ int solve_rate_cool(
   );
 
   const IndexHelper idx_helper = build_index_helper_(my_fields);
+
+  // The Sobolev-like H2 self-shielding length compares the density of a zone
+  // with its neighbors. Below, rows are converted between comoving and proper
+  // densities one at a time, so the comparison is made here, while every
+  // zone still holds the values provided by the caller.
+  std::vector<double> h2_sobolev_divrho_buf;
+  if ((my_chemistry->H2_self_shielding == 1) &&
+      (my_chemistry->primordial_chemistry > 1)) {
+    // (the same factor that scale_fields applies to each row below)
+    const gr_float density_factor = (internalu.extfields_in_comoving == 1)
+      ? (gr_float)(std::pow(internalu.a_value,(-3)) ) : (gr_float)(1.);
+    h2_sobolev_divrho_buf = precompute_h2_sobolev_density_decrement(
+        my_fields, density_factor);
+  }
+  const double* h2_sobolev_divrho =
+    h2_sobolev_divrho_buf.empty() ? nullptr : h2_sobolev_divrho_buf.data();
 
   OMP_PRAGMA("omp parallel")
   {
@@ -940,7 +960,11 @@ int solve_rate_cool(
               itmask.data(), itmask_metal.data(), my_chemistry,
               my_rates, my_fields, sp_densities, *my_uvb_rates, internalu,
               logTlininterp_buf, spsolvbuf.rxn_rate_buf,
-              spsolvbuf.chemheatrates_buf);
+              spsolvbuf.chemheatrates_buf,
+              // (the values for the current row)
+              (h2_sobolev_divrho == nullptr) ? nullptr :
+                h2_sobolev_divrho + layoutleft_3D_index_to_1D_(
+                    my_fields->grid_dimension, 0, j, k));
 
           // Compute dedot and HIdot, the rates of change of de and HI
           //   (should add itmask to this call)
@@ -1027,7 +1051,7 @@ int solve_rate_cool(
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
             my_fields, sp_densities, *my_uvb_rates, internalu,
             grain_temperatures, logTlininterp_buf, coolingheating_buf,
-            spsolvbuf.chemheatrates_buf
+            spsolvbuf.chemheatrates_buf, h2_sobolev_divrho
           );
 
         }

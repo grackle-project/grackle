@@ -163,6 +163,11 @@ struct ContextPack {
   int grid_end[3];
   /** @} */
 
+  /// holds the precomputed value of h2_sobolev_density_decrement for the
+  /// current zone. It is only meaningful when H2_self_shielding == 1 (the
+  /// calculation needs the neighboring zones, which `fields` can't reach)
+  double h2_sobolev_divrho[1];
+
   /// @defgroup dynamic_field_bufs
   /// The arrays in this group provide storage for the various 1-element buffers
   /// used with the dynamically evolved `fields`
@@ -258,13 +263,19 @@ inline ContextPack new_ContextPack(
 ///    (it has already been remapped from multiple dimensions to 1D).
 /// @param[in] local_itmask_metal specifies the local values of itmask_metal
 /// @param[in] calculate_edot Indicates whether to compute edot
+/// @param[in] h2_sobolev_divrho the buffer returned by
+///    precompute_h2_sobolev_density_decrement (indexed like the fields), or a
+///    nullptr when H2_self_shielding != 1
 inline void configure_ContextPack(
   ContextPack* pack, const grackle_field_data* my_fields,
-  int field_idx1d, gr_mask_type local_itmask_metal, bool calculate_edot
+  int field_idx1d, gr_mask_type local_itmask_metal, bool calculate_edot,
+  const double* h2_sobolev_divrho
 ) {
   pack->local_itmask_metal = local_itmask_metal;
   pack->calculate_edot = calculate_edot;
   pack->fields.grid_dx = my_fields->grid_dx;
+  pack->h2_sobolev_divrho[0] =
+    (h2_sobolev_divrho != nullptr) ? h2_sobolev_divrho[field_idx1d] : 0.0;
 
   // here, we overwrite each field in pack.fields with pointers from each field
   // in my_fields corresponding to the current location (i,j,k)
@@ -532,7 +543,8 @@ inline void derivatives(
     my_chemistry, my_rates, &pack.fields, sp_densities, my_uvb_rates, internalu,
     pack.main_scratch_buf.logTlininterp_buf,
     pack.main_scratch_buf.rxn_rate_buf,
-    pack.main_scratch_buf.chemheatrates_buf
+    pack.main_scratch_buf.chemheatrates_buf,
+    pack.h2_sobolev_divrho
   );
 
 
