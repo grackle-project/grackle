@@ -291,8 +291,9 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
               Tdust, tgas[i], kgr, dkgr_dT, Trad4, gasgr[i], gamma_isrf[i],
               nh[i]);
         };
+        // TODO: set appropriate for value analytic derivative case tolerance
         const solve_eqn::NewtonParams analytic_newton_params{.maxiter = itmax,
-                                                             .rtol = 1.e-5};
+                                                             .rtol = 1.e-10};
         rslt = unchecked_posdomain_newton(fn_with_deriv, x, solvemask.data(),
                                           idx_range.i_start, idx_range.i_stop,
                                           analytic_newton_params,
