@@ -97,7 +97,7 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
 /// original function written by: Britton Smith, 2019
 /// modified: January, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
 /// modified: August 2026 by Matthew Abruzzo; converted to scalar calculation
-/// modified: November 2026 by Christopher Bignamini; added derivative calculation
+/// modified: November 2026 by Christopher Bignamini; added derivatives
 inline ValueWithDeriv calc_grain_balance_with_deriv(double Tdust, double Tgas,
                                                     double kgr, double dkgr_dT,
                                                     double Trad4, double gasgr,
