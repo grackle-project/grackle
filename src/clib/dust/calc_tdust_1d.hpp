@@ -24,8 +24,6 @@
 #include "utils-cpp.hpp"
 
 #include <cmath>  // std::pow
-#include <cstdlib>  // std::getenv // TODO: to be removed after testing is complete
-#include <cstring>  // std::strcmp // TODO: to be removed after testing is complete
 #include <vector>
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -109,35 +107,6 @@ inline ValueWithDeriv calc_grain_balance_with_deriv(double Tdust, double Tgas,
 
 }  // namespace Tdust_detail
 
-// TODO: to be removed after testing is complete
-/// @brief Specifies the variant of newton's method used by @ref calc_tdust_1d
-enum class TdustNewtonKind {
-  // @brief derivatives are estimated with finite differences
-  FDIFF,
-  // @brief derivatives are computed analytically
-  ANALYTIC
-};
-
-// TODO: to be removed after testing is complete
-/// @brief Returns the newton variant selected by the ``GRACKLE_TDUST_NEWTON``
-///     environment variable
-///
-/// The analytic variant is used unless ``GRACKLE_TDUST_NEWTON=fdiff``
-inline TdustNewtonKind default_tdust_newton_kind() {
-  static const TdustNewtonKind kind = []() {
-    const char* val = std::getenv("GRACKLE_TDUST_NEWTON");
-    if (val == nullptr || std::strcmp(val, "analytic") == 0) {
-      return TdustNewtonKind::ANALYTIC;
-    } else if (std::strcmp(val, "fdiff") == 0) {
-      return TdustNewtonKind::FDIFF;
-    }
-    eprintf("unrecognized GRACKLE_TDUST_NEWTON value \"%s\", using analytic\n",
-            val);
-    return TdustNewtonKind::ANALYTIC;
-  }();
-  return kind;
-}
-
 ///  Calculate equilibrium dust temperature
 ///
 ///  TODO: this docstring, and the docstrings of all helper functions should
@@ -159,15 +128,12 @@ inline TdustNewtonKind default_tdust_newton_kind() {
 /// @param[in]  idx_range Index range specifying the portion of the grid to
 ///     operate on
 /// @param[in]  calculator Object of template type ``OpacCalcuator`` that
-///     supports a method with the signature given by
-///     ``double OpacCalculator::calc_opac(double tdust, int i) const``.
-///     This method returns the opacity given for the cell in the index range
-///     with an index of ``i`` given a dust temperature ``tdust``
-/// @param[in]  newton_kind The variant of newton's method to use. The
-///     analytic variant is only used when ``OpacCalculator`` also provides
-///     ``calc_opac_with_deriv`` (otherwise the finite difference variant is
-///     always used). Defaults to the variant selected by
-///     @ref default_tdust_newton_kind
+///     supports methods with the signatures given by
+///     ``double OpacCalculator::calc_opac(double tdust, int i) const`` and
+///     ``ValueWithDeriv OpacCalculator::calc_opac_with_deriv(double tdust,
+///     int i) const``. These methods return the opacity (and, for the
+///     latter, its derivative with respect to ``tdust``) for the cell in the
+///     index range with an index of ``i`` given a dust temperature ``tdust``
 ///
 /// @par History
 /// written by: Britton Smith, 2011
@@ -178,14 +144,12 @@ inline TdustNewtonKind default_tdust_newton_kind() {
 /// Recipes on Newton-Raphson describes this kind of strategy. I would be
 /// shocked if a hybrid scheme wasn't superior to running pure Newton-Raphson
 /// and then falling back to Bisection.
-// TODO: remove the newton_kind argument after testing is complete
 template <typename OpacCalculator>
 void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
                    const double* gasgr, const double* gamma_isrfa,
                    const double* isrf, const gr_mask_type* itmask,
                    double nominal_Trad, int buf_len, double* kgr,
-                   IndexRange idx_range, const OpacCalculator& calculator,
-                   TdustNewtonKind newton_kind = default_tdust_newton_kind()) {
+                   IndexRange idx_range, const OpacCalculator& calculator) {
   const double Trad = std::fmax(1., nominal_Trad);
   const double Trad4 = std::pow(Trad, 4);
 
@@ -203,13 +167,19 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
   // temperature. The root finding hunts for the dust temperature where the
   // grain's heating and cooling are balanced (we are also interested in
   // returning the associated opacity).
-  // -> the analytic variant of newton's method uses a version of this function
-  //    that also computes the derivative (see the newton's method scope)
+  // -> this version is used by the bisection method
   auto fn = [&](double Tdust, int i) -> double {
     double kgr = calculator.calc_opac(Tdust, i);
     double sol = Tdust_detail::calc_grain_balance(
         Tdust, tgas[i], kgr, Trad4, gasgr[i], gamma_isrf[i], nh[i]);
     return sol;
+  };
+
+  // -> this version also computes the derivative and is used by newton's method
+  auto fn_with_deriv = [&](double Tdust, int i) -> ValueWithDeriv {
+    auto [kgr, dkgr_dT] = calculator.calc_opac_with_deriv(Tdust, i);
+    return Tdust_detail::calc_grain_balance_with_deriv(
+        Tdust, tgas[i], kgr, dkgr_dT, Trad4, gasgr[i], gamma_isrf[i], nh[i]);
   };
 
   // grain opacity from Omukai (2000, equation 17) normalized by
@@ -220,16 +190,14 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
   const int itmax = 50;
   const int bi_itmax = 30;
 
-  const solve_eqn::FDiffNewtonParams newton_params{.maxiter = itmax,
-                                                   .perturb_init = 1.e-3,
-                                                   .perturb_min = 1.e-10,
-                                                   .tol = 1.e-5};
+  // near the kinks of the opacity (table nodes, 200 K, sublimation) newton's
+  // method converges only linearly, and a looser rtol leaves errors that grow
+  // over long integrations (e.g. the freefall answer tests). Where convergence
+  // is quadratic, this costs about one extra iteration
+  const solve_eqn::NewtonParams newton_params{.maxiter = itmax, .rtol = 1.e-10};
 
-  std::vector<double> sol(buf_len);
   // holds dust temperature guess for the current root-finding iteration
   std::vector<double> tdustnow(buf_len);
-  // relative finite difference step size
-  std::vector<double> pert(buf_len);
   std::vector<double> bi_t_high(buf_len);
 
   // specifies the status of each index (a solver skips a calculation if an
@@ -274,36 +242,9 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
     // below this x value, we give up!
     double giveup_small_x_threshold = Trad;
 
-    double* f_vals = sol.data();
-
-    auto run_fdiff_newton = [&]() {
-      return unchecked_posdomain_fdiff_newton(
-          fn, x, solvemask.data(), f_vals, pert.data(), idx_range.i_start,
-          idx_range.i_stop, newton_params, giveup_small_x_threshold, max_x);
-    };
-
-    solve_eqn::EqnSolveRslt rslt;
-    if constexpr (requires { calculator.calc_opac_with_deriv(1.0, 0); }) {
-      if (newton_kind == TdustNewtonKind::ANALYTIC) {
-        auto fn_with_deriv = [&](double Tdust, int i) -> ValueWithDeriv {
-          auto [kgr, dkgr_dT] = calculator.calc_opac_with_deriv(Tdust, i);
-          return Tdust_detail::calc_grain_balance_with_deriv(
-              Tdust, tgas[i], kgr, dkgr_dT, Trad4, gasgr[i], gamma_isrf[i],
-              nh[i]);
-        };
-        // TODO: set appropriate for value analytic derivative case tolerance
-        const solve_eqn::NewtonParams analytic_newton_params{.maxiter = itmax,
-                                                             .rtol = 1.e-10};
-        rslt = unchecked_posdomain_newton(fn_with_deriv, x, solvemask.data(),
-                                          idx_range.i_start, idx_range.i_stop,
-                                          analytic_newton_params,
-                                          giveup_small_x_threshold, max_x);
-      } else {
-        rslt = run_fdiff_newton();
-      }
-    } else {
-      rslt = run_fdiff_newton();
-    }
+    solve_eqn::EqnSolveRslt rslt = unchecked_posdomain_newton(
+        fn_with_deriv, x, solvemask.data(), idx_range.i_start, idx_range.i_stop,
+        newton_params, giveup_small_x_threshold, max_x);
     at_least_one_bisection = at_least_one_bisection || !rslt.all_solved;
   }
 
