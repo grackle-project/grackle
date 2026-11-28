@@ -93,6 +93,11 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
 /// @param gamma_isrf Heating from interstellar radiation field
 /// @param nH hydrogen number density
 ///
+/// @par History
+/// original function written by: Britton Smith, 2019
+/// modified: January, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
+/// modified: August 2026 by Matthew Abruzzo; converted to scalar calculation
+/// modified: November 2026 by Christopher Bignamini; added derivative calculation
 inline ValueWithDeriv calc_grain_balance_with_deriv(double Tdust, double Tgas,
                                                     double kgr, double dkgr_dT,
                                                     double Trad4, double gasgr,
@@ -190,10 +195,6 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
   const int itmax = 50;
   const int bi_itmax = 30;
 
-  // near the kinks of the opacity (table nodes, 200 K, sublimation) newton's
-  // method converges only linearly, and a looser rtol leaves errors that grow
-  // over long integrations (e.g. the freefall answer tests). Where convergence
-  // is quadratic, this costs about one extra iteration
   const solve_eqn::NewtonParams newton_params{.maxiter = itmax, .rtol = 1.e-10};
 
   // holds dust temperature guess for the current root-finding iteration

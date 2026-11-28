@@ -54,8 +54,7 @@ int cubic_eqn_root(double a, double b, double c, double& root);
 //      to work with bisection. This helps when derivatives are close to 0
 // -> newton's method uses analytic derivatives. Due to piecewise
 //    functions/linear interpolation, the analytic derivative is not continuous
-//    (e.g. in calc_tdust_1d, at every node of the opacity tables) and near
-//    these kinks newton's method only converges linearly. A more robust
+//    (e.g. in calc_tdust_1d, at every node of the opacity tables). A more robust
 //    approach would start with a bisection/binary-search phase to find the
 //    interval bounding the solution where the analytic derivative is
 //    continuous
@@ -185,7 +184,7 @@ struct NewtonParams {
   double rtol;
 };
 
-/// @brief Find root of a function at a number of locations
+/// @brief Find root of a function within an interval at a number of locations
 ///
 /// Use newton's method to find an array of roots for @p fn (a scalar-valued
 /// function that directly computes its derivative).
