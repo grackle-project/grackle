@@ -18,6 +18,7 @@
 
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "math/solve_eqn.hpp"
+#include "math/value_with_deriv.hpp"
 #include "support/config.hpp"
 #include "support/index_helper.hpp"
 #include "utils-cpp.hpp"
@@ -57,8 +58,7 @@ inline constexpr double sigma_sb_times_4 = 4.0 * constants::sigma_sb_grflt;
 /// @param nH hydrogen number density
 ///
 /// @note
-/// If we provided the derivative of @p kgr with respect to Tdust, the
-/// analytic derivative of this function is straightforward
+/// @ref calc_grain_balance_with_deriv also computes the analytic derivative
 ///
 /// @par History
 /// original function written by: Britton Smith, 2019
@@ -75,6 +75,39 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
   //  This comment is **ONLY** correct when the function used as
   //  part of the single-field dust model. See the docstring for
   //  more details.
+}
+
+/// @brief Calculate grain heating/cooling balance and its derivative with
+///     respect to the dust temperature
+///
+/// The returned value is identical to the value returned by
+/// @ref calc_grain_balance. See that function for a description of the
+/// shared parameters.
+///
+/// @param Tdust dust temperature
+/// @param Tgas gas temperature
+/// @param kgr grain opacity
+/// @param dkgr_dT derivative of @p kgr with respect to @p Tdust
+/// @param Trad4 CMB radiation temperature to the 4th power
+/// @param gasgr gas-grain heat transfer rates
+/// @param gamma_isrf Heating from interstellar radiation field
+/// @param nH hydrogen number density
+///
+/// @par History
+/// original function written by: Britton Smith, 2019
+/// modified: January, 2026 by Christopher Bignamini & Matthew Abruzzo; C++ port
+/// modified: August 2026 by Matthew Abruzzo; converted to scalar calculation
+/// modified: November 2026 by Christopher Bignamini; added derivatives
+inline ValueWithDeriv calc_grain_balance_with_deriv(double Tdust, double Tgas,
+                                                    double kgr, double dkgr_dT,
+                                                    double Trad4, double gasgr,
+                                                    double gamma_isrf,
+                                                    double nH) {
+  double f = calc_grain_balance(Tdust, Tgas, kgr, Trad4, gasgr, gamma_isrf, nH);
+  double df_dT = sigma_sb_times_4 * (dkgr_dT * (Trad4 - std::pow(Tdust, 4)) -
+                                     4.0 * kgr * std::pow(Tdust, 3)) -
+                 gasgr * nH;
+  return {f, df_dT};
 }
 
 }  // namespace Tdust_detail
@@ -100,10 +133,12 @@ inline double calc_grain_balance(double Tdust, double Tgas, double kgr,
 /// @param[in]  idx_range Index range specifying the portion of the grid to
 ///     operate on
 /// @param[in]  calculator Object of template type ``OpacCalcuator`` that
-///     supports a method with the signature given by
-///     ``double OpacCalculator::calc_opac(double tdust, int i) const``.
-///     This method returns the opacity given for the cell in the index range
-///     with an index of ``i`` given a dust temperature ``tdust``
+///     supports methods with the signatures given by
+///     ``double OpacCalculator::calc_opac(double tdust, int i) const`` and
+///     ``ValueWithDeriv OpacCalculator::calc_opac_with_deriv(double tdust,
+///     int i) const``. These methods return the opacity (and, for the
+///     latter, its derivative with respect to ``tdust``) for the cell in the
+///     index range with an index of ``i`` given a dust temperature ``tdust``
 ///
 /// @par History
 /// written by: Britton Smith, 2011
@@ -137,14 +172,19 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
   // temperature. The root finding hunts for the dust temperature where the
   // grain's heating and cooling are balanced (we are also interested in
   // returning the associated opacity).
-  // -> we should think about directly computing analytic derivatives. This
-  //    shouldn't be too hard and would significantly improve the robustness
-  //    (and speed) of the newton solver pass
+  // -> this version is used by the bisection method
   auto fn = [&](double Tdust, int i) -> double {
     double kgr = calculator.calc_opac(Tdust, i);
     double sol = Tdust_detail::calc_grain_balance(
         Tdust, tgas[i], kgr, Trad4, gasgr[i], gamma_isrf[i], nh[i]);
     return sol;
+  };
+
+  // -> this version also computes the derivative and is used by newton's method
+  auto fn_with_deriv = [&](double Tdust, int i) -> ValueWithDeriv {
+    auto [kgr, dkgr_dT] = calculator.calc_opac_with_deriv(Tdust, i);
+    return Tdust_detail::calc_grain_balance_with_deriv(
+        Tdust, tgas[i], kgr, dkgr_dT, Trad4, gasgr[i], gamma_isrf[i], nh[i]);
   };
 
   // grain opacity from Omukai (2000, equation 17) normalized by
@@ -155,16 +195,10 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
   const int itmax = 50;
   const int bi_itmax = 30;
 
-  const solve_eqn::FDiffNewtonParams newton_params{.maxiter = itmax,
-                                                   .perturb_init = 1.e-3,
-                                                   .perturb_min = 1.e-10,
-                                                   .tol = 1.e-5};
+  const solve_eqn::NewtonParams newton_params{.maxiter = itmax, .rtol = 1.e-10};
 
-  std::vector<double> sol(buf_len);
   // holds dust temperature guess for the current root-finding iteration
   std::vector<double> tdustnow(buf_len);
-  // relative finite difference step size
-  std::vector<double> pert(buf_len);
   std::vector<double> bi_t_high(buf_len);
 
   // specifies the status of each index (a solver skips a calculation if an
@@ -209,11 +243,9 @@ void calc_tdust_1d(double* tdust, const double* tgas, const double* nh,
     // below this x value, we give up!
     double giveup_small_x_threshold = Trad;
 
-    double* f_vals = sol.data();
-
-    solve_eqn::EqnSolveRslt rslt = unchecked_posdomain_fdiff_newton(
-        fn, x, solvemask.data(), f_vals, pert.data(), idx_range.i_start,
-        idx_range.i_stop, newton_params, giveup_small_x_threshold, max_x);
+    solve_eqn::EqnSolveRslt rslt = unchecked_posdomain_newton(
+        fn_with_deriv, x, solvemask.data(), idx_range.i_start, idx_range.i_stop,
+        newton_params, giveup_small_x_threshold, max_x);
     at_least_one_bisection = at_least_one_bisection || !rslt.all_solved;
   }
 

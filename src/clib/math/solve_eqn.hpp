@@ -16,6 +16,7 @@
 #include <cmath>
 
 #include "./misc.hpp"
+#include "./value_with_deriv.hpp"
 #include "support/config.hpp"  // GRIMPL_NAMESPACE_DECL
 
 namespace GRIMPL_NAMESPACE_DECL {
@@ -51,15 +52,12 @@ int cubic_eqn_root(double a, double b, double c, double& root);
 //      interpolation)
 //    - if we do know derivatives, it's very common to modify newton's method
 //      to work with bisection. This helps when derivatives are close to 0
-// -> the machinery currently uses finite-differences to approximate derivatives
-//    in newton's method. In calc_tdust_1d and other places where this logic
-//    could be used (namely, calculating gas temperature in tabulated-mode),
-//    the analytic function for computing the derivative is straight-forward.
-//    The trick is that due to piecewise functions/linear interpolation, the
-//    analytic derivative is not continuous. The trick to using the analytic
-//    derivatives is to an initial phase of the calculation using
-//    bisection/binary to find the interval containing bounding the solution
-//    where the analytic derivative is continuous
+// -> newton's method uses analytic derivatives. Due to piecewise
+//    functions/linear interpolation, the analytic derivative is not continuous
+//    (e.g. in calc_tdust_1d, at every node of the opacity tables). A more
+//    robust approach would start with a bisection/binary-search phase to find
+//    the interval bounding the solution where the analytic derivative is
+//    continuous
 
 /// Encodes a mask value specifying the status at a given index of a numerical
 /// root-finding algorithm
@@ -173,67 +171,48 @@ static EqnSolveRslt unchecked_bisect(
   return EqnSolveRslt{n_unconverged == 0, iter + 1};
 }
 
-/// @brief Parameters for the positive-domain, finite difference newton method
-struct FDiffNewtonParams {
+/// @brief Parameters for the positive-domain newton method, with analytic
+/// derivatives
+struct NewtonParams {
   /// maximum number of iterations
   int maxiter;
 
-  /// @brief the initial perturbation for computing finite differences
-  ///
-  /// A finite difference involves evaluating a function at a value ``x`` and
-  /// a value ``(1+perturb)*x``. This is the initial perturbation. The size of
-  /// the perturbation gets smaller with subsequent iterations.
-  double perturb_init;
-
-  /// @brief the minimum perturbation for computing finite differences
-  ///
-  /// @note
-  /// If the relative difference between 2 successive guesses exceeds this
-  /// value, we should probably consider the result converged
-  double perturb_min;
-
   /// @brief convergence tolerance
   ///
-  /// This is a somewhat atypical definition for tolerance. A guess ``x`` is
-  /// considered converged if ``|f(x)| < |tol*f(x*(1+perturb))|``
-  double tol;
+  /// A guess ``x`` is considered converged when the proposed newton step
+  /// satisfies ``|f(x)/f'(x)| <= rtol*|x_new|``
+  double rtol;
 };
 
 /// @brief Find root of a function within an interval at a number of locations
 ///
-/// Use a variant of newton's method to find an array of roots for @p fn (a
-/// scalar-valued function that does NOT directly compute the derivative).
-/// Derivatives are estimated via finite differences.
+/// Use newton's method to find an array of roots for @p fn (a scalar-valued
+/// function that directly computes its derivative).
 ///
 /// This function assumes that the root of @p fn occurs for a positive x value.
 /// It is also designed to help the caller fall back to an alternative method
 /// (e.g. bisection) upon failure.
 ///
-/// @param[in]    fn Function object representing the models the mathematical
-///    function for which roots are computed. This should have a signature
-///    of the form `double fn(double x, int i)` where `i` refers to an
-///    associated array index
+/// @param[in]    fn Function object representing the mathematical function for
+///    which roots are computed. This should have a signature of the form
+///    `ValueWithDeriv fn(double x, int i)` where `i` refers to an associated
+///    array index
 /// @param[inout] x Array of initial guesses for the root. Elements are updated
 ///    in place as the root is searched for.
-///    narrowed. Historically, we have called the final value in x_a the
-///    root. See the note below for additional requirements.
 /// @param[inout] solvemask Array specifying a @ref SolveStatus value at each
 ///    index. The solver will only look for roots at indices that initially have
 ///    values of @ref SolveStatus::UNCONVERGED. Elements will be updated to hold
 ///    @ref SolveStatus::CONVERGED, as convergence is achieved or to hold
 ///    @ref SolveStatus::SKIP_SOLVE at locations where the guess drops below
-///    @p giveup_small_x_threshold
-/// @param[inout] f_vals, pert Scratch arrays employed by the function.
+///    @p giveup_small_x_threshold or where the newton step is not finite (e.g.
+///    because the derivative is 0)
 /// @param[in]    i_start, i_stop The range of indices for which root finding
 ///    is performed.
 /// @param[in]    param Carries a number of assorted configuration options
 /// @param[in]    giveup_small_x_threshold A positive value. Below this
 ///    threshold, the solver gives up
 /// @param[in]    max_x The maximum x value in the domain that can be guessed
-///    as a root. Be mindful that for a guessed root of ``max_x``, a derivative
-///    will be estimated by evaluating the function with an x value that may be
-///    as large as ``max_x * (1.0 + perturb_init)``, where ``perturb_init`` is
-///    specified in the @p param argument
+///    as a root.
 ///
 /// @note
 /// For an index `i`, the current implementation requires (but does not
@@ -242,15 +221,13 @@ struct FDiffNewtonParams {
 /// results are undefined. The fact that these conditons aren't checked is
 /// reflected by the name of this function template.
 template <typename Fn>
-static EqnSolveRslt unchecked_posdomain_fdiff_newton(
-    const Fn& fn, double* x, SolveStatus* solvemask, double* f_vals,
-    double* pert, int i_start, int i_stop, const FDiffNewtonParams& param,
-    double giveup_small_x_threshold, double max_x) {
+static EqnSolveRslt unchecked_posdomain_newton(
+    const Fn& fn, double* x, SolveStatus* solvemask, int i_start, int i_stop,
+    const NewtonParams& param, double giveup_small_x_threshold, double max_x) {
   int n_to_solve = 0;
 
   for (int i = i_start; i < i_stop; i++) {
     n_to_solve += solvemask[i] == SolveStatus::UNCONVERGED;
-    pert[i] = param.perturb_init;
   }
   // Iterate to convergence with Newton's method
   bool any_giveups = false;
@@ -258,46 +235,32 @@ static EqnSolveRslt unchecked_posdomain_fdiff_newton(
   for (iter = 0; (iter < param.maxiter) && (n_to_solve > 0); iter++) {
     for (int i = i_start; i < i_stop; i++) {
       if (solvemask[i] == SolveStatus::UNCONVERGED) {
-        f_vals[i] = fn(x[i], i);
-      }
-    }
-    for (int i = i_start; i < i_stop; i++) {
-      if (solvemask[i] == SolveStatus::UNCONVERGED) {
-        // (outside of the very first iteration), the combination of using
-        // giveup_small_x_threshold and applying fmax to xplus doesn't make a
-        // lot of sense. Given that pert is guaranteed to be positive:
-        // - when giveup_small_x_threshold > 1.0e-3, this operation is totally
-        //   unnecessary
-        // - 1.0e-3 > when giveup_small_x_threshold > 0, then the value of
-        //   (x_plus-x[i])/x[i] may get huge!
-        // thus, instead of applying fmax to x_plus, it would be more robust
-        // to apply fmax to giveup_small_x_threshold and add an initial check
-        // to comparing x and giveup_small_x_threshold
-        double x_plus = std::fmax(1.e-3, (1. + pert[i]) * x[i]);
-        double fplus_val = fn(x_plus, i);
-        // it would be slightly faster to compute 1.0/slope
-        double slope = (fplus_val - f_vals[i]) / (pert[i] * x[i]);
+        auto [f, df_dx] = fn(x[i], i);
+        double step = f / df_dx;
+        // a zero derivative or a non-finite function value yields a
+        // non-finite step. We don't need to check for tiny derivatives: the
+        // resulting huge step is caught by the domain checks below
+        if (!std::isfinite(step)) {
+          solvemask[i] = SolveStatus::SKIP_SOLVE;
+          n_to_solve--;
+          any_giveups = true;
+          continue;
+        }
 
-        double x_old = x[i];
-        // note: next line is erroneous if fplus_val - f_vals is exactly 0
-        x[i] = std::fmin(x[i] - (f_vals[i] / slope), max_x);
-
-        // try to ensure next x_plus is closer to x than x_old
-        pert[i] = fclamp(0.5 * std::fabs(x[i] - x_old) / x[i],
-                         param.perturb_min, pert[i]);
+        x[i] = std::fmin(x[i] - step, max_x);
 
         if (x[i] < giveup_small_x_threshold) {
           solvemask[i] = SolveStatus::SKIP_SOLVE;
           n_to_solve--;
           any_giveups = true;
-        } else if (std::fabs(f_vals[i]) < std::fabs(fplus_val * param.tol)) {
+        } else if (std::fabs(step) <= param.rtol * std::fabs(x[i])) {
           solvemask[i] = SolveStatus::CONVERGED;
           n_to_solve--;
         }
       }
     }
   }
-  return {(n_to_solve == 0) && !any_giveups, iter + 1};
+  return {(n_to_solve == 0) && !any_giveups, iter};
 }
 }  // namespace solve_eqn
 }  // namespace GRIMPL_NAMESPACE_DECL
